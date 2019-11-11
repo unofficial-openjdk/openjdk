@@ -30,6 +30,7 @@
 
 import java.lang.annotation.*;
 
+@Bean
 public class IsEnum {
 
     static int test(Class<?> clazz, boolean expected) {

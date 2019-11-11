@@ -39,6 +39,7 @@
 
 package compiler.arraycopy;
 
+@Bean
 public class TestEliminatedArrayCopyDeopt {
 
     static class A implements Cloneable {

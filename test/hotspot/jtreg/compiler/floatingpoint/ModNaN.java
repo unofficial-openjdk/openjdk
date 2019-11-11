@@ -31,6 +31,7 @@
 
 package compiler.floatingpoint;
 
+@Bean
 public class ModNaN {
     /* This bug was seen in the field for a particular version of the VM,
      * but never reproduced internally, and the reason was never known,

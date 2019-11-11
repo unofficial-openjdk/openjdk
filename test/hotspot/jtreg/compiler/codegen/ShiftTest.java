@@ -30,6 +30,7 @@
 
 package compiler.codegen;
 
+@Bean
 public class ShiftTest {
     static final int w = 32;
 

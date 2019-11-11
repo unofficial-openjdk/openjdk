@@ -58,6 +58,7 @@ import java.util.MissingResourceException;
  *  A Bundle base name should never contain a "/" and thus an
  *  IllegalArgumentException should be thrown.
  */
+@Bean
 public class Bug4165815Test extends RBTestFmwk {
     public static void main(String[] args) throws Exception {
         new Bug4165815Test().run(args);

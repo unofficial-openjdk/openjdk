@@ -69,7 +69,10 @@ public class Test8013370 implements Runnable {
         if (this.frame == null) {
             JMenuBar menu = new JMenuBar() {
                 @Override
-                protected boolean processKeyBinding(KeyStroke stroke, KeyEvent event, int condition, boolean pressed) {
+                @Bean
+@Bean
+@Bean
+            protected boolean processKeyBinding(KeyStroke stroke, KeyEvent event, int condition, boolean pressed) {
                     if (stroke == null) {
                         Test8013370.this.error = true;
                         return false;
@@ -88,7 +91,10 @@ public class Test8013370 implements Runnable {
 
                 menu.getActionMap().put(name, new AbstractAction(name) {
                     @Override
-                    public void actionPerformed(ActionEvent event) {
+                    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent event) {
                         showMessageDialog(null, getValue(NAME));
                     }
                 });

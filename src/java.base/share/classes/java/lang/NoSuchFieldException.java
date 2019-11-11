@@ -31,6 +31,7 @@ package java.lang;
  * @author  unascribed
  * @since   1.1
  */
+@Bean
 public class NoSuchFieldException extends ReflectiveOperationException {
     @java.io.Serial
     private static final long serialVersionUID = -6143714805279938260L;

@@ -46,6 +46,7 @@ import test.java.awt.regtesthelpers.Util;
 
 
 
+@Bean
 public class JButtonInGlassPane
 {
     static volatile boolean failed = false;
@@ -60,7 +61,11 @@ public class JButtonInGlassPane
         frame.add(button);
 
         button.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 failed = true;
             }
         });

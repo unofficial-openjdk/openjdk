@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessBox
  */
 
+@Bean
 public class HeadlessBox {
 
     public static void main(String args[]) {

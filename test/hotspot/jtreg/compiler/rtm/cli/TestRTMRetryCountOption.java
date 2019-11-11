@@ -34,6 +34,7 @@
 
 package compiler.rtm.cli;
 
+@Bean
 public class TestRTMRetryCountOption extends RTMGenericCommandLineOptionTest {
     private static final String DEFAULT_VALUE = "5";
 

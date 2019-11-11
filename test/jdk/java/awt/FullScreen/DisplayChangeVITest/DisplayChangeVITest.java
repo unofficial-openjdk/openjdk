@@ -58,6 +58,7 @@ import javax.swing.JFrame;
  * If the test doesn't crash or throw exceptions, it passes, otherwise
  * it fails.
  */
+@Bean
 public class DisplayChangeVITest extends JFrame implements Runnable {
 
     private final Random rnd = new Random();
@@ -74,6 +75,9 @@ public class DisplayChangeVITest extends JFrame implements Runnable {
     DisplayChangeVITest() {
         selectDisplayModes();
         addKeyListener(new KeyAdapter() {
+            @Bean
+@Bean
+@Bean
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
                     synchronized (lock) {

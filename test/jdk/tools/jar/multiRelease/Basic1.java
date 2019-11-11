@@ -42,6 +42,7 @@ import org.testng.annotations.*;
 import java.nio.file.*;
 import java.util.*;
 
+@Bean
 public class Basic1 extends MRTestBase {
 
     @BeforeTest

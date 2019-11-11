@@ -31,6 +31,7 @@
 
 import java.util.Arrays;
 
+@Bean
 public class TestHKSCS {
     public static void main(String args[]) throws Exception {
         String[] charsets = { "x-MS950-HKSCS-XP",

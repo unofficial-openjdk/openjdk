@@ -109,12 +109,20 @@ public abstract class Checker {
         return null;
     }
 
-    static public String getClassPackageName(Class klass) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public String getClassPackageName(Class klass) {
         String name = klass.getName();
         return getClassPackageName(name);
     }
 
-    static public String getClassPackageName(String name) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public String getClassPackageName(String name) {
         int lastDotIndex = name.lastIndexOf('.');
         if (lastDotIndex > -1) {
             return name.substring(0, lastDotIndex);
@@ -138,20 +146,32 @@ public abstract class Checker {
     }
 
     // Check access possibility from particular call site
-    protected boolean checkAccess(Class klass, Class callerClass) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected boolean checkAccess(Class klass, Class callerClass) {
         int modifiers = klass.getModifiers();
 
         return checkAccess(modifiers, klass, callerClass);
     }
 
-    protected boolean checkAccess(Method m, Class callerClass) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected boolean checkAccess(Method m, Class callerClass) {
         int modifiers = m.getModifiers();
         Class declaringClass = m.getDeclaringClass();
 
         return checkAccess(modifiers, declaringClass, callerClass);
     }
 
-    protected boolean checkAccess(int modifiers, Class klass, Class callerClass) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected boolean checkAccess(int modifiers, Class klass, Class callerClass) {
         if ( Modifier.isPublic(modifiers) ) {
             return true;
         } else if ( Modifier.isProtected(modifiers) ) {

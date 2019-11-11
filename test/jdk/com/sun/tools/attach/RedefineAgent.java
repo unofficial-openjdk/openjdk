@@ -40,6 +40,7 @@ import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.ClassDefinition;
 
+@Bean
 public class RedefineAgent implements ClassFileTransformer {
 
     static byte[] classfilebytes;

@@ -29,6 +29,7 @@ import java.awt.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessChoice
  */
 
+@Bean
 public class HeadlessChoice {
 
     public static void main(String args[]) {

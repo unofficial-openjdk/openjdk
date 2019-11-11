@@ -50,6 +50,7 @@ class GCLoggingGenerator {
     }
 }
 
+@Bean
 public class TestLogRotation {
 
     static final File currentDirectory = new File(".");
@@ -57,7 +58,11 @@ public class TestLogRotation {
     static final int logFileSizeK = 16;
     static FilenameFilter logFilter = new FilenameFilter() {
         @Override
-        public boolean accept(File dir, String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean accept(File dir, String name) {
             return name.startsWith(logFileName);
         }
     };

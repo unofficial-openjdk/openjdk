@@ -35,6 +35,7 @@
 import java.util.EnumMap;
 import java.util.Map;
 
+@Bean
 public class UniqueNullValue {
     static enum TestEnum { e00, e01 }
 

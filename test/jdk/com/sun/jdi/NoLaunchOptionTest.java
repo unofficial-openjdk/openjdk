@@ -37,6 +37,7 @@ import jdk.test.lib.process.ProcessTools;
  * @build VMConnection
  * @run driver NoLaunchOptionTest
  */
+@Bean
 public class NoLaunchOptionTest extends Object {
 
     public static void main(String[] args) throws Exception {

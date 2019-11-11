@@ -34,6 +34,7 @@ import javax.accessibility.AccessibleContext;
  * @run main AccessibleIndexInParentTest
  */
 
+@Bean
 public class AccessibleIndexInParentTest {
 
     public static void main(String[] args) throws Exception {

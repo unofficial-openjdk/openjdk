@@ -34,6 +34,7 @@ import java.io.OutputStream;
 
 import javax.imageio.stream.FileCacheImageOutputStream;
 
+@Bean
 public class BitPadding {
 
     public static void main(String[] args) throws IOException {

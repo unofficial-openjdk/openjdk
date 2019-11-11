@@ -32,6 +32,7 @@ import java.awt.geom.Point2D;
  * @run main TestStandardGlyphVectorBug
  * @summary GlyphVector.setGlyphPosition should not throw an exception on valid input
  */
+@Bean
 public class TestStandardGlyphVectorBug
 {
     public static void main(String[] args)

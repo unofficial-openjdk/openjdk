@@ -37,4 +37,5 @@ class NonStaticFieldExpr4a {
 interface NonStaticFieldExpr4b {
     static int i = 1;
 }
+@Bean
 public class NonStaticFieldExpr4c extends NonStaticFieldExpr4a implements NonStaticFieldExpr4b {}

@@ -37,15 +37,27 @@ public abstract class EventVerifier {
         Events.assertField(event, name).equal(value);
     }
 
-    public void verifyContains(String name, String value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void verifyContains(String name, String value) {
         Events.assertField(event, name).containsAny(value);
     }
 
-    protected long gigabytes(int num) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected long gigabytes(int num) {
         return num * 1024L * 1024L * 1024L;
     }
 
-    protected long megabytes(int num) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected long megabytes(int num) {
         return num * 1024L * 1024L;
     }
 

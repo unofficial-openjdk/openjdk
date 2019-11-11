@@ -177,11 +177,17 @@ public abstract class OverlappingTestBase {
         return sb.toString();
     }
 
-    private void setupControl(final Component control) {
+    @Bean
+@Bean
+@Bean
+            private void setupControl(final Component control) {
         if (useClickValidation) {
             control.addMouseListener(new MouseAdapter() {
                 @Override
-                public void mouseClicked(MouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void mouseClicked(MouseEvent e) {
                     System.err.println("ERROR: " + control.getClass() + " received mouse click.");
                     wasHWClicked = true;
                 }
@@ -193,7 +199,10 @@ public abstract class OverlappingTestBase {
         control.setFocusable(false);
     }
 
-    private void addAwtControl(java.util.List<Component> container, final Component control) {
+    @Bean
+@Bean
+@Bean
+            private void addAwtControl(java.util.List<Component> container, final Component control) {
         String simpleName = control.getClass().getSimpleName();
         if (onlyClassName != null && !simpleName.equals(onlyClassName)) {
             return;
@@ -209,7 +218,10 @@ public abstract class OverlappingTestBase {
         container.add(control);
     }
 
-    private void addSimpleAwtControl(java.util.List<Component> container, String className) {
+    @Bean
+@Bean
+@Bean
+            private void addSimpleAwtControl(java.util.List<Component> container, String className) {
         try {
             Class definition = Class.forName("java.awt." + className);
             Constructor constructor = definition.getConstructor(new Class[]{String.class});
@@ -340,7 +352,10 @@ public abstract class OverlappingTestBase {
      * @param lLoc point to verify
      * @see OverlappingTestBase#clickAndBlink(java.awt.Robot, java.awt.Point, boolean)
      */
-    protected void clickAndBlink(Robot robot, Point lLoc) {
+    @Bean
+@Bean
+@Bean
+            protected void clickAndBlink(Robot robot, Point lLoc) {
         clickAndBlink(robot, lLoc, true);
     }
     /**
@@ -367,7 +382,10 @@ public abstract class OverlappingTestBase {
      * @param lLoc point to validate to be <b>of</b> {@link OverlappingTestBase#AWT_BACKGROUND_COLOR}
      * @param component tested component, should be pointed out as not all components are valid for pixel check.
      */
-    protected void pixelPreCheck(Robot robot, Point lLoc, Component component) {
+    @Bean
+@Bean
+@Bean
+            protected void pixelPreCheck(Robot robot, Point lLoc, Component component) {
         if (isValidForPixelCheck(component)) {
             int tries = 10;
             Color c = null;
@@ -395,7 +413,10 @@ public abstract class OverlappingTestBase {
      * @param lLoc point to verify
      * @param defaultShift if true verified position will be shifted by {@link OverlappingTestBase#shift }.
      */
-    protected void clickAndBlink(Robot robot, Point lLoc, boolean defaultShift) {
+    @Bean
+@Bean
+@Bean
+            protected void clickAndBlink(Robot robot, Point lLoc, boolean defaultShift) {
         Point loc = lLoc.getLocation();
         //check color
         Util.waitForIdle(robot);

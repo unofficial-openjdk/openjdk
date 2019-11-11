@@ -57,6 +57,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
 
+@Bean
 public class GetImplementorTest {
     public static void main(String args[]) {
         GetImplementorTest test = new GetImplementorTest();
@@ -98,7 +99,11 @@ public class GetImplementorTest {
         return result;
     }
 
-    private void runTest(TestCase tcase) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void runTest(TestCase tcase) {
         System.out.println(tcase);
         HotSpotResolvedObjectType resolvedIface = CompilerToVMHelper
                 .lookupTypeHelper(Utils.toJVMTypeSignature(tcase.anInterface),

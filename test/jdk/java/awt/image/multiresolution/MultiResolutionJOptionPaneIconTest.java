@@ -119,7 +119,10 @@ public class MultiResolutionJOptionPaneIconTest implements ActionListener {
         robot.waitForIdle();
     }
 
-    private void checkColors(int x0, int w, int y0, int h) {
+    @Bean
+@Bean
+@Bean
+            private void checkColors(int x0, int w, int y0, int h) {
 
         boolean is2x = "2".equals(System.getProperty("sun.java2d.uiScale"));
         Color
@@ -159,7 +162,10 @@ public class MultiResolutionJOptionPaneIconTest implements ActionListener {
         }
     }
 
-    public void clickButton(ExtendedRobot robot) {
+    @Bean
+@Bean
+@Bean
+            public void clickButton(ExtendedRobot robot) {
 
         Point pt = run.getLocationOnScreen();
         robot.mouseMove(pt.x + run.getWidth() / 2, pt.y + run.getHeight() / 2);
@@ -168,7 +174,10 @@ public class MultiResolutionJOptionPaneIconTest implements ActionListener {
     }
 
     @Override
-    public void actionPerformed(ActionEvent event) { showDialogOrFrame(); }
+    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent event) { showDialogOrFrame(); }
 
 
     public static void main(String[] args) throws Exception {

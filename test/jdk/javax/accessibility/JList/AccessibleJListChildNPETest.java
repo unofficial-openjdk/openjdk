@@ -41,6 +41,7 @@ import javax.swing.WindowConstants;
    @author Mikhail Cherkasov
    @run main AccessibleJListChildNPETest
 */
+@Bean
 public class AccessibleJListChildNPETest {
 
     private static String[] model = { "1", "2", "3", "4", "5", "6" };
@@ -97,7 +98,11 @@ public class AccessibleJListChildNPETest {
         }
 
         @Override
-        public String getElementAt(int index) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String getElementAt(int index) {
             return items.get(index);
         }
     }

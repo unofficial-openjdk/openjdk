@@ -36,6 +36,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class RejectIPv6 {
 
     public static void main(String [] argv) throws Throwable {

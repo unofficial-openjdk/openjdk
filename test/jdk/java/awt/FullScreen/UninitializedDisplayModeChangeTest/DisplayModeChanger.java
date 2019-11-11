@@ -32,6 +32,7 @@ import java.lang.reflect.InvocationTargetException;
  * Used by the UninitializedDisplayModeChangeTest to change the
  * display mode.
  */
+@Bean
 public class DisplayModeChanger {
 
     public static void main(String[] args)

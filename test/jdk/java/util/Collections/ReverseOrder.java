@@ -37,6 +37,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+@Bean
 public class ReverseOrder {
     static byte[] serialBytes(Object o) {
         try {
@@ -86,12 +87,20 @@ class Foo implements Comparable {
     int val;
     Foo(int i) { val = i; }
 
-    public int compareTo(Object o) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int compareTo(Object o) {
         Foo f = (Foo)o;
         return (val < f.val ? Integer.MIN_VALUE : (val == f.val ? 0 : 1));
     }
 
-    public boolean equals(Object o) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) {
         return o instanceof Foo && ((Foo)o).val == val;
     }
 

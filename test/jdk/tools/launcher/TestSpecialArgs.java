@@ -38,6 +38,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+@Bean
 public class TestSpecialArgs extends TestHelper {
 
     public static void main(String... args) throws Exception {

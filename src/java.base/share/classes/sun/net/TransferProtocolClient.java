@@ -37,6 +37,7 @@ import java.util.Vector;
  * @see         sun.net.nntp.NntpClient
  */
 
+@Bean
 public class TransferProtocolClient extends NetworkClient {
     static final boolean debug = false;
 
@@ -112,7 +113,8 @@ public class TransferProtocolClient extends NetworkClient {
     }
 
     /** Sends command <i>cmd</i> to the server. */
-    public void sendServer(String cmd) {
+@Bean
+        public void sendServer(String cmd) {
         serverOutput.print(cmd);
         if (debug) {
             System.out.print("Sending: " + cmd);

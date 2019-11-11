@@ -37,5 +37,6 @@
 /**
  * Test HTML version option.
  */
+@Bean
 public class HtmlVersionTest {
 }

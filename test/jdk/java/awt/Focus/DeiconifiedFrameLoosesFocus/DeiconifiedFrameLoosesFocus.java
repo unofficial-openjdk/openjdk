@@ -34,6 +34,7 @@
 import java.awt.*;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class DeiconifiedFrameLoosesFocus {
     Robot robot;
     static final Frame frame = new Frame("Frame");

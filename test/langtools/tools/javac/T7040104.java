@@ -27,6 +27,7 @@
  * @summary javac NPE on Object a[]; Object o = (a=null)[0];
  */
 
+@Bean
 public class T7040104 {
     public static void main(String[] args) {
         T7040104 t = new T7040104();

@@ -46,6 +46,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 
 @Test
+@Bean
 public class JapanEraNameCompatTest {
     static final Calendar c = new Calendar.Builder()
             .setCalendarType("japanese")

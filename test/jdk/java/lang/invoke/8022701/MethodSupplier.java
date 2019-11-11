@@ -27,6 +27,7 @@
  * BogoLoader to either make m be private or have a different name.
  */
 
+@Bean
 public class MethodSupplier {
     public void m() {
         System.out.println("good");

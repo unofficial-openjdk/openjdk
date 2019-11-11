@@ -33,6 +33,7 @@ import java.lang.invoke.MethodType;
  * @run main TestPrivateMember
  */
 
+@Bean
 public class TestPrivateMember {
     public static void main(String... args) throws Throwable {
         System.setSecurityManager(new SecurityManager());

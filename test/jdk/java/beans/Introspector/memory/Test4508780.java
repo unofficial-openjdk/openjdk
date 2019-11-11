@@ -38,6 +38,7 @@ import java.lang.reflect.Method;
  * Multiple classloader test to ensure that methods
  * returned by the BeanInfo classes are unique to the classloader.
  */
+@Bean
 public class Test4508780 implements Runnable {
     /**
      * This is here to force the bean classes to be compiled

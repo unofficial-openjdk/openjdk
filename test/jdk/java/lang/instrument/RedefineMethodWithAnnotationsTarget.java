@@ -25,6 +25,7 @@
  * The first version of this class. The second version is in
  * RedefineMethodWithAnnotationsTarget_2.java.
  */
+@Bean
 public class RedefineMethodWithAnnotationsTarget {
     public void annotatedMethod(@ParameterAnnotation(
             value = ParameterAnnotation.STRING_VALUE_1) String parameter) {

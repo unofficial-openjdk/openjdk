@@ -29,6 +29,7 @@
 
 import java.util.*;
 
+@Bean
 public class ExtensionsTest {
     public static void main(String[] args) {
         Locale jaJPJP = new Locale("ja", "JP", "JP");

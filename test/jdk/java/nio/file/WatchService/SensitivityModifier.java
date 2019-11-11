@@ -38,6 +38,7 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import com.sun.nio.file.SensitivityWatchEventModifier;
 
+@Bean
 public class SensitivityModifier {
 
     static final Random rand = new Random();

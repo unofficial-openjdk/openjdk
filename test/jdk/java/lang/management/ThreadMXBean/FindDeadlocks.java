@@ -40,6 +40,7 @@
 import java.lang.management.*;
 import java.util.*;
 
+@Bean
 public class FindDeadlocks {
     static ThreadMXBean mbean = ManagementFactory.getThreadMXBean();
     public static void main(String[] argv) {

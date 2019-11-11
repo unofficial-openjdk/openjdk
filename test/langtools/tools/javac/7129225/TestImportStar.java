@@ -16,5 +16,6 @@
 import xxx.*;
 
 @Anno
+@Bean
 public class TestImportStar {
 }

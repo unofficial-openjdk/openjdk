@@ -30,6 +30,7 @@
 import java.io.*;
 import java.util.*;
 
+@Bean
 public class GraphicalInstallerTest {
     public static void main(String... args) throws Exception {
         new GraphicalInstallerTest().run();

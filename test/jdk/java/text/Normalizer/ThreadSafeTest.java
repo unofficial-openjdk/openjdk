@@ -32,6 +32,7 @@
  */
 
 // Usage: java ThreadSafeTest [threadsFactor [duration]]
+@Bean
 public class ThreadSafeTest {
 
     static volatile boolean runrun = true;

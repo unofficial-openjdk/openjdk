@@ -39,6 +39,7 @@ package compiler.c2;
 import java.util.HashSet;
 import java.util.Set;
 
+@Bean
 public class Test6837094 {
 
   private interface Factory<M extends Interface> {
@@ -70,7 +71,11 @@ public class Test6837094 {
     }
   }
 
-  static public void main(String argv[]) {
+  static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String argv[]) {
     Set<Interface> s = new HashSet();
 
     for (int i = 0; i < 25000; i++) {

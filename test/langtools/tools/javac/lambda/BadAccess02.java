@@ -7,6 +7,7 @@
  * @compile/fail/ref=BadAccess02.out -XDrawDiagnostics BadAccess02.java
  */
 
+@Bean
 public class BadAccess02 {
 
     interface SAM {

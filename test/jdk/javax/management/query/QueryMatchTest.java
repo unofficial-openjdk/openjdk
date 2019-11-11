@@ -38,6 +38,7 @@ import javax.management.ObjectName;
 import javax.management.Query;
 import javax.management.QueryExp;
 
+@Bean
 public class QueryMatchTest {
 
     public static interface SimpleMBean {

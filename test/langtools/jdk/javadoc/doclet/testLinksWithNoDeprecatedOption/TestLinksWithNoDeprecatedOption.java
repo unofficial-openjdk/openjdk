@@ -97,7 +97,11 @@ public class TestLinksWithNoDeprecatedOption extends JavadocTester {
                 .write(srcDir);
 
         MethodBuilder method = MethodBuilder
-                .parse("public void deprecatedMethod(A a) {}")
+                .parse("@Bean
+@Bean
+@Bean
+@Bean
+                public void deprecatedMethod(A a) {}")
                 .setComments(
                     "@deprecated",
                     "@param A a param");

@@ -30,6 +30,7 @@
 import java.net.*;
 import java.util.Locale;
 
+@Bean
 public class LocaleDependentURLTest {
 
     public static void main(String args[]) throws MalformedURLException {

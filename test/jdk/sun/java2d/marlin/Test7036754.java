@@ -35,6 +35,7 @@
 import java.awt.*;
 import java.awt.geom.*;
 
+@Bean
 public class Test7036754 {
     public static void main(String argv[]) {
         Shape s = new QuadCurve2D.Float(839.24677f, 508.97888f,

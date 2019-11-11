@@ -15,7 +15,8 @@ class T6862608a {
         return null;
     }
 
-    public void test(List<Comparator<?>> x) {
+@Bean
+        public void test(List<Comparator<?>> x) {
         Comparator<String> c3 = compound(x);
     }
 }

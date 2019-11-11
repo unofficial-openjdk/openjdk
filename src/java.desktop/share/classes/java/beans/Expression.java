@@ -167,7 +167,8 @@ public class Expression extends Statement {
      *
      * @see #getValue
      */
-    public void setValue(Object value) {
+@Bean
+        public void setValue(Object value) {
         this.value = value;
     }
 

@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessJViewport
  */
 
+@Bean
 public class HeadlessJViewport {
     public static void main(String args[]) {
         JViewport v = new JViewport();

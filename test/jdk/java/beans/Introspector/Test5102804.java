@@ -39,6 +39,7 @@ import java.lang.ref.WeakReference;
 import java.net.URL;
 import java.net.URLClassLoader;
 
+@Bean
 public class Test5102804 {
     private static final String BEAN_NAME = "Test5102804$Example";
     private static final String BEAN_INFO_NAME = BEAN_NAME + "BeanInfo";
@@ -123,7 +124,11 @@ public class Test5102804 {
             return value;
         }
 
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(int value) {
             this.value = value;
         }
     }

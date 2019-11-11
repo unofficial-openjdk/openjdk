@@ -74,7 +74,11 @@ public class RASagent {
         return new RASagent().runThis(argv, out);
     }
 
-    private int runThis(String argv[], PrintStream out) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int runThis(String argv[], PrintStream out) {
         int skipArgs = 1; // number of arguments which must be skipped
                           // for the invoked test
         boolean invokeRun = false; // invoke the method "main" by default
@@ -175,7 +179,11 @@ public class RASagent {
      * Verify that test's class file exists with a path given as a parameter
      * and, if so, store that path in the static field "clfBasePath".
      */
-    private boolean pathValid(String pathToCheck, String testName) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean pathValid(String pathToCheck, String testName) {
         String fullPath = pathToCheck + File.separator
             + testName.replace('.', File.separatorChar) + ".class";
         File classFile = null;
@@ -211,7 +219,11 @@ public class RASagent {
      * Get short name of an invoked test (i.e. without package name) and
      * store path to the directory with the test's class files.
      */
-    private String getTestNameAndPath(String testName) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String getTestNameAndPath(String testName) {
         String shortTestName = testName;
         String packageName = "";
 
@@ -249,7 +261,11 @@ public class RASagent {
     /**
      * Invoke the method <i>main(String[])</i> of the test.
      */
-    private int invokeMainMethod(Class testCls, String args[]) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int invokeMainMethod(Class testCls, String args[]) {
         Class[] methType = { String[].class };
         Object[] methArgs = { args };
 
@@ -259,7 +275,11 @@ public class RASagent {
     /**
      * Invoke the method <i>run(String[], PrintStream)</i> of the test.
      */
-    private int invokeRunMethod(Class testCls, String args[]) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int invokeRunMethod(Class testCls, String args[]) {
         Class[] methType = { String[].class, PrintStream.class };
         Object[] methArgs = { args, out };
 

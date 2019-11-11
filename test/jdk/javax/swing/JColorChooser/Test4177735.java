@@ -35,6 +35,7 @@ import javax.swing.JDialog;
 import javax.swing.SwingUtilities;
 import javax.swing.colorchooser.AbstractColorChooserPanel;
 
+@Bean
 public class Test4177735 implements Runnable {
     private static final long DELAY = 1000L;
 

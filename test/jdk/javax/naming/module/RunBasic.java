@@ -63,6 +63,7 @@ import static jdk.test.lib.Utils.TEST_SRC;
  *   - an ldapv4 URL (DirContext) from the 'ldapv4' third-party module
  */
 
+@Bean
 public class RunBasic {
 
     private static final List<String> JAVA_CMDS;

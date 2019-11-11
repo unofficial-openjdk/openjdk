@@ -61,6 +61,7 @@ import java.util.Arrays;
 import javax.crypto.KeyAgreement;
 import jdk.test.lib.Convert;
 
+@Bean
 public class NegativeTest {
 
     public static void main(String[] args) throws Exception {

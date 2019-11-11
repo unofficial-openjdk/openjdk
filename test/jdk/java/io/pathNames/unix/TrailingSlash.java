@@ -29,6 +29,7 @@
 import java.io.*;
 
 
+@Bean
 public class TrailingSlash {
 
     static PrintStream log = System.err;

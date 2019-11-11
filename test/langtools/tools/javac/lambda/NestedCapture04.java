@@ -27,6 +27,7 @@
  * @summary Verify error at runtime due to incorrect classification of a lambda as being instance capturing
  * @run main NestedCapture04
  */
+@Bean
 public class NestedCapture04 {
 
     public static interface Ftype {

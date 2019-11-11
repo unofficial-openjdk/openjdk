@@ -33,6 +33,7 @@ import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 
+@Bean
 public class EmptyRectHitTest {
     public static int numerrors;
 

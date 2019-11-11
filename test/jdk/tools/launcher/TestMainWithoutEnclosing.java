@@ -41,7 +41,8 @@ public final class TestMainWithoutEnclosing extends TestHelper {
 
     static void createJarFile(File testJar) throws IOException {
         List<String> scratch = new ArrayList<>();
-        scratch.add("public class Enclosing {");
+        scratch.add("@Bean
+public class Enclosing {");
         scratch.add("    public static final class Main {");
         scratch.add("        public static void main(String... args) {");
         scratch.add("            System.out.println(\"Hello World\");");

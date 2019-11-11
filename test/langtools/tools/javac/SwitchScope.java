@@ -7,6 +7,7 @@
  * @compile/fail/ref=SwitchScope.out -XDrawDiagnostics SwitchScope.java
  */
 
+@Bean
 public class SwitchScope {
     public static void main(String[] args) {
         switch (args.length) {

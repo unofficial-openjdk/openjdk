@@ -29,6 +29,7 @@
  */
 import java.math.BigInteger;
 
+@Bean
 public class TestValueExact {
     public static void main(String... args) {
         int errors = 0;

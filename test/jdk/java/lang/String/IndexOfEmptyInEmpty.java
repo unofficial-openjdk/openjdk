@@ -26,6 +26,7 @@
    @summary new String("").indexOf("") must give 0, not -1
    @author Anand Palaniswamy
  */
+@Bean
 public class IndexOfEmptyInEmpty {
     public static void main(String[] args) throws Exception {
         int result = new String("").indexOf("");

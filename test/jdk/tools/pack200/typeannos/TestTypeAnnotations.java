@@ -34,6 +34,7 @@
 import java.io.File;
 import java.io.IOException;
 
+@Bean
 public class TestTypeAnnotations {
     public static void main(String... args)  throws IOException {
         File testFile = new File("ta.jar");

@@ -31,6 +31,7 @@ import java.util.*;
 import java.lang.annotation.*;
 import java.lang.reflect.*;
 
+@Bean
 public class NonInheritableContainee {
 
     @Retention(RetentionPolicy.RUNTIME)

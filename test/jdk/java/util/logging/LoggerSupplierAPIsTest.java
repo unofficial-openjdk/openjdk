@@ -42,6 +42,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 @Test(groups="unit")
+@Bean
 public class LoggerSupplierAPIsTest {
     static class CountingSupplier implements Supplier<String> {
         AtomicInteger sno = new AtomicInteger();
@@ -66,7 +67,11 @@ public class LoggerSupplierAPIsTest {
         public void flush() { reset(); }
 
         @Override
-        public void publish(LogRecord lr) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void publish(LogRecord lr) {
             // Can do some more assertion here?
             // System.out.println(lr.getMessage());
             count.incrementAndGet();
@@ -216,7 +221,11 @@ public class LoggerSupplierAPIsTest {
         logger.finest(SystemInfo::OS);
     }
 
-    private void validate(int index, boolean thrown, String methodName) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void validate(int index, boolean thrown, String methodName) {
         assertEquals(supplier.getCount(), invokes[index]);
         assertEquals(handler.getCount(), log_count[index]);
         // Verify associated Throwable is right

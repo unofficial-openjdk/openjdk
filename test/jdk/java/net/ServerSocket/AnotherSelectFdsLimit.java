@@ -37,6 +37,7 @@ import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Bean
 public class AnotherSelectFdsLimit {
     static final int DEFAULT_FDS_TO_USE = 1600;
 

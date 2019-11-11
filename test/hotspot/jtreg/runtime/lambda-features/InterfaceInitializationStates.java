@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Arrays;
 import java.util.ArrayList;
 
+@Bean
 public class InterfaceInitializationStates {
 
     static List<Class<?>> cInitOrder = new ArrayList<>();
@@ -105,7 +106,11 @@ public class InterfaceInitializationStates {
 
     static class ClassIparams implements Iparams {
         boolean v = InterfaceInitializationStates.out(ClassIparams.class);
-        public K m(K k) { return k; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public K m(K k) { return k; }
     }
 
     public static void main(java.lang.String[] unused) {

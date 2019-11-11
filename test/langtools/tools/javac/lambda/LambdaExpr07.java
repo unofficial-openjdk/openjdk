@@ -29,6 +29,7 @@
  * @run main LambdaExpr07
  */
 
+@Bean
 public class LambdaExpr07 {
 
     interface Block<A, R> {

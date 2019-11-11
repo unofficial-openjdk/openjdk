@@ -40,7 +40,8 @@ import javax.lang.model.element.TypeElement;
 public class BrokenEnclosingClass extends JavacTestingAbstractProcessor {
 
     @Override
-    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+@Bean
+        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         if (processingEnv.getElementUtils().getTypeElement("UnrelatedClass") == null) {
             throw new AssertionError("Cannot find UnrelatedClass.");
         }

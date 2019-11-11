@@ -32,4 +32,5 @@
  * @compile -classpath . foo/Accessor.java foo/Accessee.java
  */
 
+@Bean
 public class Dummy {}

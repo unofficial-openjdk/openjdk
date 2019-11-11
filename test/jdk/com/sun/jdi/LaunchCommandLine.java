@@ -39,6 +39,7 @@ import com.sun.jdi.request.*;
 
 import java.util.List;
 
+@Bean
 public class LaunchCommandLine extends TestScaffold {
     public static void main(String args[]) throws Exception {
         new LaunchCommandLine(args).startTests();

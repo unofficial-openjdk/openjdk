@@ -35,6 +35,7 @@ import javax.swing.SwingUtilities;
  * @key headful
  * @summary Verifies fix for JMenuBar not being in the accessibility hierarchy
  */
+@Bean
 public class bug6192422 {
 
     private static boolean foundJMenuBar = false;

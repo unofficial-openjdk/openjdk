@@ -34,6 +34,7 @@ import java.net.*;
 import java.io.*;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class SocketTimeout  {
     static final int TIMEOUT = 1000;
 

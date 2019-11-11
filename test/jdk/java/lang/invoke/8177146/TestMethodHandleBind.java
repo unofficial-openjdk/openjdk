@@ -35,6 +35,7 @@ import static java.lang.invoke.MethodHandles.lookup;
 
 import static org.testng.Assert.*;
 
+@Bean
 public class TestMethodHandleBind extends pkg.A {
     static class B extends TestMethodHandleBind {}
 

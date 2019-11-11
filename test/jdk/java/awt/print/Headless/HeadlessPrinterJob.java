@@ -40,7 +40,10 @@ public class HeadlessPrinterJob {
 
     class testPrintable implements Printable {
 
-        public int print(Graphics graphics, PageFormat pageFormat, int pageIndex) {
+        @Bean
+@Bean
+@Bean
+            public int print(Graphics graphics, PageFormat pageFormat, int pageIndex) {
             Graphics2D g2 = (Graphics2D) graphics;
 
             if (pageIndex >= 10) {

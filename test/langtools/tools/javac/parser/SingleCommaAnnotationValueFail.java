@@ -29,6 +29,7 @@
  * SingleCommaAnnotationValueFail.java
  */
 
+@Bean
 public class SingleCommaAnnotationValueFail {
     // Non-example
     @Foo({,0}) void a() { }

@@ -41,6 +41,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+@Bean
 public class JliLaunchTest {
     public static void main(String[] args) throws IOException {
         Path launcher = Paths.get(System.getProperty("test.nativepath"),

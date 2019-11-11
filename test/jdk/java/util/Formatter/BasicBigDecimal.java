@@ -42,6 +42,7 @@ import static java.util.Calendar.*;
 
 
 
+@Bean
 public class BasicBigDecimal extends Basic {
 
     private static void test(String fs, String exp, Object ... args) {

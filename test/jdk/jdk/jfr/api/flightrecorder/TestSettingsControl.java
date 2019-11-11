@@ -49,7 +49,10 @@ public class TestSettingsControl {
         private String value = "default";
 
         @Override
-        public String combine(Set<String> values) {
+        @Bean
+@Bean
+@Bean
+            public String combine(Set<String> values) {
            StringBuilder sb = new StringBuilder();
             for(String s : values) {
                 sb.append(s).append(" ");
@@ -58,7 +61,10 @@ public class TestSettingsControl {
         }
 
         @Override
-        public void setValue(String value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(String value) {
             setWasCalled = true;
             this.value = value;
         }

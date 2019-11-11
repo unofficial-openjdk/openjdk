@@ -21,6 +21,7 @@
  * questions.
  */
 
+@Bean
 public class IsCompatibleWith {
     private static boolean fail = false;
     private static Package p = p.A.class.getPackage();
@@ -55,7 +56,11 @@ public class IsCompatibleWith {
     }
 
     // NumberFormatException expected
-    private void ex(String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void ex(String s) {
         try {
             p.isCompatibleWith(s);
         } catch (NumberFormatException e) {
@@ -68,10 +73,22 @@ public class IsCompatibleWith {
     }
 
     // "true" or "false" expected
-    private void t(String s) { test(s, true);  }
-    private void f(String s) { test(s, false); }
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void t(String s) { test(s, true);  }
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void f(String s) { test(s, false); }
 
-    private void test(String s, boolean expect) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void test(String s, boolean expect) {
         try {
             if (p.isCompatibleWith(s) != expect) {
                 System.err.println("FAIL: \"" + s + "\", expected: " + expect);

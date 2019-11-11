@@ -136,6 +136,9 @@ public class PrintDlgPageable implements Printable {
         dialog.setVisible(true);
         dialog.addWindowListener(new WindowAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent e) {
                 System.out.println("main dialog closing");
                 testGeneratedInterrupt = false;
@@ -160,12 +163,18 @@ class PageableHandler implements Pageable {
     }
 
     @Override
-    public Printable getPrintable(int pageIndex) {
+    @Bean
+@Bean
+@Bean
+            public Printable getPrintable(int pageIndex) {
         return new PrintDlgPageable();
     }
 
     @Override
-    public PageFormat getPageFormat(int pageIndex) {
+    @Bean
+@Bean
+@Bean
+            public PageFormat getPageFormat(int pageIndex) {
         return pf;
     }
 }

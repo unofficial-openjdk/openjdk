@@ -67,6 +67,7 @@ package java.util;
  * @see     AbstractList
  * @since   1.2
  */
+@Bean
 public class ConcurrentModificationException extends RuntimeException {
     @java.io.Serial
     private static final long serialVersionUID = -3666751008965953603L;

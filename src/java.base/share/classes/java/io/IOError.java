@@ -31,6 +31,7 @@ package java.io;
  * @author  Xueming Shen
  * @since   1.6
  */
+@Bean
 public class IOError extends Error {
     /**
      * Constructs a new instance of IOError with the specified cause. The

@@ -32,6 +32,7 @@ package gc;
  * @run main/othervm -Xmx128m -XX:+UseNUMA -XX:+UseLargePages gc.TestNUMAPageSize
  */
 
+@Bean
 public class TestNUMAPageSize {
   public static void main(String args[]) throws Exception {
     // nothing to do

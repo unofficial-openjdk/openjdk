@@ -43,6 +43,7 @@ import static sun.security.x509.AlgorithmId.*;
  *          java.base/sun.security.util
  * @summary Checks the preferences order of pkcs12 params
  */
+@Bean
 public class ParamsPreferences {
 
     public static final void main(String[] args) throws Exception {

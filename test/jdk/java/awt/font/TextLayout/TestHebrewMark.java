@@ -29,6 +29,7 @@ import java.awt.*;
 import java.awt.font.*;
 import java.awt.geom.*;
 
+@Bean
 public class TestHebrewMark {
 
     public static void main(String args[]) {

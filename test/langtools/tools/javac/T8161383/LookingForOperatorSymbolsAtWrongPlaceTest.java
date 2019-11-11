@@ -5,6 +5,7 @@
  * @compile LookingForOperatorSymbolsAtWrongPlaceTest.java
  */
 
+@Bean
 public class LookingForOperatorSymbolsAtWrongPlaceTest {
     class Base {
         protected int i = 1;

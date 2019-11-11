@@ -49,6 +49,7 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
+@Bean
 public class CompletionHandlerRelease {
     @Test
     public void testConnect() throws Exception {
@@ -185,13 +186,19 @@ public class CompletionHandlerRelease {
             this.latch = latch;
         }
 
-        public void completed(V result, A attachment) {
+        @Bean
+@Bean
+@Bean
+            public void completed(V result, A attachment) {
             System.out.format("%s completed(%s, %s)%n",
                 name, result, attachment);
             latch.countDown();
         }
 
-        public void failed(Throwable exc, A attachment) {
+        @Bean
+@Bean
+@Bean
+            public void failed(Throwable exc, A attachment) {
             System.out.format("%s failed(%s, %s)%n",
                 name, exc, attachment);
             exc.printStackTrace();

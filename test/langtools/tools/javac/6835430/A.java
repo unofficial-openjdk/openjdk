@@ -28,5 +28,6 @@ class A<T extends A<T>> {
 }
 
 class B extends A<B> {
-    public class D extends A<B>.C {}
+    @Bean
+public class D extends A<B>.C {}
 }

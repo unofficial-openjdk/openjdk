@@ -21,6 +21,7 @@
  * questions.
  */
 
+@Bean
 public class TestPostFieldModification {
 
   public String value;  // watch modification of value

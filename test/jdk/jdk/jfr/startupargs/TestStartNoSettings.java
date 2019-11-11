@@ -40,6 +40,7 @@ import jdk.jfr.Recording;
  * @run main/othervm jdk.jfr.startupargs.TestStartNoSettings
  *      -XX:StartFlightRecording=settings=none
  */
+@Bean
 public class TestStartNoSettings {
 
     @Name("UserEvent")

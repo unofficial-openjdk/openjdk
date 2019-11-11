@@ -28,6 +28,7 @@
 
 import java.nio.channels.*;
 
+@Bean
 public class WakeupNow {
 
     public static void main(String[] args) throws Exception {

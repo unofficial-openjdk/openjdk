@@ -39,6 +39,7 @@ import static javax.swing.UIManager.setLookAndFeel;
 
 import java.util.Arrays;
 
+@Bean
 public class ListSelectionModelTest {
 
     public static void main(String[] args) throws Exception {

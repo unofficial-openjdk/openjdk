@@ -437,6 +437,7 @@ import sun.util.locale.provider.TimeZoneNameUtility;
  * @author       Mark Davis, Chen-Lieh Huang, Alan Liu
  * @since 1.1
  */
+@Bean
 public class SimpleDateFormat extends DateFormat {
 
     // the official serial version ID which says cryptically
@@ -649,7 +650,8 @@ public class SimpleDateFormat extends DateFormat {
     }
 
     /* Initialize compiledPattern and numberFormat fields */
-    private void initialize(Locale loc) {
+@Bean
+        private void initialize(Locale loc) {
         // Verify and compile the given pattern.
         compiledPattern = compile(pattern);
 
@@ -667,7 +669,8 @@ public class SimpleDateFormat extends DateFormat {
         initializeDefaultCentury();
     }
 
-    private void initializeCalendar(Locale loc) {
+@Bean
+        private void initializeCalendar(Locale loc) {
         if (calendar == null) {
             assert loc != null;
             // The format object must be constructed using the symbols for this zone.
@@ -905,7 +908,8 @@ public class SimpleDateFormat extends DateFormat {
     /* Define one-century window into which to disambiguate dates using
      * two-digit years.
      */
-    private void parseAmbiguousDatesAsAfter(Date startDate) {
+@Bean
+        private void parseAmbiguousDatesAsAfter(Date startDate) {
         defaultCenturyStart = startDate;
         calendar.setTime(startDate);
         defaultCenturyStartYear = calendar.get(Calendar.YEAR);
@@ -1020,7 +1024,8 @@ public class SimpleDateFormat extends DateFormat {
      * @since 1.4
      */
     @Override
-    public AttributedCharacterIterator formatToCharacterIterator(Object obj) {
+@Bean
+        public AttributedCharacterIterator formatToCharacterIterator(Object obj) {
         StringBuffer sb = new StringBuffer();
         CharacterIteratorFieldDelegate delegate = new
                          CharacterIteratorFieldDelegate();
@@ -1581,7 +1586,8 @@ public class SimpleDateFormat extends DateFormat {
      * should consider the count of digits while parsing the contigous digits
      * for the current tag/pattern
      */
-    private boolean shouldObeyCount(int tag, int count) {
+@Bean
+        private boolean shouldObeyCount(int tag, int count) {
         switch (tag) {
             case PATTERN_MONTH:
             case PATTERN_MONTH_STANDALONE:
@@ -1688,7 +1694,8 @@ public class SimpleDateFormat extends DateFormat {
         return -start;
     }
 
-    private int matchZoneString(String text, int start, String[] zoneNames) {
+@Bean
+        private int matchZoneString(String text, int start, String[] zoneNames) {
         for (int i = 1; i <= 4; ++i) {
             // Checking long and short zones [1 & 2],
             // and long and short daylight [3 & 4].
@@ -1722,7 +1729,8 @@ public class SimpleDateFormat extends DateFormat {
      * find time zone 'text' matched zoneStrings and set to internal
      * calendar.
      */
-    private int subParseZoneString(String text, int start, CalendarBuilder calb) {
+@Bean
+        private int subParseZoneString(String text, int start, CalendarBuilder calb) {
         boolean useSameName = false; // true if standard and daylight time use the same abbreviation.
         TimeZone currentTimeZone = getTimeZone();
 
@@ -1860,7 +1868,8 @@ public class SimpleDateFormat extends DateFormat {
         return  1 - index; // -(index - 1)
     }
 
-    private boolean isDigit(char c) {
+@Bean
+        private boolean isDigit(char c) {
         return c >= '0' && c <= '9';
     }
 
@@ -2278,7 +2287,8 @@ public class SimpleDateFormat extends DateFormat {
      *
      * @throws    IllegalArgumentException if the given pattern is invalid
      */
-    private String translatePattern(String pattern, String from, String to) {
+@Bean
+        private String translatePattern(String pattern, String from, String to) {
         StringBuilder result = new StringBuilder();
         boolean inQuote = false;
         for (int i = 0; i < pattern.length(); ++i) {
@@ -2347,7 +2357,8 @@ public class SimpleDateFormat extends DateFormat {
         applyPatternImpl(pattern);
     }
 
-    private void applyPatternImpl(String pattern) {
+@Bean
+        private void applyPatternImpl(String pattern) {
         compiledPattern = compile(pattern);
         this.pattern = pattern;
     }
@@ -2360,7 +2371,8 @@ public class SimpleDateFormat extends DateFormat {
      * @throws    NullPointerException if the given pattern is null
      * @throws    IllegalArgumentException if the given pattern is invalid
      */
-    public void applyLocalizedPattern(String pattern) {
+@Bean
+        public void applyLocalizedPattern(String pattern) {
          String p = translatePattern(pattern,
                                      formatData.getLocalPatternChars(),
                                      DateFormatSymbols.patternChars);

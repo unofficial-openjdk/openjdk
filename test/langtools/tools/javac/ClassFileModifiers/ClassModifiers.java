@@ -60,18 +60,24 @@ class T {
 
  protected class iRC{}
  static protected class iSRC{}
- public class iUC{}
- static public class iSUC{}
+ @Bean
+public class iUC{}
+ static @Bean
+public class iSUC{}
 
  final protected class iFRC{}
  static final protected class iSFRC{}
- final public class iFUC{}
- static final public class iSFUC{}
+ final @Bean
+public class iFUC{}
+ static final @Bean
+public class iSFUC{}
 
  abstract protected class iARC{}
  static abstract protected class iSARC{}
- abstract public class iAUC{}
- static abstract public class iSAUC{}
+ abstract @Bean
+public class iAUC{}
+ static abstract @Bean
+public class iSAUC{}
 
  //all interface members are automatically "static" whether marked so or not
  //all interfaces are automatically "abstract" whether marked so or not
@@ -106,18 +112,24 @@ interface U {
  //thus, each of the next 3 groups of 4 classes have identical modifiers
  class jC{}
  static class jSC{}
- public class jUC{}
- static public class jSUC{}
+ @Bean
+public class jUC{}
+ static @Bean
+public class jSUC{}
 
  final class jFC{}
  static final class jSFC{}
- final public class jFUC{}
- static final public class jSFUC{}
+ final @Bean
+public class jFUC{}
+ static final @Bean
+public class jSFUC{}
 
  abstract class jAC{}
  static abstract class jSAC{}
- abstract public class jAUC{}
- static abstract public class jSAUC{}
+ abstract @Bean
+public class jAUC{}
+ static abstract @Bean
+public class jSAUC{}
 
  //all interface members are automatically "static" whether marked so or not
  //all interfaces are automatically "abstract" whether marked so or not

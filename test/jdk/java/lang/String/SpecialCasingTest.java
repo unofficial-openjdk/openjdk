@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.StringTokenizer;
 
+@Bean
 public class SpecialCasingTest {
 
     private static boolean err = false;
@@ -176,7 +177,11 @@ public class SpecialCasingTest {
         }
     }
 
-    private void test(String line) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void test(String line) {
         int index = line.indexOf('#');
         if (index != -1) {
             line = line.substring(0, index);
@@ -332,7 +337,11 @@ public class SpecialCasingTest {
     }
     StringBuilder sb = new StringBuilder();
 
-    private String convert(String str) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String convert(String str) {
         sb.setLength(0);
 
         String[] tokens = str.split(" ");
@@ -342,7 +351,11 @@ public class SpecialCasingTest {
         return sb.toString();
     }
 
-    private String toString(String str) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String toString(String str) {
         sb.setLength(0);
 
         int len = str.length();

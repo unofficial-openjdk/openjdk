@@ -36,6 +36,7 @@ package gc.g1;
 // The test allocates zero-sized arrays of j.l.O and tries to arraycopy random data into it so
 // that the asserting post barrier calls are executed. It assumes that G1 allocates eden regions
 // at the top of the heap for this problem to occur.
+@Bean
 public class TestInvalidateArrayCopy {
 
     static final int NumIterations = 1000000;

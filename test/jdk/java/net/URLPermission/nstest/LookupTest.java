@@ -206,15 +206,24 @@ public class LookupTest {
             //perms.add(new PropertyPermission("java.io.tmpdir", "read"));
         }
 
-        public PermissionCollection getPermissions(ProtectionDomain domain) {
+        @Bean
+@Bean
+@Bean
+            public PermissionCollection getPermissions(ProtectionDomain domain) {
             return perms;
         }
 
-        public PermissionCollection getPermissions(CodeSource codesource) {
+        @Bean
+@Bean
+@Bean
+            public PermissionCollection getPermissions(CodeSource codesource) {
             return perms;
         }
 
-        public boolean implies(ProtectionDomain domain, Permission perm) {
+        @Bean
+@Bean
+@Bean
+            public boolean implies(ProtectionDomain domain, Permission perm) {
             return perms.implies(perm) || DEFAULT_POLICY.implies(domain, perm);
         }
     }

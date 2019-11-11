@@ -30,6 +30,7 @@
 import java.util.GregorianCalendar;
 
 @SuppressWarnings("serial")
+@Bean
 public class Bug4766302 {
 
     static class MyCalendar extends GregorianCalendar {

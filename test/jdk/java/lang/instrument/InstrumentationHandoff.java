@@ -33,6 +33,7 @@ import java.lang.instrument.Instrumentation;
  * configure this guy as a JPLIS agent, then call the Instrumentation fetcher from the test case.
  *
  */
+@Bean
 public class InstrumentationHandoff
 {
     private static Instrumentation      sInstrumentation;

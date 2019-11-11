@@ -34,6 +34,7 @@ import java.util.stream.Stream;
  *          methods of all ancestor classes and interfaces
  * @run main CheckOverrides
  */
+@Bean
 public class CheckOverrides {
 
     public static void main(String[] args) {
@@ -85,7 +86,11 @@ public class CheckOverrides {
         }
 
         @Override
-        public boolean equals(Object o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             MethodSignature that = (MethodSignature) o;

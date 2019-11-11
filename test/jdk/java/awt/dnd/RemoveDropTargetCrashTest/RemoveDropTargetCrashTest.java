@@ -65,6 +65,7 @@ import java.util.concurrent.TimeUnit;
  *          drop processing doesn't cause crash
  * @run main/timeout=300 RemoveDropTargetCrashTest RUN_PROCESS
  */
+@Bean
 public class RemoveDropTargetCrashTest {
 
     private static final String RUN_PROCESS = "RUN_PROCESS";
@@ -203,23 +204,41 @@ public class RemoveDropTargetCrashTest {
                     this);
         }
 
-        public void dragGestureRecognized(DragGestureEvent dge) {
+        @Bean
+@Bean
+@Bean
+            public void dragGestureRecognized(DragGestureEvent dge) {
             dge.startDrag(null, this, this);
         }
 
-        public void dragEnter(DragSourceDragEvent dsde) {
+        @Bean
+@Bean
+@Bean
+            public void dragEnter(DragSourceDragEvent dsde) {
         }
 
-        public void dragExit(DragSourceEvent dse) {
+        @Bean
+@Bean
+@Bean
+            public void dragExit(DragSourceEvent dse) {
         }
 
-        public void dragOver(DragSourceDragEvent dsde) {
+        @Bean
+@Bean
+@Bean
+            public void dragOver(DragSourceDragEvent dsde) {
         }
 
-        public void dragDropEnd(DragSourceDropEvent dsde) {
+        @Bean
+@Bean
+@Bean
+            public void dragDropEnd(DragSourceDropEvent dsde) {
         }
 
-        public void dropActionChanged(DragSourceDragEvent dsde) {
+        @Bean
+@Bean
+@Bean
+            public void dropActionChanged(DragSourceDragEvent dsde) {
         }
 
         public Object getTransferData(DataFlavor flavor)
@@ -236,7 +255,10 @@ public class RemoveDropTargetCrashTest {
             return new DataFlavor[]{dataflavor};
         }
 
-        public boolean isDataFlavorSupported(DataFlavor dflavor) {
+        @Bean
+@Bean
+@Bean
+            public boolean isDataFlavorSupported(DataFlavor dflavor) {
             return dataflavor.equals(dflavor);
         }
     }
@@ -253,19 +275,34 @@ public class RemoveDropTargetCrashTest {
             return preferredSize;
         }
 
-        public void dragEnter(DropTargetDragEvent dtde) {
+        @Bean
+@Bean
+@Bean
+            public void dragEnter(DropTargetDragEvent dtde) {
         }
 
-        public void dragExit(DropTargetEvent dte) {
+        @Bean
+@Bean
+@Bean
+            public void dragExit(DropTargetEvent dte) {
         }
 
-        public void dragOver(DropTargetDragEvent dtde) {
+        @Bean
+@Bean
+@Bean
+            public void dragOver(DropTargetDragEvent dtde) {
         }
 
-        public void dropActionChanged(DropTargetDragEvent dtde) {
+        @Bean
+@Bean
+@Bean
+            public void dropActionChanged(DropTargetDragEvent dtde) {
         }
 
-        public void drop(DropTargetDropEvent dtde) {
+        @Bean
+@Bean
+@Bean
+            public void drop(DropTargetDropEvent dtde) {
 
             setDropTarget(null);
 

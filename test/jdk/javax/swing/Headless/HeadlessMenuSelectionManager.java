@@ -30,6 +30,7 @@ import javax.swing.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessMenuSelectionManager
  */
 
+@Bean
 public class HeadlessMenuSelectionManager {
     public static void main(String args[]) {
         MenuSelectionManager msm = new MenuSelectionManager();

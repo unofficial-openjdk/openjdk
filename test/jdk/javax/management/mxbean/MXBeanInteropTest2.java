@@ -53,6 +53,7 @@ import javax.management.remote.JMXConnectorServer;
 import javax.management.remote.JMXConnectorServerFactory;
 import javax.management.remote.JMXServiceURL;
 
+@Bean
 public class MXBeanInteropTest2 {
 
     private static String BASIC_MXBEAN_CLASS_NAME = "Basic";
@@ -75,7 +76,11 @@ public class MXBeanInteropTest2 {
 
     }
 
-    public void run(Map<String, Object> args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void run(Map<String, Object> args) {
 
         System.out.println("MXBeanInteropTest2::run: Start") ;
         int errorCount = 0 ;
@@ -194,7 +199,11 @@ public class MXBeanInteropTest2 {
         return errorCount ;
     }
 
-    private void printMBeanInfo(MBeanInfo mbInfo) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void printMBeanInfo(MBeanInfo mbInfo) {
         System.out.println("Description " + mbInfo.getDescription());
 
         for (MBeanConstructorInfo ctor : mbInfo.getConstructors()) {

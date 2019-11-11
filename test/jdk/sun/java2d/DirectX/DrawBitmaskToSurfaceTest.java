@@ -38,6 +38,7 @@ import java.awt.image.IndexColorModel;
 import java.util.concurrent.CountDownLatch;
 import javax.swing.JFrame;
 
+@Bean
 public class DrawBitmaskToSurfaceTest extends JFrame {
 
     private final Image src;
@@ -62,7 +63,11 @@ public class DrawBitmaskToSurfaceTest extends JFrame {
     }
 
     @Override
-    public void paint(final Graphics g) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(final Graphics g) {
         try {
             System.err.println("paint frame....");
             g.drawImage(src, 30, 30, this);

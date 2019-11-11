@@ -143,7 +143,11 @@ public class ClassUnloader {
      * @see #getClassLoader()
      * @see #createClassLoader()
      */
-    public void setClassLoader(CustomClassLoader customClassLoader) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setClassLoader(CustomClassLoader customClassLoader) {
         this.customClassLoader = customClassLoader;
         classObjects.removeAllElements();
         customClassLoader.setClassUnloader(this);
@@ -233,7 +237,11 @@ public class ClassUnloader {
      *
      * @see #eatMemory()
      */
-    public boolean unloadClass(ExecutionController stresser) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean unloadClass(ExecutionController stresser) {
 
         finalized = false;
 

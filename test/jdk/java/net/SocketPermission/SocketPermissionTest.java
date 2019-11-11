@@ -62,6 +62,7 @@ import static org.testng.Assert.*;
 import static jdk.test.lib.NetworkConfiguration.probe;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+@Bean
 public class SocketPermissionTest {
 
     @BeforeMethod
@@ -71,13 +72,25 @@ public class SocketPermissionTest {
         Policy.setPolicy(new Policy() {
              final PermissionCollection perms = new Permissions();
              { perms.add(new java.security.AllPermission()); }
-             public PermissionCollection getPermissions(ProtectionDomain domain) {
+             @Bean
+@Bean
+@Bean
+@Bean
+                public PermissionCollection getPermissions(ProtectionDomain domain) {
                  return perms;
              }
-             public PermissionCollection getPermissions(CodeSource codesource) {
+             @Bean
+@Bean
+@Bean
+@Bean
+                public PermissionCollection getPermissions(CodeSource codesource) {
                  return perms;
              }
-             public boolean implies(ProtectionDomain domain, Permission perm) {
+             @Bean
+@Bean
+@Bean
+@Bean
+                public boolean implies(ProtectionDomain domain, Permission perm) {
                  return perms.implies(perm);
              }
         } );

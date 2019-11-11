@@ -37,6 +37,7 @@ import java.util.LinkedHashSet;
 import java.util.Random;
 import java.util.Set;
 
+@Bean
 public class Basic {
     static Random rnd = new Random(666);
 

@@ -48,6 +48,7 @@ import javax.swing.event.ChangeListener;
  * PerformanceMonitor.
  */
 @SuppressWarnings("serial")
+@Bean
 public class GlobalPanel extends JPanel implements ChangeListener {
     private final DemoInstVarsAccessor demoInstVars;
     private JPanel p;
@@ -68,7 +69,11 @@ public class GlobalPanel extends JPanel implements ChangeListener {
     }
 
     @Override
-    public void stateChanged(ChangeEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void stateChanged(ChangeEvent e) {
 
         demoInstVars.getGroup()[index].shutDown(demoInstVars.getGroup()[index].getPanel());
         if (demoInstVars.getTabbedPane().getSelectedIndex() == 0) {

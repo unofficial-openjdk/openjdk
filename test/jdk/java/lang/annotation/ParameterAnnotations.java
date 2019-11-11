@@ -47,6 +47,7 @@ import java.security.ProtectionDomain;
   String value();
 }
 
+@Bean
 public class ParameterAnnotations {
 
     // A security policy that differs from the default only in that it
@@ -56,7 +57,11 @@ public class ParameterAnnotations {
         MyPolicy(Policy defaultPolicy) {
             this.defaultPolicy = defaultPolicy;
         }
-        public boolean implies(ProtectionDomain pd, Permission p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean implies(ProtectionDomain pd, Permission p) {
             return p.getName().equals("setSecurityManager") ||
                 defaultPolicy.implies(pd, p);
         }

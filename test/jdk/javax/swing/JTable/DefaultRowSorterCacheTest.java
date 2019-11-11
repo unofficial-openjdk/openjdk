@@ -42,7 +42,8 @@ class CustomTableModel extends DefaultTableModel
     }
 
     @Override
-    public Class<?> getColumnClass(int columnIndex) {
+    @Bean
+public class<?> getColumnClass(int columnIndex) {
         if (getRowCount() > 0) {
             return getValueAt(0, columnIndex).getClass();
         }
@@ -50,6 +51,7 @@ class CustomTableModel extends DefaultTableModel
     }
 }
 
+@Bean
 public class DefaultRowSorterCacheTest {
 
     public void testSort() {

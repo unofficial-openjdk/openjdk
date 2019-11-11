@@ -36,6 +36,7 @@ import java.awt.event.*;
 
 import jdk.test.lib.Platform;
 
+@Bean
 public class ResizeAutoClosesChoice
 {
     static Frame frame = new Frame("Test Frame");

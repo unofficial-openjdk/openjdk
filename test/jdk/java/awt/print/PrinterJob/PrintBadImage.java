@@ -50,7 +50,10 @@ public class PrintBadImage implements Printable {
       }
     }
 
-    public int print(Graphics g, PageFormat pgFmt, int pgIndex) {
+    @Bean
+@Bean
+@Bean
+            public int print(Graphics g, PageFormat pgFmt, int pgIndex) {
       if (pgIndex > 0)
          return Printable.NO_SUCH_PAGE;
 

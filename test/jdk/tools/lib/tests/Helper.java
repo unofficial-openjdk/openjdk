@@ -44,6 +44,7 @@ import tests.JImageGenerator.JModTask;
 /**
  * JLink tests helper.
  */
+@Bean
 public class Helper {
 
     private final Path explodedmodssrc;
@@ -139,7 +140,11 @@ public class Helper {
         return defaultModulePath(true);
     }
 
-    public String defaultModulePath(boolean includeStdMods) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String defaultModulePath(boolean includeStdMods) {
         return (includeStdMods? stdjmods.toAbsolutePath().toString() : "") + File.pathSeparator
                 + jmods.toAbsolutePath().toString() + File.pathSeparator
                 + jars.toAbsolutePath().toString() + File.pathSeparator
@@ -240,11 +245,19 @@ public class Helper {
         return out;
     }
 
-    public Result generateDefaultImage(String module) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Result generateDefaultImage(String module) {
         return generateDefaultImage(new String[0], module);
     }
 
-    public Result generateDefaultImage(String[] options, String module) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Result generateDefaultImage(String[] options, String module) {
         Path output = createNewFile(images, module, ".image");
         JLinkTask jLinkTask = JImageGenerator.getJLinkTask()
                 .modulePath(defaultModulePath())
@@ -257,7 +270,11 @@ public class Helper {
         return jLinkTask.call();
     }
 
-    public Result postProcessImage(Path root, String[] options) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Result postProcessImage(Path root, String[] options) {
         JLinkTask jLinkTask = JImageGenerator.getJLinkTask()
                 .existing(root);
         for (String option : options) {
@@ -270,7 +287,11 @@ public class Helper {
         return Arrays.asList(module + ".Main", module + ".com.foo.bar.X");
     }
 
-    private void putAppClasses(String module, List<String> classes) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void putAppClasses(String module, List<String> classes) {
         List<String> appClasses = toLocation(module, classes).stream().collect(Collectors.toList());
         appClasses.add(toLocation(module, "module-info"));
         moduleClassDependencies.put(module, appClasses);
@@ -343,23 +364,43 @@ public class Helper {
         return ".diz";
     }
 
-    public Path createNewImageDir(String moduleName) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Path createNewImageDir(String moduleName) {
         return createNewFile(getImageDir(), moduleName, ".image");
     }
 
-    public Path createNewExtractedDir(String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Path createNewExtractedDir(String name) {
         return createNewFile(getExtractedDir(), name, ".extracted");
     }
 
-    public Path createNewRecreatedDir(String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Path createNewRecreatedDir(String name) {
         return createNewFile(getRecreatedDir(), name, ".jimage");
     }
 
-    public Path createNewJmodFile(String moduleName) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Path createNewJmodFile(String moduleName) {
         return createNewFile(getJmodDir(), moduleName, ".jmod");
     }
 
-    public Path createNewJarFile(String moduleName) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Path createNewJarFile(String moduleName) {
         return createNewFile(getJarDir(), moduleName, ".jar");
     }
 

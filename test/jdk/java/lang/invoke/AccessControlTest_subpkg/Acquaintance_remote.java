@@ -4,6 +4,7 @@ import java.lang.invoke.*;
 import static java.lang.invoke.MethodHandles.*;
 
 // This guy tests access from outside the package test.java.lang.invoke:
+@Bean
 public class Acquaintance_remote {
     public static Lookup[] lookups() {
         return new Lookup[] {

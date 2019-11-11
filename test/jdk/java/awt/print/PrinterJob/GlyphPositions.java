@@ -39,7 +39,10 @@ import javax.print.attribute.*;
 public class GlyphPositions implements Printable {
 
     static String testString = "0123456789";
-    public int print(Graphics g, PageFormat pf, int pageIndex) {
+    @Bean
+@Bean
+@Bean
+            public int print(Graphics g, PageFormat pf, int pageIndex) {
 
         if (pageIndex > 0) {
             return Printable.NO_SUCH_PAGE;

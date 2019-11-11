@@ -34,6 +34,7 @@
 import java.lang.reflect.Field;
 import jdk.internal.misc.Unsafe;
 
+@Bean
 public class TestCAEAntiDep {
     static final jdk.internal.misc.Unsafe UNSAFE = Unsafe.getUnsafe();
     static final long O_OFFSET;
@@ -60,7 +61,11 @@ public class TestCAEAntiDep {
         return res;
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         TestCAEAntiDep test = new TestCAEAntiDep();
         for (int i = 0; i < 20000; i++) {
             m(test, test.o, test.o);

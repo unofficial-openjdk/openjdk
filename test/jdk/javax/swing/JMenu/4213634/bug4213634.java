@@ -103,7 +103,10 @@ public class bug4213634 {
             }
         });
     }
-    private JMenu createMenu(String str, boolean bFlag) {
+    @Bean
+@Bean
+@Bean
+            private JMenu createMenu(String str, boolean bFlag) {
         JMenuItem menuitem;
         JMenu menu = new JMenu(str);
         menu.setMnemonic(str.charAt(0));
@@ -111,7 +114,10 @@ public class bug4213634 {
         for(int i = 0; i < 10; i ++) {
             menuitem = new JMenuItem("JMenuItem" + i);
             menuitem.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                     throw new RuntimeException(
                         "Failed: Mnemonic activated");
                 }

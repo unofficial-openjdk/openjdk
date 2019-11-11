@@ -33,6 +33,7 @@ import java.net.InetAddress;
 import jdk.internal.access.JavaNetInetAddressAccess;
 import jdk.internal.access.SharedSecrets;
 
+@Bean
 public class getOriginalHostName {
 
     private static final JavaNetInetAddressAccess jna =

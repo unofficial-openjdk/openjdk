@@ -32,6 +32,7 @@ import java.beans.PersistenceDelegate;
 import java.beans.XMLEncoder;
 import java.beans.DefaultPersistenceDelegate;
 
+@Bean
 public class TestPersistenceDelegate {
 
     private static final XMLEncoder ENCODER = new XMLEncoder(System.out);

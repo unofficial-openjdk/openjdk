@@ -34,6 +34,7 @@ import java.util.NoSuchElementException;
 import java.util.PriorityQueue;
 import java.util.Queue;
 
+@Bean
 public class ForgetMeNot {
     private static void checkQ(PriorityQueue<Integer> q, Integer...elts) {
         check(Arrays.equals(q.toArray(), elts));

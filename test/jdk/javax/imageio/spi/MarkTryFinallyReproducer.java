@@ -43,6 +43,7 @@ import javax.imageio.stream.IIOByteBuffer;
 import javax.imageio.stream.ImageInputStream;
 
 
+@Bean
 public class MarkTryFinallyReproducer {
 
     private static final byte[] bmp = new byte[]{
@@ -70,7 +71,11 @@ public class MarkTryFinallyReproducer {
         }
 
         @Override
-        public void setByteOrder(ByteOrder byteOrder) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setByteOrder(ByteOrder byteOrder) {
             src.setByteOrder(byteOrder);
         }
 
@@ -325,7 +330,11 @@ public class MarkTryFinallyReproducer {
         }
 
         @Override
-        public String getDescription(Locale locale) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String getDescription(Locale locale) {
             return "";
         }
 
@@ -335,7 +344,11 @@ public class MarkTryFinallyReproducer {
         }
 
         @Override
-        public ImageReader createReaderInstance(Object extension) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public ImageReader createReaderInstance(Object extension) {
             return null;
         }
     }

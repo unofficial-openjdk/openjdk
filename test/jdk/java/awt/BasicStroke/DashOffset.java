@@ -48,6 +48,7 @@ import static java.awt.image.BufferedImage.TYPE_INT_RGB;
  * @author flar
  * @run main/othervm -Dsun.java2d.uiScale=1 DashOffset
  */
+@Bean
 public class DashOffset {
 
     private static final BasicStroke dash =

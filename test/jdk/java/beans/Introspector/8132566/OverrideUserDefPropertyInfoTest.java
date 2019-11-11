@@ -41,6 +41,7 @@ import java.beans.SimpleBeanInfo;
  * @author a.stepanov
  */
 
+@Bean
 public class OverrideUserDefPropertyInfoTest {
 
     private static final boolean baseFlag  = true;
@@ -62,22 +63,34 @@ public class OverrideUserDefPropertyInfoTest {
                 enumerationValues = {"javax.swing.SwingConstants.BOTTOM"}
                 )
         @Override
-        public void setX(int v) { x = v; }
+        @Bean
+@Bean
+@Bean
+            public void setX(int v) { x = v; }
         @Override
         public  int getX() { return x; }
 
         @Override
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
         @Override
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+            public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     public static class Base {
         private int x;
-        public void setX(int v) { x = v; }
+        @Bean
+@Bean
+@Bean
+            public void setX(int v) { x = v; }
         public  int getX() { return x; }
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+            public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     public static class BaseBeanInfo extends SimpleBeanInfo {

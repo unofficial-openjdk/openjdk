@@ -151,6 +151,9 @@ class TestUI {
         failButton.setActionCommand("Fail");
         failButton.addActionListener(new ActionListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 testResult = false;
                 mainFrame.dispose();

@@ -27,6 +27,7 @@
  * @author Josh Bloch
  */
 
+@Bean
 public class Basic {
     static ThreadLocal n = new ThreadLocal() {
         int i = 0;

@@ -108,7 +108,10 @@ public class AutoTestOnTop {
         isUnix = osName.equals("Linux") || osName.equals("SunOS");
 
         Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
-                public void eventDispatched(AWTEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void eventDispatched(AWTEvent e) {
                     if (e.getID() == MouseEvent.MOUSE_CLICKED) {
                         if (eventSrc != null & eventSrc != uncheckedSrc && e.getSource() != eventSrc) {
                             error("Test failed: stage #" + stageNum + ", action # " + actNum + ": " + msgCase + ": " + msgAction + ": " + msgError);
@@ -356,7 +359,10 @@ public class AutoTestOnTop {
             break;
         }
         topw.addWindowStateListener(new WindowAdapter() {
-                public void windowStateChanged(WindowEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void windowStateChanged(WindowEvent e) {
                     System.err.println("* " + e);
                     STATE_SEMA.raise();
                 }

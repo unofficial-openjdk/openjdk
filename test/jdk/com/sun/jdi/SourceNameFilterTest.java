@@ -81,6 +81,7 @@ class LoadedLater3 {
 
     /********** test program **********/
 
+@Bean
 public class SourceNameFilterTest extends TestScaffold {
     ReferenceType targetClass;
     ThreadReference mainThread;
@@ -96,7 +97,11 @@ public class SourceNameFilterTest extends TestScaffold {
     public static void main(String[] args)      throws Exception {
         new SourceNameFilterTest(args).startTests();
     }
-    public void eventSetComplete(EventSet set) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void eventSetComplete(EventSet set) {
         //System.out.println("jj: resuming, set = " + set);
         if (shouldResume) {
             set.resume();
@@ -104,7 +109,11 @@ public class SourceNameFilterTest extends TestScaffold {
         }
     }
 
-    public void classPrepared(ClassPrepareEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void classPrepared(ClassPrepareEvent event) {
         shouldResume = true;
 
         ReferenceType rt = event.referenceType();

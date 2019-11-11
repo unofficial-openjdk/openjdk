@@ -35,8 +35,13 @@ import pkg.*;
  *  versions of javac previous to JDK7.
  */
 
+@Bean
 public class AvoidNPEAtClassReaderTest {
-    public void bar(Outer outer) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void bar(Outer outer) {
         Object stuff = outer.foo();
     }
 }

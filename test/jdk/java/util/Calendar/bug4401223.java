@@ -33,6 +33,7 @@ import java.util.GregorianCalendar;
 
 import static java.util.GregorianCalendar.*;
 
+@Bean
 public class bug4401223 extends IntlTest {
 
     public void Test4401223a() {

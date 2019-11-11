@@ -28,6 +28,7 @@
  */
 
 
+@Bean
 public class MinMax {
 
 

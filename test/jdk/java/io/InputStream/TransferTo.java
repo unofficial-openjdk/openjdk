@@ -39,6 +39,7 @@ import static java.lang.String.format;
  *          contract defined in the javadoc
  * @key randomness
  */
+@Bean
 public class TransferTo {
 
     public static void main(String[] args) throws IOException {

@@ -54,6 +54,7 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertEquals;
 
 
+@Bean
 public class InverseDeps {
     private static final String TEST_SRC = System.getProperty("test.src");
     private static final String TEST_CLASSES = System.getProperty("test.classes");

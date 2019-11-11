@@ -32,6 +32,7 @@
 
 import java.util.*;
 
+@Bean
 public class LambdaConv16 {
 
     static int assertionCount = 0;

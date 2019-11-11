@@ -53,11 +53,17 @@ public class FindOwnerTest extends Applet
         JTextField field = new JTextField("JTextField");
         field.addFocusListener(new FocusListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void focusGained(FocusEvent e) {
                 gained = true;
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void focusLost(FocusEvent e) {
             }
         });

@@ -36,6 +36,7 @@ import java.util.Map;
  * @run main/othervm -Djava.awt.headless=true HeadlessFont
  */
 
+@Bean
 public class HeadlessFont {
 
     public static void main(String args[]) {

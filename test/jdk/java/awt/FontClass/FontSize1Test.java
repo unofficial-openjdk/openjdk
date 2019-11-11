@@ -32,6 +32,7 @@ import java.awt.Graphics2D;
 import java.awt.GraphicsEnvironment;
 import java.awt.image.BufferedImage;
 
+@Bean
 public class FontSize1Test {
 
     static final String text = "abcdefghijklmnopqrstuvwxyz";

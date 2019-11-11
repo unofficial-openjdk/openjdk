@@ -70,6 +70,7 @@ import jdk.test.lib.compiler.CompilerUtils;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class RuntimeTest {
     public static final int SUCCESS = 0;
     private static final String src = System.getProperty("test.src", ".");

@@ -63,6 +63,7 @@ package java.io;
  * @since       1.1
  */
 
+@Bean
 public class BufferedWriter extends Writer {
 
     private Writer out;
@@ -140,7 +141,11 @@ public class BufferedWriter extends Writer {
      * Our own little min method, to avoid loading java.lang.Math if we've run
      * out of file descriptors and we're trying to print a stack trace.
      */
-    private int min(int a, int b) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int min(int a, int b) {
         if (a < b) return a;
         return b;
     }

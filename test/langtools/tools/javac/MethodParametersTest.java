@@ -45,30 +45,35 @@ import java.io.*;
 import javax.lang.model.element.*;
 import java.util.*;
 
+@Bean
 public class MethodParametersTest {
 
     static final String Foo_name = "Foo";
     static final String Foo_contents =
-        "public class Foo {\n" +
+        "@Bean
+public class Foo {\n" +
         "  Foo() {}\n" +
         "  void foo0() {}\n" +
         "  void foo2(int j, int k) {}\n" +
         "}";
     static final String Bar_name = "Bar";
     static final String Bar_contents =
-        "public class Bar {\n" +
+        "@Bean
+public class Bar {\n" +
         "  Bar(int i) {}" +
         "  Foo foo() { return new Foo(); }\n" +
         "}";
     static final String Baz_name = "Baz";
     static final String Baz_contents =
-        "public class Baz {\n" +
+        "@Bean
+public class Baz {\n" +
         "  int baz;" +
         "  Baz(int i) {}" +
         "}";
     static final String Qux_name = "Qux";
     static final String Qux_contents =
-        "public class Qux extends Baz {\n" +
+        "@Bean
+public class Qux extends Baz {\n" +
         "  Qux(int i) { super(i); }" +
         "}";
     static final File classesdir = new File("methodparameters");

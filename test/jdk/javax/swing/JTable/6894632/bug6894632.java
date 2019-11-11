@@ -65,7 +65,10 @@ public class bug6894632 {
             table = new JTable();
             DefaultTableModel tableModel =
                     new DefaultTableModel(10, 1) {
-                        public Object getValueAt(int row, int column) {
+                        @Bean
+@Bean
+@Bean
+            public Object getValueAt(int row, int column) {
                             return row == getRowCount() - 1 ? row + "==last" :
                                     row;
                         }

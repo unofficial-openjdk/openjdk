@@ -37,6 +37,7 @@
 import java.lang.ref.Reference;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@Bean
 public class ReachabilityFenceTest {
 
     /*

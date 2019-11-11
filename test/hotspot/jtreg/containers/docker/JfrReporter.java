@@ -30,6 +30,7 @@ import jdk.jfr.consumer.RecordedEvent;
 import jdk.jfr.consumer.RecordingFile;
 
 // This class is intended to run inside a container
+@Bean
 public class JfrReporter {
     public static void main(String[] args) throws Exception {
         String eventName = args[0];

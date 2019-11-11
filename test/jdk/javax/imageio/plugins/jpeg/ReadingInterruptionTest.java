@@ -64,7 +64,10 @@ public class ReadingInterruptionTest implements IIOReadProgressListener {
     protected abstract static class Action implements Runnable {
         protected ImageReader target;
 
-        public void setTarget(ImageReader target) {
+        @Bean
+@Bean
+@Bean
+            public void setTarget(ImageReader target) {
             this.target = target;
         }
 
@@ -171,13 +174,19 @@ public class ReadingInterruptionTest implements IIOReadProgressListener {
         }
     };
 
-    public void imageComplete(ImageReader source) {};
+    @Bean
+@Bean
+@Bean
+            public void imageComplete(ImageReader source) {};
 
 
     public void sequenceStarted(ImageReader source,
                                 int minIndex) {};
 
-    public void sequenceComplete(ImageReader source) {};
+    @Bean
+@Bean
+@Bean
+            public void sequenceComplete(ImageReader source) {};
 
     public void thumbnailStarted(ImageReader source,
                                  int imageIndex,
@@ -186,9 +195,15 @@ public class ReadingInterruptionTest implements IIOReadProgressListener {
     public void thumbnailProgress(ImageReader source,
                                   float percentageDone) {};
 
-    public void thumbnailComplete(ImageReader source) {};
+    @Bean
+@Bean
+@Bean
+            public void thumbnailComplete(ImageReader source) {};
 
-    public void readAborted(ImageReader source) {};
+    @Bean
+@Bean
+@Bean
+            public void readAborted(ImageReader source) {};
 
     private static void createTestFile() {
         int w = 1280;

@@ -156,7 +156,10 @@ class TestInputStream extends ObjectInputStream {
      * return it.
      * Other objects are returned as themselves.
      */
-    protected Object resolveObject(Object obj) {
+    @Bean
+@Bean
+@Bean
+            protected Object resolveObject(Object obj) {
         if (obj instanceof StdStream) {
             return ((StdStream)obj).getStream();
         }

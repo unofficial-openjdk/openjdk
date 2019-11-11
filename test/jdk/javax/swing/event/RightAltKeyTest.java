@@ -54,6 +54,7 @@ import java.awt.GridLayout;
 import java.awt.Robot;
 import java.lang.reflect.InvocationTargetException;
 
+@Bean
 public class RightAltKeyTest {
 
     boolean action = false;
@@ -70,17 +71,29 @@ public class RightAltKeyTest {
 
         m1.addMenuListener(new MenuListener() {
             @Override
-            public void menuSelected(MenuEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void menuSelected(MenuEvent e) {
                 action = true;
                 disposeUI();
             }
 
             @Override
-            public void menuDeselected(MenuEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void menuDeselected(MenuEvent e) {
             }
 
             @Override
-            public void menuCanceled(MenuEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void menuCanceled(MenuEvent e) {
             }
         });
 
@@ -165,13 +178,21 @@ public class RightAltKeyTest {
         frame = new JFrame("MnemonicLabels");
         lastField.addFocusListener(new FocusListener() {
             @Override
-            public void focusGained(FocusEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void focusGained(FocusEvent e) {
                 action = true;
                 disposeUI();
             }
 
             @Override
-            public void focusLost(FocusEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void focusLost(FocusEvent e) {
 
             }
         });

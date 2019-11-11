@@ -48,6 +48,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import compiler.whitebox.CompilerWhiteBoxTest;
 
+@Bean
 public class TestMethodUnloading {
     private static final String workerClassName = "compiler.classUnloading.methodUnloading.WorkerClass";
     private static int work = -1;
@@ -83,7 +84,11 @@ public class TestMethodUnloading {
      * Makes sure that method is compiled by forcing compilation if not yet compiled.
      * @param m Method to be checked
      */
-    static private void makeSureIsCompiled(Method m) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                private void makeSureIsCompiled(Method m) {
         // Make sure background compilation is disabled
         if (WHITE_BOX.getBooleanVMFlag("BackgroundCompilation")) {
             throw new RuntimeException("Background compilation enabled");

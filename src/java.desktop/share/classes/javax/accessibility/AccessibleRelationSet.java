@@ -86,7 +86,8 @@ public class AccessibleRelationSet {
      * @return {@code true} if relation is added to the relation set;
      *         {@code false} if the relation set is unchanged
      */
-    public boolean add(AccessibleRelation relation) {
+@Bean
+        public boolean add(AccessibleRelation relation) {
         if (relations == null) {
             relations = new Vector<>();
         }
@@ -121,7 +122,8 @@ public class AccessibleRelationSet {
      * @param  relations {@code AccessibleRelation} array describing the
      *         relation set
      */
-    public void addAll(AccessibleRelation[] relations) {
+@Bean
+        public void addAll(AccessibleRelation[] relations) {
         if (relations.length != 0) {
             if (this.relations == null) {
                 this.relations = new Vector<>(relations.length);
@@ -142,7 +144,8 @@ public class AccessibleRelationSet {
      * @return {@code true} if the relation is in the relation set;
      *         {@code false} if the relation set is unchanged
      */
-    public boolean remove(AccessibleRelation relation) {
+@Bean
+        public boolean remove(AccessibleRelation relation) {
         if (relations == null) {
             return false;
         } else {
@@ -180,7 +183,8 @@ public class AccessibleRelationSet {
      * @return {@code true} if the relation is in the relation set; otherwise
      *         {@code false}
      */
-    public boolean contains(String key) {
+@Bean
+        public boolean contains(String key) {
         return get(key) != null;
     }
 
@@ -191,7 +195,8 @@ public class AccessibleRelationSet {
      * @return the relation, if one exists, that matches the specified key.
      *         Otherwise, {@code null} is returned.
      */
-    public AccessibleRelation get(String key) {
+@Bean
+        public AccessibleRelation get(String key) {
         if (relations == null) {
             return null;
         } else {

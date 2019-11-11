@@ -27,6 +27,7 @@ import compiler.whitebox.CompilerWhiteBoxTest;
 import jdk.test.lib.Asserts;
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class VMBase extends CiReplayBase {
 
     public static void main(String args[]) {

@@ -43,7 +43,10 @@ public class SpanishDiacriticsTest extends Applet {
             JTextField textField = new JTextField(20);
             textField.addKeyListener(new KeyAdapter() {
                 @Override
-                public void keyTyped(KeyEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void keyTyped(KeyEvent e) {
                     LockSupport.parkNanos(1_000_000_000L);
                 }
             });

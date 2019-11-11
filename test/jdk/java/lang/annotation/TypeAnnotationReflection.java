@@ -32,6 +32,7 @@ import java.lang.annotation.*;
 import java.lang.reflect.*;
 import java.io.Serializable;
 
+@Bean
 public class TypeAnnotationReflection {
     public static void main(String[] args) throws Exception {
         testSuper();
@@ -573,16 +574,31 @@ public class TypeAnnotationReflection {
 
 class Params {
     public void noParams() {}
-    public void onlyAnnotated(@TypeAnno("1") String s1, @TypeAnno("2") String s2, @TypeAnno("3a") @TypeAnno2("3b") String s3) {}
-    public void mixed(@TypeAnno("1") String s1, String s2, @TypeAnno("3a") @TypeAnno2("3b") String s3) {}
-    public void unAnnotated(String s1, String s2, String s3) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void onlyAnnotated(@TypeAnno("1") String s1, @TypeAnno("2") String s2, @TypeAnno("3a") @TypeAnno2("3b") String s3) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void mixed(@TypeAnno("1") String s1, String s2, @TypeAnno("3a") @TypeAnno2("3b") String s3) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void unAnnotated(String s1, String s2, String s3) {}
 }
 
 abstract class TestWildcardType {
     public <T> List<? super T> foo() { return null;}
-    public Class<@TypeAnno("1") ? extends @TypeAnno("2") Annotation> f1;
-    public Class<@TypeAnno("3") ? super @TypeAnno("4") Annotation> f2;
-    public Class<@TypeAnno("5") ?> f3;
+    @Bean
+public class<@TypeAnno("1") ? extends @TypeAnno("2") Annotation> f1;
+    @Bean
+public class<@TypeAnno("3") ? super @TypeAnno("4") Annotation> f2;
+    @Bean
+public class<@TypeAnno("5") ?> f3;
 }
 
 abstract class TestParameterizedType implements @TypeAnno("M") Map<@TypeAnno("S")String, @TypeAnno("I") @TypeAnno2("I2")Integer> {

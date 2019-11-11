@@ -53,6 +53,7 @@ class DeleteAllBkptsTarg {
 
     /********** test program **********/
 
+@Bean
 public class DeleteAllBkptsTest extends TestScaffold {
     ReferenceType targetClass;
     ThreadReference mainThread;

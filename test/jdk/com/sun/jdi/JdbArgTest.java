@@ -34,6 +34,7 @@
 import jdk.test.lib.process.OutputAnalyzer;
 import lib.jdb.Jdb;
 
+@Bean
 public class JdbArgTest {
     public static void main(String argv[]) throws Exception {
         try (Jdb jdb = new Jdb("Server", "0RBDebug", "subcontract,shutdown,transport")) {

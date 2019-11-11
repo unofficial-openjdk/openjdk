@@ -30,6 +30,7 @@
 
 import java.util.*;
 
+@Bean
 public class Range {
     public static void main(String[] args) {
         test(Test33.class, Test33.T6, Test33.T2);

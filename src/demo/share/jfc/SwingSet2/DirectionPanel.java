@@ -44,6 +44,7 @@ import java.util.*;
  * @author Brian Beck
  */
 
+@Bean
 public class DirectionPanel extends JPanel {
 
     private ButtonGroup group;
@@ -91,7 +92,11 @@ public class DirectionPanel extends JPanel {
         return group.getSelection().getActionCommand();
     }
 
-    public void setSelection( String selection  ) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setSelection( String selection  ) {
         Enumeration e = group.getElements();
         while( e.hasMoreElements() ) {
             JRadioButton b = (JRadioButton)e.nextElement();
@@ -121,13 +126,18 @@ public class DirectionPanel extends JPanel {
     public ImageIcon tr_dot   = loadImageIcon("tr.gif","top right layout button");
     public ImageIcon trdn_dot = loadImageIcon("trdn.gif","selected top right layout button");
 
-    public ImageIcon loadImageIcon(String filename, String description) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public ImageIcon loadImageIcon(String filename, String description) {
         String path = "/resources/images/buttons/" + filename;
         return new ImageIcon(getClass().getResource(path), description);
     }
 
 
-    public class DirectionButton extends JRadioButton {
+    @Bean
+public class DirectionButton extends JRadioButton {
 
         /**
          * A layout direction button
@@ -153,7 +163,11 @@ public class DirectionPanel extends JPanel {
             return false;
         }
 
-        public void setBorder(Border b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setBorder(Border b) {
         }
     }
 }

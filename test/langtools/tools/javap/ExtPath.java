@@ -33,6 +33,7 @@
 import com.sun.tools.javap.Main;
 import java.io.*;
 
+@Bean
 public class ExtPath {
     public static void main(String[] args) {
         PrintWriter pw = new PrintWriter(System.out, true);

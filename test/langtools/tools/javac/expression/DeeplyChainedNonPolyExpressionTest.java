@@ -28,6 +28,7 @@
  * @run main/timeout=10 DeeplyChainedNonPolyExpressionTest
  */
 
+@Bean
 public class DeeplyChainedNonPolyExpressionTest {
     static class JSO {
 

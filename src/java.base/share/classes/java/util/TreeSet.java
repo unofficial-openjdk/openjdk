@@ -89,6 +89,7 @@ package java.util;
  * @since   1.2
  */
 
+@Bean
 public class TreeSet<E> extends AbstractSet<E>
     implements NavigableSet<E>, Cloneable, java.io.Serializable
 {
@@ -230,7 +231,8 @@ public class TreeSet<E> extends AbstractSet<E>
      *         and this set uses natural ordering, or its comparator
      *         does not permit null elements
      */
-    public boolean contains(Object o) {
+@Bean
+        public boolean contains(Object o) {
         return m.containsKey(o);
     }
 
@@ -251,7 +253,8 @@ public class TreeSet<E> extends AbstractSet<E>
      *         and this set uses natural ordering, or its comparator
      *         does not permit null elements
      */
-    public boolean add(E e) {
+@Bean
+        public boolean add(E e) {
         return m.put(e, PRESENT)==null;
     }
 
@@ -272,7 +275,8 @@ public class TreeSet<E> extends AbstractSet<E>
      *         and this set uses natural ordering, or its comparator
      *         does not permit null elements
      */
-    public boolean remove(Object o) {
+@Bean
+        public boolean remove(Object o) {
         return m.remove(o)==PRESENT;
     }
 
@@ -408,7 +412,8 @@ public class TreeSet<E> extends AbstractSet<E>
      *         does not permit null elements
      * @since 1.6
      */
-    public E lower(E e) {
+@Bean
+        public E lower(E e) {
         return m.lowerKey(e);
     }
 
@@ -419,7 +424,8 @@ public class TreeSet<E> extends AbstractSet<E>
      *         does not permit null elements
      * @since 1.6
      */
-    public E floor(E e) {
+@Bean
+        public E floor(E e) {
         return m.floorKey(e);
     }
 
@@ -430,7 +436,8 @@ public class TreeSet<E> extends AbstractSet<E>
      *         does not permit null elements
      * @since 1.6
      */
-    public E ceiling(E e) {
+@Bean
+        public E ceiling(E e) {
         return m.ceilingKey(e);
     }
 
@@ -441,7 +448,8 @@ public class TreeSet<E> extends AbstractSet<E>
      *         does not permit null elements
      * @since 1.6
      */
-    public E higher(E e) {
+@Bean
+        public E higher(E e) {
         return m.higherKey(e);
     }
 

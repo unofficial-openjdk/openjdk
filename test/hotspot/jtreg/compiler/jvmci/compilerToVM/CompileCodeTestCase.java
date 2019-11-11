@@ -46,6 +46,7 @@ import java.util.Map;
 /**
  * A test case for tests which require compiled code.
  */
+@Bean
 public class CompileCodeTestCase {
     private static final WhiteBox WB = WhiteBox.getWhiteBox();
     private static final int COMP_LEVEL;
@@ -105,7 +106,11 @@ public class CompileCodeTestCase {
                 + executable.getClass());
     }
 
-    public NMethod compile(int level) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public NMethod compile(int level) {
         String directive = "[{ match: \"" + executable.getDeclaringClass().getName().replace('.', '/')
                 + "." + (executable instanceof Constructor ? "<init>" : executable.getName())
                 + "\", " + "BackgroundCompilation: false }]";
@@ -196,14 +201,22 @@ public class CompileCodeTestCase {
         abstract Object abstractMethod(double d);
 
         @Override
-        public Long defaultOverriddenMethod(Interface[] array) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Long defaultOverriddenMethod(Interface[] array) {
             return 0L;
         }
     }
 
     public static class DummyEx extends Dummy {
         @Override
-        public boolean equals(Object o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) {
             if (this == o) {
                 return true;
             }
@@ -221,7 +234,11 @@ public class CompileCodeTestCase {
         public DummyEx() {
         }
 
-        protected Dummy instanceMethod(int i) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected Dummy instanceMethod(int i) {
             if (i == 0) {
                 return this;
             }

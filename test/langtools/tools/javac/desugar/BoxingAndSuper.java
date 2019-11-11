@@ -77,6 +77,7 @@ import com.sun.tools.javac.util.Names;
 
 import toolbox.ToolBox;
 
+@Bean
 public class BoxingAndSuper {
     public static void main(String... args) throws Exception {
         new BoxingAndSuper().testSuper();
@@ -146,7 +147,8 @@ public class BoxingAndSuper {
                 "}\n" +
                 "---" +
                 "package p2;\n" +
-                "public class Parent {\n" +
+                "@Bean
+public class Parent {\n" +
                 "     protected Integer i=10;\n" +
                 "} ",
                 "p1.Test.dump()java.lang.Integer\n" +
@@ -167,7 +169,8 @@ public class BoxingAndSuper {
                 "}\n" +
                 "---" +
                 "package p2;\n" +
-                "public class Parent {\n" +
+                "@Bean
+public class Parent {\n" +
                 "     protected Integer i=10;\n" +
                 "} ",
                 "p1.Test.Inner.dump()java.lang.Integer\n" +
@@ -191,7 +194,8 @@ public class BoxingAndSuper {
     }
 
     public void testThis() throws Exception {
-        String code = "public class Test {\n" +
+        String code = "@Bean
+public class Test {\n" +
                       "    Integer i;\n" +
                       "    private void dump() {\n" +
                       "        i++;\n" +
@@ -206,7 +210,8 @@ public class BoxingAndSuper {
                 "}\n";
         runTest(code, expected);
         //qualified this:
-        runTest("public class Test {\n" +
+        runTest("@Bean
+public class Test {\n" +
                 "   Integer i;\n" +
                 "   class Inner1 {\n" +
                 "       class Inner2 {\n" +
@@ -265,7 +270,11 @@ public class BoxingAndSuper {
 
         public static void preRegister(Context context) {
             context.put(lowerKey, new Context.Factory<Lower>() {
-                   public Lower make(Context c) {
+                   @Bean
+@Bean
+@Bean
+@Bean
+                public Lower make(Context c) {
                        return new TestLower(c);
                    }
             });
@@ -290,6 +299,10 @@ public class BoxingAndSuper {
 
             new TreeScanner() {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void visitMethodDef(JCMethodDecl tree) {
                     if (tree.name.toString().startsWith("dump")) {
                         toDump.add(tree.sym);
@@ -306,7 +319,11 @@ public class BoxingAndSuper {
             return result;
         }
 
-        private void dump(Symbol methodSym, Map<Symbol, JCMethodDecl> declarations, Set<Symbol> alreadyPrinted) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void dump(Symbol methodSym, Map<Symbol, JCMethodDecl> declarations, Set<Symbol> alreadyPrinted) {
             if (!alreadyPrinted.add(methodSym))
                 return ;
 
@@ -323,6 +340,10 @@ public class BoxingAndSuper {
                 private int i;
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public JCTree visitOther(Tree node, Void p) {
                     JCTree tree = (JCTree) node;
                     if (tree.hasTag(Tag.LETEXPR)) {
@@ -337,6 +358,10 @@ public class BoxingAndSuper {
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public JCTree visitVariable(VariableTree node, Void p) {
                     String newName = letExprRemap.get(node.getName().toString());
                     if (newName != null) {
@@ -346,6 +371,10 @@ public class BoxingAndSuper {
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public JCTree visitIdentifier(IdentifierTree node, Void p) {
                     String newName = letExprRemap.get(node.getName().toString());
                     if (newName != null) {
@@ -369,6 +398,10 @@ public class BoxingAndSuper {
 
             new TreeScanner() {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void visitApply(JCMethodInvocation tree) {
                     invoked.add(TreeInfo.symbol(tree.meth));
                     super.visitApply(tree);

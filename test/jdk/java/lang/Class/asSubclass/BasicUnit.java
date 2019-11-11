@@ -41,6 +41,7 @@ class MyInt implements Int {
     }
 }
 
+@Bean
 public class BasicUnit {
     static <T extends Int> T factory(Class<T> c) throws Throwable {
         return c.newInstance();

@@ -43,6 +43,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
 import java.io.ObjectInputStream;
 
+@Bean
 public class NulFile {
 
     private static final char CHAR_NUL = '\u0000';
@@ -389,7 +390,11 @@ public class NulFile {
         // list(FilenameFilter)
         FilenameFilter fnFilter = new FilenameFilter() {
             @Override
-            public boolean accept(File dir, String name) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public boolean accept(File dir, String name) {
                 return false;
             }
         };
@@ -408,7 +413,11 @@ public class NulFile {
         // listFiles(FileFilter)
         FileFilter fFilter = new FileFilter() {
             @Override
-            public boolean accept(File file) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public boolean accept(File file) {
                 return false;
             }
         };

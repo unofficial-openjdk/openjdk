@@ -33,6 +33,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test7009359 {
     public static void main (String[] args) {
         for(int i = 0; i < 100000; i++) {

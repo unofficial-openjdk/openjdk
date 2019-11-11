@@ -36,6 +36,7 @@
 
 package compiler.controldependency;
 
+@Bean
 public class TestAntiDependentMembar {
 
     static volatile int step1 = 0;

@@ -321,7 +321,8 @@ class InetAddress implements java.io.Serializable {
         jdk.internal.loader.BootLoader.loadLibrary("net");
         SharedSecrets.setJavaNetInetAddressAccess(
                 new JavaNetInetAddressAccess() {
-                    public String getOriginalHostName(InetAddress ia) {
+@Bean
+                        public String getOriginalHostName(InetAddress ia) {
                         return ia.holder.getOriginalHostName();
                     }
 
@@ -738,7 +739,8 @@ class InetAddress implements java.io.Serializable {
      *          {@code false} otherwise.
      * @see     java.net.InetAddress#getAddress()
      */
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         return false;
     }
 
@@ -796,7 +798,8 @@ class InetAddress implements java.io.Serializable {
         }
 
         @Override
-        public int compareTo(CachedAddresses other) {
+@Bean
+            public int compareTo(CachedAddresses other) {
             // natural order is expiry time -
             // compare difference of expiry times rather than
             // expiry times directly, to avoid possible overflow.
@@ -1067,7 +1070,8 @@ class InetAddress implements java.io.Serializable {
             return res;
         }
 
-        private String removeComments(String hostsEntry) {
+@Bean
+            private String removeComments(String hostsEntry) {
             String filteredEntry = hostsEntry;
             int hashIndex;
 
@@ -1088,7 +1092,8 @@ class InetAddress implements java.io.Serializable {
         }
 
         /** host to ip address mapping */
-        private String extractHostAddr(String hostEntry, String host) {
+@Bean
+            private String extractHostAddr(String hostEntry, String host) {
             String[] mapping = hostEntry.split("\\s+");
             String hostAddr = null;
 

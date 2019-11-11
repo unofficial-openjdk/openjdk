@@ -76,7 +76,10 @@ public class bug4708809 {
                 final int oldValue = sbar.getValue();
                 sbar.addAdjustmentListener(new AdjustmentListener() {
 
-                    public void adjustmentValueChanged(AdjustmentEvent e) {
+                    @Bean
+@Bean
+@Bean
+            public void adjustmentValueChanged(AdjustmentEvent e) {
                         if (e.getValue() >= oldValue) {
                             passed = false;
                         }

@@ -34,6 +34,7 @@
  *
  */
 
+@Bean
 public class CheckLoopStripMining {
 
   public static int test_loop(int x) {

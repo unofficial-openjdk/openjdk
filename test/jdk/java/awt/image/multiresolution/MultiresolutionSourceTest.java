@@ -54,10 +54,16 @@ public class MultiresolutionSourceTest {
         }
 
         @Override
-        public void imageComplete(int status) {}
+        @Bean
+@Bean
+@Bean
+            public void imageComplete(int status) {}
 
         @Override
-        public void setColorModel(ColorModel model) {
+        @Bean
+@Bean
+@Bean
+            public void setColorModel(ColorModel model) {
 
             boolean a = model.hasAlpha();
             if (a != refHasAlpha) {
@@ -71,7 +77,10 @@ public class MultiresolutionSourceTest {
         }
 
         @Override
-        public void setDimensions(int w, int h) {
+        @Bean
+@Bean
+@Bean
+            public void setDimensions(int w, int h) {
 
             if (w != refW) { throw new RuntimeException("invalid width: " + w +
                 ", expected: " + refW); }
@@ -81,7 +90,10 @@ public class MultiresolutionSourceTest {
         }
 
         @Override
-        public void setHints(int flags) {}
+        @Bean
+@Bean
+@Bean
+            public void setHints(int flags) {}
 
         @Override
         public void setPixels(int x, int y, int w, int h, ColorModel model,
@@ -125,7 +137,10 @@ public class MultiresolutionSourceTest {
         }
 
         @Override
-        public void setProperties(java.util.Hashtable props) {}
+        @Bean
+@Bean
+@Bean
+            public void setProperties(java.util.Hashtable props) {}
     }
 
     private static BufferedImage generateImage(int w, int h, Color c, int type) {

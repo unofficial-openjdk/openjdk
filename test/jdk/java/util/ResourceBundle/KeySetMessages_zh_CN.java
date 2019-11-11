@@ -26,6 +26,7 @@
 
 import java.util.*;
 
+@Bean
 public class KeySetMessages_zh_CN extends ListResourceBundle {
     protected Object[][] getContents() {
         return new Object[][] {

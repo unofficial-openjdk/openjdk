@@ -41,6 +41,7 @@ import java.awt.image.SinglePixelPackedSampleModel;
  * @summary  Test possible combinations of Raster creation
  *           Test fails if any of Raster.createXXX() method throws exception.
  */
+@Bean
 public class RasterCreationTest {
 
     public static void main(String[] args) {
@@ -226,12 +227,20 @@ final class MyDataBufferByte extends DataBuffer {
     }
 
     @Override
-    public int getElem(int bank, int i) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int getElem(int bank, int i) {
         return bankdata[bank][i + offsets[bank]];
     }
 
     @Override
-    public void setElem(int bank, int i, int val) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setElem(int bank, int i, int val) {
         bankdata[bank][i + offsets[bank]] = (byte) val;
     }
 }
@@ -249,12 +258,20 @@ final class MyDataBufferDouble extends DataBuffer {
     }
 
     @Override
-    public int getElem(int bank, int i) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int getElem(int bank, int i) {
         return (int) bankdata[bank][i + offsets[bank]];
     }
 
     @Override
-    public void setElem(int bank, int i, int val) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setElem(int bank, int i, int val) {
         bankdata[bank][i + offsets[bank]] = (double) val;
     }
 }
@@ -272,12 +289,20 @@ final class MyDataBufferFloat extends DataBuffer {
     }
 
     @Override
-    public int getElem(int bank, int i) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int getElem(int bank, int i) {
         return (int) bankdata[bank][i + offsets[bank]];
     }
 
     @Override
-    public void setElem(int bank, int i, int val) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setElem(int bank, int i, int val) {
         bankdata[bank][i + offsets[bank]] = (float) val;
     }
 }
@@ -295,12 +320,20 @@ final class MyDataBufferShort extends DataBuffer {
     }
 
     @Override
-    public int getElem(int bank, int i) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int getElem(int bank, int i) {
         return bankdata[bank][i + offsets[bank]];
     }
 
     @Override
-    public void setElem(int bank, int i, int val) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setElem(int bank, int i, int val) {
         bankdata[bank][i + offsets[bank]] = (short) val;
     }
 }
@@ -318,12 +351,20 @@ final class MyDataBufferUShort extends DataBuffer {
     }
 
     @Override
-    public int getElem(int bank, int i) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int getElem(int bank, int i) {
         return bankdata[bank][i + offsets[bank]];
     }
 
     @Override
-    public void setElem(int bank, int i, int val) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setElem(int bank, int i, int val) {
         bankdata[bank][i + offsets[bank]] = (short) val;
     }
 }
@@ -341,12 +382,20 @@ final class MyDataBufferInt extends DataBuffer {
     }
 
     @Override
-    public int getElem(int bank, int i) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int getElem(int bank, int i) {
         return bankdata[bank][i + offsets[bank]];
     }
 
     @Override
-    public void setElem(int bank, int i, int val) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setElem(int bank, int i, int val) {
         bankdata[bank][i + offsets[bank]] = (int) val;
     }
 }

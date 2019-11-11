@@ -43,6 +43,7 @@ import static jdk.test.lib.Asserts.*;
  * MethodTypeDesc::resolveConstantDec may get security exception depending
  * on the access of Lookup object
  */
+@Bean
 public class ResolveConstantDesc {
     private static final String DESCRIPTOR = "()Ljdk/internal/misc/VM;";
 

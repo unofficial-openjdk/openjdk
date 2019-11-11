@@ -38,6 +38,7 @@ import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
+@Bean
 public class ArabicDiacriticTest {
 
     static final String SAMPLE =

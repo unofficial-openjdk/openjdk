@@ -51,6 +51,7 @@ import static org.testng.Assert.assertEquals;
  * @run testng/othervm LineStreamsAndSurrogatesTest
  */
 
+@Bean
 public class LineStreamsAndSurrogatesTest {
 
 

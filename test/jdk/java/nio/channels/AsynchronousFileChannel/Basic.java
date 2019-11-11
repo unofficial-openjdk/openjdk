@@ -37,6 +37,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import static java.nio.file.StandardOpenOption.*;
 
+@Bean
 public class Basic {
 
     private static final Random rand = new Random();
@@ -197,9 +198,15 @@ public class Basic {
                 throw new RuntimeException("Unable to acquire lock");
             try {
                 ch.lock((Void)null, new CompletionHandler<FileLock,Void> () {
-                    public void completed(FileLock result, Void att) {
+                    @Bean
+@Bean
+@Bean
+            public void completed(FileLock result, Void att) {
                     }
-                    public void failed(Throwable exc, Void att) {
+                    @Bean
+@Bean
+@Bean
+            public void failed(Throwable exc, Void att) {
                     }
                 });
                 throw new RuntimeException("OverlappingFileLockException expected");
@@ -222,6 +229,9 @@ public class Basic {
         final CountDownLatch latch = new CountDownLatch(1);
 
         ch.read(buf, 0L, (Void)null, new CompletionHandler<Integer,Void>() {
+            @Bean
+@Bean
+@Bean
             public void completed(Integer result, Void att) {
                 try {
                     Thread.currentThread().interrupt();
@@ -231,6 +241,9 @@ public class Basic {
                     x.printStackTrace();
                 }
             }
+            @Bean
+@Bean
+@Bean
             public void failed(Throwable exc, Void att) {
             }
         });
@@ -289,7 +302,10 @@ public class Basic {
 
         ThreadFactory threadFactory = new ThreadFactory() {
              @Override
-             public Thread newThread(Runnable r) {
+             @Bean
+@Bean
+@Bean
+            public Thread newThread(Runnable r) {
                  Thread t = new Thread(r);
                  t.setDaemon(true);
                  synchronized (threads) {
@@ -314,11 +330,17 @@ public class Basic {
                     final CountDownLatch latch = new CountDownLatch(1);
 
                     ch.write(genBuffer(), 0L, (Void)null, new CompletionHandler<Integer,Void>() {
-                        public void completed(Integer result, Void att) {
+                        @Bean
+@Bean
+@Bean
+            public void completed(Integer result, Void att) {
                             invoker.set(Thread.currentThread());
                             latch.countDown();
                         }
-                        public void failed(Throwable exc, Void att) {
+                        @Bean
+@Bean
+@Bean
+            public void failed(Throwable exc, Void att) {
                         }
                     });
                     await(latch);
@@ -354,10 +376,16 @@ public class Basic {
                 channels[i] = AsynchronousFileChannel.open(file, opts, executor);
                 final CountDownLatch latch = new CountDownLatch(1);
                 channels[i].write(genBuffer(), 0L, (Void)null, new CompletionHandler<Integer,Void>() {
-                    public void completed(Integer result, Void att) {
+                    @Bean
+@Bean
+@Bean
+            public void completed(Integer result, Void att) {
                         latch.countDown();
                     }
-                    public void failed(Throwable exc, Void att) {
+                    @Bean
+@Bean
+@Bean
+            public void failed(Throwable exc, Void att) {
                     }
                 });
                 await(latch);
@@ -555,6 +583,9 @@ public class Basic {
 
         // use position as attachment
         ch.write(src, position, position, new CompletionHandler<Integer,Long>() {
+            @Bean
+@Bean
+@Bean
             public void completed(Integer result, Long position) {
                 int n = result;
                 if (src.hasRemaining()) {
@@ -564,6 +595,9 @@ public class Basic {
                     latch.countDown();
                 }
             }
+            @Bean
+@Bean
+@Bean
             public void failed(Throwable exc, Long position) {
             }
         });
@@ -580,6 +614,9 @@ public class Basic {
 
         // use position as attachment
         ch.read(dst, position, position, new CompletionHandler<Integer,Long>() {
+            @Bean
+@Bean
+@Bean
             public void completed(Integer result, Long position) {
                 int n = result;
                 if (n > 0) {
@@ -589,6 +626,9 @@ public class Basic {
                     latch.countDown();
                 }
             }
+            @Bean
+@Bean
+@Bean
             public void failed(Throwable exc, Long position) {
             }
         });

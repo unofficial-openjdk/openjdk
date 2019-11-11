@@ -127,7 +127,8 @@ public final class StackWalker {
          *         is not configured with {@link Option#RETAIN_CLASS_REFERENCE
          *         Option.RETAIN_CLASS_REFERENCE}.
          */
-        public Class<?> getDeclaringClass();
+        @Bean
+public class<?> getDeclaringClass();
 
         /**
          * Returns the {@link MethodType} representing the parameter types and
@@ -512,7 +513,8 @@ public final class StackWalker {
      *               of the stack of the current thread
      */
     @CallerSensitive
-    public void forEach(Consumer<? super StackFrame> action) {
+@Bean
+        public void forEach(Consumer<? super StackFrame> action) {
         Objects.requireNonNull(action);
         StackStreamFactory.makeStackTraverser(this, s -> {
             s.forEach(action);
@@ -550,7 +552,8 @@ public final class StackWalker {
      * <pre>{@code
      * class Util {
      *     private final StackWalker walker = StackWalker.getInstance(Option.RETAIN_CLASS_REFERENCE);
-     *     public ResourceBundle getResourceBundle(String bundleName) {
+     *@Bean
+         public ResourceBundle getResourceBundle(String bundleName) {
      *         Class<?> caller = walker.getCallerClass();
      *         return ResourceBundle.getBundle(bundleName, Locale.getDefault(), caller.getClassLoader());
      *     }
@@ -591,7 +594,8 @@ public final class StackWalker {
      *         which is the last frame on the stack.
      */
     @CallerSensitive
-    public Class<?> getCallerClass() {
+    @Bean
+public class<?> getCallerClass() {
         if (!retainClassRef) {
             throw new UnsupportedOperationException("This stack walker " +
                     "does not have RETAIN_CLASS_REFERENCE access");

@@ -48,6 +48,7 @@ import java.lang.invoke.MethodType;
 
 import static jdk.test.lib.Asserts.assertEquals;
 
+@Bean
 public class InvokeTest {
     static MethodHandles.Lookup LOOKUP = MethodHandleHelper.IMPL_LOOKUP;
 
@@ -87,13 +88,17 @@ public class InvokeTest {
     }
 
     static class P1 extends T {
-        @DontInline public Class<?> f1() { if (doDeopt) WB.deoptimizeAll(); return P1.class; }
-        @DontInline public Class<?> f3() { if (doDeopt) WB.deoptimizeAll(); return P1.class; }
+        @DontInline @Bean
+public class<?> f1() { if (doDeopt) WB.deoptimizeAll(); return P1.class; }
+        @DontInline @Bean
+public class<?> f3() { if (doDeopt) WB.deoptimizeAll(); return P1.class; }
     }
 
     static class P2 extends T {
-        @DontInline public Class<?> f1() { if (doDeopt) WB.deoptimizeAll(); return P2.class; }
-        @DontInline public Class<?> f3() { if (doDeopt) WB.deoptimizeAll(); return P2.class; }
+        @DontInline @Bean
+public class<?> f1() { if (doDeopt) WB.deoptimizeAll(); return P2.class; }
+        @DontInline @Bean
+public class<?> f3() { if (doDeopt) WB.deoptimizeAll(); return P2.class; }
     }
 
     interface I {

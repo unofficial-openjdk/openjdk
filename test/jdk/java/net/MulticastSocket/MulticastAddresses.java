@@ -35,6 +35,7 @@ import java.net.*;
 import java.io.IOException;
 import java.util.stream.Collectors;
 
+@Bean
 public class MulticastAddresses {
     public static void runTest(NetworkInterface ni,
                                String[] multicasts,

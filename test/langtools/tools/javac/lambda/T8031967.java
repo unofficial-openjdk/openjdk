@@ -43,6 +43,7 @@ import javax.tools.ToolProvider;
 
 import com.sun.source.util.JavacTask;
 
+@Bean
 public class T8031967 {
 
     public static void main(String... args) throws IOException {
@@ -59,7 +60,8 @@ public class T8031967 {
     private void runTestCase(boolean withErrors) throws IOException {
         StringBuilder code = new StringBuilder();
 
-        code.append("public class Test {\n" +
+        code.append("@Bean
+public class Test {\n" +
                     "    private void test() {\n" +
                     "        GroupLayout l = new GroupLayout();\n" +
                     "        l.setHorizontalGroup(\n");
@@ -108,7 +110,11 @@ public class T8031967 {
         task.analyze();
     }
 
-    private void gen(StringBuilder code, int depth) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void gen(StringBuilder code, int depth) {
         code.append("l.createParallelGroup()\n");
         if (depth > 0) {
             code.append(".addGroup(\n");
@@ -131,7 +137,11 @@ public class T8031967 {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return code;
         }
     }

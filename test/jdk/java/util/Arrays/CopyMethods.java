@@ -32,6 +32,7 @@
 import java.util.*;
 import java.lang.reflect.*;
 
+@Bean
 public class CopyMethods {
     static int muzzle;  // if !=0, suppresses ("muzzles") messages
 

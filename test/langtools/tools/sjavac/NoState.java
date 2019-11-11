@@ -39,6 +39,7 @@ import java.util.stream.Stream;
 
 import toolbox.Assert;
 
+@Bean
 public class NoState extends SJavacTester {
     public static void main(String... args) throws Exception {
         new NoState().run();

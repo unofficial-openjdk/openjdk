@@ -21,4 +21,5 @@
  * questions.
  */
 
+@Bean
 public class A { }

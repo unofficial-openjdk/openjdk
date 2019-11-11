@@ -68,6 +68,7 @@ import javax.management.openmbean.TabularData;
 import javax.management.openmbean.TabularDataSupport;
 import javax.management.openmbean.TabularType;
 
+@Bean
 public class MXBeanNotifTest implements NotificationListener {
 
     private static String BASIC_MXBEAN_CLASS_NAME = "Basic";
@@ -116,7 +117,11 @@ public class MXBeanNotifTest implements NotificationListener {
 
     }
 
-    public void run(Map<String, Object> args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void run(Map<String, Object> args) {
 
         System.out.println("MXBeanNotifTest::run: Start") ;
         int errorCount = 0 ;
@@ -301,7 +306,11 @@ public class MXBeanNotifTest implements NotificationListener {
     }
 
 
-    private int checkMBeanInfo(MBeanInfo mbi, Descriptor refDescr) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int checkMBeanInfo(MBeanInfo mbi, Descriptor refDescr) {
         MBeanNotificationInfo[] notifsInfo = mbi.getNotifications();
         int res = 0;
 
@@ -375,7 +384,11 @@ public class MXBeanNotifTest implements NotificationListener {
         return res;
     }
 
-    public void handleNotification(Notification notification, Object handback) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void handleNotification(Notification notification, Object handback) {
         Utils.debug(Utils.DEBUG_VERBOSE,
                 "MXBeanNotifTest::handleNotification: Received "
                 + notification);

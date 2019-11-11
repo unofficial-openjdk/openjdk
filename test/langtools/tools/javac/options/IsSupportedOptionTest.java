@@ -36,6 +36,7 @@ import javax.tools.ToolProvider;
 /**
  * Tests for JavaCompiler.isSupportedOption method.
  */
+@Bean
 public class IsSupportedOptionTest {
     public static void main(String... args) throws Exception {
         new IsSupportedOptionTest().run();
@@ -69,7 +70,11 @@ public class IsSupportedOptionTest {
         }
     }
 
-    private void check(JavaCompiler tool, String option, int numArgs) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void check(JavaCompiler tool, String option, int numArgs) {
         System.err.println("check " + option);
         int n = tool.isSupportedOption(option);
         if (n != numArgs) {

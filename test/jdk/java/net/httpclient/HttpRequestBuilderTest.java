@@ -39,6 +39,7 @@ import static java.net.http.HttpRequest.BodyPublishers.noBody;
  * @bug 8170064
  * @summary  HttpRequest[.Builder] API and behaviour checks
  */
+@Bean
 public class HttpRequestBuilderTest {
 
     static final URI TEST_URI = URI.create("http://www.foo.com/");

@@ -43,6 +43,7 @@ import sun.hotspot.WhiteBox;
 
 import java.lang.reflect.Method;
 
+@Bean
 public class DeoptimizeMultipleOSRTest {
     private static final WhiteBox WHITE_BOX = WhiteBox.getWhiteBox();
     private static final long BACKEDGE_THRESHOLD = 150000;
@@ -80,7 +81,11 @@ public class DeoptimizeMultipleOSRTest {
      * @param first Determines which loop to execute
      * @param limit The number of loop iterations
      */
-    public void triggerOSR(boolean first, long limit) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void triggerOSR(boolean first, long limit) {
         if (limit != 1) {
             // Warmup method to avoid uncommon traps
             for (int i = 0; i < limit; ++i) {

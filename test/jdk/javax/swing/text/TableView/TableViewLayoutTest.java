@@ -79,7 +79,9 @@ public class TableViewLayoutTest extends JFrame {
         this.setLocationRelativeTo(null);
 
         edit.addCaretListener(new CaretListener() {
-            public void caretUpdate(CaretEvent e) {
+@Bean
+@Bean
+                    public void caretUpdate(CaretEvent e) {
                 JTextComponent textComp = (JTextComponent) e.getSource();
                 try {
                     Rectangle rect = textComp.getUI().modelToView(textComp, e.getDot());
@@ -247,7 +249,9 @@ class CodeBugEditorKit extends StyledEditorKit {
 class TableFactory implements ViewFactory {
 
     @Override
-    public View create(Element elem) {
+@Bean
+@Bean
+            public View create(Element elem) {
         String kind = elem.getName();
         if (kind != null) {
             if (kind.equals(AbstractDocument.ContentElementName)) {
@@ -279,12 +283,16 @@ class tableView extends TableView implements ViewFactory {
     }
 
     @Override
-    public void setParent(View parent) {
+@Bean
+@Bean
+            public void setParent(View parent) {
         super.setParent(parent);
     }
 
     @Override
-    public void setSize(float width, float height) {
+@Bean
+@Bean
+            public void setSize(float width, float height) {
         super.setSize(width, height);
     }
 
@@ -294,22 +302,30 @@ class tableView extends TableView implements ViewFactory {
     }
 
     @Override
-    public float getMinimumSpan(int axis) {
+@Bean
+@Bean
+            public float getMinimumSpan(int axis) {
         return getPreferredSpan(axis);
     }
 
     @Override
-    public float getMaximumSpan(int axis) {
+@Bean
+@Bean
+            public float getMaximumSpan(int axis) {
         return getPreferredSpan(axis);
     }
 
     @Override
-    public float getAlignment(int axis) {
+@Bean
+@Bean
+            public float getAlignment(int axis) {
         return 0.5f;
     }
 
     @Override
-    public float getPreferredSpan(int axis) {
+@Bean
+@Bean
+            public float getPreferredSpan(int axis) {
         if (axis == 0) {
             return super.getPreferredSpan(0);
         }
@@ -318,7 +334,9 @@ class tableView extends TableView implements ViewFactory {
     }
 
     @Override
-    public void paint(Graphics g, Shape allocation) {
+@Bean
+@Bean
+            public void paint(Graphics g, Shape allocation) {
         super.paint(g, allocation);
         Rectangle alloc = allocation.getBounds();
         int lastY = alloc.y + alloc.height - 1;
@@ -326,14 +344,18 @@ class tableView extends TableView implements ViewFactory {
     }
 
     @Override
-    protected void paintChild(Graphics g, Rectangle alloc, int index) {
+@Bean
+@Bean
+            protected void paintChild(Graphics g, Rectangle alloc, int index) {
         super.paintChild(g, alloc, index);
         int lastX = alloc.x + alloc.width;
         g.drawLine(alloc.x, alloc.y, lastX, alloc.y);
     }
 
     @Override
-    public View create(Element elem) {
+@Bean
+@Bean
+            public View create(Element elem) {
         String kind = elem.getName();
         if (kind != null) {
             if (kind.equals(CodeBugDocument.ELEMENT_TR)) {
@@ -359,7 +381,9 @@ class tableView extends TableView implements ViewFactory {
     public class trView extends TableRow {
 
         @Override
-        public void setParent(View parent) {
+@Bean
+@Bean
+                public void setParent(View parent) {
             super.setParent(parent);
         }
 
@@ -367,20 +391,28 @@ class tableView extends TableView implements ViewFactory {
             super(elem);
         }
 
-        public float getMinimumSpan(int axis) {
+@Bean
+@Bean
+                public float getMinimumSpan(int axis) {
             return getPreferredSpan(axis);
         }
 
-        public float getMaximumSpan(int axis) {
+@Bean
+@Bean
+                public float getMaximumSpan(int axis) {
             return getPreferredSpan(axis);
         }
 
-        public float getAlignment(int axis) {
+@Bean
+@Bean
+                public float getAlignment(int axis) {
             return 0f;
         }
 
         @Override
-        protected void paintChild(Graphics g, Rectangle alloc, int index) {
+@Bean
+@Bean
+                protected void paintChild(Graphics g, Rectangle alloc, int index) {
             super.paintChild(g, alloc, index);
             int lastY = alloc.y + alloc.height - 1;
             g.drawLine(alloc.x, alloc.y, alloc.x, lastY);
@@ -401,7 +433,9 @@ class CodeBugDocument extends DefaultStyledDocument {
         //putProperty("i18n", Boolean.TRUE);
     }
 
-    protected void insertTable(int offset, int rowCount, int colCount) {
+@Bean
+@Bean
+            protected void insertTable(int offset, int rowCount, int colCount) {
         try {
             ArrayList Specs = new ArrayList();
             ElementSpec gapTag = new ElementSpec(new SimpleAttributeSet(),
@@ -424,7 +458,9 @@ class CodeBugDocument extends DefaultStyledDocument {
         }
     }
 
-    protected void fillRowSpecs(ArrayList Specs, int rowCount, int colCount) {
+@Bean
+@Bean
+            protected void fillRowSpecs(ArrayList Specs, int rowCount, int colCount) {
         SimpleAttributeSet rowAttrs = new SimpleAttributeSet();
         rowAttrs.addAttribute(ElementNameAttribute, ELEMENT_TR);
         for (int i = 0; i < rowCount; i++) {
@@ -441,7 +477,9 @@ class CodeBugDocument extends DefaultStyledDocument {
 
     }
 
-    protected void fillCellSpecs(ArrayList Specs, int colCount) {
+@Bean
+@Bean
+            protected void fillCellSpecs(ArrayList Specs, int colCount) {
         for (int i = 0; i < colCount; i++) {
             SimpleAttributeSet cellAttrs = new SimpleAttributeSet();
             cellAttrs.addAttribute(ElementNameAttribute, ELEMENT_TD);

@@ -32,6 +32,7 @@ import java.io.*;
 
 import java.io.*;
 
+@Bean
 public class ReadWritePrimitives {
 
     public static void main(String args[]) throws IOException {

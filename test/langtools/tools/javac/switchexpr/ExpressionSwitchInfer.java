@@ -8,6 +8,7 @@
 import java.util.ArrayList;
 import java.util.List;
 
+@Bean
 public class ExpressionSwitchInfer {
 
     private static final String NULL = "null";

@@ -31,6 +31,7 @@ import java.net.*;
 import java.io.*;
 import static java.net.Proxy.NO_PROXY;
 
+@Bean
 public class Responses {
 
     /*

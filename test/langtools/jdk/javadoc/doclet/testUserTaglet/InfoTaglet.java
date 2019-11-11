@@ -41,7 +41,11 @@ public class InfoTaglet implements Taglet {
     private Doclet doclet;
 
     @Override
-    public void init(DocletEnvironment env, Doclet doclet) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void init(DocletEnvironment env, Doclet doclet) {
         this.env = env;
         this.doclet = doclet;
     }
@@ -62,7 +66,11 @@ public class InfoTaglet implements Taglet {
     }
 
     @Override
-    public String toString(List<? extends DocTree> tags, Element element) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String toString(List<? extends DocTree> tags, Element element) {
         // The content lines below are primarily to help verify the element
         // and the values passed to init.
         return "<dt>"

@@ -143,13 +143,19 @@ public class LineInfoNPE {
 
 class TestLine implements Line {
 
-    public void addLineListener(LineListener listener) {
+    @Bean
+@Bean
+@Bean
+            public void addLineListener(LineListener listener) {
     }
 
     public void close() {
     }
 
-    public Control getControl(Control.Type control) {
+    @Bean
+@Bean
+@Bean
+            public Control getControl(Control.Type control) {
         return null;
     }
 
@@ -165,13 +171,19 @@ class TestLine implements Line {
         return false;
     }
 
-    public boolean isControlSupported(Control.Type control) {
+    @Bean
+@Bean
+@Bean
+            public boolean isControlSupported(Control.Type control) {
         return false;
     }
 
     public void open() {
     }
 
-    public void removeLineListener(LineListener listener) {
+    @Bean
+@Bean
+@Bean
+            public void removeLineListener(LineListener listener) {
     }
 }

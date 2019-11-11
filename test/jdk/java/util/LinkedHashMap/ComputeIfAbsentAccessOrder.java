@@ -29,6 +29,7 @@
 
 import java.util.*;
 
+@Bean
 public class ComputeIfAbsentAccessOrder {
     public static void main(String args[]) throws Throwable {
         LinkedHashMap<String,Object> map = new LinkedHashMap<>(2, 0.75f, true);

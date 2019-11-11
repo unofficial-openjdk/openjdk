@@ -136,6 +136,9 @@ public class FullscreenEnterEventTest {
         enableFullScreen(frame);
         frame.addMouseListener(new MouseAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseEntered(MouseEvent e) {
                 mouseEnterCount++;
             }

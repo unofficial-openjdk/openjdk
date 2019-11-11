@@ -40,6 +40,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 import jtreg.SkippedException;
 import sun.hotspot.gc.GC;
 
+@Bean
 public class TestInitialGCThreadLogging {
   public static void main(String[] args) throws Exception {
     boolean noneGCSupported = true;

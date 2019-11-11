@@ -76,6 +76,7 @@ import java.util.stream.Stream;
  *
  * @author danielfuchs
  */
+@Bean
 public class HTTPSetAuthenticatorTest extends HTTPTest {
 
     public static void main(String[] args) throws Exception {

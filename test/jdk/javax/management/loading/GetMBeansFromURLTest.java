@@ -40,6 +40,7 @@ import javax.management.ObjectName;
 import javax.management.ServiceNotFoundException;
 import javax.management.loading.MLet;
 
+@Bean
 public class GetMBeansFromURLTest {
 
     public static void main(String[] args) throws Exception {

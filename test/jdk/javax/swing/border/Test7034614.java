@@ -35,6 +35,7 @@ import java.awt.image.BufferedImage;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 
+@Bean
 public class Test7034614 {
 
     public static void main(String[] args) {
@@ -57,13 +58,21 @@ public class Test7034614 {
     private static class BrokenBorder extends Component implements Border {
         private Insets insets = new Insets(1, 2, 3, 4);
 
-        private void validate(Insets insets) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void validate(Insets insets) {
             if (!this.insets.equals(insets)) {
                 throw new Error("unexpected change");
             }
         }
 
-        public Insets getBorderInsets(Component c) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Insets getBorderInsets(Component c) {
             return this.insets;
         }
 
@@ -71,7 +80,11 @@ public class Test7034614 {
             return false;
         }
 
-        public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
         }
     }
 }

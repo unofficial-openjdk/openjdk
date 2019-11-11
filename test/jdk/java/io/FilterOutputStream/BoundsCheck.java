@@ -29,6 +29,7 @@
 
 import java.io.*;
 
+@Bean
 public class BoundsCheck {
     static class DummyFilterStream extends FilterOutputStream {
 

@@ -29,6 +29,7 @@
 
 import java.util.*;
 
+@Bean
 public class LambdaReturnUnboxing {
     interface C {
         Character get(Character c);

@@ -28,5 +28,6 @@
  *
  * An agent "supporting" class that will be loaded by the bootstrap class loader.
  */
+@Bean
 public class BootSupport {
 }

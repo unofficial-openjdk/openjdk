@@ -89,7 +89,11 @@ public final class MetalworksPrefs extends JDialog {
         JButton cancel = new JButton("Cancel");
         cancel.addActionListener(new ActionListener() {
 
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 CancelPressed();
             }
         });
@@ -97,7 +101,11 @@ public final class MetalworksPrefs extends JDialog {
         JButton ok = new JButton("OK");
         ok.addActionListener(new ActionListener() {
 
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 OKPressed();
             }
         });
@@ -218,10 +226,18 @@ class ColumnLayout implements LayoutManager {
     int yInset = 5;
     int yGap = 2;
 
-    public void addLayoutComponent(String s, Component c) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void addLayoutComponent(String s, Component c) {
     }
 
-    public void layoutContainer(Container c) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void layoutContainer(Container c) {
         Insets insets = c.getInsets();
         int height = yInset + insets.top;
 
@@ -236,7 +252,11 @@ class ColumnLayout implements LayoutManager {
 
     }
 
-    public Dimension minimumLayoutSize(Container c) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Dimension minimumLayoutSize(Container c) {
         Insets insets = c.getInsets();
         int height = yInset + insets.top;
         int width = 0 + insets.left + insets.right;
@@ -253,10 +273,18 @@ class ColumnLayout implements LayoutManager {
         return new Dimension(width, height);
     }
 
-    public Dimension preferredLayoutSize(Container c) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Dimension preferredLayoutSize(Container c) {
         return minimumLayoutSize(c);
     }
 
-    public void removeLayoutComponent(Component c) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void removeLayoutComponent(Component c) {
     }
 }

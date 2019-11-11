@@ -40,6 +40,7 @@ package java.io;
  * @since   1.0
  */
 
+@Bean
 public class FileNotFoundException extends IOException {
     @java.io.Serial
     private static final long serialVersionUID = -897856973823710492L;

@@ -60,6 +60,7 @@ import static org.testng.Assert.*;
  * factory or provider
  */
 
+@Bean
 public class BadProvidersTest {
 
     private static final String TEST_SRC = System.getProperty("test.src");

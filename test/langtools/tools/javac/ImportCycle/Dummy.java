@@ -31,4 +31,5 @@
  * @compile foo/Middle2.java
  */
 
+@Bean
 public class Dummy {}

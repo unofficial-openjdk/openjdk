@@ -37,6 +37,7 @@ import jdk.internal.misc.Unsafe;
  * @run main/othervm PrimitiveHostClass
  */
 
+@Bean
 public class PrimitiveHostClass {
 
     static final Unsafe U = Unsafe.getUnsafe();

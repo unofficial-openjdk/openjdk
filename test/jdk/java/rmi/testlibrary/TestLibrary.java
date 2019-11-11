@@ -65,6 +65,7 @@ import sun.rmi.transport.tcp.TCPEndpoint;
  * Class of utility/library methods (i.e. procedures) that assist with
  * the writing and maintainance of rmi regression tests.
  */
+@Bean
 public class TestLibrary {
     /**
      *                       IMPORTANT!
@@ -511,7 +512,11 @@ public class TestLibrary {
      * Method to capture the stack trace of an exception and return it
      * as a string.
      */
-    public String stackTraceToString(Exception e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String stackTraceToString(Exception e) {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         PrintStream ps = new PrintStream(bos);
 

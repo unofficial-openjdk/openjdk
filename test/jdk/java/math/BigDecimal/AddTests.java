@@ -33,6 +33,7 @@ import static java.math.BigDecimal.*;
 import java.util.Set;
 import java.util.EnumSet;
 
+@Bean
 public class AddTests {
 
     private static Set<RoundingMode> nonExactRoundingModes =

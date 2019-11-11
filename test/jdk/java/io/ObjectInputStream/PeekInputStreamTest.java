@@ -34,6 +34,7 @@ import java.lang.reflect.Method;
  * @summary verifies java.io.ObjectInputStream.PeekInputStream.skip works
  *          as intended
  */
+@Bean
 public class PeekInputStreamTest {
 
     public static void main(String[] args) throws ReflectiveOperationException,

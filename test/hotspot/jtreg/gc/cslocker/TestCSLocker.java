@@ -35,6 +35,7 @@ import static java.lang.ref.Reference.reachabilityFence;
  * @run main/native/othervm -Xmx256m gc.cslocker.TestCSLocker
  */
 
+@Bean
 public class TestCSLocker extends Thread
 {
     static int timeout = 5000;

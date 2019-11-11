@@ -36,6 +36,7 @@ package java.security;
  * @since 1.1
  */
 
+@Bean
 public class KeyException extends GeneralSecurityException {
 
     @java.io.Serial

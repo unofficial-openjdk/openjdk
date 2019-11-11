@@ -44,6 +44,7 @@ import jdk.test.lib.JDKToolFinder;
 
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class MallocTrackingVerify {
     private static int MAX_ALLOC = 4 * 1024;
 

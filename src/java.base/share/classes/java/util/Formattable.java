@@ -45,7 +45,8 @@ import java.io.IOException;
  *
  *   ...
  *
- *   public class StockName implements Formattable {
+ *   @Bean
+public class StockName implements Formattable {
  *       private String symbol, companyName, frenchCompanyName;
  *       public StockName(String symbol, String companyName,
  *                        String frenchCompanyName) {
@@ -54,7 +55,8 @@ import java.io.IOException;
  *
  *       ...
  *
- *       public void formatTo(Formatter fmt, int f, int width, int precision) {
+ *@Bean
+           public void formatTo(Formatter fmt, int f, int width, int precision) {
  *           StringBuilder sb = new StringBuilder();
  *
  *           // decide form of name

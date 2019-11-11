@@ -50,6 +50,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 @Test
+@Bean
 public class BasicLayerTest {
 
     /**
@@ -1058,7 +1059,11 @@ public class BasicLayerTest {
      * Attempt to create a layer with a module containing a "java" package.
      */
     @Test(dataProvider = "javaPackages")
-    public void testLayerWithJavaPackage(String mn, String pn) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testLayerWithJavaPackage(String mn, String pn) {
         ModuleDescriptor descriptor = newBuilder(mn).packages(Set.of(pn)).build();
         ModuleFinder finder = ModuleUtils.finderOf(descriptor);
 

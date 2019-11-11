@@ -38,7 +38,11 @@ import jdk.test.lib.dcmd.JMXExecutor;
  * @run testng/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:+ThereShouldNotBeAnyVMOptionNamedLikeThis CommandLineTest
  */
 public class CommandLineTest {
-    public void run(CommandExecutor executor) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void run(CommandExecutor executor) {
         OutputAnalyzer output = executor.execute("VM.command_line");
         output.shouldContain("-XX:+IgnoreUnrecognizedVMOptions");
         output.shouldContain("-XX:+ThereShouldNotBeAnyVMOptionNamedLikeThis");

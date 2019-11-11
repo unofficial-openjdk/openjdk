@@ -41,6 +41,7 @@ import java.util.stream.IntStream;
 import static java.lang.System.out;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class PreferIPv6AddressesTest {
 
     // A name, that if resolves, returns both IPv4 and IPv6 addresses.

@@ -32,6 +32,7 @@
 
 package compiler.c1;
 
+@Bean
 public class Test8004051 {
     public static void main(String[] argv) {
         Object o = new Object();

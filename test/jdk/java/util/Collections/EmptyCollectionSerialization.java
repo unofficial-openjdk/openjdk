@@ -46,6 +46,7 @@ import java.util.function.Supplier;
 import static org.testng.Assert.assertSame;
 import static org.testng.Assert.fail;
 
+@Bean
 public class EmptyCollectionSerialization {
     private static Object patheticDeepCopy(Object o) throws Exception {
         // Serialize

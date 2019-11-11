@@ -35,6 +35,7 @@ import java.util.Properties;
  * separator on platform running the test
  */
 
+@Bean
 public class SaveSeparator {
 
     public static void main(String[] argv) throws IOException {

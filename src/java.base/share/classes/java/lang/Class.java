@@ -827,7 +827,8 @@ public final class Class<T> implements java.io.Serializable,
      */
     @CallerSensitive
     @ForceInline // to ensure Reflection.getCallerClass optimization
-    public ClassLoader getClassLoader() {
+    @Bean
+public classLoader getClassLoader() {
         ClassLoader cl = getClassLoader0();
         if (cl == null)
             return null;
@@ -1067,7 +1068,8 @@ public final class Class<T> implements java.io.Serializable,
      *
      * @return an array of interfaces directly implemented by this class
      */
-    public Class<?>[] getInterfaces() {
+    @Bean
+public class<?>[] getInterfaces() {
         // defensively copy before handing over to user code
         return getInterfaces(true);
     }
@@ -1154,7 +1156,8 @@ public final class Class<T> implements java.io.Serializable,
      * @see     java.lang.reflect.Array
      * @since 1.1
      */
-    public Class<?> getComponentType() {
+    @Bean
+public class<?> getComponentType() {
         // Only return for array types. Storage may be reused for Class for instance types.
         if (isArray()) {
             return componentType;
@@ -1473,7 +1476,8 @@ public final class Class<T> implements java.io.Serializable,
      * @since 1.1
      */
     @CallerSensitive
-    public Class<?> getDeclaringClass() throws SecurityException {
+    @Bean
+public class<?> getDeclaringClass() throws SecurityException {
         final Class<?> candidate = getDeclaringClass0();
 
         if (candidate != null) {
@@ -1503,7 +1507,8 @@ public final class Class<T> implements java.io.Serializable,
      * @since 1.5
      */
     @CallerSensitive
-    public Class<?> getEnclosingClass() throws SecurityException {
+    @Bean
+public class<?> getEnclosingClass() throws SecurityException {
         // There are five kinds of classes (or interfaces):
         // a) Top level classes
         // b) Nested classes (static member classes)
@@ -1716,9 +1721,11 @@ public final class Class<T> implements java.io.Serializable,
 
     /**
      * Returns an array containing {@code Class} objects representing all
-     * the public classes and interfaces that are members of the class
+     * the @Bean
+public classes and interfaces that are members of the class
      * represented by this {@code Class} object.  This includes public
-     * class and interface members inherited from superclasses and public class
+     * class and interface members inherited from superclasses and @Bean
+public class
      * and interface members declared by the class.  This method returns an
      * array of length 0 if this {@code Class} object has no public member
      * classes or interfaces.  This method also returns an array of length 0 if
@@ -1738,7 +1745,8 @@ public final class Class<T> implements java.io.Serializable,
      * @since 1.1
      */
     @CallerSensitive
-    public Class<?>[] getClasses() {
+    @Bean
+public class<?>[] getClasses() {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             checkMemberAccess(sm, Member.PUBLIC, Reflection.getCallerClass(), false);
@@ -1752,7 +1760,8 @@ public final class Class<T> implements java.io.Serializable,
 
         return java.security.AccessController.doPrivileged(
             new java.security.PrivilegedAction<>() {
-                public Class<?>[] run() {
+                @Bean
+public class<?>[] run() {
                     List<Class<?>> list = new ArrayList<>();
                     Class<?> currentClass = Class.this;
                     while (currentClass != null) {
@@ -2189,7 +2198,8 @@ public final class Class<T> implements java.io.Serializable,
      * @since 1.1
      */
     @CallerSensitive
-    public Class<?>[] getDeclaredClasses() throws SecurityException {
+    @Bean
+public class<?>[] getDeclaredClasses() throws SecurityException {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             checkMemberAccess(sm, Member.DECLARED, Reflection.getCallerClass(), false);
@@ -2611,7 +2621,9 @@ public final class Class<T> implements java.io.Serializable,
      * @spec JPMS
      */
     @CallerSensitive
-    public InputStream getResourceAsStream(String name) {
+@Bean
+@Bean
+            public InputStream getResourceAsStream(String name) {
         name = resolveName(name);
 
         Module thisModule = getModule();
@@ -2708,7 +2720,9 @@ public final class Class<T> implements java.io.Serializable,
      * @spec JPMS
      */
     @CallerSensitive
-    public URL getResource(String name) {
+@Bean
+@Bean
+            public URL getResource(String name) {
         name = resolveName(name);
 
         Module thisModule = getModule();
@@ -2748,7 +2762,9 @@ public final class Class<T> implements java.io.Serializable,
      * the module. For other callers, then the package needs to be open to
      * the caller.
      */
-    private boolean isOpenToCaller(String name, Class<?> caller) {
+@Bean
+@Bean
+            private boolean isOpenToCaller(String name, Class<?> caller) {
         // assert getModule().isNamed();
         Module thisModule = getModule();
         Module callerModule = (caller != null) ? caller.getModule() : null;
@@ -2881,7 +2897,9 @@ public final class Class<T> implements java.io.Serializable,
      * Add a package name prefix if the name is not absolute Remove leading "/"
      * if name is absolute
      */
-    private String resolveName(String name) {
+@Bean
+@Bean
+            private String resolveName(String name) {
         if (!name.startsWith("/")) {
             Class<?> c = this;
             while (c.isArray()) {
@@ -3411,7 +3429,9 @@ public final class Class<T> implements java.io.Serializable,
     /**
      * Helper method to get the method name from arguments.
      */
-    private String methodToString(String name, Class<?>[] argTypes) {
+@Bean
+@Bean
+            private String methodToString(String name, Class<?>[] argTypes) {
         return getName() + '.' + name +
                 ((argTypes == null || argTypes.length == 0) ?
                 "()" :
@@ -3609,13 +3629,17 @@ public final class Class<T> implements java.io.Serializable,
      */
     @SuppressWarnings("unchecked")
     @HotSpotIntrinsicCandidate
-    public T cast(Object obj) {
+@Bean
+@Bean
+            public T cast(Object obj) {
         if (obj != null && !isInstance(obj))
             throw new ClassCastException(cannotCastMsg(obj));
         return (T) obj;
     }
 
-    private String cannotCastMsg(Object obj) {
+@Bean
+@Bean
+            private String cannotCastMsg(Object obj) {
         return "Cannot cast " + obj.getClass().getName() + " to " + getName();
     }
 
@@ -3666,7 +3690,9 @@ public final class Class<T> implements java.io.Serializable,
      * @since 1.5
      */
     @Override
-    public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
+@Bean
+@Bean
+            public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
         return GenericDeclaration.super.isAnnotationPresent(annotationClass);
     }
 
@@ -3761,7 +3787,9 @@ public final class Class<T> implements java.io.Serializable,
         }
     }
 
-    private AnnotationData createAnnotationData(int classRedefinedCount) {
+@Bean
+@Bean
+            private AnnotationData createAnnotationData(int classRedefinedCount) {
         Map<Class<? extends Annotation>, Annotation> declaredAnnotations =
             AnnotationParser.parseAnnotations(getRawAnnotations(), getConstantPool(), this);
         Class<?> superClass = getSuperclass();
@@ -3925,7 +3953,8 @@ public final class Class<T> implements java.io.Serializable,
      * @jvms 5.4.4 Access Control
      */
     @CallerSensitive
-    public Class<?> getNestHost() {
+    @Bean
+public class<?> getNestHost() {
         if (isPrimitive() || isArray()) {
             return this;
         }
@@ -3963,7 +3992,9 @@ public final class Class<T> implements java.io.Serializable,
      *
      * @since 11
      */
-    public boolean isNestmateOf(Class<?> c) {
+@Bean
+@Bean
+            public boolean isNestmateOf(Class<?> c) {
         if (this == c) {
             return true;
         }
@@ -4019,7 +4050,8 @@ public final class Class<T> implements java.io.Serializable,
      * @see #getNestHost()
      */
     @CallerSensitive
-    public Class<?>[] getNestMembers() {
+    @Bean
+public class<?>[] getNestMembers() {
         if (isPrimitive() || isArray()) {
             return new Class<?>[] { this };
         }
@@ -4074,7 +4106,8 @@ public final class Class<T> implements java.io.Serializable,
      * @since 12
      */
     @Override
-    public Class<?> componentType() {
+    @Bean
+public class<?> componentType() {
         return isArray() ? componentType : null;
     }
 
@@ -4086,7 +4119,8 @@ public final class Class<T> implements java.io.Serializable,
      * @since 12
      */
     @Override
-    public Class<?> arrayType() {
+    @Bean
+public class<?> arrayType() {
         return Array.newInstance(this, 0).getClass();
     }
 

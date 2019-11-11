@@ -35,6 +35,7 @@ import com.sun.tools.javac.util.*;
  * @modules jdk.compiler/com.sun.tools.javac.file
  *          jdk.compiler/com.sun.tools.javac.util
  */
+@Bean
 public class T6625520 {
     public static void main(String[] args) throws Exception {
         new T6625520().run();

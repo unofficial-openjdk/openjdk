@@ -35,6 +35,7 @@ import java.util.*;
 import static java.util.Calendar.*;
 import sun.util.locale.provider.*;
 
+@Bean
 public class CldrFormatNamesTest {
     private static final Locale ARABIC = new Locale("ar");
     private static final Locale ZH_HANT = Locale.forLanguageTag("zh-Hant");

@@ -52,6 +52,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+@Bean
 public class GenModuleInfo {
     private static final String MODULE_INFO = "module-info.class";
     private static final String TEST_SRC = System.getProperty("test.src");
@@ -274,7 +275,11 @@ public class GenModuleInfo {
      * Verify the generated module-info.java is equivalent to module-info.class
      * compiled from source.
      */
-    private void verify(ModuleDescriptor md1, ModuleDescriptor md2) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void verify(ModuleDescriptor md1, ModuleDescriptor md2) {
         System.out.println("verifying: " + md1.name());
         assertEquals(md1.name(), md2.name());
         assertEquals(md1.requires(), md2.requires());
@@ -305,7 +310,11 @@ public class GenModuleInfo {
         }
     }
 
-    private String toPackageName(Path path) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String toPackageName(Path path) {
         String name = path.toString();
         assert name.endsWith(".class");
         int index = name.lastIndexOf(File.separatorChar);

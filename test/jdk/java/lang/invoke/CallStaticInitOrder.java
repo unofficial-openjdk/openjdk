@@ -41,6 +41,7 @@ import java.lang.invoke.*;
 import static java.lang.invoke.MethodHandles.*;
 import static java.lang.invoke.MethodType.*;
 
+@Bean
 public class CallStaticInitOrder {
     private static int TICK;
     private static synchronized int tick(String event) {

@@ -37,6 +37,7 @@ import java.net.Socket;
 import jdk.net.ExtendedSocketOptions;
 import jdk.net.Sockets;
 
+@Bean
 public class QuickAckTest {
 
     public static void main(String args[]) throws IOException {

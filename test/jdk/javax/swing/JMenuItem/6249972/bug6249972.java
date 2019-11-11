@@ -100,7 +100,10 @@ public class bug6249972 implements ActionListener {
         System.out.println("Test passed");
     }
 
-    public void actionPerformed(ActionEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
         // We are in the actionPerformed() method -
         // JMenuItem(String,int) handles lower-case mnemonics properly
         testPassed = true;

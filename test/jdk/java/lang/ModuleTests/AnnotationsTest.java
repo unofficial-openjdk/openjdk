@@ -55,6 +55,7 @@ import static org.testng.Assert.*;
  * @summary Basic test of annotations on modules
  */
 
+@Bean
 public class AnnotationsTest {
 
     /**

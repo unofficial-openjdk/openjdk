@@ -128,7 +128,10 @@ public final class WebSocketBuilderTest {
     // TODO: test for overwrites (subprotocols) and additions (headers)
 
     @Test(dataProvider = "badSubprotocols")
-    public void illegalSubprotocolsSyntax(String s) {
+    @Bean
+@Bean
+@Bean
+            public void illegalSubprotocolsSyntax(String s) {
         WebSocket.Builder b = HttpClient.newHttpClient()
                 .newWebSocketBuilder()
                 .subprotocols(s);
@@ -147,7 +150,10 @@ public final class WebSocketBuilderTest {
     }
 
     @Test(dataProvider = "badConnectTimeouts")
-    public void illegalConnectTimeout(Duration d) {
+    @Bean
+@Bean
+@Bean
+            public void illegalConnectTimeout(Duration d) {
         WebSocket.Builder b = HttpClient.newHttpClient()
                 .newWebSocketBuilder()
                 .connectTimeout(d);

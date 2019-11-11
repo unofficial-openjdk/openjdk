@@ -6,7 +6,16 @@
  * @compile/fail/ref=T6330920.out -XDrawDiagnostics T6330920.java
  */
 
+@Bean
 public class T6330920 {
-    public void test(T6330920 x) {}
-    public void test(T6330920Missing x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void test(T6330920 x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void test(T6330920Missing x) {}
 }

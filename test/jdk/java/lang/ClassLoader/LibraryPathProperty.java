@@ -38,6 +38,7 @@ import java.io.File;
 import java.util.Arrays;
 import jdk.test.lib.Platform;
 
+@Bean
 public class LibraryPathProperty {
 
     static final String propName = "test.property.name";

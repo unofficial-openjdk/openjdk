@@ -33,6 +33,7 @@ import jdk.test.lib.security.TestCertificate;
  * @run main/othervm jdk.security.logging.TestX509ValidationLog LOGGING_ENABLED
  * @run main/othervm jdk.security.logging.TestX509ValidationLog LOGGING_DISABLED
  */
+@Bean
 public class TestX509ValidationLog {
     public static void main(String[] args) throws Exception {
         LogJvm l = new LogJvm(GenerateCertificateChain.class, args);

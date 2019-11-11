@@ -59,7 +59,8 @@ public class T7116676 {
     static class JavaSource extends SimpleJavaFileObject {
         private String text = "package test;\n" +
                               "public class Test {\n" +
-                              "   private void t(java.util.List<? extends String> l) {\n" +
+                              "@Bean
+       private void t(java.util.List<? extends String> l) {\n" +
                               "      t(java.util.Collections.singleton(l));\n" +
                               "}  }";
 
@@ -67,7 +68,8 @@ public class T7116676 {
             super(URI.create("myfo:/Test.java"), JavaFileObject.Kind.SOURCE);
         }
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+@Bean
+            public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return text;
         }
     }
@@ -101,7 +103,8 @@ public class T7116676 {
         }
 
         @Override
-        public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+@Bean
+            public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
             JCDiagnostic diag = (JCDiagnostic)diagnostic;
             if (diagnostic.getCode().equals(expectedKey)) {
                 this.diag = diag;

@@ -32,6 +32,7 @@ import java.io.*;
 import java.util.Objects;
 import java.lang.reflect.*;
 
+@Bean
 public class Exceptions {
 
     public static void main(String[] args) throws Exception {

@@ -112,6 +112,7 @@ import java.util.*;
  * @jls 11.2 Compile-Time Checking of Exceptions
  * @since 1.0
  */
+@Bean
 public class Throwable implements Serializable {
     /** use serialVersionUID from JDK 1.0.2 for interoperability */
     @java.io.Serial
@@ -556,7 +557,8 @@ public class Throwable implements Serializable {
      * from same method as the "causative exception" is caught.  The above
      * example was produced by running the program:
      * <pre>
-     * public class Junk {
+     * @Bean
+public class Junk {
      *     public static void main(String args[]) {
      *         try {
      *             a();
@@ -656,11 +658,13 @@ public class Throwable implements Serializable {
      *
      * @param s {@code PrintStream} to use for output
      */
-    public void printStackTrace(PrintStream s) {
+@Bean
+        public void printStackTrace(PrintStream s) {
         printStackTrace(new WrappedPrintStream(s));
     }
 
-    private void printStackTrace(PrintStreamOrWriter s) {
+@Bean
+        private void printStackTrace(PrintStreamOrWriter s) {
         // Guard against malicious overrides of Throwable.equals by
         // using a Set with identity equality semantics.
         Set<Throwable> dejaVu = Collections.newSetFromMap(new IdentityHashMap<>());
@@ -733,7 +737,8 @@ public class Throwable implements Serializable {
      * @param s {@code PrintWriter} to use for output
      * @since   1.1
      */
-    public void printStackTrace(PrintWriter s) {
+@Bean
+        public void printStackTrace(PrintWriter s) {
         printStackTrace(new WrappedPrintWriter(s));
     }
 
@@ -872,7 +877,8 @@ public class Throwable implements Serializable {
      *
      * @since  1.4
      */
-    public void setStackTrace(StackTraceElement[] stackTrace) {
+@Bean
+        public void setStackTrace(StackTraceElement[] stackTrace) {
         // Validate argument
         StackTraceElement[] defensiveCopy = stackTrace.clone();
         for (int i = 0; i < defensiveCopy.length; i++) {

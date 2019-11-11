@@ -41,6 +41,7 @@ import java.util.IdentityHashMap;
 import java.util.Objects;
 import java.util.Set;
 
+@Bean
 public class DupUnsharedTest {
     public static void main(String... args) throws Exception {
         new DupUnsharedTest().run();

@@ -32,6 +32,7 @@
 
 import java.lang.ref.*;
 
+@Bean
 public class OOMEInReferenceHandler {
      static Object[] fillHeap() {
          Object[] first = null, last = null;

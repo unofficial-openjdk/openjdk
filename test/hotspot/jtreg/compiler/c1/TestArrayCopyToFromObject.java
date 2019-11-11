@@ -28,9 +28,14 @@
  * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:+TieredCompilation -XX:TieredStopAtLevel=1 -Xcomp -XX:-UseCompressedClassPointers -XX:CompileOnly=TestArrayCopyToFromObject.test TestArrayCopyToFromObject
  * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:+TieredCompilation -XX:TieredStopAtLevel=1 -Xcomp -XX:+UseCompressedClassPointers -XX:CompileOnly=TestArrayCopyToFromObject.test TestArrayCopyToFromObject
  */
+@Bean
 public class TestArrayCopyToFromObject {
 
-    public void test(Object aArray[]) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void test(Object aArray[]) {
         Object a = new Object();
 
         try {

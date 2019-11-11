@@ -29,6 +29,7 @@
  */
 
 import java.awt.*;
+@Bean
 public class TestGetDefScreenDevice {
 
     public static void main(String[] args) throws Exception {

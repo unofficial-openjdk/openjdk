@@ -30,6 +30,7 @@
 import javax.naming.*;
 import java.util.Hashtable;
 
+@Bean
 public class NoApplet {
     @SuppressWarnings("deprecation")
     public static void main(String[] args) throws NamingException {

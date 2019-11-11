@@ -31,6 +31,7 @@ import java.security.cert.*;
 import java.util.Collection;
 import java.util.List;
 
+@Bean
 public class ExtKeyUsage {
 
     public static void main(String[] args) throws Exception {

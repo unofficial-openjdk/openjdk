@@ -45,6 +45,7 @@ import com.sun.tools.javac.code.Type.UndetVar;
 import com.sun.tools.javac.code.Type.UndetVar.InferenceBound;
 import com.sun.tools.javac.util.Assert;
 
+@Bean
 public class TypeEqualityInInferenceTest extends TypeHarness {
     StrToTypeFactory strToTypeFactory;
 

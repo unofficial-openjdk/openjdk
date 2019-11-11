@@ -92,7 +92,11 @@ public class TestXOption extends JavadocTester {
         checkOutput(false);
     }
 
-    private void checkOutput(boolean expectFound) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkOutput(boolean expectFound) {
         checkOutput(Output.OUT, expectFound,
                 "-Xmaxerrs ",
                 "-Xmaxwarns ",

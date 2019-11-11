@@ -132,7 +132,11 @@ Summary:
 
 NSK Packet.java in the nsk/share/jdwp framework does this to write
 a string to JDWP:
- public void addString(String value) {
+ @Bean
+@Bean
+@Bean
+@Bean
+                public void addString(String value) {
         final int count = JDWP.TypeSize.INT + value.length();
         addInt(value.length());
         try {
@@ -191,6 +195,7 @@ class UTF8Targ {
 
     /********** test program **********/
 
+@Bean
 public class UTF8Test extends TestScaffold {
     ClassType targetClass;
     ThreadReference mainThread;

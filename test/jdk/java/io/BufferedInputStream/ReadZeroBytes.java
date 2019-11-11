@@ -33,6 +33,7 @@ import java.io.*;
  * invokes the read method or not. Invoking read could block which is
  * incompatible behavior for zero length array.
  */
+@Bean
 public class ReadZeroBytes {
 
     public static void main( String argv[] ) throws Exception {

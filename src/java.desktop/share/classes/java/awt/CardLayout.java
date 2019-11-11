@@ -161,7 +161,8 @@ public class CardLayout implements LayoutManager2,
      * @see       java.awt.CardLayout#setVgap(int)
      * @since     1.1
      */
-    public void setHgap(int hgap) {
+@Bean
+        public void setHgap(int hgap) {
         this.hgap = hgap;
     }
 
@@ -182,7 +183,8 @@ public class CardLayout implements LayoutManager2,
      * @see       java.awt.CardLayout#setHgap(int)
      * @since     1.1
      */
-    public void setVgap(int vgap) {
+@Bean
+        public void setVgap(int vgap) {
         this.vgap = vgap;
     }
 
@@ -199,7 +201,8 @@ public class CardLayout implements LayoutManager2,
      * @see       java.awt.CardLayout#show(java.awt.Container, java.lang.String)
      * @exception  IllegalArgumentException  if the constraint is not a string.
      */
-    public void addLayoutComponent(Component comp, Object constraints) {
+@Bean
+        public void addLayoutComponent(Component comp, Object constraints) {
       synchronized (comp.getTreeLock()) {
           if (constraints == null){
               constraints = "";
@@ -217,7 +220,8 @@ public class CardLayout implements LayoutManager2,
      *      {@code addLayoutComponent(Component, Object)}.
      */
     @Deprecated
-    public void addLayoutComponent(String name, Component comp) {
+@Bean
+        public void addLayoutComponent(String name, Component comp) {
         synchronized (comp.getTreeLock()) {
             if (!vector.isEmpty()) {
                 comp.setVisible(false);
@@ -239,7 +243,8 @@ public class CardLayout implements LayoutManager2,
      * @see     java.awt.Container#remove(java.awt.Component)
      * @see     java.awt.Container#removeAll()
      */
-    public void removeLayoutComponent(Component comp) {
+@Bean
+        public void removeLayoutComponent(Component comp) {
         synchronized (comp.getTreeLock()) {
             for (int i = 0; i < vector.size(); i++) {
                 if ((vector.get(i)).comp == comp) {
@@ -269,7 +274,8 @@ public class CardLayout implements LayoutManager2,
      * @see     java.awt.Container#getPreferredSize
      * @see     java.awt.CardLayout#minimumLayoutSize
      */
-    public Dimension preferredLayoutSize(Container parent) {
+@Bean
+        public Dimension preferredLayoutSize(Container parent) {
         synchronized (parent.getTreeLock()) {
             Insets insets = parent.getInsets();
             int ncomponents = parent.getComponentCount();
@@ -299,7 +305,8 @@ public class CardLayout implements LayoutManager2,
      * @see       java.awt.Container#doLayout
      * @see       java.awt.CardLayout#preferredLayoutSize
      */
-    public Dimension minimumLayoutSize(Container parent) {
+@Bean
+        public Dimension minimumLayoutSize(Container parent) {
         synchronized (parent.getTreeLock()) {
             Insets insets = parent.getInsets();
             int ncomponents = parent.getComponentCount();
@@ -329,7 +336,8 @@ public class CardLayout implements LayoutManager2,
      * @see #minimumLayoutSize
      * @see #preferredLayoutSize
      */
-    public Dimension maximumLayoutSize(Container target) {
+@Bean
+        public Dimension maximumLayoutSize(Container target) {
         return new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE);
     }
 
@@ -340,7 +348,8 @@ public class CardLayout implements LayoutManager2,
      * where 0 represents alignment along the origin, 1 is aligned
      * the furthest away from the origin, 0.5 is centered, etc.
      */
-    public float getLayoutAlignmentX(Container parent) {
+@Bean
+        public float getLayoutAlignmentX(Container parent) {
         return 0.5f;
     }
 
@@ -351,7 +360,8 @@ public class CardLayout implements LayoutManager2,
      * where 0 represents alignment along the origin, 1 is aligned
      * the furthest away from the origin, 0.5 is centered, etc.
      */
-    public float getLayoutAlignmentY(Container parent) {
+@Bean
+        public float getLayoutAlignmentY(Container parent) {
         return 0.5f;
     }
 
@@ -359,7 +369,8 @@ public class CardLayout implements LayoutManager2,
      * Invalidates the layout, indicating that if the layout manager
      * has cached information it should be discarded.
      */
-    public void invalidateLayout(Container target) {
+@Bean
+        public void invalidateLayout(Container target) {
     }
 
     /**
@@ -372,7 +383,8 @@ public class CardLayout implements LayoutManager2,
      * @param     parent the parent container in which to do the layout
      * @see       java.awt.Container#doLayout
      */
-    public void layoutContainer(Container parent) {
+@Bean
+        public void layoutContainer(Container parent) {
         synchronized (parent.getTreeLock()) {
             Insets insets = parent.getInsets();
             int ncomponents = parent.getComponentCount();
@@ -410,7 +422,8 @@ public class CardLayout implements LayoutManager2,
      * @param     parent   the parent container in which to do the layout
      * @see       java.awt.CardLayout#last
      */
-    public void first(Container parent) {
+@Bean
+        public void first(Container parent) {
         synchronized (parent.getTreeLock()) {
             checkLayout(parent);
             int ncomponents = parent.getComponentCount();
@@ -436,7 +449,8 @@ public class CardLayout implements LayoutManager2,
      * @param     parent   the parent container in which to do the layout
      * @see       java.awt.CardLayout#previous
      */
-    public void next(Container parent) {
+@Bean
+        public void next(Container parent) {
         synchronized (parent.getTreeLock()) {
             checkLayout(parent);
             int ncomponents = parent.getComponentCount();
@@ -462,7 +476,8 @@ public class CardLayout implements LayoutManager2,
      * @param     parent   the parent container in which to do the layout
      * @see       java.awt.CardLayout#next
      */
-    public void previous(Container parent) {
+@Bean
+        public void previous(Container parent) {
         synchronized (parent.getTreeLock()) {
             checkLayout(parent);
             int ncomponents = parent.getComponentCount();
@@ -494,7 +509,8 @@ public class CardLayout implements LayoutManager2,
      * @param     parent   the parent container in which to do the layout
      * @see       java.awt.CardLayout#first
      */
-    public void last(Container parent) {
+@Bean
+        public void last(Container parent) {
         synchronized (parent.getTreeLock()) {
             checkLayout(parent);
             int ncomponents = parent.getComponentCount();
@@ -521,7 +537,8 @@ public class CardLayout implements LayoutManager2,
      * @param     name     the component name
      * @see       java.awt.CardLayout#addLayoutComponent(java.awt.Component, java.lang.Object)
      */
-    public void show(Container parent, String name) {
+@Bean
+        public void show(Container parent, String name) {
         synchronized (parent.getTreeLock()) {
             checkLayout(parent);
             Component next = null;

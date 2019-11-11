@@ -148,6 +148,7 @@ import sun.util.calendar.Gregorian;
  * @author   David Goldsmith, Mark Davis, Chen-Lieh Huang, Alan Liu
  */
 
+@Bean
 public class SimpleTimeZone extends TimeZone {
     /**
      * Constructs a SimpleTimeZone with the given base time zone offset from GMT
@@ -410,7 +411,8 @@ public class SimpleTimeZone extends TimeZone {
      * {@code startDayOfMonth}, or {@code startTime} parameters are out of range
      * @since 1.2
      */
-    public void setStartRule(int startMonth, int startDay, int startTime) {
+@Bean
+        public void setStartRule(int startMonth, int startDay, int startTime) {
         setStartRule(startMonth, startDay, 0, startTime);
     }
 
@@ -536,7 +538,8 @@ public class SimpleTimeZone extends TimeZone {
      * local time.
      * @since 1.4
      */
-    public int getOffset(long date) {
+@Bean
+        public int getOffset(long date) {
         return getOffsets(date, null);
     }
 
@@ -669,7 +672,8 @@ public class SimpleTimeZone extends TimeZone {
         return getOffset(cal, cdate, y, time);
     }
 
-    private int getOffset(BaseCalendar cal, BaseCalendar.Date cdate, int year, long time) {
+@Bean
+        private int getOffset(BaseCalendar cal, BaseCalendar.Date cdate, int year, long time) {
         Cache cache = this.cache;
         if (cache != null) {
             if (time >= cache.start && time < cache.end) {
@@ -711,7 +715,8 @@ public class SimpleTimeZone extends TimeZone {
         return offset;
     }
 
-    private long getStart(BaseCalendar cal, BaseCalendar.Date cdate, int year) {
+@Bean
+        private long getStart(BaseCalendar cal, BaseCalendar.Date cdate, int year) {
         int time = startTime;
         if (startTimeMode != UTC_TIME) {
             time -= rawOffset;
@@ -720,7 +725,8 @@ public class SimpleTimeZone extends TimeZone {
                              startDayOfWeek, time);
     }
 
-    private long getEnd(BaseCalendar cal, BaseCalendar.Date cdate, int year) {
+@Bean
+        private long getEnd(BaseCalendar cal, BaseCalendar.Date cdate, int year) {
         int time = endTime;
         if (endTimeMode != UTC_TIME) {
             time -= rawOffset;
@@ -794,7 +800,8 @@ public class SimpleTimeZone extends TimeZone {
      * @see #getDSTSavings
      * @since 1.2
      */
-    public void setDSTSavings(int millisSavedDuringDST) {
+@Bean
+        public void setDSTSavings(int millisSavedDuringDST) {
         if (millisSavedDuringDST <= 0) {
             throw new IllegalArgumentException("Illegal daylight saving value: "
                                                + millisSavedDuringDST);
@@ -900,7 +907,8 @@ public class SimpleTimeZone extends TimeZone {
      * same rules and offset as this one
      * @since 1.2
      */
-    public boolean hasSameRules(TimeZone other) {
+@Bean
+        public boolean hasSameRules(TimeZone other) {
         if (this == other) {
             return true;
         }
@@ -1616,7 +1624,8 @@ public class SimpleTimeZone extends TimeZone {
      * Unpack the start and end times from an array of bytes.  This is required
      * as of serial version 2.
      */
-    private void unpackTimes(int[] times) {
+@Bean
+        private void unpackTimes(int[] times) {
         startTime = times[0];
         endTime = times[1];
     }

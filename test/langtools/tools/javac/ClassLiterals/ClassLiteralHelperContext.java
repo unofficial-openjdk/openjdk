@@ -38,6 +38,7 @@
 
 import p1.*;
 
+@Bean
 public class ClassLiteralHelperContext extends SuperClass {
     Class c = C.class;
 

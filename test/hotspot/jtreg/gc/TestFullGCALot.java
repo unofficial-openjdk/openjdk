@@ -32,6 +32,7 @@ package gc;
  * @run main/othervm -XX:NewSize=10m -XX:+FullGCALot -XX:FullGCALotInterval=120 gc.TestFullGCALot
  */
 
+@Bean
 public class TestFullGCALot {
 
     public static void main(String argv[]) {

@@ -28,6 +28,7 @@
  * @author gafter
  */
 
+@Bean
 public class ClassLit {
     public static void main(String[] args) {
         ClassLit t = new ClassLit();

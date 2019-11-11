@@ -33,6 +33,7 @@ import jdk.test.lib.process.*;
  *          java.management
  */
 
+@Bean
 public class TestAbortOnVMOperationTimeout {
 
     public static void main(String[] args) throws Exception {

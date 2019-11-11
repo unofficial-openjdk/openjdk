@@ -35,6 +35,7 @@ import java.util.Arrays;
 import java.io.*;
 import javax.tools.*;
 
+@Bean
 public class T6265400 {
     public static final String SILLY_BILLY = "oh what a silly billy I am";
 

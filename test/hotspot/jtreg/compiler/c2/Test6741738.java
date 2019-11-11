@@ -33,6 +33,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test6741738 {
     private String[] values;
     private int count;

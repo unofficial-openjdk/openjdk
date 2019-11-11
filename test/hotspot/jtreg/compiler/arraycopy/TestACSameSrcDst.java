@@ -30,6 +30,7 @@
  *
  */
 
+@Bean
 public class TestACSameSrcDst {
 
     static int test1(int[] src, int[] dst) {

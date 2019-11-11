@@ -44,6 +44,7 @@ import java.util.Random;
 import java.io.PrintStream;
 import java.util.Comparator;
 
+@Bean
 public class ParallelSorting {
     private static final PrintStream out = System.out;
     private static final PrintStream err = System.err;
@@ -347,7 +348,11 @@ public class ParallelSorting {
     }
 
     private static Comparator<Pair> pairCmp = new Comparator<Pair>() {
-        public int compare(Pair p1, Pair p2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int compare(Pair p1, Pair p2) {
             return p1.compareTo(p2);
         }
     };
@@ -366,7 +371,11 @@ public class ParallelSorting {
             return myValue;
         }
 
-        public int compareTo(Pair pair) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int compareTo(Pair pair) {
             if (myKey < pair.myKey) {
                 return -1;
             }

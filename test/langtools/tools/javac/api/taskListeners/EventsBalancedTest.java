@@ -101,12 +101,14 @@ public class EventsBalancedTest {
         }
 
         @Override
-        public void started(TaskEvent e) {
+@Bean
+            public void started(TaskEvent e) {
             kind2Count.put(e.getKind(), get(e.getKind()) + 1);
         }
 
         @Override
-        public void finished(TaskEvent e) {
+@Bean
+            public void finished(TaskEvent e) {
             int count = get(e.getKind());
 
             if (count <= 0)
@@ -124,7 +126,8 @@ public class EventsBalancedTest {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+@Bean
+            public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return content;
         }
     }

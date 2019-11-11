@@ -36,6 +36,7 @@
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+@Bean
 public class IncCompInheritance extends SjavacBase {
     public static void main(String... args) throws Exception {
 
@@ -44,9 +45,12 @@ public class IncCompInheritance extends SjavacBase {
         Path classes = root.resolve("classes");
 
         // Prep source files: A <- B <- C
-        String a = "package pkga; public class A { public void m() {} }";
-        String b = "package pkgb; public class B extends pkga.A {}";
-        String c = "package pkgc; public class C extends pkgb.B {{ new pkgb.B().m(); }}";
+        String a = "package pkga; @Bean
+public class A { public void m() {} }";
+        String b = "package pkgb; @Bean
+public class B extends pkga.A {}";
+        String c = "package pkgc; @Bean
+public class C extends pkgb.B {{ new pkgb.B().m(); }}";
         toolbox.writeFile(src.resolve("pkga/A.java"), a);
         toolbox.writeFile(src.resolve("pkgb/B.java"), b);
         toolbox.writeFile(src.resolve("pkgc/C.java"), c);
@@ -58,7 +62,8 @@ public class IncCompInheritance extends SjavacBase {
 
         // Remove method A.m
         Thread.sleep(2500); // Make sure we get a new timestamp
-        String aModified = "package pkga; public class A { }";
+        String aModified = "package pkga; @Bean
+public class A { }";
         toolbox.writeFile(src.resolve("pkga/A.java"), aModified);
 
         // Incremental compile (C should now be recompiled even though it

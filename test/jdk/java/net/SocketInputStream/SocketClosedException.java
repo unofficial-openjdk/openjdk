@@ -35,6 +35,7 @@ import java.io.*;
 import java.net.*;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class SocketClosedException {
     static void doServerSide() throws Exception {
         try {

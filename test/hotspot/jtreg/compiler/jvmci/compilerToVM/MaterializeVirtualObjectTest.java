@@ -109,6 +109,7 @@ import sun.hotspot.WhiteBox;
 
 import java.lang.reflect.Method;
 
+@Bean
 public class MaterializeVirtualObjectTest {
     private static final WhiteBox WB;
     private static final boolean INVALIDATE;
@@ -196,7 +197,11 @@ public class MaterializeVirtualObjectTest {
         testFrame("someString", /* materialize */ CompilerWhiteBoxTest.THRESHOLD + 1);
     }
 
-    private void testFrame(String str, int iteration) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testFrame(String str, int iteration) {
         Helper helper = new Helper(str);
         testFrame2(str, iteration);
         Asserts.assertTrue((helper.string != null) && (this != null)
@@ -222,7 +227,11 @@ public class MaterializeVirtualObjectTest {
                 && (outerHelper != null), String.format("%s : some locals are null", getName()));
     }
 
-    private void recurse(int depth, int iteration) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void recurse(int depth, int iteration) {
         if (depth == 0) {
             check(iteration);
         } else {
@@ -233,7 +242,11 @@ public class MaterializeVirtualObjectTest {
         }
     }
 
-    private void checkStructure(boolean materialize) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkStructure(boolean materialize) {
         boolean[] framesSeen = new boolean[2];
         Object[] helpers = new Object[1];
         CompilerToVMHelper.iterateFrames(
@@ -275,7 +288,11 @@ public class MaterializeVirtualObjectTest {
         Asserts.assertTrue(framesSeen[0], "frame2 should have been seen");
     }
 
-    private void check(int iteration) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void check(int iteration) {
         // Materialize virtual objects on last invocation
         if (iteration == COMPILE_THRESHOLD) {
             // get frames and check not-null

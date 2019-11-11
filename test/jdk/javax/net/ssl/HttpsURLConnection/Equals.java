@@ -88,6 +88,9 @@ public class Equals {
         URL url = new URL(spec);
         HttpsURLConnection urlcs = (HttpsURLConnection) url.openConnection();
         urlcs.setHostnameVerifier(new HostnameVerifier() {
+            @Bean
+@Bean
+@Bean
             public boolean verify(String s, SSLSession s1) {
                 return true;
             }

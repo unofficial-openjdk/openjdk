@@ -35,6 +35,7 @@ import java.util.*;
 import java.lang.reflect.*;
 import java.io.*;
 
+@Bean
 public class UnitTest {
     private static final Class[] X = new Class[0];
     private static final Class[] Y = { int.class };
@@ -4529,111 +4530,451 @@ public class UnitTest {
     int x) { }
 
     // Marker
-    public void markerParam(@Marker int x) { }
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void markerParam(@Marker int x) { }
 
     // Single-member (shorthand)
-    public void SingleMemberByteParam(@SingleMemberByte(1) int x) {}
-    public void SingleMemberShortParam(@SingleMemberShort(2) int x) {}
-    public void SingleMemberIntParam(@SingleMemberInt(3) int x) {}
-    public void SingleMemberLongParam(@SingleMemberLong(4L) int x) {}
-    public void SingleMemberCharParam(@SingleMemberChar('5') int x) {}
-    public void SingleMemberFloatParam(@SingleMemberFloat(6.0f) int x) {}
-    public void SingleMemberDoubleParam(@SingleMemberDouble(7.0) int x) {}
-    public void SingleMemberBooleanParam(@SingleMemberBoolean(true) int x) {}
-    public void SingleMemberStringParam(@SingleMemberString("custom") int x) {}
-    public void SingleMemberClassParam(@SingleMemberClass(Map.class) int x) {}
-    public void SingleMemberEnumParam(@SingleMemberEnum(Stooge.MOE) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberByteParam(@SingleMemberByte(1) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberShortParam(@SingleMemberShort(2) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberIntParam(@SingleMemberInt(3) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberLongParam(@SingleMemberLong(4L) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberCharParam(@SingleMemberChar('5') int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberFloatParam(@SingleMemberFloat(6.0f) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberDoubleParam(@SingleMemberDouble(7.0) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberBooleanParam(@SingleMemberBoolean(true) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberStringParam(@SingleMemberString("custom") int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberClassParam(@SingleMemberClass(Map.class) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberEnumParam(@SingleMemberEnum(Stooge.MOE) int x) {}
 
     // Single-member with default (Override)
-    public void SingleMemberByteOvrdDefParam(@SingleMemberByteWithDef(1) int x) {}
-    public void SingleMemberShortOvrdDefParam(@SingleMemberShortWithDef(2) int x) {}
-    public void SingleMemberIntOvrdDefParam(@SingleMemberIntWithDef(3) int x) {}
-    public void SingleMemberLongOvrdDefParam(@SingleMemberLongWithDef(4L) int x) {}
-    public void SingleMemberCharOvrdDefParam(@SingleMemberCharWithDef('5') int x) {}
-    public void SingleMemberFloatOvrdDefParam(@SingleMemberFloatWithDef(6.0f) int x) {}
-    public void SingleMemberDoubleOvrdDefParam(@SingleMemberDoubleWithDef(7.0) int x) {}
-    public void SingleMemberBooleanOvrdDefParam(@SingleMemberBooleanWithDef(true) int x) {}
-    public void SingleMemberStringOvrdDefParam(@SingleMemberStringWithDef("custom") int x) {}
-    public void SingleMemberClassOvrdDefParam(@SingleMemberClassWithDef(Map.class)  int x) {}
-    public void SingleMemberEnumOvrdDefParam(@SingleMemberEnumWithDef(Stooge.MOE) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberByteOvrdDefParam(@SingleMemberByteWithDef(1) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberShortOvrdDefParam(@SingleMemberShortWithDef(2) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberIntOvrdDefParam(@SingleMemberIntWithDef(3) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberLongOvrdDefParam(@SingleMemberLongWithDef(4L) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberCharOvrdDefParam(@SingleMemberCharWithDef('5') int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberFloatOvrdDefParam(@SingleMemberFloatWithDef(6.0f) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberDoubleOvrdDefParam(@SingleMemberDoubleWithDef(7.0) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberBooleanOvrdDefParam(@SingleMemberBooleanWithDef(true) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberStringOvrdDefParam(@SingleMemberStringWithDef("custom") int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberClassOvrdDefParam(@SingleMemberClassWithDef(Map.class)  int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberEnumOvrdDefParam(@SingleMemberEnumWithDef(Stooge.MOE) int x) {}
 
     // Single-member with default (Accept)
-    public void SingleMemberByteAcceptDefParam(@SingleMemberByteWithDef int x) {}
-    public void SingleMemberShortAcceptDefParam(@SingleMemberShortWithDef int x) {}
-    public void SingleMemberIntAcceptDefParam(@SingleMemberIntWithDef int x) {}
-    public void SingleMemberLongAcceptDefParam(@SingleMemberLongWithDef int x) {}
-    public void SingleMemberCharAcceptDefParam(@SingleMemberCharWithDef int x) {}
-    public void SingleMemberFloatAcceptDefParam(@SingleMemberFloatWithDef int x) {}
-    public void SingleMemberDoubleAcceptDefParam(@SingleMemberDoubleWithDef int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberByteAcceptDefParam(@SingleMemberByteWithDef int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberShortAcceptDefParam(@SingleMemberShortWithDef int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberIntAcceptDefParam(@SingleMemberIntWithDef int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberLongAcceptDefParam(@SingleMemberLongWithDef int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberCharAcceptDefParam(@SingleMemberCharWithDef int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberFloatAcceptDefParam(@SingleMemberFloatWithDef int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberDoubleAcceptDefParam(@SingleMemberDoubleWithDef int x) {}
     public void SingleMemberBooleanAcceptDefParam(@SingleMemberBooleanWithDef int x){}
-    public void SingleMemberStringAcceptDefParam(@SingleMemberStringWithDef int x) {}
-    public void SingleMemberClassAcceptDefParam(@SingleMemberClassWithDef int x) {}
-    public void SingleMemberEnumAcceptDefParam(@SingleMemberEnumWithDef int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberStringAcceptDefParam(@SingleMemberStringWithDef int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberClassAcceptDefParam(@SingleMemberClassWithDef int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberEnumAcceptDefParam(@SingleMemberEnumWithDef int x) {}
 
     // Single member array (empty array)
-    public void SingleMemberByteArrEmptyParam(@SingleMemberByteArray({}) int x) {}
-    public void SingleMemberShortArrEmptyParam(@SingleMemberShortArray({}) int x) {}
-    public void SingleMemberIntArrEmptyParam(@SingleMemberIntArray({}) int x) {}
-    public void SingleMemberLongArrEmptyParam(@SingleMemberLongArray({}) int x) {}
-    public void SingleMemberCharArrEmptyParam(@SingleMemberCharArray({}) int x) {}
-    public void SingleMemberFloatArrEmptyParam(@SingleMemberFloatArray({}) int x) {}
-    public void SingleMemberDoubleArrEmptyParam(@SingleMemberDoubleArray({}) int x) {}
-    public void SingleMemberBooleanArrEmptyParam(@SingleMemberBooleanArray({}) int x) {}
-    public void SingleMemberStringArrEmptyParam(@SingleMemberStringArray({}) int x) {}
-    public void SingleMemberClassArrEmptyParam(@SingleMemberClassArray({}) int x) {}
-    public void SingleMemberEnumArrEmptyParam(@SingleMemberEnumArray({}) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberByteArrEmptyParam(@SingleMemberByteArray({}) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberShortArrEmptyParam(@SingleMemberShortArray({}) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberIntArrEmptyParam(@SingleMemberIntArray({}) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberLongArrEmptyParam(@SingleMemberLongArray({}) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberCharArrEmptyParam(@SingleMemberCharArray({}) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberFloatArrEmptyParam(@SingleMemberFloatArray({}) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberDoubleArrEmptyParam(@SingleMemberDoubleArray({}) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberBooleanArrEmptyParam(@SingleMemberBooleanArray({}) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberStringArrEmptyParam(@SingleMemberStringArray({}) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberClassArrEmptyParam(@SingleMemberClassArray({}) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberEnumArrEmptyParam(@SingleMemberEnumArray({}) int x) {}
 
     // Single member array (one-element shorthand)
-    public void SingleMemberByteArrOneParam(@SingleMemberByteArray(1) int x) {}
-    public void SingleMemberShortArrOneParam(@SingleMemberShortArray(2) int x) {}
-    public void SingleMemberIntArrOneParam(@SingleMemberIntArray(3) int x) {}
-    public void SingleMemberLongArrOneParam(@SingleMemberLongArray(4L) int x) {}
-    public void SingleMemberCharArrOneParam(@SingleMemberCharArray('5') int x) {}
-    public void SingleMemberFloatArrOneParam(@SingleMemberFloatArray(6.0f) int x) {}
-    public void SingleMemberDoubleArrOneParam(@SingleMemberDoubleArray(7.0) int x) {}
-    public void SingleMemberBooleanArrOneParam(@SingleMemberBooleanArray(true) int x) {}
-    public void SingleMemberStringArrOneParam(@SingleMemberStringArray("custom") int x) {}
-    public void SingleMemberClassArrOneParam(@SingleMemberClassArray(Map.class) int x) {}
-    public void SingleMemberEnumArrOneParam(@SingleMemberEnumArray(Stooge.MOE) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberByteArrOneParam(@SingleMemberByteArray(1) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberShortArrOneParam(@SingleMemberShortArray(2) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberIntArrOneParam(@SingleMemberIntArray(3) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberLongArrOneParam(@SingleMemberLongArray(4L) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberCharArrOneParam(@SingleMemberCharArray('5') int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberFloatArrOneParam(@SingleMemberFloatArray(6.0f) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberDoubleArrOneParam(@SingleMemberDoubleArray(7.0) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberBooleanArrOneParam(@SingleMemberBooleanArray(true) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberStringArrOneParam(@SingleMemberStringArray("custom") int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberClassArrOneParam(@SingleMemberClassArray(Map.class) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberEnumArrOneParam(@SingleMemberEnumArray(Stooge.MOE) int x) {}
 
     // Single member array (two elements)
-    public void SingleMemberByteArrTwoParam(@SingleMemberByteArray({1, 2}) int x) {}
-    public void SingleMemberShortArrTwoParam(@SingleMemberShortArray({2, 3}) int x) {}
-    public void SingleMemberIntArrTwoParam(@SingleMemberIntArray({3, 4}) int x) {}
-    public void SingleMemberLongArrTwoParam(@SingleMemberLongArray({4L, 5L}) int x) {}
-    public void SingleMemberCharArrTwoParam(@SingleMemberCharArray({'5', '6'}) int x) {}
-    public void SingleMemberFloatArrTwoParam(@SingleMemberFloatArray({6.0f, 7.0f}) int x) {}
-    public void SingleMemberDoubleArrTwoParam(@SingleMemberDoubleArray({7.0, 8.0}) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberByteArrTwoParam(@SingleMemberByteArray({1, 2}) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberShortArrTwoParam(@SingleMemberShortArray({2, 3}) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberIntArrTwoParam(@SingleMemberIntArray({3, 4}) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberLongArrTwoParam(@SingleMemberLongArray({4L, 5L}) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberCharArrTwoParam(@SingleMemberCharArray({'5', '6'}) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberFloatArrTwoParam(@SingleMemberFloatArray({6.0f, 7.0f}) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberDoubleArrTwoParam(@SingleMemberDoubleArray({7.0, 8.0}) int x) {}
     public void SingleMemberBooleanArrTwoParam(@SingleMemberBooleanArray({true, false}) int x){}
-    public void SingleMemberStringArrTwoParam(@SingleMemberStringArray({"custom", "paint"}) int x) {}
-    public void SingleMemberClassArrTwoParam(@SingleMemberClassArray({Map.class, Set.class}) int x) {}
-    public void SingleMemberEnumArrTwoParam(@SingleMemberEnumArray({Stooge.MOE, Stooge.CURLY}) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberStringArrTwoParam(@SingleMemberStringArray({"custom", "paint"}) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberClassArrTwoParam(@SingleMemberClassArray({Map.class, Set.class}) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberEnumArrTwoParam(@SingleMemberEnumArray({Stooge.MOE, Stooge.CURLY}) int x) {}
 
     // Single member array with default (override)
-    public void SingleMemberByteArrOvrdDefParam(@SingleMemberByteArrayDef(1) int x) {}
-    public void SingleMemberShortArrOvrdDefParam(@SingleMemberShortArrayDef(2) int x) {}
-    public void SingleMemberIntArrOvrdDefParam(@SingleMemberIntArrayDef(3) int x) {}
-    public void SingleMemberLongArrOvrdDefParam(@SingleMemberLongArrayDef(4L) int x) {}
-    public void SingleMemberCharArrOvrdDefParam(@SingleMemberCharArrayDef('5') int x) {}
-    public void SingleMemberFloatArrOvrdDefParam(@SingleMemberFloatArrayDef(6.0f) int x) {}
-    public void SingleMemberDoubleArrOvrdDefParam(@SingleMemberDoubleArrayDef(7.0) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberByteArrOvrdDefParam(@SingleMemberByteArrayDef(1) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberShortArrOvrdDefParam(@SingleMemberShortArrayDef(2) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberIntArrOvrdDefParam(@SingleMemberIntArrayDef(3) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberLongArrOvrdDefParam(@SingleMemberLongArrayDef(4L) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberCharArrOvrdDefParam(@SingleMemberCharArrayDef('5') int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberFloatArrOvrdDefParam(@SingleMemberFloatArrayDef(6.0f) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberDoubleArrOvrdDefParam(@SingleMemberDoubleArrayDef(7.0) int x) {}
     public void SingleMemberBooleanArrOvrdDefParam(@SingleMemberBooleanArrayDef(true) int x){}
-    public void SingleMemberStringArrOvrdDefParam(@SingleMemberStringArrayDef("custom") int x) {}
-    public void SingleMemberClassArrOvrdDefParam(@SingleMemberClassArrayDef(Map.class) int x) {}
-    public void SingleMemberEnumArrOvrdDefParam(@SingleMemberEnumArrayDef(Stooge.MOE) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberStringArrOvrdDefParam(@SingleMemberStringArrayDef("custom") int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberClassArrOvrdDefParam(@SingleMemberClassArrayDef(Map.class) int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberEnumArrOvrdDefParam(@SingleMemberEnumArrayDef(Stooge.MOE) int x) {}
 
     // Single member array with default - accept
-    public void SingleMemberByteArrAcceptDefParam(@SingleMemberByteArrayDef int x) {}
-    public void SingleMemberShortArrAcceptDefParam(@SingleMemberShortArrayDef int x) {}
-    public void SingleMemberIntArrAcceptDefParam(@SingleMemberIntArrayDef int x) {}
-    public void SingleMemberLongArrAcceptDefParam(@SingleMemberLongArrayDef int x) {}
-    public void SingleMemberCharArrAcceptDefParam(@SingleMemberCharArrayDef int x) {}
-    public void SingleMemberFloatArrAcceptDefParam(@SingleMemberFloatArrayDef int x) {}
-    public void SingleMemberDoubleArrAcceptDefParam(@SingleMemberDoubleArrayDef int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberByteArrAcceptDefParam(@SingleMemberByteArrayDef int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberShortArrAcceptDefParam(@SingleMemberShortArrayDef int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberIntArrAcceptDefParam(@SingleMemberIntArrayDef int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberLongArrAcceptDefParam(@SingleMemberLongArrayDef int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberCharArrAcceptDefParam(@SingleMemberCharArrayDef int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberFloatArrAcceptDefParam(@SingleMemberFloatArrayDef int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberDoubleArrAcceptDefParam(@SingleMemberDoubleArrayDef int x) {}
     public void SingleMemberBooleanArrAcceptDefParam(@SingleMemberBooleanArrayDef int x){}
-    public void SingleMemberStringArrAcceptDefParam(@SingleMemberStringArrayDef int x) {}
-    public void SingleMemberClassArrAcceptDefParam(@SingleMemberClassArrayDef int x) {}
-    public void SingleMemberEnumArrAcceptDefParam(@SingleMemberEnumArrayDef int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberStringArrAcceptDefParam(@SingleMemberStringArrayDef int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberClassArrAcceptDefParam(@SingleMemberClassArrayDef int x) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void SingleMemberEnumArrAcceptDefParam(@SingleMemberEnumArrayDef int x) {}
 }
 
 // Helper types

@@ -51,6 +51,7 @@ import toolbox.Task.Expect;
 import toolbox.TestRunner;
 import toolbox.ToolBox;
 
+@Bean
 public class BCPOrSystemNotSpecified extends TestRunner {
 
     private final ToolBox tb = new ToolBox();
@@ -68,7 +69,8 @@ public class BCPOrSystemNotSpecified extends TestRunner {
     public void testSource8(Path base) throws IOException {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
-                          "package test; public class Test { } ");
+                          "package test; @Bean
+public class Test { } ");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
@@ -114,7 +116,8 @@ public class BCPOrSystemNotSpecified extends TestRunner {
     public void testSource9(Path base) throws IOException {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
-                          "package test; public class Test { } ");
+                          "package test; @Bean
+public class Test { } ");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 

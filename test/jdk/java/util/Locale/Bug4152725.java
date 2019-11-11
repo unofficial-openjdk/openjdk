@@ -43,6 +43,7 @@
 
 import java.util.Locale;
 
+@Bean
 public class Bug4152725 {
 
     public static void main(String[] args) {

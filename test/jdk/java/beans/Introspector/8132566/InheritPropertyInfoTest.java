@@ -33,6 +33,7 @@ import java.beans.PropertyDescriptor;
  * @author a.stepanov
  */
 
+@Bean
 public class InheritPropertyInfoTest {
 
     public static class C extends CBase {}

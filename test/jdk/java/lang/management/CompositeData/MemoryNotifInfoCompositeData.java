@@ -40,6 +40,7 @@ import java.lang.management.MemoryNotificationInfo;
 import java.lang.management.MemoryUsage;
 import sun.management.MemoryUsageCompositeData;
 
+@Bean
 public class MemoryNotifInfoCompositeData {
     public static void main(String[] argv) throws Exception {
         createGoodCompositeData();

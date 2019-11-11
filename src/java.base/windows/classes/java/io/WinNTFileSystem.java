@@ -55,15 +55,18 @@ class WinNTFileSystem extends FileSystem {
         prefixCache = useCanonPrefixCache ? new ExpiringCache() : null;
     }
 
-    private boolean isSlash(char c) {
+@Bean
+        private boolean isSlash(char c) {
         return (c == '\\') || (c == '/');
     }
 
-    private boolean isLetter(char c) {
+@Bean
+        private boolean isLetter(char c) {
         return ((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z'));
     }
 
-    private String slashify(String p) {
+@Bean
+        private String slashify(String p) {
         if (!p.isEmpty() && p.charAt(0) != slash) return slash + p;
         else return p;
     }
@@ -84,7 +87,8 @@ class WinNTFileSystem extends FileSystem {
        normalizer on the part of the pathname that requires normalization.
        This way we iterate through the whole pathname string only once. */
     @Override
-    public String normalize(String path) {
+@Bean
+        public String normalize(String path) {
         int n = path.length();
         char slash = this.slash;
         char altSlash = this.altSlash;
@@ -105,7 +109,8 @@ class WinNTFileSystem extends FileSystem {
 
     /* Normalize the given pathname, whose length is len, starting at the given
        offset; everything before this offset is already normal. */
-    private String normalize(String path, int len, int off) {
+@Bean
+        private String normalize(String path, int len, int off) {
         if (len == 0) return path;
         if (off < 3) off = 0;   /* Avoid fencepost cases with UNC pathnames */
         int src;
@@ -177,7 +182,8 @@ class WinNTFileSystem extends FileSystem {
                 else directory-relative (has form "z:foo")
            3  absolute local pathname (begins with "z:\\")
      */
-    private int normalizePrefix(String path, int len, StringBuilder sb) {
+@Bean
+        private int normalizePrefix(String path, int len, StringBuilder sb) {
         int src = 0;
         while ((src < len) && isSlash(path.charAt(src))) src++;
         char c;
@@ -209,7 +215,8 @@ class WinNTFileSystem extends FileSystem {
     }
 
     @Override
-    public int prefixLength(String path) {
+@Bean
+        public int prefixLength(String path) {
         char slash = this.slash;
         int n = path.length();
         if (n == 0) return 0;
@@ -228,7 +235,8 @@ class WinNTFileSystem extends FileSystem {
     }
 
     @Override
-    public String resolve(String parent, String child) {
+@Bean
+        public String resolve(String parent, String child) {
         int pn = parent.length();
         if (pn == 0) return child;
         int cn = child.length();
@@ -281,7 +289,8 @@ class WinNTFileSystem extends FileSystem {
     }
 
     @Override
-    public String fromURIPath(String path) {
+@Bean
+        public String fromURIPath(String path) {
         String p = path;
         if ((p.length() > 2) && (p.charAt(2) == ':')) {
             // "/c:/foo" --> "c:/foo"
@@ -299,14 +308,16 @@ class WinNTFileSystem extends FileSystem {
     /* -- Path operations -- */
 
     @Override
-    public boolean isAbsolute(File f) {
+@Bean
+        public boolean isAbsolute(File f) {
         int pl = f.getPrefixLength();
         return (((pl == 2) && (f.getPath().charAt(0) == slash))
                 || (pl == 3));
     }
 
     @Override
-    public String resolve(File f) {
+@Bean
+        public String resolve(File f) {
         String path = f.getPath();
         int pl = f.getPrefixLength();
         if ((pl == 2) && (path.charAt(0) == slash))
@@ -357,7 +368,8 @@ class WinNTFileSystem extends FileSystem {
         return normalize(userDir);
     }
 
-    private String getDrive(String path) {
+@Bean
+        private String getDrive(String path) {
         int pl = prefixLength(path);
         return (pl == 3) ? path.substring(0, 2) : null;
     }
@@ -372,7 +384,8 @@ class WinNTFileSystem extends FileSystem {
 
     private native String getDriveDirectory(int drive);
 
-    private String getDriveDirectory(char drive) {
+@Bean
+        private String getDriveDirectory(char drive) {
         int i = driveIndex(drive);
         if (i < 0) return null;
         String s = driveDirCache[i];
@@ -563,7 +576,8 @@ class WinNTFileSystem extends FileSystem {
     public native boolean setReadOnly(File f);
 
     @Override
-    public boolean delete(File f) {
+@Bean
+        public boolean delete(File f) {
         // Keep canonicalization caches in sync after file deletion
         // and renaming operations. Could be more clever than this
         // (i.e., only remove/update affected entries) but probably
@@ -581,7 +595,8 @@ class WinNTFileSystem extends FileSystem {
     private native boolean delete0(File f);
 
     @Override
-    public boolean rename(File f1, File f2) {
+@Bean
+        public boolean rename(File f1, File f2) {
         // Keep canonicalization caches in sync after file deletion
         // and renaming operations. Could be more clever than this
         // (i.e., only remove/update affected entries) but probably
@@ -612,7 +627,8 @@ class WinNTFileSystem extends FileSystem {
 
     private static native int listRoots0();
 
-    private boolean access(String path) {
+@Bean
+        private boolean access(String path) {
         try {
             SecurityManager security = System.getSecurityManager();
             if (security != null) security.checkRead(path);
@@ -625,7 +641,8 @@ class WinNTFileSystem extends FileSystem {
     /* -- Disk usage -- */
 
     @Override
-    public long getSpace(File f, int t) {
+@Bean
+        public long getSpace(File f, int t) {
         if (f.exists()) {
             return getSpace0(f, t);
         }
@@ -641,7 +658,8 @@ class WinNTFileSystem extends FileSystem {
     private native int getNameMax0(String path);
 
     @Override
-    public int getNameMax(String path) {
+@Bean
+        public int getNameMax(String path) {
         String s = null;
         if (path != null) {
             File f = new File(path);
@@ -659,12 +677,14 @@ class WinNTFileSystem extends FileSystem {
     }
 
     @Override
-    public int compare(File f1, File f2) {
+@Bean
+        public int compare(File f1, File f2) {
         return f1.getPath().compareToIgnoreCase(f2.getPath());
     }
 
     @Override
-    public int hashCode(File f) {
+@Bean
+        public int hashCode(File f) {
         /* Could make this more efficient: String.hashCodeIgnoreCase */
         return f.getPath().toLowerCase(Locale.ENGLISH).hashCode() ^ 1234321;
     }

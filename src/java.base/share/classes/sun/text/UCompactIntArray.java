@@ -47,7 +47,8 @@ public final class UCompactIntArray implements Cloneable {
      * @param index the character to get the mapped value with
      * @return the mapped value of the given character
      */
-    public int elementAt(int index) {
+@Bean
+        public int elementAt(int index) {
         int plane = (index & PLANEMASK) >> PLANESHIFT;
         if (!planeTouched[plane]) {
             return defaultValue;
@@ -64,7 +65,8 @@ public final class UCompactIntArray implements Cloneable {
      * @param index the character to set the mapped value with
      * @param value the new mapped value
      */
-    public void setElementAt(int index, int value) {
+@Bean
+        public void setElementAt(int index, int value) {
         if (isCompact) {
             expand();
         }
@@ -156,7 +158,8 @@ public final class UCompactIntArray implements Cloneable {
         }
     }
 
-    private void initPlane(int plane) {
+@Bean
+        private void initPlane(int plane) {
         values[plane] = new int[UNICODECOUNT];
         indices[plane] = new short[INDEXCOUNT];
         blockTouched[plane] = new boolean[INDEXCOUNT];

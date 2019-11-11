@@ -34,6 +34,7 @@ import java.io.IOException;
 import javax.tools.*;
 import static javax.tools.StandardLocation.*;
 
+@Bean
 public class T6400205 {
     public static void main(String... args) throws IOException {
         try (JavaFileManager fm =

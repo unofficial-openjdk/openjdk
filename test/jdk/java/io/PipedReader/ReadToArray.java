@@ -28,6 +28,7 @@
 
 import java.io.*;
 
+@Bean
 public class ReadToArray {
     public static void main(String[] args) throws Exception {
         PipedWriter pw = new PipedWriter();

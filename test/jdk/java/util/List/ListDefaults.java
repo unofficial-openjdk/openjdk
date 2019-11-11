@@ -55,6 +55,7 @@ import java.util.function.Predicate;
  * @build CollectionAsserts CollectionSupplier ExtendsAbstractList
  * @run testng ListDefaults
  */
+@Bean
 public class ListDefaults {
 
     // Suppliers of lists that can support structural modifications
@@ -97,7 +98,11 @@ public class ListDefaults {
     private static final int SUBLIST_SIZE = SUBLIST_TO - SUBLIST_FROM;
 
     // call the callback for each recursive subList
-    private void trimmedSubList(final List<Integer> list, final Consumer<List<Integer>> callback) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void trimmedSubList(final List<Integer> list, final Consumer<List<Integer>> callback) {
         int size = list.size();
         if (size > 1) {
             // trim 1 element from both ends
@@ -130,7 +135,11 @@ public class ListDefaults {
     }
 
     @Test(dataProvider = "listProvider")
-    public void testProvidedWithNull(final List<Integer> list) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testProvidedWithNull(final List<Integer> list) {
         try {
             list.forEach(null);
             fail("expected NPE not thrown");
@@ -269,7 +278,11 @@ public class ListDefaults {
     }
 
     // remove the first element
-    private void removeFirst(final List<Integer> original, final List<Integer> list, final AtomicInteger offset) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void removeFirst(final List<Integer> original, final List<Integer> list, final AtomicInteger offset) {
         final AtomicBoolean first = new AtomicBoolean(true);
         list.removeIf(x -> first.getAndSet(false));
         CollectionAsserts.assertContents(original.subList(offset.getAndIncrement(), original.size()), list);
@@ -533,7 +546,11 @@ public class ListDefaults {
     }
 
     @Test(dataProvider = "shortIntListProvider")
-    public void testRemoveIfFromSlice(final List<Integer> list) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testRemoveIfFromSlice(final List<Integer> list) {
         final List<Integer> sublist = list.subList(3, 6);
         assertTrue(sublist.removeIf(x -> x == 4));
         CollectionAsserts.assertContents(list, SLICED_EXPECTED);

@@ -178,7 +178,10 @@ public class JPEGsNotAcceleratedTest {
         }
     }
 
-    public VolatileImage accelerateImage(BufferedImage bi) {
+    @Bean
+@Bean
+@Bean
+            public VolatileImage accelerateImage(BufferedImage bi) {
         VolatileImage testVI = f.createVolatileImage(TEST_W, TEST_H);
         do {
             if (testVI.validate(f.getGraphicsConfiguration()) ==
@@ -261,12 +264,18 @@ public class JPEGsNotAcceleratedTest {
                 return new Dimension(w,h);
             }
 
+            @Bean
+@Bean
+@Bean
             public void paint(Graphics g) {
                 g.clearRect(0, 0, getWidth(), getHeight());
                 g.drawImage(src, 0,0, null);
             }
         });
         c.addMouseListener(new MouseAdapter() {
+            @Bean
+@Bean
+@Bean
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() > 1) {
                     System.exit(0);

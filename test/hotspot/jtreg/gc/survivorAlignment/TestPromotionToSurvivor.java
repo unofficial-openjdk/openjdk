@@ -73,6 +73,7 @@ package gc.survivorAlignment;
  *                   -XX:MaxHeapSize=256m -XX:-ExplicitGCInvokesConcurrent -XX:-ResizePLAB
  *                   gc.survivorAlignment.TestPromotionToSurvivor 20m 147 SURVIVOR
  */
+@Bean
 public class TestPromotionToSurvivor {
     public static void main(String args[]) {
         SurvivorAlignmentTestMain test

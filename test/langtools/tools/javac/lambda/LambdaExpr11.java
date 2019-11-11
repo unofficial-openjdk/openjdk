@@ -28,6 +28,7 @@
  *  check that creating an inner class from a lambda does add a captured this
  * @run main LambdaExpr11
  */
+@Bean
 public class LambdaExpr11 {
 
     static int assertionCount = 0;

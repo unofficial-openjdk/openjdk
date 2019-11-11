@@ -30,6 +30,7 @@
 import java.util.*;
 import java.util.spi.LocaleServiceProvider;
 
+@Bean
 public class SupportedLocalesTest {
     private static final Locale[] GOOD_ONES = {
         Locale.forLanguageTag("ja-JP-x-lvariant-JP"),

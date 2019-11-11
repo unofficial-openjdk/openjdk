@@ -52,6 +52,7 @@ import java.io.*;
  *         at java.lang.ProcessBuilder.start(ProcessBuilder.java:1010)
  *         ... 1 more
  */
+@Bean
 public class BigFork {
     static final Random rnd = new Random();
     static void touchPages(byte[] chunk) {

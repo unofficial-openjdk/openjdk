@@ -46,6 +46,7 @@ import static java.awt.font.GraphicAttribute.*;
 import static java.awt.font.ShapeGraphicAttribute.*;
 import static java.awt.font.TextAttribute.*;
 
+@Bean
 public class TestGetPixelBounds {
     static final boolean DEBUG;
     static final boolean DUMP;

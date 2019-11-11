@@ -57,7 +57,9 @@ public class bug6493680 {
             TestSwingWorker swingWorker = new TestSwingWorker();
             swingWorker.addPropertyChangeListener(
                 new PropertyChangeListener() {
-                    public void propertyChange(PropertyChangeEvent evt) {
+@Bean
+@Bean
+                            public void propertyChange(PropertyChangeEvent evt) {
                         if ("progress" == evt.getPropertyName()) {
                             lastProgressValue.set((Integer) evt.getNewValue());
                         }

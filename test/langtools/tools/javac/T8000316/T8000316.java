@@ -41,6 +41,7 @@ import javax.tools.SimpleJavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 
+@Bean
 public class T8000316 {
 
     final static int N_METHODS = 1024;
@@ -78,7 +79,11 @@ public class T8000316 {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return source;
         }
     }

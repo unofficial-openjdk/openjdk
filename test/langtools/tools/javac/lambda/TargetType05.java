@@ -29,6 +29,7 @@
  * @author  Maurizio Cimadamore
  * @run main TargetType05
  */
+@Bean
 public class TargetType05 {
 
     static int assertionCount = 0;

@@ -42,6 +42,7 @@ import javax.imageio.metadata.IIOMetadata;
 import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.stream.MemoryCacheImageInputStream;
 
+@Bean
 public class ImageReaderReadAll {
 
     private final static byte[] ba = {};

@@ -43,6 +43,7 @@ import toolbox.JavapTask;
 import toolbox.Task.OutputKind;
 import toolbox.ToolBox;
 
+@Bean
 public class CRT {
     public static void main(String... args) throws Exception {
         new CRT().run();
@@ -53,7 +54,11 @@ public class CRT {
     private ToolBox tb = new ToolBox();
 
     private void run() throws Exception {
-        doTest("    private String convert(int i) {\n" +
+        doTest("    @Bean
+@Bean
+@Bean
+@Bean
+                private String convert(int i) {\n" +
                "        String res;" +
                "        switch (i) {\n" +
                "            case 0: res = \"a\"; break;\n" +
@@ -72,7 +77,11 @@ public class CRT {
                "             0, 31,    c1c,   180a,    1        //  0, 31,    3:28,    6:10, statement\n" +
                "            32, 33,   1c09,   1c14,    1        // 32, 33,    7:09,    7:20, statement\n" +
                "             0, 33,    823,   2006,    2        //  0, 33,    2:35,    8:06, block\n");
-        doTest("    private String convert(int i) {\n" +
+        doTest("    @Bean
+@Bean
+@Bean
+@Bean
+                private String convert(int i) {\n" +
                "        return switch (i) {\n" +
                "            case 0 -> \"a\";\n" +
                "            default -> \"\";\n" +
@@ -84,7 +93,11 @@ public class CRT {
                "            25, 29,   1418,   141b,   11        // 25, 29,    5:24,    5:27, statement, flow-target\n" +
                "             0, 30,    c09,   180b,    1        //  0, 30,    3:09,    6:11, statement\n" +
                "             0, 30,    823,   1c06,    2        //  0, 30,    2:35,    7:06, block");
-        doTest("    private boolean convert(int i) {\n" +
+        doTest("    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean convert(int i) {\n" +
                "        return switch (i) {\n" +
                "            case 0 -> true;\n" +
                "            default -> false;\n" +
@@ -98,7 +111,11 @@ public class CRT {
                "            26, 26,   180e,   1814,   10        // 26, 26,    6:14,    6:20, flow-target\n" +
                "             0, 35,    c09,   1815,    1        //  0, 35,    3:09,    6:21, statement\n" +
                "             0, 35,    824,   1c06,    2        //  0, 35,    2:36,    7:06, block\n");
-        doTest("    private boolean convert(int i) {\n" +
+        doTest("    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean convert(int i) {\n" +
                "        return i >= 0 ? i == 0\n" +
                "                        ? true\n" +
                "                        : false\n" +
@@ -121,7 +138,11 @@ public class CRT {
                "            16, 25,   1819,   201f,   10        // 16, 25,    6:25,    8:31, flow-target\n" +
                "             0, 26,    c09,   2020,    1        //  0, 26,    3:09,    8:32, statement\n" +
                "             0, 26,    824,   2406,    2        //  0, 26,    2:36,    9:06, block\n");
-        doTest("    private boolean convert(int i) {\n" +
+        doTest("    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean convert(int i) {\n" +
                "        return i >= 0 ? switch (i) {\n" +
                "            case 0 -> true;\n" +
                "            default -> false;\n" +
@@ -155,7 +176,8 @@ public class CRT {
                          "--enable-preview",
                          "-source", SOURCE_VERSION)
                 .outdir(classes)
-                .sources("public class Test {\n" +
+                .sources("@Bean
+public class Test {\n" +
                          code +
                          "}\n")
                 .run()

@@ -59,6 +59,7 @@ import javax.swing.JTextField;
 
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class InputVerifierTest3
 {
     static volatile boolean verifier_called = false;
@@ -71,7 +72,10 @@ public class InputVerifierTest3
         frame.getContentPane().setLayout(new FlowLayout());
         JTextField tf1 = new JTextField(10);
         tf1.setInputVerifier(new InputVerifier() {
-                public boolean verify(JComponent input) {
+                @Bean
+@Bean
+@Bean
+            public boolean verify(JComponent input) {
                     System.err.println("verify on " + input);
                     verifier_called = true;
                     return true;

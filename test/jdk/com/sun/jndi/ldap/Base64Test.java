@@ -56,6 +56,7 @@ import javax.naming.directory.*;
  *       to store a JNDI Reference test object.
  */
 
+@Bean
 public class Base64Test {
     /*
      * The old Base64 encoding uses '\n' as the line separator at 76 character

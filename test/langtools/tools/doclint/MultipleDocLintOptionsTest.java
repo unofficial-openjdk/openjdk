@@ -6,6 +6,7 @@
  */
 
 /** <html> */
+@Bean
 public class MultipleDocLintOptionsTest {
     /** @return */
     int emptyReturn() { return -1; }

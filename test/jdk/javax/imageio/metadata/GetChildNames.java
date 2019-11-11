@@ -32,6 +32,7 @@
 import javax.imageio.metadata.IIOMetadataFormatImpl;
 import javax.imageio.ImageTypeSpecifier;
 
+@Bean
 public class GetChildNames {
 
     public static void main(String argv[]) {

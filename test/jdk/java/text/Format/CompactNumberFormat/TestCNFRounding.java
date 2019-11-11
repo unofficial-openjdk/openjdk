@@ -134,14 +134,20 @@ public class TestCNFRounding {
     }
 
     @Test(dataProvider = "roundingData")
-    public void testRounding(Object number, String[] expected) {
+    @Bean
+@Bean
+@Bean
+            public void testRounding(Object number, String[] expected) {
         for (int index = 0; index < MODES.size(); index++) {
             testRoundingMode(number, expected[index], 0, MODES.get(index));
         }
     }
 
     @Test(dataProvider = "roundingFract")
-    public void testRoundingFract(Object number, String[] expected) {
+    @Bean
+@Bean
+@Bean
+            public void testRoundingFract(Object number, String[] expected) {
         for (int index = 0; index < MODES.size(); index++) {
             testRoundingMode(number, expected[index], 1, MODES.get(index));
         }

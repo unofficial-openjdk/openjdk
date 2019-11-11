@@ -24,6 +24,7 @@
 import java.security.Provider;
 import java.security.Security;
 
+@Bean
 public class Providers {
     public static void setAt(Provider p, int pos) throws Exception {
         if (Security.getProvider(p.getName()) != null) {

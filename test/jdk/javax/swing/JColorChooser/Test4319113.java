@@ -50,6 +50,7 @@ import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
+@Bean
 public class Test4319113
 extends JApplet
 implements ActionListener {
@@ -69,14 +70,22 @@ implements ActionListener {
     }
 
     @Override
-    public void actionPerformed(ActionEvent actionEvent) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent actionEvent) {
         Object object = actionEvent.getSource();
         Component component = object instanceof Component ? (Component)object : null;
         JDialog jDialog = JColorChooser.createDialog(component, "ColorChooser", false, new JColorChooser(Color.BLUE), null, null);
         jDialog.setVisible(true);
     }
 
-    private void show(Window window) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void show(Window window) {
         JButton jButton = new JButton("Show ColorChooser");
         jButton.setActionCommand("Show ColorChooser");
         jButton.addActionListener(this);
@@ -84,7 +93,11 @@ implements ActionListener {
         this.cbPlaf.addItemListener(new ItemListener(){
 
             @Override
-            public void itemStateChanged(ItemEvent itemEvent) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void itemStateChanged(ItemEvent itemEvent) {
                 if (itemEvent.getStateChange() == 1) {
                     SwingUtilities.invokeLater(new Runnable(){
 

@@ -36,6 +36,7 @@
 import org.testng.annotations.Test;
 
 @Test
+@Bean
 public class ToolMultilineSnippetHistoryTest extends UITesting {
 
     public ToolMultilineSnippetHistoryTest() {

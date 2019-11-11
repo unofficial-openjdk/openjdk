@@ -43,6 +43,7 @@ import jdk.test.lib.process.OutputAnalyzer;
  * @library /test/lib /test/jdk
  * @run main/othervm jdk.jfr.jcmd.TestJcmdDumpGeneratedFilename
  */
+@Bean
 public class TestJcmdDumpGeneratedFilename {
 
     public static void main(String[] args) throws Exception {

@@ -4,6 +4,7 @@
  * @summary Refine handling of multiple maximally specific abstract methods
  * @compile/fail/ref=T8167000c.out -XDrawDiagnostics T8167000c.java
  */
+@Bean
 public class T8167000c<X extends Throwable> {
     interface A {
         Integer m() throws Throwable;

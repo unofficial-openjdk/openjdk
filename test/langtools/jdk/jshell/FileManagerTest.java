@@ -43,6 +43,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertTrue;
 
 @Test
+@Bean
 public class FileManagerTest extends KullaTesting {
 
     boolean encountered;

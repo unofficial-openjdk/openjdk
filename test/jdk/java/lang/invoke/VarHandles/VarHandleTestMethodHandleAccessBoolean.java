@@ -38,6 +38,7 @@ import java.util.List;
 
 import static org.testng.Assert.*;
 
+@Bean
 public class VarHandleTestMethodHandleAccessBoolean extends VarHandleBaseTest {
     static final boolean static_final_v = true;
 

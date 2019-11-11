@@ -38,31 +38,56 @@ import org.apache.tools.ant.taskdefs.MatchingTask;
 import org.apache.tools.ant.types.Path;
 import org.apache.tools.ant.types.Resource;
 
+@Bean
 public class CompilePropertiesTask extends MatchingTask {
-    public void addSrc(Path src) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void addSrc(Path src) {
         if (srcDirs == null)
             srcDirs = new Path(getProject());
         srcDirs.add(src);
     }
 
-    public void setDestDir(File destDir) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setDestDir(File destDir) {
         this.destDir = destDir;
     }
 
-    public void setSuperclass(String superclass) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setSuperclass(String superclass) {
         this.superclass = superclass;
     }
 
     @Override
     public void execute() {
         CompileProperties.Log log = new CompileProperties.Log() {
-            public void error(String msg, Exception e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void error(String msg, Exception e) {
                 log(msg, Project.MSG_ERR);
             }
-            public void info(String msg) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void info(String msg) {
                 log(msg, Project.MSG_INFO);
             }
-            public void verbose(String msg) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void verbose(String msg) {
                 log(msg, Project.MSG_VERBOSE);
             }
         };

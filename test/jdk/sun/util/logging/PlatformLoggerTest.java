@@ -40,6 +40,7 @@ import java.util.logging.*;
 import sun.util.logging.PlatformLogger;
 import static sun.util.logging.PlatformLogger.Level.*;
 
+@Bean
 public class PlatformLoggerTest {
 
     static Logger logger;

@@ -47,6 +47,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 @Test
+@Bean
 public class ErrorTranslationTest extends ReplToolTesting {
 
     @Test(enabled = false) // TODO 8080353
@@ -110,7 +111,11 @@ public class ErrorTranslationTest extends ReplToolTesting {
         return new ExpectedDiagnostic("", startPosition, endPosition, position, lineNumber, columnNumber, kind);
     }
 
-    private void assertDiagnostic(boolean after, String cmd, ExpectedDiagnostic expectedDiagnostic) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertDiagnostic(boolean after, String cmd, ExpectedDiagnostic expectedDiagnostic) {
         assertCommandCheckOutput(after, cmd, assertDiagnostic(cmd, expectedDiagnostic));
     }
 
@@ -138,7 +143,11 @@ public class ErrorTranslationTest extends ReplToolTesting {
         };
     }
 
-    private String createMarkingLine(int start, int end) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String createMarkingLine(int start, int end) {
         assertTrue(end >= start, String.format("End position %d is less than start position %d", end, start));
         StringBuilder sb = new StringBuilder();
         sb.append("|  ");
@@ -155,7 +164,11 @@ public class ErrorTranslationTest extends ReplToolTesting {
         return sb.toString();
     }
 
-    public String getKind(Diagnostic.Kind kind) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String getKind(Diagnostic.Kind kind) {
         switch (kind) {
             case WARNING:
                 return "|  Warning:";

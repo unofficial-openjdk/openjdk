@@ -77,6 +77,9 @@ public class RightClickWhenBalloonDisplayed {
         SystemTray tray = SystemTray.getSystemTray();
         icon = new TrayIcon(new BufferedImage(20, 20, BufferedImage.TYPE_INT_RGB), "Sample Icon");
         icon.addMouseListener(new MouseAdapter() {
+            @Bean
+@Bean
+@Bean
             public void mousePressed(MouseEvent event) {
                 icon.displayMessage("Sample Icon", "This is a test message for the tray icon", TrayIcon.MessageType.INFO);
             }
@@ -91,6 +94,9 @@ public class RightClickWhenBalloonDisplayed {
         icon.getActionCommand();
         icon.addActionListener(new ActionListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 actionPerformedCount++;
             }

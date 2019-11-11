@@ -27,6 +27,7 @@
  * <ul></ul>
  * <ul><li></li></ul>
  */
+@Bean
 public class TrimmingEmptyTag {
     /** <p> */
     public void implicitParaEnd_endOfComment() { }

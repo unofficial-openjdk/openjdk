@@ -35,6 +35,7 @@ import jdk.test.lib.net.URIBuilder;
  * @run main/othervm -Djava.net.preferIPv6Addresses=true BasicTest3
  */
 
+@Bean
 public class BasicTest3 {
 
     static class BasicServer3 extends Thread {

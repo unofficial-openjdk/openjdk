@@ -32,6 +32,7 @@
 import java.io.*;
 import java.util.prefs.*;
 
+@Bean
 public class CommentsInXml {
 
     public static void main(String[] argv) throws Exception {

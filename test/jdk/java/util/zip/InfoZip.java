@@ -31,6 +31,7 @@ import java.util.*;
 import java.util.zip.*;
 import java.io.*;
 
+@Bean
 public class InfoZip {
     static int passed = 0, failed = 0;
 

@@ -60,11 +60,13 @@ import toolbox.ToolBox;
  *
  * package pkg;
  * import static pkg.ChildA.method;
- * public class Test {{
+ * @Bean
+public class Test {{
  *     method();
  * }}
  *
  */
+@Bean
 public class ImportMembersTest {
 
     private static final String[] expectedErrorMessages = {
@@ -75,7 +77,8 @@ public class ImportMembersTest {
     private static final String sourceTemplate =
             "package pkg;\n" +
             "#IMPORT\n" +
-            "public class Test {{\n" +
+            "@Bean
+public class Test {{\n" +
             "    #STATEMENT\n" +
             "}}\n";
 
@@ -130,7 +133,11 @@ public class ImportMembersTest {
         echo(message);
     }
 
-    private String getExpectedErrorMessage(ClassType classType, ImportType importType, MemberType memberType) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String getExpectedErrorMessage(ClassType classType, ImportType importType, MemberType memberType) {
         String expectedErrorMessage;
         if (importType == ImportType.IMPORT && classType == ClassType.CHILD_A &&
                 memberType == MemberType.CLASS) {
@@ -141,14 +148,22 @@ public class ImportMembersTest {
         return expectedErrorMessage;
     }
 
-    private void reportFailure(List<ToolBox.JavaSource> sources, String message) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void reportFailure(List<ToolBox.JavaSource> sources, String message) {
         echo("Test case failed!");
         printSources(sources);
         echo(message);
         echo();
     }
 
-    private String generateSource(ClassType classType, MemberType memberType, ImportType importType) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String generateSource(ClassType classType, MemberType memberType, ImportType importType) {
         String importString = importType.generateImport(classType.getClassName(), memberType.getMemberType());
         String statement;
         if (importType.hasError(classType, memberType)) {
@@ -187,14 +202,22 @@ public class ImportMembersTest {
         }
     }
 
-    private CompilationResult compile(List<ToolBox.JavaSource> sources) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private CompilationResult compile(List<ToolBox.JavaSource> sources) {
         StringWriter writer = new StringWriter();
         JavaCompiler jc = ToolProvider.getSystemJavaCompiler();
         Boolean call = jc.getTask(writer, null, null, Arrays.asList("-XDrawDiagnostics"), null, sources).call();
         return new CompilationResult(call, writer.toString().replace(ToolBox.lineSeparator, "\n"));
     }
 
-    public void printSources(List<ToolBox.JavaSource> sources) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void printSources(List<ToolBox.JavaSource> sources) {
         for (ToolBox.JavaSource javaSource : sources) {
             echo(javaSource.getCharContent(true).toString());
         }
@@ -204,11 +227,19 @@ public class ImportMembersTest {
         echo("");
     }
 
-    public void echo(String output) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void echo(String output) {
         printf(output + "\n");
     }
 
-    public void printf(String template, Object...args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void printf(String template, Object...args) {
         System.err.print(String.format(template, args).replace("\n", ToolBox.lineSeparator));
     }
 
@@ -311,13 +342,21 @@ public class ImportMembersTest {
             this.importType = importType;
         }
 
-        public String generateImport(String className, String memberName) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String generateImport(String className, String memberName) {
             return importType
                     .replace("#CLASS_NAME", className)
                     .replace("#MEMBER_NAME", memberName);
         }
 
-        public boolean hasError(ClassType classType, MemberType memberType) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean hasError(ClassType classType, MemberType memberType) {
             switch (memberType) {
                 case FIELD:
                     return this != ImportType.STATIC_IMPORT;

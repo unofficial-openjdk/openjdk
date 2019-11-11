@@ -33,6 +33,7 @@ import java.beans.PropertyVetoException;
 import java.beans.VetoableChangeListener;
 import java.beans.VetoableChangeSupport;
 
+@Bean
 public class TestVetoableChangeSupport implements VetoableChangeListener {
     private static final String NAME = "property";
 
@@ -71,6 +72,10 @@ public class TestVetoableChangeSupport implements VetoableChangeListener {
                         + "; Time (ms): " + time1 + "/" + time2);
     }
 
-    public void vetoableChange(PropertyChangeEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void vetoableChange(PropertyChangeEvent event) {
     }
 }

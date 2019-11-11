@@ -47,6 +47,7 @@ class CatchAllTestTarg {
     }
 }
 
+@Bean
 public class CatchAllTest extends JdbTest {
     public static void main(String argv[]) {
         new CatchAllTest().run();

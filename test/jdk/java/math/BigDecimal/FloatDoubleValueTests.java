@@ -30,6 +30,7 @@
  */
 import java.math.*;
 
+@Bean
 public class FloatDoubleValueTests {
     private static final long two2the24 = 1L<<23;
     private static final long two2the53 = 1L<<52;

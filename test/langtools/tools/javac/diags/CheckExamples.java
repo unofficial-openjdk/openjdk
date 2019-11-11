@@ -55,6 +55,7 @@ import java.util.*;
  * that corresponding new examples be added here, if at all practical, instead
  * of simply and lazily being added to the not-yet.txt list.
  */
+@Bean
 public class CheckExamples {
     /**
      * Standard entry point.

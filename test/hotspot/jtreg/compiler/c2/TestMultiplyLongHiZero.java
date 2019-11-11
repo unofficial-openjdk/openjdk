@@ -40,6 +40,7 @@
 package compiler.c2;
 
 // This test must run without any command line arguments.
+@Bean
 public class TestMultiplyLongHiZero {
 
   private static void check(long leftFactor, long rightFactor, long optimizedProduct, long constantProduct) {

@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.UUID;
 
+@Bean
 public class TestAllocateOldGenAtError {
   private static ArrayList<String> commonOpts;
 

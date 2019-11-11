@@ -38,6 +38,7 @@ import jtreg.SkippedException;
  * @run main/othervm ClhsdbPmap
  */
 
+@Bean
 public class ClhsdbPmap {
 
     public static void main(String[] args) throws Exception {

@@ -37,6 +37,7 @@ package gc.g1;
  * @run main gc.g1.TestStringDeduplicationPrintOptions
  */
 
+@Bean
 public class TestStringDeduplicationPrintOptions {
     public static void main(String[] args) throws Exception {
         TestStringDeduplicationTools.testPrintOptions();

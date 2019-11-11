@@ -40,6 +40,7 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 
+@Bean
 public class XRenderBlitsTest {
 
     private static final int w = 10;
@@ -70,7 +71,11 @@ public class XRenderBlitsTest {
             }
 
             @Override
-            public void paint(Graphics g) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(Graphics g) {
                 int x = 0;
                 for (BufferedImage img : images) {
                     System.out.println("Draw image " + img.getType());

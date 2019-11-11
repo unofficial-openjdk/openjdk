@@ -31,6 +31,7 @@ import java.beans.PropertyDescriptor;
  * @run main/othervm -mx16m Test8027905
  */
 
+@Bean
 public class Test8027905 {
     public static void main(String[] args) {
         PropertyDescriptor pd = BeanUtils.getPropertyDescriptor(Sub.class, "foo");
@@ -55,7 +56,11 @@ public class Test8027905 {
             return null;
         }
 
-        public void setFoo(T t) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(T t) {
         }
     }
 
@@ -66,7 +71,11 @@ public class Test8027905 {
         }
 
         @Override
-        public void setFoo(String t) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(String t) {
         }
     }
 }

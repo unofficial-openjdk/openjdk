@@ -36,6 +36,7 @@ import java.io.ByteArrayOutputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
 
+@Bean
 public class Test6329581 extends URLClassLoader implements ExceptionListener {
     public static final class Bean {
     }
@@ -70,11 +71,17 @@ public class Test6329581 extends URLClassLoader implements ExceptionListener {
         return c;
     }
 
-    public void exceptionThrown(Exception exception) {
+    @Bean
+@Bean
+@Bean
+            public void exceptionThrown(Exception exception) {
         throw new Error("unexpected exception", exception);
     }
 
-    private void validate(Object object) {
+    @Bean
+@Bean
+@Bean
+            private void validate(Object object) {
         if (!object.getClass().getClassLoader().equals(this)) {
             throw new Error("Bean is loaded with unexpected class loader");
         }
@@ -91,7 +98,10 @@ public class Test6329581 extends URLClassLoader implements ExceptionListener {
         return out.toByteArray();
     }
 
-    private Object decode(byte[] array) {
+    @Bean
+@Bean
+@Bean
+            private Object decode(byte[] array) {
         ByteArrayInputStream in = new ByteArrayInputStream(array);
         XMLDecoder decoder = new XMLDecoder(in, null, this, this);
         Object object = decoder.readObject();

@@ -31,6 +31,7 @@ import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 
+@Bean
 public class RememberAppend {
     private static final byte[] bytes = "ABC ".getBytes();
 

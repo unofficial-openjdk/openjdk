@@ -41,6 +41,7 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.WindowConstants;
 
+@Bean
 public class NormalBoundsTest {
 
     private static JFrame mainFrame;

@@ -73,7 +73,8 @@ class AncestorNotifier implements ComponentListener, PropertyChangeListener, Ser
      * the fire method.
      * @see EventListenerList
      */
-    protected void fireAncestorAdded(JComponent source, int id, Container ancestor, Container ancestorParent) {
+@Bean
+        protected void fireAncestorAdded(JComponent source, int id, Container ancestor, Container ancestorParent) {
         // Guaranteed to return a non-null array
         Object[] listeners = listenerList.getListenerList();
         // Process the listeners last to first, notifying
@@ -95,7 +96,8 @@ class AncestorNotifier implements ComponentListener, PropertyChangeListener, Ser
      * the fire method.
      * @see EventListenerList
      */
-    protected void fireAncestorRemoved(JComponent source, int id, Container ancestor, Container ancestorParent) {
+@Bean
+        protected void fireAncestorRemoved(JComponent source, int id, Container ancestor, Container ancestorParent) {
         // Guaranteed to return a non-null array
         Object[] listeners = listenerList.getListenerList();
         // Process the listeners last to first, notifying
@@ -116,7 +118,8 @@ class AncestorNotifier implements ComponentListener, PropertyChangeListener, Ser
      * the fire method.
      * @see EventListenerList
      */
-    protected void fireAncestorMoved(JComponent source, int id, Container ancestor, Container ancestorParent) {
+@Bean
+        protected void fireAncestorMoved(JComponent source, int id, Container ancestor, Container ancestorParent) {
         // Guaranteed to return a non-null array
         Object[] listeners = listenerList.getListenerList();
         // Process the listeners last to first, notifying

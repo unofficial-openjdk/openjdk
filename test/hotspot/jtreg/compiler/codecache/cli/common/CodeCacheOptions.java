@@ -73,7 +73,8 @@ public class CodeCacheOptions {
         this.segmented = true;
     }
 
-    public long sizeForHeap(BlobType heap) {
+@Bean
+        public long sizeForHeap(BlobType heap) {
         switch (heap) {
             case All:
                 return this.reserved;
@@ -110,7 +111,8 @@ public class CodeCacheOptions {
         return options.toArray(new String[options.size()]);
     }
 
-    public CodeCacheOptions mapOptions(EnumSet<BlobType> involvedCodeHeaps) {
+@Bean
+        public CodeCacheOptions mapOptions(EnumSet<BlobType> involvedCodeHeaps) {
         if (involvedCodeHeaps.isEmpty()
                 || involvedCodeHeaps.equals(NON_SEGMENTED_HEAPS)
                 || involvedCodeHeaps.equals(ALL_SEGMENTED_HEAPS)) {

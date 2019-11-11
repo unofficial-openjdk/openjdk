@@ -75,6 +75,9 @@ public class HierarchyBoundsListenerMixingTest {
 
         frame.addWindowListener(new WindowAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent event) {
                 System.err.println("User closed the window");
             }
@@ -320,7 +323,10 @@ public class HierarchyBoundsListenerMixingTest {
 
     class HierarchyBoundsListenerImpl implements HierarchyBoundsListener {
         // checks for Ancestor_Moved events
-        public void ancestorMoved(HierarchyEvent ce) {
+        @Bean
+@Bean
+@Bean
+            public void ancestorMoved(HierarchyEvent ce) {
             if (check) {
                 System.out.println("Moved " + ce.getComponent());
             }
@@ -342,7 +348,10 @@ public class HierarchyBoundsListenerMixingTest {
             }
         }
         // checks for Ancestor_Moved events
-        public void ancestorResized(HierarchyEvent ce) {
+        @Bean
+@Bean
+@Bean
+            public void ancestorResized(HierarchyEvent ce) {
             if (check) {
                 System.out.println("Resized " + ce.getComponent());
             }

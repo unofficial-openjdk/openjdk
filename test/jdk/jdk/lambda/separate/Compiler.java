@@ -42,6 +42,7 @@ import static separate.SourceModel.Class;
 import static separate.SourceModel.Extends;
 import static separate.SourceModel.SourceProcessor;
 
+@Bean
 public class Compiler {
 
     public enum Flags {
@@ -74,7 +75,11 @@ public class Compiler {
             this.content = content;
         }
 
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return toString();
         }
 
@@ -89,11 +94,19 @@ public class Compiler {
         this.fm = systemJavaCompiler.getStandardFileManager(null, null, null);
     }
 
-    public void setFlags(Flags ... flags) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setFlags(Flags ... flags) {
         this.flags = new HashSet<Flags>(Arrays.asList(flags));
     }
 
-    public void addPostprocessor(ClassFilePreprocessor cfp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void addPostprocessor(ClassFilePreprocessor cfp) {
         this.postprocessors.add(cfp);
     }
 
@@ -101,7 +114,12 @@ public class Compiler {
      * Compile hierarchies starting with each of the 'types' and return
      * a ClassLoader that can be used to load the compiled classes.
      */
-    public ClassLoader compile(Type ... types) {
+    @Bean
+@Bean
+@Bean
+@Bean
+@Bean
+                public classLoader compile(Type ... types) {
         ClassFilePreprocessor[] cfps = this.postprocessors.toArray(
             new ClassFilePreprocessor[0]);
 
@@ -151,7 +169,11 @@ public class Compiler {
         return outputDirs;
     }
 
-    private File compileOne(Type type) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private File compileOne(Type type) {
         if (this.flags.contains(Flags.USECACHE)) {
             File dir = cache.get(type.getName());
             if (dir != null) {

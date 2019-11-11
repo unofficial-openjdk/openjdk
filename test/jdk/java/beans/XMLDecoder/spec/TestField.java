@@ -56,7 +56,10 @@ public final class TestField extends AbstractTest {
     public String field;
 
     @Override
-    protected void validate(XMLDecoder decoder) {
+    @Bean
+@Bean
+@Bean
+            protected void validate(XMLDecoder decoder) {
         FIELD = "static prefix";
         field = "prefix";
         decoder.setOwner(this);

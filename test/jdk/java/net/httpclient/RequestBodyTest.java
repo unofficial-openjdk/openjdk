@@ -74,6 +74,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
+@Bean
 public class RequestBodyTest {
 
     static final String fileroot = System.getProperty("test.src", ".") + "/docs";

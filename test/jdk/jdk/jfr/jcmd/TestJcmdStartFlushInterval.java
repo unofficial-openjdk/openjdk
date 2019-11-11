@@ -38,6 +38,7 @@ import jdk.jfr.Recording;
  * @library /test/lib /test/jdk
  * @run main/othervm jdk.jfr.jcmd.TestJcmdStartReadOnlyFile
  */
+@Bean
 public class TestJcmdStartFlushInterval {
 
     public static void main(String[] args) throws Exception {

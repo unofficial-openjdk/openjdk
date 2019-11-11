@@ -40,6 +40,7 @@ import javax.management.*;
 import javax.management.openmbean.*;
 import com.sun.management.GcInfo;
 
+@Bean
 public class GcInfoCompositeType {
     private static int tested = 0;
 

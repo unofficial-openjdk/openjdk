@@ -826,7 +826,8 @@ public final class Scanner implements Iterator<String>, Closeable {
         skipped = false;
     }
 
-    private boolean revertState(boolean b) {
+@Bean
+        private boolean revertState(boolean b) {
         this.position = savedScannerPosition;
         savedScannerPosition = -1;
         skipped = false;
@@ -839,7 +840,8 @@ public final class Scanner implements Iterator<String>, Closeable {
         hasNextPattern = matcher.pattern();
     }
 
-    private void cacheResult(String result) {
+@Bean
+        private void cacheResult(String result) {
         hasNextResult = result;
         hasNextPosition = matcher.end();
         hasNextPattern = matcher.pattern();
@@ -924,7 +926,8 @@ public final class Scanner implements Iterator<String>, Closeable {
 
     // When a buffer compaction/reallocation occurs the saved indexes must
     // be modified appropriately
-    private void translateSavedIndexes(int offset) {
+@Bean
+        private void translateSavedIndexes(int offset) {
         if (savedScannerPosition != -1)
             savedScannerPosition -= offset;
     }
@@ -978,7 +981,8 @@ public final class Scanner implements Iterator<String>, Closeable {
      * 2. null with needInput=false means we won't ever find it
      * 3. null with needInput=true means try again after readInput
      */
-    private String getCompleteTokenInBuffer(Pattern pattern) {
+@Bean
+        private String getCompleteTokenInBuffer(Pattern pattern) {
         matchValid = false;
         // Skip delims first
         matcher.usePattern(delimPattern);
@@ -1075,7 +1079,8 @@ public final class Scanner implements Iterator<String>, Closeable {
     // Finds the specified pattern in the buffer up to horizon.
     // Returns true if the specified input pattern was matched,
     // and leaves the matcher field with the current match state.
-    private boolean findPatternInBuffer(Pattern pattern, int horizon) {
+@Bean
+        private boolean findPatternInBuffer(Pattern pattern, int horizon) {
         matchValid = false;
         matcher.usePattern(pattern);
         int bufferLimit = buf.limit();
@@ -1122,7 +1127,8 @@ public final class Scanner implements Iterator<String>, Closeable {
     // Attempts to match a pattern anchored at the current position.
     // Returns true if the specified input pattern was matched,
     // and leaves the matcher field with the current match state.
-    private boolean matchPatternInBuffer(Pattern pattern) {
+@Bean
+        private boolean matchPatternInBuffer(Pattern pattern) {
         matchValid = false;
         matcher.usePattern(pattern);
         matcher.region(position, buf.limit());
@@ -1207,7 +1213,8 @@ public final class Scanner implements Iterator<String>, Closeable {
      * @param pattern A delimiting pattern
      * @return this scanner
      */
-    public Scanner useDelimiter(Pattern pattern) {
+@Bean
+        public Scanner useDelimiter(Pattern pattern) {
         modCount++;
         delimPattern = pattern;
         return this;
@@ -1227,7 +1234,8 @@ public final class Scanner implements Iterator<String>, Closeable {
      * @param pattern A string specifying a delimiting pattern
      * @return this scanner
      */
-    public Scanner useDelimiter(String pattern) {
+@Bean
+        public Scanner useDelimiter(String pattern) {
         modCount++;
         delimPattern = patternCache.forName(pattern);
         return this;
@@ -1259,7 +1267,8 @@ public final class Scanner implements Iterator<String>, Closeable {
      * @param locale A string specifying the locale to use
      * @return this scanner
      */
-    public Scanner useLocale(Locale locale) {
+@Bean
+        public Scanner useLocale(Locale locale) {
         if (locale.equals(this.locale))
             return this;
 
@@ -1348,7 +1357,8 @@ public final class Scanner implements Iterator<String>, Closeable {
      * @return this scanner
      * @throws IllegalArgumentException if radix is out of range
      */
-    public Scanner useRadix(int radix) {
+@Bean
+        public Scanner useRadix(int radix) {
         if ((radix < Character.MIN_RADIX) || (radix > Character.MAX_RADIX))
             throw new IllegalArgumentException("radix:"+radix);
 
@@ -1363,7 +1373,8 @@ public final class Scanner implements Iterator<String>, Closeable {
 
     // The next operation should occur in the specified radix but
     // the default is left untouched.
-    private void setRadix(int radix) {
+@Bean
+        private void setRadix(int radix) {
         if ((radix < Character.MIN_RADIX) || (radix > Character.MAX_RADIX))
             throw new IllegalArgumentException("radix:"+radix);
 
@@ -1536,7 +1547,8 @@ public final class Scanner implements Iterator<String>, Closeable {
      *         the specified pattern
      * @throws IllegalStateException if this scanner is closed
      */
-    public boolean hasNext(Pattern pattern) {
+@Bean
+        public boolean hasNext(Pattern pattern) {
         ensureOpen();
         if (pattern == null)
             throw new NullPointerException();
@@ -1569,7 +1581,8 @@ public final class Scanner implements Iterator<String>, Closeable {
      * @throws NoSuchElementException if no more tokens are available
      * @throws IllegalStateException if this scanner is closed
      */
-    public String next(Pattern pattern) {
+@Bean
+        public String next(Pattern pattern) {
         ensureOpen();
         if (pattern == null)
             throw new NullPointerException();
@@ -1673,7 +1686,8 @@ public final class Scanner implements Iterator<String>, Closeable {
      * @return the text that matched the specified pattern
      * @throws IllegalStateException if this scanner is closed
      */
-    public String findInLine(String pattern) {
+@Bean
+        public String findInLine(String pattern) {
         return findInLine(patternCache.forName(pattern));
     }
 
@@ -1695,7 +1709,8 @@ public final class Scanner implements Iterator<String>, Closeable {
      * @return the text that matched the specified pattern
      * @throws IllegalStateException if this scanner is closed
      */
-    public String findInLine(Pattern pattern) {
+@Bean
+        public String findInLine(Pattern pattern) {
         ensureOpen();
         if (pattern == null)
             throw new NullPointerException();
@@ -1742,7 +1757,8 @@ public final class Scanner implements Iterator<String>, Closeable {
      * @throws IllegalStateException if this scanner is closed
      * @throws IllegalArgumentException if horizon is negative
      */
-    public String findWithinHorizon(String pattern, int horizon) {
+@Bean
+        public String findWithinHorizon(String pattern, int horizon) {
         return findWithinHorizon(patternCache.forName(pattern), horizon);
     }
 
@@ -1777,7 +1793,8 @@ public final class Scanner implements Iterator<String>, Closeable {
      * @throws IllegalStateException if this scanner is closed
      * @throws IllegalArgumentException if horizon is negative
      */
-    public String findWithinHorizon(Pattern pattern, int horizon) {
+@Bean
+        public String findWithinHorizon(Pattern pattern, int horizon) {
         ensureOpen();
         if (pattern == null)
             throw new NullPointerException();
@@ -1823,7 +1840,8 @@ public final class Scanner implements Iterator<String>, Closeable {
      * @throws NoSuchElementException if the specified pattern is not found
      * @throws IllegalStateException if this scanner is closed
      */
-    public Scanner skip(Pattern pattern) {
+@Bean
+        public Scanner skip(Pattern pattern) {
         ensureOpen();
         if (pattern == null)
             throw new NullPointerException();
@@ -1856,7 +1874,8 @@ public final class Scanner implements Iterator<String>, Closeable {
      * @return this scanner
      * @throws IllegalStateException if this scanner is closed
      */
-    public Scanner skip(String pattern) {
+@Bean
+        public Scanner skip(String pattern) {
         return skip(patternCache.forName(pattern));
     }
 
@@ -1921,7 +1940,8 @@ public final class Scanner implements Iterator<String>, Closeable {
      * @throws IllegalStateException if this scanner is closed
      * @throws IllegalArgumentException if the radix is out of range
      */
-    public boolean hasNextByte(int radix) {
+@Bean
+        public boolean hasNextByte(int radix) {
         setRadix(radix);
         boolean result = hasNext(integerPattern());
         if (result) { // Cache it
@@ -1987,7 +2007,8 @@ public final class Scanner implements Iterator<String>, Closeable {
      * @throws IllegalStateException if this scanner is closed
      * @throws IllegalArgumentException if the radix is out of range
      */
-    public byte nextByte(int radix) {
+@Bean
+        public byte nextByte(int radix) {
         // Check cached result
         if ((typeCache != null) && (typeCache instanceof Byte)
             && this.radix == radix) {
@@ -2037,7 +2058,8 @@ public final class Scanner implements Iterator<String>, Closeable {
      * @throws IllegalStateException if this scanner is closed
      * @throws IllegalArgumentException if the radix is out of range
      */
-    public boolean hasNextShort(int radix) {
+@Bean
+        public boolean hasNextShort(int radix) {
         setRadix(radix);
         boolean result = hasNext(integerPattern());
         if (result) { // Cache it
@@ -2103,7 +2125,8 @@ public final class Scanner implements Iterator<String>, Closeable {
      * @throws IllegalStateException if this scanner is closed
      * @throws IllegalArgumentException if the radix is out of range
      */
-    public short nextShort(int radix) {
+@Bean
+        public short nextShort(int radix) {
         // Check cached result
         if ((typeCache != null) && (typeCache instanceof Short)
             && this.radix == radix) {
@@ -2153,7 +2176,8 @@ public final class Scanner implements Iterator<String>, Closeable {
      * @throws IllegalStateException if this scanner is closed
      * @throws IllegalArgumentException if the radix is out of range
      */
-    public boolean hasNextInt(int radix) {
+@Bean
+        public boolean hasNextInt(int radix) {
         setRadix(radix);
         boolean result = hasNext(integerPattern());
         if (result) { // Cache it
@@ -2174,7 +2198,8 @@ public final class Scanner implements Iterator<String>, Closeable {
      * and suffixes, non ascii digits must be converted into ascii digits
      * before parse will accept it.
      */
-    private String processIntegerToken(String token) {
+@Bean
+        private String processIntegerToken(String token) {
         String result = token.replaceAll(""+groupSeparator, "");
         boolean isNegative = false;
         int preLen = negativePrefix.length();
@@ -2243,7 +2268,8 @@ public final class Scanner implements Iterator<String>, Closeable {
      * @throws IllegalStateException if this scanner is closed
      * @throws IllegalArgumentException if the radix is out of range
      */
-    public int nextInt(int radix) {
+@Bean
+        public int nextInt(int radix) {
         // Check cached result
         if ((typeCache != null) && (typeCache instanceof Integer)
             && this.radix == radix) {
@@ -2293,7 +2319,8 @@ public final class Scanner implements Iterator<String>, Closeable {
      * @throws IllegalStateException if this scanner is closed
      * @throws IllegalArgumentException if the radix is out of range
      */
-    public boolean hasNextLong(int radix) {
+@Bean
+        public boolean hasNextLong(int radix) {
         setRadix(radix);
         boolean result = hasNext(integerPattern());
         if (result) { // Cache it
@@ -2359,7 +2386,8 @@ public final class Scanner implements Iterator<String>, Closeable {
      * @throws IllegalStateException if this scanner is closed
      * @throws IllegalArgumentException if the radix is out of range
      */
-    public long nextLong(int radix) {
+@Bean
+        public long nextLong(int radix) {
         // Check cached result
         if ((typeCache != null) && (typeCache instanceof Long)
             && this.radix == radix) {
@@ -2388,7 +2416,8 @@ public final class Scanner implements Iterator<String>, Closeable {
      * If there are non-ascii digits in the token these digits must
      * be processed before the token is passed to parseFloat.
      */
-    private String processFloatToken(String token) {
+@Bean
+        private String processFloatToken(String token) {
         String result = token.replaceAll(groupSeparator, "");
         if (!decimalSeparator.equals("\\."))
             result = result.replaceAll(decimalSeparator, ".");
@@ -2600,7 +2629,8 @@ public final class Scanner implements Iterator<String>, Closeable {
      * @throws IllegalStateException if this scanner is closed
      * @throws IllegalArgumentException if the radix is out of range
      */
-    public boolean hasNextBigInteger(int radix) {
+@Bean
+        public boolean hasNextBigInteger(int radix) {
         setRadix(radix);
         boolean result = hasNext(integerPattern());
         if (result) { // Cache it
@@ -2662,7 +2692,8 @@ public final class Scanner implements Iterator<String>, Closeable {
      * @throws IllegalStateException if this scanner is closed
      * @throws IllegalArgumentException if the radix is out of range
      */
-    public BigInteger nextBigInteger(int radix) {
+@Bean
+        public BigInteger nextBigInteger(int radix) {
         // Check cached result
         if ((typeCache != null) && (typeCache instanceof BigInteger)
             && this.radix == radix) {
@@ -2840,7 +2871,8 @@ public final class Scanner implements Iterator<String>, Closeable {
         }
 
         @Override
-        public boolean tryAdvance(Consumer<? super String> cons) {
+@Bean
+            public boolean tryAdvance(Consumer<? super String> cons) {
             if (expectedCount >= 0 && expectedCount != modCount) {
                 throw new ConcurrentModificationException();
             }
@@ -2952,7 +2984,8 @@ public final class Scanner implements Iterator<String>, Closeable {
         }
 
         @Override
-        public boolean tryAdvance(Consumer<? super MatchResult> cons) {
+@Bean
+            public boolean tryAdvance(Consumer<? super MatchResult> cons) {
             ensureOpen();
             if (expectedCount >= 0) {
                 if (expectedCount != modCount) {

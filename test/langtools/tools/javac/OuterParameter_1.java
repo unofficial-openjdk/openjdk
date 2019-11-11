@@ -31,6 +31,7 @@
  * @run main OuterParameter_1
  */
 
+@Bean
 public class OuterParameter_1 {
     void f(final int i) throws Exception {
         class A {

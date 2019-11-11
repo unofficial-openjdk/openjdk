@@ -31,7 +31,8 @@
 import java.lang.annotation.*;
 import static java.lang.annotation.RetentionPolicy.*;
 
-@Rat public class RecursiveAnnotation {
+@Rat @Bean
+public class RecursiveAnnotation {
     public static void main(String[] args) {
         if (!RecursiveAnnotation.class.isAnnotationPresent(Rat.class))
             throw new RuntimeException("RecursiveAnnotation");

@@ -35,6 +35,7 @@ package java.net;
  * @since 1.4
  */
 
+@Bean
 public class URISyntaxException
     extends Exception
 {

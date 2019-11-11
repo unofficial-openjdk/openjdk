@@ -39,6 +39,7 @@ import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 
 
+@Bean
 public class TestDuplicateImport {
 
     static int checkCount = 0;
@@ -74,7 +75,11 @@ public class TestDuplicateImport {
             this.qualifierStr = qualifierStr;
         }
 
-        public boolean compatible(QualifierKind ik) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean compatible(QualifierKind ik) {
             return this == ik || (this != A && ik != A);
         }
     }
@@ -176,7 +181,11 @@ public class TestDuplicateImport {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return source;
         }
     }
@@ -232,7 +241,11 @@ public class TestDuplicateImport {
 
         boolean errorFound;
 
-        public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
             if (diagnostic.getKind() == Diagnostic.Kind.ERROR) {
                 errorFound = true;
             }

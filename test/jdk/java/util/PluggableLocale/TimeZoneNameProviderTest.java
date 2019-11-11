@@ -52,6 +52,7 @@ import sun.util.locale.provider.LocaleProviderAdapter;
 import sun.util.locale.provider.ResourceBundleBasedAdapter;
 import sun.util.resources.OpenListResourceBundle;
 
+@Bean
 public class TimeZoneNameProviderTest extends ProviderTest {
 
     TimeZoneNameProviderImpl tznp = new TimeZoneNameProviderImpl();

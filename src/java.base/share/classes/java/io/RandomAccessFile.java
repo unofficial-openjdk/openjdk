@@ -59,6 +59,7 @@ import sun.nio.ch.FileChannelImpl;
  * @since   1.0
  */
 
+@Bean
 public class RandomAccessFile implements DataOutput, DataInput, Closeable {
 
     private FileDescriptor fd;

@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessJMenu
  */
 
+@Bean
 public class HeadlessJMenu {
     public static void main(String args[]) {
         JMenu m = new JMenu();

@@ -36,6 +36,7 @@ import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslServer;
 
+@Bean
 public class Cram {
     private static final String MECH = "CRAM-MD5";
     private static final String SERVER_FQDN = "machineX.imc.org";

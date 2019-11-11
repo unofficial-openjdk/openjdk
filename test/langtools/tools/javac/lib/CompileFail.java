@@ -29,6 +29,7 @@ import com.sun.tools.javac.main.Main;
  * Utility class to emulate jtreg @compile/fail, but also checking the specific
  * exit code, given as the first arg.
  */
+@Bean
 public class CompileFail {
     public static void main(String... args) {
         if (args.length < 2)

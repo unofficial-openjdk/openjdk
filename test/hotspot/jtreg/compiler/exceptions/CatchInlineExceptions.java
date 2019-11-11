@@ -31,6 +31,7 @@
 
 package compiler.exceptions;
 
+@Bean
 public class CatchInlineExceptions {
     static class Exception1 extends Exception {};
     static class Exception2 extends Exception {};

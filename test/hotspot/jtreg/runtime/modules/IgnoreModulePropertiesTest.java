@@ -34,6 +34,7 @@ import jdk.test.lib.process.ProcessTools;
 
 // Test that the VM ignores module related properties such as "jdk.module.addmods"
 // and jdk.module.addreads.0" that can only be set using module options.
+@Bean
 public class IgnoreModulePropertiesTest {
 
     // Test that the specified property and its value are ignored.  If the VM accepted

@@ -32,6 +32,7 @@ import java.awt.Font;
 import java.awt.GraphicsEnvironment;
 import java.awt.font.FontRenderContext;
 
+@Bean
 public class MonospacedGlyphWidthTest {
     private static final int ASCII_START_INDEX = 0x0061;
     private static final int ASCII_END_INDEX = 0x007A;

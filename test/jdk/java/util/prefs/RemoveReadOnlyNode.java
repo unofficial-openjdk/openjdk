@@ -33,6 +33,7 @@
 import java.io.*;
 import java.util.prefs.*;
 
+@Bean
 public class RemoveReadOnlyNode {
     public static void main(String[] args) throws Exception {
         String osName = System.getProperty("os.name");

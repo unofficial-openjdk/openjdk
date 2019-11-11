@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
+@Bean
 public class HasNextAfterException {
     public static void main(String[] args) {
         List list = new ArrayList();

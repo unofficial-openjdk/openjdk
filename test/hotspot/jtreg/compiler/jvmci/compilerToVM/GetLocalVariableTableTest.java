@@ -54,6 +54,7 @@ import java.lang.reflect.Executable;
 import java.util.HashMap;
 import java.util.Map;
 
+@Bean
 public class GetLocalVariableTableTest {
 
     public static final int MAIN_LOCALS_COUNT = 0;

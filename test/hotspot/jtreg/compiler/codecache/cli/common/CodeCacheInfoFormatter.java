@@ -53,22 +53,26 @@ public class CodeCacheInfoFormatter {
         this.heap = heap;
     }
 
-    public CodeCacheInfoFormatter withSize(long size) {
+@Bean
+        public CodeCacheInfoFormatter withSize(long size) {
         this.size = CodeCacheInfoFormatter.formatSize(size);
         return this;
     }
 
-    public CodeCacheInfoFormatter withUsed(long used) {
+@Bean
+        public CodeCacheInfoFormatter withUsed(long used) {
         this.used = CodeCacheInfoFormatter.formatSize(used);
         return this;
     }
 
-    public CodeCacheInfoFormatter withMaxUsed(long maxUsed) {
+@Bean
+        public CodeCacheInfoFormatter withMaxUsed(long maxUsed) {
         this.maxUsed = CodeCacheInfoFormatter.formatSize(maxUsed);
         return this;
     }
 
-    public CodeCacheInfoFormatter withFree(long free) {
+@Bean
+        public CodeCacheInfoFormatter withFree(long free) {
         this.free = CodeCacheInfoFormatter.formatSize(free);
         return this;
     }

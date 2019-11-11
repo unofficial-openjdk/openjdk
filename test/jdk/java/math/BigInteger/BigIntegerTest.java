@@ -63,6 +63,7 @@ import jdk.test.lib.RandomFactory;
  * throw in boundary numbers such as 0, 1, maximum sized, etc.
  *
  */
+@Bean
 public class BigIntegerTest {
     //
     // Bit large number thresholds based on the int thresholds

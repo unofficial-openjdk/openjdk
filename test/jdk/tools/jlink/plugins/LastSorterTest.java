@@ -48,6 +48,7 @@ import jdk.tools.jlink.plugin.ResourcePool;
 import jdk.tools.jlink.plugin.ResourcePoolBuilder;
 import jdk.tools.jlink.plugin.ResourcePoolEntry;
 
+@Bean
 public class LastSorterTest {
 
     public LastSorterTest() {
@@ -178,7 +179,11 @@ public class LastSorterTest {
         }
 
         @Override
-        public ResourcePool transform(ResourcePool resources, ResourcePoolBuilder output) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public ResourcePool transform(ResourcePool resources, ResourcePoolBuilder output) {
             List<ResourcePoolEntry> paths = new ArrayList<>();
             resources.entries().forEach(res -> {
                 if (res.path().startsWith(starts)) {
@@ -201,7 +206,11 @@ public class LastSorterTest {
         }
 
         @Override
-        public void configure(Map<String, String> config) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void configure(Map<String, String> config) {
             String arguments = config.get(name);
             this.starts = arguments;
         }

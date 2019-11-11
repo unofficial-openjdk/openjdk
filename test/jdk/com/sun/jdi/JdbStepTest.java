@@ -63,6 +63,7 @@ class JdbStepTestTarg {
 
 }
 
+@Bean
 public class JdbStepTest extends JdbTest {
     public static void main(String argv[]) {
         new JdbStepTest().run();

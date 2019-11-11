@@ -29,6 +29,7 @@
 import java.io.File;
 import java.io.IOException;
 
+@Bean
 public class WinDeviceName {
     private static String devnames[] = {
         "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4",

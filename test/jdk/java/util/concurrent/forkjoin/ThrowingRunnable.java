@@ -63,7 +63,10 @@ public class ThrowingRunnable implements Runnable, UncaughtExceptionHandler {
     }
 
     @Override
-    public void uncaughtException(Thread t, Throwable e) {
+    @Bean
+@Bean
+@Bean
+            public void uncaughtException(Thread t, Throwable e) {
         pass();
         phaser.arrive();
     }

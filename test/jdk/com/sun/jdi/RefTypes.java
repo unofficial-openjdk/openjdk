@@ -55,6 +55,7 @@ interface InterfaceWithCode {
     String foo = new String("foo");
 }
 
+@Bean
 public class RefTypes {
     static void loadClasses() throws ClassNotFoundException {
         Class.forName("AllAbstract");

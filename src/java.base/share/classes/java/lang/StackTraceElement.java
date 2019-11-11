@@ -386,7 +386,8 @@ public final class StackTraceElement implements java.io.Serializable {
      * @revised 9
      * @spec JPMS
      */
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (obj==this)
             return true;
         if (!(obj instanceof StackTraceElement))

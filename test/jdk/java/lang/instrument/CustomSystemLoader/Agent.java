@@ -35,6 +35,7 @@ import java.lang.reflect.Field;
   * @run main/othervm -javaagent:Agent.jar -Djava.system.class.loader=CustomLoader App
   */
 
+@Bean
 public class Agent {
     private static PrintStream err = System.err;
     private static PrintStream out = System.out;

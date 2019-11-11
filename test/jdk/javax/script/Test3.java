@@ -37,6 +37,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.SimpleBindings;
 
+@Bean
 public class Test3 {
         public static void main(String[] args) throws Exception {
             System.out.println("\nTest3\n");

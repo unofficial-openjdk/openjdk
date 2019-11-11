@@ -40,6 +40,7 @@ import javax.crypto.Cipher;
 import javax.crypto.NullCipher;
 import javax.crypto.spec.SecretKeySpec;
 
+@Bean
 public class TestNPE {
     private static byte[] BYTES = new byte[16];
     static {

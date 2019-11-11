@@ -31,6 +31,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.Map;
 
+@Bean
 public class ThreadLists {
     public static void main(String args[]) {
 

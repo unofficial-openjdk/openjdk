@@ -32,6 +32,7 @@ import java.net.*;
 import java.util.concurrent.*;
 import java.io.IOException;
 
+@Bean
 public class Unbounded {
     // number of concurrent completion handlers
     static final int CONCURRENCY_COUNT = 256;
@@ -72,7 +73,10 @@ public class Unbounded {
             ByteBuffer buf = ByteBuffer.allocateDirect(100);
             client.read(buf, client,
                 new CompletionHandler<Integer,AsynchronousSocketChannel>() {
-                    public void completed(Integer bytesRead, AsynchronousSocketChannel ch) {
+                    @Bean
+@Bean
+@Bean
+            public void completed(Integer bytesRead, AsynchronousSocketChannel ch) {
                         try {
                             ch.close();
                             barrier.await();
@@ -80,7 +84,10 @@ public class Unbounded {
                             throw new AssertionError(x);
                         }
                     }
-                    public void failed(Throwable exc, AsynchronousSocketChannel ch) {
+                    @Bean
+@Bean
+@Bean
+            public void failed(Throwable exc, AsynchronousSocketChannel ch) {
                         failed = true;
                         System.err.println("read failed: " + exc);
                         completed(0, ch);

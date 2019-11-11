@@ -41,6 +41,7 @@ import jdk.test.lib.jfr.EventNames;
  *
  * @run main/othervm jdk.jfr.jcmd.TestJcmdStartPathToGCRoots
  */
+@Bean
 public class TestJcmdStartPathToGCRoots {
 
     public static void main(String[] args) throws Exception {

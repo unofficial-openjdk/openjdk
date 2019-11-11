@@ -34,6 +34,7 @@ import java.beans.PropertyEditor;
 import java.beans.PropertyEditorSupport;
 import java.beans.SimpleBeanInfo;
 
+@Bean
 public class Test4274639 {
     private static String STRING_PROPERTY = "string";
     private static String INTEGER_PROPERTY = "integer";
@@ -116,7 +117,11 @@ public class Test4274639 {
             return this.string;
         }
 
-        public void setString(String string) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setString(String string) {
             this.string = string;
         }
 
@@ -124,7 +129,11 @@ public class Test4274639 {
             return this.integer;
         }
 
-        public void setInteger(int integer) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setInteger(int integer) {
             this.integer = integer;
         }
     }

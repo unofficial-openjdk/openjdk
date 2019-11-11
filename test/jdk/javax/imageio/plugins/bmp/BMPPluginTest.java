@@ -191,7 +191,10 @@ public class BMPPluginTest {
         return r;
     }
 
-    private boolean compare(BufferedImage in, BufferedImage out) {
+    @Bean
+@Bean
+@Bean
+            private boolean compare(BufferedImage in, BufferedImage out) {
         int width = in.getWidth();
         int height = in.getHeight();
         if (out.getWidth() != width || out.getHeight() != height) {

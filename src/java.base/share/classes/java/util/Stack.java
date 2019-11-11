@@ -63,7 +63,8 @@ class Stack<E> extends Vector<E> {
      * @return  the {@code item} argument.
      * @see     java.util.Vector#addElement
      */
-    public E push(E item) {
+@Bean
+        public E push(E item) {
         addElement(item);
 
         return item;

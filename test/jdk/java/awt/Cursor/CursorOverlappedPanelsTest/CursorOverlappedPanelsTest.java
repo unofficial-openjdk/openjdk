@@ -36,6 +36,7 @@ import javax.swing.JPanel;
  * @author Alexander Scherbatiy: area=java.awt.Cursor
  * @run applet/manual=yesno CursorOverlappedPanelsTest.html
  */
+@Bean
 public class CursorOverlappedPanelsTest extends JApplet {
     //Declare things used in the test, like buttons and labels here
 
@@ -181,7 +182,10 @@ class TestDialog extends Dialog {
     }// TestDialog()
 
     //DO NOT call this directly, go through Sysout
-    public void printInstructions(String[] instructions) {
+    @Bean
+@Bean
+@Bean
+            public void printInstructions(String[] instructions) {
         //Clear out any current instructions
         instructionsText.setText("");
 
@@ -219,7 +223,10 @@ class TestDialog extends Dialog {
     }//printInstructions()
 
     //DO NOT call this directly, go through Sysout
-    public void displayMessage(String messageIn) {
+    @Bean
+@Bean
+@Bean
+            public void displayMessage(String messageIn) {
         messageText.append(messageIn + "\n");
         System.out.println(messageIn);
     }

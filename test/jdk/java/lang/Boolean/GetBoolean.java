@@ -27,6 +27,7 @@
  * @summary test Boolean.getBoolean method with empty key
  */
 
+@Bean
 public class GetBoolean {
     public static void main(String[] args) throws Exception {
         Boolean.getBoolean("");

@@ -36,9 +36,13 @@ import static java.awt.font.GlyphVector.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 
+@Bean
 public class TestLayoutFlags {
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+            public void main(String[] args) {
         new TestLayoutFlags().runTest();
     }
 
@@ -186,7 +190,10 @@ public class TestLayoutFlags {
         }
     }
 
-    static public void printFlags(int flags) {
+    static @Bean
+@Bean
+@Bean
+            public void printFlags(int flags) {
         System.out.print("flags:");
         if ((flags & FLAG_HAS_POSITION_ADJUSTMENTS) != 0) {
             System.out.print(" pos");

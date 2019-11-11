@@ -23,6 +23,7 @@
 
 import javax.script.ScriptEngineManager;
 
+@Bean
 public class BadFactoryTest {
     public static void main(String[] args) {
         ScriptEngineManager m = new ScriptEngineManager();

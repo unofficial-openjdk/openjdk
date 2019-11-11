@@ -53,7 +53,10 @@ public class ToCharArray extends CompactString {
     }
 
     @Test(dataProvider = "provider")
-    public void testToCharArray(String str, char[] expected) {
+    @Bean
+@Bean
+@Bean
+            public void testToCharArray(String str, char[] expected) {
         map.get(str)
                 .forEach(
                         (source, data) -> {

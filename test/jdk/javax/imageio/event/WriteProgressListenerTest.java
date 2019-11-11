@@ -37,6 +37,7 @@ import javax.imageio.ImageWriter;
 import javax.imageio.event.IIOWriteProgressListener;
 import javax.imageio.stream.ImageOutputStream;
 
+@Bean
 public class WriteProgressListenerTest implements IIOWriteProgressListener {
 
     final static int UNINITIALIZED = 0;
@@ -80,26 +81,46 @@ public class WriteProgressListenerTest implements IIOWriteProgressListener {
         print("Passed!");
     }
 
-    private void error(String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void error(String s) {
         if (tempFile != null) {
             tempFile.delete();
         }
         throw new RuntimeException(s);
     }
 
-    private void print(String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void print(String s) {
         System.out.println(s);
     }
 
-    public void sequenceStarted(ImageWriter source) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void sequenceStarted(ImageWriter source) {
         error("Obsolete method sequenceStarted was called!");
     }
 
-    public void sequenceComplete(ImageWriter source) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void sequenceComplete(ImageWriter source) {
         error("Obsolete method sequenceComplete was called!");
     }
 
-    public void imageStarted(ImageWriter source, int imageIndex) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void imageStarted(ImageWriter source, int imageIndex) {
         print("imageStarted: imageIndex = " + imageIndex);
 
         if (state != UNINITIALIZED) {
@@ -122,7 +143,11 @@ public class WriteProgressListenerTest implements IIOWriteProgressListener {
         prevPercentageDone = percentageDone;
     }
 
-    public void imageComplete(ImageWriter source) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void imageComplete(ImageWriter source) {
         print("imageComplete");
 
         if (state != IMAGE_STARTED) {
@@ -138,13 +163,25 @@ public class WriteProgressListenerTest implements IIOWriteProgressListener {
                                  int imageIndex, int thumbnailIndex) {
     }
 
-    public void thumbnailProgress(ImageWriter source, float percentageDone) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void thumbnailProgress(ImageWriter source, float percentageDone) {
     }
 
-    public void thumbnailComplete(ImageWriter source) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void thumbnailComplete(ImageWriter source) {
     }
 
-    public void writeAborted(ImageWriter source) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void writeAborted(ImageWriter source) {
     }
 
     public static void main(String[] args) throws IOException {

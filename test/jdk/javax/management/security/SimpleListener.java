@@ -28,6 +28,7 @@ import java.util.Vector;
 import javax.management.NotificationListener;
 import javax.management.Notification;
 
+@Bean
 public class SimpleListener implements NotificationListener {
     private boolean received = false;
     private String type = null;

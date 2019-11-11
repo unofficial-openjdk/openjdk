@@ -36,6 +36,7 @@ import java.awt.event.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class WindowInitialFocusTest {
     Frame frame = new Frame("Test Frame");
     Window window = new Window(frame);
@@ -55,7 +56,10 @@ public class WindowInitialFocusTest {
         window.add(button);
 
         window.addWindowFocusListener(new WindowAdapter() {
-                public void windowGainedFocus(WindowEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void windowGainedFocus(WindowEvent e) {
                     System.out.println(e.toString());
                     synchronized (focused) {
                         focused.set(true);

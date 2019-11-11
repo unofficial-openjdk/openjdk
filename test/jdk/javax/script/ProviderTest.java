@@ -28,6 +28,7 @@
  */
 import javax.script.*;
 
+@Bean
 public class ProviderTest {
     public static void main(String args[]) throws Exception {
         ScriptEngineManager manager = new ScriptEngineManager();

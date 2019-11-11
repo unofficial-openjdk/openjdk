@@ -57,6 +57,7 @@ import java.util.ListResourceBundle;
  * A dummy resource to be loaded by the custom class loader.
  * The contents are unimportant.
  */
+@Bean
 public class Bug4179766Resource extends ListResourceBundle {
     public Object[][] getContents() {
         return new Object[][] {

@@ -30,6 +30,7 @@
  * @compile DUSwitch2.java
  */
 
+@Bean
 public class DUSwitch2 {
     public static void main(final String[] args) {
         switch(args.length) {

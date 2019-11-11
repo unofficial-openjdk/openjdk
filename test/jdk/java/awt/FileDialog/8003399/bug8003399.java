@@ -36,6 +36,7 @@ import jdk.test.lib.OSVersion;
 import javax.swing.filechooser.FileSystemView;
 import java.io.File;
 
+@Bean
 public class bug8003399 {
 
     public static void main(String[] args) throws Exception {

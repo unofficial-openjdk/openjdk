@@ -32,6 +32,7 @@ import java.lang.annotation.*;
 import java.lang.reflect.*;
 import java.io.Serializable;
 
+@Bean
 public class TypeParamAnnotation {
     public static void main(String[] args) throws Exception {
         testOnClass();

@@ -39,6 +39,7 @@ import java.security.PrivilegedAction;
  *
  * @author      Jonathan Payne
  */
+@Bean
 public class NetworkClient {
     /* Default value of read timeout, if not specified (infinity) */
     public static final int DEFAULT_READ_TIMEOUT = -1;
@@ -234,7 +235,8 @@ public class NetworkClient {
 
     public NetworkClient() {}
 
-    public void setConnectTimeout(int timeout) {
+@Bean
+        public void setConnectTimeout(int timeout) {
         connectTimeout = timeout;
     }
 
@@ -255,7 +257,8 @@ public class NetworkClient {
      * potentially blocking internal operation, e.g. cleaning up unread
      * response data, buffering error stream response data, etc
      */
-    public void setReadTimeout(int timeout) {
+@Bean
+        public void setReadTimeout(int timeout) {
         if (timeout == DEFAULT_READ_TIMEOUT)
             timeout = defaultSoTimeout;
 

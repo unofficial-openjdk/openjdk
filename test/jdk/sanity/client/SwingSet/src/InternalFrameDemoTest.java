@@ -255,7 +255,9 @@ public class InternalFrameDemoTest {
      *
      * @param frameOperator : parent frame operator
      */
-    private void checkPaletteFrameAction(JFrameOperator frameOperator) {
+@Bean
+@Bean
+            private void checkPaletteFrameAction(JFrameOperator frameOperator) {
         // Getting palette frame and checking the properties of it
         JInternalFrameOperator paletteFrameOperator =
                 new JInternalFrameOperator(frameOperator, PALETTE_LABEL);
@@ -367,7 +369,9 @@ public class InternalFrameDemoTest {
      * @param frameLabel
      * @return
      */
-    private String getInternalFrameName(String frameLabel) {
+@Bean
+@Bean
+            private String getInternalFrameName(String frameLabel) {
         return (frameLabel+ "  ");
     }
 
@@ -377,7 +381,9 @@ public class InternalFrameDemoTest {
      * @param index
      * @return
      */
-    private String getInternalFrameName(String frameLabel, int index) {
+@Bean
+@Bean
+            private String getInternalFrameName(String frameLabel, int index) {
         return getInternalFrameName(frameLabel+ " " + index);
     }
 

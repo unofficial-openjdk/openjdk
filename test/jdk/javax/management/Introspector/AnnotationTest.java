@@ -84,6 +84,7 @@ import javax.management.ObjectName;
     . an array of enumeration type (RetentionPolicy[])
     . boolean[]
  */
+@Bean
 public class AnnotationTest {
     private static String failed = null;
 
@@ -181,7 +182,11 @@ public class AnnotationTest {
 
         public int getReadOnly() {return 0;}
 
-        public void setWriteOnly(int x) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setWriteOnly(int x) {}
 
         public int getReadWrite1() {return 0;}
         public void setReadWrite1(int x) {}
@@ -192,7 +197,11 @@ public class AnnotationTest {
         public int getReadWrite3() {return 0;}
         public void setReadWrite3(int x) {}
 
-        public int operation(int p1, int p2) {return 0;}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int operation(int p1, int p2) {return 0;}
     }
 
     @Pair(x = 3, y = "foo")
@@ -207,7 +216,11 @@ public class AnnotationTest {
 
         public int getReadOnly() {return 0;}
 
-        public void setWriteOnly(int x) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setWriteOnly(int x) {}
 
         public int getReadWrite1() {return 0;}
         public void setReadWrite1(int x) {}
@@ -218,7 +231,11 @@ public class AnnotationTest {
         public int getReadWrite3() {return 0;}
         public void setReadWrite3(int x) {}
 
-        public int operation(int p1, int p2) {return 0;}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int operation(int p1, int p2) {return 0;}
     }
 
     public static void main(String[] args) throws Exception {

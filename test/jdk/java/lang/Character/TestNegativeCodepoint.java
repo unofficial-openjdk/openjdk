@@ -30,6 +30,7 @@
  * @author John O'Conner
  */
 
+@Bean
 public class TestNegativeCodepoint {
 
     public static void main(String[] args) {

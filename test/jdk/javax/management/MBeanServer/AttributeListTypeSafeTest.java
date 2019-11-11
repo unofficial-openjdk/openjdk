@@ -33,6 +33,7 @@ import java.util.List;
 import javax.management.Attribute;
 import javax.management.AttributeList;
 
+@Bean
 public class AttributeListTypeSafeTest {
 
     private static String failure;

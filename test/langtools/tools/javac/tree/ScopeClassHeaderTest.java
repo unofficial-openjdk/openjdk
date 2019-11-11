@@ -59,9 +59,17 @@ public class ScopeClassHeaderTest {
         JavaCompiler tool = ToolProvider.getSystemJavaCompiler();
         JavaFileObject source = new SimpleJavaFileObject(URI.create("mem://Test.java"), Kind.SOURCE) {
             @Override public CharSequence getCharContent(boolean ignoreEncodingErrors) throws IOException {
-                return "import java.util.*; class O { public void m() { class X<T extends ArrayList> { public void test() { String o; } } } }";
+                return "import java.util.*; class O { @Bean
+@Bean
+@Bean
+@Bean
+                public void m() { class X<T extends ArrayList> { public void test() { String o; } } } }";
             }
-            @Override public boolean isNameCompatible(String simpleName, Kind kind) {
+            @Override @Bean
+@Bean
+@Bean
+@Bean
+                public boolean isNameCompatible(String simpleName, Kind kind) {
                 return !"module-info".equals(simpleName);
             }
         };
@@ -74,7 +82,11 @@ public class ScopeClassHeaderTest {
 
         new TreePathScanner<Void, Void>() {
             @Override
-            public Void visitIdentifier(IdentifierTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitIdentifier(IdentifierTree node, Void p) {
                 if (node.getName().contentEquals("ArrayList") || node.getName().contentEquals("String")) {
                     Scope scope = trees.getScope(getCurrentPath());
                     System.err.println("scope: " + scope);

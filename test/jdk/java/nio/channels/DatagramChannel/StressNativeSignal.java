@@ -31,6 +31,7 @@ import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 
+@Bean
 public class StressNativeSignal {
     private UDPThread udpThread;
     private ServerSocketThread serverSocketThread;
@@ -74,7 +75,8 @@ public class StressNativeSignal {
         }
     }
 
-    public class ServerSocketThread extends Thread {
+    @Bean
+public class ServerSocketThread extends Thread {
         private volatile boolean shouldTerminate;
         private ServerSocket socket;
 
@@ -105,7 +107,8 @@ public class StressNativeSignal {
         }
     }
 
-    public class UDPThread extends Thread {
+    @Bean
+public class UDPThread extends Thread {
         private DatagramChannel channel;
         private volatile boolean shouldTerminate;
 

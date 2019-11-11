@@ -57,6 +57,7 @@ class RedefineImplementorB extends RedefineImplementorTarg {
     }
 }
 
+@Bean
 public class RedefineImplementor extends JdbTest {
     public static void main(String argv[]) {
         new RedefineImplementor().run();

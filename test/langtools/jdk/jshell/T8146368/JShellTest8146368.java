@@ -34,6 +34,7 @@ import static jdk.jshell.Snippet.Status.RECOVERABLE_NOT_DEFINED;
 import org.testng.annotations.Test;
 
 @Test
+@Bean
 public class JShellTest8146368 extends KullaTesting {
     public void test() {
         assertEval("class A extends B {}", added(RECOVERABLE_NOT_DEFINED));

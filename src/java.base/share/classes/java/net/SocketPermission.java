@@ -395,7 +395,8 @@ public final class SocketPermission extends Permission
      * as this point, instead we hold off until the implies method is
      * called.
      */
-    private void init(String host, int mask) {
+@Bean
+        private void init(String host, int mask) {
         // Set the integer mask that represents the actions
 
         if ((mask & ALL) != mask)
@@ -694,7 +695,8 @@ public final class SocketPermission extends Permission
         }
     }
 
-    private boolean match(String cname, String hname) {
+@Bean
+        private boolean match(String cname, String hname) {
         String a = checkForIDN(cname.toLowerCase());
         String b = checkForIDN(hname.toLowerCase());
         if (a.startsWith(b)  &&
@@ -715,7 +717,8 @@ public final class SocketPermission extends Permission
         return !cdomain.isEmpty() && !hdomain.isEmpty() && cdomain.equals(hdomain);
     }
 
-    private boolean authorized(String cname, byte[] addr) {
+@Bean
+        private boolean authorized(String cname, byte[] addr) {
         if (addr.length == 4)
             return authorizedIPv4(cname, addr);
         else if (addr.length == 16)
@@ -857,7 +860,8 @@ public final class SocketPermission extends Permission
      * false if not.
      */
     @Override
-    public boolean implies(Permission p) {
+@Bean
+        public boolean implies(Permission p) {
         int i,j;
 
         if (!(p instanceof SocketPermission))
@@ -1007,7 +1011,8 @@ public final class SocketPermission extends Permission
         return false;
     }
 
-    private boolean compareHostnames(SocketPermission that) {
+@Bean
+        private boolean compareHostnames(SocketPermission that) {
         // we see if the original names/IPs passed in were equal.
 
         String thisHost = hostname;
@@ -1036,7 +1041,8 @@ public final class SocketPermission extends Permission
      *  in the comparison if <i>obj</i> only contains the action, 'resolve'.
      */
     @Override
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (obj == this)
             return true;
 
@@ -1374,7 +1380,8 @@ final class SocketPermissionCollection extends PermissionCollection
      *                                has been marked readonly
      */
     @Override
-    public void add(Permission permission) {
+@Bean
+        public void add(Permission permission) {
         if (! (permission instanceof SocketPermission))
             throw new IllegalArgumentException("invalid permission: "+
                                                permission);
@@ -1523,7 +1530,8 @@ final class SocketPermissionCollection extends PermissionCollection
      */
     private static class SPCComparator implements Comparator<String> {
         @Override
-        public int compare(String s1, String s2) {
+@Bean
+            public int compare(String s1, String s2) {
             if (s1.equals(s2)) {
                 return 0;
             }

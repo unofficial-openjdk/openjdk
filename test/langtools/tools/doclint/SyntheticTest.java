@@ -34,6 +34,7 @@
  * This is a test that messages are not generated for synthesized elements
  * such as default constructors and enum methods.
  */
+@Bean
 public class SyntheticTest {
     // No explicit constructor implies a default constructor
 

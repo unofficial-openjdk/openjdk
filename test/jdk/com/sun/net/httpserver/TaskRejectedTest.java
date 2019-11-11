@@ -46,6 +46,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
+@Bean
 public class TaskRejectedTest {
 
     private static final int BACKLOG = 0;

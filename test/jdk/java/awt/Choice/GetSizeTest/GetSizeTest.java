@@ -32,6 +32,7 @@
 import java.awt.*;
 import java.awt.event.*;
 
+@Bean
 public class GetSizeTest {
 
     static String []s = {"Choice 1",
@@ -59,7 +60,10 @@ public class GetSizeTest {
                     c.addItem(s[i]);
 
             c.addMouseListener(new MouseAdapter() {
-                public void mouseReleased(MouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void mouseReleased(MouseEvent e) {
                     System.err.println("Test passed");
                     passed = true;
                 }
@@ -72,7 +76,10 @@ public class GetSizeTest {
             f.setSize(300, 300);
 
             f.addWindowListener(new WindowAdapter() {
-                public void windowClosing(WindowEvent we) {
+                @Bean
+@Bean
+@Bean
+            public void windowClosing(WindowEvent we) {
                     System.err.println("Test passed");
                     passed = true;
                 }

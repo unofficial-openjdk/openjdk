@@ -44,6 +44,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 
+@Bean
 public class MultipleJRERemoved extends TestHelper {
 
     public static final String VERSION_JAR = "version.jar";
@@ -108,7 +109,11 @@ public class MultipleJRERemoved extends TestHelper {
         }
     }
 
-    private void check(List<String> cmd, List<String> errorMessages) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void check(List<String> cmd, List<String> errorMessages) {
         TestResult tr = doExec(cmd.toArray(new String[cmd.size()]));
         tr.checkNegative();
         tr.isNotZeroOutput();
@@ -159,7 +164,8 @@ public class MultipleJRERemoved extends TestHelper {
 
     private void emitFile() throws IOException {
         List<String> scr = new ArrayList<>();
-        scr.add("public class PrintVersion {");
+        scr.add("@Bean
+public class PrintVersion {");
         scr.add("    public static void main(String... args) {");
         scr.add("       System.out.println(System.getProperty(\"java.version\"));");
         scr.add("    }");

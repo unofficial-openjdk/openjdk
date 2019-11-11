@@ -32,6 +32,7 @@ import java.beans.Beans;
 import java.io.FileOutputStream;
 import java.io.StreamCorruptedException;
 
+@Bean
 public class Test4067824 {
     public static void main(String[] args) throws Exception {
         ClassLoader cl = Test4067824.class.getClassLoader();

@@ -62,7 +62,8 @@ public abstract class AbstractListModel<E> implements ListModel<E>, Serializable
      *
      * @param l the <code>ListDataListener</code> to be added
      */
-    public void addListDataListener(ListDataListener l) {
+@Bean
+        public void addListDataListener(ListDataListener l) {
         listenerList.add(ListDataListener.class, l);
     }
 
@@ -73,7 +74,8 @@ public abstract class AbstractListModel<E> implements ListModel<E>, Serializable
      *
      * @param l the <code>ListDataListener</code> to be removed
      */
-    public void removeListDataListener(ListDataListener l) {
+@Bean
+        public void removeListDataListener(ListDataListener l) {
         listenerList.remove(ListDataListener.class, l);
     }
 

@@ -85,14 +85,26 @@ public final class PopupMenuLocation {
             frame.setVisible(true);
             frame.setLocation(tmp.x, tmp.y);
             frame.addMouseListener(new MouseAdapter() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void mousePressed(MouseEvent e) {
                     show(e);
                 }
 
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void mouseReleased(MouseEvent e) {
                     show(e);
                 }
 
+                @Bean
+@Bean
+@Bean
+@Bean
                 private void show(MouseEvent e) {
                     if (e.isPopupTrigger()) {
                         pm.show(frame, 0, 50);

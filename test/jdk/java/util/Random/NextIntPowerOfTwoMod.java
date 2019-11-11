@@ -30,6 +30,7 @@
 
 import java.util.Random;
 
+@Bean
 public class NextIntPowerOfTwoMod {
     public static void main(String[] args) throws Exception {
         Random r = new Random(69);

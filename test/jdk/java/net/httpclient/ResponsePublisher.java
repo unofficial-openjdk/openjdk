@@ -80,6 +80,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
+@Bean
 public class ResponsePublisher implements HttpServerAdapters {
 
     SSLContext sslContext;
@@ -335,7 +336,11 @@ public class ResponsePublisher implements HttpServerAdapters {
                 subscriptionCF.thenCompose((s) -> CompletableFuture.completedStage(this::subscribe));
                 //CompletableFuture.completedStage(this::subscribe);
 
-        private void subscribe(Flow.Subscriber<? super List<ByteBuffer>> subscriber) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void subscribe(Flow.Subscriber<? super List<ByteBuffer>> subscriber) {
             Objects.requireNonNull(subscriber, "subscriber must not be null");
             if (subscriberRef.compareAndSet(null, subscriber)) {
                 subscriptionCF.thenAccept((s) -> {
@@ -344,7 +349,11 @@ public class ResponsePublisher implements HttpServerAdapters {
                 });
             } else {
                 subscriber.onSubscribe(new Flow.Subscription() {
-                    @Override public void request(long n) { }
+                    @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void request(long n) { }
                     @Override public void cancel() { }
                 });
                 subscriber.onError(
@@ -353,12 +362,20 @@ public class ResponsePublisher implements HttpServerAdapters {
         }
 
         @Override
-        public void onSubscribe(Flow.Subscription subscription) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onSubscribe(Flow.Subscription subscription) {
             subscriptionCF.complete(subscription);
         }
 
         @Override
-        public void onNext(List<ByteBuffer> item) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(List<ByteBuffer> item) {
             assert subscriptionCF.isDone(); // cannot be called before onSubscribe()
             Flow.Subscriber<? super List<ByteBuffer>> subscriber = subscriberRef.get();
             assert subscriber != null; // cannot be called before subscriber calls request(1)
@@ -366,7 +383,11 @@ public class ResponsePublisher implements HttpServerAdapters {
         }
 
         @Override
-        public void onError(Throwable throwable) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onError(Throwable throwable) {
             assert subscriptionCF.isDone(); // cannot be called before onSubscribe()
             // onError can be called before request(1), and therefore can
             // be called before subscriberRef is set.

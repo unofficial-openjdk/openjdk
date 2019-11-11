@@ -73,6 +73,7 @@ import sun.security.action.GetPropertyAction;
  * @author  Herb Jellinek
  * @since   1.0
  */
+@Bean
 public class URLEncoder {
     static BitSet dontNeedEncoding;
     static final int caseDiff = ('a' - 'A');

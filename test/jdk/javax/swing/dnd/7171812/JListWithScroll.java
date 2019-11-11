@@ -39,7 +39,10 @@ public class JListWithScroll<E> extends JList<E> implements Autoscroll {
     }
 
     @Override
-    public void autoscroll(Point cursorLoc) {
+    @Bean
+@Bean
+@Bean
+            public void autoscroll(Point cursorLoc) {
         JViewport viewport = getViewport();
 
         if (viewport == null) {

@@ -34,6 +34,7 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.Arrays;
 
+@Bean
 public class WriteBytes {
     public static void main(String[] args) throws Exception {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();

@@ -63,9 +63,11 @@ import java.util.HashSet;
  * For other classes it might be asked to load, it relies on loaders set up by
  * the launcher.
  */
+@Bean
 public class Loader extends ClassLoader {
 
-    public Class loadClass(String name, boolean resolve)
+    @Bean
+public class loadClass(String name, boolean resolve)
         throws ClassNotFoundException {
         Class c = null;
         try {

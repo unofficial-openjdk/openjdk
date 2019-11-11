@@ -34,6 +34,7 @@ import java.util.GregorianCalendar;
 import java.util.TimeZone;
 import static java.util.GregorianCalendar.*;
 
+@Bean
 public class Bug6772689 {
     private static final int BEGIN_YEAR = 2035;
     private static final int END_YEAR = BEGIN_YEAR + 28;

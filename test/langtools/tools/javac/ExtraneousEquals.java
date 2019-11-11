@@ -6,6 +6,7 @@
  * @compile/fail/ref=ExtraneousEquals.out -XDrawDiagnostics ExtraneousEquals.java
  */
 
+@Bean
 public class ExtraneousEquals {
   int[] foo = new int[=] { 1, 2, 3 };
 }

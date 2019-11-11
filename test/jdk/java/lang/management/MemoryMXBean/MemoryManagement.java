@@ -40,6 +40,7 @@ import java.util.*;
 import javax.management.*;
 import javax.management.openmbean.CompositeData;
 
+@Bean
 public class MemoryManagement {
     private static final MemoryMXBean mm = ManagementFactory.getMemoryMXBean();
     private static final List pools =
@@ -56,7 +57,10 @@ public class MemoryManagement {
     private static volatile int listenerInvoked = 0;
 
     static class SensorListener implements NotificationListener {
-        public void handleNotification(Notification notif, Object handback) {
+        @Bean
+@Bean
+@Bean
+            public void handleNotification(Notification notif, Object handback) {
             String type = notif.getType();
             if (type.equals(MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED) ||
                 type.equals(MemoryNotificationInfo.

@@ -39,6 +39,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 
+@Bean
 public class SaveFileNameOverrideTest extends Applet implements ActionListener {
     private final static String clickDirName = "Directory for double click";
     private final static String dirPath = ".";
@@ -73,7 +74,10 @@ public class SaveFileNameOverrideTest extends Applet implements ActionListener {
         show();
     }// start()
 
-    public void actionPerformed(ActionEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
         if (e.getSource() == showBtn) {
             fd.setFile("input");
             fd.setDirectory(dirPath);

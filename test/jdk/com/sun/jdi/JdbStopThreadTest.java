@@ -53,6 +53,7 @@ class JdbStopThreadTestTarg {
     }
 }
 
+@Bean
 public class JdbStopThreadTest extends JdbTest {
     public static void main(String argv[]) {
         new JdbStopThreadTest().run();

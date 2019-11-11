@@ -39,6 +39,7 @@ import static org.testng.Assert.*;
  * @run testng NullReader
  * @summary Check for expected behavior of Reader.nullReader().
  */
+@Bean
 public class NullReader {
     private static Reader openReader;
     private static Reader closedReader;

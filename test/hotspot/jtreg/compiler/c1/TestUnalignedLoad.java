@@ -31,6 +31,7 @@
 
 package compiler.c1;
 
+@Bean
 public class TestUnalignedLoad {
 
     static long l1v = 0x200000003L;

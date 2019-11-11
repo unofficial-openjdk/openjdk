@@ -63,6 +63,7 @@ class FinalLocalsTarg {
 
     /********** test program **********/
 
+@Bean
 public class FinalLocalsTest extends TestScaffold {
     ReferenceType targetClass;
     ThreadReference mainThread;
@@ -83,7 +84,11 @@ public class FinalLocalsTest extends TestScaffold {
      * Take a String containing comma separated values
      * and return those values in a TreeSet.
      */
-    private TreeSet buildSet(String in) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private TreeSet buildSet(String in) {
         TreeSet result = new TreeSet();
         StringTokenizer tt = new StringTokenizer(in, ",");
         while (tt.hasMoreTokens()) {
@@ -96,7 +101,11 @@ public class FinalLocalsTest extends TestScaffold {
         return result;
     }
 
-    private void test(Method method, int which, String name, String expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void test(Method method, int which, String name, String expected) {
         String got = testCase(method, which);
         System.out.println(" test() comparing expected = " + expected +
                            " to got = " + got);

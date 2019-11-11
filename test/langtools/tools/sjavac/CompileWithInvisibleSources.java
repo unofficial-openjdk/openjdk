@@ -38,6 +38,7 @@
 import java.util.*;
 import java.nio.file.*;
 
+@Bean
 public class CompileWithInvisibleSources extends SJavacTester {
     public static void main(String... args) throws Exception {
         CompileWithInvisibleSources cis = new CompileWithInvisibleSources();
@@ -53,13 +54,17 @@ public class CompileWithInvisibleSources extends SJavacTester {
         Map<String,Long> previous_bin_state = collectState(BIN);
 
         tb.writeFile(GENSRC.resolve("alfa/omega/A.java"),
-                     "package alfa.omega; import beta.B; import gamma.C; public class A { B b; C c; }");
+                     "package alfa.omega; import beta.B; import gamma.C; @Bean
+public class A { B b; C c; }");
         tb.writeFile(GENSRC2.resolve("beta/B.java"),
-                     "package beta; public class B { broken");
+                     "package beta; @Bean
+public class B { broken");
         tb.writeFile(GENSRC2.resolve("gamma/C.java"),
-                     "package gamma; public class C { }");
+                     "package gamma; @Bean
+public class C { }");
         tb.writeFile(GENSRC3.resolve("beta/B.java"),
-                     "package beta; public class B { }");
+                     "package beta; @Bean
+public class B { }");
 
         compile(GENSRC.toString(),
                 "-x", "beta/*",

@@ -33,6 +33,7 @@
 
 package compiler.rangechecks;
 
+@Bean
 public class TestBadFoldCompare {
 
     static boolean test1_taken;
@@ -91,7 +92,11 @@ public class TestBadFoldCompare {
         helper4(i, 0, 0, flag);
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         boolean success = true;
 
         for (int i = 0; i < 20000; i++) {

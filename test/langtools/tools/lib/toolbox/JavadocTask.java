@@ -51,6 +51,7 @@ import jdk.javadoc.internal.api.JavadocTool;
 /**
  * A task to configure and run the documentation tool, javadoc.
  */
+@Bean
 public class JavadocTask extends AbstractTask<JavadocTask> {
     private boolean includeStandardOptions;
     private List<Path> classpath;
@@ -88,7 +89,11 @@ public class JavadocTask extends AbstractTask<JavadocTask> {
      * @param classpath the classpath
      * @return this task object
      */
-    public JavadocTask classpath(String classpath) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavadocTask classpath(String classpath) {
         this.classpath = Stream.of(classpath.split(File.pathSeparator))
                 .filter(s -> !s.isEmpty())
                 .map(s -> Paths.get(s))
@@ -101,7 +106,11 @@ public class JavadocTask extends AbstractTask<JavadocTask> {
      * @param classpath the classpath
      * @return this task object
      */
-    public JavadocTask classpath(Path... classpath) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavadocTask classpath(Path... classpath) {
         this.classpath = Arrays.asList(classpath);
         return this;
     }
@@ -111,7 +120,11 @@ public class JavadocTask extends AbstractTask<JavadocTask> {
      * @param classpath the classpath
      * @return this task object
      */
-    public JavadocTask classpath(List<Path> classpath) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavadocTask classpath(List<Path> classpath) {
         this.classpath = classpath;
         return this;
     }
@@ -121,7 +134,11 @@ public class JavadocTask extends AbstractTask<JavadocTask> {
      * @param sourcepath the sourcepath
      * @return this task object
      */
-    public JavadocTask sourcepath(String sourcepath) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavadocTask sourcepath(String sourcepath) {
         this.sourcepath = Stream.of(sourcepath.split(File.pathSeparator))
                 .filter(s -> !s.isEmpty())
                 .map(s -> Paths.get(s))
@@ -134,7 +151,11 @@ public class JavadocTask extends AbstractTask<JavadocTask> {
      * @param sourcepath the sourcepath
      * @return this task object
      */
-    public JavadocTask sourcepath(Path... sourcepath) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavadocTask sourcepath(Path... sourcepath) {
         this.sourcepath = Arrays.asList(sourcepath);
         return this;
     }
@@ -144,7 +165,11 @@ public class JavadocTask extends AbstractTask<JavadocTask> {
      * @param sourcepath the sourcepath
      * @return this task object
      */
-    public JavadocTask sourcepath(List<Path> sourcepath) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavadocTask sourcepath(List<Path> sourcepath) {
         this.sourcepath = sourcepath;
         return this;
     }
@@ -154,7 +179,11 @@ public class JavadocTask extends AbstractTask<JavadocTask> {
      * @param outdir the output directory
      * @return this task object
      */
-    public JavadocTask outdir(String outdir) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavadocTask outdir(String outdir) {
         this.outdir = Paths.get(outdir);
         return this;
     }
@@ -164,7 +193,11 @@ public class JavadocTask extends AbstractTask<JavadocTask> {
      * @param outdir the output directory
      * @return this task object
      */
-    public JavadocTask outdir(Path outdir) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavadocTask outdir(Path outdir) {
         this.outdir = outdir;
         return this;
     }
@@ -174,7 +207,11 @@ public class JavadocTask extends AbstractTask<JavadocTask> {
      * @param options the options
      * @return this task object
      */
-    public JavadocTask options(String... options) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavadocTask options(String... options) {
         this.options = Arrays.asList(options);
         return this;
     }
@@ -184,7 +221,11 @@ public class JavadocTask extends AbstractTask<JavadocTask> {
      * @param options the options
      * @return this task object
      */
-    public JavadocTask options(List<String> options) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavadocTask options(List<String> options) {
         this.options = options;
         return this;
     }
@@ -194,7 +235,11 @@ public class JavadocTask extends AbstractTask<JavadocTask> {
      * @param files the files
      * @return this task object
      */
-    public JavadocTask files(String... files) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavadocTask files(String... files) {
         this.files = Arrays.asList(files);
         return this;
     }
@@ -204,7 +249,11 @@ public class JavadocTask extends AbstractTask<JavadocTask> {
      * @param files the files
      * @return this task object
      */
-    public JavadocTask files(Path... files) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavadocTask files(Path... files) {
         this.files = Stream.of(files)
                 .map(Path::toString)
                 .collect(Collectors.toList());
@@ -216,7 +265,11 @@ public class JavadocTask extends AbstractTask<JavadocTask> {
      * @param files the files
      * @return this task object
      */
-    public JavadocTask files(List<Path> files) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavadocTask files(List<Path> files) {
         this.files = files.stream()
                 .map(Path::toString)
                 .collect(Collectors.toList());
@@ -230,7 +283,11 @@ public class JavadocTask extends AbstractTask<JavadocTask> {
      * @param sources the sources
      * @return this task object
      */
-    public JavadocTask sources(String... sources) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavadocTask sources(String... sources) {
         fileObjects = Stream.of(sources)
                 .map(s -> new ToolBox.JavaSource(s))
                 .collect(Collectors.toList());
@@ -242,7 +299,11 @@ public class JavadocTask extends AbstractTask<JavadocTask> {
      * @param fileManager the file manager
      * @return this task object
      */
-    public JavadocTask fileManager(JavaFileManager fileManager) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavadocTask fileManager(JavaFileManager fileManager) {
         this.fileManager = fileManager;
         return this;
     }
@@ -253,7 +314,11 @@ public class JavadocTask extends AbstractTask<JavadocTask> {
      * @param docletClass the user specified doclet
      * @return this task object
      */
-    public JavadocTask docletClass(Class<?> docletClass) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavadocTask docletClass(Class<?> docletClass) {
         this.docletClass = docletClass;
         return this;
     }
@@ -345,7 +410,11 @@ public class JavadocTask extends AbstractTask<JavadocTask> {
         ((StandardJavaFileManager) fileManager).setLocationFromPaths(location, files);
     }
 
-    private int runCommand(PrintWriter pw) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int runCommand(PrintWriter pw) {
         List<String> args = getAllArgs();
         String[] argsArray = args.toArray(new String[args.size()]);
         return jdk.javadoc.internal.tool.Main.execute(argsArray, pw);
@@ -394,7 +463,11 @@ public class JavadocTask extends AbstractTask<JavadocTask> {
         return args;
     }
 
-    private String toSearchPath(List<Path> files) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String toSearchPath(List<Path> files) {
         return files.stream()
             .map(Path::toString)
             .collect(Collectors.joining(File.pathSeparator));

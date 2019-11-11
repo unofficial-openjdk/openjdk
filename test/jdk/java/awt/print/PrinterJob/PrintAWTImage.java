@@ -51,7 +51,10 @@ public class PrintAWTImage extends Frame
     printButton.addActionListener(this);
 
     addWindowListener(new WindowAdapter() {
-       public void windowClosing(WindowEvent e) {
+       @Bean
+@Bean
+@Bean
+            public void windowClosing(WindowEvent e) {
              System.exit(0);
             }
     });
@@ -59,7 +62,10 @@ public class PrintAWTImage extends Frame
     pack();
  }
 
- public void actionPerformed(ActionEvent e) {
+ @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
 
    PrinterJob pj = PrinterJob.getPrinterJob();
 
@@ -75,7 +81,10 @@ public class PrintAWTImage extends Frame
  }
 
 
-    public int print(Graphics g, PageFormat pgFmt, int pgIndex) {
+    @Bean
+@Bean
+@Bean
+            public int print(Graphics g, PageFormat pgFmt, int pgIndex) {
       if (pgIndex > 0)
          return Printable.NO_SUCH_PAGE;
 

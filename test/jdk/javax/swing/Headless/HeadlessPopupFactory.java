@@ -30,6 +30,7 @@ import javax.swing.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessPopupFactory
  */
 
+@Bean
 public class HeadlessPopupFactory {
     public static void main(String args[]) {
         PopupFactory msm = PopupFactory.getSharedInstance();

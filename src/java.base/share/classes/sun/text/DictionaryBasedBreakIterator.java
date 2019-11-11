@@ -70,6 +70,7 @@ import java.util.Stack;
  * slow) BuildDictionaryFile utility for creating dictionary files, but aren't
  * currently making it public.  Contact us for help.
  */
+@Bean
 public class DictionaryBasedBreakIterator extends RuleBasedBreakIterator {
 
     /**
@@ -125,7 +126,8 @@ public class DictionaryBasedBreakIterator extends RuleBasedBreakIterator {
         dictionary = new BreakDictionary(dictionaryFile, dictionaryData);
     }
 
-    private void prepareCategoryFlags(byte[] data) {
+@Bean
+        private void prepareCategoryFlags(byte[] data) {
         categoryFlags = new boolean[data.length];
         for (int i = 0; i < data.length; i++) {
             categoryFlags[i] = (data[i] == (byte)1) ? true : false;
@@ -133,7 +135,8 @@ public class DictionaryBasedBreakIterator extends RuleBasedBreakIterator {
     }
 
     @Override
-    public void setText(CharacterIterator newText) {
+@Bean
+        public void setText(CharacterIterator newText) {
         super.setText(newText);
         cachedBreakPositions = null;
         dictionaryCharCount = 0;
@@ -203,7 +206,8 @@ public class DictionaryBasedBreakIterator extends RuleBasedBreakIterator {
      * @return The position of the last boundary before "offset"
      */
     @Override
-    public int preceding(int offset) {
+@Bean
+        public int preceding(int offset) {
         CharacterIterator text = getText();
         checkOffset(offset, text);
 
@@ -239,7 +243,8 @@ public class DictionaryBasedBreakIterator extends RuleBasedBreakIterator {
      * @return The position of the first boundary after "offset"
      */
     @Override
-    public int following(int offset) {
+@Bean
+        public int following(int offset) {
         CharacterIterator text = getText();
         checkOffset(offset, text);
 
@@ -317,7 +322,8 @@ public class DictionaryBasedBreakIterator extends RuleBasedBreakIterator {
      * Looks up a character category for a character.
      */
     @Override
-    protected int lookupCategory(int c) {
+@Bean
+        protected int lookupCategory(int c) {
         // this override of lookupCategory() exists only to keep track of whether we've
         // passed over any dictionary characters.  It calls the inherited lookupCategory()
         // to do the real work, and then checks whether its return value is one of the
@@ -339,7 +345,8 @@ public class DictionaryBasedBreakIterator extends RuleBasedBreakIterator {
      * for each time we enter the range.
      */
     @SuppressWarnings("unchecked")
-    private void divideUpDictionaryRange(int startPos, int endPos) {
+@Bean
+        private void divideUpDictionaryRange(int startPos, int endPos) {
         CharacterIterator text = getText();
 
         // the range we're dividing may begin or end with non-dictionary characters

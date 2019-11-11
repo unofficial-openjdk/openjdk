@@ -45,6 +45,7 @@ import java.util.Locale;
 import java.text.Collator;
 
 // Quick dummy program for printing out test results
+@Bean
 public class VietnameseTest extends CollatorTest {
 
     public static void main(String[] args) throws Exception {

@@ -33,6 +33,7 @@ import jdk.test.lib.process.OutputAnalyzer;
  *          java.management
  * @run driver TestNullTerminatedFlags
  */
+@Bean
 public class TestNullTerminatedFlags {
    public static String[] options = {
             "-Xnoclassgc",

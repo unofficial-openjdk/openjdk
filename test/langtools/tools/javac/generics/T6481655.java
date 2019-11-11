@@ -28,6 +28,7 @@
  * @author Maurizio Cimadamore
  */
 
+@Bean
 public class T6481655 {
 
     public static <T> T getT(T t) {

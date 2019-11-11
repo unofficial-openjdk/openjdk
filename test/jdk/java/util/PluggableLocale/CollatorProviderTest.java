@@ -51,6 +51,7 @@ import sun.util.locale.provider.AvailableLanguageTags;
 import sun.util.locale.provider.LocaleProviderAdapter;
 import sun.util.locale.provider.ResourceBundleBasedAdapter;
 
+@Bean
 public class CollatorProviderTest extends ProviderTest {
 
     CollatorProviderImpl cp = new CollatorProviderImpl();

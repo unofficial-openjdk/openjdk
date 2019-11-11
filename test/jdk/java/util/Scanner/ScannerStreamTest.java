@@ -53,6 +53,7 @@ import static org.testng.Assert.*;
  */
 
 @Test
+@Bean
 public class ScannerStreamTest extends OpTestCase {
 
     static File inputFile = new File(System.getProperty("test.src", "."), "input.txt");
@@ -86,7 +87,11 @@ public class ScannerStreamTest extends OpTestCase {
      * results that would be provided by a Scanner hasNext/next loop.
      */
     @Test(dataProvider = "Tokens")
-    public void tokensTest(String description, String input, String delimiter) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void tokensTest(String description, String input, String delimiter) {
         // derive expected result by using conventional loop
         Scanner sc = makeScanner(input, delimiter);
         List<String> expected = new ArrayList<>();
@@ -175,7 +180,11 @@ public class ScannerStreamTest extends OpTestCase {
      * mistaken for a correct expected result.
      */
     @Test(dataProvider = "FindAllZero")
-    public void findAllZeroTest(String input, String patternString) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void findAllZeroTest(String input, String patternString) {
         Pattern pattern = Pattern.compile(patternString);
 
         // generate expected result using Matcher.find()

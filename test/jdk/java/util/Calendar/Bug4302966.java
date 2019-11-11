@@ -31,6 +31,7 @@
 import java.util.Calendar;
 import java.util.Locale;
 
+@Bean
 public class Bug4302966 {
 
     public static void main(String[] args) {

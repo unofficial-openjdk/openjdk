@@ -34,6 +34,7 @@ import java.nio.*;
 import java.util.*;
 import java.util.zip.*;
 
+@Bean
 public class InflaterBufferSize {
     private static final int DATA_LEN = 1024 *64;
     private static byte[] data;

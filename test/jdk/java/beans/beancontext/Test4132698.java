@@ -32,6 +32,7 @@ import java.beans.beancontext.BeanContext;
 import java.beans.beancontext.BeanContextMembershipEvent;
 import java.beans.beancontext.BeanContextSupport;
 
+@Bean
 public class Test4132698 extends BeanContextMembershipEvent {
     public static void main(String[] args) throws Exception {
         BeanContextSupport bcs = new BeanContextSupport();

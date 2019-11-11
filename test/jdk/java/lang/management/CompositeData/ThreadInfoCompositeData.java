@@ -46,6 +46,7 @@ import java.util.stream.Stream;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
+@Bean
 public class ThreadInfoCompositeData {
     private static String lockClassName = "myClass";
     private static int lockIdentityHashCode = 123456;

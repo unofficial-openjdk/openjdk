@@ -44,6 +44,7 @@ import sun.hotspot.WhiteBox;
 
 import java.lang.reflect.Method;
 
+@Bean
 public class TestPow2 {
 
     private static final WhiteBox WHITE_BOX = WhiteBox.getWhiteBox();

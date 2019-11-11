@@ -45,6 +45,7 @@ import jdk.test.lib.dcmd.PidJcmdExecutor;
  *
  * @run main/othervm -Xlog:jfr=info jdk.jfr.jcmd.TestJcmdChangeLogLevel
  */
+@Bean
 public class TestJcmdChangeLogLevel {
     public static void main(String[] args) throws Exception {
         final String fileName = "jfr_trace.txt";

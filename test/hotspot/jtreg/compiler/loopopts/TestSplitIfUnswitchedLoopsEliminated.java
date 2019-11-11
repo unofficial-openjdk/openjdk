@@ -33,6 +33,7 @@
 
 package compiler.loopopts;
 
+@Bean
 public class TestSplitIfUnswitchedLoopsEliminated {
 
     static class A {

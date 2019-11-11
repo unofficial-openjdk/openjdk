@@ -36,6 +36,7 @@ package compiler.membars;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class TestMembarDependencies {
     private static TestMembarDependencies f1;
     private static TestMembarDependencies f2;

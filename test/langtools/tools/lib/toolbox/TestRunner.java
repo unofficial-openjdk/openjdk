@@ -117,7 +117,11 @@ public abstract class TestRunner {
         }
     }
 
-    protected void error(String message) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void error(String message) {
         out.println("Error: " + message);
         errorCount++;
     }

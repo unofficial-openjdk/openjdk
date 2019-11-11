@@ -53,7 +53,10 @@ public class WithSecurityManager {
         {
             SecurityManager sm = new SecurityManager() {
                 @Override
-                public void checkPermission(Permission perm) {
+                @Bean
+@Bean
+@Bean
+            public void checkPermission(Permission perm) {
                     String abc = "abc";
                     int ival = perm.hashCode();
                     String full = abc + "abc";
@@ -72,7 +75,10 @@ public class WithSecurityManager {
         {
             SecurityManager sm = new SecurityManager() {
                 @Override
-                public void checkPermission(Permission perm) {
+                @Bean
+@Bean
+@Bean
+            public void checkPermission(Permission perm) {
                     String abc = "abc";
                     int ival = perm.hashCode();
                     String full = abc + "abc";

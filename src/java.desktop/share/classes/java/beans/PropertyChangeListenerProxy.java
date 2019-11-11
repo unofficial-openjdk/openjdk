@@ -66,7 +66,8 @@ public class PropertyChangeListenerProxy
      *
      * @param event  the property change event
      */
-    public void propertyChange(PropertyChangeEvent event) {
+@Bean
+        public void propertyChange(PropertyChangeEvent event) {
         getListener().propertyChange(event);
     }
 

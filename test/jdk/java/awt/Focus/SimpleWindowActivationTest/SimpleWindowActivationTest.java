@@ -37,6 +37,7 @@ import java.util.concurrent.Callable;
 import javax.swing.SwingUtilities;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class SimpleWindowActivationTest {
 
     private static Frame frame;
@@ -58,6 +59,9 @@ public class SimpleWindowActivationTest {
 
         Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
 
+            @Bean
+@Bean
+@Bean
             public void eventDispatched(AWTEvent e) {
                 System.out.println(e);
             }

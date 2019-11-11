@@ -32,6 +32,7 @@
  * @run main/othervm -Xverify:all TestBadClassName
  */
 
+@Bean
 public class TestBadClassName {
     public static void main(String args[]) throws Throwable {
 

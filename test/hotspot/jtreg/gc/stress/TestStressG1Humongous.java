@@ -45,6 +45,7 @@ import jdk.test.lib.Utils;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class TestStressG1Humongous{
 
     public static void main(String[] args) throws Exception {
@@ -136,7 +137,11 @@ class TestStressG1HumongousImpl {
      * Starts several threads to allocate the requested amount of humongous objects.
      * @param totalObjects total amount of object that will be created
      */
-    private void startAllocationThreads(int totalObjects) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void startAllocationThreads(int totalObjects) {
         int objectsPerThread = totalObjects / THREAD_COUNT;
         int objectsForLastThread = objectsPerThread + totalObjects % THREAD_COUNT;
         for (int i = 0; i < THREAD_COUNT - 1; ++i) {
@@ -161,7 +166,11 @@ class TestStressG1HumongousImpl {
      * @param expectedObjects amount of objects based on heap size
      * @return amount of created objects
      */
-    private int checkHeapCapacity(int expectedObjects) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int checkHeapCapacity(int expectedObjects) {
         int allocated = 0;
         try {
             while (isRunning() && allocated < expectedObjects) {

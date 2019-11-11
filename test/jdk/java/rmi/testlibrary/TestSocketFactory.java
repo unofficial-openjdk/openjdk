@@ -75,6 +75,7 @@ import org.testng.annotations.DataProvider;
  * time and immediately reset and restart matching.  Changes are propagated
  * to all of the sockets created from the factories immediately.
  */
+@Bean
 public class TestSocketFactory extends RMISocketFactory
         implements RMIClientSocketFactory, RMIServerSocketFactory, Serializable {
 
@@ -135,7 +136,11 @@ public class TestSocketFactory extends RMISocketFactory
      * @param matchBytes bytes to match
      * @param replaceBytes bytes to replace the matched bytes
      */
-    public void setMatchReplaceBytes(byte[] matchBytes, byte[] replaceBytes) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setMatchReplaceBytes(byte[] matchBytes, byte[] replaceBytes) {
         setMatchReplaceBytes(EMPTY_BYTE_ARRAY, matchBytes, replaceBytes);
     }
 
@@ -254,7 +259,11 @@ public class TestSocketFactory extends RMISocketFactory
          * @param matchBytes bytes to match
          * @param replaceBytes bytes to replace the matched bytes
          */
-        public void setMatchReplaceBytes(byte[] matchBytes, byte[] replaceBytes) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setMatchReplaceBytes(byte[] matchBytes, byte[] replaceBytes) {
             this.setMatchReplaceBytes(EMPTY_BYTE_ARRAY, matchBytes, replaceBytes);
         }
 
@@ -457,7 +466,11 @@ public class TestSocketFactory extends RMISocketFactory
          * @param matchBytes bytes to match
          * @param replaceBytes bytes to replace the matched bytes
          */
-        public void setMatchReplaceBytes(byte[] matchBytes, byte[] replaceBytes) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setMatchReplaceBytes(byte[] matchBytes, byte[] replaceBytes) {
             setMatchReplaceBytes(EMPTY_BYTE_ARRAY, matchBytes, replaceBytes);
         }
 
@@ -653,7 +666,11 @@ public class TestSocketFactory extends RMISocketFactory
             this.log = log;
         }
 
-        public void setMatchReplaceBytes(byte[] matchBytes, byte[] replaceBytes) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setMatchReplaceBytes(byte[] matchBytes, byte[] replaceBytes) {
             setMatchReplaceBytes(EMPTY_BYTE_ARRAY, matchBytes, replaceBytes);
         }
 

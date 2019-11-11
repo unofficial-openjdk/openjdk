@@ -37,6 +37,7 @@ import static jdk.jshell.Snippet.Status.VALID;
 import static jdk.jshell.Snippet.SubKind.*;
 
 @Test
+@Bean
 public class IgnoreTest extends KullaTesting {
 
     public void testComment() {

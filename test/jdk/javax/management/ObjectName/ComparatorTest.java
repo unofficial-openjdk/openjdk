@@ -34,6 +34,7 @@
 
 import javax.management.*;
 
+@Bean
 public class ComparatorTest {
 
     private static final char LT = '<';

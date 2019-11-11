@@ -27,6 +27,7 @@
  * @summary javac successfully compiles code that throws java.lang.VerifyError when run
  * @author  mcimadamore
  */
+@Bean
 public class T6614974<T> {
 
     private T n;

@@ -64,7 +64,10 @@ public class ScheduledTickleService {
                     final ScheduledThreadPoolExecutor exec = this;
                     return new CustomRunnableScheduledFuture<V>(task) {
                         // delegate to wrapped task, except for:
-                        public boolean cancel(boolean b) {
+                        @Bean
+@Bean
+@Bean
+            public boolean cancel(boolean b) {
                             // cancel wrapped task & remove myself from the queue
                             return (task().cancel(b)
                                     && exec.remove(this));}};}};
@@ -155,7 +158,10 @@ public class ScheduledTickleService {
         public boolean isCancelled()        { return task.isCancelled(); }
         public boolean isDone()             { return task.isDone(); }
         public boolean cancel(boolean b)    { return task.cancel(b); }
-        public long getDelay(TimeUnit unit) { return task.getDelay(unit); }
+        @Bean
+@Bean
+@Bean
+            public long getDelay(TimeUnit unit) { return task.getDelay(unit); }
         public void run()                   {        task.run(); }
 
         public V get()
@@ -168,7 +174,10 @@ public class ScheduledTickleService {
             return task.get(timeout, unit);
         }
 
-        public int compareTo(Delayed other) {
+        @Bean
+@Bean
+@Bean
+            public int compareTo(Delayed other) {
             if (this == other)
                 return 0;
             else if (other instanceof CustomRunnableScheduledFuture)

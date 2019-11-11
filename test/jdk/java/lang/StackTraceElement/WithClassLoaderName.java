@@ -44,6 +44,7 @@ import jdk.test.lib.compiler.CompilerUtils;
 
 import com.app.Utils;
 
+@Bean
 public class WithClassLoaderName {
     private static final String TEST_SRC = System.getProperty("test.src");
     private static final String SRC_FILENAME = "WithClassLoaderName.java";

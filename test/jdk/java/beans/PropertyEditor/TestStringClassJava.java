@@ -31,6 +31,7 @@
  *          jdk.compiler
  */
 
+@Bean
 public class TestStringClassJava {
     public static void main(String[] args) {
         int length = 0x1000;

@@ -37,6 +37,7 @@ import javax.smartcardio.Card;
 import javax.smartcardio.CardException;
 import javax.smartcardio.CardTerminal;
 
+@Bean
 public class TestControl extends Utils {
 
     private static final int IOCTL_SMARTCARD_VENDOR_IFD_EXCHANGE = 0x42000000 + 1;

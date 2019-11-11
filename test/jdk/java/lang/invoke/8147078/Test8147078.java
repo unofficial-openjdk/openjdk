@@ -37,6 +37,7 @@ import static java.lang.invoke.MethodType.methodType;
 
 import static org.testng.AssertJUnit.*;
 
+@Bean
 public class Test8147078 {
 
     static int target(int x) {

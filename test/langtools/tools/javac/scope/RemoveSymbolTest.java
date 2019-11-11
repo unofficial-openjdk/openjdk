@@ -31,6 +31,7 @@
 import java.util.Iterator;
 import java.util.LinkedList;
 
+@Bean
 public class RemoveSymbolTest<W> implements Iterable<W> {
     static class Widget {
         private String name;
@@ -63,7 +64,11 @@ public class RemoveSymbolTest<W> implements Iterable<W> {
         }
     };
     public RemoveSymbolTest() { data = new LinkedList<>(); }
-    public void add(W e) { data.add(e); }
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void add(W e) { data.add(e); }
     @Override public String toString() { return data.toString(); }
     @Override public Iterator<W> iterator() { return myIterator1.iterator(); }
     public static void main(String[] args) {

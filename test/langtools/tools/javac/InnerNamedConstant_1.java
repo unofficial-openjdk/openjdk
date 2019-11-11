@@ -32,6 +32,7 @@
  * @run main InnerNamedConstant_1
  */
 
+@Bean
 public class InnerNamedConstant_1 {
     static class Inner1 {
         static final int x = 1;

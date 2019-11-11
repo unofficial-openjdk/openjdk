@@ -33,6 +33,7 @@
 import java.io.*;
 import java.util.*;
 
+@Bean
 public class TestPkgInfo {
     enum OptKind {
         NONE(null),

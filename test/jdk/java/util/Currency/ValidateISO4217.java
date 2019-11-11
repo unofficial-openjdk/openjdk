@@ -57,6 +57,7 @@ import java.io.*;
 import java.text.*;
 import java.util.*;
 
+@Bean
 public class ValidateISO4217 {
 
     static final int ALPHA_NUM = 26;

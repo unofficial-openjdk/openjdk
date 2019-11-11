@@ -33,6 +33,7 @@
 import java.io.File;
 import javax.tools.*;
 
+@Bean
 public class T6407011 {
     public static void main(String... args) {
         JavaCompiler tool = ToolProvider.getSystemJavaCompiler();

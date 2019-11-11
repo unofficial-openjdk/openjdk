@@ -34,6 +34,7 @@
 import java.net.*;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class SetSoLinger {
     static final int LINGER = 65546;
 

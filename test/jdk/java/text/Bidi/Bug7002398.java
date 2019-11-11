@@ -28,6 +28,7 @@
  */
 import java.text.*;
 
+@Bean
 public class Bug7002398 {
 
     private static final int[] directions = {

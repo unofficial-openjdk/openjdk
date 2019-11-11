@@ -31,6 +31,7 @@
 import java.math.*;
 import java.io.*;
 
+@Bean
 public class SerializationTests {
 
     static void checkSerialForm(BigDecimal bd) throws Exception  {

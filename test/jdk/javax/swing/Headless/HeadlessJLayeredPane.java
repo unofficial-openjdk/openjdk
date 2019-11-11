@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessJLayeredPane
  */
 
+@Bean
 public class HeadlessJLayeredPane {
     public static void main(String args[]) {
         JLayeredPane lp = new JLayeredPane();

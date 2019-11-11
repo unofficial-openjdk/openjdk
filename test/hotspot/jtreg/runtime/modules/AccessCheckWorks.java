@@ -36,6 +36,7 @@
 
 import static jdk.test.lib.Asserts.*;
 
+@Bean
 public class AccessCheckWorks {
 
     // Check that a class in a package in module_one can successfully access a

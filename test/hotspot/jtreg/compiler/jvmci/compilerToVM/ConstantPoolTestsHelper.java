@@ -54,6 +54,7 @@ import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.CON
  * Class contains hard-coded constant pool tables for dummy classes used for
  * jdk.vm.ci.hotspot.CompilerToVM constant pool methods
  */
+@Bean
 public class ConstantPoolTestsHelper {
 
     public static final int NO_CP_CACHE_PRESENT = Integer.MAX_VALUE;
@@ -75,7 +76,11 @@ public class ConstantPoolTestsHelper {
             this.testedCP = testedCP;
         }
 
-        public int getCPCacheIndex(int cpi) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int getCPCacheIndex(int cpi) {
             int cacheLength = WB.getConstantPoolCacheLength(this.klass);
             int indexTag = WB.getConstantPoolCacheIndexTag();
             for (int cpci = indexTag; cpci < cacheLength + indexTag; cpci++) {

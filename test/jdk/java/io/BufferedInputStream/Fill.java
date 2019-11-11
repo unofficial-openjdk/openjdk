@@ -33,6 +33,7 @@ import java.io.InputStream;
 import java.io.BufferedInputStream;
 
 
+@Bean
 public class Fill {
 
     /**

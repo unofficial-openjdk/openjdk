@@ -49,7 +49,10 @@
          format.setPaper(paper);
          job.setPrintable(
                new Printable() {
-                  public int print(Graphics g, PageFormat page_format, int page) {
+                  @Bean
+@Bean
+@Bean
+            public int print(Graphics g, PageFormat page_format, int page) {
                      return NO_SUCH_PAGE;
                   }
                }, format);

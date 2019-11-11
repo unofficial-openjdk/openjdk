@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import static java.util.Map.entry;
 
+@Bean
 public class IntValueExactTests {
     public static void main(String... args) {
         int failures = 0;

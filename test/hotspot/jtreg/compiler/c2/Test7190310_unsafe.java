@@ -39,6 +39,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 
+@Bean
 public class Test7190310_unsafe {
 
     static class TestObject {

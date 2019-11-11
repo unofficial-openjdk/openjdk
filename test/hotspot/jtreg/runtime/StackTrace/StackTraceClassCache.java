@@ -32,6 +32,7 @@
 
 import java.lang.reflect.*;
 
+@Bean
 public class StackTraceClassCache  {
     public static void main(String... args) throws Exception {
         Outer.Inner o = new Outer().new Inner();

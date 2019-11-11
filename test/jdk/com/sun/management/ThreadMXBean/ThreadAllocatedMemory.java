@@ -30,6 +30,7 @@
 
 import java.lang.management.*;
 
+@Bean
 public class ThreadAllocatedMemory {
     private static com.sun.management.ThreadMXBean mbean =
         (com.sun.management.ThreadMXBean)ManagementFactory.getThreadMXBean();

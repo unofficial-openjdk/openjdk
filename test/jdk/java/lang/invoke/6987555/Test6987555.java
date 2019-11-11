@@ -31,6 +31,7 @@
 
 import java.lang.invoke.*;
 
+@Bean
 public class Test6987555 {
     private static final Class   CLASS = Test6987555.class;
     private static final String  NAME  = "foo";

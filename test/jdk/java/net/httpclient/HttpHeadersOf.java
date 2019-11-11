@@ -41,6 +41,7 @@ import static org.testng.Assert.assertThrows;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
+@Bean
 public class HttpHeadersOf {
 
     static final Class<NullPointerException> NPE = NullPointerException.class;
@@ -49,13 +50,21 @@ public class HttpHeadersOf {
 
     static final BiPredicate<String,String> ACCEPT_ALL =
         new BiPredicate<>() {
-            @Override public boolean test(String name, String value) { return true; }
+            @Override @Bean
+@Bean
+@Bean
+@Bean
+                public boolean test(String name, String value) { return true; }
             @Override public String toString() { return "ACCEPT_ALL"; }
         };
 
     static final BiPredicate<String,String> REJECT_ALL =
         new BiPredicate<>() {
-            @Override public boolean test(String name, String value) { return false; }
+            @Override @Bean
+@Bean
+@Bean
+@Bean
+                public boolean test(String name, String value) { return false; }
             @Override public String toString() { return "REJECT_ALL"; }
         };
 
@@ -65,7 +74,11 @@ public class HttpHeadersOf {
     }
 
     @Test(dataProvider = "predicates")
-    public void testNull(BiPredicate<String,String> filter) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testNull(BiPredicate<String,String> filter) {
         assertThrows(NPE, () -> HttpHeaders.of(null, null));
         assertThrows(NPE, () -> HttpHeaders.of(null, filter));
         assertThrows(NPE, () -> HttpHeaders.of(Map.of(), null));
@@ -91,7 +104,11 @@ public class HttpHeadersOf {
     }
 
     @Test(dataProvider = "filterMaps")
-    public void testFilter(Map<String,List<String>> map) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testFilter(Map<String,List<String>> map) {
         HttpHeaders headers = HttpHeaders.of(map, REJECT_ALL);
         assertEquals(headers.map().size(), 0);
         assertFalse(headers.firstValue("A").isPresent());
@@ -138,7 +155,11 @@ public class HttpHeadersOf {
     }
 
     @Test(dataProvider = "mapValues")
-    public void testMapValues(Map<String,List<String>> map) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testMapValues(Map<String,List<String>> map) {
         HttpHeaders headers = HttpHeaders.of(map, ACCEPT_ALL);
 
         assertEquals(headers.map().size(), map.size());
@@ -180,7 +201,11 @@ public class HttpHeadersOf {
     }
 
     @Test(dataProvider = "caseInsensitivity")
-    public void testCaseInsensitivity(Map<String,List<String>> map) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testCaseInsensitivity(Map<String,List<String>> map) {
         HttpHeaders headers = HttpHeaders.of(map, ACCEPT_ALL);
 
         for (String name : List.of("Accept-Encoding", "accept-encoding",
@@ -233,7 +258,11 @@ public class HttpHeadersOf {
     }
 
     @Test(dataProvider = "valueAsLong")
-    public void testValueAsLong(Map<String,List<String>> map, long expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testValueAsLong(Map<String,List<String>> map, long expected) {
         HttpHeaders headers = HttpHeaders.of(map, ACCEPT_ALL);
         assertEquals(headers.firstValueAsLong("Content-Length").getAsLong(), expected);
     }
@@ -263,7 +292,11 @@ public class HttpHeadersOf {
     }
 
     @Test(dataProvider = "duplicateNames")
-    public void testDuplicates(Map<String,List<String>> map) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testDuplicates(Map<String,List<String>> map) {
         HttpHeaders headers;
         try {
             headers = HttpHeaders.of(map, ACCEPT_ALL);
@@ -297,7 +330,11 @@ public class HttpHeadersOf {
     }
 
     @Test(dataProvider = "noSplittingJoining")
-    public void testNoSplittingJoining(Map<String,List<String>> map) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testNoSplittingJoining(Map<String,List<String>> map) {
         HttpHeaders headers = HttpHeaders.of(map, ACCEPT_ALL);
         Map<String,List<String>> headersMap = headers.map();
 
@@ -332,7 +369,11 @@ public class HttpHeadersOf {
     }
 
     @Test(dataProvider = "trimming")
-    public void testTrimming(Map<String,List<String>> map) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testTrimming(Map<String,List<String>> map) {
         HttpHeaders headers = HttpHeaders.of(map, (name, value) -> {
             assertEquals(name, "A");
             assertEquals(value, "B");
@@ -359,7 +400,11 @@ public class HttpHeadersOf {
     }
 
     @Test(dataProvider = "emptyKey")
-    public void testEmptyKey(Map<String,List<String>> map) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testEmptyKey(Map<String,List<String>> map) {
         HttpHeaders headers;
         try {
             headers = HttpHeaders.of(map, ACCEPT_ALL);
@@ -384,7 +429,11 @@ public class HttpHeadersOf {
     }
 
     @Test(dataProvider = "emptyValue")
-    public void testEmptyValue(Map<String,List<String>> map) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testEmptyValue(Map<String,List<String>> map) {
         HttpHeaders headers = HttpHeaders.of(map, (name, value) -> {
             assertEquals(value, "");
             return true;
@@ -409,7 +458,11 @@ public class HttpHeadersOf {
     }
 
     @Test(dataProvider = "noValues")
-    public void testNoValues(Map<String,List<String>> map) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testNoValues(Map<String,List<String>> map) {
         HttpHeaders headers = HttpHeaders.of(map, (name, value) -> {
             fail("UNEXPECTED call to filter");
             return true;

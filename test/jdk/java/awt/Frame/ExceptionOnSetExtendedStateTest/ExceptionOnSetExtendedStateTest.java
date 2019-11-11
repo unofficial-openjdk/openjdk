@@ -32,6 +32,7 @@
 
 import java.awt.*;
 
+@Bean
 public class ExceptionOnSetExtendedStateTest {
     private static final int[] frameStates = { Frame.NORMAL, Frame.ICONIFIED, Frame.MAXIMIZED_BOTH };
 

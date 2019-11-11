@@ -36,6 +36,7 @@ import jdk.test.lib.Platform;
 
 import java.awt.*;
 
+@Bean
 public class MaximizedByPlatform {
     private static Frame frame;
     private static Rectangle availableScreenBounds;

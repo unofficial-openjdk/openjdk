@@ -36,6 +36,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
+@Bean
 public class Test7149090 {
     private static final Object[][] DEFAULT_TITLE_POSITIONS = {
             {"Metal", TitledBorder.TOP},

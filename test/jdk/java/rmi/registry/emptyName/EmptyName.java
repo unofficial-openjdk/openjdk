@@ -36,6 +36,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.RemoteObject;
 
+@Bean
 public class EmptyName {
     public static void main(String[] args) throws Exception {
         Registry impl = TestLibrary.createRegistryOnEphemeralPort();

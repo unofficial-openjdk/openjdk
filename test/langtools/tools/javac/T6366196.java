@@ -32,6 +32,7 @@
 
 import com.sun.tools.javac.util.*;
 
+@Bean
 public class T6366196 {
     public static final int MIDLINE = Position.MAXPOS>>>Position.LINESHIFT; // 0x00200000
 

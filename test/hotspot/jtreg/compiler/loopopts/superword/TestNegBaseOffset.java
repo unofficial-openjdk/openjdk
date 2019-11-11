@@ -34,6 +34,7 @@
 
 package compiler.loopopts.superword;
 
+@Bean
 public class TestNegBaseOffset {
     public static final int N = 400;
     public static int iFld=10;

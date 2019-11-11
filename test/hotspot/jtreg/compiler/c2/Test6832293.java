@@ -35,6 +35,7 @@ package compiler.c2;
 
 import java.io.PrintStream;
 
+@Bean
 public class Test6832293 {
     static interface SomeInterface {
         int SEVENS = 777;

@@ -46,6 +46,7 @@ import javax.tools.StandardLocation;
 import toolbox.JavacTask;
 import toolbox.ToolBox;
 
+@Bean
 public class CanHandleClassFilesTest {
 
     public static void main(String... args) throws Exception {

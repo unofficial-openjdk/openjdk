@@ -28,6 +28,7 @@
 
 import java.io.*;
 
+@Bean
 public class ReadLine {
 
     public static void main(String args[]) throws Exception {

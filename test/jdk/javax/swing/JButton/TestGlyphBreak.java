@@ -34,6 +34,7 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
+@Bean
 public class TestGlyphBreak {
 
     static JFrame f;

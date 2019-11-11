@@ -34,6 +34,7 @@
 
 package compiler.intrinsics.object;
 
+@Bean
 public class TestHashCode {
     static class A {
         int i;

@@ -35,13 +35,18 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+@Bean
 public class Test6593649 {
     private static JFrame frame;
 
     private static JTextArea textArea;
 
     private static final Timer timer = new Timer(1000, new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             boolean failed = !textArea.getParent().getSize().equals(textArea.getSize());
 
             frame.dispose();

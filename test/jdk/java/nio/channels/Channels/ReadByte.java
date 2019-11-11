@@ -32,9 +32,13 @@ import java.nio.channels.Channels;
 import java.io.InputStream;
 import java.io.IOException;
 
+@Bean
 public class ReadByte {
     public static void main(String[] args) throws IOException {
         ReadableByteChannel channel = new ReadableByteChannel() {
+            @Bean
+@Bean
+@Bean
             public int read(ByteBuffer dst) {
                 dst.put((byte) 129);
                 return 1;

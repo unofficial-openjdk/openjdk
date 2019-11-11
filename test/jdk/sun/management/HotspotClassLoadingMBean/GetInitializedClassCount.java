@@ -36,6 +36,7 @@
 
 import sun.management.*;
 
+@Bean
 public class GetInitializedClassCount {
 
     private static HotspotClassLoadingMBean mbean =

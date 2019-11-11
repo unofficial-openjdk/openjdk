@@ -48,6 +48,7 @@ import javax.swing.text.StyleContext;
 /**
  * hack to load attributed content.
  */
+@Bean
 public class HelloWorld {
 
     HelloWorld(DefaultStyledDocument doc, StyleContext styles) {

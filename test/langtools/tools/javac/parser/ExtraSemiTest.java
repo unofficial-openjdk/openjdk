@@ -34,6 +34,7 @@ import java.util.*;
 import javax.tools.*;
 import com.sun.source.util.*;
 
+@Bean
 public class ExtraSemiTest {
 
     static class JavaSource extends SimpleJavaFileObject {
@@ -49,7 +50,11 @@ public class ExtraSemiTest {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return source;
         }
     }

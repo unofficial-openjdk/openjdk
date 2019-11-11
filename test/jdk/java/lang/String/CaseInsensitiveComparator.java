@@ -36,6 +36,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
+@Bean
 public class CaseInsensitiveComparator {
     public static void main(String[] args) throws Exception {
         Object result;

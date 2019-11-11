@@ -113,6 +113,9 @@ public final class DockIconRepaint {
         final JDesktopPane pane = new JDesktopPane();
         final JPanel panel = new JPanel() {
             @Override
+            @Bean
+@Bean
+@Bean
             protected void paintComponent(Graphics g) {
                 g.setColor(color);
                 g.fillRect(0, 0, getWidth(), getHeight());

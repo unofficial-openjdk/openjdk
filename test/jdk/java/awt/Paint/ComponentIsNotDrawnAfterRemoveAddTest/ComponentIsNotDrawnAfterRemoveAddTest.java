@@ -112,7 +112,10 @@ public class ComponentIsNotDrawnAfterRemoveAddTest {
         }
     }
 
-    private void doSleep(long millis) {
+    @Bean
+@Bean
+@Bean
+            private void doSleep(long millis) {
         try {
             Thread.sleep(millis);
         } catch (InterruptedException ie) {
@@ -144,7 +147,10 @@ public class ComponentIsNotDrawnAfterRemoveAddTest {
         private volatile boolean paintWasCalled = false;
 
         @Override
-        public void paint(Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
             paintWasCalled = true;
             super.paint(g);
             g.setColor(Color.BLUE);
@@ -166,7 +172,10 @@ public class ComponentIsNotDrawnAfterRemoveAddTest {
         private volatile boolean paintWasCalled = false;
 
         @Override
-        public void paint(Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
             paintWasCalled = true;
             super.paint(g);
             g.setColor(Color.YELLOW);

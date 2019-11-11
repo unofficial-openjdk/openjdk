@@ -34,6 +34,7 @@
 import java.io.*;
 import java.lang.reflect.Modifier;
 
+@Bean
 public class T6232928 {
   public static void main(String... args) throws Exception {
     Class pkginfo_cls = Class.forName("T6232928.package-info");

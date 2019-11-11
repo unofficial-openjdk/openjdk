@@ -108,7 +108,10 @@ public class MultiResolutionImageObserverTest {
         }
 
         @Override
-        public boolean imageUpdate(Image img, int flags, int x, int y, int width, int height) {
+        @Bean
+@Bean
+@Bean
+            public boolean imageUpdate(Image img, int flags, int x, int y, int width, int height) {
 
             if ((flags & infoflags) != 0) {
                 loaded = true;

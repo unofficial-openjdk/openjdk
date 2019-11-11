@@ -45,6 +45,7 @@ import javax.management.ObjectName;
 import javax.management.RuntimeMBeanException;
 import javax.management.StandardMBean;
 
+@Bean
 public class MBeanExceptionTest {
     public static void main(String[] args) throws Exception {
         System.out.println("Test that if an MBean throws RuntimeException " +
@@ -218,7 +219,11 @@ public class MBeanExceptionTest {
         public String getUncheckedException() {
             throw theUncheckedException;
         }
-        public void setUncheckedException(String x) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setUncheckedException(String x) {
             throw theUncheckedException;
         }
         public void UncheckedException() {
@@ -259,11 +264,19 @@ public class MBeanExceptionTest {
             else
                 throw new AssertionError();
         }
-        public AttributeList getAttributes(String[] names) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public AttributeList getAttributes(String[] names) {
             assert false;
             return null;
         }
-        public AttributeList setAttributes(AttributeList attrs) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public AttributeList setAttributes(AttributeList attrs) {
             assert false;
             return null;
         }

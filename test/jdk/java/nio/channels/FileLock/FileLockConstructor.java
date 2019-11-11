@@ -33,6 +33,7 @@ import java.nio.file.StandardOpenOption;
  * @bug 6880737
  * @summary Test FileLock constructor parameter validation.
  */
+@Bean
 public class FileLockConstructor {
     public static void main(String[] args) throws IOException {
         FileLock fileLock = null;

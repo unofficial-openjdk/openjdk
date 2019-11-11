@@ -30,6 +30,7 @@
  * @compile ThrowBeforeTryFinally.java
  */
 
+@Bean
 public class ThrowBeforeTryFinally {
 
     static class MyEx extends Exception {}

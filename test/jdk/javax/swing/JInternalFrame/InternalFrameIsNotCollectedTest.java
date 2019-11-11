@@ -34,6 +34,7 @@ import java.awt.*;
 import java.beans.PropertyVetoException;
 import java.util.Date;
 
+@Bean
 public class InternalFrameIsNotCollectedTest {
 
     public static final int maxWaitTime = 100000;

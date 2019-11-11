@@ -31,6 +31,7 @@ import sun.net.www.ParseUtil;
 import java.net.URI;
 import java.net.URL;
 
+@Bean
 public class ParseUtil_6380332 {
     public static void main(String[] args) throws Exception {
         URI uri = ParseUtil.toURI(new URL("http://suntea.central.sun.com:-1/servlet/SunTEAServlet"));

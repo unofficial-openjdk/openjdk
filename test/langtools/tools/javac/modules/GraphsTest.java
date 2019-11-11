@@ -46,6 +46,7 @@ import toolbox.ModuleBuilder;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class GraphsTest extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {
@@ -78,8 +79,10 @@ public class GraphsTest extends ModuleTestBase {
 
         new ModuleBuilder(tb, "J")
                 .exports("openJ")
-                .classes("package openJ; public class J { }")
-                .classes("package closedJ; public class J { }")
+                .classes("package openJ; @Bean
+public class J { }")
+                .classes("package closedJ; @Bean
+public class J { }")
                 .build(base.resolve("jar"));
 
         Path jarModules = Files.createDirectories(base.resolve("jarModules"));
@@ -93,27 +96,34 @@ public class GraphsTest extends ModuleTestBase {
         new ModuleBuilder(tb, "O")
                 .exports("openO")
                 .requiresTransitive("J", jarModules)
-                .classes("package openO; public class O { openJ.J j; }")
-                .classes("package closedO; public class O { }")
+                .classes("package openO; @Bean
+public class O { openJ.J j; }")
+                .classes("package closedO; @Bean
+public class O { }")
                 .build(modSrc, modules);
         new ModuleBuilder(tb, "N")
                 .requiresTransitive("O", modules, jarModules)
                 .exports("openN")
-                .classes("package openN; public class N { }")
-                .classes("package closedN; public class N { }")
+                .classes("package openN; @Bean
+public class N { }")
+                .classes("package closedN; @Bean
+public class N { }")
                 .build(modSrc, modules);
         new ModuleBuilder(tb, "L")
                 .requiresTransitive("O", modules, jarModules)
                 .exports("openL")
-                .classes("package openL; public class L { }")
-                .classes("package closedL; public class L { }")
+                .classes("package openL; @Bean
+public class L { }")
+                .classes("package closedL; @Bean
+public class L { }")
                 .build(modSrc, modules);
         ModuleBuilder m = new ModuleBuilder(tb, "M");
         //positive case
         Path positiveSrc = m
                 .requires("N", modules)
                 .requires("L", modules)
-                .classes("package p; public class Positive { openO.O o; openN.N n; openL.L l; }")
+                .classes("package p; @Bean
+public class Positive { openO.O o; openN.N n; openL.L l; }")
                 .write(base.resolve("positiveSrc"));
 
         new JavacTask(tb)
@@ -123,7 +133,8 @@ public class GraphsTest extends ModuleTestBase {
                 .run()
                 .writeAll();
         //negative case
-        Path negativeSrc = m.classes("package p; public class Negative { closedO.O o; closedN.N n; closedL.L l; }")
+        Path negativeSrc = m.classes("package p; @Bean
+public class Negative { closedO.O o; closedN.N n; closedL.L l; }")
                 .write(base.resolve("negativeSrc"));
         List<String> log = new JavacTask(tb)
                 .options("-XDrawDiagnostics", "-p", modules + File.pathSeparator + jarModules)
@@ -186,11 +197,13 @@ public class GraphsTest extends ModuleTestBase {
                 .write(modSrc);
         new ModuleBuilder(tb, "N")
                 .exportsTo("pack", "M")
-                .classes("package pack; public class Clazz { }")
+                .classes("package pack; @Bean
+public class Clazz { }")
                 .write(modSrc);
         new ModuleBuilder(tb, "L")
                 .requires("M")
-                .classes("package p; public class A { A(pack.Clazz cl){} } ")
+                .classes("package p; @Bean
+public class A { A(pack.Clazz cl){} } ")
                 .write(modSrc);
         String log = new JavacTask(tb)
                 .options("-XDrawDiagnostics",

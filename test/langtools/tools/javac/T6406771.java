@@ -26,6 +26,7 @@ import com.sun.tools.javac.api.*;
 import com.sun.tools.javac.tree.JCTree;
 
 @SupportedAnnotationTypes("*")
+@Bean
 public class T6406771 extends AbstractProcessor {
     String[] tests = {
         "line:31",
@@ -65,14 +66,22 @@ public class T6406771 extends AbstractProcessor {
         }
     }
 
-    public boolean process(Set<? extends TypeElement> elems, RoundEnvironment rEnv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> elems, RoundEnvironment rEnv) {
         final String LINE = "line" + ':';   // avoid matching this string
         final String COLUMN  = "col" + ':';
         final Messager messager = processingEnv.getMessager();
         final Trees trees = Trees.instance(processingEnv);
 
         TreeScanner<Void,LineMap> s = new  TreeScanner<Void,LineMap>() {
-            public Void visitLiteral(LiteralTree tree, LineMap lineMap) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitLiteral(LiteralTree tree, LineMap lineMap) {
                 if (tree.getKind() == Tree.Kind.STRING_LITERAL) {
                     String s = (String) tree.getValue();
                     int pos = ((JCTree) tree).pos; // can't get through public api, bug 6412669 filed

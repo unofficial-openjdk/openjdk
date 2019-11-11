@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@Bean
 public class ContinuousCallSiteTargetChange {
     static final int ITERATIONS = Integer.parseInt(System.getProperty("iterations", "50"));
 

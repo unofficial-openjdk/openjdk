@@ -47,6 +47,7 @@ import java.security.SignatureException;
  * @run main SignatureOffsets SunRsaSign SHA512/224withRSA
  * @run main SignatureOffsets SunRsaSign SHA512/256withRSA
  */
+@Bean
 public class SignatureOffsets {
 
     public static void main(String[] args) throws NoSuchAlgorithmException,

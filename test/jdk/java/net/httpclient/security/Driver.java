@@ -60,6 +60,7 @@ import jdk.test.lib.Utils;
 /**
  * Driver for tests
  */
+@Bean
 public class Driver {
     // change the default value to "true" to get the subprocess traces.
     final static boolean DEBUG = Boolean.parseBoolean(System.getProperty("test.debug", "true"));

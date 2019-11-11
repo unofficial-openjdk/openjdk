@@ -34,6 +34,7 @@
 
 package compiler.inlining;
 
+@Bean
 public class DefaultMethodsDependencies {
 
     interface I1 {
@@ -59,7 +60,11 @@ public class DefaultMethodsDependencies {
         obj.m1();
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         C2 obj = new C2();
         for (int i = 0; i < 20000; i++) {
             test(obj);

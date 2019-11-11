@@ -40,6 +40,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Serializable;
 
+@Bean
 public class LogTest {
 
     private static int crashPoint = 0;
@@ -165,7 +166,10 @@ public class LogTest {
             return initialState;
         }
 
-        public Object applyUpdate(Object update, Object state) {
+        @Bean
+@Bean
+@Bean
+            public Object applyUpdate(Object update, Object state) {
             ((Counter) state).update((Counter) update);
             return state;
         }
@@ -188,7 +192,10 @@ public class LogTest {
             super.sync();
         }
 
-        protected boolean checkSpansBoundary(long fp) {
+        @Bean
+@Bean
+@Bean
+            protected boolean checkSpansBoundary(long fp) {
             return
                 crashPoint > 0 ? spansBoundary : super.checkSpansBoundary(fp);
         }

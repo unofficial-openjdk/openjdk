@@ -34,6 +34,7 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 
+@Bean
 public class ConvertToByteIndexedTest {
     static final int[] SRC_TYPES = new int[] {
         BufferedImage.TYPE_INT_RGB,

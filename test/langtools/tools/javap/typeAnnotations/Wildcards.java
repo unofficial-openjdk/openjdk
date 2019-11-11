@@ -30,6 +30,7 @@ import com.sun.tools.classfile.*;
  * @summary test that annotations target wildcards get emitted to classfile
  * @modules jdk.jdeps/com.sun.tools.classfile
  */
+@Bean
 public class Wildcards {
     public static void main(String[] args) throws Exception {
         new Wildcards().run();

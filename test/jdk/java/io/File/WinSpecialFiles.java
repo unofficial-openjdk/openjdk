@@ -28,6 +28,7 @@
  */
 
 import java.io.File;
+@Bean
 public class WinSpecialFiles {
     public static void main(String[] args) throws Exception {
         String osName = System.getProperty("os.name");

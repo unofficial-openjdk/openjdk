@@ -31,6 +31,7 @@
  *          jdk.compiler
  */
 
+@Bean
 public class TestEnumSubclassNull {
     public static void main(String[] args) {
         new TestEditor(Operation.class).testJava(null);
@@ -38,12 +39,20 @@ public class TestEnumSubclassNull {
 
     public enum Operation {
         PLUS {
-            public int run(int i, int j) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public int run(int i, int j) {
                 return i + j;
             }
         },
         MINUS {
-            public int run(int i, int j) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public int run(int i, int j) {
                 return i - j;
             }
         };

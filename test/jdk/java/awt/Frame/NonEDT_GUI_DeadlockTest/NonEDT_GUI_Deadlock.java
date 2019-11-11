@@ -31,6 +31,7 @@
 
 import java.awt.*;
 
+@Bean
 public class NonEDT_GUI_Deadlock {
     boolean bOK = false;
     Thread badThread = null;
@@ -88,7 +89,10 @@ public class NonEDT_GUI_Deadlock {
 
         }
 
-        public void paint(Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
             g.drawString("Deadlock or no deadlock?",20,80);
         }
 

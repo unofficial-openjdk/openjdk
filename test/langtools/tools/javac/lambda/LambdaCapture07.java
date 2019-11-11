@@ -26,6 +26,7 @@
  * @bug 8004962
  * @summary Code generation crash with lambda and local classes
  */
+@Bean
 public class LambdaCapture07 {
 
     static int assertionCount = 0;

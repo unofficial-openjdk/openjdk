@@ -33,6 +33,7 @@ import jdk.test.lib.security.TestTLSHandshake;
  * @run main/othervm jdk.security.logging.TestTLSHandshakeLog LOGGING_ENABLED
  * @run main/othervm jdk.security.logging.TestTLSHandshakeLog LOGGING_DISABLED
  */
+@Bean
 public class TestTLSHandshakeLog {
     public static void main(String[] args) throws Exception {
         LogJvm l = new LogJvm(TLSHandshake.class, args);

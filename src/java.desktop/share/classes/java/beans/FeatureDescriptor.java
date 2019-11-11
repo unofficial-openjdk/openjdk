@@ -75,7 +75,8 @@ public class FeatureDescriptor {
      *
      * @param name  The programmatic name of the property/method/event
      */
-    public void setName(String name) {
+@Bean
+        public void setName(String name) {
         this.name = name;
     }
 
@@ -98,7 +99,8 @@ public class FeatureDescriptor {
      * @param displayName  The localized display name for the
      *          property/method/event.
      */
-    public void setDisplayName(String displayName) {
+@Bean
+        public void setDisplayName(String displayName) {
         this.displayName = displayName;
     }
 
@@ -118,7 +120,8 @@ public class FeatureDescriptor {
      *
      * @param expert True if this feature is intended for use by experts only.
      */
-    public void setExpert(boolean expert) {
+@Bean
+        public void setExpert(boolean expert) {
         this.expert = expert;
     }
 
@@ -138,7 +141,8 @@ public class FeatureDescriptor {
      *
      * @param hidden  True if this feature should be hidden from human users.
      */
-    public void setHidden(boolean hidden) {
+@Bean
+        public void setHidden(boolean hidden) {
         this.hidden = hidden;
     }
 
@@ -161,7 +165,8 @@ public class FeatureDescriptor {
      *                   to human users.
      * @since 1.2
      */
-    public void setPreferred(boolean preferred) {
+@Bean
+        public void setPreferred(boolean preferred) {
         this.preferred = preferred;
     }
 
@@ -184,7 +189,8 @@ public class FeatureDescriptor {
      * @param text  A (localized) short description to be associated with
      * this property/method/event.
      */
-    public void setShortDescription(String text) {
+@Bean
+        public void setShortDescription(String text) {
         shortDescription = text;
     }
 
@@ -194,7 +200,8 @@ public class FeatureDescriptor {
      * @param attributeName  The locale-independent name of the attribute
      * @param value  The value.
      */
-    public void setValue(String attributeName, Object value) {
+@Bean
+        public void setValue(String attributeName, Object value) {
         getTable().put(attributeName, value);
     }
 
@@ -205,7 +212,8 @@ public class FeatureDescriptor {
      * @return  The value of the attribute.  May be null if
      *     the attribute is unknown.
      */
-    public Object getValue(String attributeName) {
+@Bean
+        public Object getValue(String attributeName) {
         return (this.table != null)
                 ? this.table.get(attributeName)
                 : null;
@@ -275,7 +283,8 @@ public class FeatureDescriptor {
      *
      * @param table  the attribute table with new values
      */
-    private void addTable(Hashtable<String, Object> table) {
+@Bean
+        private void addTable(Hashtable<String, Object> table) {
         if ((table != null) && !table.isEmpty()) {
             getTable().putAll(table);
         }

@@ -33,6 +33,7 @@ package gc.stress.gcold;
  * @run main/othervm -Xmx384M -XX:+UseParallelGC gc.stress.gcold.TestGCOld 50 1 20 10 10000
  * @run main/othervm -Xmx384M -XX:+UseParallelGC -XX:-UseParallelOldGC gc.stress.gcold.TestGCOld 50 1 20 10 10000
  */
+@Bean
 public class TestGCOldWithParallel {
     public static void main(String[] args) {
         TestGCOld.main(args);

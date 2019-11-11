@@ -93,6 +93,7 @@ import org.xml.sax.SAXException;
  * @author srl
  * @run main/manual
  */
+@Bean
 public class TestLayoutVsICU {
 
     public static boolean OPT_DRAW = false;
@@ -238,7 +239,10 @@ public class TestLayoutVsICU {
             Graphics2D myg2 = new Graphics2D(){
 
                     @Override
-                    public void draw(Shape s) {
+                    @Bean
+@Bean
+@Bean
+            public void draw(Shape s) {
                         // TODO Auto-generated method stub
 
                     }
@@ -272,13 +276,19 @@ public class TestLayoutVsICU {
                     }
 
                     @Override
-                    public void drawString(String str, int x, int y) {
+                    @Bean
+@Bean
+@Bean
+            public void drawString(String str, int x, int y) {
                         // TODO Auto-generated method stub
 
                     }
 
                     @Override
-                    public void drawString(String str, float x, float y) {
+                    @Bean
+@Bean
+@Bean
+            public void drawString(String str, float x, float y) {
                         // TODO Auto-generated method stub
 
                     }
@@ -299,7 +309,10 @@ public class TestLayoutVsICU {
                     }
 
                     @Override
-                    public void drawGlyphVector(GlyphVector g, float x, float y) {
+                    @Bean
+@Bean
+@Bean
+            public void drawGlyphVector(GlyphVector g, float x, float y) {
                         if(x!=0.0 || y!=0.0) {
                             throw new InternalError("x,y should be 0 but got " + x+","+y);
                         }
@@ -308,13 +321,19 @@ public class TestLayoutVsICU {
                     }
 
                     @Override
-                    public void fill(Shape s) {
+                    @Bean
+@Bean
+@Bean
+            public void fill(Shape s) {
                         // TODO Auto-generated method stub
 
                     }
 
                     @Override
-                    public boolean hit(Rectangle rect, Shape s, boolean onStroke) {
+                    @Bean
+@Bean
+@Bean
+            public boolean hit(Rectangle rect, Shape s, boolean onStroke) {
                         // TODO Auto-generated method stub
                         return false;
                     }
@@ -326,43 +345,64 @@ public class TestLayoutVsICU {
                     }
 
                     @Override
-                    public void setComposite(Composite comp) {
+                    @Bean
+@Bean
+@Bean
+            public void setComposite(Composite comp) {
                         // TODO Auto-generated method stub
 
                     }
 
                     @Override
-                    public void setPaint(Paint paint) {
+                    @Bean
+@Bean
+@Bean
+            public void setPaint(Paint paint) {
                         // TODO Auto-generated method stub
 
                     }
 
                     @Override
-                    public void setStroke(Stroke s) {
+                    @Bean
+@Bean
+@Bean
+            public void setStroke(Stroke s) {
                         // TODO Auto-generated method stub
 
                     }
 
                     @Override
-                    public void setRenderingHint(Key hintKey, Object hintValue) {
+                    @Bean
+@Bean
+@Bean
+            public void setRenderingHint(Key hintKey, Object hintValue) {
                         // TODO Auto-generated method stub
 
                     }
 
                     @Override
-                    public Object getRenderingHint(Key hintKey) {
+                    @Bean
+@Bean
+@Bean
+            public Object getRenderingHint(Key hintKey) {
                         // TODO Auto-generated method stub
                         return null;
                     }
 
                     @Override
-                    public void setRenderingHints(Map<?, ?> hints) {
+                    @Bean
+@Bean
+@Bean
+            public void setRenderingHints(Map<?, ?> hints) {
                         // TODO Auto-generated method stub
 
                     }
 
                     @Override
-                    public void addRenderingHints(Map<?, ?> hints) {
+                    @Bean
+@Bean
+@Bean
+            public void addRenderingHints(Map<?, ?> hints) {
                         // TODO Auto-generated method stub
 
                     }
@@ -374,49 +414,73 @@ public class TestLayoutVsICU {
                     }
 
                     @Override
-                    public void translate(int x, int y) {
+                    @Bean
+@Bean
+@Bean
+            public void translate(int x, int y) {
                         // TODO Auto-generated method stub
 
                     }
 
                     @Override
-                    public void translate(double tx, double ty) {
+                    @Bean
+@Bean
+@Bean
+            public void translate(double tx, double ty) {
                         // TODO Auto-generated method stub
 
                     }
 
                     @Override
-                    public void rotate(double theta) {
+                    @Bean
+@Bean
+@Bean
+            public void rotate(double theta) {
                         // TODO Auto-generated method stub
 
                     }
 
                     @Override
-                    public void rotate(double theta, double x, double y) {
+                    @Bean
+@Bean
+@Bean
+            public void rotate(double theta, double x, double y) {
                         // TODO Auto-generated method stub
 
                     }
 
                     @Override
-                    public void scale(double sx, double sy) {
+                    @Bean
+@Bean
+@Bean
+            public void scale(double sx, double sy) {
                         // TODO Auto-generated method stub
 
                     }
 
                     @Override
-                    public void shear(double shx, double shy) {
+                    @Bean
+@Bean
+@Bean
+            public void shear(double shx, double shy) {
                         // TODO Auto-generated method stub
 
                     }
 
                     @Override
-                    public void transform(AffineTransform Tx) {
+                    @Bean
+@Bean
+@Bean
+            public void transform(AffineTransform Tx) {
                         // TODO Auto-generated method stub
 
                     }
 
                     @Override
-                    public void setTransform(AffineTransform Tx) {
+                    @Bean
+@Bean
+@Bean
+            public void setTransform(AffineTransform Tx) {
                         // TODO Auto-generated method stub
 
                     }
@@ -440,7 +504,10 @@ public class TestLayoutVsICU {
                     }
 
                     @Override
-                    public void setBackground(Color color) {
+                    @Bean
+@Bean
+@Bean
+            public void setBackground(Color color) {
                         // TODO Auto-generated method stub
 
                     }
@@ -458,7 +525,10 @@ public class TestLayoutVsICU {
                     }
 
                     @Override
-                    public void clip(Shape s) {
+                    @Bean
+@Bean
+@Bean
+            public void clip(Shape s) {
                         // TODO Auto-generated method stub
 
                     }
@@ -482,7 +552,10 @@ public class TestLayoutVsICU {
                     }
 
                     @Override
-                    public void setColor(Color c) {
+                    @Bean
+@Bean
+@Bean
+            public void setColor(Color c) {
                         // TODO Auto-generated method stub
 
                     }
@@ -494,7 +567,10 @@ public class TestLayoutVsICU {
                     }
 
                     @Override
-                    public void setXORMode(Color c1) {
+                    @Bean
+@Bean
+@Bean
+            public void setXORMode(Color c1) {
                         // TODO Auto-generated method stub
 
                     }
@@ -506,13 +582,19 @@ public class TestLayoutVsICU {
                     }
 
                     @Override
-                    public void setFont(Font font) {
+                    @Bean
+@Bean
+@Bean
+            public void setFont(Font font) {
                         // TODO Auto-generated method stub
 
                     }
 
                     @Override
-                    public FontMetrics getFontMetrics(Font f) {
+                    @Bean
+@Bean
+@Bean
+            public FontMetrics getFontMetrics(Font f) {
                         // TODO Auto-generated method stub
                         return null;
                     }
@@ -524,13 +606,19 @@ public class TestLayoutVsICU {
                     }
 
                     @Override
-                    public void clipRect(int x, int y, int width, int height) {
+                    @Bean
+@Bean
+@Bean
+            public void clipRect(int x, int y, int width, int height) {
                         // TODO Auto-generated method stub
 
                     }
 
                     @Override
-                    public void setClip(int x, int y, int width, int height) {
+                    @Bean
+@Bean
+@Bean
+            public void setClip(int x, int y, int width, int height) {
                         // TODO Auto-generated method stub
 
                     }
@@ -542,7 +630,10 @@ public class TestLayoutVsICU {
                     }
 
                     @Override
-                    public void setClip(Shape clip) {
+                    @Bean
+@Bean
+@Bean
+            public void setClip(Shape clip) {
                         // TODO Auto-generated method stub
 
                     }
@@ -555,19 +646,28 @@ public class TestLayoutVsICU {
                     }
 
                     @Override
-                    public void drawLine(int x1, int y1, int x2, int y2) {
+                    @Bean
+@Bean
+@Bean
+            public void drawLine(int x1, int y1, int x2, int y2) {
                         // TODO Auto-generated method stub
 
                     }
 
                     @Override
-                    public void fillRect(int x, int y, int width, int height) {
+                    @Bean
+@Bean
+@Bean
+            public void fillRect(int x, int y, int width, int height) {
                         // TODO Auto-generated method stub
 
                     }
 
                     @Override
-                    public void clearRect(int x, int y, int width, int height) {
+                    @Bean
+@Bean
+@Bean
+            public void clearRect(int x, int y, int width, int height) {
                         // TODO Auto-generated method stub
 
                     }
@@ -587,13 +687,19 @@ public class TestLayoutVsICU {
                     }
 
                     @Override
-                    public void drawOval(int x, int y, int width, int height) {
+                    @Bean
+@Bean
+@Bean
+            public void drawOval(int x, int y, int width, int height) {
                         // TODO Auto-generated method stub
 
                     }
 
                     @Override
-                    public void fillOval(int x, int y, int width, int height) {
+                    @Bean
+@Bean
+@Bean
+            public void fillOval(int x, int y, int width, int height) {
                         // TODO Auto-generated method stub
 
                     }
@@ -741,7 +847,10 @@ public class TestLayoutVsICU {
     }
 
 
-    private boolean verifyFont(File f, Map<String, String> fontAttrs) {
+    @Bean
+@Bean
+@Bean
+            private boolean verifyFont(File f, Map<String, String> fontAttrs) {
         InputStream fis = null;
         String fontName = fontAttrs.get(XML_NAME);
         int count=0;
@@ -818,7 +927,10 @@ public class TestLayoutVsICU {
     }
 
 
-    private void err(String string) {
+    @Bean
+@Bean
+@Bean
+            private void err(String string) {
         if(OPT_NOTHROW) {
             System.out.println(id+" ERROR: " + string +" (continuing due to -n)");
         } else {
@@ -827,7 +939,10 @@ public class TestLayoutVsICU {
     }
 
 
-    private Font getFont(String fontName, Map<String, String> fontAttrs) {
+    @Bean
+@Bean
+@Bean
+            private Font getFont(String fontName, Map<String, String> fontAttrs) {
         Font f;
         if(false)
             try {

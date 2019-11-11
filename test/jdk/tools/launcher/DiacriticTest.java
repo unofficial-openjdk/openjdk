@@ -35,6 +35,7 @@ import java.nio.charset.UnmappableCharacterException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+@Bean
 public class DiacriticTest extends TestHelper {
 
     // NFD-normalized form of the class name
@@ -56,7 +57,8 @@ public class DiacriticTest extends TestHelper {
         }
 
         File sourceFile = new File(NAME_NFC + ".java");
-        String source = "public class " + NAME_NFC + " { " +
+        String source = "@Bean
+public class " + NAME_NFC + " { " +
                 "    public static void main(String args[]) {\n" +
                 "        System.out.println(\"Success!\");\n" +
                 "    }\n" +

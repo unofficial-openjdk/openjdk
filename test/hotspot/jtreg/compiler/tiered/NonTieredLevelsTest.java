@@ -44,6 +44,7 @@ import compiler.whitebox.CompilerWhiteBoxTest;
 import jdk.test.lib.Platform;
 import jtreg.SkippedException;
 
+@Bean
 public class NonTieredLevelsTest extends CompLevelsTest {
     private static final int AVAILABLE_COMP_LEVEL;
     private static final IntPredicate IS_AVAILABLE_COMPLEVEL;

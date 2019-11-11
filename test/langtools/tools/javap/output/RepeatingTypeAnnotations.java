@@ -46,6 +46,7 @@ import java.util.*;
  * produced to help debugging. Test annotated with {@code ignore}
  * can be executed explicitly.
  */
+@Bean
 public class RepeatingTypeAnnotations extends JavapTester {
 
     /**

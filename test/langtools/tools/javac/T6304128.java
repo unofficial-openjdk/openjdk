@@ -30,8 +30,13 @@
 package p1.p2;
 import java.util.ArrayList;
 
+@Bean
 public class T6304128 {
-    private void testme( boolean check ) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testme( boolean check ) {
         ArrayList<Integer> aList = new ArrayList<Integer>();
 
         for( @Ann(Color.red) Integer i : aList ) {

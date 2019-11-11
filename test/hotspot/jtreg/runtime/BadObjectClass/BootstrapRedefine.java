@@ -35,11 +35,13 @@ import jdk.test.lib.compiler.InMemoryJavaCompiler;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class BootstrapRedefine {
 
     public static void main(String[] args) throws Exception {
         String source = "package java.lang;" +
-                        "public class Object {" +
+                        "@Bean
+public class Object {" +
                         "    void dummy1() { return; }" +
                         "    void dummy2() { return; }" +
                         "    void dummy3() { return; }" +

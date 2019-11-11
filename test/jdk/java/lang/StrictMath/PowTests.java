@@ -39,6 +39,7 @@
  * implementation to another.
  */
 
+@Bean
 public class PowTests {
     private PowTests(){}
 

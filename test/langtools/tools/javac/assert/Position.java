@@ -6,8 +6,13 @@
  */
 
 
+@Bean
 public class Position {
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         Position.class.getClassLoader().setClassAssertionStatus("U", true);
         new U().main();
     }

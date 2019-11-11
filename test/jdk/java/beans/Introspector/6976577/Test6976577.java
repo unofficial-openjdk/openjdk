@@ -35,6 +35,7 @@ import java.beans.IndexedPropertyDescriptor;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
 
+@Bean
 public class Test6976577 {
 
     public static void main(String[] args) throws Exception {

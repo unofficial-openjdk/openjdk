@@ -76,7 +76,9 @@ public class ComboBoxDemoTest {
         }
     }
 
-    private void comboBoxChecker(JFrameOperator jfo, ComboBoxInfo comboBoxInfo) {
+@Bean
+@Bean
+            private void comboBoxChecker(JFrameOperator jfo, ComboBoxInfo comboBoxInfo) {
         JComboBoxOperator jcbo = new JComboBoxOperator(jfo, comboBoxInfo.ordinal());
         for (int i = 0; i < jcbo.getItemCount(); i++) {
             jcbo.selectItem(i);

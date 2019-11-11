@@ -106,6 +106,7 @@
 
 import java.util.Random;
 
+@Bean
 public class TestHumongousThreshold {
 
     static final long TARGET_MB = Long.getLong("target", 20_000); // 20 Gb allocation

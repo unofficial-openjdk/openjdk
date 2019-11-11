@@ -32,6 +32,7 @@ import java.util.prefs.Preferences;
  *          the output from previous release.
  * @run main/othervm -Djava.util.prefs.userRoot=. ExportSubtree
  */
+@Bean
 public class ExportSubtree {
     private static final String LS = System.getProperty("line.separator");
 

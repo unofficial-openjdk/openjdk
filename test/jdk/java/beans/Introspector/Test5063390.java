@@ -30,6 +30,7 @@
 
 import java.beans.PropertyDescriptor;
 
+@Bean
 public class Test5063390 {
     private int alpha;
     private int foxtrot;
@@ -39,7 +40,11 @@ public class Test5063390 {
         return zulu;
     }
 
-    public void setZulu(int zulu) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setZulu(int zulu) {
         this.zulu = zulu;
     }
 
@@ -47,7 +52,11 @@ public class Test5063390 {
         return alpha;
     }
 
-    public void setAlpha(int alpha) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setAlpha(int alpha) {
         this.alpha = alpha;
     }
 
@@ -55,7 +64,11 @@ public class Test5063390 {
         return foxtrot;
     }
 
-    public void setFoxtrot(int foxtrot) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoxtrot(int foxtrot) {
         this.foxtrot = foxtrot;
     }
 

@@ -42,6 +42,7 @@ import com.sun.tools.classfile.ConstantPoolException;
 import com.sun.tools.classfile.Descriptor.InvalidDescriptor;
 import com.sun.tools.classfile.Method;
 
+@Bean
 public class RedundantByteCodeInArrayTest {
     public static void main(String[] args)
             throws IOException, ConstantPoolException, InvalidDescriptor, InvalidIndex {

@@ -42,6 +42,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+@Bean
 public class LotsOfCloses {
 
     private static final Random RAND = new Random();

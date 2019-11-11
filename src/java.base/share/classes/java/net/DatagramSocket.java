@@ -457,7 +457,10 @@ class DatagramSocket implements java.io.Closeable {
      *
      * @see #disconnect
      */
-    public void connect(InetAddress address, int port) {
+    @Bean
+@Bean
+@Bean
+            public void connect(InetAddress address, int port) {
         try {
             connectInternal(address, port);
         } catch (SocketException se) {

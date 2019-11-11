@@ -42,6 +42,7 @@ import sun.net.www.*;
  * if the password is wrong
  */
 
+@Bean
 public class B6870935 {
 
     static char[] passwd = "password".toCharArray();
@@ -191,7 +192,11 @@ public class B6870935 {
             '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
         };
 
-        private String encode(String src, char[] passwd, MessageDigest md) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private String encode(String src, char[] passwd, MessageDigest md) {
             md.update(src.getBytes());
             if (passwd != null) {
                 byte[] passwdBytes = new byte[passwd.length];

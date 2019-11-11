@@ -34,6 +34,7 @@ import sun.awt.SunToolkit;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 
+@Bean
 public class Test6657026 implements Runnable {
 
     public static void main(String[] args) throws Exception {

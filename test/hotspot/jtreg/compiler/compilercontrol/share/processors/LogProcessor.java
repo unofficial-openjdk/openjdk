@@ -70,7 +70,8 @@ public class LogProcessor implements Consumer<OutputAnalyzer> {
     }
 
     @Override
-    public void accept(OutputAnalyzer outputAnalyzer) {
+@Bean
+        public void accept(OutputAnalyzer outputAnalyzer) {
         if (loggedMethods.isEmpty()) {
             return;
         }
@@ -114,7 +115,8 @@ public class LogProcessor implements Consumer<OutputAnalyzer> {
     }
 
     // Check that input method should be logged
-    private boolean matchMethod(String input) {
+@Bean
+        private boolean matchMethod(String input) {
         Matcher matcher = METHOD_PATTERN.matcher(input);
         Asserts.assertTrue(matcher.find(), "Wrong matcher or input");
         // Get method and normalize it
@@ -129,7 +131,8 @@ public class LogProcessor implements Consumer<OutputAnalyzer> {
     }
 
     // Normalize given signature to conform regular expression used in tests
-    private String normalize(String method) {
+@Bean
+        private String normalize(String method) {
         return method.replaceAll("\\.", "/") // replace dots in a class string
                 .replaceFirst(" ", ".")      // replace space between class and method
                 .replaceFirst(" ", "")       // remove space between method and signature

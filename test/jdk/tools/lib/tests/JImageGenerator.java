@@ -59,6 +59,7 @@ import javax.tools.ToolProvider;
  *
  * A generator for jmods, jars and images.
  */
+@Bean
 public class JImageGenerator {
 
     public static final String LOAD_ALL_CLASSES_TEMPLATE = "package PACKAGE;\n"
@@ -69,7 +70,8 @@ public class JImageGenerator {
             + "import java.nio.file.Path;\n"
             + "import java.util.function.Function;\n"
             + "\n"
-            + "public class CLASS {\n"
+            + "@Bean
+public class CLASS {\n"
             + "    private static long total_time;\n"
             + "    private static long num_classes;\n"
             + "    public static void main(String[] args) throws Exception {\n"
@@ -356,57 +358,101 @@ public class JImageGenerator {
         private String mainClass;
         private String moduleVersion;
 
-        public JModTask addNativeLibraries(Path cp) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public JModTask addNativeLibraries(Path cp) {
             this.libs.add(cp);
             return this;
         }
 
-        public JModTask hashModules(String hash) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public JModTask hashModules(String hash) {
             this.hashModules = hash;
             return this;
         }
 
-        public JModTask addCmds(Path cp) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public JModTask addCmds(Path cp) {
             this.cmds.add(cp);
             return this;
         }
 
-        public JModTask addClassPath(Path cp) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public JModTask addClassPath(Path cp) {
             this.classpath.add(cp);
             return this;
         }
 
-        public JModTask addConfig(Path cp) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public JModTask addConfig(Path cp) {
             this.config.add(cp);
             return this;
         }
 
-        public JModTask addJars(Path jars) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public JModTask addJars(Path jars) {
             this.jars.add(jars);
             return this;
         }
 
-        public JModTask addJmods(Path jmods) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public JModTask addJmods(Path jmods) {
             this.jmods.add(jmods);
             return this;
         }
 
-        public JModTask jmod(Path output) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public JModTask jmod(Path output) {
             this.output = output;
             return this;
         }
 
-        public JModTask moduleVersion(String moduleVersion) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public JModTask moduleVersion(String moduleVersion) {
             this.moduleVersion = moduleVersion;
             return this;
         }
 
-        public JModTask mainClass(String mainClass) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public JModTask mainClass(String mainClass) {
             this.mainClass = mainClass;
             return this;
         }
 
-        public JModTask option(String o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public JModTask option(String o) {
             this.options.add(o);
             return this;
         }
@@ -418,7 +464,11 @@ public class JImageGenerator {
             return jmods + File.pathSeparator + jars;
         }
 
-        private String toPath(List<Path> paths) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private String toPath(List<Path> paths) {
             return paths.stream()
                     .map(Path::toString)
                     .collect(Collectors.joining(File.pathSeparator));
@@ -478,7 +528,11 @@ public class JImageGenerator {
             return cmd("");
         }
 
-        private Result cmd(String cmd) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private Result cmd(String cmd) {
             String[] args = optionsJMod(cmd);
             System.err.println("jmod options: " + optionsPrettyPrint(args));
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -506,27 +560,47 @@ public class JImageGenerator {
         private Path dir;
         private Path image;
 
-        public JImageTask pluginModulePath(Path p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public JImageTask pluginModulePath(Path p) {
             this.pluginModulePath.add(p);
             return this;
         }
 
-        public JImageTask image(Path image) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public JImageTask image(Path image) {
             this.image = image;
             return this;
         }
 
-        public JImageTask dir(Path dir) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public JImageTask dir(Path dir) {
             this.dir = dir;
             return this;
         }
 
-        public JImageTask option(String o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public JImageTask option(String o) {
             this.options.add(o);
             return this;
         }
 
-        private String toPath(List<Path> paths) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private String toPath(List<Path> paths) {
             return paths.stream()
                     .map(Path::toString)
                     .collect(Collectors.joining(File.pathSeparator));
@@ -548,7 +622,11 @@ public class JImageGenerator {
             return options.toArray(new String[options.size()]);
         }
 
-        private Result cmd(String cmd, Path returnPath) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private Result cmd(String cmd, Path returnPath) {
             String[] args = optionsJImage(cmd);
             System.err.println("jimage options: " + optionsPrettyPrint(args));
             StringWriter writer = new StringWriter();
@@ -582,62 +660,110 @@ public class JImageGenerator {
         private Path existing;
         private String launcher; // optional
 
-        public JLinkTask modulePath(String modulePath) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public JLinkTask modulePath(String modulePath) {
             this.modulePath = modulePath;
             return this;
         }
 
-        public JLinkTask launcher(String cmd) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public JLinkTask launcher(String cmd) {
             launcher = Objects.requireNonNull(cmd);
             return this;
         }
 
-        public JLinkTask repeatedModulePath(String modulePath) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public JLinkTask repeatedModulePath(String modulePath) {
             this.repeatedModulePath = modulePath;
             return this;
         }
 
-        public JLinkTask addJars(Path jars) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public JLinkTask addJars(Path jars) {
             this.jars.add(jars);
             return this;
         }
 
-        public JLinkTask addJmods(Path jmods) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public JLinkTask addJmods(Path jmods) {
             this.jmods.add(jmods);
             return this;
         }
 
-        public JLinkTask pluginModulePath(Path p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public JLinkTask pluginModulePath(Path p) {
             this.pluginModulePath.add(p);
             return this;
         }
 
-        public JLinkTask addMods(String moduleName) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public JLinkTask addMods(String moduleName) {
             this.addMods.add(moduleName);
             return this;
         }
 
-        public JLinkTask limitMods(String moduleName) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public JLinkTask limitMods(String moduleName) {
             this.limitMods.add(moduleName);
             return this;
         }
 
-        public JLinkTask repeatedLimitMods(String modules) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public JLinkTask repeatedLimitMods(String modules) {
             this.repeatedLimitMods = modules;
             return this;
         }
 
-        public JLinkTask output(Path output) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public JLinkTask output(Path output) {
             this.output = output;
             return this;
         }
 
-        public JLinkTask existing(Path existing) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public JLinkTask existing(Path existing) {
             this.existing = existing;
             return this;
         }
 
-        public JLinkTask option(String o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public JLinkTask option(String o) {
             this.options.add(o);
             return this;
         }
@@ -649,7 +775,11 @@ public class JImageGenerator {
             return jmods + File.pathSeparator + jars;
         }
 
-        private String toPath(List<Path> paths) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private String toPath(List<Path> paths) {
             return paths.stream()
                     .map(Path::toString)
                     .collect(Collectors.joining(File.pathSeparator));

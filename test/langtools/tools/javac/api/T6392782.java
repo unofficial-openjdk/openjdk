@@ -36,6 +36,7 @@ import com.sun.source.tree.*;
 import com.sun.source.util.*;
 import com.sun.tools.javac.api.*;
 
+@Bean
 public class T6392782 {
     public static void main(String... args) throws IOException {
         String testSrc = System.getProperty("test.src", ".");
@@ -65,27 +66,43 @@ public class T6392782 {
 
     static class MyScanner extends TreeScanner<Integer,Void> {
         @Override
-        public Integer visitImport(ImportTree tree, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Integer visitImport(ImportTree tree, Void ignore) {
             //System.err.println(tree);
             return 1;
         }
 
         @Override
-        public Integer reduce(Integer i1, Integer i2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Integer reduce(Integer i1, Integer i2) {
             return (i1 == null ? 0 : i1) + (i2 == null ? 0 : i2);
         }
     }
 
     static class CountNodes extends TreeScanner<Integer,Void> {
         @Override
-        public Integer scan(Tree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Integer scan(Tree node, Void p) {
             if (node == null)
                 return 0;
             Integer n = super.scan(node, p);
             return (n == null ? 0 : n) + 1;
         }
         @Override
-        public Integer reduce(Integer r1, Integer r2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Integer reduce(Integer r1, Integer r2) {
             return (r1 == null ? 0 : r1) + (r2 == null ? 0 : r2);
         }
     }
@@ -93,11 +110,19 @@ public class T6392782 {
     // example from TreeScanner javadoc
     static class CountIdentifiers extends TreeScanner<Integer,Void> {
         @Override
-        public Integer visitIdentifier(IdentifierTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Integer visitIdentifier(IdentifierTree node, Void p) {
             return 1;
         }
         @Override
-        public Integer reduce(Integer r1, Integer r2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Integer reduce(Integer r1, Integer r2) {
             return (r1 == null ? 0 : r1) + (r2 == null ? 0 : r2);
         }
     }

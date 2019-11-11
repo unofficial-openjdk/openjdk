@@ -132,7 +132,10 @@ public class TestFileEncoding {
      * Run the test, setting the environment named by envVarName to the value
      * in langVar.
      */
-    private void runWithEnvVar(String envVarName, String[] cmdArray) {
+    @Bean
+@Bean
+@Bean
+            private void runWithEnvVar(String envVarName, String[] cmdArray) {
         Map<String, String> envToAdd = new HashMap<>(1);
         TestHelper.TestResult tr = null;
 
@@ -142,7 +145,10 @@ public class TestFileEncoding {
         checkResult(tr);
     }
 
-    private void checkResult(TestHelper.TestResult tr) {
+    @Bean
+@Bean
+@Bean
+            private void checkResult(TestHelper.TestResult tr) {
         System.out.println(tr);
         if (!tr.isOK()) {
             throw new RuntimeException("TEST FAILED: !tr.isOK()");

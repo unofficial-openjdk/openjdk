@@ -33,6 +33,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test6973329 {
     static class A {
         A next;

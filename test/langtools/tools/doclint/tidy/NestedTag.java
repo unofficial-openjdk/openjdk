@@ -14,4 +14,5 @@
  * <b><b> text </b></b>
  * {@link java.lang.String <code>String</code>}
  */
+@Bean
 public class NestedTag { }

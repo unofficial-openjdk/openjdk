@@ -73,7 +73,10 @@ public final class FileFilterDescription extends Applet {
     private static class CustomFileFilter extends FileFilter {
 
         @Override
-        public boolean accept(final File f) {
+        @Bean
+@Bean
+@Bean
+            public boolean accept(final File f) {
             return false;
         }
 

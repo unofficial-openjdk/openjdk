@@ -33,6 +33,7 @@ import javax.swing.JLabel;
 import java.awt.Dimension;
 import java.lang.reflect.InvocationTargetException;
 
+@Bean
 public class MaximumSizeTest {
     public static void main(String args[]) {
         try {

@@ -40,6 +40,7 @@ import java.lang.management.*;
 import javax.management.*;
 import javax.management.openmbean.*;
 
+@Bean
 public class StandardMBeanOverrideTest {
 
     private static Object testInstances[] = {
@@ -88,7 +89,11 @@ public class StandardMBeanOverrideTest {
         public TestClass1(boolean mxbean) {
             super(TestInterface.class, mxbean);
         }
-        protected void cacheMBeanInfo(MBeanInfo info) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void cacheMBeanInfo(MBeanInfo info) {
             super.cacheMBeanInfo(info);
         }
     }
@@ -142,7 +147,11 @@ public class StandardMBeanOverrideTest {
             super(TestInterface.class, mxbean,
                   new NotificationBroadcasterSupport());
         }
-        protected void cacheMBeanInfo(MBeanInfo info) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void cacheMBeanInfo(MBeanInfo info) {
             super.cacheMBeanInfo(info);
         }
     }

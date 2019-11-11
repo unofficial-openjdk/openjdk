@@ -42,6 +42,7 @@ import static jdk.test.lib.process.ProcessTools.*;
  * The java agent appends to the "hidden" directory to the class path
  * at runtime.
  */
+@Bean
 public class AppendToClassPathModuleTest {
     public static void main(String... args) throws Throwable {
         String modulepath = System.getProperty("test.module.path");

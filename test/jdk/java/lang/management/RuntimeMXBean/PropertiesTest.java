@@ -37,6 +37,7 @@ import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 
+@Bean
 public class PropertiesTest {
     private static int NUM_MYPROPS = 3;
     public static void main(String[] argv) throws Exception {

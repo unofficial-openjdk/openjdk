@@ -42,6 +42,7 @@ import java.io.FileReader;
 import java.util.HashSet;
 import java.util.Locale;
 
+@Bean
 public class CheckBlocks {
 
     static boolean err = false;
@@ -333,7 +334,10 @@ class Block {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(Object obj) {
         if (obj == null) return false;
         if (!(obj instanceof Block)) return false;
 

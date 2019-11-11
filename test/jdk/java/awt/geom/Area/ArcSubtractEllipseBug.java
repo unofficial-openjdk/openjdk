@@ -31,6 +31,7 @@ import java.awt.geom.Arc2D;
 import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 
+@Bean
 public class ArcSubtractEllipseBug {
     public static void main(String[] args) {
         double x = -4.250000000000002;

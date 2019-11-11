@@ -34,6 +34,7 @@ class ParselTongue implements Language {
     }
 }
 
+@Bean
 public class LingeredAppWithInterface extends LingeredApp {
 
     public static void main(String args[]) {

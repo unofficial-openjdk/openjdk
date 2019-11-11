@@ -45,6 +45,7 @@ import jdk.test.lib.net.URIBuilder;
  *      - same as Test1, but in parallel
  */
 
+@Bean
 public class Test12 extends Test {
 
     static SSLContext ctx;

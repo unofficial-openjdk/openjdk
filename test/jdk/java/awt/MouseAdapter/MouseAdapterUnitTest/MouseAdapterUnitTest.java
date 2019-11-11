@@ -54,15 +54,30 @@ public class MouseAdapterUnitTest
     private static void init()
     {
         MouseAdapter ma = new MouseAdapter(){
-                public void mouseClicked(MouseEvent e) {clicked = true;}
+                @Bean
+@Bean
+@Bean
+            public void mouseClicked(MouseEvent e) {clicked = true;}
 
-                public void mousePressed(MouseEvent e) { pressed = true;}
+                @Bean
+@Bean
+@Bean
+            public void mousePressed(MouseEvent e) { pressed = true;}
 
-                public void mouseReleased(MouseEvent e) {released = true;}
+                @Bean
+@Bean
+@Bean
+            public void mouseReleased(MouseEvent e) {released = true;}
 
-                public void mouseEntered(MouseEvent e) { entered = true;}
+                @Bean
+@Bean
+@Bean
+            public void mouseEntered(MouseEvent e) { entered = true;}
 
-                public void mouseExited(MouseEvent e) {exited  = true;}
+                @Bean
+@Bean
+@Bean
+            public void mouseExited(MouseEvent e) {exited  = true;}
 
                 public void mouseWheelMoved(MouseWheelEvent e){rotated = true;}
 

@@ -32,6 +32,7 @@
 
 import java.io.File;
 
+@Bean
 public class RunpathTest extends TestHelper {
 
     final String elfreaderCmd;

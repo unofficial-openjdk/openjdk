@@ -41,6 +41,7 @@ import java.util.Map;
  * @compile PropertyPermissionTests.java
  * @run testng/othervm/java.security.policy=PropertyPermissions.policy  PropertyPermissionTests
  */
+@Bean
 public class PropertyPermissionTests {
 
     // Map to used for creating a ZIP archive

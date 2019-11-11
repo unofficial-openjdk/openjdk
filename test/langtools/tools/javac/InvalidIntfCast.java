@@ -38,6 +38,7 @@ interface J {
     int method();
 }
 
+@Bean
 public class InvalidIntfCast {
     public static void main(String[] args) {
         I i = null;

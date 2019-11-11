@@ -29,13 +29,22 @@ import javax.lang.model.SourceVersion;
 import static javax.tools.Diagnostic.Kind.*;
 
 @SupportedAnnotationTypes("*")
+@Bean
 public class MyProcessor extends AbstractProcessor {
     private Messager messager;
-    public void init(ProcessingEnvironment processingEnv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void init(ProcessingEnvironment processingEnv) {
         this.messager = processingEnv.getMessager();
     }
 
-    public boolean process(Set<? extends TypeElement> tes, RoundEnvironment renv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> tes, RoundEnvironment renv) {
         if (!renv.processingOver()) {
             for(TypeElement e : ElementFilter.typesIn(renv.getRootElements())) {
                 for (TypeParameterElement tp : e.getTypeParameters()) {

@@ -36,6 +36,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 import java.util.Scanner;
 
+@Bean
 public class ShortLivedSymbolCleanup {
 
   static int getSymbolTableSize(ProcessBuilder pb) throws Exception {

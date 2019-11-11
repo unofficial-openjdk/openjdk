@@ -33,6 +33,7 @@ import java.nio.*;
 import java.nio.channels.*;
 
 
+@Bean
 public class Basic {
 
     static PrintStream log = System.err;

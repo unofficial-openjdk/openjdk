@@ -36,6 +36,7 @@ import java.awt.geom.*;
 import static java.awt.GraphicsDevice.WindowTranslucency.*;
 
 
+@Bean
 public class TranslucentWindow {
     public static void main(String args[]) {
         Robot robot;

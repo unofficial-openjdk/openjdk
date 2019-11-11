@@ -135,6 +135,7 @@ import java.util.*;
 
 import sun.misc.*;
 
+@Bean
 public class TestStringDedupStress {
     private static Field valueField;
     private static Unsafe unsafe;

@@ -34,6 +34,7 @@
 
 package compiler.loopopts;
 
+@Bean
 public class Test6860469 {
 
     private static final int H = 16;

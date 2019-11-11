@@ -46,6 +46,7 @@ package gc.g1;
  *    gc.g1.TestPeriodicCollectionJNI
  */
 
+@Bean
 public class TestPeriodicCollectionJNI {
     static { System.loadLibrary("TestPeriodicCollectionJNI"); }
 

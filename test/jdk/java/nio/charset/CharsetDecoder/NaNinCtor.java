@@ -32,6 +32,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
 
+@Bean
 public class NaNinCtor {
 
     public static void main(String[] args) throws Throwable {
@@ -62,7 +63,10 @@ public class NaNinCtor {
         public MyDecoder(Charset cs, float avg, float max) {
             super(cs, avg, max);
         }
-        protected CoderResult decodeLoop(ByteBuffer in, CharBuffer out) {
+        @Bean
+@Bean
+@Bean
+            protected CoderResult decodeLoop(ByteBuffer in, CharBuffer out) {
             return null;
         }
     }

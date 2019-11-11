@@ -51,6 +51,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
+@Bean
 public class PrintManualTest_FitWidthMultiple extends JTable implements Runnable {
 
     static boolean testPassed;
@@ -153,7 +154,11 @@ public class PrintManualTest_FitWidthMultiple extends JTable implements Runnable
                 /* Container and Component Listeners */
                 fr.addWindowListener(new WindowAdapter() {
                     @Override
-                    public void windowClosing(WindowEvent e) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosing(WindowEvent e) {
                         dispose();
                         if (testPassed == false) {
                             throw new RuntimeException(" User has not executed the test");
@@ -183,7 +188,11 @@ public class PrintManualTest_FitWidthMultiple extends JTable implements Runnable
         fr.dispose();
     }
 
-    public JScrollPane addInfo(String info) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JScrollPane addInfo(String info) {
         JTextArea jta = new JTextArea(info,8,20);
         jta.setEditable(false);
         jta.setLineWrap(true);

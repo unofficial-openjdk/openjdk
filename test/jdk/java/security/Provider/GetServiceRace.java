@@ -31,6 +31,7 @@
 
 import java.security.Provider;
 
+@Bean
 public class GetServiceRace {
 
     private static final Provider testProvider;

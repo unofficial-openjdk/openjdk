@@ -43,6 +43,7 @@ class A<T1> {
     }
 }
 
+@Bean
 public class GenericAnonCtor {
     public static void main(String[] args) {
         A<Integer> a = new <String>A<Integer>(new Integer(11), "foo") {};

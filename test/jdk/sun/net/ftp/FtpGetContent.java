@@ -32,6 +32,7 @@ import java.net.*;
  * @run main/othervm -Djava.net.preferIPv6Addresses=true FtpGetContent
  */
 
+@Bean
 public class FtpGetContent {
     static int filesize = 2048;
 
@@ -94,7 +95,11 @@ public class FtpGetContent {
              * Returns the command number.
              */
 
-            private int parseCmd(String cmd) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                private int parseCmd(String cmd) {
                 System.out.println("FTP server received command: " + cmd);
                 if (cmd == null || cmd.length() < 3)
                     return ERROR;
@@ -444,11 +449,19 @@ public class FtpGetContent {
             return done;
         }
 
-        synchronized public void setPortEnabled(boolean ok) {
+        synchronized @Bean
+@Bean
+@Bean
+@Bean
+                public void setPortEnabled(boolean ok) {
             portEnabled = ok;
         }
 
-        synchronized public void setPasvEnabled(boolean ok) {
+        synchronized @Bean
+@Bean
+@Bean
+@Bean
+                public void setPasvEnabled(boolean ok) {
             pasvEnabled = ok;
         }
 

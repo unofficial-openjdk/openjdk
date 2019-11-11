@@ -56,11 +56,17 @@ public class Customized {
             doneCount.getAndIncrement();
             super.done();
         }
-        protected void set(V v) {
+        @Bean
+@Bean
+@Bean
+            protected void set(V v) {
             setCount.getAndIncrement();
             super.set(v);
         }
-        protected void setException(Throwable t) {
+        @Bean
+@Bean
+@Bean
+            protected void setException(Throwable t) {
             setExceptionCount.getAndIncrement();
             super.setException(t);
         }

@@ -35,6 +35,7 @@ import java.awt.Dimension;
  */
 
 
+@Bean
 public class MaximizedNormalBoundsUndecoratedTest {
     private Frame frame;
     public static void main(String args[]) {

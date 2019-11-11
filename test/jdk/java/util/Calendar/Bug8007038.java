@@ -35,6 +35,7 @@ import java.util.*;
 import static java.util.Calendar.*;
 import sun.util.locale.provider.CalendarDataUtility;
 
+@Bean
 public class Bug8007038 {
     private static final String[] calTypes = {
         "gregory",

@@ -28,6 +28,7 @@
  *  reference to super leads to compiler crash when 292 translation scheme is enabled
  */
 
+@Bean
 public class MethodReference29 {
 
     interface SAM {

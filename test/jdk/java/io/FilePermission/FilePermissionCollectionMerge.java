@@ -37,6 +37,7 @@ import java.io.FilePermission;
 import java.security.Permissions;
 import jdk.test.lib.Asserts;
 
+@Bean
 public class FilePermissionCollectionMerge {
 
     public static void main(String[] args) throws Exception {

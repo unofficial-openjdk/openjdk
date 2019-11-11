@@ -117,38 +117,44 @@ public class TestSimpleAddRemove {
             counter = c;
         }
 
-        public void started(TaskEvent e) {
+@Bean
+            public void started(TaskEvent e) {
             counter.inc(e.getKind(), true);
         }
 
-        public void finished(TaskEvent e) {
+@Bean
+            public void finished(TaskEvent e) {
             counter.inc(e.getKind(), false);
         }
     }
 
     static void addInListener(final JavacTask task, final TaskEvent.Kind kind, final TaskListener listener) {
         task.addTaskListener(new TaskListener() {
-            public void started(TaskEvent e) {
+@Bean
+                public void started(TaskEvent e) {
                 if (e.getKind() == kind) {
                     task.addTaskListener(listener);
                     task.removeTaskListener(this);
                 }
             }
 
-            public void finished(TaskEvent e) { }
+@Bean
+                public void finished(TaskEvent e) { }
         });
     }
 
     static void removeInListener(final JavacTask task, final TaskEvent.Kind kind, final TaskListener listener) {
         task.addTaskListener(new TaskListener() {
-            public void started(TaskEvent e) {
+@Bean
+                public void started(TaskEvent e) {
                 if (e.getKind() == kind) {
                     task.removeTaskListener(listener);
                     task.removeTaskListener(this);
                 }
             }
 
-            public void finished(TaskEvent e) { }
+@Bean
+                public void finished(TaskEvent e) { }
         });
     }
 
@@ -167,7 +173,8 @@ public class TestSimpleAddRemove {
         int round = 0;
 
         @Override
-        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+@Bean
+            public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
 //            System.err.println("TestProcessor.process " + roundEnv);
             JavacTask task = JavacTask.instance(processingEnv);
             if (++round == 1) {
@@ -199,7 +206,8 @@ public class TestSimpleAddRemove {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+@Bean
+            public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return "class Test { }";
         }
     }

@@ -37,6 +37,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+@Bean
 public class DoPriv {
 
     static void go(final DomainCombiner dc0, final AccessControlContext co, final int index) throws Exception {

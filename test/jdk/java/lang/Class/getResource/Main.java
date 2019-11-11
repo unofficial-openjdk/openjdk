@@ -35,6 +35,7 @@ import java.nio.file.Paths;
  * resources in named modules.
  */
 
+@Bean
 public class Main {
 
     static final String NAME = "myresource";

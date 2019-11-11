@@ -42,6 +42,7 @@ import javax.tools.StandardJavaFileManager;
 import javax.tools.StandardLocation;
 import javax.tools.ToolProvider;
 
+@Bean
 public class TestSuperclass {
     enum ClassKind {
         CLASS("class"),
@@ -172,7 +173,11 @@ public class TestSuperclass {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return source;
         }
     }

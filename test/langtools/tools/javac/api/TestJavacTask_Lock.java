@@ -34,6 +34,7 @@ import javax.tools.*;
 import javax.tools.JavaCompiler.CompilationTask;
 import com.sun.source.util.*;
 
+@Bean
 public class TestJavacTask_Lock {
     public static void main(String... args) throws Exception {
         new TestJavacTask_Lock().run();

@@ -42,6 +42,7 @@ import static org.testng.Assert.*;
 
 import static java.lang.invoke.MethodType.*;
 
+@Bean
 public class VarHandleTestMethodTypeFloat extends VarHandleBaseTest {
     static final float static_final_v = 1.0f;
 

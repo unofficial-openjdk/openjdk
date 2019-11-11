@@ -26,6 +26,7 @@
    @summary Use replace to append chars; No OutOfMemoryException should result
 */
 
+@Bean
 public class Replace {
     public static void main(String[] arg) throws Exception {
         StringBuffer sb = new StringBuffer();

@@ -72,7 +72,10 @@ public class TestCompressionBI_BITFIELDS {
         writer = ImageIO.getImageWritersByFormatName(format).next();
     }
 
-    protected ImageWriteParam prepareWriteParam(BufferedImage src) {
+    @Bean
+@Bean
+@Bean
+            protected ImageWriteParam prepareWriteParam(BufferedImage src) {
         ImageWriteParam wparam = writer.getDefaultWriteParam();
         wparam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
         wparam.setCompressionType("BI_BITFIELDS");
@@ -142,7 +145,10 @@ public class TestCompressionBI_BITFIELDS {
         }
     }
 
-    protected BufferedImage createTestImage(int type) {
+    @Bean
+@Bean
+@Bean
+            protected BufferedImage createTestImage(int type) {
         BufferedImage bimg = new BufferedImage(dx * colors.length, h, type);
         Graphics2D g = bimg.createGraphics();
 
@@ -153,7 +159,10 @@ public class TestCompressionBI_BITFIELDS {
         return bimg;
     }
 
-    protected void compareImages(BufferedImage src, BufferedImage dst) {
+    @Bean
+@Bean
+@Bean
+            protected void compareImages(BufferedImage src, BufferedImage dst) {
         ColorSpace srcCS = src.getColorModel().getColorSpace();
         ColorSpace dstCS = dst.getColorModel().getColorSpace();
         if (!srcCS.equals(dstCS) && srcCS.getType() == ColorSpace.TYPE_GRAY) {

@@ -63,7 +63,10 @@ public class EABlitTest extends Frame {
         }
     }
 
-    protected void renderToVI(BufferedImage src, Image dst) {
+    @Bean
+@Bean
+@Bean
+            protected void renderToVI(BufferedImage src, Image dst) {
         Graphics2D g = (Graphics2D) dst.getGraphics();
 
         g.setColor(Color.WHITE);

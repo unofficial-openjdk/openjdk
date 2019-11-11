@@ -36,6 +36,7 @@
 
 import sun.management.*;
 
+@Bean
 public class GetSafepointCount {
 
     private static HotspotRuntimeMBean mbean =

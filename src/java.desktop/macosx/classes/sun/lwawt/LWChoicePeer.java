@@ -80,7 +80,8 @@ final class LWChoicePeer extends LWComponentPeer<Choice, JComboBox<String>>
     }
 
     @Override
-    public void itemStateChanged(final ItemEvent e) {
+@Bean
+        public void itemStateChanged(final ItemEvent e) {
         // AWT Choice sends SELECTED event only whereas JComboBox
         // sends both SELECTED and DESELECTED.
         if (e.getStateChange() == ItemEvent.SELECTED) {
@@ -96,14 +97,16 @@ final class LWChoicePeer extends LWComponentPeer<Choice, JComboBox<String>>
     }
 
     @Override
-    public void add(final String item, final int index) {
+@Bean
+        public void add(final String item, final int index) {
         synchronized (getDelegateLock()) {
             getDelegate().insertItemAt(item, index);
         }
     }
 
     @Override
-    public void remove(final int index) {
+@Bean
+        public void remove(final int index) {
         synchronized (getDelegateLock()) {
             // We shouldn't post event, if selected item was removed.
             skipPostMessage = true;
@@ -120,7 +123,8 @@ final class LWChoicePeer extends LWComponentPeer<Choice, JComboBox<String>>
     }
 
     @Override
-    public void select(final int index) {
+@Bean
+        public void select(final int index) {
         synchronized (getDelegateLock()) {
             if (index != getDelegate().getSelectedIndex()) {
                 skipPostMessage = true;

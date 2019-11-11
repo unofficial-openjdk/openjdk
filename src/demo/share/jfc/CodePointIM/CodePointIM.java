@@ -44,6 +44,7 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 
+@Bean
 public class CodePointIM {
 
     // Actually, the main method is not required for InputMethod.

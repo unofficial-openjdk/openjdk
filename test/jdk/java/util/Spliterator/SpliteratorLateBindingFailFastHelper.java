@@ -190,7 +190,11 @@ class SpliteratorLateBindingFailFastHelper {
         }
 
         @Override
-        public boolean add(Integer integer) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean add(Integer integer) {
             modCount++;
             return l.add(integer);
         }
@@ -201,12 +205,20 @@ class SpliteratorLateBindingFailFastHelper {
         }
 
         @Override
-        public Integer get(int index) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Integer get(int index) {
             return l.get(index);
         }
 
         @Override
-        public boolean remove(Object o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean remove(Object o) {
             modCount++;
             return l.remove(o);
         }

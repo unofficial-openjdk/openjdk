@@ -41,6 +41,7 @@ import static java.lang.StackWalker.Option.*;
 import org.testng.annotations.*;
 import static org.testng.Assert.*;
 
+@Bean
 public class AcrossThreads {
     static final StackWalker WALKERS[] = new StackWalker[] {
             StackWalker.getInstance(RETAIN_CLASS_REFERENCE),
@@ -58,7 +59,11 @@ public class AcrossThreads {
     }
 
     @Test(dataProvider = "walkerProvider")
-    public void test(StackWalker walker) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void test(StackWalker walker) {
         Thread t1 = new T1(walker);
         // call methods of one instance of StackWalker sequentially in T1, T2, T3.
         t1.start();
@@ -89,7 +94,11 @@ public class AcrossThreads {
 
         public void consume();
 
-        default public void assertWalker(StackWalker walker, int n) {
+        default @Bean
+@Bean
+@Bean
+@Bean
+                public void assertWalker(StackWalker walker, int n) {
             if (--n == 0) {
                 Map<String, Integer> methods = new HashMap<String, Integer>();
                 walker.forEach(f -> {

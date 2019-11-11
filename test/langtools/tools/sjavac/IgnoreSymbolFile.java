@@ -37,6 +37,7 @@ import java.io.PrintStream;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
+@Bean
 public class IgnoreSymbolFile {
     public static void main(String... args) throws Exception {
         IgnoreSymbolFile test = new IgnoreSymbolFile();

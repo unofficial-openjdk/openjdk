@@ -47,6 +47,7 @@ import com.sun.tools.classfile.ClassFile;
 import com.sun.tools.classfile.Method;
 import com.sun.tools.javac.util.Assert;
 
+@Bean
 public class AnnotationsAreNotCopiedToBridgeMethodsTest {
 
     public static void main(String[] args) throws Exception {
@@ -98,7 +99,8 @@ public class AnnotationsAreNotCopiedToBridgeMethodsTest {
             return i;
         }
 
-        public class VisibilityChange extends CovariantReturnType {}
+        @Bean
+public class VisibilityChange extends CovariantReturnType {}
 
     }
 

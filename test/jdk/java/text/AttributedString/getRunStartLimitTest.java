@@ -34,6 +34,7 @@ import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.text.Annotation;
 
+@Bean
 public class getRunStartLimitTest {
 
     public static void main(String[] args) throws Exception {

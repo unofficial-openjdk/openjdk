@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+@Bean
 public class SkipTest {
     private static final String javaExe =
             System.getProperty("java.home") +

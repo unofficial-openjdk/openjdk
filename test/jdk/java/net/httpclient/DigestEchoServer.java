@@ -306,7 +306,11 @@ public abstract class DigestEchoServer implements HttpServerAdapters {
         }
 
         @Override
-        protected InetSocketAddress getAddress(ServerSocket socket) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected InetSocketAddress getAddress(ServerSocket socket) {
             return new InetSocketAddress(socket.getInetAddress(), socket.getLocalPort());
         }
 
@@ -329,7 +333,11 @@ public abstract class DigestEchoServer implements HttpServerAdapters {
         }
 
         @Override
-        protected InetSocketAddress getAddress(S server) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected InetSocketAddress getAddress(S server) {
             return server.getAddress();
         }
 
@@ -363,7 +371,11 @@ public abstract class DigestEchoServer implements HttpServerAdapters {
         }
 
         @Override
-        protected InetSocketAddress getAddress(S server) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected InetSocketAddress getAddress(S server) {
             return server.getAddress();
         }
 
@@ -484,6 +496,10 @@ public abstract class DigestEchoServer implements HttpServerAdapters {
         com.sun.net.httpserver.Authenticator authenticator =
             new BasicAuthenticator(realm) {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public boolean checkCredentials(String username, String pwd) {
                     return auth.getUserName().equals(username)
                            && new String(auth.getPassword(username)).equals(pwd);
@@ -985,7 +1001,11 @@ public abstract class DigestEchoServer implements HttpServerAdapters {
         }
 
         @Override
-        protected boolean isAuthentified(HttpTestExchange he) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected boolean isAuthentified(HttpTestExchange he) {
             if (he.getRequestHeaders().containsKey(getAuthorization())) {
                 List<String> authorization =
                     he.getRequestHeaders().get(getAuthorization());
@@ -1078,7 +1098,11 @@ public abstract class DigestEchoServer implements HttpServerAdapters {
         }
 
         @Override
-        protected boolean isAuthentified(HttpTestExchange he) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected boolean isAuthentified(HttpTestExchange he) {
             if (he.getRequestHeaders().containsKey(getAuthorization())) {
                 List<String> authorization = he.getRequestHeaders().get(getAuthorization());
                 for (String a : authorization) {
@@ -1404,7 +1428,11 @@ public abstract class DigestEchoServer implements HttpServerAdapters {
             return true;
         }
 
-        public boolean authorize(StringBuilder response, String requestLine, String headers) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean authorize(StringBuilder response, String requestLine, String headers) {
             String message = "<html><body><p>Authorization Failed%s</p></body></html>\r\n";
             if (authenticator == null && schemeType != HttpAuthSchemeType.NONE) {
                 message = String.format(message, " No Authenticator Set");

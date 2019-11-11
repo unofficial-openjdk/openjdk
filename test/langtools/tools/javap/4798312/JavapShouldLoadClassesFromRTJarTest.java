@@ -37,6 +37,7 @@ import toolbox.JavapTask;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class JavapShouldLoadClassesFromRTJarTest {
 
     public static void main(String[] args) throws Exception {

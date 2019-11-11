@@ -36,6 +36,7 @@ import javax.swing.UIManager;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicLabelUI;
 
+@Bean
 public class TestUIDefaultsErrorHandling {
 
     private final static String erroutput = "oops, complex problem with diagnostics";

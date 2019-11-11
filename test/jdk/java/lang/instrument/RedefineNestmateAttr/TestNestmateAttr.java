@@ -55,7 +55,8 @@ etc.
 
 Each Host class has the form:
 
-  public class Host {
+  @Bean
+public class Host {
     public static String getID() { return "<directory name>/Host.java"; }
 
     < zero or more empty nested classes>
@@ -136,6 +137,7 @@ import jdk.test.lib.compiler.CompilerUtils;
 import jdk.test.lib.compiler.InMemoryJavaCompiler;
 import static jdk.test.lib.Asserts.assertTrue;
 
+@Bean
 public class TestNestmateAttr {
 
     static final String SRC = System.getProperty("test.src");
@@ -229,7 +231,8 @@ public class TestNestmateAttr {
         String name = "Host$A";
         // This is compiled as a top-level class: the $ in the name is not
         // significant to the compiler.
-        String hostA = "public class " + name + " {}";
+        String hostA = "@Bean
+public class " + name + " {}";
 
         // Have to do this reflectively as there is no Host$A
         // when compiling the "Host/" case.

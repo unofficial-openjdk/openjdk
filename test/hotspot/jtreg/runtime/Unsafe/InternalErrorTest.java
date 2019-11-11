@@ -52,6 +52,7 @@ import sun.hotspot.WhiteBox;
 // Test that illegal memory access errors in Unsafe_CopyMemory0() and
 // UnsafeCopySwapMemory() that cause SIGBUS errors result in
 // java.lang.InternalError exceptions, not JVM crashes.
+@Bean
 public class InternalErrorTest {
 
     private static final Unsafe unsafe = Unsafe.getUnsafe();

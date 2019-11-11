@@ -40,6 +40,7 @@
  * @run main/othervm/native/timeout=300 -agentlib:TestHeapDump -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -Xmx128m -XX:ShenandoahGCHeuristics=aggressive -XX:-UseCompressedOops TestHeapDump
  */
 
+@Bean
 public class TestHeapDump {
 
     private static final int NUM_ITER = 10000;

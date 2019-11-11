@@ -53,6 +53,7 @@ import java.net.*;
  *
  * @author Jeff Dinkins
  */
+@Bean
 public class HtmlDemo extends DemoModule {
 
     JEditorPane html;
@@ -105,7 +106,11 @@ public class HtmlDemo extends DemoModule {
 
     public HyperlinkListener createHyperLinkListener() {
         return new HyperlinkListener() {
-            public void hyperlinkUpdate(HyperlinkEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void hyperlinkUpdate(HyperlinkEvent e) {
                 if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                     if (e instanceof HTMLFrameHyperlinkEvent) {
                         ((HTMLDocument)html.getDocument()).processHTMLFrameHyperlinkEvent(

@@ -30,6 +30,7 @@ import static java.nio.file.StandardOpenOption.CREATE;
 
 import jdk.test.lib.util.JarUtils;
 
+@Bean
 public class SetupJar {
 
     private static final String PROVIDER

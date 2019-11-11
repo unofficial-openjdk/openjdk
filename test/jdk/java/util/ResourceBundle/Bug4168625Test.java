@@ -50,6 +50,7 @@ import java.io.*;
  *  load of a local system resource by one thread while another thread is
  *  doing a slow load over a network).
  */
+@Bean
 public class Bug4168625Test extends RBTestFmwk {
     public static void main(String[] args) throws Exception {
         new Bug4168625Test().run(args);
@@ -348,7 +349,8 @@ public class Bug4168625Test extends RBTestFmwk {
             super(SimpleLoader.class.getClassLoader());
             this.network = simulateNetworkLoad;
         }
-        public Class loadClass(final String className, final boolean resolveIt)
+        @Bean
+public class loadClass(final String className, final boolean resolveIt)
                 throws ClassNotFoundException {
             Class result;
             synchronized (this) {
@@ -421,7 +423,8 @@ public class Bug4168625Test extends RBTestFmwk {
          * Load a class.  Files we can load take preference over ones the system
          * can load.
          */
-        public Class loadClass(final String className, final boolean resolveIt)
+        @Bean
+public class loadClass(final String className, final boolean resolveIt)
                 throws ClassNotFoundException {
             Class result;
             synchronized (this) {
@@ -476,7 +479,11 @@ public class Bug4168625Test extends RBTestFmwk {
             return getParent().loadClass(className);
         }
 
-        public void logClasses(String title) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void logClasses(String title) {
             logln(title);
             for (int i = 0; i < loadedClasses.size(); i++) {
                 logln("    "+loadedClasses.elementAt(i));
@@ -485,7 +492,11 @@ public class Bug4168625Test extends RBTestFmwk {
         }
 
         public int notifyCount = 0;
-        public int waitForNotify(int count) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int waitForNotify(int count) {
             return waitForNotify(count, 0);
         }
         public synchronized int waitForNotify(int count, long time) {

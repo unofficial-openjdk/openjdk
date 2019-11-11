@@ -36,6 +36,7 @@ import static java.lang.System.out;
  * @run main/othervm InterruptedBlockingSend
  */
 
+@Bean
 public class InterruptedBlockingSend {
 
     static volatile Throwable throwable;

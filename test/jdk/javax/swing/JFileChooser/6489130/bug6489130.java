@@ -42,7 +42,10 @@ public class bug6489130 {
     private static final CountDownLatch MUX = new CountDownLatch(1);
 
     private final Timer timer = new Timer(1000, new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
             switch (state) {
                 case 0:
                 case 1: {

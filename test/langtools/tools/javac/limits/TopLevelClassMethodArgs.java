@@ -31,6 +31,7 @@
  * @run main TopLevelClassMethodArgs
  */
 
+@Bean
 public class TopLevelClassMethodArgs extends NumArgsTest {
     private TopLevelClassMethodArgs() {
         super(254, "void", "test", "TopLevelClassMethodArgs");

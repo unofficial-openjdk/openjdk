@@ -51,7 +51,10 @@ public class bug8038113 extends JApplet {
                 final JPanel panel = new JPanel() {
 
                     @Override
-                    public void paint(Graphics g) {
+                    @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
                         super.paint(g);
                         Graphics2D g2 = (Graphics2D) g;
                         g2.setStroke(new BasicStroke(0.5f));

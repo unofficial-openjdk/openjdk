@@ -32,6 +32,7 @@
 import java.awt.*;
 import java.awt.event.*;
 
+@Bean
 public class F10TopToplevel {
 
     static Frame frame;
@@ -47,6 +48,9 @@ public class F10TopToplevel {
         menu = new Menu("nu");
         menu.add((item = new MenuItem("item")));
         item.addActionListener( new ActionListener() {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed( ActionEvent ae ) {
                 menuToggled = true;
             }

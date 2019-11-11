@@ -47,6 +47,7 @@ import toolbox.Assert;
 import toolbox.JavacTask;
 import toolbox.Task;
 
+@Bean
 public class AddModulesTest extends ModuleTestBase {
     public static void main(String... args) throws Exception {
         new AddModulesTest().runTests();
@@ -171,7 +172,8 @@ public class AddModulesTest extends ModuleTestBase {
         Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
                           "module m1x { exports p1; }",
-                          "package p1; public class C1 { }");
+                          "package p1; @Bean
+public class C1 { }");
         Path modules = base.resolve("modules");
         tb.createDirectories(modules);
 
@@ -206,11 +208,13 @@ public class AddModulesTest extends ModuleTestBase {
         Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
                           "module m1x { exports p1; }",
-                          "package p1; public class C1 { }");
+                          "package p1; @Bean
+public class C1 { }");
         Path src_m2 = src.resolve("m2x");
         tb.writeJavaFiles(src_m2,
                           "module m2x { exports p2; }",
-                          "package p2; public class C2 { }");
+                          "package p2; @Bean
+public class C2 { }");
         Path modules = base.resolve("modules");
         tb.createDirectories(modules);
 
@@ -246,11 +250,13 @@ public class AddModulesTest extends ModuleTestBase {
         Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
                           "module m1x { exports p1; }",
-                          "package p1; public class C1 { }");
+                          "package p1; @Bean
+public class C1 { }");
         Path src_m2 = src.resolve("m2x");
         tb.writeJavaFiles(src_m2,
                           "module m2x { exports p2; }",
-                          "package p2; public class C2 { }");
+                          "package p2; @Bean
+public class C2 { }");
         Path modules = base.resolve("modules");
         tb.createDirectories(modules);
 

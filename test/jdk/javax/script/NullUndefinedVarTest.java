@@ -32,6 +32,7 @@
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 
+@Bean
 public class NullUndefinedVarTest {
 
         public static void main(String[] args) throws Exception {

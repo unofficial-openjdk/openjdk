@@ -33,6 +33,7 @@
 import java.lang.reflect.Array;
 import java.util.Arrays;
 
+@Bean
 public class TestConservativeAntiDep {
     private static long longField;
 

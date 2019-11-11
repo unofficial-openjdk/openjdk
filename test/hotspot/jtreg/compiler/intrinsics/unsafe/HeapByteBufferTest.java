@@ -35,6 +35,7 @@
  *      HeapByteBufferTest
  */
 
+@Bean
 public class HeapByteBufferTest extends ByteBufferTest {
 
     public HeapByteBufferTest(long iterations, boolean direct) {

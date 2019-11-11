@@ -30,6 +30,7 @@
 
 import java.util.*;
 
+@Bean
 public class JumboRange {
     public static void main(String[] args) {
         test(Test127.class, Test127.T2, Test127.T6);

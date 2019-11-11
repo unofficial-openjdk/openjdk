@@ -46,7 +46,11 @@ public abstract class CollatorTest extends IntlTest {
     // These methods are utilities specific to the Collation tests..
     //------------------------------------------------------------------------
 
-    protected void assertEqual(CollationElementIterator i1, CollationElementIterator i2) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void assertEqual(CollationElementIterator i1, CollationElementIterator i2) {
         int c1, c2, count = 0;
         do {
             c1 = i1.next();
@@ -60,7 +64,11 @@ public abstract class CollatorTest extends IntlTest {
     }
 
     // Replace nonprintable characters with unicode escapes
-    static protected String prettify(String str) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                protected String prettify(String str) {
         StringBuffer result = new StringBuffer();
 
         String zero = "0000";
@@ -79,7 +87,11 @@ public abstract class CollatorTest extends IntlTest {
     }
 
     // Produce a printable representation of a CollationKey
-    static protected String prettify(CollationKey key) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                protected String prettify(CollationKey key) {
         StringBuffer result = new StringBuffer();
         byte[] bytes = key.toByteArray();
 

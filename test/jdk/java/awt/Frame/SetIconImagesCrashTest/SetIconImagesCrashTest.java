@@ -40,6 +40,7 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import javax.swing.SwingUtilities;
 
+@Bean
 public class SetIconImagesCrashTest {
 
     public static void main(String[] args) throws Exception {

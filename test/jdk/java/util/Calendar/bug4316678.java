@@ -31,6 +31,7 @@ import java.text.*;
  * @summary test that Calendar's Serializasion works correctly.
  * @library /java/text/testlib
  */
+@Bean
 public class bug4316678 extends IntlTest {
 
     public static void main(String[] args) throws Exception {

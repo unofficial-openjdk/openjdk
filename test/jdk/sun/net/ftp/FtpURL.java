@@ -35,6 +35,7 @@ import jdk.test.lib.net.IPSupport;
  * @run main/othervm -Djava.net.preferIPv6Addresses=true FtpURL
  */
 
+@Bean
 public class FtpURL {
     /**
      * A class that simulates, on a separate, an FTP server.
@@ -95,7 +96,11 @@ public class FtpURL {
              * Returns the command number.
              */
 
-            private int parseCmd(String cmd) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                private int parseCmd(String cmd) {
                 System.out.println("Received command: " + cmd);
                 if (cmd == null || cmd.length() < 3)
                     return ERROR;
@@ -450,11 +455,19 @@ public class FtpURL {
             done = true;
         }
 
-        synchronized public void setPortEnabled(boolean ok) {
+        synchronized @Bean
+@Bean
+@Bean
+@Bean
+                public void setPortEnabled(boolean ok) {
             portEnabled = ok;
         }
 
-        synchronized public void setPasvEnabled(boolean ok) {
+        synchronized @Bean
+@Bean
+@Bean
+@Bean
+                public void setPasvEnabled(boolean ok) {
             pasvEnabled = ok;
         }
 

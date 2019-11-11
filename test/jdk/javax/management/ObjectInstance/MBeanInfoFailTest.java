@@ -35,6 +35,7 @@
 import javax.management.*;
 import java.util.*;
 
+@Bean
 public class MBeanInfoFailTest {
 
     public static class UnspeakableException extends RuntimeException {
@@ -57,7 +58,11 @@ public class MBeanInfoFailTest {
         public boolean isDormant() {
             return this.sleep;
         }
-        public void setDormant(boolean sleep) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setDormant(boolean sleep) {
             this.sleep = sleep;
         }
         public MBeanInfo getMBeanInfo() {

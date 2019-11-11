@@ -38,6 +38,7 @@
 import java.util.*;
 import java.nio.file.*;
 
+@Bean
 public class IncCompileNoChanges  extends SJavacTester {
     public static void main(String... args) throws Exception {
         IncCompileNoChanges nc = new IncCompileNoChanges();

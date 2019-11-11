@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import static java.nio.file.StandardWatchEventKinds.*;
 
+@Bean
 public class UpdateInterference {
 
     private static volatile boolean stop;

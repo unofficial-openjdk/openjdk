@@ -33,6 +33,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Properties;
 
+@Bean
 public class LoadParsing2 {
     public static void main(String[] argv) throws Exception {
         for (int i = 0; i < dfiles.length; i++) {

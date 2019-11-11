@@ -31,6 +31,7 @@ import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@Bean
 public class RequestProperties {
     static int failed;
 

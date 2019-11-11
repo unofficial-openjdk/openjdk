@@ -42,6 +42,7 @@ import jdk.test.lib.Platform;
 import jdk.test.lib.cli.CommandLineOptionTest;
 import sun.hotspot.code.BlobType;
 
+@Bean
 public class TestSegmentedCodeCacheOption {
     private static final String INT_MODE = "-Xint";
     private static final String TIERED_COMPILATION = "TieredCompilation";

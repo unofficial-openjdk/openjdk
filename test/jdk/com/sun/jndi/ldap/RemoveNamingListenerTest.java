@@ -46,6 +46,7 @@ import javax.naming.event.ObjectChangeListener;
  * @modules java.naming
  * @run main RemoveNamingListenerTest
  */
+@Bean
 public class RemoveNamingListenerTest {
 
     private static volatile Exception exception;
@@ -119,12 +120,20 @@ public class RemoveNamingListenerTest {
     static class SampleListener implements ObjectChangeListener {
 
         @Override
-        public void objectChanged(NamingEvent ne) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void objectChanged(NamingEvent ne) {
             //do nothing
         }
 
         @Override
-        public void namingExceptionThrown(NamingExceptionEvent nee) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void namingExceptionThrown(NamingExceptionEvent nee) {
             //do nothing
         }
     }

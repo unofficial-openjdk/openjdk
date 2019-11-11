@@ -38,6 +38,7 @@
  * test of the condition described in the summary.
  */
 
+@Bean
 public class LateAddition {
     public int f() {
         class Local {

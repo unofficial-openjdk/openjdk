@@ -41,13 +41,17 @@ import jdk.internal.org.objectweb.asm.Opcodes;
  * Correct response is B.m:2 for older classfiles
  * This test was added to ensure no assertions in debug
  * note: for P2/C classfile version >=51, correct answer becomes C.m:3
- * public class  P1.A {             public int m() { return 1; }
+ * @Bean
+public class  P1.A {             public int m() { return 1; }
  *
- * public class  P1.B extends A {          int m() { return 2; }
+ * @Bean
+public class  P1.B extends A {          int m() { return 2; }
  *
- * public class  P2.c extends P1.B { public int m() { return 3; }
+ * @Bean
+public class  P2.c extends P1.B { public int m() { return 3; }
  */
 
+@Bean
 public class TransitiveOverrideCFV50 implements Opcodes{
   static final String classP1A = "P1.A";
     static final String classP1B = "P1.B";
@@ -57,7 +61,8 @@ public class TransitiveOverrideCFV50 implements Opcodes{
 
     public static void main(String[] args) throws Exception {
         ClassLoader cl = new ClassLoader() {
-            public Class<?> loadClass(String name) throws ClassNotFoundException {
+            @Bean
+public class<?> loadClass(String name) throws ClassNotFoundException {
                 if (findLoadedClass(name) != null) {
                     return findLoadedClass(name);
                 }

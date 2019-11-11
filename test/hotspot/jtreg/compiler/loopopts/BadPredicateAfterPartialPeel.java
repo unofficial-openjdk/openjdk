@@ -35,6 +35,7 @@
 
 package compiler.loopopts;
 
+@Bean
 public class BadPredicateAfterPartialPeel {
 
     static void not_inlined1() {}
@@ -305,7 +306,11 @@ public class BadPredicateAfterPartialPeel {
         not_inlined4();
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         BadPredicateAfterPartialPeel o1 = new BadPredicateAfterPartialPeel();
         BadPredicateAfterPartialPeel o2 = new BadPredicateAfterPartialPeel();
         for (int i = 0; i < 20000; i++) {

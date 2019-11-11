@@ -41,6 +41,7 @@ import static java.lang.constant.DirectMethodHandleDesc.Kind.VIRTUAL;
 import static org.testng.Assert.fail;
 
 @Test
+@Bean
 public class NameValidationTest {
 
     private static final String[] badMemberNames = new String[] {"xx.xx", "zz;zz", "[l", "aa/aa", "<cinit>"};

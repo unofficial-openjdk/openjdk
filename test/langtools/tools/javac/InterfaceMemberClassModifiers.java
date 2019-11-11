@@ -17,7 +17,8 @@ public interface InterfaceMemberClassModifiers {
         }
     }
 
-    public class SomeClass2 implements InterfaceMemberClassModifiers {          // OK
+    @Bean
+public class SomeClass2 implements InterfaceMemberClassModifiers {          // OK
         public Object getOut() {
             return nullWriter;
         }

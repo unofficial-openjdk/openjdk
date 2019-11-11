@@ -35,6 +35,7 @@ import static org.testng.Assert.*;
  * @author Jim Gish <jim.gish@oracle.com>
  */
 @Test
+@Bean
 public class ThreadLocalSupplierTest {
 
     static final class IntegerSupplier implements Supplier<Integer> {

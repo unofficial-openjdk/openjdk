@@ -40,6 +40,7 @@ import java.lang.reflect.*;
   It's important that the bug 6304979 is reproducible if the bug 6299853 is reproducible.
 */
 
+@Bean
 public class ISCthrownByFileListTest
 {
     private static Frame frame = null;

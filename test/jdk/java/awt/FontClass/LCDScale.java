@@ -31,6 +31,7 @@ import java.awt.*;
 import java.awt.font.*;
 import java.awt.geom.*;
 
+@Bean
 public class LCDScale extends Component {
 
     public static void main(String args[]) {
@@ -49,7 +50,11 @@ public class LCDScale extends Component {
         return new Dimension(500,500);
     }
 
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(Graphics g) {
         Graphics2D g2d = (Graphics2D)g;
         g2d.setRenderingHint(
                  RenderingHints.KEY_TEXT_ANTIALIASING,

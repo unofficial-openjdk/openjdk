@@ -61,6 +61,7 @@ class NewInstanceTarg {
 
     /********** test program **********/
 
+@Bean
 public class NewInstanceTest extends TestScaffold {
     ReferenceType targetClass;
 

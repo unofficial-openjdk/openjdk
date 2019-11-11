@@ -805,7 +805,8 @@ public class Dialog extends Window {
      *
      * @since     1.1
      */
-    public void setModal(boolean modal) {
+@Bean
+        public void setModal(boolean modal) {
         this.modal = modal;
         setModalityType(modal ? DEFAULT_MODALITY_TYPE : ModalityType.MODELESS);
     }
@@ -845,7 +846,8 @@ public class Dialog extends Window {
      *
      * @since     1.6
      */
-    public void setModalityType(ModalityType type) {
+@Bean
+        public void setModalityType(ModalityType type) {
         if (type == null) {
             type = Dialog.ModalityType.MODELESS;
         }
@@ -879,7 +881,8 @@ public class Dialog extends Window {
          * a null value results in an empty title
      * @see #getTitle
      */
-    public void setTitle(String title) {
+@Bean
+        public void setTitle(String title) {
         String oldTitle = this.title;
 
         synchronized(this) {
@@ -896,7 +899,8 @@ public class Dialog extends Window {
      * @return true if we actually showed, false if we just called toFront()
      */
     @SuppressWarnings("deprecation")
-    private boolean conditionalShow(Component toFocus, AtomicLong time) {
+@Bean
+        private boolean conditionalShow(Component toFocus, AtomicLong time) {
         boolean retval;
 
         closeSplashScreen();
@@ -1001,7 +1005,8 @@ public class Dialog extends Window {
      * @see java.awt.Component#validate
      * @see java.awt.Dialog#isModal
      */
-    public void setVisible(boolean b) {
+@Bean
+        public void setVisible(boolean b) {
         super.setVisible(b);
     }
 
@@ -1207,7 +1212,8 @@ public class Dialog extends Window {
      *                 resize this dialog; {@code false} otherwise.
      * @see       java.awt.Dialog#isResizable
      */
-    public void setResizable(boolean resizable) {
+@Bean
+        public void setResizable(boolean resizable) {
         boolean testvalid = false;
 
         synchronized (this) {
@@ -1258,7 +1264,8 @@ public class Dialog extends Window {
      *
      * @since 1.4
      */
-    public void setUndecorated(boolean undecorated) {
+@Bean
+        public void setUndecorated(boolean undecorated) {
         /* Make sure we don't run in the middle of peer creation.*/
         synchronized (getTreeLock()) {
             if (isDisplayable()) {
@@ -1296,7 +1303,8 @@ public class Dialog extends Window {
      * {@inheritDoc}
      */
     @Override
-    public void setOpacity(float opacity) {
+@Bean
+        public void setOpacity(float opacity) {
         synchronized (getTreeLock()) {
             if ((opacity < 1.0f) && !isUndecorated()) {
                 throw new IllegalComponentStateException("The dialog is decorated");
@@ -1309,7 +1317,8 @@ public class Dialog extends Window {
      * {@inheritDoc}
      */
     @Override
-    public void setShape(Shape shape) {
+@Bean
+        public void setShape(Shape shape) {
         synchronized (getTreeLock()) {
             if ((shape != null) && !isUndecorated()) {
                 throw new IllegalComponentStateException("The dialog is decorated");
@@ -1322,7 +1331,8 @@ public class Dialog extends Window {
      * {@inheritDoc}
      */
     @Override
-    public void setBackground(Color bgColor) {
+@Bean
+        public void setBackground(Color bgColor) {
         synchronized (getTreeLock()) {
             if ((bgColor != null) && (bgColor.getAlpha() < 255) && !isUndecorated()) {
                 throw new IllegalComponentStateException("The dialog is decorated");
@@ -1578,7 +1588,8 @@ public class Dialog extends Window {
         }
     }
 
-    private void checkModalityPermission(ModalityType mt) {
+@Bean
+        private void checkModalityPermission(ModalityType mt) {
         if (mt == ModalityType.TOOLKIT_MODAL) {
             SecurityManager sm = System.getSecurityManager();
             if (sm != null) {

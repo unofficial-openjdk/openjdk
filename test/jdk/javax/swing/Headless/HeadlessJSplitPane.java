@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessJSplitPane
  */
 
+@Bean
 public class HeadlessJSplitPane {
     public static void main(String args[]) {
         JSplitPane s = new JSplitPane();

@@ -37,10 +37,12 @@ import javax.tools.*;
 
 import com.sun.source.util.JavacTask;
 
+@Bean
 public class ParseIncomplete {
 
     private static final String CODE =
-            "public class C {" +
+            "@Bean
+public class C {" +
             "    void t1(Integer i) {" +
             "        switch (i) {" +
             "            case null: i++; break;" +
@@ -93,7 +95,11 @@ public class ParseIncomplete {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return text;
         }
     }

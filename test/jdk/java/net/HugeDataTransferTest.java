@@ -64,6 +64,7 @@ import java.util.Random;
  *
  * @author vtewari
  */
+@Bean
 public class HugeDataTransferTest {
 
     /**
@@ -852,7 +853,11 @@ public class HugeDataTransferTest {
          * Check byte-to-byte equality between <code>this</code> and the
          * <code>other</code> parcels.
          */
-        public boolean equals(Parcel other) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Parcel other) {
             if (this.parcel.length != other.parcel.length) {
                 return false;
             }

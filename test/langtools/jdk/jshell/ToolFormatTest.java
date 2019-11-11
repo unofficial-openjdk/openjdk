@@ -44,6 +44,7 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 @Test
+@Bean
 public class ToolFormatTest extends ReplToolTesting {
 
     public void testSetFormat() {

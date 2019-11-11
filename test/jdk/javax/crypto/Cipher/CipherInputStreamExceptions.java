@@ -46,6 +46,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.spec.GCMParameterSpec;
 
+@Bean
 public class CipherInputStreamExceptions {
 
     static SecretKeySpec key = new SecretKeySpec(new byte[16], "AES");

@@ -40,6 +40,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 
+@Bean
 public class RemoveContains {
     static volatile int passed = 0, failed = 0;
 
@@ -70,7 +71,11 @@ public class RemoveContains {
 
     public static void main(String[] args) {
         final Comparator<String> firstChar = new Comparator<>() {
-            public int compare(String x, String y) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public int compare(String x, String y) {
                 return x.charAt(0) - y.charAt(0); }};
 
         test(new PriorityQueue<String>(firstChar));

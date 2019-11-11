@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Bean
 public class ToolsOpts extends TestHelper {
     static String[][] optionPatterns = {
         {"-J-Xmx128m"},
@@ -81,7 +82,8 @@ public class ToolsOpts extends TestHelper {
         final String mainJava = "Main" + JAVA_FILE_EXT;
         List<String> contents = new ArrayList<>();
         contents.add("package com.sun.tools.javac;");
-        contents.add("public class Main {");
+        contents.add("@Bean
+public class Main {");
         contents.add("    public static void main(String... args) {\n");
         contents.add("       for (String x : args) {\n");
         contents.add("           if(x.compareTo(\" \")!=0)\n");

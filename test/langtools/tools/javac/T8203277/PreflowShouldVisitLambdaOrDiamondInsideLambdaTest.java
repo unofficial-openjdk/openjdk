@@ -35,7 +35,11 @@ class PreflowShouldVisitLambdaOrDiamondInsideLambdaTest {
     void build() {
         List<Function<String, Double>> list1 = transform(null,
                 builder -> new Function<>() {
-                    public Double apply(String params) { return null; }
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public Double apply(String params) { return null; }
                 });
 
         List<Function<String, Double>> list2 = transform(null,

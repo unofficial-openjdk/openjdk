@@ -41,6 +41,7 @@
 
 import java.awt.*;
 
+@Bean
 public class TestFrameSize {
 
     static Dimension desiredDimensions = new Dimension(200, 200);

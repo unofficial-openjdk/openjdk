@@ -38,6 +38,7 @@ import java.lang.reflect.InvocationTargetException;
 import javax.swing.JMenuBar;
 import javax.swing.SwingUtilities;
 
+@Bean
 public class DefaultMenuBarDispose
 {
     public DefaultMenuBarDispose()

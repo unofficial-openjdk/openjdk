@@ -59,7 +59,10 @@ public class CodePointBefore extends CompactString {
     }
 
     @Test(dataProvider = "provider")
-    public void testCodePointBefore(String str, int[] expected) {
+    @Bean
+@Bean
+@Bean
+            public void testCodePointBefore(String str, int[] expected) {
         map.get(str)
                 .forEach(
                         (source, data) -> {

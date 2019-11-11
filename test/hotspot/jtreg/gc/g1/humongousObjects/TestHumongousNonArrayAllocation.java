@@ -79,6 +79,7 @@ import java.nio.file.Paths;
  * humongous object that takes more than two regions (region * 2 + sizeof(long))
  *
  */
+@Bean
 public class TestHumongousNonArrayAllocation {
     private static final WhiteBox WB = WhiteBox.getWhiteBox();
     private static final String CLASS_NAME_PREFIX = TestHumongousNonArrayAllocation.class.getSimpleName() + "_";

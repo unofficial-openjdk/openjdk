@@ -36,6 +36,7 @@ import static java.util.stream.Collectors.toList;
  * Two threads are created per client connection. So, it's not
  * intended for large numbers of parallel connections.
  */
+@Bean
 public class ProxyServer extends Thread implements Closeable {
 
     ServerSocket listener;

@@ -42,6 +42,7 @@ package gc.concurrent_phase_control;
 
 import gc.concurrent_phase_control.CheckSupported;
 
+@Bean
 public class TestConcurrentPhaseControlG1Basics {
 
     public static void main(String[] args) throws Exception {

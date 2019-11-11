@@ -71,6 +71,9 @@ public class SetShapeAndClickSwing extends Common {
         super.initBackgroundFrame();
         background.addMouseListener(new MouseAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseClicked(MouseEvent e) {
                 clicked |= 1 << 0;
             }
@@ -85,6 +88,9 @@ public class SetShapeAndClickSwing extends Common {
         south = new JLabel("South");
         south.addMouseListener(new MouseAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseClicked(MouseEvent e) {
                 clicked |= 1 << 3;
             }
@@ -94,6 +100,9 @@ public class SetShapeAndClickSwing extends Common {
         center = new JList();
         center.addMouseListener(new MouseAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseClicked(MouseEvent e) {
                 clicked |= 1 << 2;
             }
@@ -103,6 +112,9 @@ public class SetShapeAndClickSwing extends Common {
         north = new JTextField("North");
         north.addMouseListener(new MouseAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseClicked(MouseEvent e) {
                 clicked |= 1 << 1;
             }

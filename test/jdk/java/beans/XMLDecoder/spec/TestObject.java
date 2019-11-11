@@ -61,7 +61,10 @@ public final class TestObject extends AbstractTest {
     }
 
     @Override
-    protected void validate(XMLDecoder decoder) {
+    @Bean
+@Bean
+@Bean
+            protected void validate(XMLDecoder decoder) {
         JPanel panel = (JPanel) decoder.readObject();
         if (2 != panel.getComponents().length) {
             throw new Error("unexpected component count");

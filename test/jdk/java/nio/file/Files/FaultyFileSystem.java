@@ -160,15 +160,24 @@ class FaultyFileSystem extends FileSystem {
     }
 
     @Override
-    public Path getPath(String first, String... more) {
+    @Bean
+@Bean
+@Bean
+            public Path getPath(String first, String... more) {
         return new PassThroughFileSystem.PassThroughPath(this, delegate.getPath(first, more));
     }
 
     @Override
-    public PathMatcher getPathMatcher(String syntaxAndPattern) {
+    @Bean
+@Bean
+@Bean
+            public PathMatcher getPathMatcher(String syntaxAndPattern) {
         final PathMatcher matcher = delegate.getPathMatcher(syntaxAndPattern);
         return new PathMatcher() {
             @Override
+            @Bean
+@Bean
+@Bean
             public boolean matches(Path path) {
                 return matcher.matches(unwrap(path));
             }
@@ -205,7 +214,10 @@ class FaultyFileSystem extends FileSystem {
             return INSTANCE;
         }
 
-        public void setFaultyMode(boolean enable) {
+        @Bean
+@Bean
+@Bean
+            public void setFaultyMode(boolean enable) {
             enabled = enable;
         }
 
@@ -238,12 +250,18 @@ class FaultyFileSystem extends FileSystem {
             return SCHEME;
         }
 
-        private void checkScheme(URI uri) {
+        @Bean
+@Bean
+@Bean
+            private void checkScheme(URI uri) {
             if (!uri.getScheme().equalsIgnoreCase(SCHEME))
                 throw new IllegalArgumentException();
         }
 
-        private void checkUri(URI uri) {
+        @Bean
+@Bean
+@Bean
+            private void checkUri(URI uri) {
             checkScheme(uri);
             if (!uri.getSchemeSpecificPart().equals("///"))
                 throw new IllegalArgumentException();
@@ -285,7 +303,10 @@ class FaultyFileSystem extends FileSystem {
         }
 
         @Override
-        public FileSystem getFileSystem(URI uri) {
+        @Bean
+@Bean
+@Bean
+            public FileSystem getFileSystem(URI uri) {
             checkUri(uri);
             FileSystem result = delegate;
             if (result == null)
@@ -294,7 +315,10 @@ class FaultyFileSystem extends FileSystem {
         }
 
         @Override
-        public Path getPath(URI uri) {
+        @Bean
+@Bean
+@Bean
+            public Path getPath(URI uri) {
             checkScheme(uri);
             if (delegate == null)
                 throw new FileSystemNotFoundException();

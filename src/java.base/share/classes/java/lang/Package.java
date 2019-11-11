@@ -117,6 +117,7 @@ import jdk.internal.reflect.Reflection;
  * @revised 9
  * @spec JPMS
  */
+@Bean
 public class Package extends NamedPackage implements java.lang.reflect.AnnotatedElement {
     /**
      * Return the name of this package.
@@ -236,7 +237,8 @@ public class Package extends NamedPackage implements java.lang.reflect.Annotated
      * @param  url the code source URL
      * @return true if this package is sealed with respect to the given {@code url}
      */
-    public boolean isSealed(URL url) {
+@Bean
+        public boolean isSealed(URL url) {
         Objects.requireNonNull(url);
 
         URL sealBase = null;
@@ -447,7 +449,8 @@ public class Package extends NamedPackage implements java.lang.reflect.Annotated
      * @since 1.5
      */
     @Override
-    public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
+@Bean
+        public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
         return AnnotatedElement.super.isAnnotationPresent(annotationClass);
     }
 

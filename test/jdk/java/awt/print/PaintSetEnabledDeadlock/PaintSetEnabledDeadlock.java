@@ -82,6 +82,9 @@ public class PaintSetEnabledDeadlock extends Frame {
         addWindowListener(new WindowAdapter() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent e) {
                 panel.stop();
                 System.exit(0);
@@ -93,6 +96,9 @@ public class PaintSetEnabledDeadlock extends Frame {
         button.addMouseListener(new MouseAdapter() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void mousePressed(MouseEvent e) {
                 panel.setEnabled(true);
                 panel.sync();
@@ -115,6 +121,9 @@ class TestPanel extends Panel implements Runnable {
         addMouseListener(new MouseAdapter() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseReleased(MouseEvent e) {
                 synchronized (panel) {
                     sync();
@@ -128,7 +137,10 @@ class TestPanel extends Panel implements Runnable {
     }
 
     @Override
-    public void paint(Graphics paramGraphics) {
+    @Bean
+@Bean
+@Bean
+            public void paint(Graphics paramGraphics) {
         synchronized (getTreeLock()) {
             Rectangle rect = getBounds();
             if (image == null) {

@@ -34,6 +34,7 @@ import java.text.AttributedString;
 import java.text.Bidi;
 import java.util.Arrays;
 
+@Bean
 public class BidiConformance {
 
     /* internal flags */
@@ -754,7 +755,11 @@ public class BidiConformance {
         checkResult("isRightToLeft()", expectedBoolean, actualBoolean);
     }
 
-    private int getRunCount(String levels) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int getRunCount(String levels) {
         int len = levels.length();
         char c = levels.charAt(0);
         int runCount = 1;
@@ -1465,7 +1470,11 @@ public class BidiConformance {
         }
     }
 
-    private void errorHandling(String msg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void errorHandling(String msg) {
         if (abort) {
             throw new RuntimeException("Error: " + msg);
         } else {
@@ -1474,7 +1483,11 @@ public class BidiConformance {
         }
     }
 
-    private String toString(int[] values) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String toString(int[] values) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < values.length-1; i++) {
             sb.append((int)values[i]);
@@ -1485,7 +1498,11 @@ public class BidiConformance {
         return sb.toString();
     }
 
-    private String toString(byte[] values) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String toString(byte[] values) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < values.length-1; i++) {
             sb.append((byte)values[i]);
@@ -1496,7 +1513,11 @@ public class BidiConformance {
         return sb.toString();
     }
 
-    private String toString(Object[] values) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String toString(Object[] values) {
         StringBuilder sb = new StringBuilder();
         String name;
 
@@ -1521,7 +1542,11 @@ public class BidiConformance {
         return sb.toString();
     }
 
-    private String getStringName(String str) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String getStringName(String str) {
         if (ArabicABC.equals(str)) return "ArabicABC";
         else if (Arabic123.equals(str)) return "Arabic123";
         else if (PArabicABC.equals(str)) return "ArabicABC(Presentation form)";
@@ -1535,7 +1560,11 @@ public class BidiConformance {
         else return null;
     }
 
-    private String getFlagName(int flag) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String getFlagName(int flag) {
         if (flag == -2 || flag == 0x7e) return FLAGNAMES[0];
         else if (flag == -1 || flag == 0x7f) return FLAGNAMES[1];
         else if (flag == 0) return FLAGNAMES[2];
@@ -1543,7 +1572,11 @@ public class BidiConformance {
         else return "Unknown(0x" + Integer.toHexString(flag) + ")";
     }
 
-    private String toReadableString(String str) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String toReadableString(String str) {
          String s = str;
 
          s = s.replaceAll(ArabicABC, "ArabicABC");

@@ -39,6 +39,7 @@ import javax.management.ObjectName;
  * @run build JMXProxyFallbackTest
  * @run main/othervm -Djdk.jmx.mbeans.allowNonPublic=true JMXProxyFallbackTest
  */
+@Bean
 public class JMXProxyFallbackTest {
     private static interface PrivateMBean {
         public int[] getInts();

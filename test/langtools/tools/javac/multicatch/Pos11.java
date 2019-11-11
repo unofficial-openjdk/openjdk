@@ -46,6 +46,7 @@
  * be caught and rethrown multiple times.
  */
 
+@Bean
 public class Pos11 {
 
     public static String results = "";

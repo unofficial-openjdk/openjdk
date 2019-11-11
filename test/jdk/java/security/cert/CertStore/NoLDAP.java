@@ -32,6 +32,7 @@ import java.security.cert.CertStore;
 import java.security.cert.LDAPCertStoreParameters;
 
 
+@Bean
 public class NoLDAP {
     public static void main(String[] args) throws Exception {
         try {

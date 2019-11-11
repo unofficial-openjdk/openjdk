@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.nio.*;
 import java.nio.charset.*;
 
+@Bean
 public class TestIBM1364 {
     private static String c2bNRStr = "\u00AD\u00B7\u2015\u223C\u2299\uFF5E";
     private static byte[] c2bNRBytes = new byte[] {

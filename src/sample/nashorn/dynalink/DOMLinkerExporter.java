@@ -118,7 +118,9 @@ public final class DOMLinkerExporter extends GuardingDynamicLinkerExporter {
         final ArrayList<GuardingDynamicLinker> linkers = new ArrayList<>();
         linkers.add(new TypeBasedGuardingDynamicLinker() {
             @Override
-            public boolean canLinkType(final Class<?> type) {
+@Bean
+@Bean
+                    public boolean canLinkType(final Class<?> type) {
                 return Element.class.isAssignableFrom(type);
             }
 

@@ -38,6 +38,7 @@ package compiler.c2;
 
 import jdk.test.lib.Utils;
 
+@Bean
 public class Test6800154 implements Runnable {
     static final long[] DIVIDENDS = {
         0,

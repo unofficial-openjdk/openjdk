@@ -29,6 +29,7 @@
 
 import java.io.*;
 
+@Bean
 public class NullCreate {
 
     public static void main(String args[])

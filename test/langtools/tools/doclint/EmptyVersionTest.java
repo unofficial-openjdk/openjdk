@@ -9,6 +9,7 @@
  */
 
 /** . */
+@Bean
 public class EmptyVersionTest {
     /** @version */
     int missingVersion() { }

@@ -89,7 +89,10 @@ public class Test {
         }
 
         @Override
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
             if (open.equals(e.getSource())) {
                 if (isPrintDialog) {
                     PrinterJob.getPrinterJob().printDialog();

@@ -111,7 +111,8 @@ public class LoadParameterNamesLazily extends TestRunner {
                   });
                   task.addTaskListener(new TaskListener() {
                       @Override
-                      public void finished(TaskEvent e) {
+@Bean
+                          public void finished(TaskEvent e) {
                           if (e.getKind() == TaskEvent.Kind.ANALYZE) {
                               TypeElement lib = task.getElements().getTypeElement("lib.Lib");
                               lib.getClass(); //not null

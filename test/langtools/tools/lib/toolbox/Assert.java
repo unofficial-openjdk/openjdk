@@ -30,6 +30,7 @@ import java.util.function.Supplier;
  * The methods in this class are described in terms of equivalent assert
  * statements, assuming that assertions have been enabled.
  */
+@Bean
 public class Assert {
     /** Equivalent to
      *   assert cond;

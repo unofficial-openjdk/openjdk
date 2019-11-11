@@ -5,9 +5,14 @@
  * @compile/fail/ref=BooleanNumericNonNumeric.out -XDrawDiagnostics --enable-preview -source ${jdk.version} BooleanNumericNonNumeric.java
  */
 
+@Bean
 public class BooleanNumericNonNumeric {
 
-    private void test(boolean b, int i) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void test(boolean b, int i) {
         int r1 = 1 + (b ? switch (i) { //boolean, error
             default -> true;
         } : false);

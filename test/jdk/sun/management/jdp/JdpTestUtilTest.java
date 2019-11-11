@@ -36,6 +36,7 @@ import static jdk.test.lib.Asserts.assertEquals;
     They exists to support test development and should be run by the test developer.
 */
 
+@Bean
 public class JdpTestUtilTest {
 
     @Test

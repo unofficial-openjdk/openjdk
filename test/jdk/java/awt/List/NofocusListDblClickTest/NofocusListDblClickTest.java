@@ -92,7 +92,10 @@ public class NofocusListDblClickTest {
         lst.setFocusable(false);
 
         lst.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                     System.out.println(e.toString());
                     synchronized (actionPerformed) {
                         if (EXPECTED_ACTION_COUNT == actionPerformed.incrementAndGet()) {

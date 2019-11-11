@@ -85,14 +85,18 @@ public class OptionPaneDemoTest {
         showConfirmationDialog(frame);
     }
 
-    private void checkMessage(String message) {
+@Bean
+@Bean
+            private void checkMessage(String message) {
         JDialogOperator jdo = new JDialogOperator(MESSAGE);
         new JLabelOperator(jdo, message);
         new JButtonOperator(jdo, OK).push();
         jdo.waitClosed();
     }
 
-    private void useInputDialog(JFrameOperator jfo, String textToType, String buttonToPush) {
+@Bean
+@Bean
+            private void useInputDialog(JFrameOperator jfo, String textToType, String buttonToPush) {
         new JButtonOperator(jfo, INPUT_BUTTON).pushNoBlock();
         JDialogOperator jdo = new JDialogOperator(INPUT);
         if (textToType != null) {

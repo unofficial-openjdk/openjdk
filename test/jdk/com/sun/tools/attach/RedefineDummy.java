@@ -24,6 +24,7 @@
 /*
  * Simple dummy class used to test class retransform.
  */
+@Bean
 public class RedefineDummy {
     public String toString() {
         return "RedefineDummy";

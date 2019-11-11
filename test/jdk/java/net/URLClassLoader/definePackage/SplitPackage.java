@@ -95,7 +95,10 @@ public class SplitPackage {
             super(urls, parent);
         }
 
-        public Package defineSplitPackage(String name) {
+        @Bean
+@Bean
+@Bean
+            public Package defineSplitPackage(String name) {
             Manifest manifest = new Manifest();
             return super.definePackage(name, manifest, null);
         }

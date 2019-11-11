@@ -38,6 +38,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
+@Bean
 public class SendSize {
     static final int bufferLength = 512;
     static final int packetLength = 256;

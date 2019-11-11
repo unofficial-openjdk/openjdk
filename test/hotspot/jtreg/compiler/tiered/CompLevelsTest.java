@@ -42,7 +42,11 @@ public abstract class CompLevelsTest extends CompilerWhiteBoxTest {
      * Checks that level is available.
      * @param compLevel level to check
      */
-    protected void testAvailableLevel(int compLevel, int bci) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void testAvailableLevel(int compLevel, int bci) {
         if (IS_VERBOSE) {
             System.out.printf("testAvailableLevel(level = %d, bci = %d)%n",
                     compLevel, bci);
@@ -57,7 +61,11 @@ public abstract class CompLevelsTest extends CompilerWhiteBoxTest {
      * Checks that level is unavailable.
      * @param compLevel level to check
      */
-    protected void testUnavailableLevel(int compLevel, int bci) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void testUnavailableLevel(int compLevel, int bci) {
         if (IS_VERBOSE) {
             System.out.printf("testUnavailableLevel(level = %d, bci = %d)%n",
                     compLevel, bci);
@@ -71,7 +79,11 @@ public abstract class CompLevelsTest extends CompilerWhiteBoxTest {
      * @param expected expected level
      * @param actual actually level
      */
-    protected void checkLevel(int expected, int actual) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void checkLevel(int expected, int actual) {
         if (expected != actual) {
             throw new RuntimeException("expected[" + expected + "] != actual["
                     + actual + "]");

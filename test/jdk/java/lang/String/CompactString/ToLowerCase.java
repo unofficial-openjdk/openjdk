@@ -55,7 +55,10 @@ public class ToLowerCase extends CompactString {
     }
 
     @Test(dataProvider = "provider")
-    public void testToLowerCase(String str, String expected) {
+    @Bean
+@Bean
+@Bean
+            public void testToLowerCase(String str, String expected) {
         map.get(str).forEach(
                 (source, data) -> {
                     assertEquals(data.toLowerCase(), expected, String.format(

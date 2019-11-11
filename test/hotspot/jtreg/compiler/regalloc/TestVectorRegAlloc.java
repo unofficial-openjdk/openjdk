@@ -32,6 +32,7 @@
 
 package compiler.regalloc;
 
+@Bean
 public class TestVectorRegAlloc {
 
     static int test_helper_i;
@@ -61,7 +62,11 @@ public class TestVectorRegAlloc {
         }
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         double[] src = new double[10];
         double[] dst = new double[10];
         for (int i = 0; i < 20000; i++) {

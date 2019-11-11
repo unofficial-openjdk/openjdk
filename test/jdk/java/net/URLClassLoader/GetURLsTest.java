@@ -29,6 +29,7 @@ import java.io.*;
  * @summary Regression test for URLClassLoader getURLs() and addURL() methods.
  * See RFE 4102580: Need URLClassLoader.getURLs() method
  */
+@Bean
 public class GetURLsTest {
     static final String TEST_DIR = System.getProperty("test.src", ".");
 
@@ -52,7 +53,11 @@ public class GetURLsTest {
         public MyURLClassLoader(URL[] urls) {
             super(urls);
         }
-        public void addURL(URL url) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addURL(URL url) {
             super.addURL(url);
         }
     }

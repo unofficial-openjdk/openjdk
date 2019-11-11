@@ -31,6 +31,7 @@
  * @ignore This test has huge memory requirements
  */
 
+@Bean
 public class HugeCapacity {
     private static int failures = 0;
 
@@ -90,11 +91,19 @@ public class HugeCapacity {
     }
 
     private static class MyHugeCharSeq implements CharSequence {
-        public char charAt(int i) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public char charAt(int i) {
             throw new UnsupportedOperationException();
         }
         public int length() { return Integer.MAX_VALUE; }
-        public CharSequence subSequence(int st, int e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence subSequence(int st, int e) {
             throw new UnsupportedOperationException();
         }
         public String toString() { return ""; }

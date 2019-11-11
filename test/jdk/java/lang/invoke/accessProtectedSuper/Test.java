@@ -53,7 +53,11 @@ class MakeProtected implements BogoLoader.VisitorMaker, Opcodes {
         whenVisitInner = when_visit_inner;
     }
 
-    public ClassVisitor make(ClassVisitor cv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+            public classVisitor make(ClassVisitor cv) {
         return new ClassVisitor(Opcodes.ASM7, cv) {
 
             @Override
@@ -74,6 +78,7 @@ class MakeProtected implements BogoLoader.VisitorMaker, Opcodes {
     }
 };
 
+@Bean
 public class Test {
 
     public static void main(String argv[]) throws Exception, Throwable {

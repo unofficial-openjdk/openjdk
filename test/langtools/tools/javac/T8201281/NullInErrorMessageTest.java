@@ -9,6 +9,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+@Bean
 public class NullInErrorMessageTest {
     private CompletionStage<String> test() {
         return null;

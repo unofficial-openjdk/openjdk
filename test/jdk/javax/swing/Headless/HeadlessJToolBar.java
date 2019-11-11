@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessJToolBar
  */
 
+@Bean
 public class HeadlessJToolBar {
     public static void main(String args[]) {
         JToolBar tb = new JToolBar();

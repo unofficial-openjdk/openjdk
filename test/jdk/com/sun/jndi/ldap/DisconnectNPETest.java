@@ -44,6 +44,7 @@ import java.util.Hashtable;
  * @run main/othervm DisconnectNPETest
  */
 
+@Bean
 public class DisconnectNPETest {
     // Normally the NPE bug should be hit less than 100 times run, but just in
     // case, we set repeat count to 1000 here.
@@ -108,7 +109,11 @@ public class DisconnectNPETest {
         cleanupClosableRes(serverSocket);
     }
 
-    private void cleanupContext(DirContext context) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void cleanupContext(DirContext context) {
         if (context != null) {
             try {
                 context.close();

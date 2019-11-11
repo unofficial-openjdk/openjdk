@@ -58,6 +58,7 @@ import toolbox.TestRunner;
 import toolbox.TestRunner;
 import toolbox.ToolBox;
 
+@Bean
 public class SourceLauncherTest extends TestRunner {
     public static void main(String... args) throws Exception {
         SourceLauncherTest t = new SourceLauncherTest();
@@ -141,8 +142,13 @@ public class SourceLauncherTest extends TestRunner {
             "import javax.annotation.processing.*;\n" +
             "import javax.lang.model.element.*;\n" +
             "@SupportedAnnotationTypes(\"*\")\n" +
-            "public class AnnoProc extends AbstractProcessor {\n" +
-            "    public boolean process(Set<? extends TypeElement> annos, RoundEnvironment rEnv) {\n" +
+            "@Bean
+public class AnnoProc extends AbstractProcessor {\n" +
+            "    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annos, RoundEnvironment rEnv) {\n" +
             "        throw new Error(\"Annotation processor should not be invoked\");\n" +
             "    }\n" +
             "}\n");
@@ -418,7 +424,8 @@ public class SourceLauncherTest extends TestRunner {
     public void testNoSourceOnClassPath(Path base) throws IOException {
         Path auxSrc = base.resolve("auxSrc");
         tb.writeJavaFiles(auxSrc,
-            "public class Aux {\n" +
+            "@Bean
+public class Aux {\n" +
             "    static final String MESSAGE = \"Hello World\";\n" +
             "}\n");
 
@@ -566,7 +573,11 @@ public class SourceLauncherTest extends TestRunner {
     @Test
     public void testMainNotStatic(Path base) throws IOException {
         tb.writeJavaFiles(base,
-                "class NotStatic { public void main(String... args) { } }");
+                "class NotStatic { @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String... args) { } }");
         testError(base.resolve("NotStatic.java"), "",
                 "error: 'main' method is not declared 'public static'");
     }

@@ -35,6 +35,7 @@ import java.beans.beancontext.BeanContextServices;
 import java.beans.beancontext.BeanContextServicesSupport;
 import java.util.Iterator;
 
+@Bean
 public class Test4328406 {
     public static void main(String[] args) {
         for (int i = 0; i < 10; i++) {
@@ -61,7 +62,11 @@ class MyService1 extends BeanContextChildSupport implements BeanContextServicePr
         bcs.addService(this.getClass(), this);
     }
 
-    public Object getService(BeanContextServices bcs, Object requestor, Class serviceClass, Object serviceSelector) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Object getService(BeanContextServices bcs, Object requestor, Class serviceClass, Object serviceSelector) {
         return this;
     }
 
@@ -69,7 +74,11 @@ class MyService1 extends BeanContextChildSupport implements BeanContextServicePr
             service) {
     }
 
-    public Iterator getCurrentServiceSelectors(BeanContextServices bcs, Class serviceClass) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Iterator getCurrentServiceSelectors(BeanContextServices bcs, Class serviceClass) {
         return null;
     }
 }
@@ -95,14 +104,26 @@ class MyService2 extends BeanContextServicesSupport implements BeanContextServic
         bcs.revokeService(this.getClass(), this, true);
     }
 
-    public Object getService(BeanContextServices bcs, Object requestor, Class serviceClass, Object serviceSelector) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Object getService(BeanContextServices bcs, Object requestor, Class serviceClass, Object serviceSelector) {
         return this;
     }
 
-    public void releaseService(BeanContextServices bcs, Object requestor, Object service) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void releaseService(BeanContextServices bcs, Object requestor, Object service) {
     }
 
-    public Iterator getCurrentServiceSelectors(BeanContextServices bcs, Class serviceClass) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Iterator getCurrentServiceSelectors(BeanContextServices bcs, Class serviceClass) {
         return null;
     }
 }

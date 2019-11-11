@@ -74,7 +74,10 @@ public class Contains extends CompactString {
     }
 
     @Test(dataProvider = "provider")
-    public void testContains(String str, String anotherString, boolean expected) {
+    @Bean
+@Bean
+@Bean
+            public void testContains(String str, String anotherString, boolean expected) {
         map.get(str)
                 .forEach(
                         (source, data) -> {

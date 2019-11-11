@@ -56,6 +56,7 @@ import toolbox.TestRunner;
 import toolbox.TestRunner.Test;
 import toolbox.ToolBox;
 
+@Bean
 public class SetLocationForModule extends TestRunner {
 
     public static void main(String... args) throws Exception {
@@ -319,7 +320,11 @@ public class SetLocationForModule extends TestRunner {
         }
     }
 
-    private Location findLocation(JavaFileManager fm, Iterable<Set<Location>> locations, String moduleName) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Location findLocation(JavaFileManager fm, Iterable<Set<Location>> locations, String moduleName) {
         for (Set<Location> locs : locations) {
             for (Location loc : locs) {
                 try {
@@ -336,7 +341,11 @@ public class SetLocationForModule extends TestRunner {
     }
 
     @Test
-    public void testTemplate(Path base) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testTemplate(Path base) {
         // set a top default
         // getLocnForModule
         // set a value

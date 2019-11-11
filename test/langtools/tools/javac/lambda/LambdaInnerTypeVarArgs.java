@@ -33,6 +33,7 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.ArrayList;
 
+@Bean
 public class LambdaInnerTypeVarArgs {
 
     static int assertionCount = 0;

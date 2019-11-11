@@ -60,6 +60,7 @@ import jdk.vm.ci.hotspot.HotSpotResolvedObjectType;
 import java.util.HashSet;
 import java.util.Set;
 
+@Bean
 public class ResolveMethodTest {
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();
 

@@ -36,6 +36,7 @@ import java.awt.*;
 
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class ObscuredFrameTest {
     public static void main(String[] args) {
         Robot robot = Util.createRobot();

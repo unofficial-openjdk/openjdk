@@ -32,10 +32,12 @@ import java.awt.peer.MouseInfoPeer;
 
 import sun.awt.AWTAccessor;
 
+@Bean
 public class LWMouseInfoPeer implements MouseInfoPeer {
 
     @Override
-    public int fillPointWithCoords(Point point) {
+@Bean
+        public int fillPointWithCoords(Point point) {
         LWCursorManager cursorManager =
             LWToolkit.getLWToolkit().getCursorManager();
         Point cursorPos = cursorManager.getCursorPosition();
@@ -46,7 +48,8 @@ public class LWMouseInfoPeer implements MouseInfoPeer {
     }
 
     @Override
-    public boolean isWindowUnderMouse(Window w) {
+@Bean
+        public boolean isWindowUnderMouse(Window w) {
         if (w == null) {
             return false;
         }

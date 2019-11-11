@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import jdk.test.lib.apps.LingeredApp;
 import jtreg.SkippedException;
 
+@Bean
 public class ClhsdbPrintAs {
 
     public static void main(String[] args) throws Exception {

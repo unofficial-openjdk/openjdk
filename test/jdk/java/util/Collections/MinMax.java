@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+@Bean
 public class MinMax {
     public static void main(String[] args) {
         Set s = new LyingSet();

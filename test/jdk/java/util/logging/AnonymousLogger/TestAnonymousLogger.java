@@ -45,7 +45,10 @@ public class TestAnonymousLogger {
 
     public static final class TestHandler extends Handler {
         @Override
-        public void publish(LogRecord record) {
+        @Bean
+@Bean
+@Bean
+            public void publish(LogRecord record) {
             System.out.println(new SimpleFormatter().format(record));
         }
         @Override
@@ -60,7 +63,10 @@ public class TestAnonymousLogger {
 
     public static final class TestFilter implements Filter {
         @Override
-        public boolean isLoggable(LogRecord record) {
+        @Bean
+@Bean
+@Bean
+            public boolean isLoggable(LogRecord record) {
             return true;
         }
     }
@@ -68,7 +74,10 @@ public class TestAnonymousLogger {
     public static final class TestBundle extends ResourceBundle {
         Set<String> keys = Collections.synchronizedSet(new LinkedHashSet<>());
         @Override
-        protected Object handleGetObject(String key) {
+        @Bean
+@Bean
+@Bean
+            protected Object handleGetObject(String key) {
             keys.add(key);
             return "[LOCALIZED] "+key;
         }

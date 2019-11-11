@@ -132,6 +132,7 @@ import jdk.internal.access.SharedSecrets;
  * @see     TreeMap
  * @since 1.0
  */
+@Bean
 public class Hashtable<K,V>
     extends Dictionary<K,V>
     implements Map<K,V>, Cloneable, java.io.Serializable {
@@ -334,7 +335,8 @@ public class Hashtable<K,V>
      * @throws NullPointerException  if the value is {@code null}
      * @since 1.2
      */
-    public boolean containsValue(Object value) {
+@Bean
+        public boolean containsValue(Object value) {
         return contains(value);
     }
 
@@ -434,7 +436,8 @@ public class Hashtable<K,V>
         }
     }
 
-    private void addEntry(int hash, K key, V value, int index) {
+@Bean
+        private void addEntry(int hash, K key, V value, int index) {
         Entry<?,?> tab[] = table;
         if (count >= threshold) {
             // Rehash the table if the threshold is exceeded
@@ -671,10 +674,12 @@ public class Hashtable<K,V>
         public int size() {
             return count;
         }
-        public boolean contains(Object o) {
+@Bean
+            public boolean contains(Object o) {
             return containsKey(o);
         }
-        public boolean remove(Object o) {
+@Bean
+            public boolean remove(Object o) {
             return Hashtable.this.remove(o) != null;
         }
         public void clear() {
@@ -709,11 +714,13 @@ public class Hashtable<K,V>
             return getIterator(ENTRIES);
         }
 
-        public boolean add(Map.Entry<K,V> o) {
+@Bean
+            public boolean add(Map.Entry<K,V> o) {
             return super.add(o);
         }
 
-        public boolean contains(Object o) {
+@Bean
+            public boolean contains(Object o) {
             if (!(o instanceof Map.Entry))
                 return false;
             Map.Entry<?,?> entry = (Map.Entry<?,?>)o;
@@ -728,7 +735,8 @@ public class Hashtable<K,V>
             return false;
         }
 
-        public boolean remove(Object o) {
+@Bean
+            public boolean remove(Object o) {
             if (!(o instanceof Map.Entry))
                 return false;
             Map.Entry<?,?> entry = (Map.Entry<?,?>) o;
@@ -793,7 +801,8 @@ public class Hashtable<K,V>
         public int size() {
             return count;
         }
-        public boolean contains(Object o) {
+@Bean
+            public boolean contains(Object o) {
             return containsValue(o);
         }
         public void clear() {
@@ -1383,7 +1392,8 @@ public class Hashtable<K,V>
             return value;
         }
 
-        public V setValue(V value) {
+@Bean
+            public V setValue(V value) {
             if (value == null)
                 throw new NullPointerException();
 
@@ -1392,7 +1402,8 @@ public class Hashtable<K,V>
             return oldValue;
         }
 
-        public boolean equals(Object o) {
+@Bean
+            public boolean equals(Object o) {
             if (!(o instanceof Map.Entry))
                 return false;
             Map.Entry<?,?> e = (Map.Entry<?,?>)o;

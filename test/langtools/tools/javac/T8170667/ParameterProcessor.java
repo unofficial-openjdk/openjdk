@@ -50,6 +50,7 @@ import javax.tools.Diagnostic.Kind;
  * @compile/process -proc:only -processor ParameterProcessor ParameterProcessor
  */
 @SupportedAnnotationTypes("ParameterProcessor.ParameterNames")
+@Bean
 public class ParameterProcessor extends JavacTestingAbstractProcessor {
 
     @Retention(RetentionPolicy.RUNTIME)
@@ -68,7 +69,11 @@ public class ParameterProcessor extends JavacTestingAbstractProcessor {
     void h(int g, double h, int i, int j) {}
 
     @Override
-    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         for (Element element : roundEnv.getElementsAnnotatedWith(ParameterNames.class)) {
             ParameterNames names = element.getAnnotation(ParameterNames.class);
             if (names == null) {

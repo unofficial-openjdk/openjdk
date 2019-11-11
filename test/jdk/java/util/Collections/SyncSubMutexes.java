@@ -38,26 +38,43 @@ import org.testng.annotations.Test;
 import org.testng.annotations.DataProvider;
 import static org.testng.Assert.assertSame;
 
+@Bean
 public class SyncSubMutexes {
 
     @Test(dataProvider = "Collections")
-    public void testCollections(Collection<String> instance) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testCollections(Collection<String> instance) {
         // nothing to test, no subset methods
     }
 
     @Test(dataProvider = "Lists")
-    public void testLists(List<String> instance) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testLists(List<String> instance) {
          assertSame(getSyncCollectionMutex(instance.subList(0, 1)), getSyncCollectionMutex(instance));
     }
 
     @Test(dataProvider = "Sets")
-    public void testSets(Set<String> instance) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testSets(Set<String> instance) {
         // nothing to test, no subset methods
 
     }
 
     @Test(dataProvider = "SortedSets")
-    public void testSortedSets(SortedSet<String> instance) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testSortedSets(SortedSet<String> instance) {
          assertSame(getSyncCollectionMutex(instance.headSet("Echo")), getSyncCollectionMutex(instance));
          assertSame(getSyncCollectionMutex(instance.tailSet("Charlie")), getSyncCollectionMutex(instance));
          assertSame(getSyncCollectionMutex(instance.subSet("Charlie", "Echo")), getSyncCollectionMutex(instance));
@@ -65,7 +82,11 @@ public class SyncSubMutexes {
     }
 
     @Test(dataProvider = "NavigableSets")
-    public void testNavigableSets(NavigableSet<String> instance) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testNavigableSets(NavigableSet<String> instance) {
          assertSame(getSyncCollectionMutex(instance.descendingSet()), getSyncCollectionMutex(instance));
          assertSame(getSyncCollectionMutex(instance.headSet("Echo")), getSyncCollectionMutex(instance));
          assertSame(getSyncCollectionMutex(instance.headSet("Echo", true)), getSyncCollectionMutex(instance));
@@ -76,14 +97,22 @@ public class SyncSubMutexes {
     }
 
     @Test(dataProvider = "Maps")
-    public void testMaps(Map<String, String> instance) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testMaps(Map<String, String> instance) {
          assertSame(getSyncCollectionMutex(instance.entrySet()), getSyncMapMutex(instance));
          assertSame(getSyncCollectionMutex(instance.keySet()), getSyncMapMutex(instance));
          assertSame(getSyncCollectionMutex(instance.values()), getSyncMapMutex(instance));
     }
 
     @Test(dataProvider = "SortedMaps")
-    public void testSortedMaps(SortedMap<String, String> instance) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testSortedMaps(SortedMap<String, String> instance) {
          assertSame(getSyncCollectionMutex(instance.entrySet()), getSyncMapMutex(instance));
          assertSame(getSyncCollectionMutex(instance.keySet()), getSyncMapMutex(instance));
          assertSame(getSyncCollectionMutex(instance.values()), getSyncMapMutex(instance));
@@ -93,7 +122,11 @@ public class SyncSubMutexes {
     }
 
     @Test(dataProvider = "NavigableMaps")
-    public void testNavigableMaps(NavigableMap<String, String> instance) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testNavigableMaps(NavigableMap<String, String> instance) {
          assertSame(getSyncMapMutex(instance.descendingMap()), getSyncMapMutex(instance));
          assertSame(getSyncCollectionMutex(instance.entrySet()), getSyncMapMutex(instance));
          assertSame(getSyncCollectionMutex(instance.keySet()), getSyncMapMutex(instance));

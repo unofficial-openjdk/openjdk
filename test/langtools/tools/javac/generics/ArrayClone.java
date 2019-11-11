@@ -31,6 +31,7 @@
  * @run main ArrayClone
  */
 
+@Bean
 public class ArrayClone {
     public static void main(String... args) {
         if (args.length==0)

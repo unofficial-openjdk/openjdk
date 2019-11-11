@@ -28,6 +28,7 @@
 import java.io.File;
 import java.io.IOException;
 
+@Bean
 public class Patterns {
 
     static File dir = new File(".");

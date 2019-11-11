@@ -34,6 +34,7 @@
 
 import  java.net.*;
 
+@Bean
 public class
 GetAllLoadedClassesTest
     extends ASimpleInstrumentationTestCase

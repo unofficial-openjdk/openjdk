@@ -35,6 +35,7 @@ import java.beans.Introspector;
 /**
  * This test is just a benchmark of introspector performance.
  */
+@Bean
 public class TestIntrospector {
     private static final Class[] TYPES = {
             javax.swing.Box.class,

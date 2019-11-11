@@ -38,6 +38,7 @@ import java.util.List;
 
 import static org.testng.Assert.*;
 
+@Bean
 public class VarHandleTestMethodHandleAccessByte extends VarHandleBaseTest {
     static final byte static_final_v = (byte)0x01;
 

@@ -33,6 +33,7 @@ import java.io.*;
 import java.util.logging.*;
 import java.util.regex.*;
 
+@Bean
 public class SimpleFormatterFormat {
     private static final String key = "java.util.logging.SimpleFormatter.format";
     private static final String origFormat = System.getProperty(key);

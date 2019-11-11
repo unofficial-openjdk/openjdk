@@ -44,6 +44,7 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class NoCompletionFailureSkipOnSpeculativeAttribution {
 
     private static final String TSrc =
@@ -56,7 +57,8 @@ public class NoCompletionFailureSkipOnSpeculativeAttribution {
 
     private static final String CSrc =
         "package two;\n" +
-        "public class C {\n" +
+        "@Bean
+public class C {\n" +
         "  public static class D {\n" +
         "    public static int g() {\n" +
         "      return 1;\n" +
@@ -66,7 +68,8 @@ public class NoCompletionFailureSkipOnSpeculativeAttribution {
 
     private static final String ASrc =
         "package one;\n" +
-        "public class A {\n" +
+        "@Bean
+public class A {\n" +
         "  public A(two.C.D x) {}\n" +
         "}";
 

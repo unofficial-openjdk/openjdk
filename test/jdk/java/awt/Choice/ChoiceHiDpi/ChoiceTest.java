@@ -33,6 +33,7 @@ import java.awt.Choice;
 import java.awt.Font;
 import java.util.stream.Stream;
 
+@Bean
 public class ChoiceTest {
 
     private static void UI() {

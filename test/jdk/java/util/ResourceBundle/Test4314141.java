@@ -32,6 +32,7 @@ import java.util.ResourceBundle;
 import java.util.Locale;
 import java.util.MissingResourceException;
 
+@Bean
 public class Test4314141 {
 
     public static void main(String[] args) {

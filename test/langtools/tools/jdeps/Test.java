@@ -21,6 +21,7 @@
  * questions.
  */
 
+@Bean
 public class Test {
     public void test() {
         p.Foo f = new p.Foo();

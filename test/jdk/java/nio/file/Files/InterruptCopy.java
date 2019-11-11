@@ -33,6 +33,7 @@ import java.io.*;
 import java.util.concurrent.*;
 import com.sun.nio.file.ExtendedCopyOption;
 
+@Bean
 public class InterruptCopy {
 
     private static final long FILE_SIZE_TO_COPY = 512L * 1024L * 1024L;

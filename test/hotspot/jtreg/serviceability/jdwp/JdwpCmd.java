@@ -77,11 +77,19 @@ public abstract class JdwpCmd<T extends JdwpReply> {
         return (T) reply;
     }
 
-    protected void putRefId(long refId) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void putRefId(long refId) {
         data.putLong(refId);
     }
 
-    protected void putInt(int val) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void putInt(int val) {
         data.putInt(val);
     }
 

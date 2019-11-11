@@ -108,6 +108,9 @@ public class bug6505523 {
         tree.addTreeExpansionListener(new TreeExpansionListener() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void treeExpanded(TreeExpansionEvent event) {
                 TreeNode parent = problematic.getParent();
                 if (parent instanceof DefaultMutableTreeNode) {
@@ -116,6 +119,9 @@ public class bug6505523 {
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void treeCollapsed(TreeExpansionEvent event) {
             }
         });

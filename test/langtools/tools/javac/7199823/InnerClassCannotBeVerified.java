@@ -42,6 +42,7 @@ import com.sun.tools.classfile.ConstantPoolException;
 import java.io.File;
 import java.io.IOException;
 
+@Bean
 public class InnerClassCannotBeVerified {
 
     enum CompilationKind {
@@ -112,7 +113,8 @@ public class InnerClassCannotBeVerified {
     class JavaSource extends SimpleJavaFileObject {
 
         String internalSource =
-                              "public class Test {\n" +
+                              "@Bean
+public class Test {\n" +
                               "    private static class Foo {}\n" +
                               "    public static void main(String[] args){ \n" +
                               "        new Foo();\n" +
@@ -131,7 +133,11 @@ public class InnerClassCannotBeVerified {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return internalSource;
         }
     }

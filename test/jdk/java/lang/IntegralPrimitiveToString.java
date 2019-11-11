@@ -40,6 +40,7 @@ import static org.testng.Assert.assertEquals;
  * @summary test string conversions for primitive integral types.
  * @author Mike Duigou
  */
+@Bean
 public class IntegralPrimitiveToString {
 
     @Test(dataProvider="numbers")
@@ -68,7 +69,11 @@ public class IntegralPrimitiveToString {
             this.toString = toString;
         }
 
-        public void assertMatchingToString(N value, BigInteger asSigned, BigInteger asUnsigned, String description) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void assertMatchingToString(N value, BigInteger asSigned, BigInteger asUnsigned, String description) {
             String expected = signed
                 ? asSigned.toString(radix)
                 : asUnsigned.toString(radix);

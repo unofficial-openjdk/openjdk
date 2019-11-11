@@ -40,6 +40,7 @@ import java.util.Arrays;
  */
 
 
+@Bean
 public class InheritanceBeanPropertyTest {
 
     private final static String  DESCRIPTION = "TEST";
@@ -84,10 +85,18 @@ public class InheritanceBeanPropertyTest {
             required     = REQUIRED,
             visualUpdate = UPDATE,
             enumerationValues = {V_NAME})
-        public double getX(int i) { return x[i]; } // indexed
+        @Bean
+@Bean
+@Bean
+@Bean
+                public double getX(int i) { return x[i]; } // indexed
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     // ----------
@@ -97,7 +106,11 @@ public class InheritanceBeanPropertyTest {
         private final static String TESTCASE = "base setter";
 
         double u;
-        public void setX(double v) { u = v; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(double v) { u = v; }
     }
 
     public static class OverloadSet extends BaseSet {
@@ -115,10 +128,18 @@ public class InheritanceBeanPropertyTest {
             required     = REQUIRED,
             visualUpdate = UPDATE,
             enumerationValues = {V_NAME})
-        public void setX(int i, double v) { x[i] = v; } // indexed
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(int i, double v) { x[i] = v; } // indexed
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     // ----------
@@ -142,10 +163,18 @@ public class InheritanceBeanPropertyTest {
             required     = REQUIRED,
             visualUpdate = UPDATE,
             enumerationValues = {V_NAME})
-        public double getX(int i) { return x[i]; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public double getX(int i) { return x[i]; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     // ----------
@@ -153,7 +182,11 @@ public class InheritanceBeanPropertyTest {
     public static class BaseISet {
 
         protected double x[] = {X, X, X};
-        public void setX(double a[]) { x = Arrays.copyOf(a, a.length); }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(double a[]) { x = Arrays.copyOf(a, a.length); }
     }
 
     public static class OverloadISet extends BaseISet {
@@ -169,10 +202,18 @@ public class InheritanceBeanPropertyTest {
             required     = REQUIRED,
             visualUpdate = UPDATE,
             enumerationValues = {V_NAME})
-        public void setX(int i, double v) { x[i] = v; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(int i, double v) { x[i] = v; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     // ----------
@@ -205,7 +246,11 @@ public class InheritanceBeanPropertyTest {
         public boolean isX() { return false; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
     // ----------
 
@@ -237,7 +282,11 @@ public class InheritanceBeanPropertyTest {
         public boolean getX() { return false; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     // ----------
@@ -258,7 +307,11 @@ public class InheritanceBeanPropertyTest {
         public double getX() { return 0.; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     public static class OverrideAnnotatedGet extends AnnotatedGet {
@@ -287,7 +340,11 @@ public class InheritanceBeanPropertyTest {
         public boolean isX() { return false; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     public static class OverrideAnnotatedIs extends AnnotatedIs {
@@ -315,10 +372,18 @@ public class InheritanceBeanPropertyTest {
             required     = REQUIRED,
             visualUpdate = UPDATE,
             enumerationValues = {V_NAME})
-        public void setX(double v) { x = -v; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(double v) { x = -v; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     public static class OverrideAnnotatedSet extends AnnotatedSet {
@@ -326,7 +391,11 @@ public class InheritanceBeanPropertyTest {
         private final static String TESTCASE = "override annotated setter";
 
         @Override
-        public void setX(double v) { x = v; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(double v) { x = v; }
     }
 
     // ----------
@@ -363,7 +432,11 @@ public class InheritanceBeanPropertyTest {
         public double getX() { return X; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     public static class AnnotatedGet2Ext extends AnnotatedGet2 {
@@ -379,10 +452,18 @@ public class InheritanceBeanPropertyTest {
             required     = REQUIRED,
             visualUpdate = UPDATE,
             enumerationValues = {V_NAME})
-        public void setX(double v) { x = v; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(double v) { x = v; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     // ----------
@@ -418,7 +499,11 @@ public class InheritanceBeanPropertyTest {
         public boolean isX() { return b; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     public static class AnnotatedIs2Ext extends AnnotatedIs2 {
@@ -433,10 +518,18 @@ public class InheritanceBeanPropertyTest {
             preferred    = PREFERRED,
             required     = REQUIRED,
             visualUpdate = UPDATE)
-        public void setX(boolean v) { b = v; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(boolean v) { b = v; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     // ----------
@@ -453,7 +546,11 @@ public class InheritanceBeanPropertyTest {
             preferred    = !PREFERRED,
             required     = !REQUIRED,
             visualUpdate = !UPDATE)
-        public void setX(double v) { x = -v; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(double v) { x = -v; }
     }
 
     public static class OverrideAnnotatedSet2 extends AnnotatedSet2 {
@@ -470,10 +567,18 @@ public class InheritanceBeanPropertyTest {
             visualUpdate = UPDATE,
             enumerationValues = {V_NAME})
         @Override
-        public void setX(double v) { x = v; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(double v) { x = v; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     public static class AnnotatedSet2Ext extends AnnotatedSet2 {
@@ -492,7 +597,11 @@ public class InheritanceBeanPropertyTest {
         public double getX() { return x; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     // ----------
@@ -537,7 +646,11 @@ public class InheritanceBeanPropertyTest {
         public double getX() { return X; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     public abstract static class AbstractGetExt extends AbstractGet {
@@ -557,7 +670,11 @@ public class InheritanceBeanPropertyTest {
         public abstract void setX(double v);
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     // ----------
@@ -601,7 +718,11 @@ public class InheritanceBeanPropertyTest {
         public boolean isX() { return true; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
 
@@ -621,7 +742,11 @@ public class InheritanceBeanPropertyTest {
         public abstract boolean getX();
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     // ----------
@@ -647,7 +772,11 @@ public class InheritanceBeanPropertyTest {
         private double x;
 
         @Override
-        public void setX(double v) { x = v; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(double v) { x = v; }
     }
 
     public static class OverrideAbstractSet2 extends AbstractSet {
@@ -667,10 +796,18 @@ public class InheritanceBeanPropertyTest {
             visualUpdate = UPDATE,
             enumerationValues = {V_NAME})
         @Override
-        public void setX(double v) { x = v; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(double v) { x = v; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     public abstract static class AbstractSetExt extends AbstractSet {
@@ -690,7 +827,11 @@ public class InheritanceBeanPropertyTest {
         public abstract void setX(double v[]);
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     // ----------
@@ -711,7 +852,11 @@ public class InheritanceBeanPropertyTest {
         public abstract double getX();
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     public static abstract class AbstractGet2Ext extends AbstractGet2 {
@@ -767,7 +912,11 @@ public class InheritanceBeanPropertyTest {
         public double getX() { return X; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     public abstract static class IGetImpl3 implements IGet {
@@ -786,7 +935,11 @@ public class InheritanceBeanPropertyTest {
         public abstract void setX(double v);
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     // ----------
@@ -828,7 +981,11 @@ public class InheritanceBeanPropertyTest {
         public boolean isX() { return true; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     public abstract static class IIsImpl3 implements IIs {
@@ -846,7 +1003,11 @@ public class InheritanceBeanPropertyTest {
         public abstract void setX(boolean v);
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     // ----------
@@ -871,7 +1032,11 @@ public class InheritanceBeanPropertyTest {
         private double x;
 
         @Override
-        public void setX(double v) { x = v; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(double v) { x = v; }
     }
 
     public static class ISetImpl2 implements ISet {
@@ -890,10 +1055,18 @@ public class InheritanceBeanPropertyTest {
             visualUpdate = UPDATE,
             enumerationValues = {V_NAME})
         @Override
-        public void setX(double v) { x = v; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(double v) { x = v; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     public abstract static class ISetImpl3 implements ISet {
@@ -912,7 +1085,11 @@ public class InheritanceBeanPropertyTest {
         public abstract double getX();
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     // ----------
@@ -949,12 +1126,24 @@ public class InheritanceBeanPropertyTest {
             required     = !REQUIRED,
             visualUpdate = !UPDATE)
         @Override
-        public void setX(double v) { x = v; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(double v) { x = v; }
 
         @Override
-        public void addPropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addPropertyChangeListener(PropertyChangeListener l) {}
         @Override
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     // ----------
@@ -992,9 +1181,17 @@ public class InheritanceBeanPropertyTest {
         public double[] getX() { return new double[]{X, X}; }
 
         @Override
-        public void addPropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addPropertyChangeListener(PropertyChangeListener l) {}
         @Override
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     // ----------
@@ -1028,8 +1225,16 @@ public class InheritanceBeanPropertyTest {
         @Override
         public double getX() { return X; }
 
-        public void addPropertyChangeListener(PropertyChangeListener l) {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addPropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     // ----------

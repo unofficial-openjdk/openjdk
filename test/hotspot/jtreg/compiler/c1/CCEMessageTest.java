@@ -31,6 +31,7 @@
 
 package compiler.c1;
 
+@Bean
 public class CCEMessageTest {
     public static void main(String... args) {
         String[] s = null;

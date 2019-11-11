@@ -30,6 +30,7 @@
  * @run compile/fail ReturnAfterIfThenElse.java
  */
 
+@Bean
 public class ReturnAfterIfThenElse {
     int method() {
         if (false) {

@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.util.Enumeration;
 import jdk.test.lib.NetworkConfiguration;
 
+@Bean
 public class SetLoopbackMode {
 
     static final boolean FAILED = true;

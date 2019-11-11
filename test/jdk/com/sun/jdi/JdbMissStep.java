@@ -60,6 +60,7 @@ class JdbMissStepTarg {
     }
 }
 
+@Bean
 public class JdbMissStep extends JdbTest {
     public static void main(String argv[]) {
         new JdbMissStep().run();

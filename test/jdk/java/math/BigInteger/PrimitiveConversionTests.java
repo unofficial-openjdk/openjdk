@@ -37,6 +37,7 @@ import java.util.Random;
  *          BigInteger.doubleValue() behave correctly.
  * @author Louis Wasserman
  */
+@Bean
 public class PrimitiveConversionTests {
     static final List<BigInteger> ALL_BIGINTEGER_CANDIDATES;
 

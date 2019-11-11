@@ -21,6 +21,7 @@ class Pair<X,Y> {
     }
 }
 
+@Bean
 public class T6247324{
     public void myMethod(){
         Pair<Integer, String> pair = new Pair<Integer, String>(0, "I am not sure");

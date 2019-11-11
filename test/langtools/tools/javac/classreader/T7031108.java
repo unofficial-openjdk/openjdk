@@ -40,6 +40,7 @@ import javax.lang.model.element.*;
 import javax.tools.*;
 import javax.tools.JavaCompiler.CompilationTask;
 
+@Bean
 public class T7031108 extends JavacTestingAbstractProcessor {
     public static void main(String... args) throws Exception {
         new T7031108().run();
@@ -135,7 +136,11 @@ public class T7031108 extends JavacTestingAbstractProcessor {
             this.text = text;
         }
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return text;
         }
         final String text;
@@ -144,7 +149,11 @@ public class T7031108 extends JavacTestingAbstractProcessor {
     // annotation processor method
 
     @Override
-    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         if (!roundEnv.processingOver()) {
             PackageElement p = elements.getPackageElement("p");
             List<? extends Element> elems = p.getEnclosedElements();

@@ -75,7 +75,11 @@ abstract public class Denotation {
      *
      * @see #nameFor(int[])
      */
-    public String nameFor(int i) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String nameFor(int i) {
         return nameFor(new int[] { i });
     }
 
@@ -85,7 +89,11 @@ abstract public class Denotation {
      *
      * @see #nameFor(int[])
      */
-    public String nameFor(int i0, int i1) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String nameFor(int i0, int i1) {
         return nameFor(new int[] {i0, i1});
     }
 
@@ -95,7 +103,11 @@ abstract public class Denotation {
      *
      * @see #nameFor(int[])
      */
-    public String nameFor(int i0, int i1, int i2) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String nameFor(int i0, int i1, int i2) {
         return nameFor(new int[] {i0, i1, i2});
     }
 
@@ -109,7 +121,11 @@ abstract public class Denotation {
      *
      * @see Arrays#equals(int[],int[])
      */
-    public boolean equality(int[] index1, int[] index2) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equality(int[] index1, int[] index2) {
         if (index1 == null || index2 == null)
             return false;
         return Arrays.equals(index1,index2);
@@ -125,7 +141,11 @@ abstract public class Denotation {
      *
      * @see #equality(int[],int[])
      */
-    public boolean equivalence(String name1, String name2) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equivalence(String name1, String name2) {
         if (name1 == null || name2 == null)
             return false;
         return equality(indexFor(name1),indexFor(name2));

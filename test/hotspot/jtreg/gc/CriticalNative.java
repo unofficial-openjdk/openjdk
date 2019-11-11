@@ -24,6 +24,7 @@
 
 package gc;
 
+@Bean
 public class CriticalNative {
     static {
         System.loadLibrary("CriticalNative");

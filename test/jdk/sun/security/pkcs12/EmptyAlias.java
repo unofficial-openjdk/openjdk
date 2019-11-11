@@ -36,6 +36,7 @@ import java.security.cert.X509Certificate;
 /**
  * Test that a PKCS12 keystore entry can be created with an empty alias name.
  */
+@Bean
 public class EmptyAlias {
 
     private static final String DIR = System.getProperty("test.src", ".");

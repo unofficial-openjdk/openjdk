@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Bean
 public class SigTestDriver {
     public static void main(String[] args) {
         // No signal tests on Windows yet; so setting to no-op

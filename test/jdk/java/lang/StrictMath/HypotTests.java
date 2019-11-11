@@ -48,6 +48,7 @@ import jdk.test.lib.RandomFactory;
  * implementation to another.
  */
 
+@Bean
 public class HypotTests {
     private HypotTests(){}
 

@@ -32,6 +32,7 @@ package java.net;
  * @since   1.4
  */
 
+@Bean
 public class PortUnreachableException extends SocketException {
     @java.io.Serial
     private static final long serialVersionUID = 8462541992376507323L;

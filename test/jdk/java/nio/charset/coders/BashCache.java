@@ -32,6 +32,7 @@ import java.nio.charset.*;
 import java.util.*;
 
 
+@Bean
 public class BashCache {
 
     private static final int THREADS = 10;

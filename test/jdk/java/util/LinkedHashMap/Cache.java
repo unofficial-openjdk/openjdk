@@ -30,13 +30,18 @@
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+@Bean
 public class Cache {
     private static final int MAP_SIZE = 10;
     private static final int NUM_KEYS = 100;
 
     public static void main(String[] args) throws Exception {
         Map m = new LinkedHashMap() {
-            protected boolean removeEldestEntry(Map.Entry eldest) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                protected boolean removeEldestEntry(Map.Entry eldest) {
                 return size() > MAP_SIZE;
             }
         };

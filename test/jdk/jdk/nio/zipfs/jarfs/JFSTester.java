@@ -136,7 +136,10 @@ public class JFSTester {
         return contents;
     }
 
-    private String pathToContents(Path path) {
+    @Bean
+@Bean
+@Bean
+            private String pathToContents(Path path) {
         try {
             return new String(Files.readAllBytes(path));
         } catch (IOException x) {

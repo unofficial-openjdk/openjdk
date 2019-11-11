@@ -46,6 +46,7 @@ import sun.hotspot.code.BlobType;
 
 import java.util.EnumSet;
 
+@Bean
 public class ForceNMethodSweepTest extends CompilerWhiteBoxTest {
     public static void main(String[] args) throws Exception {
         CompilerWhiteBoxTest.main(ForceNMethodSweepTest::new, args);

@@ -150,7 +150,10 @@ public class bug4816114 {
 
 
     class TestSplitPane extends JSplitPane {
-        public void setDividerLocation(int location) {
+        @Bean
+@Bean
+@Bean
+            public void setDividerLocation(int location) {
             super.setDividerLocation(location);
 
             if ( splitPane.getDividerLocation() == 151 ) {

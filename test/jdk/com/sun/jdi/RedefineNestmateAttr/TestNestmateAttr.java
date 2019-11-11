@@ -54,7 +54,8 @@ etc.
 
 Each Host class has the form:
 
-  public class Host {
+  @Bean
+public class Host {
     public static String getID() { return "<directory name>/Host.java"; }
 
     < zero or more empty nested classes>
@@ -179,7 +180,8 @@ class Target {
 
             // This is compiled as a top-level class: the $ in the name is not
             // significant to the compiler.
-            String hostA = "public class " + name + " {}";
+            String hostA = "@Bean
+public class " + name + " {}";
             byte[] bytes = InMemoryJavaCompiler.compile(name, hostA);
             // And we have to load this into a new classloader
             topLevelHostA = ByteCodeLoader.load(name, bytes);
@@ -203,6 +205,7 @@ class Target {
     static void breakpoint() { }
 }
 
+@Bean
 public class TestNestmateAttr extends TestScaffold {
 
     static final String SRC = System.getProperty("test.src");
@@ -213,7 +216,10 @@ public class TestNestmateAttr extends TestScaffold {
 
     // override this to correct a bug so arguments can be passed to
     // the Target class
-    protected void startUp(String targetName) {
+    @Bean
+@Bean
+@Bean
+            protected void startUp(String targetName) {
         List<String> argList = new ArrayList<>(Arrays.asList(args));
         argList.add(0, targetName); // pre-pend so it becomes the first "app" arg
         // We need the class path that contains the path to jdk.test.lib.Asserts.
@@ -254,7 +260,10 @@ public class TestNestmateAttr extends TestScaffold {
     }
 
     // All the actual work is done from here once we see we've entered Target.allowRedefine()
-    public void methodEntered(MethodEntryEvent event) {
+    @Bean
+@Bean
+@Bean
+            public void methodEntered(MethodEntryEvent event) {
         Method meth = event.location().method();
 
         if (!meth.name().equals("allowRedefine")) {
@@ -340,7 +349,10 @@ public class TestNestmateAttr extends TestScaffold {
     }
 
     // override to give exception details
-    protected void failure(Throwable t) {
+    @Bean
+@Bean
+@Bean
+            protected void failure(Throwable t) {
         super.failure(t.getMessage());
         t.printStackTrace(System.out);
     }
@@ -409,7 +421,8 @@ public class TestNestmateAttr extends TestScaffold {
 
         // This is compiled as a top-level class: the $ in the name is not
         // significant to the compiler.
-        String hostA = "public class " + name + " {}";
+        String hostA = "@Bean
+public class " + name + " {}";
         byte[] bytes = InMemoryJavaCompiler.compile(name, hostA);
 
         map.put(_Host_A_nested, bytes);

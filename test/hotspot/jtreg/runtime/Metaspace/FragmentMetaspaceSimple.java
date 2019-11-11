@@ -43,6 +43,7 @@ import java.util.ArrayList;
  * chunks per class loader this will cause a lot of fragmentation if not handled
  * properly since every other chunk will be unused.
  */
+@Bean
 public class FragmentMetaspaceSimple {
     public static void main(String... args) {
         runSimple(Long.valueOf(System.getProperty("time", "80000")));
@@ -100,7 +101,8 @@ public class FragmentMetaspaceSimple {
             this.buff = buff;
         }
 
-        public Class<?> loadClass() throws ClassNotFoundException {
+        @Bean
+public class<?> loadClass() throws ClassNotFoundException {
             String name = "test.Empty";
             try {
                 return defineClass(name, buff, 0, buff.length);

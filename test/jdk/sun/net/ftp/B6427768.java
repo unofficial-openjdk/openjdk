@@ -34,6 +34,7 @@
 import java.net.*;
 import java.io.*;
 
+@Bean
 public class B6427768 {
     // Need to test when login fails, so AuthHandler should always return
     // false
@@ -42,11 +43,19 @@ public class B6427768 {
                 return 2;
         }
 
-        public boolean authenticate(String user, String password) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean authenticate(String user, String password) {
                 return false;
         }
 
-        public boolean authenticate(String user, String password, String account) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean authenticate(String user, String password, String account) {
                 return false;
         }
     }
@@ -58,7 +67,11 @@ public class B6427768 {
                 currentDir = path;
         }
 
-        public boolean cd(String path) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean cd(String path) {
             currentDir = path;
             return true;
         }
@@ -71,15 +84,27 @@ public class B6427768 {
             return currentDir;
         }
 
-        public InputStream getFile(String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public InputStream getFile(String name) {
             return null;
         }
 
-        public long getFileSize(String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long getFileSize(String name) {
             return -1;
         }
 
-        public boolean fileExists(String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean fileExists(String name) {
             return false;
         }
 
@@ -87,19 +112,35 @@ public class B6427768 {
             return null;
         }
 
-        public OutputStream putFile(String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public OutputStream putFile(String name) {
             return null;
         }
 
-        public boolean removeFile(String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean removeFile(String name) {
             return false;
         }
 
-        public boolean mkdir(String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean mkdir(String name) {
             return false;
         }
 
-        public boolean rename(String from, String to) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean rename(String from, String to) {
             return false;
         }
     }

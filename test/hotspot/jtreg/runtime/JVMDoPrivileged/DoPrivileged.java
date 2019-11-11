@@ -32,6 +32,7 @@
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
+@Bean
 public class DoPrivileged {
     interface VoidPrivilegedAction extends PrivilegedAction<Void> {
         void perform();

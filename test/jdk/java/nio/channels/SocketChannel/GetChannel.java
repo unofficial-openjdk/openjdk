@@ -33,6 +33,7 @@ import java.nio.channels.*;
 import java.util.*;
 
 
+@Bean
 public class GetChannel  {
     public static void main(String args[]) throws Exception {
     InetAddress  sin = null;

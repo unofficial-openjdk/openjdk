@@ -112,6 +112,7 @@ Steps to reproduce this problem:
    j. to see "abcde" output,  users will have to pop the stack, and re-execute method start().
 ************/
 
+@Bean
 public class RedefineMulti extends JdbTest {
 
     public static void main(String argv[]) {

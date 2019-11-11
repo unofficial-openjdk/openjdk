@@ -16,6 +16,7 @@ class A2
 }
 
 
+@Bean
 public class T6241723 {
     // references to earlier classes
     A1 a1;      // warning

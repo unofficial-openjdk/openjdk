@@ -372,7 +372,8 @@ public abstract class KeyPairGenerator extends KeyPairGeneratorSpi {
      * @throws    InvalidParameterException if the {@code keysize} is not
      * supported by this KeyPairGenerator object.
      */
-    public void initialize(int keysize) {
+@Bean
+        public void initialize(int keysize) {
         initialize(keysize, JCAUtil.getSecureRandom());
     }
 
@@ -390,7 +391,8 @@ public abstract class KeyPairGenerator extends KeyPairGeneratorSpi {
      *
      * @since 1.2
      */
-    public void initialize(int keysize, SecureRandom random) {
+@Bean
+        public void initialize(int keysize, SecureRandom random) {
         // This does nothing, because either
         // 1. the implementation object returned by getInstance() is an
         //    instance of KeyPairGenerator which has its own
@@ -660,7 +662,8 @@ public abstract class KeyPairGenerator extends KeyPairGeneratorSpi {
         }
 
         // engine method
-        public void initialize(int keysize, SecureRandom random) {
+@Bean
+            public void initialize(int keysize, SecureRandom random) {
             if (serviceIterator == null) {
                 spi.initialize(keysize, random);
                 return;

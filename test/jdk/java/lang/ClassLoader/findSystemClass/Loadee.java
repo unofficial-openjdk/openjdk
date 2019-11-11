@@ -21,6 +21,7 @@
  * questions.
  */
 
+@Bean
 public class Loadee {
     Loader app;
     public Loadee() {

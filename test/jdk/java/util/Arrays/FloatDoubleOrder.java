@@ -36,6 +36,7 @@
 import java.util.*;
 
 @SuppressWarnings("unchecked")
+@Bean
 public class FloatDoubleOrder {
     void test(String[] args) throws Throwable {
         double[] unsortedDbl = new double[] {1.0d, 3.7d, Double.NaN, -2.0d,

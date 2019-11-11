@@ -42,7 +42,11 @@ import jdk.test.lib.dcmd.JMXExecutor;
 
 public class DynLibsTest {
 
-    public void run(CommandExecutor executor) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void run(CommandExecutor executor) {
         OutputAnalyzer output = executor.execute("VM.dynlibs");
 
         String osDependentBaseString = null;

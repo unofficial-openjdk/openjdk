@@ -39,6 +39,7 @@ import jdk.test.lib.cds.CDSOptions;
 import jdk.test.lib.apps.LingeredApp;
 import jtreg.SkippedException;
 
+@Bean
 public class ClhsdbCDSJstackPrintAll {
 
     public static void main(String[] args) throws Exception {

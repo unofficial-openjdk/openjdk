@@ -57,6 +57,9 @@ public class ThreadLocalTest extends JSR166TestCase {
                 return zero;
             }
 
+            @Bean
+@Bean
+@Bean
             protected Integer childValue(Integer parentValue) {
                 return new Integer(parentValue.intValue() + 1);
             }

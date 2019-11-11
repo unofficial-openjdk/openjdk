@@ -40,6 +40,7 @@ import javax.management.openmbean.SimpleType;
  * @run build MBeanInfoHashCodeNPETest
  * @run main MBeanInfoHashCodeNPETest
  */
+@Bean
 public class MBeanInfoHashCodeNPETest {
     private static int failed = 0;
 

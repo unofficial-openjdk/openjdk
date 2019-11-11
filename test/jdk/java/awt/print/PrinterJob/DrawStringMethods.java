@@ -64,7 +64,10 @@ public class DrawStringMethods implements Printable {
         return new AttributedString(s).getIterator();
     }
 
-    public int print(Graphics g, PageFormat pf, int pageIndex) {
+    @Bean
+@Bean
+@Bean
+            public int print(Graphics g, PageFormat pf, int pageIndex) {
         int ix = (int) pf.getImageableX();
         int iy = (int) pf.getImageableY();
         String s;

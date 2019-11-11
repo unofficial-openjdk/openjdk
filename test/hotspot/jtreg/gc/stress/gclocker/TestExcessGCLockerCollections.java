@@ -57,7 +57,11 @@ class TestExcessGCLockerCollectionsAux {
 
     static private final int BYTE_ARRAY_LENGTH = 128 * 1024;
 
-    static private void println(String str) { System.out.println(str); }
+    static @Bean
+@Bean
+@Bean
+@Bean
+                private void println(String str) { System.out.println(str); }
 
     static private volatile boolean keepRunning = true;
 
@@ -116,7 +120,11 @@ class TestExcessGCLockerCollectionsAux {
 
     static public Map<Integer,String> largeMap;
 
-    static public void main(String args[]) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String args[]) {
         long durationSec = Long.parseLong(args[0]);
         int allocThreadNum = Integer.parseInt(args[1]);
         int jniCriticalThreadNum = Integer.parseInt(args[2]);
@@ -152,6 +160,7 @@ class TestExcessGCLockerCollectionsAux {
     }
 }
 
+@Bean
 public class TestExcessGCLockerCollections {
     private static final String locker =
         "\\[gc\\s*\\] .* \\(GCLocker Initiated GC\\)";

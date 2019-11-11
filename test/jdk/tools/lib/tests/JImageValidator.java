@@ -42,6 +42,7 @@ import jdk.internal.jimage.ImageLocation;
  *
  * JDK Modular image validator
  */
+@Bean
 public class JImageValidator {
 
     private static final String[] dirs = {"bin", "lib"};
@@ -160,7 +161,11 @@ public class JImageValidator {
 
     }
 
-    private int waitFor(Process process) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int waitFor(Process process) {
         try {
             return process.waitFor();
         } catch (InterruptedException e) {

@@ -35,6 +35,7 @@ class Test6756768_2a {
     static int var = ++Test6756768_2.var;
 }
 
+@Bean
 public class Test6756768_2 {
     static int var = 1;
 

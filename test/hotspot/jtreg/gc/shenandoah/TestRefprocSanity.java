@@ -63,6 +63,7 @@
 
 import java.lang.ref.*;
 
+@Bean
 public class TestRefprocSanity {
 
     static final long TARGET_MB = Long.getLong("target", 10_000); // 10 Gb allocation

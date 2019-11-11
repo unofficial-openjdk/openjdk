@@ -32,6 +32,7 @@ import java.beans.PropertyDescriptor;
  * @author Sergey Malenkov
  */
 
+@Bean
 public class Test8034085 {
     public static final StringBuilder ERROR = new StringBuilder();
 
@@ -93,56 +94,104 @@ public class Test8034085 {
     }
 
     public static class Bean0001 {
-        public void setSize(int index, int value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setSize(int index, int value) {
         }
     }
 
     public static class Bean0010 {
-        public int getSize(int index) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int getSize(int index) {
             return 0;
         }
     }
 
     public static class Bean0011 {
-        public int getSize(int index) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int getSize(int index) {
             return 0;
         }
 
-        public void setSize(int index, int value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setSize(int index, int value) {
         }
     }
 
     public static class Bean0100 {
-        public void setSize(int value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setSize(int value) {
         }
     }
 
     public static class Bean0101 {
-        public void setSize(int value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setSize(int value) {
         }
 
-        public void setSize(int index, int value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setSize(int index, int value) {
         }
     }
 
     public static class Bean0110 {
-        public void setSize(int value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setSize(int value) {
         }
 
-        public int getSize(int index) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int getSize(int index) {
             return 0;
         }
     }
 
     public static class Bean0111 {
-        public void setSize(int value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setSize(int value) {
         }
 
-        public int getSize(int index) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int getSize(int index) {
             return 0;
         }
 
-        public void setSize(int index, int value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setSize(int index, int value) {
         }
     }
 
@@ -157,7 +206,11 @@ public class Test8034085 {
             return 0;
         }
 
-        public void setSize(int index, int value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setSize(int index, int value) {
         }
     }
 
@@ -166,7 +219,11 @@ public class Test8034085 {
             return 0;
         }
 
-        public int getSize(int index) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int getSize(int index) {
             return 0;
         }
     }
@@ -176,11 +233,19 @@ public class Test8034085 {
             return 0;
         }
 
-        public int getSize(int index) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int getSize(int index) {
             return 0;
         }
 
-        public void setSize(int index, int value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setSize(int index, int value) {
         }
     }
 
@@ -189,7 +254,11 @@ public class Test8034085 {
             return 0;
         }
 
-        public void setSize(int value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setSize(int value) {
         }
     }
 
@@ -198,10 +267,18 @@ public class Test8034085 {
             return 0;
         }
 
-        public void setSize(int value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setSize(int value) {
         }
 
-        public void setSize(int index, int value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setSize(int index, int value) {
         }
     }
 
@@ -210,10 +287,18 @@ public class Test8034085 {
             return 0;
         }
 
-        public void setSize(int value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setSize(int value) {
         }
 
-        public int getSize(int index) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int getSize(int index) {
             return 0;
         }
     }
@@ -223,14 +308,26 @@ public class Test8034085 {
             return 0;
         }
 
-        public void setSize(int value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setSize(int value) {
         }
 
-        public int getSize(int index) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int getSize(int index) {
             return 0;
         }
 
-        public void setSize(int index, int value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setSize(int index, int value) {
         }
     }
 }

@@ -23,6 +23,7 @@
 
 /**/
 
+@Bean
 public class Decode {
     private static boolean isAscii(char c) {
         return c < '\u0080';

@@ -50,6 +50,7 @@ import java.nio.file.Paths;
 
 import jdk.test.lib.net.URIBuilder;
 
+@Bean
 public class MarkResetTest {
     private static final String FILE_NAME = "EncDec.doc";
 
@@ -95,7 +96,11 @@ public class MarkResetTest {
              * Returns the command number.
              */
 
-            private int parseCmd(String cmd) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                private int parseCmd(String cmd) {
                 if (cmd == null || cmd.length() < 3)
                     return ERROR;
                 int blank = cmd.indexOf(' ');

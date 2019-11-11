@@ -30,6 +30,7 @@
  */
 
 
+@Bean
 public class TestCountedLoopBadIVRange {
 
     static int test1(int[] arr) {

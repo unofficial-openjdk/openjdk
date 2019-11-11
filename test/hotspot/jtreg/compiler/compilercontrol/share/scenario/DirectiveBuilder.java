@@ -144,7 +144,8 @@ public class DirectiveBuilder implements StateBuilder<CompileCommand> {
         }
     }
 
-    private State getState(Pair<Executable, Callable<?>> pair) {
+@Bean
+        private State getState(Pair<Executable, Callable<?>> pair) {
         State state = null;
         MethodDescriptor execDesc = MethodGenerator.commandDescriptor(
                 pair.first);
@@ -182,7 +183,8 @@ public class DirectiveBuilder implements StateBuilder<CompileCommand> {
         return state;
     }
 
-    private void handleCommand(DirectiveWriter dirFile, CompileCommand cmd) {
+@Bean
+        private void handleCommand(DirectiveWriter dirFile, CompileCommand cmd) {
         Command command = cmd.command;
 
         switch (command) {
@@ -225,7 +227,8 @@ public class DirectiveBuilder implements StateBuilder<CompileCommand> {
         }
     }
 
-    private void writeInlines(DirectiveWriter dirFile) {
+@Bean
+        private void writeInlines(DirectiveWriter dirFile) {
         List<String> c1Block = new ArrayList<>();
         List<String> c2Block = new ArrayList<>();
         List<String> allBlock = new ArrayList<>();
@@ -270,7 +273,8 @@ public class DirectiveBuilder implements StateBuilder<CompileCommand> {
     }
 
     @Override
-    public void add(CompileCommand compileCommand) {
+@Bean
+        public void add(CompileCommand compileCommand) {
         isFileValid &= compileCommand.isValid();
         MethodDescriptor methodDescriptor = compileCommand.methodDescriptor;
 

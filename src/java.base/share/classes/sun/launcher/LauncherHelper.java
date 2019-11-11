@@ -1185,7 +1185,8 @@ public final class LauncherHelper {
         }
 
         @Override
-        public int compare(ModuleReference a, ModuleReference b) {
+@Bean
+            public int compare(ModuleReference a, ModuleReference b) {
             if (isJrt(a)) {
                 return isJrt(b) ? real.compare(a, b) : -1;
             } else {

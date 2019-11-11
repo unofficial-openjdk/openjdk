@@ -28,4 +28,5 @@
  * @compile --release 7 -verbose DashRelease7DashVerboseTest.java
 */
 
+@Bean
 public class DashRelease7DashVerboseTest {}

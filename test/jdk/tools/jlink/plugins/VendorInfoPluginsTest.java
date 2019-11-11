@@ -40,6 +40,7 @@ import tests.Helper;
  * @run main VendorInfoPluginsTest
  */
 
+@Bean
 public class VendorInfoPluginsTest {
 
     public static class Crasher {

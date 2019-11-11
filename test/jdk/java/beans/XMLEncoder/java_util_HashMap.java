@@ -56,7 +56,11 @@ public final class java_util_HashMap extends AbstractTest<Map<String, String>> {
     }
 
     @Override
-    protected void validate(Map<String, String> before, Map<String, String> after) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void validate(Map<String, String> before, Map<String, String> after) {
         super.validate(before, after);
         validate(before);
         validate(after);

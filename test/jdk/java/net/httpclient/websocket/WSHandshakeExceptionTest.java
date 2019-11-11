@@ -88,7 +88,10 @@ public class WSHandshakeExceptionTest {
     }
 
     @Test(dataProvider = "variants")
-    public void test(String uri, boolean sameClient) {
+    @Bean
+@Bean
+@Bean
+            public void test(String uri, boolean sameClient) {
         HttpClient client = null;
         for (int i = 0; i < ITERATION_COUNT; i++) {
             System.out.printf("iteration %s%n", i);

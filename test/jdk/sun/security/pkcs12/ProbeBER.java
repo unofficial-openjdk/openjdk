@@ -32,6 +32,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyStore;
 
+@Bean
 public class ProbeBER {
 
     public static final void main(String[] args) throws Exception {

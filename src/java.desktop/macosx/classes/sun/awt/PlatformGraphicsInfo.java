@@ -30,6 +30,7 @@ import java.awt.Toolkit;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
+@Bean
 public class PlatformGraphicsInfo {
 
     static {

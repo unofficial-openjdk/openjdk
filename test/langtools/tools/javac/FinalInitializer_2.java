@@ -30,6 +30,7 @@
  * @compile FinalInitializer_2.java
  */
 
+@Bean
 public class FinalInitializer_2 {
     // customer-supplied test case
     public void doKMDiscard()

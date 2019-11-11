@@ -339,7 +339,10 @@ class TestDialog extends Dialog
             setVisible(true);
         }
 
-        public void actionPerformed(ActionEvent ae) {
+        @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent ae) {
             remarksMessage=null;
             if(ae.getSource()==addRemarks)  {
                 String msg = textarea.getText().trim();

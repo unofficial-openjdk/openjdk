@@ -45,6 +45,7 @@ import jdk.test.lib.process.ProcessTools;
 /**
  * A simple class calling AOT compiler over requested items
  */
+@Bean
 public class AotCompiler {
 
     private final static String METHODS_LIST_FILENAME = "methodsList.txt";

@@ -35,6 +35,7 @@ import java.lang.ref.WeakReference;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class SafepointTest {
     public static void main(String[] args) throws Exception {
         ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-Xlog:safepoint=trace",

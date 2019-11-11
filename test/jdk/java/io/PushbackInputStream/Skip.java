@@ -28,6 +28,7 @@
 
 import java.io.*;
 
+@Bean
 public class Skip {
 
     private static void dotest(PushbackInputStream in, int expected)

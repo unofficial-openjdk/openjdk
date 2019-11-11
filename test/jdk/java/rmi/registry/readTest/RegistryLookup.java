@@ -26,6 +26,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
+@Bean
 public class RegistryLookup {
     public static final int EXIT_FAIL = 1;
 

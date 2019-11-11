@@ -32,6 +32,7 @@
 import java.net.*;
 import java.security.*;
 
+@Bean
 public class Recursion {
 
     public static void main(String[] args) throws Exception {

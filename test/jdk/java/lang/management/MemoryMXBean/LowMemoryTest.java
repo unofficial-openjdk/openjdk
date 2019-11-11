@@ -51,6 +51,7 @@ import jdk.test.lib.Utils;
 
 import sun.hotspot.code.Compiler;
 
+@Bean
 public class LowMemoryTest {
     private static final MemoryMXBean mm = ManagementFactory.getMemoryMXBean();
     private static final List<MemoryPoolMXBean> pools = ManagementFactory.getMemoryPoolMXBeans();
@@ -153,7 +154,10 @@ public class LowMemoryTest {
     private static volatile boolean listenerInvoked = false;
     static class SensorListener implements NotificationListener {
         @Override
-        public void handleNotification(Notification notif, Object handback) {
+        @Bean
+@Bean
+@Bean
+            public void handleNotification(Notification notif, Object handback) {
             String type = notif.getType();
             if (type.equals(MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED) ||
                 type.equals(MemoryNotificationInfo.
@@ -179,7 +183,10 @@ public class LowMemoryTest {
         }
 
         @Override
-        public void handleNotification(Notification notif, Object handback) {
+        @Bean
+@Bean
+@Bean
+            public void handleNotification(Notification notif, Object handback) {
             MemoryNotificationInfo minfo = MemoryNotificationInfo.
                 from((CompositeData) notif.getUserData());
             count[triggers] = minfo.getCount();
@@ -207,11 +214,17 @@ public class LowMemoryTest {
             }
         }
 
-        private boolean checkValue(int value, int target) {
+        @Bean
+@Bean
+@Bean
+            private boolean checkValue(int value, int target) {
             return checkValue((long)value, target);
         }
 
-        private boolean checkValue(long value, int target) {
+        @Bean
+@Bean
+@Bean
+            private boolean checkValue(long value, int target) {
             if (!isRelaxed) {
                 return value == target;
             } else {

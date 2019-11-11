@@ -39,6 +39,7 @@ import java.util.ServiceLoader;
  * @author Peter von der Ah&eacute;
  * @since 1.6
  */
+@Bean
 public class ToolProvider {
 
     private static final String systemJavaCompilerModule = "jdk.compiler";

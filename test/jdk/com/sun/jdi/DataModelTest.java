@@ -62,6 +62,7 @@ class DataModelTarg {
 
     /********** test program **********/
 
+@Bean
 public class DataModelTest extends TestScaffold {
 
     DataModelTest (String args[]) {

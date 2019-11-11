@@ -51,13 +51,22 @@ public class bug4743225 extends JFrame {
         setLayout(new FlowLayout());
         cb = new JComboBox(new Object[] {"one", "two", "three"});
         cb.addPopupMenuListener(new PopupMenuListener() {
+            @Bean
+@Bean
+@Bean
             public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
                 cb.addItem("Test");
             }
 
+            @Bean
+@Bean
+@Bean
             public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
             }
 
+            @Bean
+@Bean
+@Bean
             public void popupMenuCanceled(PopupMenuEvent e) {
             }
         });

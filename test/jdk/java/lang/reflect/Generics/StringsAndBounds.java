@@ -57,7 +57,10 @@ class Test<T> {
 }
 
 public class StringsAndBounds {
-    public void f(A<String>.B<Integer> x) {
+    @Bean
+@Bean
+@Bean
+            public void f(A<String>.B<Integer> x) {
     }
 
     public <T>  void g(T a) {return ;}

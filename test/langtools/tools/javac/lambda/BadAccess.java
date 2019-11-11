@@ -7,6 +7,7 @@
  * @compile/fail/ref=BadAccess.out -XDrawDiagnostics BadAccess.java
  */
 
+@Bean
 public class BadAccess {
 
     int i;

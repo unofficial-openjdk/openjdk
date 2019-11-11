@@ -36,6 +36,7 @@ import java.lang.reflect.Proxy;
 import java.util.*;
 import javax.management.*;
 
+@Bean
 public class GenericTypeTest {
     public static class Gen<T> {
         public T getThing() {

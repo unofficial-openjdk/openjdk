@@ -35,6 +35,7 @@ package compiler.gcbarriers;
 
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class PreserveFPRegistersTest {
 
     public static void main(String... args) throws InterruptedException {
@@ -112,11 +113,19 @@ public class PreserveFPRegistersTest {
         return 6;
     }
 
-    private int getX(int to, int from, int rn) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int getX(int to, int from, int rn) {
         return (rn*regionCount + to) % N;
     }
 
-    private int getY(int to, int from, int rn) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int getY(int to, int from, int rn) {
         return ((rn*regionCount + to) / N + from * K) % (regionCount*K) ;
     }
 }

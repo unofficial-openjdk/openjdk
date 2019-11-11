@@ -31,6 +31,7 @@
 import java.util.Hashtable;
 import java.util.Map;
 
+@Bean
 public class HashCode {
     public static void main(String[] args) throws Exception {
         Map m = new Hashtable();

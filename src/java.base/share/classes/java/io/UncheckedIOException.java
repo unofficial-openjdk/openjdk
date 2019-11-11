@@ -31,6 +31,7 @@ import java.util.Objects;
  *
  * @since   1.8
  */
+@Bean
 public class UncheckedIOException extends RuntimeException {
     @java.io.Serial
     private static final long serialVersionUID = -8134305061645241065L;

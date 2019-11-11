@@ -225,6 +225,7 @@ import java.util.Objects;
  * @author  Sergey V. Kuksenko
  * @since 1.1
  */
+@Bean
 public class BigDecimal extends Number implements Comparable<BigDecimal> {
     /**
      * The unscaled value of this BigDecimal, as returned by {@link
@@ -632,7 +633,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
         this.intVal = rb;
     }
 
-    private int adjustScale(int scl, long exp) {
+    @Bean
+@Bean
+@Bean
+            private int adjustScale(int scl, long exp) {
         long adjustedScale = scl - exp;
         if (adjustedScale > Integer.MAX_VALUE || adjustedScale < Integer.MIN_VALUE)
             throw new NumberFormatException("Scale out of range.");
@@ -1314,7 +1318,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      * @param  augend value to be added to this {@code BigDecimal}.
      * @return {@code this + augend}
      */
-    public BigDecimal add(BigDecimal augend) {
+    @Bean
+@Bean
+@Bean
+            public BigDecimal add(BigDecimal augend) {
         if (this.intCompact != INFLATED) {
             if ((augend.intCompact != INFLATED)) {
                 return add(this.intCompact, this.scale, augend.intCompact, augend.scale);
@@ -1344,7 +1351,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      *         rounding mode is {@code UNNECESSARY}.
      * @since  1.5
      */
-    public BigDecimal add(BigDecimal augend, MathContext mc) {
+    @Bean
+@Bean
+@Bean
+            public BigDecimal add(BigDecimal augend, MathContext mc) {
         if (mc.precision == 0)
             return add(augend);
         BigDecimal lhs = this;
@@ -1461,7 +1471,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      * @param  subtrahend value to be subtracted from this {@code BigDecimal}.
      * @return {@code this - subtrahend}
      */
-    public BigDecimal subtract(BigDecimal subtrahend) {
+    @Bean
+@Bean
+@Bean
+            public BigDecimal subtract(BigDecimal subtrahend) {
         if (this.intCompact != INFLATED) {
             if ((subtrahend.intCompact != INFLATED)) {
                 return add(this.intCompact, this.scale, -subtrahend.intCompact, subtrahend.scale);
@@ -1494,7 +1507,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      *         rounding mode is {@code UNNECESSARY}.
      * @since  1.5
      */
-    public BigDecimal subtract(BigDecimal subtrahend, MathContext mc) {
+    @Bean
+@Bean
+@Bean
+            public BigDecimal subtract(BigDecimal subtrahend, MathContext mc) {
         if (mc.precision == 0)
             return subtract(subtrahend);
         // share the special rounding code in add()
@@ -1509,7 +1525,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      * @param  multiplicand value to be multiplied by this {@code BigDecimal}.
      * @return {@code this * multiplicand}
      */
-    public BigDecimal multiply(BigDecimal multiplicand) {
+    @Bean
+@Bean
+@Bean
+            public BigDecimal multiply(BigDecimal multiplicand) {
         int productScale = checkScale((long) scale + multiplicand.scale);
         if (this.intCompact != INFLATED) {
             if ((multiplicand.intCompact != INFLATED)) {
@@ -1537,7 +1556,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      *         rounding mode is {@code UNNECESSARY}.
      * @since  1.5
      */
-    public BigDecimal multiply(BigDecimal multiplicand, MathContext mc) {
+    @Bean
+@Bean
+@Bean
+            public BigDecimal multiply(BigDecimal multiplicand, MathContext mc) {
         if (mc.precision == 0)
             return multiply(multiplicand);
         int productScale = checkScale((long) scale + multiplicand.scale);
@@ -1585,7 +1607,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      * @see    #ROUND_UNNECESSARY
      */
     @Deprecated(since="9")
-    public BigDecimal divide(BigDecimal divisor, int scale, int roundingMode) {
+    @Bean
+@Bean
+@Bean
+            public BigDecimal divide(BigDecimal divisor, int scale, int roundingMode) {
         if (roundingMode < ROUND_UP || roundingMode > ROUND_UNNECESSARY)
             throw new IllegalArgumentException("Invalid rounding mode");
         if (this.intCompact != INFLATED) {
@@ -1619,7 +1644,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      *         of the division exactly.
      * @since 1.5
      */
-    public BigDecimal divide(BigDecimal divisor, int scale, RoundingMode roundingMode) {
+    @Bean
+@Bean
+@Bean
+            public BigDecimal divide(BigDecimal divisor, int scale, RoundingMode roundingMode) {
         return divide(divisor, scale, roundingMode.oldMode);
     }
 
@@ -1651,7 +1679,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      * @see    #ROUND_UNNECESSARY
      */
     @Deprecated(since="9")
-    public BigDecimal divide(BigDecimal divisor, int roundingMode) {
+    @Bean
+@Bean
+@Bean
+            public BigDecimal divide(BigDecimal divisor, int roundingMode) {
         return this.divide(divisor, scale, roundingMode);
     }
 
@@ -1670,7 +1701,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      *         of the division exactly.
      * @since 1.5
      */
-    public BigDecimal divide(BigDecimal divisor, RoundingMode roundingMode) {
+    @Bean
+@Bean
+@Bean
+            public BigDecimal divide(BigDecimal divisor, RoundingMode roundingMode) {
         return this.divide(divisor, scale, roundingMode.oldMode);
     }
 
@@ -1688,7 +1722,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      * @since 1.5
      * @author Joseph D. Darcy
      */
-    public BigDecimal divide(BigDecimal divisor) {
+    @Bean
+@Bean
+@Bean
+            public BigDecimal divide(BigDecimal divisor) {
         /*
          * Handle zero cases first.
          */
@@ -1750,7 +1787,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      *         non-terminating decimal expansion.
      * @since  1.5
      */
-    public BigDecimal divide(BigDecimal divisor, MathContext mc) {
+    @Bean
+@Bean
+@Bean
+            public BigDecimal divide(BigDecimal divisor, MathContext mc) {
         int mcp = mc.precision;
         if (mcp == 0)
             return divide(divisor);
@@ -1804,7 +1844,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      * @throws ArithmeticException if {@code divisor==0}
      * @since  1.5
      */
-    public BigDecimal divideToIntegralValue(BigDecimal divisor) {
+    @Bean
+@Bean
+@Bean
+            public BigDecimal divideToIntegralValue(BigDecimal divisor) {
         // Calculate preferred scale
         int preferredScale = saturateLong((long) this.scale - divisor.scale);
         if (this.compareMagnitude(divisor) < 0) {
@@ -1857,7 +1900,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      * @since  1.5
      * @author Joseph D. Darcy
      */
-    public BigDecimal divideToIntegralValue(BigDecimal divisor, MathContext mc) {
+    @Bean
+@Bean
+@Bean
+            public BigDecimal divideToIntegralValue(BigDecimal divisor, MathContext mc) {
         if (mc.precision == 0 || // exact result
             (this.compareMagnitude(divisor) < 0)) // zero result
             return divideToIntegralValue(divisor);
@@ -1919,7 +1965,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      * @throws ArithmeticException if {@code divisor==0}
      * @since  1.5
      */
-    public BigDecimal remainder(BigDecimal divisor) {
+    @Bean
+@Bean
+@Bean
+            public BigDecimal remainder(BigDecimal divisor) {
         BigDecimal divrem[] = this.divideAndRemainder(divisor);
         return divrem[1];
     }
@@ -1949,7 +1998,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      * @see    #divideToIntegralValue(java.math.BigDecimal, java.math.MathContext)
      * @since  1.5
      */
-    public BigDecimal remainder(BigDecimal divisor, MathContext mc) {
+    @Bean
+@Bean
+@Bean
+            public BigDecimal remainder(BigDecimal divisor, MathContext mc) {
         BigDecimal divrem[] = this.divideAndRemainder(divisor, mc);
         return divrem[1];
     }
@@ -2055,7 +2107,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      * @see BigInteger#sqrt()
      * @since  9
      */
-    public BigDecimal sqrt(MathContext mc) {
+    @Bean
+@Bean
+@Bean
+            public BigDecimal sqrt(MathContext mc) {
         int signum = signum();
         if (signum == 1) {
             /*
@@ -2246,7 +2301,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      * input. Conversely, for UP and CEIL, result^2 must be {@code >=} the
      * input and (result-ulp)^2 must be {@code <} the input.
      */
-    private boolean squareRootResultAssertions(BigDecimal result, MathContext mc) {
+    @Bean
+@Bean
+@Bean
+            private boolean squareRootResultAssertions(BigDecimal result, MathContext mc) {
         if (result.signum() == 0) {
             return squareRootZeroResultAssertions(result, mc);
         } else {
@@ -2307,7 +2365,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
         }
     }
 
-    private boolean squareRootZeroResultAssertions(BigDecimal result, MathContext mc) {
+    @Bean
+@Bean
+@Bean
+            private boolean squareRootZeroResultAssertions(BigDecimal result, MathContext mc) {
         return this.compareTo(ZERO) == 0;
     }
 
@@ -2328,7 +2389,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      * @throws ArithmeticException if {@code n} is out of range.
      * @since  1.5
      */
-    public BigDecimal pow(int n) {
+    @Bean
+@Bean
+@Bean
+            public BigDecimal pow(int n) {
         if (n < 0 || n > 999999999)
             throw new ArithmeticException("Invalid operation");
         // No need to calculate pow(n) if result will over/underflow.
@@ -2388,7 +2452,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      *         of range.
      * @since  1.5
      */
-    public BigDecimal pow(int n, MathContext mc) {
+    @Bean
+@Bean
+@Bean
+            public BigDecimal pow(int n, MathContext mc) {
         if (mc.precision == 0)
             return pow(n);
         if (n < -999999999 || n > 999999999)
@@ -2449,7 +2516,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      *         rounding mode is {@code UNNECESSARY}.
      * @since 1.5
      */
-    public BigDecimal abs(MathContext mc) {
+    @Bean
+@Bean
+@Bean
+            public BigDecimal abs(MathContext mc) {
         return (signum() < 0 ? negate(mc) : plus(mc));
     }
 
@@ -2477,7 +2547,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      *         rounding mode is {@code UNNECESSARY}.
      * @since  1.5
      */
-    public BigDecimal negate(MathContext mc) {
+    @Bean
+@Bean
+@Bean
+            public BigDecimal negate(MathContext mc) {
         return negate().plus(mc);
     }
 
@@ -2512,7 +2585,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      * @see    #round(MathContext)
      * @since  1.5
      */
-    public BigDecimal plus(MathContext mc) {
+    @Bean
+@Bean
+@Bean
+            public BigDecimal plus(MathContext mc) {
         if (mc.precision == 0)                 // no rounding please
             return this;
         return doRound(this, mc);
@@ -2696,7 +2772,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      * @see    #plus(MathContext)
      * @since  1.5
      */
-    public BigDecimal round(MathContext mc) {
+    @Bean
+@Bean
+@Bean
+            public BigDecimal round(MathContext mc) {
         return plus(mc);
     }
 
@@ -2729,7 +2808,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      * @see    RoundingMode
      * @since  1.5
      */
-    public BigDecimal setScale(int newScale, RoundingMode roundingMode) {
+    @Bean
+@Bean
+@Bean
+            public BigDecimal setScale(int newScale, RoundingMode roundingMode) {
         return setScale(newScale, roundingMode.oldMode);
     }
 
@@ -2774,7 +2856,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      * @see    #ROUND_UNNECESSARY
      */
     @Deprecated(since="9")
-    public BigDecimal setScale(int newScale, int roundingMode) {
+    @Bean
+@Bean
+@Bean
+            public BigDecimal setScale(int newScale, int roundingMode) {
         if (roundingMode < ROUND_UP || roundingMode > ROUND_UNNECESSARY)
             throw new IllegalArgumentException("Invalid rounding mode");
 
@@ -2856,7 +2941,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      * @see    #setScale(int, int)
      * @see    #setScale(int, RoundingMode)
      */
-    public BigDecimal setScale(int newScale) {
+    @Bean
+@Bean
+@Bean
+            public BigDecimal setScale(int newScale) {
         return setScale(newScale, ROUND_UNNECESSARY);
     }
 
@@ -2877,7 +2965,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      *         decimal point moved {@code n} places to the left.
      * @throws ArithmeticException if scale overflows.
      */
-    public BigDecimal movePointLeft(int n) {
+    @Bean
+@Bean
+@Bean
+            public BigDecimal movePointLeft(int n) {
         if (n == 0) return this;
 
         // Cannot use movePointRight(-n) in case of n==Integer.MIN_VALUE
@@ -2901,7 +2992,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      *         with the decimal point moved {@code n} places to the right.
      * @throws ArithmeticException if scale overflows.
      */
-    public BigDecimal movePointRight(int n) {
+    @Bean
+@Bean
+@Bean
+            public BigDecimal movePointRight(int n) {
         if (n == 0) return this;
 
         // Cannot use movePointLeft(-n) in case of n==Integer.MIN_VALUE
@@ -2923,7 +3017,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      *
      * @since 1.5
      */
-    public BigDecimal scaleByPowerOfTen(int n) {
+    @Bean
+@Bean
+@Bean
+            public BigDecimal scaleByPowerOfTen(int n) {
         return new BigDecimal(intVal, intCompact,
                               checkScale((long)scale - n), precision);
     }
@@ -2973,7 +3070,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      *          less than, equal to, or greater than {@code val}.
      */
     @Override
-    public int compareTo(BigDecimal val) {
+    @Bean
+@Bean
+@Bean
+            public int compareTo(BigDecimal val) {
         // Quick path for equal scale and non-inflated case.
         if (scale == val.scale) {
             long xs = intCompact;
@@ -2994,7 +3094,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
     /**
      * Version of compareTo that ignores sign.
      */
-    private int compareMagnitude(BigDecimal val) {
+    @Bean
+@Bean
+@Bean
+            private int compareMagnitude(BigDecimal val) {
         // Match scales, avoid unnecessary inflation
         long ys = val.intCompact;
         long xs = this.intCompact;
@@ -3057,7 +3160,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      * @see    #hashCode
      */
     @Override
-    public boolean equals(Object x) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(Object x) {
         if (!(x instanceof BigDecimal))
             return false;
         BigDecimal xDec = (BigDecimal) x;
@@ -3088,7 +3194,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      *         method, {@code this} is returned.
      * @see    #compareTo(java.math.BigDecimal)
      */
-    public BigDecimal min(BigDecimal val) {
+    @Bean
+@Bean
+@Bean
+            public BigDecimal min(BigDecimal val) {
         return (compareTo(val) <= 0 ? this : val);
     }
 
@@ -3102,7 +3211,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      *         method, {@code this} is returned.
      * @see    #compareTo(java.math.BigDecimal)
      */
-    public BigDecimal max(BigDecimal val) {
+    @Bean
+@Bean
+@Bean
+            public BigDecimal max(BigDecimal val) {
         return (compareTo(val) >= 0 ? this : val);
     }
 
@@ -3336,7 +3448,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
     }
 
     /* Returns a digit.digit string */
-    private String getValueString(int signum, String intString, int scale) {
+    @Bean
+@Bean
+@Bean
+            private String getValueString(int signum, String intString, int scale) {
         /* Insert decimal point */
         StringBuilder buf;
         int insertionPoint = intString.length() - scale;
@@ -3814,7 +3929,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      * @return string with canonical string representation of this
      *         {@code BigDecimal}
      */
-    private String layoutChars(boolean sci) {
+    @Bean
+@Bean
+@Bean
+            private String layoutChars(boolean sci) {
         if (scale == 0)                      // zero scale is trivial
             return (intCompact != INFLATED) ?
                 Long.toString(intCompact):
@@ -4063,7 +4181,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      * Compute this * 10 ^ n.
      * Needed mainly to allow special casing to trap zero value
      */
-    private BigInteger bigMultiplyPowerTen(int n) {
+    @Bean
+@Bean
+@Bean
+            private BigInteger bigMultiplyPowerTen(int n) {
         if (n <= 0)
             return this.inflated();
 
@@ -4219,7 +4340,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      *         scale is out of range.
      * @return validated scale as an int.
      */
-    private int checkScale(long val) {
+    @Bean
+@Bean
+@Bean
+            private int checkScale(long val) {
         int asInt = (int)val;
         if (asInt != val) {
             asInt = val>Integer.MAX_VALUE ? Integer.MAX_VALUE : Integer.MIN_VALUE;

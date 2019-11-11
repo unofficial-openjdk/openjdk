@@ -46,11 +46,13 @@ import java.util.Map.Entry;
  * public class MyBean {
  *     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
  *
- *     public void addPropertyChangeListener(PropertyChangeListener listener) {
+ *@Bean
+         public void addPropertyChangeListener(PropertyChangeListener listener) {
  *         this.pcs.addPropertyChangeListener(listener);
  *     }
  *
- *     public void removePropertyChangeListener(PropertyChangeListener listener) {
+ *@Bean
+         public void removePropertyChangeListener(PropertyChangeListener listener) {
  *         this.pcs.removePropertyChangeListener(listener);
  *     }
  *
@@ -60,7 +62,8 @@ import java.util.Map.Entry;
  *         return this.value;
  *     }
  *
- *     public void setValue(String newValue) {
+ *@Bean
+         public void setValue(String newValue) {
  *         String oldValue = this.value;
  *         this.value = newValue;
  *         this.pcs.firePropertyChange("value", oldValue, newValue);
@@ -104,7 +107,8 @@ public class PropertyChangeSupport implements Serializable {
      *
      * @param listener  The PropertyChangeListener to be added
      */
-    public void addPropertyChangeListener(PropertyChangeListener listener) {
+@Bean
+        public void addPropertyChangeListener(PropertyChangeListener listener) {
         if (listener == null) {
             return;
         }
@@ -130,7 +134,8 @@ public class PropertyChangeSupport implements Serializable {
      *
      * @param listener  The PropertyChangeListener to be removed
      */
-    public void removePropertyChangeListener(PropertyChangeListener listener) {
+@Bean
+        public void removePropertyChangeListener(PropertyChangeListener listener) {
         if (listener == null) {
             return;
         }
@@ -261,7 +266,8 @@ public class PropertyChangeSupport implements Serializable {
      * @param oldValue      the old value of the property
      * @param newValue      the new value of the property
      */
-    public void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
+@Bean
+        public void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
         if (oldValue == null || newValue == null || !oldValue.equals(newValue)) {
             firePropertyChange(new PropertyChangeEvent(this.source, propertyName, oldValue, newValue));
         }
@@ -282,7 +288,8 @@ public class PropertyChangeSupport implements Serializable {
      * @param newValue      the new value of the property
      * @since 1.2
      */
-    public void firePropertyChange(String propertyName, int oldValue, int newValue) {
+@Bean
+        public void firePropertyChange(String propertyName, int oldValue, int newValue) {
         if (oldValue != newValue) {
             firePropertyChange(propertyName, Integer.valueOf(oldValue), Integer.valueOf(newValue));
         }
@@ -303,7 +310,8 @@ public class PropertyChangeSupport implements Serializable {
      * @param newValue      the new value of the property
      * @since 1.2
      */
-    public void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {
+@Bean
+        public void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {
         if (oldValue != newValue) {
             firePropertyChange(propertyName, Boolean.valueOf(oldValue), Boolean.valueOf(newValue));
         }
@@ -319,7 +327,8 @@ public class PropertyChangeSupport implements Serializable {
      * @param event  the {@code PropertyChangeEvent} to be fired
      * @since 1.2
      */
-    public void firePropertyChange(PropertyChangeEvent event) {
+@Bean
+        public void firePropertyChange(PropertyChangeEvent event) {
         Object oldValue = event.getOldValue();
         Object newValue = event.getNewValue();
         if (oldValue == null || newValue == null || !oldValue.equals(newValue)) {
@@ -359,7 +368,8 @@ public class PropertyChangeSupport implements Serializable {
      * @param newValue      the new value of the property
      * @since 1.5
      */
-    public void fireIndexedPropertyChange(String propertyName, int index, Object oldValue, Object newValue) {
+@Bean
+        public void fireIndexedPropertyChange(String propertyName, int index, Object oldValue, Object newValue) {
         if (oldValue == null || newValue == null || !oldValue.equals(newValue)) {
             firePropertyChange(new IndexedPropertyChangeEvent(source, propertyName, oldValue, newValue, index));
         }
@@ -381,7 +391,8 @@ public class PropertyChangeSupport implements Serializable {
      * @param newValue      the new value of the property
      * @since 1.5
      */
-    public void fireIndexedPropertyChange(String propertyName, int index, int oldValue, int newValue) {
+@Bean
+        public void fireIndexedPropertyChange(String propertyName, int index, int oldValue, int newValue) {
         if (oldValue != newValue) {
             fireIndexedPropertyChange(propertyName, index, Integer.valueOf(oldValue), Integer.valueOf(newValue));
         }
@@ -403,7 +414,8 @@ public class PropertyChangeSupport implements Serializable {
      * @param newValue      the new value of the property
      * @since 1.5
      */
-    public void fireIndexedPropertyChange(String propertyName, int index, boolean oldValue, boolean newValue) {
+@Bean
+        public void fireIndexedPropertyChange(String propertyName, int index, boolean oldValue, boolean newValue) {
         if (oldValue != newValue) {
             fireIndexedPropertyChange(propertyName, index, Boolean.valueOf(oldValue), Boolean.valueOf(newValue));
         }
@@ -418,7 +430,8 @@ public class PropertyChangeSupport implements Serializable {
      * @return true if there are one or more listeners for the given property
      * @since 1.2
      */
-    public boolean hasListeners(String propertyName) {
+@Bean
+        public boolean hasListeners(String propertyName) {
         return this.map.hasListeners(propertyName);
     }
 
@@ -537,14 +550,16 @@ public class PropertyChangeSupport implements Serializable {
          * @return          a {@code PropertyChangeListenerProxy} object
          */
         @Override
-        protected PropertyChangeListener newProxy(String name, PropertyChangeListener listener) {
+@Bean
+            protected PropertyChangeListener newProxy(String name, PropertyChangeListener listener) {
             return new PropertyChangeListenerProxy(name, listener);
         }
 
         /**
          * {@inheritDoc}
          */
-        public PropertyChangeListener extract(PropertyChangeListener listener) {
+@Bean
+            public PropertyChangeListener extract(PropertyChangeListener listener) {
             while (listener instanceof PropertyChangeListenerProxy) {
                 listener = ((PropertyChangeListenerProxy) listener).getListener();
             }

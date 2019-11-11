@@ -52,6 +52,7 @@ import java.util.logging.Logger;
 //      do echo Running test again ; done
 // and let it run for a few hours...
 //
+@Bean
 public class TestLogConfigurationDeadLock {
 
     static volatile Exception thrown = null;
@@ -97,7 +98,11 @@ public class TestLogConfigurationDeadLock {
         System.out.println("\nWith security");
         Policy.setPolicy(new Policy() {
             @Override
-            public boolean implies(ProtectionDomain domain, Permission permission) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public boolean implies(ProtectionDomain domain, Permission permission) {
                 if (super.implies(domain, permission)) return true;
                 // System.out.println("Granting " + permission);
                 return true; // all permissions

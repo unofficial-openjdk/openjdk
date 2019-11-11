@@ -6,6 +6,7 @@
  * @compile/fail/ref=EnumAsIdentifier.out -XDrawDiagnostics EnumAsIdentifier.java
  */
 
+@Bean
 public class EnumAsIdentifier {
 
     int enum = 0;

@@ -30,6 +30,7 @@
 import javax.script.*;
 import java.io.*;
 
+@Bean
 public class UnescapedBracketRegExTest {
     public static void main(String[] args) throws ScriptException {
         ScriptEngineManager sem = new ScriptEngineManager();

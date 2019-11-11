@@ -44,7 +44,11 @@ interface I3 extends I1, I2 {
     // void foo() throws E4;
 }
 class Blah {
-    public void foo(I3 i3) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void foo(I3 i3) {
         try {
             i3.foo();
         } catch (E4 e4) {

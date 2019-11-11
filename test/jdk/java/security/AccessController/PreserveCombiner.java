@@ -31,6 +31,7 @@ import java.security.*;
 import javax.security.auth.Subject;
 import javax.security.auth.x500.X500Principal;
 
+@Bean
 public class PreserveCombiner {
 
     public static void main(String[] args) throws Exception {

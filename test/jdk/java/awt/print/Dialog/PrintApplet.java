@@ -52,6 +52,9 @@ public class PrintApplet extends JApplet implements Printable {
     private void jbInit() throws Exception {
         jButton1.setText("PRINT");
         jButton1.addActionListener(new java.awt.event.ActionListener() {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 jButton1_actionPerformed(e);
             }

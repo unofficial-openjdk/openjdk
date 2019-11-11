@@ -34,6 +34,7 @@
 
 import java.lang.management.*;
 
+@Bean
 public class EnableTest {
     private static ThreadMXBean tm = ManagementFactory.getThreadMXBean();
 

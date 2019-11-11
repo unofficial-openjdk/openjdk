@@ -35,6 +35,7 @@
 import toolbox.JavacTask;
 import toolbox.ToolBox;
 
+@Bean
 public class CompileErrorWithIteratorTest {
 
     private static final String TestCollectionSrc =
@@ -43,7 +44,8 @@ public class CompileErrorWithIteratorTest {
         "import java.util.Iterator;\n" +
         "import java.util.NoSuchElementException;\n" +
 
-        "public class TestCollection<E> implements Iterable<E> {\n" +
+        "@Bean
+public class TestCollection<E> implements Iterable<E> {\n" +
         "    public testCollectionIterator iterator() {\n" +
         "        return  new testCollectionIterator();\n" +
         "    }\n" +
@@ -60,7 +62,8 @@ public class CompileErrorWithIteratorTest {
     private static final String TestSrc =
         "import pkg.TestCollection;\n" +
         "\n" +
-        "public class Test {\n" +
+        "@Bean
+public class Test {\n" +
         "\n" +
         "    public static void main(String[] args) {\n" +
         "        TestCollection<String>  tc1 = new TestCollection<String>();\n" +

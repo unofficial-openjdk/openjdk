@@ -41,6 +41,7 @@ import sun.hotspot.WhiteBox;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 
+@Bean
 public class MethodMatcherTest {
 
     /** Instance of WhiteBox */
@@ -198,7 +199,11 @@ public class MethodMatcherTest {
             this.expectedResult = expectedResult;
         }
 
-        public String resultAsStr(int errorCode) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String resultAsStr(int errorCode) {
             switch (errorCode) {
             case PARSING_FAILURE:
                 return "Parsing failed";
@@ -234,7 +239,11 @@ public class MethodMatcherTest {
     class TestCases extends ArrayList<TestCase> {
         private static final long serialVersionUID = 1L;
 
-        public boolean add(Method testTarget, String pattern, int expectedResult) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean add(Method testTarget, String pattern, int expectedResult) {
             return super.add(new TestCase(testTarget, pattern, expectedResult));
         }
 

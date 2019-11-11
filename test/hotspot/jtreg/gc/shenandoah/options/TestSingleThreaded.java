@@ -30,6 +30,7 @@
  *                   -XX:ParallelGCThreads=1 -XX:ConcGCThreads=1 TestSingleThreaded
  */
 
+@Bean
 public class TestSingleThreaded {
 
     public static void main(String[] args) {

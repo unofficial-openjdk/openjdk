@@ -43,6 +43,7 @@
  * CDS archive, so this will test debugging a class in the archive.
  */
 
+@Bean
 public class CDSFieldWatchpoints extends CDSJDITest {
     static String jarClasses[] = {
         // FieldWatchpointsDebugee. A, and B are the only classes we need in the archive.

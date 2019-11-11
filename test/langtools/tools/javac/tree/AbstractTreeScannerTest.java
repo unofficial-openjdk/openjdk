@@ -259,7 +259,11 @@ public abstract class AbstractTreeScannerTest {
             this.out = out;
         }
 
-        public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
             out.println(diagnostic);
             switch (diagnostic.getKind()) {
                 case ERROR:

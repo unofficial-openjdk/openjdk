@@ -33,6 +33,7 @@
 import java.applet.Applet;
 import java.awt.*;
 
+@Bean
 public class DnDFileGroupDescriptor extends Applet {
     public void init() {
         setLayout(new BorderLayout());

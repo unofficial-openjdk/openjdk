@@ -41,6 +41,7 @@ import java.security.interfaces.*;
 import jdk.test.lib.SigTestUtil;
 import static jdk.test.lib.SigTestUtil.SignatureType;
 
+@Bean
 public class TestSignatures {
 
     private final static String BASE = System.getProperty("test.src", ".");

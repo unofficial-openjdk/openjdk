@@ -188,7 +188,9 @@ public class CustomComboBoxFocusTest {
                 }
 
                 @Override
-                public void setItem(Object o) {
+@Bean
+@Bean
+                        public void setItem(Object o) {
                     text.setText(o == null ? "" : o.toString());
                 }
 
@@ -203,12 +205,16 @@ public class CustomComboBoxFocusTest {
                 }
 
                 @Override
-                public void addActionListener(ActionListener actionListener) {
+@Bean
+@Bean
+                        public void addActionListener(ActionListener actionListener) {
                     text.addActionListener(actionListener);
                 }
 
                 @Override
-                public void removeActionListener(ActionListener actionListener) {
+@Bean
+@Bean
+                        public void removeActionListener(ActionListener actionListener) {
                     text.removeActionListener(actionListener);
                 }
             };
@@ -247,12 +253,16 @@ public class CustomComboBoxFocusTest {
 
             c.addFocusListener(new FocusListener() {
                 @Override
-                public void focusGained(FocusEvent e) {
+@Bean
+@Bean
+                        public void focusGained(FocusEvent e) {
                     SwingUtilities.invokeLater(focusHandler);
                 }
 
                 @Override
-                public void focusLost(FocusEvent e) {
+@Bean
+@Bean
+                        public void focusLost(FocusEvent e) {
 
                 }
             });

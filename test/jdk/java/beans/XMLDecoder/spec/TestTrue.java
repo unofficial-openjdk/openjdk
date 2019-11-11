@@ -40,7 +40,10 @@ public final class TestTrue extends AbstractTest {
     }
 
     @Override
-    protected void validate(XMLDecoder decoder) {
+    @Bean
+@Bean
+@Bean
+            protected void validate(XMLDecoder decoder) {
         if (!Boolean.TRUE.equals(decoder.readObject())) {
             throw new Error("true expected");
         }

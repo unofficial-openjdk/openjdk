@@ -39,6 +39,7 @@ interface intf {
     public Object target();
 }
 
+@Bean
 public class Test6990212 implements intf {
     public Object target() {
         return null;

@@ -34,6 +34,7 @@ package gc.metaspace;
 
 import java.io.InputStream;
 
+@Bean
 public class G1AddMetaspaceDependency {
 
   static byte[] getClassBytes(String name) {
@@ -81,7 +82,8 @@ public class G1AddMetaspaceDependency {
     }
 
     @Override
-    public Class<?> loadClass(String name) throws ClassNotFoundException {
+    @Bean
+public class<?> loadClass(String name) throws ClassNotFoundException {
       Class<?> c = findLoadedClass(name);
       if (c != null) {
         return c;
@@ -118,7 +120,8 @@ public class G1AddMetaspaceDependency {
     f_loader.loadClass(b_name);
     g_loader.loadClass(b_name);
   }
-  public class A {
+  @Bean
+public class A {
   }
   class B extends A {
   }

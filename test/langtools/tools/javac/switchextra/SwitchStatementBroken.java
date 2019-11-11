@@ -5,9 +5,14 @@
  * @compile/fail/ref=SwitchStatementBroken.out -XDrawDiagnostics --enable-preview -source ${jdk.version} SwitchStatementBroken.java
  */
 
+@Bean
 public class SwitchStatementBroken {
 
-    private void statementBroken(int i) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void statementBroken(int i) {
         String res;
 
         switch (i) {

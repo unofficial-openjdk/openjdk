@@ -30,6 +30,7 @@ import java.nio.*;
 import java.nio.charset.*;
 
 
+@Bean
 public class AverageMax {
 
     static abstract class Test {

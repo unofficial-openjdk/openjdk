@@ -243,7 +243,11 @@ public class Log extends FinalizableObject {
     /**
      * Enable or disable printing errors summary at exit.
      */
-    public void enableErrorsSummary(boolean enable) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void enableErrorsSummary(boolean enable) {
         errorsSummaryEnabled = enable;
     }
 
@@ -257,14 +261,22 @@ public class Log extends FinalizableObject {
     /**
      * Enable or disable printing saved verbose messages on error.
      */
-    public void enableVerboseOnError(boolean enable) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void enableVerboseOnError(boolean enable) {
         verboseOnErrorEnabled = enable;
     }
 
     /**
      * Enable or disable verbose mode for printing messages.
      */
-    public void enableVerbose(boolean enable) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void enableVerbose(boolean enable) {
         if (!verbose) {
             flushLogBuffer();
         }
@@ -279,7 +291,11 @@ public class Log extends FinalizableObject {
      * Set threshold for printing trace messages.
      * Warning: trace level changes may NOT be observed by other threads immediately.
      */
-    public void setTraceLevel(int level) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setTraceLevel(int level) {
         traceLevel = level;
     }
 
@@ -339,7 +355,11 @@ public class Log extends FinalizableObject {
      * trace level specified in command line by <code>-trace.level</code>
      * option.
      */
-    public void trace(int level, Object message) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void trace(int level, Object message) {
         if (level <= traceLevel) {
             synchronized ( this ) {
                 doPrint("### TRACE " + level + ": " + message);
@@ -353,7 +373,11 @@ public class Log extends FinalizableObject {
      * trace level specified in command line by <code>-trace.level</code>
      * option.
      */
-    public void trace(int level, Object message, Throwable exception) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void trace(int level, Object message, Throwable exception) {
         if (level <= traceLevel) {
             trace(level, printExceptionToString(message, exception));
         }
@@ -405,7 +429,11 @@ public class Log extends FinalizableObject {
      * (or to stderr if output is not specified) and keep the message
      * into <code>errorsBuffer</code>.
      */
-    public void complain(Object message, Throwable exception) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void complain(Object message, Throwable exception) {
         if ( exception != null )
             complain(printExceptionToString(message, exception));
         else
@@ -416,7 +444,11 @@ public class Log extends FinalizableObject {
      * Create an Exception and print the stack trace for an error msg.
      * This makes it possible to detect a failure reason for this error.
      */
-    private void logExceptionForFailureAnalysis(String msg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void logExceptionForFailureAnalysis(String msg) {
         // Some error messages are formatted in multiple lines and with tabs.
         // We clean the messages to help parse the stack traces for failure analysis.
         // We keep at most 2 lines, otherwise the error message may be too long.
@@ -509,7 +541,11 @@ public class Log extends FinalizableObject {
     /**
      * Compose line to print possible prefixing it with timestamp.
      */
-    private String composeLine(String message) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String composeLine(String message) {
         if (timestamp) {
             long time = System.currentTimeMillis();
             long ms = time % 1000;
@@ -684,14 +720,22 @@ public class Log extends FinalizableObject {
         /**
          * Set prefix for printed messages.
          */
-        public void setLogPrefix(String prefix) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setLogPrefix(String prefix) {
             logPrefix = prefix;
         }
 
         /**
          * Make printable message by adding <code>logPrefix<code> to it.
          */
-        public String makeLogMessage(String message) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String makeLogMessage(String message) {
             return logPrefix + message;
         }
 
@@ -700,7 +744,11 @@ public class Log extends FinalizableObject {
          *
          * @see Log#trace
          */
-        public void trace(int level, String message) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void trace(int level, String message) {
             log.trace(level, makeLogMessage(message));
         }
 
@@ -709,7 +757,11 @@ public class Log extends FinalizableObject {
          *
          * @see Log#println
          */
-        public void println(String message) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void println(String message) {
             log.println(makeLogMessage(message));
         }
 
@@ -718,7 +770,11 @@ public class Log extends FinalizableObject {
          *
          * @see Log#display
          */
-        public void display(String message) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void display(String message) {
             log.display(makeLogMessage(message));
         }
 
@@ -727,7 +783,11 @@ public class Log extends FinalizableObject {
          *
          * @see Log#complain
          */
-        public void complain(String message) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void complain(String message) {
             log.complain(makeLogMessage(message));
         }
 

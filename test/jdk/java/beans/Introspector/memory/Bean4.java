@@ -21,6 +21,7 @@
  * questions.
  */
 
+@Bean
 public class Bean4 {
     private String name;
     private int number;
@@ -38,7 +39,10 @@ public class Bean4 {
         return this.name;
     }
 
-    public void setName(String name) {
+    @Bean
+@Bean
+@Bean
+            public void setName(String name) {
         this.name = name;
     }
 
@@ -46,7 +50,10 @@ public class Bean4 {
         return this.number;
     }
 
-    public void setNumber(int i) {
+    @Bean
+@Bean
+@Bean
+            public void setNumber(int i) {
         this.number = i;
     }
 }

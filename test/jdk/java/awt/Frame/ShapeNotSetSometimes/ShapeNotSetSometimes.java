@@ -36,6 +36,7 @@ import java.awt.event.InputEvent;
 import java.awt.geom.*;
 
 
+@Bean
 public class ShapeNotSetSometimes {
 
     private Frame backgroundFrame;
@@ -93,7 +94,10 @@ public class ShapeNotSetSometimes {
     class BackgroundFrame extends Frame {
 
         @Override
-        public void paint(Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
 
             g.setColor(BACKGROUND_COLOR);
             g.fillRect(0, 0, 300, 300);
@@ -105,7 +109,10 @@ public class ShapeNotSetSometimes {
     class TestFrame extends Frame {
 
         @Override
-        public void paint(Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
 
             g.setColor(Color.WHITE);
             g.fillRect(0, 0, 200, 200);

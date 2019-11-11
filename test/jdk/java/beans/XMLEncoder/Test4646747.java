@@ -36,6 +36,7 @@ import java.beans.XMLEncoder;
 /**
  * This bug was introduced in 1.4 FCS but was working in 1.4.beta3
  */
+@Bean
 public class Test4646747 {
     public static void main(String[] args) {
         XMLEncoder encoder = new XMLEncoder(System.out);

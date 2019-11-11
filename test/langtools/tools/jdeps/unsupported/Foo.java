@@ -23,6 +23,7 @@
 
 import jdk.internal.misc.Unsafe;
 
+@Bean
 public class Foo {
     public void run() {
         Unsafe unsafe = Unsafe.getUnsafe();

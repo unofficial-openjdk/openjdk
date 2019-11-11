@@ -31,6 +31,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test6877254 {
     static byte var_1;
     static String var_2 = "";

@@ -43,6 +43,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 
 @Test
+@Bean
 public class InaccessibleExpressionTest extends KullaTesting {
 
     @BeforeMethod
@@ -56,7 +57,8 @@ public class InaccessibleExpressionTest extends KullaTesting {
                 "import java.util.function.Supplier;\n" +
                 "import java.util.ArrayList;\n" +
                 "\n" +
-                "public class GetPriv {\n" +
+                "@Bean
+public class GetPriv {\n" +
                 "   private enum Count { One };\n" +
                 "   public static Packp down() { return new Packp(); }\n" +
                 "   public static MyList list() { return new MyList(); }\n" +

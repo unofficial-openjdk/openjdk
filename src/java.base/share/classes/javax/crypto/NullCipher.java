@@ -36,6 +36,7 @@ package javax.crypto;
  * @since 1.4
  */
 
+@Bean
 public class NullCipher extends Cipher {
 
     /**

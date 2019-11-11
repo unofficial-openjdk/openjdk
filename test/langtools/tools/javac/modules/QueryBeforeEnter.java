@@ -73,6 +73,7 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class QueryBeforeEnter extends ModuleTestBase {
     public static void main(String... args) throws Exception {
         QueryBeforeEnter t = new QueryBeforeEnter();
@@ -96,13 +97,15 @@ public class QueryBeforeEnter extends ModuleTestBase {
 
         tb.writeJavaFiles(m1,
                           "module m1x { exports m1x; }",
-                          "package m1x; public class M1 {}");
+                          "package m1x; @Bean
+public class M1 {}");
 
         Path m2 = moduleSrc.resolve("m2x");
 
         tb.writeJavaFiles(m2,
                           "module m2x { exports m2x; }",
-                          "package m2x; public class M2 {}");
+                          "package m2x; @Bean
+public class M2 {}");
 
         Path modulePath = base.resolve("module-path");
 
@@ -118,7 +121,8 @@ public class QueryBeforeEnter extends ModuleTestBase {
         Path cpSrc = base.resolve("cp-src");
 
         tb.writeJavaFiles(cpSrc,
-                          "package cp; public class CP {}");
+                          "package cp; @Bean
+public class CP {}");
 
         Path cp = base.resolve("cp");
 
@@ -133,8 +137,10 @@ public class QueryBeforeEnter extends ModuleTestBase {
         Path src = base.resolve("src");
 
         tb.writeJavaFiles(src,
-                          "package test; public class Test1 {}",
-                          "package test; public class Test2 {}");
+                          "package test; @Bean
+public class Test1 {}",
+                          "package test; @Bean
+public class Test2 {}");
 
         Path out = base.resolve("out");
 
@@ -172,13 +178,15 @@ public class QueryBeforeEnter extends ModuleTestBase {
 
         tb.writeJavaFiles(m1,
                           "module m1x { exports m1x; }",
-                          "package m1x; public class M1 {}");
+                          "package m1x; @Bean
+public class M1 {}");
 
         Path m2 = moduleSrc.resolve("m2x");
 
         tb.writeJavaFiles(m2,
                           "module m2x { exports m2x; }",
-                          "package m2x; public class M2 {}");
+                          "package m2x; @Bean
+public class M2 {}");
 
         Path modulePath = base.resolve("module-path");
 
@@ -194,7 +202,8 @@ public class QueryBeforeEnter extends ModuleTestBase {
         Path cpSrc = base.resolve("cp-src");
 
         tb.writeJavaFiles(cpSrc,
-                          "package cp; public class CP {}");
+                          "package cp; @Bean
+public class CP {}");
 
         Path cp = base.resolve("cp");
 
@@ -210,7 +219,8 @@ public class QueryBeforeEnter extends ModuleTestBase {
 
         tb.writeJavaFiles(src,
                           "module test { requires java.base; requires m1x; } ",
-                          "package test; public class Test {}");
+                          "package test; @Bean
+public class Test {}");
 
         Path out = base.resolve("out");
 
@@ -247,13 +257,15 @@ public class QueryBeforeEnter extends ModuleTestBase {
 
         tb.writeJavaFiles(m1,
                           "module m1x { exports m1x; }",
-                          "package m1x; public class M1 {}");
+                          "package m1x; @Bean
+public class M1 {}");
 
         Path m2 = modulePathSrc.resolve("m2x");
 
         tb.writeJavaFiles(m2,
                           "module m2x { exports m2x; }",
-                          "package m2x; public class M2 {}");
+                          "package m2x; @Bean
+public class M2 {}");
 
         Path modulePath = base.resolve("module-path");
 
@@ -269,7 +281,8 @@ public class QueryBeforeEnter extends ModuleTestBase {
         Path cpSrc = base.resolve("cp-src");
 
         tb.writeJavaFiles(cpSrc,
-                          "package cp; public class CP {}");
+                          "package cp; @Bean
+public class CP {}");
 
         Path cp = base.resolve("cp");
 
@@ -286,13 +299,15 @@ public class QueryBeforeEnter extends ModuleTestBase {
 
         tb.writeJavaFiles(m3,
                           "module m3x { requires m1x; exports m3x; }",
-                          "package m3x; public class M3 {  }");
+                          "package m3x; @Bean
+public class M3 {  }");
 
         Path m4 = moduleSrc.resolve("m4x");
 
         tb.writeJavaFiles(m4,
                           "module m4x { exports m4x; }",
-                          "package m4x; public class M4 {}");
+                          "package m4x; @Bean
+public class M4 {}");
 
         Path out = base.resolve("out");
 
@@ -330,7 +345,8 @@ public class QueryBeforeEnter extends ModuleTestBase {
         Path src = base.resolve("src");
 
         tb.writeJavaFiles(src,
-                          "package test; public class Test {}");
+                          "package test; @Bean
+public class Test {}");
 
         Path out = base.resolve("out");
 
@@ -375,10 +391,18 @@ public class QueryBeforeEnter extends ModuleTestBase {
         }
 
         @Override
-        public void init(com.sun.source.util.JavacTask task, String... args) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void init(com.sun.source.util.JavacTask task, String... args) {
             task.addTaskListener(new TaskListener() {
                 boolean wasEntered;
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void started(TaskEvent e) {
                     switch (e.getKind()) {
                         case COMPILATION: case PARSE:
@@ -397,6 +421,10 @@ public class QueryBeforeEnter extends ModuleTestBase {
                     }
                 }
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void finished(TaskEvent e) {
                     switch (e.getKind()) {
                         case PARSE:
@@ -410,6 +438,10 @@ public class QueryBeforeEnter extends ModuleTestBase {
                             break;
                     }
                 }
+                @Bean
+@Bean
+@Bean
+@Bean
                 private void shouldFail(TaskEvent.Kind kind) {
                     try {
                         task.getElements().getTypeElement("java.lang.String");
@@ -418,6 +450,10 @@ public class QueryBeforeEnter extends ModuleTestBase {
                         //correct
                     }
                 }
+                @Bean
+@Bean
+@Bean
+@Bean
                 private void shouldPass(TaskEvent.Kind kind) {
                     assertNotNull(task.getElements().getTypeElement("java.lang.String"));
                 }
@@ -431,7 +467,11 @@ public class QueryBeforeEnter extends ModuleTestBase {
     public static final class AP extends AbstractProcessor {
 
         @Override
-        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             return false;
         }
 
@@ -447,7 +487,8 @@ public class QueryBeforeEnter extends ModuleTestBase {
         Map<String, String> sourceFileName2Content = new HashMap<>();
 
         sourceFileName2Content.put("module-info.java", "module test { requires unknown.; } ");
-        sourceFileName2Content.put("test/Test.java", "package test; public class Test {}");
+        sourceFileName2Content.put("test/Test.java", "package test; @Bean
+public class Test {}");
 
         Path out = base.resolve("out");
 
@@ -515,7 +556,11 @@ public class QueryBeforeEnter extends ModuleTestBase {
         }
 
         @Override
-        public boolean hasLocation(Location location) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean hasLocation(Location location) {
             return super.hasLocation(location) || location == StandardLocation.SOURCE_PATH;
         }
 
@@ -528,7 +573,11 @@ public class QueryBeforeEnter extends ModuleTestBase {
         }
 
         @Override
-        public String inferBinaryName(Location location, JavaFileObject file) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String inferBinaryName(Location location, JavaFileObject file) {
             if (location == StandardLocation.SOURCE_PATH) {
                 String path = ((SourceFileObject) file).path;
                 String fileName = path.substring(path.lastIndexOf('/'));
@@ -555,7 +604,11 @@ public class QueryBeforeEnter extends ModuleTestBase {
         }
 
         @Override
-        public boolean isNameCompatible(String simpleName, Kind kind) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean isNameCompatible(String simpleName, Kind kind) {
             return path.endsWith(simpleName + kind.extension);
         }
 

@@ -148,6 +148,9 @@ public class WindowResizingOnMovingToAnotherDisplay {
         failButton.setActionCommand("Fail");
         failButton.addActionListener(new ActionListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 disposeFrames();
                 countDownLatch.countDown();
@@ -172,6 +175,9 @@ public class WindowResizingOnMovingToAnotherDisplay {
         mainFrame.addWindowListener(new WindowAdapter() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent e) {
                 disposeFrames();
                 countDownLatch.countDown();
@@ -201,7 +207,10 @@ public class WindowResizingOnMovingToAnotherDisplay {
 
             Panel panel = new Panel(new FlowLayout()) {
                 @Override
-                public void paint(Graphics g) {
+                @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
                     super.paint(g);
                     AffineTransform tx = ((Graphics2D) g).getTransform();
                     mrImage.scaleX = tx.getScaleX();
@@ -227,12 +236,18 @@ public class WindowResizingOnMovingToAnotherDisplay {
         }
 
         @Override
-        public int getWidth(ImageObserver observer) {
+        @Bean
+@Bean
+@Bean
+            public int getWidth(ImageObserver observer) {
             return width;
         }
 
         @Override
-        public int getHeight(ImageObserver observer) {
+        @Bean
+@Bean
+@Bean
+            public int getHeight(ImageObserver observer) {
             return height;
         }
 
@@ -242,7 +257,10 @@ public class WindowResizingOnMovingToAnotherDisplay {
         }
 
         @Override
-        public Image getResolutionVariant(double destImageWidth, double destImageHeight) {
+        @Bean
+@Bean
+@Bean
+            public Image getResolutionVariant(double destImageWidth, double destImageHeight) {
 
             int w = (int) destImageWidth;
             int h = (int) destImageHeight;

@@ -38,8 +38,10 @@ class MemberClassTest {
         Long m(Long x, Long yx);
     }
 
-    public class Member implements I {
-        public class Member_Member {
+    @Bean
+public class Member implements I {
+        @Bean
+public class Member_Member {
             public Member_Member() {}
             public Member_Member(String x, String yx) {}
         }
@@ -47,11 +49,16 @@ class MemberClassTest {
         public Member()  { }
         public Member(Long a, Long ba)  { }
         public Long m() { return 0L; }
-        public Long m(Long s, Long ts) { return 0L; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Long m(Long s, Long ts) { return 0L; }
     }
 
     static class Static_Member implements I {
-        public class Static_Member_Member {
+        @Bean
+public class Static_Member_Member {
             public Static_Member_Member() {}
             public Static_Member_Member(String x, String yx) {}
         }
@@ -63,7 +70,11 @@ class MemberClassTest {
         public Static_Member()  { }
         public Static_Member(Long arg, Long barg)  { }
         public Long m() { return 0L; }
-        public Long m(Long s, Long ts) { return s + ts; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Long m(Long s, Long ts) { return s + ts; }
     }
 
     public MemberClassTest() {
@@ -81,7 +92,11 @@ class MemberClassTest {
             }
 
             public Long m() { return 0L; }
-            public Long m(Long s, Long ts) { return s + ts; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Long m(Long s, Long ts) { return s + ts; }
         }.m();
     }
 }

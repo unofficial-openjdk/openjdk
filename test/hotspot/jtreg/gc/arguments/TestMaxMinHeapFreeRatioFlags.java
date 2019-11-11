@@ -43,6 +43,7 @@ import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.Utils;
 import jdk.internal.misc.Unsafe;
 
+@Bean
 public class TestMaxMinHeapFreeRatioFlags {
 
     public static final long M = 1024 * 1024;

@@ -34,6 +34,7 @@ import java.nio.*;
 
 import java.security.*;
 
+@Bean
 public class ByteBuffers {
 
     public static void main(String[] args) throws Exception {

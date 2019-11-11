@@ -36,6 +36,7 @@ import jdk.test.lib.apps.LingeredApp;
 import jdk.test.lib.JDKToolLauncher;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class RemovingUnixDomainSocketTest {
 
     private static void runJCmd(long pid) throws InterruptedException, IOException {

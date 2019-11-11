@@ -46,6 +46,7 @@ import java.util.stream.Collectors;
  *
  * @author Jaroslav Bachorik
  **/
+@Bean
 public class LockFreeLogger {
     private final AtomicInteger logCntr = new AtomicInteger(0);
     private final Collection<Map<Integer, String>> allRecords = new ConcurrentLinkedQueue<>();
@@ -60,7 +61,11 @@ public class LockFreeLogger {
      * @param format Message format
      * @param params Message parameters
      */
-    public void log(String format, Object ... params) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void log(String format, Object ... params) {
         int id = logCntr.getAndIncrement();
         records.get().put(id, String.format(format, params));
     }

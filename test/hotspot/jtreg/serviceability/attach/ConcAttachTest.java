@@ -44,6 +44,7 @@ import jdk.test.lib.Asserts;
 import jdk.test.lib.JDKToolLauncher;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class ConcAttachTest implements Runnable {
 
     private static final int NUM_CONC_REQUESTS = 100;

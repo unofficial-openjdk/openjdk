@@ -258,22 +258,37 @@ public class ImageableAreaTest {
                 return data.length;
             }
 
+            @Bean
+@Bean
+@Bean
             public Object getValueAt(int row, int col) {
                 return data[row][col];
             }
 
+            @Bean
+@Bean
+@Bean
             public String getColumnName(int column) {
                 return headers[column];
             }
 
+            @Bean
+@Bean
+@Bean
             public Class getColumnClass(int col) {
                 return getValueAt(0, col).getClass();
             }
 
+            @Bean
+@Bean
+@Bean
             public void setValueAt(Object aValue, int row, int column) {
                 data[row][column] = aValue;
             }
 
+            @Bean
+@Bean
+@Bean
             public boolean isCellEditable(int row, int col) {
                 return false;
             }

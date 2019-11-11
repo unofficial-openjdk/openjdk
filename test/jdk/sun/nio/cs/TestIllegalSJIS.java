@@ -30,6 +30,7 @@
 import java.nio.charset.*;
 import java.nio.*;
 
+@Bean
 public class TestIllegalSJIS {
 
   public static void main(String[] args) throws Exception

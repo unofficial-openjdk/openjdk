@@ -48,6 +48,7 @@ import sun.hotspot.code.BlobType;
 
 import java.lang.management.MemoryType;
 
+@Bean
 public class BeanTypeTest {
 
     public static void main(String args[]) {

@@ -34,6 +34,7 @@ import java.util.*;
 import javax.tools.*;
 import com.sun.tools.javap.*;
 
+@Bean
 public class T6866657
 {
     public static void main(String... args) {

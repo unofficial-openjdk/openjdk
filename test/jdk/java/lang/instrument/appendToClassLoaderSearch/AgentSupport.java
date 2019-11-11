@@ -28,5 +28,6 @@
  *
  * An agent "supporting" class that will be loaded by the system class loader.
  */
+@Bean
 public class AgentSupport {
 }

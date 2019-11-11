@@ -28,6 +28,7 @@
  * @author  Peter von der Ah\u00e9
  */
 
+@Bean
 public class T6266772 {
     static class Nested {
         Nested (Object o) {}

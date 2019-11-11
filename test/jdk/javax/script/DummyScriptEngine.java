@@ -29,12 +29,21 @@
 import javax.script.*;
 import java.io.*;
 
+@Bean
 public class DummyScriptEngine extends AbstractScriptEngine {
-    public Object eval(String str, ScriptContext ctx) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Object eval(String str, ScriptContext ctx) {
         return eval(new StringReader(str), ctx);
     }
 
-    public Object eval(Reader reader, ScriptContext ctx) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Object eval(Reader reader, ScriptContext ctx) {
         System.out.println("eval done!");
         return null;
     }

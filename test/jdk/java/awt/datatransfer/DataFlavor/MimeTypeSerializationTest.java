@@ -39,6 +39,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Arrays;
 
+@Bean
 public class MimeTypeSerializationTest {
 
     public static void main(String[] args) throws Exception {

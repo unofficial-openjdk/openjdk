@@ -6,6 +6,7 @@
  * @compile/fail/ref=T4848619a.out -XDrawDiagnostics T4848619a.java
  */
 
+@Bean
 public class T4848619a {
     static void m() { System.err.println(X); };
     private static final String X = X;

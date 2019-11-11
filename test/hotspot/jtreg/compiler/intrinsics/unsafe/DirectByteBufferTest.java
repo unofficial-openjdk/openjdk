@@ -32,6 +32,7 @@
  * @summary Verify that direct byte buffers are correctly accessed.
  */
 
+@Bean
 public class DirectByteBufferTest extends ByteBufferTest {
 
     public DirectByteBufferTest(long iterations, boolean direct) {

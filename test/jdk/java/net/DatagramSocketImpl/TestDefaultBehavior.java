@@ -42,6 +42,7 @@ import static java.net.StandardSocketOptions.*;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.expectThrows;
 
+@Bean
 public class TestDefaultBehavior {
 
     static final Class<NullPointerException> NPE = NullPointerException.class;
@@ -70,7 +71,8 @@ public class TestDefaultBehavior {
 
     static final SocketOption<Boolean> FAKE_SOCK_OPT = new SocketOption<>() {
         @Override public String name() { return "FAKE_SOCK_OPT"; }
-        @Override public Class<Boolean> type() { return Boolean.class; }
+        @Override @Bean
+public class<Boolean> type() { return Boolean.class; }
     };
 
     // A DatagramSocketImpl that delegates the three new-style socket option
@@ -94,21 +96,69 @@ public class TestDefaultBehavior {
 
         // --
         @Override protected void create() { }
-        @Override protected void bind(int lport, InetAddress laddr) { }
-        @Override protected void send(DatagramPacket p) { }
-        @Override protected int peek(InetAddress i) { return 0; }
-        @Override protected int peekData(DatagramPacket p) { return 0; }
-        @Override protected void receive(DatagramPacket p) { }
-        @Override protected void setTTL(byte ttl) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                protected void bind(int lport, InetAddress laddr) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                protected void send(DatagramPacket p) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                protected int peek(InetAddress i) { return 0; }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                protected int peekData(DatagramPacket p) { return 0; }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                protected void receive(DatagramPacket p) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                protected void setTTL(byte ttl) { }
         @Override protected byte getTTL() { return 0; }
-        @Override protected void setTimeToLive(int ttl) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                protected void setTimeToLive(int ttl) { }
         @Override protected int getTimeToLive() { return 0; }
-        @Override protected void join(InetAddress inetaddr) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                protected void join(InetAddress inetaddr) { }
         @Override protected void leave(InetAddress inetaddr)  { }
-        @Override protected void joinGroup(SocketAddress mcastaddr, NetworkInterface netIf) { }
-        @Override protected void leaveGroup(SocketAddress mcastaddr, NetworkInterface netIf) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                protected void joinGroup(SocketAddress mcastaddr, NetworkInterface netIf) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                protected void leaveGroup(SocketAddress mcastaddr, NetworkInterface netIf) { }
         @Override protected void close() { }
-        @Override public void setOption(int optID, Object value) { }
-        @Override public Object getOption(int optID) { return null; }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void setOption(int optID, Object value) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public Object getOption(int optID) { return null; }
     }
 }

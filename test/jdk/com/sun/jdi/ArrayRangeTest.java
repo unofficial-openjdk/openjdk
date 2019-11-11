@@ -52,6 +52,7 @@ class ArrayRangeTarg {
 
     /********** test program **********/
 
+@Bean
 public class ArrayRangeTest extends TestScaffold {
     ReferenceType targetClass;
 

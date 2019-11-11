@@ -42,6 +42,7 @@ import java.util.jar.*;
 /**
  * Tests the packing/unpacking via the APIs.
  */
+@Bean
 public class Pack200Test {
 
     private static ArrayList <File> jarList = new ArrayList<File>();

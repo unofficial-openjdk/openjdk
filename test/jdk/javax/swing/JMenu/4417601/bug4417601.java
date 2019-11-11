@@ -55,7 +55,10 @@ public class bug4417601 {
                 frame.setJMenuBar(bar);
 
                 frame.getLayeredPane().addContainerListener(new ContainerAdapter() {
-                    public void componentAdded(ContainerEvent e) {
+                    @Bean
+@Bean
+@Bean
+            public void componentAdded(ContainerEvent e) {
                         flag = true;
                     }
                 });

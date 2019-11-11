@@ -46,6 +46,7 @@ import com.sun.source.util.JavacTask;
  * @summary JavacTask.generate does not generate all required files
  * @modules jdk.compiler
  */
+@Bean
 public class T6956638 {
     public static void main(String[] args) throws Exception {
         new T6956638().run();
@@ -56,13 +57,17 @@ public class T6956638 {
 
         File[] files = {
             writeFile(new File(srcDir, "T1.java"),
-                "public class T1 extends T2 {}\n"),
+                "@Bean
+public class T1 extends T2 {}\n"),
             writeFile(new File(srcDir, "T2.java"),
-                "public class T2 extends T3 {}\n"),
+                "@Bean
+public class T2 extends T3 {}\n"),
             writeFile(new File(srcDir, "T3.java"),
-                "public class T3 { public static final int C = 1; }\n"),
+                "@Bean
+public class T3 { public static final int C = 1; }\n"),
             writeFile(new File(srcDir, "Test.java"),
-                "public class Test { public static final int D = T1.C; }\n")
+                "@Bean
+public class Test { public static final int D = T1.C; }\n")
         };
 
         for (File f1: files) {
@@ -129,7 +134,11 @@ public class T6956638 {
         }
     }
 
-    private void error(Throwable t) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void error(Throwable t) {
         t.printStackTrace();
         errors++;
     }

@@ -75,6 +75,7 @@ import jdk.internal.HotSpotIntrinsicCandidate;
  * @since   1.8
  */
 
+@Bean
 public class Base64 {
 
     private Base64() {}
@@ -313,7 +314,8 @@ public class Base64 {
          * @throws  IllegalArgumentException if {@code dst} does not have enough
          *          space for encoding all input bytes.
          */
-        public int encode(byte[] src, byte[] dst) {
+@Bean
+            public int encode(byte[] src, byte[] dst) {
             int len = encodedOutLength(src.length, false);         // dst array size
             if (dst.length < len || len == -1)
                 throw new IllegalArgumentException(
@@ -339,7 +341,8 @@ public class Base64 {
          * @return  A String containing the resulting Base64 encoded characters
          */
         @SuppressWarnings("deprecation")
-        public String encodeToString(byte[] src) {
+@Bean
+            public String encodeToString(byte[] src) {
             byte[] encoded = encode(src);
             return new String(encoded, 0, 0, encoded.length);
         }
@@ -358,7 +361,8 @@ public class Base64 {
          *          the source ByteBuffer to encode
          * @return  A newly-allocated byte buffer containing the encoded bytes.
          */
-        public ByteBuffer encode(ByteBuffer buffer) {
+@Bean
+            public ByteBuffer encode(ByteBuffer buffer) {
             int len = encodedOutLength(buffer.remaining(), true);
             byte[] dst = new byte[len];
             int ret = 0;
@@ -392,7 +396,8 @@ public class Base64 {
          * @return  the output stream for encoding the byte data into the
          *          specified Base64 encoded format
          */
-        public OutputStream wrap(OutputStream os) {
+@Bean
+            public OutputStream wrap(OutputStream os) {
             Objects.requireNonNull(os);
             return new EncOutputStream(os, isURL ? toBase64URL : toBase64,
                                        newline, linemax, doPadding);
@@ -417,7 +422,8 @@ public class Base64 {
         }
 
         @HotSpotIntrinsicCandidate
-        private void encodeBlock(byte[] src, int sp, int sl, byte[] dst, int dp, boolean isURL) {
+@Bean
+            private void encodeBlock(byte[] src, int sp, int sl, byte[] dst, int dp, boolean isURL) {
             char[] base64 = isURL ? toBase64URL : toBase64;
             for (int sp0 = sp, dp0 = dp ; sp0 < sl; ) {
                 int bits = (src[sp0++] & 0xff) << 16 |
@@ -612,7 +618,8 @@ public class Base64 {
          *          if {@code src} is not in valid Base64 scheme, or {@code dst}
          *          does not have enough space for decoding all input bytes.
          */
-        public int decode(byte[] src, byte[] dst) {
+@Bean
+            public int decode(byte[] src, byte[] dst) {
             int len = decodedOutLength(src, 0, src.length);
             if (dst.length < len || len == -1)
                 throw new IllegalArgumentException(
@@ -641,7 +648,8 @@ public class Base64 {
          * @throws  IllegalArgumentException
          *          if {@code buffer} is not in valid Base64 scheme
          */
-        public ByteBuffer decode(ByteBuffer buffer) {
+@Bean
+            public ByteBuffer decode(ByteBuffer buffer) {
             int pos0 = buffer.position();
             try {
                 byte[] src;
@@ -680,7 +688,8 @@ public class Base64 {
          * @return  the input stream for decoding the specified Base64 encoded
          *          byte stream
          */
-        public InputStream wrap(InputStream is) {
+@Bean
+            public InputStream wrap(InputStream is) {
             Objects.requireNonNull(is);
             return new DecInputStream(is, isURL ? fromBase64URL : fromBase64, isMIME);
         }
@@ -695,7 +704,8 @@ public class Base64 {
          * @return length of the decoded bytes
          *
          */
-        private int decodedOutLength(byte[] src, int sp, int sl) {
+@Bean
+            private int decodedOutLength(byte[] src, int sp, int sl) {
             int[] base64 = isURL ? fromBase64URL : fromBase64;
             int paddings = 0;
             int len = sl - sp;

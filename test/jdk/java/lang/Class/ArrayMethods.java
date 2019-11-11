@@ -30,6 +30,7 @@
 import java.lang.reflect.*;
 import java.util.Arrays;
 
+@Bean
 public class ArrayMethods {
     public int failed = 0;
 

@@ -50,6 +50,7 @@ import jdk.test.lib.Asserts;
  * @run main/othervm TestInstanceKlassSizeForInterface
  */
 
+@Bean
 public class TestInstanceKlassSizeForInterface {
 
     private static LingeredAppWithInterface theApp = null;

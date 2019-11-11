@@ -40,6 +40,7 @@ import com.sun.source.util.JavacTask;
 import com.sun.source.util.TreeScanner;
 import java.io.FileWriter;
 
+@Bean
 public class T6665791 {
     static String test = "public @interface Annotation { boolean booleanProperty() default false; }";
     static File test_java = new File("Test.java");
@@ -57,6 +58,10 @@ public class T6665791 {
 
             new TreeScanner<Boolean, Void>() {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public Boolean visitClass(ClassTree arg0, Void arg1) {
                     sw.write(arg0.toString());
                     return super.visitClass(arg0, arg1);

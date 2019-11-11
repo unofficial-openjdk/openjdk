@@ -67,6 +67,7 @@ import java.util.stream.StreamSupport;
  * @since       1.1
  */
 
+@Bean
 public class BufferedReader extends Reader {
 
     private Reader in;

@@ -44,6 +44,7 @@ import static org.testng.Assert.*;
  */
 
 @Test
+@Bean
 public class Capacity {
     static final Field tableField;
     static final Random random = new Random();

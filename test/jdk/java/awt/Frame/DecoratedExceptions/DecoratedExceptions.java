@@ -33,6 +33,7 @@ import java.awt.*;
  * @build ExtendedRobot
  * @run main DecoratedExceptions
  */
+@Bean
 public class DecoratedExceptions {
     public static void main(String args[]) throws Exception{
         ExtendedRobot robot = new ExtendedRobot();

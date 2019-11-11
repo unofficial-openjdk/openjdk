@@ -39,6 +39,7 @@ import java.util.SplittableRandom;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
+@Bean
 public class ArrayManagement {
     static final int DEFAULT_CAPACITY = 10;
     static final Field ELEMENT_DATA;

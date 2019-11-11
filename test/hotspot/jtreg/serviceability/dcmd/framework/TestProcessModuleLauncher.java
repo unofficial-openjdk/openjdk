@@ -49,7 +49,11 @@ public class TestProcessModuleLauncher extends TestProcessLauncher {
         super(className);
     }
 
-    protected String prepareLaunch(String javaExec, String pipePort) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected String prepareLaunch(String javaExec, String pipePort) {
         try {
             prepareModule();
             return javaExec + " --module-path " + TEST_MODULES.toFile().getAbsolutePath() +

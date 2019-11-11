@@ -39,6 +39,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 
 @Test
+@Bean
 public class JapaneseLenientEraTest {
 
     @DataProvider(name="lenientEra")

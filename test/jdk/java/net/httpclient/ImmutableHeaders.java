@@ -50,6 +50,7 @@ import java.util.concurrent.Executors;
 import java.util.List;
 import static java.nio.charset.StandardCharsets.US_ASCII;
 
+@Bean
 public class ImmutableHeaders {
 
     final static String RESPONSE = "Hello world";

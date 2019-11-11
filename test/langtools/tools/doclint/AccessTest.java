@@ -19,6 +19,7 @@
  */
 
 /** */
+@Bean
 public class AccessTest {
     /**
      * public a < b

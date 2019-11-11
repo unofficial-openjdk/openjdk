@@ -41,6 +41,7 @@ import java.nio.file.ProviderMismatchException;
  * @run main/othervm/java.security.policy=test.policy PathOps
  */
 
+@Bean
 public class PathOps {
 
     static final java.io.PrintStream out = System.out;

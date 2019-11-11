@@ -31,6 +31,7 @@
 import java.util.*;
 import java.util.stream.IntStream;
 
+@Bean
 public class PutNullKey {
 
     // Initial capacity of map
@@ -60,7 +61,11 @@ public class PutNullKey {
         }
 
         @Override
-        public boolean equals(Object o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) {
             if (null == o) {
                 return false;
             }
@@ -73,7 +78,11 @@ public class PutNullKey {
         }
 
         @Override
-        public int compareTo(CollidingHash o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int compareTo(CollidingHash o) {
             return value - o.value;
         }
     }

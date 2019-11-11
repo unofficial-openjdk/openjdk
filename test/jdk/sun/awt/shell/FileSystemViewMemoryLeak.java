@@ -33,6 +33,7 @@ import java.io.File;
 import java.text.NumberFormat;
 import javax.swing.filechooser.FileSystemView;
 
+@Bean
 public class FileSystemViewMemoryLeak {
 
     public static void main(String[] args) {

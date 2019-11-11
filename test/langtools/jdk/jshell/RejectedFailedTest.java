@@ -44,9 +44,14 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 @Test
+@Bean
 public class RejectedFailedTest extends KullaTesting {
 
-    private String bad(String input, Kind kind, String prevId) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String bad(String input, Kind kind, String prevId) {
         List<SnippetEvent> events = assertEvalFail(input);
         assertEquals(events.size(), 1, "Expected one event, got: " + events.size());
         SnippetEvent e = events.get(0);
@@ -68,7 +73,11 @@ public class RejectedFailedTest extends KullaTesting {
         return key.id();
     }
 
-    private void checkByKind(String[] inputs, Kind kind) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkByKind(String[] inputs, Kind kind) {
         String prevId = "";
         for (String in : inputs) {
             prevId = bad(in, kind, prevId);

@@ -39,22 +39,26 @@ import toolbox.JavacTask;
 import toolbox.ToolBox;
 
 // Original test: test/tools/javac/ExtDirs/ExtDirs.sh
+@Bean
 public class ExtDirTest {
 
     private static final String ExtDirTestClass1Src =
         "package pkg1;\n" +
         "\n" +
-        "public class ExtDirTestClass1 {}";
+        "@Bean
+public class ExtDirTestClass1 {}";
 
     private static final String ExtDirTestClass2Src =
         "package pkg2;\n" +
         "\n" +
-        "public class ExtDirTestClass2 {}";
+        "@Bean
+public class ExtDirTestClass2 {}";
 
     private static final String ExtDirTest_1Src =
         "import pkg1.*;\n" +
         "\n" +
-        "public class ExtDirTest_1 {\n" +
+        "@Bean
+public class ExtDirTest_1 {\n" +
         "  ExtDirTestClass1 x;\n" +
         "}";
 
@@ -62,7 +66,8 @@ public class ExtDirTest {
         "import pkg1.*;\n" +
         "import pkg2.*;\n" +
         "\n" +
-        "public class ExtDirTest_2 {\n" +
+        "@Bean
+public class ExtDirTest_2 {\n" +
         "  ExtDirTestClass1 x;\n" +
         "  ExtDirTestClass2 y;\n" +
         "}";
@@ -71,7 +76,8 @@ public class ExtDirTest {
         "import pkg1.*;\n" +
         "import pkg2.*;\n" +
         "\n" +
-        "public class ExtDirTest_3 {\n" +
+        "@Bean
+public class ExtDirTest_3 {\n" +
         "  ExtDirTestClass1 x;\n" +
         "  ExtDirTestClass2 y;\n" +
         "}";

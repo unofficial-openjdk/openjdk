@@ -38,6 +38,7 @@ import javax.tools.ToolProvider;
  * Some efforts are made to make the class instances unique and of not insignificant
  * size.
  */
+@Bean
 public class GeneratedClassLoader extends ClassLoader {
     /**
      * Holds a pair of class bytecodes and class name (for use with defineClass).
@@ -91,23 +92,40 @@ public class GeneratedClassLoader extends ClassLoader {
         nameBase = "TestSimpleClass";
     }
 
-    private long getBigValue(int which) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private long getBigValue(int which) {
         // > 65536 is too large to encode in the bytecode
         // so this will force us to emit a constant pool entry for this int
         return (long)which + 65537;
     }
 
-    private String getBigString(int which) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String getBigString(int which) {
         return bigstr + which;
     }
 
-    private String getClassName(int count) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String getClassName(int count) {
         return nameBase + count;
     }
 
-    private String generateSource(int count, int sizeFactor, int numClasses) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String generateSource(int count, int sizeFactor, int numClasses) {
         StringBuilder sb = new StringBuilder();
-        sb.append("public class ").append(getClassName(count)).append("{\n");
+        sb.append("@Bean
+public class ").append(getClassName(count)).append("{\n");
         for (int j = 0; j < numClasses; ++j) {
             sb.append("public static class ")
               .append("Class")
@@ -188,7 +206,8 @@ public class GeneratedClassLoader extends ClassLoader {
      * @return the Class instance.
      * @throws IOException
      */
-    public Class<?> generateClass(int sizeFactor) throws IOException {
+    @Bean
+public class<?> generateClass(int sizeFactor) throws IOException {
         return getGeneratedClasses(sizeFactor, 1)[0];
     }
 
@@ -199,7 +218,8 @@ public class GeneratedClassLoader extends ClassLoader {
      * @return an array of the Class instances.
      * @throws IOException
      */
-    public Class<?>[] getGeneratedClasses(int sizeFactor, int numClasses) throws IOException {
+    @Bean
+public class<?>[] getGeneratedClasses(int sizeFactor, int numClasses) throws IOException {
         GeneratedClass[] gc = getGeneratedClass(sizeFactor, numClasses);
         Class<?>[] classes = new Class[numClasses];
         for (int i = 0; i < numClasses; ++i) {

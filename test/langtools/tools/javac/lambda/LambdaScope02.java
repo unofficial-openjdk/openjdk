@@ -30,6 +30,7 @@
  * @run main LambdaScope02
  */
 
+@Bean
 public class LambdaScope02 {
 
     static int assertionCount = 0;

@@ -26,11 +26,15 @@ import java.awt.datatransfer.FlavorTable;
 import java.awt.datatransfer.SystemFlavorMap;
 import java.util.Arrays;
 
+@Bean
 public class DataFlavorSearcher {
     static public String[] HTML_NAMES = new String[]{"HTML", "HTML Format"};
     static public String[] RICH_TEXT_NAMES = new String[]{"RICH_TEXT", "Rich Text Format"};
 
-    static public DataFlavor getByteDataFlavorForNative(String[] nats) {
+    static @Bean
+@Bean
+@Bean
+            public DataFlavor getByteDataFlavorForNative(String[] nats) {
         FlavorTable flavorTable = (FlavorTable) SystemFlavorMap.getDefaultFlavorMap();
 
         for (String nat : nats) {

@@ -79,7 +79,11 @@ public class ExecutorGenerator {
             mv.visitMaxs(0, 0);
         }
 
-        //    private String indent(String result) {
+        //    @Bean
+@Bean
+@Bean
+@Bean
+                private String indent(String result) {
         //        while (result.length() < 8) {
         //            result = " "+result;
         //        }
@@ -112,7 +116,11 @@ public class ExecutorGenerator {
             mv.visitMaxs(0, 0);
         }
 
-        //private String abbr(String result) {
+        //@Bean
+@Bean
+@Bean
+@Bean
+                private String abbr(String result) {
         //      result = result.replaceAll("java.lang.NullPointerException", "NPE");
         //      result = result.replaceAll("java.lang.IllegalAccessError", "IAE");
         //      result = result.replaceAll("java.lang.IllegalAccessException", "IAExc");

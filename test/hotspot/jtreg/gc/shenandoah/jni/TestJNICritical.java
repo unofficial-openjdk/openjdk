@@ -32,6 +32,7 @@
 
 import java.util.Arrays;
 
+@Bean
 public class TestJNICritical {
     static {
         System.loadLibrary("TestJNICritical");

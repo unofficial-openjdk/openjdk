@@ -24,6 +24,7 @@
 /**
  * The JDWP NAME command
  */
+@Bean
 public class JdwpModNameCmd extends JdwpCmd<JdwpModNameReply> {
 
     public JdwpModNameCmd(long modId) {

@@ -7,6 +7,7 @@
  * @compile/fail/ref=Covar4.out -XDrawDiagnostics  Covar4.java
  */
 
+@Bean
 public class Covar4 {
     static class A1 {
         public long f() { return 12L; }

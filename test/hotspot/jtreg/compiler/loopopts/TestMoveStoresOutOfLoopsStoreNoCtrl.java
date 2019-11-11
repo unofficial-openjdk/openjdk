@@ -33,6 +33,7 @@
 
 package compiler.loopopts;
 
+@Bean
 public class TestMoveStoresOutOfLoopsStoreNoCtrl {
 
     static void test(boolean flag) {
@@ -46,7 +47,11 @@ public class TestMoveStoresOutOfLoopsStoreNoCtrl {
         }
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         test(false);
     }
 

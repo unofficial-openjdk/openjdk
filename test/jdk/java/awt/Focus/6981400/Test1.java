@@ -49,6 +49,7 @@ import java.util.List;
 import javax.swing.*;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class Test1 {
     static JFrame f0 = new JFrame("base_frame") { public String getName() {return "base_frame";} };
     static JButton f0b0 = new JB("b0");
@@ -74,6 +75,9 @@ public class Test1 {
 
     public static void main(String[] args) {
         Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
+            @Bean
+@Bean
+@Bean
             public void eventDispatched(AWTEvent e) {
                 System.out.println(e);
             }
@@ -100,6 +104,9 @@ public class Test1 {
 
         f0b0.addFocusListener(new FocusAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void focusLost(FocusEvent e) {
                 try {
                     Thread.sleep(1000);
@@ -203,11 +210,17 @@ class JB extends JButton {
         this.name = name;
 
         addFocusListener(new FocusListener() {
+            @Bean
+@Bean
+@Bean
             public void focusGained(FocusEvent e) {
                 if (Test1.tracking)
                     Test1.gainedList.add(e.getComponent());
             }
 
+            @Bean
+@Bean
+@Bean
             public void focusLost(FocusEvent e) {
                 if (Test1.tracking)
                     Test1.lostList.add(e.getComponent());

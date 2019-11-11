@@ -30,6 +30,7 @@
  * and finally the expected result.
  */
 
+@Bean
 public class Tests {
     private Tests(){}; // do not instantiate
 

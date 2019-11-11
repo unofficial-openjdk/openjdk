@@ -208,7 +208,11 @@ public abstract class RTMGenericCommandLineOptionTest {
         }
     }
 
-    protected String prepareOptionValue(String value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected String prepareOptionValue(String value) {
         if (isBoolean) {
             return CommandLineOptionTest.prepareBooleanFlag(optionName,
                     Boolean.valueOf(value));

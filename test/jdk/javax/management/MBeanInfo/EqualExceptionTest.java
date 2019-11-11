@@ -36,6 +36,7 @@
 import java.io.IOException;
 import javax.management.*;
 
+@Bean
 public class EqualExceptionTest {
     public static void main(String[] args) throws Exception {
         System.out.println("<<< Test whether an null descriptor will cause an NullPointerException.");

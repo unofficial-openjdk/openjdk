@@ -32,6 +32,7 @@ import org.testng.annotations.Test;
  * @run testng/othervm ConnectTimeoutHandshakeAsync
  */
 
+@Bean
 public class ConnectTimeoutHandshakeAsync
     extends AbstractConnectTimeoutHandshake
 {

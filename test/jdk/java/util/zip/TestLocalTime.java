@@ -33,6 +33,7 @@ import java.time.*;
 import java.util.*;
 import java.util.zip.*;
 
+@Bean
 public class TestLocalTime {
     private static TimeZone tz0 = TimeZone.getDefault();
 

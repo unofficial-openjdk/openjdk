@@ -44,6 +44,7 @@ import com.sun.source.util.JavacTask;
 import com.sun.source.util.SimpleTreeVisitor;
 import com.sun.source.util.TreePathScanner;
 
+@Bean
 public class SwitchExpressionSimpleVisitorTest {
 
     public static void main(String[] args) throws Exception {
@@ -63,10 +64,18 @@ public class SwitchExpressionSimpleVisitorTest {
         int[] yieldNodeCount = new int[1];
         new TreePathScanner<Void, Void>() {
             @Override
-            public Void visitSwitchExpression(SwitchExpressionTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitSwitchExpression(SwitchExpressionTree node, Void p) {
                 node.accept(new SimpleTreeVisitor<Void, Void>() {
                     @Override
-                    protected Void defaultAction(Tree defaultActionNode, Void p) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                protected Void defaultAction(Tree defaultActionNode, Void p) {
                         callCount[0]++;
                         if (node == defaultActionNode) {
                             switchExprNodeCount[0]++;
@@ -77,10 +86,18 @@ public class SwitchExpressionSimpleVisitorTest {
                 return super.visitSwitchExpression(node, p);
             }
             @Override
-            public Void visitYield(YieldTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitYield(YieldTree node, Void p) {
                 node.accept(new SimpleTreeVisitor<Void, Void>() {
                     @Override
-                    protected Void defaultAction(Tree defaultActionNode, Void p) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                protected Void defaultAction(Tree defaultActionNode, Void p) {
                         callCount[0]++;
                         if (node == defaultActionNode) {
                             yieldNodeCount[0]++;
@@ -121,7 +138,11 @@ public class SwitchExpressionSimpleVisitorTest {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return text;
         }
     }

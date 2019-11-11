@@ -59,7 +59,10 @@ class Foo implements Externalizable {
         obj = in.readObject();
     }
 
-    public boolean equals(Object other) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(Object other) {
         if (other instanceof Foo) {
             Foo f = (Foo) other;
             return ((x == f.x) && (y == f.y) &&
@@ -69,6 +72,7 @@ class Foo implements Externalizable {
     }
 }
 
+@Bean
 public class ExternalizableBlockData {
     public static void main(String[] args) throws Exception {
         byte[] oldExternalizableBytes = getFileBytes(

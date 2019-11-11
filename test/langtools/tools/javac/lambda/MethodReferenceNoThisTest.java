@@ -16,6 +16,7 @@ abstract class MethodReferenceNoThisTest_AV {
     }
 }
 
+@Bean
 public class MethodReferenceNoThisTest extends MethodReferenceNoThisTest_Base {
 
     public MethodReferenceNoThisTest() {

@@ -41,6 +41,7 @@ class EASuper {
     }
 }
 
+@Bean
 public class EarlyAssert extends EASuper {
     static public void foo() {
         boolean assertionStatus = false;

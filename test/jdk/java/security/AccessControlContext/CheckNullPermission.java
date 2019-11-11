@@ -31,6 +31,7 @@
 import java.security.ProtectionDomain;
 import java.security.AccessControlContext;
 
+@Bean
 public class CheckNullPermission {
 
    public static void main (String argv[]) throws Exception {

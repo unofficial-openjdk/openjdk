@@ -33,6 +33,7 @@ import java.io.*;
 import jdk.test.lib.net.URIBuilder;
 import static java.net.Proxy.NO_PROXY;
 
+@Bean
 public class OpenURL {
 
     public static void main (String[] args) throws Exception {

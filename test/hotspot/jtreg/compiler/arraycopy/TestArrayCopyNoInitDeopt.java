@@ -45,6 +45,7 @@ import sun.hotspot.WhiteBox;
 
 import java.lang.reflect.Method;
 
+@Bean
 public class TestArrayCopyNoInitDeopt {
 
     public static int[] m1(Object src) {

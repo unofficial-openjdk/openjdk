@@ -28,6 +28,7 @@
  */
 
 
+@Bean
 public class Test255 {
     public static void main(String... args) {
             // allocating an array with 255 dimensions is allowed

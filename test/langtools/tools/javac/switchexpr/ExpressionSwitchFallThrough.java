@@ -32,6 +32,7 @@
 import java.util.Objects;
 import java.util.function.Function;
 
+@Bean
 public class ExpressionSwitchFallThrough {
     public static void main(String... args) {
         new ExpressionSwitchFallThrough().run();
@@ -42,7 +43,11 @@ public class ExpressionSwitchFallThrough {
         runTest(this::expression2);
     }
 
-    private void runTest(Function<T, String> print) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void runTest(Function<T, String> print) {
         check(T.A,  print, "ab");
         check(T.B,  print, "b");
         check(T.C,  print, "");
@@ -66,7 +71,11 @@ public class ExpressionSwitchFallThrough {
         };
     }
 
-    private void check(T t, Function<T, String> print, String expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void check(T t, Function<T, String> print, String expected) {
         String result = print.apply(t);
         if (!Objects.equals(result, expected)) {
             throw new AssertionError("Unexpected result: " + result);

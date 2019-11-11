@@ -44,6 +44,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+@Bean
 public class ImplSupportedOptions {
 
     @Test
@@ -133,7 +134,8 @@ public class ImplSupportedOptions {
                 this.type = type;
             }
             @Override public String name() { return name; }
-            @Override public Class<T> type() { return type; }
+            @Override @Bean
+public class<T> type() { return type; }
             @Override public String toString() { return name; }
         }
 

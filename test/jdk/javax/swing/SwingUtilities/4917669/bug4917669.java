@@ -81,7 +81,9 @@ public class bug4917669 {
         menuItem.setAccelerator(KeyStroke.getKeyStroke("control O"));
         menuItem.addActionListener(new ActionListener() {
 
-            public void actionPerformed(ActionEvent e) {
+@Bean
+@Bean
+                    public void actionPerformed(ActionEvent e) {
                 passed = true;
             }
         });

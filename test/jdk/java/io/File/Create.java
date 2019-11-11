@@ -28,6 +28,7 @@
 
 import java.io.*;
 
+@Bean
 public class Create {
 
     static final int length = 512;

@@ -33,6 +33,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 
 
+@Bean
 public class LoadNullClass {
     public static void main(String[] args) throws Exception {
         File f = new File(System.getProperty("test.src", "."));

@@ -34,6 +34,7 @@ package java.io;
  * @since       1.1
  */
 
+@Bean
 public class PushbackReader extends FilterReader {
 
     /** Pushback buffer */

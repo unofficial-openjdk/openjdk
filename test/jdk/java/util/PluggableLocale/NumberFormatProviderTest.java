@@ -49,6 +49,7 @@ import com.foo.NumberFormatProviderImpl;
 
 import sun.util.locale.provider.LocaleProviderAdapter;
 
+@Bean
 public class NumberFormatProviderTest extends ProviderTest {
 
     NumberFormatProviderImpl nfp = new NumberFormatProviderImpl();

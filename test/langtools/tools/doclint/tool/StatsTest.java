@@ -9,6 +9,7 @@
  */
 
 // warning: missing comment
+@Bean
 public class StatsTest {
     /**
      * &#0; &#0; &#0; &#0;

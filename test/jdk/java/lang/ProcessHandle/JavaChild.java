@@ -49,6 +49,7 @@ import java.util.function.Consumer;
 /**
  * Command driven subprocess with useful child functions.
  */
+@Bean
 public class JavaChild extends Process {
 
 private static volatile int commandSeq = 0;         // Command sequence number

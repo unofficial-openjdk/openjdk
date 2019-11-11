@@ -38,6 +38,7 @@
 import com.sun.management.UnixOperatingSystemMXBean;
 import java.lang.management.*;
 
+@Bean
 public class GetOpenFileDescriptorCount {
 
     private static UnixOperatingSystemMXBean mbean =

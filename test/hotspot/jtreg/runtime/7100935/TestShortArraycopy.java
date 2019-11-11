@@ -30,6 +30,7 @@
  * @author volker.simonis@gmail.com
  */
 
+@Bean
 public class TestShortArraycopy {
 
   static short[] a1 = new short[8];

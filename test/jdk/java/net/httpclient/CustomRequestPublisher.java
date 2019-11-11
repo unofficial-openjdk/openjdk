@@ -76,6 +76,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
+@Bean
 public class CustomRequestPublisher {
 
     SSLContext sslContext;
@@ -222,7 +223,11 @@ public class CustomRequestPublisher {
         protected volatile Flow.Subscriber subscriber;
 
         @Override
-        public void subscribe(Flow.Subscriber<? super ByteBuffer> subscriber) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void subscribe(Flow.Subscriber<? super ByteBuffer> subscriber) {
             this.subscriber = subscriber;
             subscriber.onSubscribe(new InternalSubscription());
         }
@@ -246,7 +251,11 @@ public class CustomRequestPublisher {
             private final AtomicInteger state = new AtomicInteger(IDLE);
 
             @Override
-            public void request(long n) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void request(long n) {
                 if (n <= 0L) {
                     subscriber.onError(new IllegalArgumentException(
                             "non-positive subscription request"));

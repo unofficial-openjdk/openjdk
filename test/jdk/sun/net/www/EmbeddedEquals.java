@@ -30,6 +30,7 @@
 
 import sun.net.www.HeaderParser;
 
+@Bean
 public class EmbeddedEquals {
     static String test = "WWW-Authenticate: Digest realm=\"testrealm\","+
                       "nonce=\"Ovqrpw==b20ff3b0ea3f3a18f1d6293331edaafdb98f5bef\", algorithm=MD5,"+

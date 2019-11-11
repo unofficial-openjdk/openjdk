@@ -80,6 +80,7 @@ import org.testng.Assert;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+@Bean
 public class SpecialHeadersTest implements HttpServerAdapters {
 
     SSLContext sslContext;

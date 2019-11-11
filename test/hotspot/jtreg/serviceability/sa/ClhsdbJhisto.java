@@ -39,6 +39,7 @@ import jtreg.SkippedException;
  * @run main/othervm ClhsdbJhisto
  */
 
+@Bean
 public class ClhsdbJhisto {
 
     public static void main(String[] args) throws Exception {

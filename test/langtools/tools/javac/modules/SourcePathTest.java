@@ -45,6 +45,7 @@ import java.util.List;
 import toolbox.JavacTask;
 import toolbox.Task;
 
+@Bean
 public class SourcePathTest extends ModuleTestBase {
     public static void main(String... args) throws Exception {
         SourcePathTest t = new SourcePathTest();
@@ -54,9 +55,11 @@ public class SourcePathTest extends ModuleTestBase {
     @Test
     public void test_unnamedModuleOnSourcePath_fileNotOnPath(Path base) throws IOException {
         Path src = base.resolve("src");
-        tb.writeJavaFiles(src, "package p; public class A { }");
+        tb.writeJavaFiles(src, "package p; @Bean
+public class A { }");
         Path otherSrc = base.resolve("otherSrc");
-        tb.writeJavaFiles(otherSrc, "package p2; public class B { }");
+        tb.writeJavaFiles(otherSrc, "package p2; @Bean
+public class B { }");
 
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
@@ -74,7 +77,8 @@ public class SourcePathTest extends ModuleTestBase {
     @Test
     public void test_unnamedModuleOnSourcePath_fileOnPath(Path base) throws IOException {
         Path src = base.resolve("src");
-        tb.writeJavaFiles(src, "package p; public class A { }");
+        tb.writeJavaFiles(src, "package p; @Bean
+public class A { }");
 
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
@@ -93,9 +97,11 @@ public class SourcePathTest extends ModuleTestBase {
     public void test_namedModuleOnSourcePath_fileNotOnPath_1(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeFile(src.resolve("module-info.java"), "module m { exports p; }");
-        tb.writeJavaFiles(src, "package p; public class A { }");
+        tb.writeJavaFiles(src, "package p; @Bean
+public class A { }");
         Path otherSrc = base.resolve("otherSrc");
-        tb.writeJavaFiles(otherSrc, "package p2; public class B { }");
+        tb.writeJavaFiles(otherSrc, "package p2; @Bean
+public class B { }");
 
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
@@ -122,11 +128,13 @@ public class SourcePathTest extends ModuleTestBase {
         Path src_mA = src.resolve("mA");
         tb.writeJavaFiles(src_mA,
                 "module mA { exports p; }",
-                "package p; public class A { }");
+                "package p; @Bean
+public class A { }");
         Path src_mB = src.resolve("mB");
         tb.writeJavaFiles(src_mB,
                 "module mA { exports p2; }",
-                "package p2; public class B { }");
+                "package p2; @Bean
+public class B { }");
 
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
@@ -148,7 +156,8 @@ public class SourcePathTest extends ModuleTestBase {
     public void test_namedModuleOnSourcePath_fileOnPath(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeFile(src.resolve("module-info.java"), "module m { exports p; }");
-        tb.writeJavaFiles(src, "package p; public class A { }");
+        tb.writeJavaFiles(src, "package p; @Bean
+public class A { }");
 
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
@@ -170,9 +179,11 @@ public class SourcePathTest extends ModuleTestBase {
         // except that other src directory is not put on the patch path
         Path src = base.resolve("src");
         tb.writeFile(src.resolve("module-info.java"), "module m { exports p; }");
-        tb.writeJavaFiles(src, "package p; public class A { }");
+        tb.writeJavaFiles(src, "package p; @Bean
+public class A { }");
         Path otherSrc = base.resolve("otherSrc");
-        tb.writeJavaFiles(otherSrc, "package p2; public class B { }");
+        tb.writeJavaFiles(otherSrc, "package p2; @Bean
+public class B { }");
 
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
@@ -201,13 +212,16 @@ public class SourcePathTest extends ModuleTestBase {
         Path src_mA = src.resolve("mA");
         tb.writeJavaFiles(src_mA,
                 "module mA { exports p; }",
-                "package p; public class A { }");
+                "package p; @Bean
+public class A { }");
         Path src_mB = src.resolve("mB");
         tb.writeJavaFiles(src_mB,
                 "module mB { exports p2; }",
-                "package p2; public class B { }");
+                "package p2; @Bean
+public class B { }");
         Path otherSrc = base.resolve("otherSrc");
-        tb.writeJavaFiles(otherSrc, "package p3; public class C { }");
+        tb.writeJavaFiles(otherSrc, "package p3; @Bean
+public class C { }");
 
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
@@ -232,11 +246,13 @@ public class SourcePathTest extends ModuleTestBase {
         Path src_mA = src.resolve("mA");
         tb.writeJavaFiles(src_mA,
                 "module mA { exports p; }",
-                "package p; public class A { }");
+                "package p; @Bean
+public class A { }");
         Path src_mB = src.resolve("mB");
         tb.writeJavaFiles(src_mB,
                 "module mB { exports p2; }",
-                "package p2; public class B { }");
+                "package p2; @Bean
+public class B { }");
 
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
@@ -262,13 +278,16 @@ public class SourcePathTest extends ModuleTestBase {
         Path src_mA = src.resolve("mA");
         tb.writeJavaFiles(src_mA,
                 "module mA { exports p; }",
-                "package p; public class A { }");
+                "package p; @Bean
+public class A { }");
         Path src_mB = src.resolve("mB");
         tb.writeJavaFiles(src_mB,
                 "module mB { exports p2; }",
-                "package p2; public class B { }");
+                "package p2; @Bean
+public class B { }");
         Path otherSrc = base.resolve("otherSrc");
-        tb.writeJavaFiles(otherSrc, "package p3; public class C { }");
+        tb.writeJavaFiles(otherSrc, "package p3; @Bean
+public class C { }");
 
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);

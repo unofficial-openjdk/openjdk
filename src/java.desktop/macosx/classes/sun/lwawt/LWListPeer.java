@@ -91,7 +91,8 @@ final class LWListPeer extends LWComponentPeer<List, LWListPeer.ScrollableJList>
     }
 
     @Override
-    public void add(final String item, final int index) {
+@Bean
+        public void add(final String item, final int index) {
         synchronized (getDelegateLock()) {
             getDelegate().getModel().add(index, item);
             revalidate();
@@ -99,7 +100,8 @@ final class LWListPeer extends LWComponentPeer<List, LWListPeer.ScrollableJList>
     }
 
     @Override
-    public void delItems(final int start, final int end) {
+@Bean
+        public void delItems(final int start, final int end) {
         synchronized (getDelegateLock()) {
             getDelegate().getModel().removeRange(start, end);
             revalidate();
@@ -115,7 +117,8 @@ final class LWListPeer extends LWComponentPeer<List, LWListPeer.ScrollableJList>
     }
 
     @Override
-    public void select(final int index) {
+@Bean
+        public void select(final int index) {
         synchronized (getDelegateLock()) {
             getDelegate().setSkipStateChangedEvent(true);
             getDelegate().getView().setSelectedIndex(index);
@@ -124,7 +127,8 @@ final class LWListPeer extends LWComponentPeer<List, LWListPeer.ScrollableJList>
     }
 
     @Override
-    public void deselect(final int index) {
+@Bean
+        public void deselect(final int index) {
         synchronized (getDelegateLock()) {
             getDelegate().getView().getSelectionModel().
                     removeSelectionInterval(index, index);
@@ -132,14 +136,16 @@ final class LWListPeer extends LWComponentPeer<List, LWListPeer.ScrollableJList>
     }
 
     @Override
-    public void makeVisible(final int index) {
+@Bean
+        public void makeVisible(final int index) {
         synchronized (getDelegateLock()) {
             getDelegate().getView().ensureIndexIsVisible(index);
         }
     }
 
     @Override
-    public void setMultipleMode(final boolean m) {
+@Bean
+        public void setMultipleMode(final boolean m) {
         synchronized (getDelegateLock()) {
             getDelegate().getView().setSelectionMode(m ?
                     ListSelectionModel.MULTIPLE_INTERVAL_SELECTION
@@ -158,12 +164,14 @@ final class LWListPeer extends LWComponentPeer<List, LWListPeer.ScrollableJList>
     }
 
     @Override
-    public Dimension getPreferredSize(final int rows) {
+@Bean
+        public Dimension getPreferredSize(final int rows) {
         return getMinimumSize(rows);
     }
 
     @Override
-    public Dimension getMinimumSize(final int rows) {
+@Bean
+        public Dimension getMinimumSize(final int rows) {
         synchronized (getDelegateLock()) {
             final Dimension size = getCellSize();
             size.height *= rows;
@@ -202,7 +210,8 @@ final class LWListPeer extends LWComponentPeer<List, LWListPeer.ScrollableJList>
         private final DefaultListModel<String> model =
                 new DefaultListModel<String>() {
                     @Override
-                    public void add(final int index, final String element) {
+@Bean
+                        public void add(final int index, final String element) {
                         if (index == -1) {
                             addElement(element);
                         } else {
@@ -231,13 +240,15 @@ final class LWListPeer extends LWComponentPeer<List, LWListPeer.ScrollableJList>
             return skipStateChangedEvent;
         }
 
-        public void setSkipStateChangedEvent(boolean skipStateChangedEvent) {
+@Bean
+            public void setSkipStateChangedEvent(boolean skipStateChangedEvent) {
             this.skipStateChangedEvent = skipStateChangedEvent;
         }
 
         @Override
         @SuppressWarnings("unchecked")
-        public void valueChanged(final ListSelectionEvent e) {
+@Bean
+            public void valueChanged(final ListSelectionEvent e) {
             if (!e.getValueIsAdjusting() && !isSkipStateChangedEvent()) {
                 final JList<?> source = (JList<?>) e.getSource();
                 for(int i = 0 ; i < source.getModel().getSize(); i++) {
@@ -268,13 +279,15 @@ final class LWListPeer extends LWComponentPeer<List, LWListPeer.ScrollableJList>
         }
 
         @Override
-        public void setEnabled(final boolean enabled) {
+@Bean
+            public void setEnabled(final boolean enabled) {
             getView().setEnabled(enabled);
             super.setEnabled(enabled);
         }
 
         @Override
-        public void setOpaque(final boolean isOpaque) {
+@Bean
+            public void setOpaque(final boolean isOpaque) {
             super.setOpaque(isOpaque);
             if (getView() != null) {
                 getView().setOpaque(isOpaque);
@@ -282,7 +295,8 @@ final class LWListPeer extends LWComponentPeer<List, LWListPeer.ScrollableJList>
         }
 
         @Override
-        public void setFont(Font font) {
+@Bean
+            public void setFont(Font font) {
             super.setFont(font);
             if (getView() != null) {
                 getView().setFont(font);
@@ -303,7 +317,8 @@ final class LWListPeer extends LWComponentPeer<List, LWListPeer.ScrollableJList>
 
             @Override
             @SuppressWarnings("deprecation")
-            protected void processMouseEvent(final MouseEvent e) {
+@Bean
+                protected void processMouseEvent(final MouseEvent e) {
                 super.processMouseEvent(e);
                 if (e.getID() == MouseEvent.MOUSE_CLICKED && e.getClickCount() == 2) {
                     final int index = locationToIndex(e.getPoint());
@@ -316,7 +331,8 @@ final class LWListPeer extends LWComponentPeer<List, LWListPeer.ScrollableJList>
 
             @Override
             @SuppressWarnings("deprecation")
-            protected void processKeyEvent(final KeyEvent e) {
+@Bean
+                protected void processKeyEvent(final KeyEvent e) {
                 super.processKeyEvent(e);
                 if (e.getID() == KeyEvent.KEY_PRESSED && e.getKeyCode() == KeyEvent.VK_ENTER) {
                     final String selectedValue = getSelectedValue();

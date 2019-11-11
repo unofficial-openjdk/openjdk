@@ -959,7 +959,9 @@ public abstract class CipherSpi {
      *
      * @since 1.7
      */
-    protected void engineUpdateAAD(byte[] src, int offset, int len) {
+    @Bean
+@Bean
+        protected void engineUpdateAAD(byte[] src, int offset, int len) {
         throw new UnsupportedOperationException(
             "The underlying Cipher implementation "
             +  "does not support this method");
@@ -992,7 +994,9 @@ public abstract class CipherSpi {
      *
      * @since 1.7
      */
-    protected void engineUpdateAAD(ByteBuffer src) {
+    @Bean
+@Bean
+        protected void engineUpdateAAD(ByteBuffer src) {
         throw new UnsupportedOperationException(
             "The underlying Cipher implementation "
             +  "does not support this method");

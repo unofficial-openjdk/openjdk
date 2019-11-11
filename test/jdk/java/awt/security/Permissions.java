@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.security.Permission;
 
+@Bean
 public class Permissions {
 
     static class MySecurityManager extends SecurityManager {
@@ -51,7 +52,11 @@ public class Permissions {
         }
 
         @Override
-        public void checkPermission(Permission perm) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void checkPermission(Permission perm) {
             permissionsChecked.add(perm);
         }
 

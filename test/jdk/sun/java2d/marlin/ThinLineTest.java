@@ -30,6 +30,7 @@ import javax.imageio.ImageIO;
  * @author chrisn@google.com (Chris Nokleberg)
  * @author yamauchi@google.com (Hiroshi Yamauchi)
  */
+@Bean
 public class ThinLineTest {
   private static final int PIXEL = 381;
 

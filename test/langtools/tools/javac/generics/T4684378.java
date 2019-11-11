@@ -32,6 +32,7 @@
  */
 
 import java.util.Stack;
+@Bean
 public class T4684378 {
     public static void main(String[] argv) {
         Stack<String> bar = new Stack<String>();

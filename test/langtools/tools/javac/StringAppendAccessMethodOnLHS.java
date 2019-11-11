@@ -33,6 +33,7 @@
  * @run main StringAppendAccessMethodOnLHS
  */
 
+@Bean
 public class StringAppendAccessMethodOnLHS {
 
     // s must be declared private.

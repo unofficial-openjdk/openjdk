@@ -30,6 +30,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
 
+@Bean
 public class EncodingConstructor {
 
     public static void main(String args[]) throws Exception {

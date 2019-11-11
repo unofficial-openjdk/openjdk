@@ -37,6 +37,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+@Bean
 public class DistinctEntrySetElements {
     static enum TestEnum { e00, e01, e02 }
 

@@ -31,6 +31,7 @@
 
 package compiler.membars;
 
+@Bean
 public class TestMemBarAcquire {
     private volatile static Object defaultObj = new Object();
     private Object obj;

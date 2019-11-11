@@ -39,6 +39,7 @@ import sun.net.idn.Punycode;
  * unit test for Punycode that is also originated from the sample code
  * provided in rfc3492.txt
  */
+@Bean
 public class PunycodeTest {
 
     /* For testing, we'll just set some compile-time limits rather than */
@@ -69,7 +70,11 @@ public class PunycodeTest {
     private int output_length[] = new int[1];
     private boolean case_flags[] = new boolean[unicode_max_length];
 
-    public String testEncoding(String inputS) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String testEncoding(String inputS) {
         char input[] = new char[unicode_max_length];
         int codept = 0;
         char uplus[] = new char[2];
@@ -120,7 +125,11 @@ public class PunycodeTest {
         return output.toString();
     }
 
-    public String testDecoding(String inputS) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String testDecoding(String inputS) {
         char input[] = new char[0];
         int pp;
         StringBuffer output;

@@ -56,6 +56,7 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 
+@Bean
 public class HeadersTest1 {
 
     private static final String RESPONSE = "Hello world";

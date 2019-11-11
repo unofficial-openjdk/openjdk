@@ -36,6 +36,7 @@
  * methods are tested in this file.
  */
 
+@Bean
 public class FusedMultiplyAddTests {
     private FusedMultiplyAddTests(){}
 

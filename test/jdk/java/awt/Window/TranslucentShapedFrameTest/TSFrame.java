@@ -82,7 +82,10 @@ public class TSFrame {
 
     private static class MyCanvas extends Canvas {
         @Override
-        public void paint(Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
             render(g, getWidth(), getHeight(), false);
         }
         @Override
@@ -94,7 +97,10 @@ public class TSFrame {
         NonOpaqueJFrame() {
             super("NonOpaque Swing JFrame");
             JPanel p = new JPanel() {
-                public void paintComponent(Graphics g) {
+                @Bean
+@Bean
+@Bean
+            public void paintComponent(Graphics g) {
                     super.paintComponent(g);
                     render(g, getWidth(), getHeight(), true);
                     g.setColor(Color.red);
@@ -112,13 +118,19 @@ public class TSFrame {
         NonOpaqueJAppletFrame() {
             super("NonOpaque Swing JAppletFrame");
             JApplet ja = new JApplet() {
-                public void paint(Graphics g) {
+                @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
                     super.paint(g);
                     System.err.println("JAppletFrame paint called");
                 }
             };
             p = new JPanel() {
-                public void paintComponent(Graphics g) {
+                @Bean
+@Bean
+@Bean
+            public void paintComponent(Graphics g) {
                     super.paintComponent(g);
                     render(g, getWidth(), getHeight(), true);
                     g.setColor(Color.red);
@@ -138,7 +150,10 @@ public class TSFrame {
             // uncomment to test with hw child
 //            setLayout(null);
 //            Component c = new Panel() {
-//                public void paint(Graphics g) {
+//                @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
 //                    g.setColor(new Color(1.0f, 1.0f, 1.0f, 0.5f));
 //                    g.fillRect(0, 0, getWidth(), getHeight());
 //                }
@@ -150,7 +165,10 @@ public class TSFrame {
 //            c.setLocation(130, 130);
         }
         @Override
-        public void paint(Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
             render(g, getWidth(), getHeight(), true);
             g.setColor(Color.red);
             g.drawString("Non-Opaque AWT Frame", 10, 15);
@@ -159,7 +177,10 @@ public class TSFrame {
 
     private static class MyJPanel extends JPanel {
         @Override
-        public void paintComponent(Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paintComponent(Graphics g) {
             render(g, getWidth(), getHeight(), false);
         }
     }
@@ -192,7 +213,10 @@ public class TSFrame {
             frame.add("Center", p);
         } else {
             frame = new Frame("AWT Frame") {
-                public void paint(Graphics g) {
+                @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
                     g.setColor(Color.red);
                     g.fillRect(0, 0, 100, 100);
                 }
@@ -211,6 +235,9 @@ public class TSFrame {
         final Frame finalFrame = frame;
         frame.addWindowListener(new WindowAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent e) {
                 finalFrame.dispose();
                 done = true;
@@ -218,6 +245,9 @@ public class TSFrame {
         });
         frame.addMouseListener(new MouseAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseClicked(MouseEvent e) {
                 finalFrame.dispose();
                 done = true;

@@ -35,6 +35,7 @@
 
 package compiler.intrinsics.string;
 
+@Bean
 public class TestStringConstruction {
 
     public static void main(String[] args) {

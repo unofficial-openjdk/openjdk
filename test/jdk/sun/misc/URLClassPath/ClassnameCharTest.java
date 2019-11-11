@@ -42,6 +42,7 @@ import java.util.jar.*;
 import com.sun.net.httpserver.*;
 import sun.net.www.ParseUtil;
 
+@Bean
 public class ClassnameCharTest {
     static String FNPrefix = System.getProperty("test.src", ".") + File.separator;
     static File classesJar = new File(FNPrefix + "testclasses.jar");
@@ -51,7 +52,11 @@ public class ClassnameCharTest {
         server = HttpServer.create(new InetSocketAddress(0), 0);
         server.createContext("/", new HttpHandler() {
             @Override
-            public void handle(HttpExchange exchange) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void handle(HttpExchange exchange) {
                 try {
                     String filename = exchange.getRequestURI().getPath();
                     System.out.println("getRequestURI = " + exchange.getRequestURI());
@@ -109,7 +114,8 @@ public class ClassnameCharTest {
         }
 
         @Override
-        public Class<?> findClass(String name) throws ClassNotFoundException {
+        @Bean
+public class<?> findClass(String name) throws ClassNotFoundException {
             int index = name.indexOf(';');
             String cookie = "";
             if(index != -1) {

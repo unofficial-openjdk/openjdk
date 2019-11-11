@@ -32,6 +32,7 @@
 
 import mypackage.Superclass;
 
+@Bean
 public class Outerclass extends Superclass {
     Innerclass innerclass = new Innerclass();
 

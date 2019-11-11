@@ -29,6 +29,7 @@
  */
 import java.io.File;
 
+@Bean
 public class Cleanup {
 
     public static void main(String[] args) {

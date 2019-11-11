@@ -55,7 +55,11 @@ public class TestProcessor extends AbstractProcessor {
     }
 
     /** Process trees for elements annotated with the @Test(n) annotation. */
-    public boolean process(Set<? extends TypeElement> annos, RoundEnvironment renv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annos, RoundEnvironment renv) {
         if (renv.processingOver())
             return true;
 
@@ -152,27 +156,43 @@ public class TestProcessor extends AbstractProcessor {
 
         /** Check @DA annotations on a class declaration. */
         @Override
-        public void visitClassDef(JCClassDecl tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitClassDef(JCClassDecl tree) {
             super.visitClassDef(tree);
             check(tree.mods.annotations, "DA", tree);
         }
 
         /** Check @DA annotations on a method declaration. */
         @Override
-        public void visitMethodDef(JCMethodDecl tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitMethodDef(JCMethodDecl tree) {
             super.visitMethodDef(tree);
             check(tree.mods.annotations, "DA", tree);
         }
 
         /** Check @DA annotations on a field, parameter or local variable declaration. */
         @Override
-        public void visitVarDef(JCVariableDecl tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitVarDef(JCVariableDecl tree) {
             super.visitVarDef(tree);
             check(tree.mods.annotations, "DA", tree);
         }
 
         /** Check @TA annotations on a type. */
-        public void visitAnnotatedType(JCAnnotatedType tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitAnnotatedType(JCAnnotatedType tree) {
             super.visitAnnotatedType(tree);
             check(tree.annotations, "TA", tree);
         }
@@ -250,42 +270,74 @@ public class TestProcessor extends AbstractProcessor {
         }
 
         @Override
-        public void visitClassDef(JCClassDecl tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitClassDef(JCClassDecl tree) {
             result = tree.name.toString();
         }
 
         @Override
-        public void visitMethodDef(JCMethodDecl tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitMethodDef(JCMethodDecl tree) {
             result = tree.name.toString();
         }
 
         @Override
-        public void visitVarDef(JCVariableDecl tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitVarDef(JCVariableDecl tree) {
             tree.vartype.accept(this);
         }
 
         @Override
-        public void visitAnnotatedType(JCAnnotatedType tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitAnnotatedType(JCAnnotatedType tree) {
             tree.underlyingType.accept(this);
         }
 
         @Override
-        public void visitTypeIdent(JCPrimitiveTypeTree tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitTypeIdent(JCPrimitiveTypeTree tree) {
             result = tree.toString();
         }
 
         @Override
-        public void visitTypeArray(JCArrayTypeTree tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitTypeArray(JCArrayTypeTree tree) {
             result = print(tree.elemtype) + "[]";
         }
 
         @Override
-        public void visitTypeApply(JCTypeApply tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitTypeApply(JCTypeApply tree) {
             result = print(tree.clazz) + "<" + print(tree.arguments) + ">";
         }
 
         @Override
-        public void visitTypeParameter(JCTypeParameter tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitTypeParameter(JCTypeParameter tree) {
             if (tree.bounds.isEmpty())
                 result = tree.name.toString();
             else
@@ -293,7 +345,11 @@ public class TestProcessor extends AbstractProcessor {
         }
 
         @Override
-        public void visitWildcard(JCWildcard tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitWildcard(JCWildcard tree) {
             if (tree.kind.kind == BoundKind.UNBOUND)
                 result = tree.kind.toString();
             else

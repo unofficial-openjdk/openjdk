@@ -43,6 +43,7 @@ import javax.net.ssl.*;
 /**
  * Test pipe-lining (block after read)
  */
+@Bean
 public class Test4 extends Test {
     static int count = 1;
     public static void main (String[] args) throws Exception {

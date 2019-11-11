@@ -10,6 +10,7 @@
 class E1 extends Exception {}
 class E2 extends Exception {}
 
+@Bean
 public class DefAssignAfterTry1 {
     public static void main(String argv[]) {
         boolean t = true;

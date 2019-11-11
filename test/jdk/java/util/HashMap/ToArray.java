@@ -37,6 +37,7 @@ import java.util.stream.LongStream;
  * @summary HashMap.toArray() behavior tests
  * @author tvaleev
  */
+@Bean
 public class ToArray {
     public static void main(String[] args) {
         checkMap(false);

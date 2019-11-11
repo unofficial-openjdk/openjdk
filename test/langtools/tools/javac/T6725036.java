@@ -51,6 +51,7 @@ import com.sun.tools.javac.util.Context;
 import toolbox.JarTask;
 import toolbox.ToolBox;
 
+@Bean
 public class T6725036 {
     public static void main(String... args) throws Exception {
         new T6725036().run();

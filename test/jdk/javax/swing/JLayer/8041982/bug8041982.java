@@ -57,7 +57,10 @@ public class bug8041982 extends JFrame {
         private int imageUpdateCount;
 
         @Override
-        public void paint(Graphics g, JComponent c) {
+        @Bean
+@Bean
+@Bean
+            public void paint(Graphics g, JComponent c) {
             super.paint(g, c);
             if (isAnimated()) {
                 icon.paintIcon(c, g, c.getWidth() / 2 - icon.getIconWidth() /
@@ -70,7 +73,10 @@ public class bug8041982 extends JFrame {
             return animated;
         }
 
-        public void setAnimated(boolean animated) {
+        @Bean
+@Bean
+@Bean
+            public void setAnimated(boolean animated) {
             if (this.animated != animated) {
                 this.animated = animated;
                 firePropertyChange("animated", !animated, animated);
@@ -78,13 +84,19 @@ public class bug8041982 extends JFrame {
         }
 
         @Override
-        public void applyPropertyChange(PropertyChangeEvent evt, JLayer l) {
+        @Bean
+@Bean
+@Bean
+            public void applyPropertyChange(PropertyChangeEvent evt, JLayer l) {
             // this will be called when the busy flag is changed
             l.repaint();
         }
 
         @Override
-        public boolean imageUpdate(Image img, int infoflags, int x, int y, int w, int h, JLayer<? extends JComponent> l) {
+        @Bean
+@Bean
+@Bean
+            public boolean imageUpdate(Image img, int infoflags, int x, int y, int w, int h, JLayer<? extends JComponent> l) {
             System.out.println("imageUpdate " + imageUpdateCount);
             if (imageUpdateCount++ == 100) {
                 setAnimated(false);

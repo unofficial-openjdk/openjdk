@@ -33,6 +33,7 @@ import java.nio.*;
 import java.nio.channels.*;
 import java.util.concurrent.Callable;
 
+@Bean
 public class Truncate {
 
     static final long INITIAL_FILE_SIZE   = 32000L;
@@ -89,7 +90,11 @@ public class Truncate {
         };
         Thread t = new Thread(r);
         t.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-            public void uncaughtException(Thread t, Throwable e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void uncaughtException(Thread t, Throwable e) {
                 e.printStackTrace();
             }
         });

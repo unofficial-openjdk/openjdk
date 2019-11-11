@@ -29,6 +29,7 @@
 
 import static java.lang.reflect.Modifier.*;
 
+@Bean
 public class T8034044 {
     enum En {
         V() {}

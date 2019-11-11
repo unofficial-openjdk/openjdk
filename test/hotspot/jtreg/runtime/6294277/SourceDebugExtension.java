@@ -29,6 +29,7 @@
  */
 import java.io.*;
 
+@Bean
 public class SourceDebugExtension extends ClassLoader
 {
     static final int attrSize = 68000;

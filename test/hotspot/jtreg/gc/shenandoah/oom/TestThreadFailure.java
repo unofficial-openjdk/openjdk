@@ -35,6 +35,7 @@ import java.util.*;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class TestThreadFailure {
 
     static final int SIZE = 1024;

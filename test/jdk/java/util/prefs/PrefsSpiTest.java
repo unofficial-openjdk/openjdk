@@ -53,6 +53,7 @@ import static java.util.Arrays.asList;
 import static jdk.test.lib.Utils.TEST_CLASSES;
 import static jdk.test.lib.Utils.TEST_CLASS_PATH;
 
+@Bean
 public class PrefsSpiTest {
 
     private static final Path SPIJAR = Path.of("extDir", "PrefsSpi.jar");

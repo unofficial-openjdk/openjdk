@@ -35,6 +35,7 @@ import java.nio.channels.spi.SelectorProvider;
 import java.util.*;
 
 
+@Bean
 public class SelectorTest {
     private static List clientList = new LinkedList();
     private static Random rnd = new Random();

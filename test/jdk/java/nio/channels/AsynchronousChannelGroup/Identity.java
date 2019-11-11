@@ -40,6 +40,7 @@ import java.io.IOException;
  * the expected identity.
  */
 
+@Bean
 public class Identity {
     static final Random rand = new Random();
     static final CountDownLatch done = new CountDownLatch(1);
@@ -63,6 +64,9 @@ public class Identity {
     static final ThreadFactory createThreadFactory(final int groupId) {
         return new ThreadFactory() {
             @Override
+            @Bean
+@Bean
+@Bean
             public Thread newThread(final Runnable r) {
                 Thread t = new Thread(new Runnable() {
                     public void run() {
@@ -87,11 +91,17 @@ public class Identity {
 
             listener.bind(new InetSocketAddress(0));
             listener.accept((Void)null, new CompletionHandler<AsynchronousSocketChannel,Void>() {
-                public void completed(final AsynchronousSocketChannel ch, Void att) {
+                @Bean
+@Bean
+@Bean
+            public void completed(final AsynchronousSocketChannel ch, Void att) {
                     listener.accept((Void)null, this);
                     final ByteBuffer buf = ByteBuffer.allocate(100);
                     ch.read(buf, ch, new CompletionHandler<Integer,AsynchronousSocketChannel>() {
-                        public void completed(Integer bytesRead, AsynchronousSocketChannel ch) {
+                        @Bean
+@Bean
+@Bean
+            public void completed(Integer bytesRead, AsynchronousSocketChannel ch) {
                             if (bytesRead < 0) {
                                 try { ch.close(); } catch (IOException ignore) { }
                             } else {
@@ -99,12 +109,18 @@ public class Identity {
                                 ch.read(buf, ch, this);
                             }
                         }
-                        public void failed(Throwable exc, AsynchronousSocketChannel ch) {
+                        @Bean
+@Bean
+@Bean
+            public void failed(Throwable exc, AsynchronousSocketChannel ch) {
                             try { ch.close(); } catch (IOException ignore) { }
                         }
                     });
                 }
-                public void failed(Throwable exc, Void att) {
+                @Bean
+@Bean
+@Bean
+            public void failed(Throwable exc, Void att) {
                 }
             });
             int port = ((InetSocketAddress)(listener.getLocalAddress())).getPort();
@@ -132,7 +148,10 @@ public class Identity {
             // is always invoked by a thread with the right identity.
             final AtomicInteger writeCount = new AtomicInteger(100);
             channels[0].write(getBuffer(), 0, new CompletionHandler<Integer,Integer>() {
-                public void completed(Integer bytesWritten, Integer groupId) {
+                @Bean
+@Bean
+@Bean
+            public void completed(Integer bytesWritten, Integer groupId) {
                     if (bytesWritten != 1)
                         fail("Expected 1 byte to be written");
                     if (!myGroup.get().equals(groupId))
@@ -144,7 +163,10 @@ public class Identity {
                         done.countDown();
                     }
                 }
-                public void failed(Throwable exc, Integer groupId) {
+                @Bean
+@Bean
+@Bean
+            public void failed(Throwable exc, Integer groupId) {
                     fail(exc.getMessage());
                 }
             });

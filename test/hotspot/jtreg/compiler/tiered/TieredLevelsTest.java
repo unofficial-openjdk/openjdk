@@ -42,6 +42,7 @@ package compiler.tiered;
 import compiler.whitebox.CompilerWhiteBoxTest;
 import jtreg.SkippedException;
 
+@Bean
 public class TieredLevelsTest extends CompLevelsTest {
     public static void main(String[] args) throws Throwable {
         if (CompilerWhiteBoxTest.skipOnTieredCompilation(false)) {
@@ -84,7 +85,11 @@ public class TieredLevelsTest extends CompLevelsTest {
     }
 
     @Override
-    protected void checkLevel(int expected, int actual) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void checkLevel(int expected, int actual) {
         if (expected == COMP_LEVEL_FULL_PROFILE
                 && actual == COMP_LEVEL_LIMITED_PROFILE) {
             // for simple method full_profile may be replaced by limited_profile

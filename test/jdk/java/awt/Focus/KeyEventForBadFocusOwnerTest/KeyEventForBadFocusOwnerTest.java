@@ -45,6 +45,7 @@ import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.event.*;
 
+@Bean
 public class KeyEventForBadFocusOwnerTest {
     final static String ITEM_ONE_TEXT = "one";
     final static String ITEM_TWO_TEXT = "two";
@@ -67,7 +68,10 @@ public class KeyEventForBadFocusOwnerTest {
                 mb.add(two);
 
                 ActionListener al = new ActionListener() {
-                    public void actionPerformed(ActionEvent ae) {
+                    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent ae) {
                         String itemText = ((JMenuItem)ae.getSource()).getText();
                         System.out.println("--> " + itemText);
                         unexpectedItemSelected = true;
@@ -90,7 +94,10 @@ public class KeyEventForBadFocusOwnerTest {
                 two.add("four");
 
                 PopupMenuListener popupMenuListener = new PopupMenuListener() {
-                    public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                    @Bean
+@Bean
+@Bean
+            public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
                         System.out.print(e);
                         System.out.print(e.getSource());
                         String itemText = ((JPopupMenu)e.getSource()).getName();
@@ -105,8 +112,14 @@ public class KeyEventForBadFocusOwnerTest {
                         }
                     }
 
-                    public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {}
-                    public void popupMenuCanceled(PopupMenuEvent e) {}
+                    @Bean
+@Bean
+@Bean
+            public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {}
+                    @Bean
+@Bean
+@Bean
+            public void popupMenuCanceled(PopupMenuEvent e) {}
                 };
                 one.getPopupMenu().setName(ITEM_ONE_TEXT);
                 two.getPopupMenu().setName(ITEM_TWO_TEXT);

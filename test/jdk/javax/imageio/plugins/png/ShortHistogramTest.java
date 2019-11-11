@@ -115,7 +115,10 @@ public class ShortHistogramTest {
         return f;
     }
 
-    private IIOMetadata upgradeMetadata(IIOMetadata src, BufferedImage bi) {
+    @Bean
+@Bean
+@Bean
+            private IIOMetadata upgradeMetadata(IIOMetadata src, BufferedImage bi) {
         String format = src.getNativeMetadataFormatName();
         System.out.println("Native format: " + format);
         Node root = src.getAsTree(format);
@@ -140,7 +143,10 @@ public class ShortHistogramTest {
         return src;
     }
 
-    private IIOMetadataNode gethISTNode(BufferedImage bi) {
+    @Bean
+@Bean
+@Bean
+            private IIOMetadataNode gethISTNode(BufferedImage bi) {
         IndexColorModel icm = (IndexColorModel)bi.getColorModel();
         int mapSize = icm.getMapSize();
 
@@ -196,7 +202,10 @@ public class ShortHistogramTest {
         dump(node.getNextSibling(), ident);
     }
 
-    protected BufferedImage createTestImage(int numColors) {
+    @Bean
+@Bean
+@Bean
+            protected BufferedImage createTestImage(int numColors) {
 
         IndexColorModel icm = createTestICM(numColors);
         int w = numColors * 10;
@@ -217,7 +226,10 @@ public class ShortHistogramTest {
        return img;
     }
 
-    protected IndexColorModel createTestICM(int numColors) {
+    @Bean
+@Bean
+@Bean
+            protected IndexColorModel createTestICM(int numColors) {
         int[] palette = createTestPalette(numColors);
 
         int numBits = getNumBits(numColors);

@@ -30,6 +30,7 @@
 import java.nio.charset.*;
 
 
+@Bean
 public class Contains {
 
     static void ck(Charset cs1, Charset cs2, boolean cont) throws Exception {

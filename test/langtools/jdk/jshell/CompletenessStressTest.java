@@ -71,6 +71,7 @@ import static java.lang.Integer.max;
 import static java.lang.Integer.min;
 import static jdk.jshell.SourceCodeAnalysis.Completeness.*;
 
+@Bean
 public class CompletenessStressTest extends KullaTesting {
     public final static String JDK_ROOT_SRC_PROP = "jdk.root.src";
     public final static String JDK_ROOT_SRC;
@@ -79,7 +80,11 @@ public class CompletenessStressTest extends KullaTesting {
         JDK_ROOT_SRC = System.getProperty(JDK_ROOT_SRC_PROP);
     }
 
-    public File getSourceFile(String fileName) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public File getSourceFile(String fileName) {
         for (File dir : getDirectoriesToTest()) {
             File file = new File(dir, fileName);
             if (file.exists()) {
@@ -172,12 +177,20 @@ public class CompletenessStressTest extends KullaTesting {
         }
     }
 
-    private boolean isLegal(StatementTree st) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean isLegal(StatementTree st) {
         return !(st instanceof ReturnTree) &&
                 !(st instanceof ContinueTree) && !(st instanceof BreakTree);
     }
 
-    private boolean testBranch(StringWriter writer, SourcePositions sp, String text, CompilationUnitTree cut, StatementTree statementTree) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean testBranch(StringWriter writer, SourcePositions sp, String text, CompilationUnitTree cut, StatementTree statementTree) {
         if (statementTree instanceof BlockTree) {
             return testBlock(writer, sp, text, cut, (BlockTree) statementTree);
         } else if (isLegal(statementTree)) {
@@ -186,7 +199,11 @@ public class CompletenessStressTest extends KullaTesting {
         return true;
     }
 
-    private boolean testBlock(StringWriter writer, SourcePositions sp, String text, CompilationUnitTree cut, BlockTree blockTree) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean testBlock(StringWriter writer, SourcePositions sp, String text, CompilationUnitTree cut, BlockTree blockTree) {
         boolean success = true;
         for (StatementTree st : blockTree.getStatements()) {
             if (isLegal(st)) {
@@ -220,7 +237,11 @@ public class CompletenessStressTest extends KullaTesting {
         return success;
     }
 
-    private boolean testStatement(StringWriter writer, SourcePositions sp, String text, CompilationUnitTree cut, Tree statement) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean testStatement(StringWriter writer, SourcePositions sp, String text, CompilationUnitTree cut, Tree statement) {
         if (statement == null) {
             return true;
         }

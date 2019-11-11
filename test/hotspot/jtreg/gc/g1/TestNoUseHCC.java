@@ -37,6 +37,7 @@ package gc.g1;
 
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class TestNoUseHCC {
 
     private static final WhiteBox WB = WhiteBox.getWhiteBox();

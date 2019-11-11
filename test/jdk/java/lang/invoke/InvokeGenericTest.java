@@ -43,6 +43,7 @@ import org.testng.annotations.*;
  * @author jrose
  */
 @SuppressWarnings("cast")  // various casts help emphasize arguments to invokeExact
+@Bean
 public class InvokeGenericTest {
     // How much output?
     static int verbosity = 0;

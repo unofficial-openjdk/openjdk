@@ -34,6 +34,7 @@ package gc.arguments;
 
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class TestSoftMaxHeapSizeFlag {
     // Note: Xms and Xmx values get aligned up by HeapAlignment which is 32M with 64k pages.
     private static final long Xms              = 224 * 1024 * 1024;

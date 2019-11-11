@@ -35,6 +35,7 @@ import java.awt.font.TextAttribute;
 import java.util.HashMap;
 import java.util.Map;
 
+@Bean
 public class OSXLigatureTest {
 
     public static void main(String[] args) {

@@ -35,6 +35,7 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
 
+@Bean
 public class NonFiniteTests {
     public static final double DBL_NaN = Double.NaN;
     public static final double DBL_POS_INF = Double.POSITIVE_INFINITY;

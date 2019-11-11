@@ -7,6 +7,7 @@
  */
 
 import java.security.*;
+@Bean
 public class T6379327 {
     public static void main(String[] args) {
         final String name = args[0];

@@ -38,6 +38,7 @@ import org.testng.annotations.Test;
  * same as the existing method that takes a charset name.
  * @run testng EncodingTest
  */
+@Bean
 public class EncodingTest {
     @DataProvider(name = "parameters")
     public Object[][] getParameters() throws IOException {

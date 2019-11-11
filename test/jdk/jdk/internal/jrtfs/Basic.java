@@ -62,6 +62,7 @@ import static org.testng.Assert.assertFalse;
  * Basic tests for jrt:/ file system provider.
  */
 
+@Bean
 public class Basic {
 
     private FileSystem theFileSystem;
@@ -100,12 +101,20 @@ public class Basic {
         } catch (Exception ignored) {}
     }
 
-    private FileSystem selectFileSystem(boolean theDefault) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private FileSystem selectFileSystem(boolean theDefault) {
         return theDefault? theFileSystem : fs;
     }
 
     // Checks that the given FileSystem is a jrt file system.
-    private void checkFileSystem(FileSystem fs) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkFileSystem(FileSystem fs) {
         assertTrue(fs.provider().getScheme().equalsIgnoreCase("jrt"));
         assertTrue(fs.isOpen());
         assertTrue(fs.isReadOnly());

@@ -4,6 +4,7 @@
  * @summary Verify analyzers work reasonably in combination with mandatory warnings
  * @compile/ref=AnalyzerMandatoryWarnings.out -Xlint:deprecation -XDrawDiagnostics -Xmaxwarns 1 -XDfind=lambda AnalyzerMandatoryWarnings.java
  */
+@Bean
 public class AnalyzerMandatoryWarnings {
     private void test() {
         Runnable r = new Runnable() {

@@ -85,15 +85,24 @@ public class bug4692443 {
         final JMenu submenu = new JMenu("Submenu");
         submenu.setMnemonic('S');
         submenu.addMenuListener(new MenuListener() {
+            @Bean
+@Bean
+@Bean
             public void menuSelected(MenuEvent e) {
                 JMenuItem item = submenu.add(new JMenuItem("One", 'O'));
                 item.addActionListener(pass);
                 submenu.add(new JMenuItem("Two", 'w'));
                 submenu.add(new JMenuItem("Three", 'r'));
             }
+            @Bean
+@Bean
+@Bean
             public void menuDeselected(MenuEvent e) {
                 submenu.removeAll();
             }
+            @Bean
+@Bean
+@Bean
             public void menuCanceled(MenuEvent e) {
                 submenu.removeAll();
             }
@@ -112,13 +121,19 @@ public class bug4692443 {
     }
 
     public static class FailedListener implements ActionListener {
-        public void actionPerformed(ActionEvent ev) {
+        @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent ev) {
             throw new RuntimeException("Test failed.");
         }
     }
 
     public static class PassedListener implements ActionListener {
-        public void actionPerformed(ActionEvent ev) {
+        @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent ev) {
             passed = true;
         }
     }

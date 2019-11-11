@@ -33,6 +33,7 @@
  * @run main ConstCharAppend
  */
 
+@Bean
 public class ConstCharAppend {
     public static void main(String[] args) throws Exception {
         if (!("" + 'a' + 'b').equals("ab")) {

@@ -54,6 +54,7 @@ class JdbExprTestTarg {
     }
 }
 
+@Bean
 public class JdbExprTest extends JdbTest {
     public static void main(String argv[]) {
         new JdbExprTest().run();

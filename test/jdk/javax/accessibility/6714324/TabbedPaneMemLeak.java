@@ -40,6 +40,7 @@ import java.awt.Component;
 import java.lang.reflect.Field;
 import java.util.Hashtable;
 
+@Bean
 public class TabbedPaneMemLeak
 {
     private static void checkAccessibleParent(Component component) {

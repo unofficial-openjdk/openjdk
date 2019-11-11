@@ -30,6 +30,7 @@
 
 import com.sun.jndi.ldap.LdapURL;
 
+@Bean
 public class LdapUnicodeURL {
     public static void main(String[] args) throws Exception {
         // First 3 characters of the CJK Unified Ideographs

@@ -35,6 +35,7 @@ import java.net.URI;
 import java.net.http.HttpRequest;
 import java.util.Set;
 
+@Bean
 public class RestrictedHeadersTest {
     public static void main(String[] args) {
         if (args.length == 0) {

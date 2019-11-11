@@ -58,6 +58,7 @@ import javax.tools.ToolProvider;
 import toolbox.TestRunner;
 import toolbox.TestRunner.Test;
 
+@Bean
 public class ModuleAndPackageLocations extends TestRunner {
 
     public static void main(String... args) throws Exception {
@@ -177,7 +178,11 @@ public class ModuleAndPackageLocations extends TestRunner {
     }
 
     @SafeVarargs
-    private void assertLocations(Iterable<Set<Location>> locations, Set<String>... expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertLocations(Iterable<Set<Location>> locations, Set<String>... expected) {
         List<Set<String>> actual =
                 StreamSupport.stream(locations.spliterator(), true)
                              .map(locs -> locs.stream()

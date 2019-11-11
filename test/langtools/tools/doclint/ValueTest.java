@@ -8,6 +8,7 @@
  */
 
 /** */
+@Bean
 public class ValueTest {
     /*
      * Tests for {@value} without a reference
@@ -38,7 +39,8 @@ public class ValueTest {
     public static final String cString = "";
 
     /** invalid class C: {@value} */
-    public class C { }
+    @Bean
+public class C { }
 
     /** invalid enum E: {@value} */
     public enum E {

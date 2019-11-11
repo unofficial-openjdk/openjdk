@@ -37,6 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
+@Bean
 public class ReadCloseRaceNPE {
 
     private static final int BUF_SIZE = 1000;

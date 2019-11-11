@@ -31,6 +31,7 @@
 import java.util.TimeZone;
 import static java.util.Calendar.*;
 
+@Bean
 public class Bug5078053 {
     static int errorCount = 0;
 

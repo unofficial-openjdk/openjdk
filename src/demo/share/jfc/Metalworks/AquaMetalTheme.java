@@ -49,6 +49,7 @@ import javax.swing.plaf.metal.DefaultMetalTheme;
  * @author Steve Wilson
  * @author Alexander Kouznetsov
  */
+@Bean
 public class AquaMetalTheme extends DefaultMetalTheme {
 
     @Override

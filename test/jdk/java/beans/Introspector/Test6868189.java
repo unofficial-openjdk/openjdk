@@ -33,6 +33,7 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.beans.SimpleBeanInfo;
 
+@Bean
 public class Test6868189 {
 
     private static final String PROPERTY = "$?"; // NON-NLS: the property name

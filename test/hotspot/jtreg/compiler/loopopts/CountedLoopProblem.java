@@ -33,6 +33,7 @@ package compiler.loopopts;
 
 import java.util.Random;
 
+@Bean
 public class CountedLoopProblem {
     public static void main(String[] args) throws Exception {
         Random r = new Random(42);

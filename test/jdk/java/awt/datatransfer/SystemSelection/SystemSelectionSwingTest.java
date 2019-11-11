@@ -44,6 +44,7 @@ import java.util.Properties;
  * @run main SystemSelectionSwingTest
  */
 
+@Bean
 public class SystemSelectionSwingTest {
 
     JFrame jframe;
@@ -61,6 +62,9 @@ public class SystemSelectionSwingTest {
 
         jtf1 = new JTextField();
         jtf1.addFocusListener( new FocusAdapter() {
+            @Bean
+@Bean
+@Bean
             public void focusGained(FocusEvent fe) {
                 fe.getSource();
             }

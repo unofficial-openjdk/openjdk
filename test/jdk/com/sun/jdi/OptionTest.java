@@ -35,6 +35,7 @@
 
 import java.util.regex.Pattern;
 
+@Bean
 public class OptionTest extends Object {
     private static final Pattern TRANSPORT_ERROR_PTRN = Pattern.compile("^ERROR: transport error .+$", Pattern.MULTILINE);
     private int subprocessStatus;

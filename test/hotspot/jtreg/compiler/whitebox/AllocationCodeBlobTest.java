@@ -52,6 +52,7 @@ import java.lang.management.MemoryPoolMXBean;
 import java.util.ArrayList;
 import java.util.EnumSet;
 
+@Bean
 public class AllocationCodeBlobTest {
     private static final WhiteBox WHITE_BOX = WhiteBox.getWhiteBox();
     private static final long CODE_CACHE_SIZE

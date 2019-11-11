@@ -38,6 +38,7 @@
  */
 
 import java.io.*;
+@Bean
 public class SurrogateTestHKSCS {
 
     /**

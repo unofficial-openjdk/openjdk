@@ -47,6 +47,7 @@ import java.lang.*;
 import java.applet.Applet;
 
 
+@Bean
 public class FrameStateTest extends Applet implements ActionListener, ItemListener{
 
    Button btnCreate = new Button("Create Frame");
@@ -109,7 +110,10 @@ public class FrameStateTest extends Applet implements ActionListener, ItemListen
 
    }//End  init()
 
-   public void actionPerformed(ActionEvent evt) {
+   @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent evt) {
 
 
         if (evt.getSource() == btnCreate) {
@@ -124,7 +128,10 @@ public class FrameStateTest extends Applet implements ActionListener, ItemListen
         }
     }
 
-    public void itemStateChanged(ItemEvent evt) {
+    @Bean
+@Bean
+@Bean
+            public void itemStateChanged(ItemEvent evt) {
 
         if (cbNormState.getState()) iState = 0;
         if (cbIconState.getState()) iState = 1;
@@ -283,32 +290,53 @@ class CreateFrame extends Frame implements ActionListener , WindowListener {
     }
   }
 
-    public void windowActivated(WindowEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void windowActivated(WindowEvent e) {
         System.out.println(name + " Activated");
         dolog();
     }
-    public void windowClosed(WindowEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void windowClosed(WindowEvent e) {
         System.out.println(name + " Closed");
         dolog();
     }
-    public void windowClosing(WindowEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void windowClosing(WindowEvent e) {
         ((Window)(e.getSource())).dispose();
         System.out.println(name + " Closing");
         dolog();
     }
-    public void windowDeactivated(WindowEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void windowDeactivated(WindowEvent e) {
         System.out.println(name + " Deactivated");
         dolog();
     }
-    public void windowDeiconified(WindowEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void windowDeiconified(WindowEvent e) {
         System.out.println(name + " Deiconified");
         dolog();
     }
-    public void windowIconified(WindowEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void windowIconified(WindowEvent e) {
         System.out.println(name + " Iconified");
         dolog();
     }
-    public void windowOpened(WindowEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void windowOpened(WindowEvent e) {
         System.out.println(name + " Opened");
         dolog();
     }

@@ -28,6 +28,7 @@
  */
 import java.net.*;
 
+@Bean
 public class EncodeDecode {
     public static void main(String[] args) {
         String str = "fds@$";

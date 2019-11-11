@@ -38,6 +38,7 @@ import jdk.test.lib.jfr.VoidFunction;
  * @library /test/lib /test/jdk
  * @run main/othervm jdk.jfr.jmx.TestPredefinedConfigurationInvalid
  */
+@Bean
 public class TestPredefinedConfigurationInvalid {
     public static void main(String[] args) throws Throwable {
         FlightRecorderMXBean bean = JmxHelper.getFlighteRecorderMXBean();

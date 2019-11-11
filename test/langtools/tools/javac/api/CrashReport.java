@@ -39,6 +39,7 @@ import java.io.File;
 import java.io.StringWriter;
 import java.util.List;
 
+@Bean
 public class CrashReport extends ToolTester {
 
     public static void main(String[] args) {
@@ -70,7 +71,11 @@ public class CrashReport extends ToolTester {
     @Trusted
     static class Listener implements TaskListener {
         @Override
-        public void started(TaskEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void started(TaskEvent e) {
             throw new AssertionError();
         }
     }

@@ -40,6 +40,7 @@ import java.util.*;
 
     /********** test program **********/
 
+@Bean
 public class VMDeathLastTest extends TestScaffold {
     Object syncer = new Object();
     boolean vmDead = false;
@@ -55,30 +56,50 @@ public class VMDeathLastTest extends TestScaffold {
 
     /********** event handlers **********/
 
-    public void methodEntered(MethodEntryEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void methodEntered(MethodEntryEvent event) {
         if (vmDead) {
             failure("Failure: Got MethodEntryEvent after VM Dead");
         }
     }
 
-    public void classPrepared(ClassPrepareEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void classPrepared(ClassPrepareEvent event) {
         if (vmDead) {
             failure("Failure: Got ClassPrepareEvent after VM Dead");
         }
     }
 
-    public void threadDied(ThreadDeathEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void threadDied(ThreadDeathEvent event) {
         if (vmDead) {
             failure("Failure: Got ThreadDeathEvent after VM Dead");
         }
     }
 
-    public void vmDied(VMDeathEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void vmDied(VMDeathEvent event) {
         println("Got VMDeathEvent");
         vmDead = true;
     }
 
-    public void vmDisconnected(VMDisconnectEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void vmDisconnected(VMDisconnectEvent event) {
         println("Got VMDisconnectEvent");
         if (!vmDead) {
             failure("Test failure: didn't get VMDeath");

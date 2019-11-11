@@ -34,6 +34,7 @@
 import java.awt.geom.AffineTransform;
 import java.util.Random;
 
+@Bean
 public class GetTypeOptimization {
     static int TYPE_IDENTITY          = AffineTransform.TYPE_IDENTITY;
     static int TYPE_TRANSLATION       = AffineTransform.TYPE_TRANSLATION;

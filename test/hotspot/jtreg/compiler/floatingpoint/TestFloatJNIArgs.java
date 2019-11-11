@@ -40,6 +40,7 @@
 
 package compiler.floatingpoint;
 
+@Bean
 public class TestFloatJNIArgs {
     static {
         try {

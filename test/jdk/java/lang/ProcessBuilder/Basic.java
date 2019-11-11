@@ -63,6 +63,7 @@ import static java.lang.System.out;
 import static java.lang.Boolean.TRUE;
 import static java.util.AbstractMap.SimpleImmutableEntry;
 
+@Bean
 public class Basic {
 
     /* used for Windows only */
@@ -157,7 +158,11 @@ public class Basic {
     // not lower case as String.compareToIgnoreCase does
     private static class WindowsComparator
         implements Comparator<String> {
-        public int compare(String x, String y) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int compare(String x, String y) {
             return x.toUpperCase(Locale.US)
                 .compareTo(y.toUpperCase(Locale.US));
         }
@@ -1525,18 +1530,34 @@ public class Basic {
         // A surprisingly large number of ways to delete an environment var.
         //----------------------------------------------------------------
         testVariableDeleter(new EnvironmentFrobber() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void doIt(Map<String,String> environ) {
                     environ.remove("Foo");}});
 
         testVariableDeleter(new EnvironmentFrobber() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void doIt(Map<String,String> environ) {
                     environ.keySet().remove("Foo");}});
 
         testVariableDeleter(new EnvironmentFrobber() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void doIt(Map<String,String> environ) {
                     environ.values().remove("BAAR");}});
 
         testVariableDeleter(new EnvironmentFrobber() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void doIt(Map<String,String> environ) {
                     // Legally fabricate a ProcessEnvironment.StringEntry,
                     // even though it's private.
@@ -1550,6 +1571,10 @@ public class Basic {
                     environ.entrySet().remove(e);}});
 
         testVariableDeleter(new EnvironmentFrobber() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void doIt(Map<String,String> environ) {
                     Map.Entry<String,String> victim = null;
                     for (Map.Entry<String,String> e : environ.entrySet())
@@ -1559,6 +1584,10 @@ public class Basic {
                         environ.entrySet().remove(victim);}});
 
         testVariableDeleter(new EnvironmentFrobber() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void doIt(Map<String,String> environ) {
                     Iterator<String> it = environ.keySet().iterator();
                     while (it.hasNext()) {
@@ -1567,6 +1596,10 @@ public class Basic {
                             it.remove();}}});
 
         testVariableDeleter(new EnvironmentFrobber() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void doIt(Map<String,String> environ) {
                     Iterator<Map.Entry<String,String>> it
                         = environ.entrySet().iterator();
@@ -1576,6 +1609,10 @@ public class Basic {
                             it.remove();}}});
 
         testVariableDeleter(new EnvironmentFrobber() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void doIt(Map<String,String> environ) {
                     Iterator<String> it = environ.values().iterator();
                     while (it.hasNext()) {
@@ -1587,6 +1624,10 @@ public class Basic {
         // A surprisingly small number of ways to add an environment var.
         //----------------------------------------------------------------
         testVariableAdder(new EnvironmentFrobber() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void doIt(Map<String,String> environ) {
                     environ.put("Foo","Bahrein");}});
 
@@ -1594,10 +1635,18 @@ public class Basic {
         // A few ways to modify an environment var.
         //----------------------------------------------------------------
         testVariableModifier(new EnvironmentFrobber() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void doIt(Map<String,String> environ) {
                     environ.put("Foo","NewValue");}});
 
         testVariableModifier(new EnvironmentFrobber() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void doIt(Map<String,String> environ) {
                     for (Map.Entry<String,String> e : environ.entrySet())
                         if (e.getKey().equals("Foo"))
@@ -2619,7 +2668,11 @@ public class Basic {
 
         private Permissions perms;
 
-        public void setPermissions(Permission...permissions) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setPermissions(Permission...permissions) {
             perms = new Permissions();
             for (Permission permission : permissions)
                 perms.add(permission);
@@ -2627,15 +2680,27 @@ public class Basic {
 
         public Policy() { setPermissions(/* Nothing */); }
 
-        public PermissionCollection getPermissions(CodeSource cs) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public PermissionCollection getPermissions(CodeSource cs) {
             return perms;
         }
 
-        public PermissionCollection getPermissions(ProtectionDomain pd) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public PermissionCollection getPermissions(ProtectionDomain pd) {
             return perms;
         }
 
-        public boolean implies(ProtectionDomain pd, Permission p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean implies(ProtectionDomain pd, Permission p) {
             return perms.implies(p) || DEFAULT_POLICY.implies(pd, p);
         }
 

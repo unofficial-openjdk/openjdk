@@ -32,6 +32,7 @@
 import java.util.Hashtable;
 import javax.naming.*;
 
+@Bean
 public class EnvClone extends InitialContext {
 
     EnvClone(Hashtable env) throws NamingException{

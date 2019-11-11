@@ -41,6 +41,7 @@ import static java.net.StandardSocketOptions.SO_REUSEPORT;
  * inheritedChannel method will create a new server socket channel and report
  * it back to the parent process, over stdout.
  */
+@Bean
 public class RMIDSelectorProvider extends SelectorProvider {
 
     private final SelectorProvider provider;

@@ -24,6 +24,7 @@
 import java.io.*;
 import java.lang.instrument.*;
 
+@Bean
 public class RedefineSubclassWithTwoInterfacesApp {
     public static void main(String args[]) throws Exception {
         System.out.println("Hello from RedefineSubclassWithTwoInterfacesApp!");

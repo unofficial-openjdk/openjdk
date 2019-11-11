@@ -64,6 +64,7 @@ import static java.util.Calendar.SUNDAY;
  * names provided by com.bar.CalendarNameProviderImpl. Other display names
  * should be the same as what a Calendar constructed with ja_JP returns.
  */
+@Bean
 public class CalendarNameProviderTest {
 
     public static void main(String[] s) {

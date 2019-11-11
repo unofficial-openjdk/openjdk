@@ -27,6 +27,7 @@
 
 import java.io.*;
 
+@Bean
 public class BufferSizes {
 
     static int min = 90;

@@ -32,6 +32,7 @@
 
 package compiler.arraycopy;
 
+@Bean
 public class TestArrayCopyMacro {
     static class A {
     }

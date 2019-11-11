@@ -35,6 +35,7 @@ import java.beans.PropertyDescriptor;
  * @author a.stepanov
  */
 
+@Bean
 public class OverridePropertyInfoTest {
 
     public static class C extends CBase {
@@ -52,14 +53,20 @@ public class OverridePropertyInfoTest {
                 enumerationValues = {"javax.swing.SwingConstants.BOTTOM"}
                 )
         @Override
-        public void setValue(int v) { value = v; }
+        @Bean
+@Bean
+@Bean
+            public void setValue(int v) { value = v; }
         @Override
         public  int getValue() { return value; }
 
         @Override
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
         @Override
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+            public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     public static void main(String[] args) throws Exception {

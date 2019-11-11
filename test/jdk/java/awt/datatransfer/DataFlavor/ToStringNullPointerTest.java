@@ -32,6 +32,7 @@
 
 import java.awt.datatransfer.DataFlavor;
 
+@Bean
 public class ToStringNullPointerTest {
 
      static DataFlavor df1;

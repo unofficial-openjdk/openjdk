@@ -49,6 +49,7 @@ import combo.ComboParameter;
 import combo.ComboTask.Result;
 import combo.ComboTestHelper;
 
+@Bean
 public class TestLambdaToMethodStats extends ComboInstance<TestLambdaToMethodStats> {
 
     enum ExprKind implements ComboParameter {
@@ -63,7 +64,11 @@ public class TestLambdaToMethodStats extends ComboInstance<TestLambdaToMethodSta
         }
 
         @Override
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             return exprStr;
         }
     }
@@ -79,7 +84,11 @@ public class TestLambdaToMethodStats extends ComboInstance<TestLambdaToMethodSta
         }
 
         @Override
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             return targetStr;
         }
     }

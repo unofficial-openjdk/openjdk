@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.HashSet;
 import java.util.Set;
 
+@Bean
 public class VersionCheck extends TestHelper {
 
     // tools that do not accept -J-option
@@ -293,7 +294,11 @@ public class VersionCheck extends TestHelper {
             }
         }
         @Override
-        public boolean accept(File pathname) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean accept(File pathname) {
             if (!pathname.isFile() || !pathname.canExecute()) {
                 return false;
             }

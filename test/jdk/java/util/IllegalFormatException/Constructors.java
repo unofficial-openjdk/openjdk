@@ -28,6 +28,7 @@
 
 import java.util.*;
 
+@Bean
 public class Constructors {
 
     private static Class NPE = NullPointerException.class;

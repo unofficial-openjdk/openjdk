@@ -41,6 +41,7 @@ import javax.imageio.ImageWriter;
 import javax.imageio.event.IIOWriteProgressListener;
 import javax.imageio.stream.ImageOutputStream;
 
+@Bean
 public class WriteAbortTest implements IIOWriteProgressListener {
 
     ImageWriter writer = null;
@@ -107,7 +108,11 @@ public class WriteAbortTest implements IIOWriteProgressListener {
      * IIOWriteProgressListener, and relevant for this test case.
      */
     @Override
-    public void imageStarted(ImageWriter source, int imageIndex) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void imageStarted(ImageWriter source, int imageIndex) {
         System.out.println("imageStarted called");
         if (startAbort) {
             source.abort();
@@ -115,7 +120,11 @@ public class WriteAbortTest implements IIOWriteProgressListener {
     }
 
     @Override
-    public void imageProgress(ImageWriter source, float percentageDone) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void imageProgress(ImageWriter source, float percentageDone) {
         System.out.println("imageProgress called");
         if (progressAbort) {
             source.abort();
@@ -123,7 +132,11 @@ public class WriteAbortTest implements IIOWriteProgressListener {
     }
 
     @Override
-    public void writeAborted(ImageWriter source) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void writeAborted(ImageWriter source) {
         System.out.println("writeAborted called");
         // Verify IIOWriteProgressListener.imageStarted() abort request.
         if (startAbort) {
@@ -150,7 +163,11 @@ public class WriteAbortTest implements IIOWriteProgressListener {
      * IIOWriteProgressListener, but not relevant for this test case.
      */
     @Override
-    public void imageComplete(ImageWriter source) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void imageComplete(ImageWriter source) {
     }
 
     @Override
@@ -159,11 +176,19 @@ public class WriteAbortTest implements IIOWriteProgressListener {
     }
 
     @Override
-    public void thumbnailProgress(ImageWriter source, float percentageDone) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void thumbnailProgress(ImageWriter source, float percentageDone) {
     }
 
     @Override
-    public void thumbnailComplete(ImageWriter source) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void thumbnailComplete(ImageWriter source) {
     }
 }
 

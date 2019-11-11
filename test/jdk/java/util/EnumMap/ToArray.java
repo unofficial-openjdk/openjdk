@@ -30,6 +30,7 @@
 
 import java.util.*;
 
+@Bean
 public class ToArray {
     enum Country { FRENCH, POLISH }
     public static void main(String[] args) throws Throwable {

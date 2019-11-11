@@ -65,6 +65,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Bean
 public class ExecutionEnvironment extends TestHelper {
     static final String LD_LIBRARY_PATH    = Platform.sharedLibraryPathVariableName();
     static final String LD_LIBRARY_PATH_32 = LD_LIBRARY_PATH + "_32";
@@ -111,7 +112,11 @@ public class ExecutionEnvironment extends TestHelper {
             throw new RuntimeException(fnfe);
         }
     }
-    private void flagError(TestResult tr, String message) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void flagError(TestResult tr, String message) {
         System.err.println(tr);
         throw new RuntimeException(message);
     }
@@ -212,7 +217,11 @@ public class ExecutionEnvironment extends TestHelper {
         }
     }
 
-    private void verifyJavaLibraryPathGeneric(TestResult tr) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void verifyJavaLibraryPathGeneric(TestResult tr) {
         if (!tr.matches("java.library.path=.*" + LD_LIBRARY_PATH_VALUE + ".*")) {
             flagError(tr, "testJavaLibraryPath: java.library.path does not contain " +
                     LD_LIBRARY_PATH_VALUE);
@@ -257,7 +266,11 @@ public class ExecutionEnvironment extends TestHelper {
         }
     }
 
-    private void tryVmOption(String opt, String expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void tryVmOption(String opt, String expected) {
         TestResult tr = doExec(javaCmd, opt, "-version");
         if (!tr.matches(expected)) {
             flagError(tr, "the expected vm " + opt + " did not launch");

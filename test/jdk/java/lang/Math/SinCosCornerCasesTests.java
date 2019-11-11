@@ -31,6 +31,7 @@
  * @author Vivek Deshpande
  */
 
+@Bean
 public class SinCosCornerCasesTests {
     private SinCosCornerCasesTests() {throw new AssertionError("No instances for you.");}
 

@@ -46,6 +46,7 @@ import test.java.awt.regtesthelpers.Util;
 
 
 
+@Bean
 public class LWPopupMenu
 {
 
@@ -64,7 +65,11 @@ public class LWPopupMenu
         JMenu lmenu = new JMenu("Lite Menu");
         lmenu.add("Salad");
         lmenu.add( new AbstractAction("Fruit Plate") {
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 failed = false;
             }
         });

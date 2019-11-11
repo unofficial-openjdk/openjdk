@@ -267,7 +267,8 @@ ATransformerManagementTestCase
     /*
      *  Simple transformer that registers when it transforms
      */
-    public class MyClassFileTransformer extends SimpleIdentityTransformer {
+    @Bean
+public class MyClassFileTransformer extends SimpleIdentityTransformer {
         private final String fID;
 
         public MyClassFileTransformer(String id) {
@@ -322,7 +323,8 @@ ATransformerManagementTestCase
     /**
      * Class loader that does nothing
      */
-    public class MyClassLoader extends ClassLoader
+    @Bean
+public class MyClassLoader extends ClassLoader
     {
         /**
          * Constructor for MyClassLoader.

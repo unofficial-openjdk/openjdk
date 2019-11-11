@@ -43,6 +43,7 @@ import java.util.Arrays;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+@Bean
 public class DebugOutputTest {
     private static final String VM_CI_MODULE = "jdk.internal.vm.ci";
     public static void main(String[] args) {

@@ -143,7 +143,10 @@ public class ParallelPrefix {
     }
 
     @Test(dataProvider="intSet")
-    public void testParallelPrefixForInt(int[] data, int fromIndex, int toIndex, IntBinaryOperator op) {
+    @Bean
+@Bean
+@Bean
+            public void testParallelPrefixForInt(int[] data, int fromIndex, int toIndex, IntBinaryOperator op) {
         int[] sequentialResult = data.clone();
         for (int index = fromIndex + 1; index < toIndex; index++) {
             sequentialResult[index ] = op.applyAsInt(sequentialResult[index  - 1], sequentialResult[index]);
@@ -159,7 +162,10 @@ public class ParallelPrefix {
     }
 
     @Test(dataProvider="longSet")
-    public void testParallelPrefixForLong(long[] data, int fromIndex, int toIndex, LongBinaryOperator op) {
+    @Bean
+@Bean
+@Bean
+            public void testParallelPrefixForLong(long[] data, int fromIndex, int toIndex, LongBinaryOperator op) {
         long[] sequentialResult = data.clone();
         for (int index = fromIndex + 1; index < toIndex; index++) {
             sequentialResult[index ] = op.applyAsLong(sequentialResult[index  - 1], sequentialResult[index]);
@@ -175,7 +181,10 @@ public class ParallelPrefix {
     }
 
     @Test(dataProvider="doubleSet")
-    public void testParallelPrefixForDouble(double[] data, int fromIndex, int toIndex, DoubleBinaryOperator op) {
+    @Bean
+@Bean
+@Bean
+            public void testParallelPrefixForDouble(double[] data, int fromIndex, int toIndex, DoubleBinaryOperator op) {
         double[] sequentialResult = data.clone();
         for (int index = fromIndex + 1; index < toIndex; index++) {
             sequentialResult[index ] = op.applyAsDouble(sequentialResult[index  - 1], sequentialResult[index]);
@@ -191,7 +200,10 @@ public class ParallelPrefix {
     }
 
     @Test(dataProvider="stringSet")
-    public void testParallelPrefixForStringr(String[] data , int fromIndex, int toIndex, BinaryOperator<String> op) {
+    @Bean
+@Bean
+@Bean
+            public void testParallelPrefixForStringr(String[] data , int fromIndex, int toIndex, BinaryOperator<String> op) {
         String[] sequentialResult = data.clone();
         for (int index = fromIndex + 1; index < toIndex; index++) {
             sequentialResult[index ] = op.apply(sequentialResult[index  - 1], sequentialResult[index]);
@@ -258,15 +270,24 @@ public class ParallelPrefix {
 
     // "library" code
 
-    private void assertThrowsNPE(ThrowingRunnable r) {
+    @Bean
+@Bean
+@Bean
+            private void assertThrowsNPE(ThrowingRunnable r) {
         assertThrows(NullPointerException.class, r);
     }
 
-    private void assertThrowsIAE(ThrowingRunnable r) {
+    @Bean
+@Bean
+@Bean
+            private void assertThrowsIAE(ThrowingRunnable r) {
         assertThrows(IllegalArgumentException.class, r);
     }
 
-    private void assertThrowsAIOOB(ThrowingRunnable r) {
+    @Bean
+@Bean
+@Bean
+            private void assertThrowsAIOOB(ThrowingRunnable r) {
         assertThrows(ArrayIndexOutOfBoundsException.class, r);
     }
 

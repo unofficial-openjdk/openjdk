@@ -45,7 +45,10 @@ public class ScaledLCDTextMetrics extends Component {
     public Dimension getPreferredSize() {
       return new Dimension(200,100);
     }
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
        Graphics2D g2 = (Graphics2D)g;
 
        Font f = new Font("Tahoma", Font.PLAIN, 11);

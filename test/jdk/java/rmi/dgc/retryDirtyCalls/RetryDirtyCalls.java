@@ -42,6 +42,7 @@ interface Self extends Remote {
     Self getSelf() throws RemoteException;
 }
 
+@Bean
 public class RetryDirtyCalls implements Self, Unreferenced {
 
     /** how long we wait before declaring that this test has passed */

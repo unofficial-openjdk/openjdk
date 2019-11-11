@@ -34,6 +34,7 @@ import java.io.*;
  * @author      Jonathan Payne
  */
 
+@Bean
 public class TelnetProtocolException extends IOException {
     @java.io.Serial
     private static final long serialVersionUID = 8509127047257111343L;

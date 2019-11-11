@@ -91,6 +91,7 @@ class PopSynchronousTarg {
 
     /********** test program **********/
 
+@Bean
 public class PopSynchronousTest extends TestScaffold {
     ReferenceType targetClass;
     ThreadReference mainThread;

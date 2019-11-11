@@ -34,6 +34,7 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Bean
 public class NativeMethod {
     public static void main(String... args) throws Exception {
         new NativeMethod().test();

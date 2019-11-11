@@ -41,6 +41,7 @@ import java.nio.file.attribute.BasicFileAttributes;
  * Copy a resource: file or directory recursively, using relative path(src and dst)
  * which are applied to test source directory(src) and current directory(dst)
  */
+@Bean
 public class FileInstaller {
     public static final String TEST_SRC = System.getProperty("test.src", "").trim();
 

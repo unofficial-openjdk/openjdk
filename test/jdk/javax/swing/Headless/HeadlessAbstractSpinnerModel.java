@@ -30,11 +30,16 @@ import javax.swing.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessAbstractSpinnerModel
  */
 
+@Bean
 public class HeadlessAbstractSpinnerModel {
     public static void main (String[] args){
         AbstractSpinnerModel model = new AbstractSpinnerModel(){
             public Object getValue() { return null; }
-            public void setValue(Object value) {}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(Object value) {}
             public Object getNextValue() { return null; }
             public Object getPreviousValue() { return null; }
         };

@@ -31,6 +31,7 @@
 import java.net.*;
 import java.io.*;
 
+@Bean
 public class IsHostReachableBug {
     public static void main(String[] args) throws Exception{
                 String hostName = "fec0::1:a00:20ff:feed:b08d";

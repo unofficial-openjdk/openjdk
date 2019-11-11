@@ -33,6 +33,7 @@ import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.ListIterator;
 
+@Bean
 public class FailFastIterator {
     public static void main(String[] args) throws Exception {
         List orig = new ArrayList(100);

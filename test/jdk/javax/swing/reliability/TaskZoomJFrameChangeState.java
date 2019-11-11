@@ -38,6 +38,7 @@ import java.awt.*;
  * @run main TaskZoomJFrameChangeState
  */
 
+@Bean
 public class TaskZoomJFrameChangeState extends Task<GUIZoomFrame> {
 
     public static void main (String[] args) throws Exception {

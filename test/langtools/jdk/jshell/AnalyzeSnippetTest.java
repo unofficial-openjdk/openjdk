@@ -54,6 +54,7 @@ import jdk.jshell.VarSnippet;
 import static jdk.jshell.Snippet.SubKind.*;
 
 @Test
+@Bean
 public class AnalyzeSnippetTest {
 
     JShell state;
@@ -150,7 +151,11 @@ public class AnalyzeSnippetTest {
         assertSnippet("new CC();", SubKind.UNKNOWN_SUBKIND);
     }
 
-    private Snippet assertSnippet(String input, SubKind sk) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Snippet assertSnippet(String input, SubKind sk) {
         List<Snippet> sns = sca.sourceToSnippets(input);
         assertEquals(sns.size(), 1, "snippet count");
         Snippet sn = sns.get(0);

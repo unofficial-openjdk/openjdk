@@ -28,6 +28,7 @@
  * @run main MethodReference74
  */
 
+@Bean
 public class MethodReference74 extends pkg.Parent {
 
     public void protectedMethod() {
@@ -37,7 +38,11 @@ public class MethodReference74 extends pkg.Parent {
         run(super::protectedMethod); // test also in invocation context.
     }
 
-    private void run(Runnable r) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void run(Runnable r) {
         r.run();
     }
 

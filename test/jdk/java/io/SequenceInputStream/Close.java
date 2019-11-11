@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 
+@Bean
 public class Close {
 
     public static void main(String[] argv) {

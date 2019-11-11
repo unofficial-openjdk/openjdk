@@ -45,6 +45,7 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
  * @run testng Mismatch
  * @summary Unit test for the Files.mismatch method.
  */
+@Bean
 public class Mismatch {
     // the standard buffer size
     final static int BUFFER_SIZE = 8192;

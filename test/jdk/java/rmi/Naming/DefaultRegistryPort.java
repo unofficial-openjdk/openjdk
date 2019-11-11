@@ -47,6 +47,7 @@ import java.rmi.Remote;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
+@Bean
 public class DefaultRegistryPort {
 
     public static void main(String args[]) throws Exception {

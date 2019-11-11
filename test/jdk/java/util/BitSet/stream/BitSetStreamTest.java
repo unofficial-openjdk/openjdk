@@ -105,7 +105,10 @@ public class BitSetStreamTest extends SpliteratorTestHelper {
     }
 
     @Test(dataProvider = "cases")
-    public void testBitsetStream(String name, IntStream data) {
+    @Bean
+@Bean
+@Bean
+            public void testBitsetStream(String name, IntStream data) {
         BitSet bs = data.collect(BitSet::new, BitSet::set, BitSet::or);
 
         assertEquals(bs.cardinality(), bs.stream().count());
@@ -167,48 +170,75 @@ public class BitSetStreamTest extends SpliteratorTestHelper {
     }
 
     @Test(dataProvider = "BitSet.stream.spliterator")
-    public void testIntNullPointerException(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
+    @Bean
+@Bean
+@Bean
+            public void testIntNullPointerException(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
         assertThrows(NullPointerException.class, () -> s.get().forEachRemaining((IntConsumer) null));
         assertThrows(NullPointerException.class, () -> s.get().tryAdvance((IntConsumer) null));
     }
 
     @Test(dataProvider = "BitSet.stream.spliterator")
-    public void testIntForEach(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
+    @Bean
+@Bean
+@Bean
+            public void testIntForEach(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
         testForEach(exp, s, intBoxingConsumer());
     }
 
     @Test(dataProvider = "BitSet.stream.spliterator")
-    public void testIntTryAdvance(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
+    @Bean
+@Bean
+@Bean
+            public void testIntTryAdvance(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
         testTryAdvance(exp, s, intBoxingConsumer());
     }
 
     @Test(dataProvider = "BitSet.stream.spliterator")
-    public void testIntMixedTryAdvanceForEach(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
+    @Bean
+@Bean
+@Bean
+            public void testIntMixedTryAdvanceForEach(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
         testMixedTryAdvanceForEach(exp, s, intBoxingConsumer());
     }
 
     @Test(dataProvider = "BitSet.stream.spliterator")
-    public void testIntMixedTraverseAndSplit(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
+    @Bean
+@Bean
+@Bean
+            public void testIntMixedTraverseAndSplit(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
         testMixedTraverseAndSplit(exp, s, intBoxingConsumer());
     }
 
     @Test(dataProvider = "BitSet.stream.spliterator")
-    public void testIntSplitAfterFullTraversal(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
+    @Bean
+@Bean
+@Bean
+            public void testIntSplitAfterFullTraversal(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
         testSplitAfterFullTraversal(s, intBoxingConsumer());
     }
 
     @Test(dataProvider = "BitSet.stream.spliterator")
-    public void testIntSplitOnce(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
+    @Bean
+@Bean
+@Bean
+            public void testIntSplitOnce(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
         testSplitOnce(exp, s, intBoxingConsumer());
     }
 
     @Test(dataProvider = "BitSet.stream.spliterator")
-    public void testIntSplitSixDeep(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
+    @Bean
+@Bean
+@Bean
+            public void testIntSplitSixDeep(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
         testSplitSixDeep(exp, s, intBoxingConsumer());
     }
 
     @Test(dataProvider = "BitSet.stream.spliterator")
-    public void testIntSplitUntilNull(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
+    @Bean
+@Bean
+@Bean
+            public void testIntSplitUntilNull(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
         testSplitUntilNull(exp, s, intBoxingConsumer());
     }
 

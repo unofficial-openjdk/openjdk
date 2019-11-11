@@ -28,6 +28,7 @@ import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic.Kind;
 
 @SupportedAnnotationTypes("Anno")
+@Bean
 public class AnnoProcessor extends JavacTestingAbstractProcessor {
     @Override
     public SourceVersion getSupportedSourceVersion() {
@@ -35,7 +36,11 @@ public class AnnoProcessor extends JavacTestingAbstractProcessor {
     }
 
     @Override
-    public boolean process(Set<? extends TypeElement> set, RoundEnvironment re) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> set, RoundEnvironment re) {
         messager.printMessage(Kind.NOTE, "RUNNING - lastRound = " + re.processingOver());
         return true;
     }

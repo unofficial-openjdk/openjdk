@@ -38,6 +38,7 @@ import java.net.InetAddress;
 import java.net.Proxy;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class SocksProxyVersion implements Runnable {
     final ServerSocket ss;
     volatile boolean failed;

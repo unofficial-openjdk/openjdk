@@ -37,6 +37,7 @@ import java.nio.channels.*;
 import java.io.IOException;
 import java.util.*;
 
+@Bean
 public class SBC {
 
     static boolean supportsLinks;

@@ -34,6 +34,7 @@
 
 import java.awt.Font;
 
+@Bean
 public class TestFontClassValue {
     public static void main(String[] args) {
         TestEditor test = new TestEditor(Font.class);

@@ -49,6 +49,7 @@ import sun.security.validator.TrustStoreUtil;
 import sun.security.validator.Validator;
 
 
+@Bean
 public class EndEntityExtensionCheck {
 
     /*

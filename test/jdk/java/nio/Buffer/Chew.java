@@ -32,6 +32,7 @@
 import java.nio.*;
 
 
+@Bean
 public class Chew {
 
     public static void main(String[] args) {

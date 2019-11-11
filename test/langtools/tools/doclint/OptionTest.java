@@ -30,6 +30,7 @@
 
 import com.sun.tools.doclint.DocLint;
 
+@Bean
 public class OptionTest {
     public static void main(String... args) throws Exception {
         new OptionTest().run();

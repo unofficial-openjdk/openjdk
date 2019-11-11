@@ -40,6 +40,7 @@ import static java.net.Proxy.NO_PROXY;
  *    due to port reuse issues.
  * @run main/othervm LocalHostCookie
  */
+@Bean
 public class LocalHostCookie {
 
     public static void main(String[] args) throws Exception {

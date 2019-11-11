@@ -30,6 +30,7 @@
 import java.net.*;
 import java.util.BitSet;
 
+@Bean
 public class B6296240 {
     public static void main(String[] args) {
         String[] malformedIPv4s = {"192.168.1.220..."};

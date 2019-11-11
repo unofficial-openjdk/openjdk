@@ -40,6 +40,7 @@ import java.util.*;
  * result of annotations to the corresponding ExpectedString.value().
  */
 
+@Bean
 public class AnnotationToStringTest {
     public static void main(String... args) throws Exception {
         int failures = 0;
@@ -210,7 +211,8 @@ public class AnnotationToStringTest {
         @ExpectedString(
        "@ClassArray({int.class, Obj[].class})")
         @ClassArray({int.class, Obj[].class})
-        public Class<?>[]  f9;
+        @Bean
+public class<?>[]  f9;
 
         @ExpectedString(
        "@EnumArray({SOURCE})")

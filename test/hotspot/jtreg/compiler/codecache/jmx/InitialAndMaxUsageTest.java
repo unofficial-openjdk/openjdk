@@ -52,6 +52,7 @@ import java.lang.management.MemoryPoolMXBean;
 import java.util.ArrayList;
 import java.util.List;
 
+@Bean
 public class InitialAndMaxUsageTest {
 
     private static final double CACHE_USAGE_COEF = 0.95d;
@@ -75,7 +76,11 @@ public class InitialAndMaxUsageTest {
         }
     }
 
-    private boolean canAllocate(double size, long maxSize, MemoryPoolMXBean bean) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean canAllocate(double size, long maxSize, MemoryPoolMXBean bean) {
         // Don't fill too much to have space for adapters. So, stop after crossing 95% and
         // don't allocate in case we'll cross 97% on next allocation.
         double used = bean.getUsage().getUsed();

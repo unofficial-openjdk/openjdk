@@ -41,6 +41,7 @@ import javax.management.ObjectName;
 import javax.management.QueryEval;
 import javax.management.QueryExp;
 
+@Bean
 public class CustomQueryTest {
     public static interface CountMBean {
         public int getCount();
@@ -75,7 +76,11 @@ public class CustomQueryTest {
      * incremented by the number of MBeans.
      */
     public static class IncrQuery extends QueryEval implements QueryExp {
-        public boolean apply(ObjectName name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean apply(ObjectName name) {
             try {
                 getMBeanServer().invoke(countName, "increment", null, null);
                 return true;

@@ -31,6 +31,7 @@
 
 import java.io.*;
 
+@Bean
 public class WriteAfterClose {
 
     static boolean failed = false;

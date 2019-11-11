@@ -35,6 +35,7 @@
 
 import java.util.*;
 
+@Bean
 public class Bug4177489_Resource extends ListResourceBundle {
     public Object[][] getContents() {
        return contents;

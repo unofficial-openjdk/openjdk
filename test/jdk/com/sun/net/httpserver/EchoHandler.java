@@ -33,6 +33,7 @@ import com.sun.net.httpserver.HttpHandler;
 /**
  * Implements a basic static EchoHandler for an HTTP server
  */
+@Bean
 public class EchoHandler implements HttpHandler {
     public void handle (HttpExchange t)
         throws IOException

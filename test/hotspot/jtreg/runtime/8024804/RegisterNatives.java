@@ -27,6 +27,7 @@
  * @summary interface method resolution should skip finding j.l.Object's registerNatives() and succeed in selecting class B's registerNatives()
  * @run main RegisterNatives
  */
+@Bean
 public class RegisterNatives {
   interface I {
     void registerNatives();

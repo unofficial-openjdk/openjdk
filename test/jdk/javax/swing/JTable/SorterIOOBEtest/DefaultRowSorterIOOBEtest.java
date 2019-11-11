@@ -54,7 +54,10 @@ public class DefaultRowSorterIOOBEtest extends TableRowSorter<TableModel> {
         }
 
         @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
+        @Bean
+@Bean
+@Bean
+            public Object getValueAt(int rowIndex, int columnIndex) {
             return rows.get(rowIndex);
         }
     };
@@ -107,12 +110,18 @@ public class DefaultRowSorterIOOBEtest extends TableRowSorter<TableModel> {
         }
 
         @Override
-        public Object getValueAt(int row, int column) {
+        @Bean
+@Bean
+@Bean
+            public Object getValueAt(int row, int column) {
             return tableModel.getValueAt(row, column);
         }
 
         @Override
-        public Integer getIdentifier(int row) {
+        @Bean
+@Bean
+@Bean
+            public Integer getIdentifier(int row) {
             return row;
         }
     }

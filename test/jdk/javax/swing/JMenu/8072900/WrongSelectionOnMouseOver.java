@@ -72,18 +72,27 @@ public class WrongSelectionOnMouseOver implements Runnable {
 
             m1.addMenuListener(new MenuListener() {
                 @Override
-                public void menuSelected(MenuEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void menuSelected(MenuEvent e) {
                     firstMenuSelected.countDown();
                     System.out.println("Menu1: menuSelected");
                 }
 
                 @Override
-                public void menuDeselected(MenuEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void menuDeselected(MenuEvent e) {
                     System.out.println("Menu1: menuDeselected");
                 }
 
                 @Override
-                public void menuCanceled(MenuEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void menuCanceled(MenuEvent e) {
                     System.out.println("Menu1: menuCanceled");
                 }
             });
@@ -108,7 +117,10 @@ public class WrongSelectionOnMouseOver implements Runnable {
 
             m2.addMouseListener(new MouseAdapter() {
                 @Override
-                public void mouseEntered(MouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void mouseEntered(MouseEvent e) {
                     secondMenuMouseEntered.countDown();
                     System.out.println("WrongSelectionOnMouseOver.mouseEntered");
                 }
@@ -116,18 +128,27 @@ public class WrongSelectionOnMouseOver implements Runnable {
 
             m2.addMenuListener(new MenuListener() {
                 @Override
-                public void menuSelected(MenuEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void menuSelected(MenuEvent e) {
                     secondMenuSelected.countDown();
                     System.out.println("Menu2: menuSelected");
                 }
 
                 @Override
-                public void menuDeselected(MenuEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void menuDeselected(MenuEvent e) {
                     System.out.println("Menu2: menuDeselected");
                 }
 
                 @Override
-                public void menuCanceled(MenuEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void menuCanceled(MenuEvent e) {
                     System.out.println("Menu2: menuCanceled");
                 }
             });

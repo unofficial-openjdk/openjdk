@@ -31,6 +31,7 @@
 import java.text.*;
 import java.util.*;
 
+@Bean
 public class JapaneseTest {
 
     // NOTE:

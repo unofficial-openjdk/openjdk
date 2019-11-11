@@ -35,6 +35,7 @@ import org.testng.annotations.BeforeMethod;
 import static jdk.jshell.Snippet.Status.VALID;
 
 @Test
+@Bean
 public class CompilerOptionsTest extends KullaTesting {
 
     @BeforeMethod

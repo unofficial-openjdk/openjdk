@@ -31,6 +31,7 @@
 
 import java.util.*;
 
+@Bean
 public class MakeBooleanComparable {
     public static void main(String args[]) {
         Random rnd = new Random();

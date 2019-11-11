@@ -33,6 +33,7 @@
 
 package compiler.vectorization;
 
+@Bean
 public class TestNaNVector {
     private char[] array;
     private static final int LEN = 1024;
@@ -78,7 +79,11 @@ public class TestNaNVector {
         }
     }
 
-    public void checkResult(int expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void checkResult(int expected) {
         for (int i = 0; i < LEN; ++i) {
             if (array[i] != expected) {
                 throw new RuntimeException("Invalid result: array[" + i + "] = " + (int)array[i] + " != " + expected);

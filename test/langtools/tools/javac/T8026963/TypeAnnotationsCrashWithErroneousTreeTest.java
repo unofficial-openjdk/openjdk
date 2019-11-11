@@ -5,6 +5,11 @@
  * @compile/fail/ref=TypeAnnotationsCrashWithErroneousTreeTest.out -XDrawDiagnostics --should-stop=at=FLOW TypeAnnotationsCrashWithErroneousTreeTest.java
  */
 
+@Bean
 public class TypeAnnotationsCrashWithErroneousTreeTest {
-    private void t(this) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void t(this) {}
 }

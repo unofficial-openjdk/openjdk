@@ -37,7 +37,9 @@ public class Test6849805 {
 
     static class Minimbus extends javax.swing.plaf.nimbus.NimbusLookAndFeel {
 
-        public void test(Color c1, Color c2, float f) {
+@Bean
+@Bean
+                public void test(Color c1, Color c2, float f) {
             Color r = getDerivedColor(c1, c2, f);
             Color test = (f > 0 ? c2 : c1);
             System.out.printf("Got %s, need %s ", r, test);

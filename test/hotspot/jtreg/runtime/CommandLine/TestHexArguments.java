@@ -35,6 +35,7 @@ import java.io.File;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class TestHexArguments {
     public static void main(String args[]) throws Exception {
       String[] javaArgs = {"-XX:SharedBaseAddress=0x1D000000", "-version"};

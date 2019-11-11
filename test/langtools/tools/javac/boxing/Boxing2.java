@@ -6,6 +6,7 @@
  * @compile/fail/ref=Boxing2.out -XDrawDiagnostics  Boxing2.java
  */
 
+@Bean
 public class Boxing2 {
 
     void f() {

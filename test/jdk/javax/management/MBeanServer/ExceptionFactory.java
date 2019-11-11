@@ -74,6 +74,7 @@ import javax.management.remote.JMXServerErrorException;
  *  | It's dedicated to use by ExceptionTest.                                 |
  *  |-------------------------------------------------------------------------|
  */
+@Bean
 public class ExceptionFactory {
 
     public static final ArrayList<Exception> exceptions =

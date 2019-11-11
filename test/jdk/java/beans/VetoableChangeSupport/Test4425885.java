@@ -33,6 +33,7 @@ import java.beans.PropertyVetoException;
 import java.beans.VetoableChangeListener;
 import java.beans.VetoableChangeSupport;
 
+@Bean
 public class Test4425885 {
     private static final String PROPERTY = "property"; // NON-NLS: predefined property name
 

@@ -31,6 +31,7 @@
  * @run main InconsistentStack
  */
 
+@Bean
 public class InconsistentStack {
     public static void main(String[] args) {
         f1();

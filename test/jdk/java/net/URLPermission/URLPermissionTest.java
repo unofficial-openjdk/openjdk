@@ -29,6 +29,7 @@ import java.io.*;
  * @bug 8010464 8027570 8027687 8029354 8114860 8071660 8161291
  */
 
+@Bean
 public class URLPermissionTest {
 
     // super class for all test types

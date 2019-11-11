@@ -27,6 +27,7 @@
  * @summary Basic tests for unsigned operations.
  * @author Joseph D. Darcy
  */
+@Bean
 public class Unsigned {
     public static void main(String... args) {
         int errors = 0;

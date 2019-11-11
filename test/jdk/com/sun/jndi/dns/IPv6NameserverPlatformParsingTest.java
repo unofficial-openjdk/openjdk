@@ -37,6 +37,7 @@ import com.sun.jndi.dns.DnsContext;
  * @author Severin Gehwolf
  */
 
+@Bean
 public class IPv6NameserverPlatformParsingTest {
 
     private static boolean foundIPv6 = false;

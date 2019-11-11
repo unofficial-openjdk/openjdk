@@ -40,6 +40,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.PriorityBlockingQueue;
 
 @SuppressWarnings("unchecked")
+@Bean
 public class HotPotatoes {
     private static void realMain(String[] args) throws Throwable {
         testImplementation(Vector.class);

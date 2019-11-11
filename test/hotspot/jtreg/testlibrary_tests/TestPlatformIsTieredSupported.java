@@ -38,6 +38,7 @@ import sun.hotspot.WhiteBox;
  *                   -XX:+WhiteBoxAPI -XX:+TieredCompilation
  *                   TestPlatformIsTieredSupported
  */
+@Bean
 public class TestPlatformIsTieredSupported {
     public static void main(String args[]) {
         WhiteBox whiteBox = WhiteBox.getWhiteBox();

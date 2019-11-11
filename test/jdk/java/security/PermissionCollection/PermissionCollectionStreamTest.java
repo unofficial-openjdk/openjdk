@@ -42,6 +42,7 @@ import java.util.stream.OpTestCase;
 import java.util.stream.Stream;
 import java.util.stream.TestData;
 
+@Bean
 public class PermissionCollectionStreamTest extends OpTestCase {
 
     @DataProvider
@@ -59,7 +60,11 @@ public class PermissionCollectionStreamTest extends OpTestCase {
     }
 
 
-    private PermissionCollection create(Permission[] pa) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private PermissionCollection create(Permission[] pa) {
         PermissionCollection pc = pa[0].newPermissionCollection();
         for (Permission p : pa) {
             pc.add(p);
@@ -68,7 +73,11 @@ public class PermissionCollectionStreamTest extends OpTestCase {
     }
 
     @Test(dataProvider = "permissions")
-    public void testElementsAsStream(String description, Permission[] pa) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testElementsAsStream(String description, Permission[] pa) {
         PermissionCollection pc = create(pa);
 
         Supplier<Stream<Permission>> ss = pc::elementsAsStream;

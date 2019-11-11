@@ -34,6 +34,7 @@ import javax.management.ValueExp;
  * Comments in each case of the big switch in method getQuery() details which
  * API member we cover with a given query.
  */
+@Bean
 public class QueryFactory extends QueryData {
 
     private String mbeanClassName = "";
@@ -322,7 +323,11 @@ public class QueryFactory extends QueryData {
      * <br>The queries numbered 1 to 23 allow to cover all the underlying
      * Java classes of the JMX API used to build queries.
      */
-    public QueryExp getQuery(int index) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public QueryExp getQuery(int index) {
         return queries.get(index - 1);
     }
 }

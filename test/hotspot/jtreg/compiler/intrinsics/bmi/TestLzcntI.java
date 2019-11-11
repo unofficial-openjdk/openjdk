@@ -42,6 +42,7 @@ package compiler.intrinsics.bmi;
 
 import sun.hotspot.cpuinfo.CPUInfo;
 
+@Bean
 public class TestLzcntI {
 
     public static void main(String args[]) throws Throwable {
@@ -56,7 +57,11 @@ public class TestLzcntI {
 
     public static class LzcntIExpr extends Expr.BitCountingIntExpr {
 
-        public int intExpr(int src) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int intExpr(int src) {
             return Integer.numberOfLeadingZeros(src);
         }
 

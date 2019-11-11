@@ -36,6 +36,7 @@
 import javax.management.*;
 import javax.management.monitor.*;
 
+@Bean
 public class CounterMonitorTest implements NotificationListener {
 
     // threshold number
@@ -62,7 +63,8 @@ public class CounterMonitorTest implements NotificationListener {
     private volatile Object observedValue = null;
 
     // MBean class
-    public class StdObservedObject implements StdObservedObjectMBean {
+    @Bean
+public class StdObservedObject implements StdObservedObjectMBean {
         public Object getNbObjects() {
             echo(">>> StdObservedObject.getNbObjects: " + count);
             synchronized(CounterMonitorTest.class) {
@@ -71,7 +73,11 @@ public class CounterMonitorTest implements NotificationListener {
             }
             return observedValue;
         }
-        public void setNbObjects(Object n) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setNbObjects(Object n) {
             echo(">>> StdObservedObject.setNbObjects: " + n);
             count = n;
         }
@@ -223,7 +229,11 @@ public class CounterMonitorTest implements NotificationListener {
         }
     }
 
-    private void waitObservation(Object value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void waitObservation(Object value) {
         synchronized (CounterMonitorTest.class) {
             while (value != observedValue) {
                 try {

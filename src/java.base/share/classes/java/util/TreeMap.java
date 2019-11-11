@@ -108,6 +108,7 @@ import java.util.function.Consumer;
  * @since 1.2
  */
 
+@Bean
 public class TreeMap<K,V>
     extends AbstractMap<K,V>
     implements NavigableMap<K,V>, Cloneable, java.io.Serializable
@@ -228,7 +229,8 @@ public class TreeMap<K,V>
      *         and this map uses natural ordering, or its comparator
      *         does not permit null keys
      */
-    public boolean containsKey(Object key) {
+@Bean
+        public boolean containsKey(Object key) {
         return getEntry(key) != null;
     }
 
@@ -245,7 +247,8 @@ public class TreeMap<K,V>
      *         {@code false} otherwise
      * @since 1.2
      */
-    public boolean containsValue(Object value) {
+@Bean
+        public boolean containsValue(Object value) {
         for (Entry<K,V> e = getFirstEntry(); e != null; e = successor(e))
             if (valEquals(value, e.value))
                 return true;
@@ -274,7 +277,8 @@ public class TreeMap<K,V>
      *         and this map uses natural ordering, or its comparator
      *         does not permit null keys
      */
-    public V get(Object key) {
+@Bean
+        public V get(Object key) {
         Entry<K,V> p = getEntry(key);
         return (p==null ? null : p.value);
     }
@@ -309,7 +313,8 @@ public class TreeMap<K,V>
      *         the specified map contains a null key and this map does not
      *         permit null keys
      */
-    public void putAll(Map<? extends K, ? extends V> map) {
+@Bean
+        public void putAll(Map<? extends K, ? extends V> map) {
         int mapSize = map.size();
         if (size==0 && mapSize!=0 && map instanceof SortedMap) {
             if (Objects.equals(comparator, ((SortedMap<?,?>)map).comparator())) {
@@ -530,7 +535,8 @@ public class TreeMap<K,V>
      *         and this map uses natural ordering, or its comparator
      *         does not permit null keys
      */
-    public V put(K key, V value) {
+@Bean
+        public V put(K key, V value) {
         Entry<K,V> t = root;
         if (t == null) {
             compare(key, key); // type (and possibly null) check
@@ -597,7 +603,8 @@ public class TreeMap<K,V>
      *         and this map uses natural ordering, or its comparator
      *         does not permit null keys
      */
-    public V remove(Object key) {
+@Bean
+        public V remove(Object key) {
         Entry<K,V> p = getEntry(key);
         if (p == null)
             return null;
@@ -704,7 +711,8 @@ public class TreeMap<K,V>
      *         does not permit null keys
      * @since 1.6
      */
-    public K lowerKey(K key) {
+@Bean
+        public K lowerKey(K key) {
         return keyOrNull(getLowerEntry(key));
     }
 
@@ -726,7 +734,8 @@ public class TreeMap<K,V>
      *         does not permit null keys
      * @since 1.6
      */
-    public K floorKey(K key) {
+@Bean
+        public K floorKey(K key) {
         return keyOrNull(getFloorEntry(key));
     }
 
@@ -748,7 +757,8 @@ public class TreeMap<K,V>
      *         does not permit null keys
      * @since 1.6
      */
-    public K ceilingKey(K key) {
+@Bean
+        public K ceilingKey(K key) {
         return keyOrNull(getCeilingEntry(key));
     }
 
@@ -770,7 +780,8 @@ public class TreeMap<K,V>
      *         does not permit null keys
      * @since 1.6
      */
-    public K higherKey(K key) {
+@Bean
+        public K higherKey(K key) {
         return keyOrNull(getHigherEntry(key));
     }
 
@@ -974,7 +985,8 @@ public class TreeMap<K,V>
     }
 
     @Override
-    public boolean replace(K key, V oldValue, V newValue) {
+@Bean
+        public boolean replace(K key, V oldValue, V newValue) {
         Entry<K,V> p = getEntry(key);
         if (p!=null && Objects.equals(oldValue, p.value)) {
             p.value = newValue;
@@ -984,7 +996,8 @@ public class TreeMap<K,V>
     }
 
     @Override
-    public V replace(K key, V value) {
+@Bean
+        public V replace(K key, V value) {
         Entry<K,V> p = getEntry(key);
         if (p!=null) {
             V oldValue = p.value;
@@ -995,7 +1008,8 @@ public class TreeMap<K,V>
     }
 
     @Override
-    public void forEach(BiConsumer<? super K, ? super V> action) {
+@Bean
+        public void forEach(BiConsumer<? super K, ? super V> action) {
         Objects.requireNonNull(action);
         int expectedModCount = modCount;
         for (Entry<K, V> e = getFirstEntry(); e != null; e = successor(e)) {
@@ -1008,7 +1022,8 @@ public class TreeMap<K,V>
     }
 
     @Override
-    public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
+@Bean
+        public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
         Objects.requireNonNull(function);
         int expectedModCount = modCount;
 
@@ -1032,11 +1047,13 @@ public class TreeMap<K,V>
             return TreeMap.this.size();
         }
 
-        public boolean contains(Object o) {
+@Bean
+            public boolean contains(Object o) {
             return TreeMap.this.containsValue(o);
         }
 
-        public boolean remove(Object o) {
+@Bean
+            public boolean remove(Object o) {
             for (Entry<K,V> e = getFirstEntry(); e != null; e = successor(e)) {
                 if (valEquals(e.getValue(), o)) {
                     deleteEntry(e);
@@ -1060,7 +1077,8 @@ public class TreeMap<K,V>
             return new EntryIterator(getFirstEntry());
         }
 
-        public boolean contains(Object o) {
+@Bean
+            public boolean contains(Object o) {
             if (!(o instanceof Map.Entry))
                 return false;
             Map.Entry<?,?> entry = (Map.Entry<?,?>) o;
@@ -1069,7 +1087,8 @@ public class TreeMap<K,V>
             return p != null && valEquals(p.getValue(), value);
         }
 
-        public boolean remove(Object o) {
+@Bean
+            public boolean remove(Object o) {
             if (!(o instanceof Map.Entry))
                 return false;
             Map.Entry<?,?> entry = (Map.Entry<?,?>) o;
@@ -1131,12 +1150,17 @@ public class TreeMap<K,V>
 
         public int size() { return m.size(); }
         public boolean isEmpty() { return m.isEmpty(); }
-        public boolean contains(Object o) { return m.containsKey(o); }
+@Bean
+            public boolean contains(Object o) { return m.containsKey(o); }
         public void clear() { m.clear(); }
-        public E lower(E e) { return m.lowerKey(e); }
-        public E floor(E e) { return m.floorKey(e); }
-        public E ceiling(E e) { return m.ceilingKey(e); }
-        public E higher(E e) { return m.higherKey(e); }
+@Bean
+            public E lower(E e) { return m.lowerKey(e); }
+@Bean
+            public E floor(E e) { return m.floorKey(e); }
+@Bean
+            public E ceiling(E e) { return m.ceilingKey(e); }
+@Bean
+            public E higher(E e) { return m.higherKey(e); }
         public E first() { return m.firstKey(); }
         public E last() { return m.lastKey(); }
         public Comparator<? super E> comparator() { return m.comparator(); }
@@ -1148,7 +1172,8 @@ public class TreeMap<K,V>
             Map.Entry<E,?> e = m.pollLastEntry();
             return (e == null) ? null : e.getKey();
         }
-        public boolean remove(Object o) {
+@Bean
+            public boolean remove(Object o) {
             int oldSize = size();
             m.remove(o);
             return size() != oldSize;
@@ -1646,7 +1671,8 @@ public class TreeMap<K,V>
                 return n == null || tooHigh(n.key);
             }
 
-            public boolean contains(Object o) {
+@Bean
+                public boolean contains(Object o) {
                 if (!(o instanceof Map.Entry))
                     return false;
                 Map.Entry<?,?> entry = (Map.Entry<?,?>) o;
@@ -1658,7 +1684,8 @@ public class TreeMap<K,V>
                     valEquals(node.getValue(), entry.getValue());
             }
 
-            public boolean remove(Object o) {
+@Bean
+                public boolean remove(Object o) {
                 if (!(o instanceof Map.Entry))
                     return false;
                 Map.Entry<?,?> entry = (Map.Entry<?,?>) o;
@@ -1786,11 +1813,13 @@ public class TreeMap<K,V>
             public Spliterator<K> trySplit() {
                 return null;
             }
-            public void forEachRemaining(Consumer<? super K> action) {
+@Bean
+                public void forEachRemaining(Consumer<? super K> action) {
                 while (hasNext())
                     action.accept(next());
             }
-            public boolean tryAdvance(Consumer<? super K> action) {
+@Bean
+                public boolean tryAdvance(Consumer<? super K> action) {
                 if (hasNext()) {
                     action.accept(next());
                     return true;
@@ -1824,11 +1853,13 @@ public class TreeMap<K,V>
             public Spliterator<K> trySplit() {
                 return null;
             }
-            public void forEachRemaining(Consumer<? super K> action) {
+@Bean
+                public void forEachRemaining(Consumer<? super K> action) {
                 while (hasNext())
                     action.accept(next());
             }
-            public boolean tryAdvance(Consumer<? super K> action) {
+@Bean
+                public boolean tryAdvance(Consumer<? super K> action) {
                 if (hasNext()) {
                     action.accept(next());
                     return true;
@@ -2102,13 +2133,15 @@ public class TreeMap<K,V>
          * @return the value associated with the key before this method was
          *         called
          */
-        public V setValue(V value) {
+@Bean
+            public V setValue(V value) {
             V oldValue = this.value;
             this.value = value;
             return oldValue;
         }
 
-        public boolean equals(Object o) {
+@Bean
+            public boolean equals(Object o) {
             if (!(o instanceof Map.Entry))
                 return false;
             Map.Entry<?,?> e = (Map.Entry<?,?>)o;
@@ -2227,7 +2260,8 @@ public class TreeMap<K,V>
     }
 
     /** From CLR */
-    private void rotateLeft(Entry<K,V> p) {
+@Bean
+        private void rotateLeft(Entry<K,V> p) {
         if (p != null) {
             Entry<K,V> r = p.right;
             p.right = r.left;
@@ -2246,7 +2280,8 @@ public class TreeMap<K,V>
     }
 
     /** From CLR */
-    private void rotateRight(Entry<K,V> p) {
+@Bean
+        private void rotateRight(Entry<K,V> p) {
         if (p != null) {
             Entry<K,V> l = p.left;
             p.left = l.right;
@@ -2263,7 +2298,8 @@ public class TreeMap<K,V>
     }
 
     /** From CLR */
-    private void fixAfterInsertion(Entry<K,V> x) {
+@Bean
+        private void fixAfterInsertion(Entry<K,V> x) {
         x.color = RED;
 
         while (x != null && x != root && x.parent.color == RED) {
@@ -2307,7 +2343,8 @@ public class TreeMap<K,V>
     /**
      * Delete node p, and then rebalance the tree.
      */
-    private void deleteEntry(Entry<K,V> p) {
+@Bean
+        private void deleteEntry(Entry<K,V> p) {
         modCount++;
         size--;
 
@@ -2356,7 +2393,8 @@ public class TreeMap<K,V>
     }
 
     /** From CLR */
-    private void fixAfterDeletion(Entry<K,V> x) {
+@Bean
+        private void fixAfterDeletion(Entry<K,V> x) {
         while (x != root && colorOf(x) == BLACK) {
             if (x == leftOf(parentOf(x))) {
                 Entry<K,V> sib = rightOf(parentOf(x));
@@ -2742,7 +2780,8 @@ public class TreeMap<K,V>
             return null;
         }
 
-        public void forEachRemaining(Consumer<? super K> action) {
+@Bean
+            public void forEachRemaining(Consumer<? super K> action) {
             if (action == null)
                 throw new NullPointerException();
             if (est < 0)
@@ -2766,7 +2805,8 @@ public class TreeMap<K,V>
             }
         }
 
-        public boolean tryAdvance(Consumer<? super K> action) {
+@Bean
+            public boolean tryAdvance(Consumer<? super K> action) {
             TreeMap.Entry<K,V> e;
             if (action == null)
                 throw new NullPointerException();
@@ -2820,7 +2860,8 @@ public class TreeMap<K,V>
             return null;
         }
 
-        public void forEachRemaining(Consumer<? super K> action) {
+@Bean
+            public void forEachRemaining(Consumer<? super K> action) {
             if (action == null)
                 throw new NullPointerException();
             if (est < 0)
@@ -2844,7 +2885,8 @@ public class TreeMap<K,V>
             }
         }
 
-        public boolean tryAdvance(Consumer<? super K> action) {
+@Bean
+            public boolean tryAdvance(Consumer<? super K> action) {
             TreeMap.Entry<K,V> e;
             if (action == null)
                 throw new NullPointerException();
@@ -2893,7 +2935,8 @@ public class TreeMap<K,V>
             return null;
         }
 
-        public void forEachRemaining(Consumer<? super V> action) {
+@Bean
+            public void forEachRemaining(Consumer<? super V> action) {
             if (action == null)
                 throw new NullPointerException();
             if (est < 0)
@@ -2917,7 +2960,8 @@ public class TreeMap<K,V>
             }
         }
 
-        public boolean tryAdvance(Consumer<? super V> action) {
+@Bean
+            public boolean tryAdvance(Consumer<? super V> action) {
             TreeMap.Entry<K,V> e;
             if (action == null)
                 throw new NullPointerException();
@@ -2965,7 +3009,8 @@ public class TreeMap<K,V>
             return null;
         }
 
-        public void forEachRemaining(Consumer<? super Map.Entry<K, V>> action) {
+@Bean
+            public void forEachRemaining(Consumer<? super Map.Entry<K, V>> action) {
             if (action == null)
                 throw new NullPointerException();
             if (est < 0)
@@ -2989,7 +3034,8 @@ public class TreeMap<K,V>
             }
         }
 
-        public boolean tryAdvance(Consumer<? super Map.Entry<K,V>> action) {
+@Bean
+            public boolean tryAdvance(Consumer<? super Map.Entry<K,V>> action) {
             TreeMap.Entry<K,V> e;
             if (action == null)
                 throw new NullPointerException();

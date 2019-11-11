@@ -33,6 +33,7 @@ import java.awt.geom.*;
 import java.text.*;
 import java.util.*;
 
+@Bean
 public class AttributeValuesCastTest
 {
     public static void main (String [] args)

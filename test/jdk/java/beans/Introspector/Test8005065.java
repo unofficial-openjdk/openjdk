@@ -37,6 +37,7 @@ import java.beans.Statement;
 import java.beans.MethodDescriptor;
 import java.beans.ParameterDescriptor;
 
+@Bean
 public class Test8005065 {
 
     public static void main(String[] args) {
@@ -115,7 +116,11 @@ public class Test8005065 {
             this.array = array;
         }
 
-        public Expression instantiate(Object instance, Encoder encoder) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Expression instantiate(Object instance, Encoder encoder) {
             encoder.setExceptionListener(this);
             return super.instantiate(instance, encoder);
         }
@@ -124,7 +129,11 @@ public class Test8005065 {
             return this.array;
         }
 
-        public void exceptionThrown(Exception exception) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void exceptionThrown(Exception exception) {
             throw new Error("unexpected error", exception);
         }
     }

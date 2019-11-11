@@ -54,6 +54,7 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
+@Bean
 public class ReplToolTesting {
 
     private final static String DEFAULT_STARTUP_MESSAGE = "|  Welcome to";
@@ -123,7 +124,11 @@ public class ReplToolTesting {
         void run(boolean after);
     }
 
-    public void setCommandInput(String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setCommandInput(String s) {
         cmdin.setInput(s);
     }
 
@@ -205,7 +210,11 @@ public class ReplToolTesting {
         return s;
     }
 
-    public void setUserInput(String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setUserInput(String s) {
         userin.setInput(s);
     }
 
@@ -221,23 +230,43 @@ public class ReplToolTesting {
         return s;
     }
 
-    public void test(ReplTest... tests) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void test(ReplTest... tests) {
         test(new String[0], tests);
     }
 
-    public void test(String[] args, ReplTest... tests) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void test(String[] args, ReplTest... tests) {
         test(true, args, tests);
     }
 
-    public void test(boolean isDefaultStartUp, String[] args, ReplTest... tests) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void test(boolean isDefaultStartUp, String[] args, ReplTest... tests) {
         test(Locale.ROOT, isDefaultStartUp, args, DEFAULT_STARTUP_MESSAGE, tests);
     }
 
-    public void testNoStartUp(ReplTest... tests) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testNoStartUp(ReplTest... tests) {
         test(Locale.ROOT, false, new String[] {"--no-startup"}, DEFAULT_STARTUP_MESSAGE, tests);
     }
 
-    public void test(Locale locale, boolean isDefaultStartUp, String[] args, String startUpMessage, ReplTest... tests) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void test(Locale locale, boolean isDefaultStartUp, String[] args, String startUpMessage, ReplTest... tests) {
         this.isDefaultStartUp = isDefaultStartUp;
         initSnippets();
         ReplTest[] wtests = new ReplTest[tests.length + 3];
@@ -272,11 +301,19 @@ public class ReplToolTesting {
         System.setProperty("jshell.test.allow.incomplete.inputs", "true");
     }
 
-    protected void setEnvVar(String name, String value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void setEnvVar(String name, String value) {
         envvars.put(name, value);
     }
 
-    protected JavaShellToolBuilder builder(Locale locale) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected JavaShellToolBuilder builder(Locale locale) {
         // turn on logging of launch failures
         Logger.getLogger("jdk.jshell.execution").setLevel(Level.ALL);
         return JavaShellToolBuilder
@@ -290,13 +327,21 @@ public class ReplToolTesting {
                     .promptCapture(true);
     }
 
-    private void testRaw(Locale locale, String[] args, ReplTest... tests) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testRaw(Locale locale, String[] args, ReplTest... tests) {
         testRawInit(tests);
         testRawRun(locale, args);
         testRawCheck(locale);
     }
 
-    private void testRawInit(ReplTest... tests) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testRawInit(ReplTest... tests) {
         cmdin = new WaitingTestingInputStream();
         cmdout = new ByteArrayOutputStream();
         cmderr = new ByteArrayOutputStream();
@@ -306,7 +351,11 @@ public class ReplToolTesting {
         usererr = new ByteArrayOutputStream();
     }
 
-    protected void testRawRun(Locale locale, String[] args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void testRawRun(Locale locale, String[] args) {
         try {
             builder(locale)
                     .run(args);
@@ -315,7 +364,11 @@ public class ReplToolTesting {
         }
     }
 
-    private void testRawCheck(Locale locale) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testRawCheck(Locale locale) {
         // perform internal consistency checks on state, if desired
         String cos = getCommandOutput();
         String ceos = getCommandErrorOutput();
@@ -328,12 +381,20 @@ public class ReplToolTesting {
         assertTrue(ueos.isEmpty(), "Expected empty user error output, got: " + ueos);
     }
 
-    public void assertReset(boolean after, String cmd) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertReset(boolean after, String cmd) {
         assertCommand(after, cmd, "|  Resetting state.\n");
         initSnippets();
     }
 
-    public void evaluateExpression(boolean after, String type, String expr, String value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void evaluateExpression(boolean after, String type, String expr, String value) {
         String output = String.format("(\\$\\d+) ==> %s", value);
         Pattern outputPattern = Pattern.compile(output);
         assertCommandCheckOutput(after, expr, s -> {
@@ -346,11 +407,19 @@ public class ReplToolTesting {
         });
     }
 
-    public void loadVariable(boolean after, String type, String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void loadVariable(boolean after, String type, String name) {
         loadVariable(after, type, name, null, null);
     }
 
-    public void loadVariable(boolean after, String type, String name, String expr, String value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void loadVariable(boolean after, String type, String name, String expr, String value) {
         String src = expr == null
                 ? String.format("%s %s", type, name)
                 : String.format("%s %s = %s", type, name, expr);
@@ -361,11 +430,19 @@ public class ReplToolTesting {
         addKey(after, var);
     }
 
-    public void assertVariable(boolean after, String type, String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertVariable(boolean after, String type, String name) {
         assertVariable(after, type, name, null, null);
     }
 
-    public void assertVariable(boolean after, String type, String name, String expr, String value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertVariable(boolean after, String type, String name, String expr, String value) {
         String src = expr == null
                 ? String.format("%s %s", type, name)
                 : String.format("%s %s = %s", type, name, expr);
@@ -377,39 +454,63 @@ public class ReplToolTesting {
         addKey(after, var);
     }
 
-    public void loadMethod(boolean after, String src, String signature, String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void loadMethod(boolean after, String src, String signature, String name) {
         MethodInfo method = new MethodInfo(src, signature, name);
         addKey(after, method, methods);
         addKey(after, method);
     }
 
-    public void assertMethod(boolean after, String src, String signature, String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertMethod(boolean after, String src, String signature, String name) {
         MethodInfo method = new MethodInfo(src, signature, name);
         assertCommandCheckOutput(after, src, method.checkOutput());
         addKey(after, method, methods);
         addKey(after, method);
     }
 
-    public void loadClass(boolean after, String src, String type, String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void loadClass(boolean after, String src, String type, String name) {
         ClassInfo clazz = new ClassInfo(src, type, name);
         addKey(after, clazz, classes);
         addKey(after, clazz);
     }
 
-    public void assertClass(boolean after, String src, String type, String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertClass(boolean after, String src, String type, String name) {
         ClassInfo clazz = new ClassInfo(src, type, name);
         assertCommandCheckOutput(after, src, clazz.checkOutput());
         addKey(after, clazz, classes);
         addKey(after, clazz);
     }
 
-    public void loadImport(boolean after, String src, String type, String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void loadImport(boolean after, String src, String type, String name) {
         ImportInfo i = new ImportInfo(src, type, name);
         addKey(after, i, imports);
         addKey(after, i);
     }
 
-    public void assertImport(boolean after, String src, String type, String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertImport(boolean after, String src, String type, String name) {
         ImportInfo i = new ImportInfo(src, type, name);
         assertCommandCheckOutput(after, src, i.checkOutput());
         addKey(after, i, imports);
@@ -436,7 +537,11 @@ public class ReplToolTesting {
         }
     }
 
-    private void dropKey(boolean after, String cmd, String name, Map<String, ? extends MemberInfo> map, String output) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void dropKey(boolean after, String cmd, String name, Map<String, ? extends MemberInfo> map, String output) {
         assertCommand(after, cmd, output);
         if (after) {
             map.remove(name);
@@ -451,27 +556,51 @@ public class ReplToolTesting {
         }
     }
 
-    public void dropVariable(boolean after, String cmd, String name, String output) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void dropVariable(boolean after, String cmd, String name, String output) {
         dropKey(after, cmd, name, variables, output);
     }
 
-    public void dropMethod(boolean after, String cmd, String name, String output) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void dropMethod(boolean after, String cmd, String name, String output) {
         dropKey(after, cmd, name, methods, output);
     }
 
-    public void dropClass(boolean after, String cmd, String name, String output) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void dropClass(boolean after, String cmd, String name, String output) {
         dropKey(after, cmd, name, classes, output);
     }
 
-    public void dropImport(boolean after, String cmd, String name, String output) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void dropImport(boolean after, String cmd, String name, String output) {
         dropKey(after, cmd, name, imports, output);
     }
 
-    public void assertCommand(boolean after, String cmd, String out) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertCommand(boolean after, String cmd, String out) {
         assertCommand(after, cmd, out, "", null, "", "");
     }
 
-    public void assertCommandOutputContains(boolean after, String cmd, String... hasThese) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertCommandOutputContains(boolean after, String cmd, String... hasThese) {
         assertCommandCheckOutput(after, cmd, (s)
                 -> assertTrue(Arrays.stream(hasThese)
                                     .allMatch(has -> s.contains(has)),
@@ -481,11 +610,19 @@ public class ReplToolTesting {
                                         .collect(Collectors.joining(", "))));
     }
 
-    public void assertCommandOutputStartsWith(boolean after, String cmd, String starts) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertCommandOutputStartsWith(boolean after, String cmd, String starts) {
         assertCommandCheckOutput(after, cmd, assertStartsWith(starts));
     }
 
-    public void assertCommandCheckOutput(boolean after, String cmd, Consumer<String> check) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertCommandCheckOutput(boolean after, String cmd, Consumer<String> check) {
         if (!after) {
             assertCommand(false, cmd, null);
         } else {
@@ -523,13 +660,21 @@ public class ReplToolTesting {
         };
     }
 
-    public void assertOutput(String got, String expected, String display) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertOutput(String got, String expected, String display) {
         if (expected != null) {
             assertEquals(got, expected, display + ".\n");
         }
     }
 
-    private String normalizeLineEndings(String text) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String normalizeLineEndings(String text) {
         return ANSI_CODE_PATTERN.matcher(text.replace(System.getProperty("line.separator"), "\n")).replaceAll("");
     }
         private static final Pattern ANSI_CODE_PATTERN = Pattern.compile("\033\\[[\060-\077]*[\040-\057]*[\100-\176]");
@@ -551,7 +696,11 @@ public class ReplToolTesting {
         }
 
         @Override
-        public boolean equals(Object o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) {
             if (o instanceof MemberInfo) {
                 MemberInfo mi = (MemberInfo) o;
                 return name.equals(mi.name);
@@ -625,7 +774,11 @@ public class ReplToolTesting {
         }
 
         @Override
-        public boolean equals(Object o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) {
             if (o instanceof VariableInfo) {
                 VariableInfo v = (VariableInfo) o;
                 return name.equals(v.name);
@@ -679,7 +832,11 @@ public class ReplToolTesting {
         }
 
         @Override
-        public boolean equals(Object o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) {
             if (o instanceof MemberInfo) {
                 MemberInfo m = (MemberInfo) o;
                 return name.equals(m.name) && type.equals(m.type);
@@ -700,7 +857,8 @@ public class ReplToolTesting {
 
     public static class ClassInfo extends MemberInfo {
 
-        public ClassInfo(String source, String type, String name) {
+        @Bean
+public classInfo(String source, String type, String name) {
             super(source, type, name);
         }
 
@@ -718,7 +876,11 @@ public class ReplToolTesting {
         }
 
         @Override
-        public boolean equals(Object o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) {
             if (o instanceof ClassInfo) {
                 ClassInfo c = (ClassInfo) o;
                 return name.equals(c.name);
@@ -748,7 +910,11 @@ public class ReplToolTesting {
         }
 
         @Override
-        public boolean equals(Object o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) {
             if (o instanceof ImportInfo) {
                 ImportInfo i = (ImportInfo) o;
                 return name.equals(i.name) && type.equals(i.type);
@@ -797,7 +963,11 @@ public class ReplToolTesting {
         }
 
         @Override
-        public int read(byte b[], int off, int len) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int read(byte b[], int off, int len) {
             waitForInput();
             return super.read(b, off, len);
         }
@@ -855,17 +1025,29 @@ public class ReplToolTesting {
         }
 
         @Override
-        protected void putSpi(String key, String value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void putSpi(String key, String value) {
             values.put(key, value);
         }
 
         @Override
-        protected String getSpi(String key) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected String getSpi(String key) {
             return values.get(key);
         }
 
         @Override
-        protected void removeSpi(String key) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void removeSpi(String key) {
             values.remove(key);
         }
 
@@ -885,7 +1067,11 @@ public class ReplToolTesting {
         }
 
         @Override
-        protected AbstractPreferences childSpi(String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected AbstractPreferences childSpi(String name) {
             return nodes.computeIfAbsent(name, n -> new MemoryPreferences(this, name));
         }
 

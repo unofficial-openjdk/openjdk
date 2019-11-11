@@ -31,6 +31,7 @@ import java.util.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessContainer
  */
 
+@Bean
 public class HeadlessContainer {
     public static void main(String args[]) {
         Container lw = new java.awt.Container();

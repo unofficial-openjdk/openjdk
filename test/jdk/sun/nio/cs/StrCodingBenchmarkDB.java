@@ -27,6 +27,7 @@ import java.nio.charset.*;
 import java.util.concurrent.*;
 import java.util.regex.Pattern;
 
+@Bean
 public class StrCodingBenchmarkDB extends StrCodingBenchmark {
 
 

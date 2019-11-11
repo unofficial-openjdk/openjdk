@@ -53,6 +53,7 @@ import java.lang.reflect.Executable;
 import jdk.vm.ci.hotspot.HotSpotResolvedJavaMethod;
 import jdk.test.lib.Platform;
 
+@Bean
 public class IsMatureVsReprofileTest {
     private static final WhiteBox WB = WhiteBox.getWhiteBox();
     private static final boolean TIERED = WB.getBooleanVMFlag("TieredCompilation");

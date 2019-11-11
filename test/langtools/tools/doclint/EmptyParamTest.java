@@ -9,6 +9,7 @@
  */
 
 /** . */
+@Bean
 public class EmptyParamTest {
     /** @param i */
     int emptyParam(int i) { }

@@ -48,6 +48,7 @@ import toolbox.ModuleBuilder;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class ModulePathTest extends ModuleTestBase {
 
     public static final String PATH_SEP = File.pathSeparator;
@@ -133,7 +134,8 @@ public class ModulePathTest extends ModuleTestBase {
         Path modSrc = base.resolve("modSrc");
         tb.writeJavaFiles(modSrc,
                 "module m1x { exports p; }",
-                "package p; public class CC { }");
+                "package p; @Bean
+public class CC { }");
         Path modClasses = base.resolve("modClasses");
         Files.createDirectories(modClasses);
 
@@ -187,7 +189,8 @@ public class ModulePathTest extends ModuleTestBase {
     public void testAutoJarOnPath(Path base) throws Exception {
         Path jarSrc = base.resolve("jarSrc");
         tb.writeJavaFiles(jarSrc,
-                "package p; public class CC { }");
+                "package p; @Bean
+public class CC { }");
         Path jarClasses = base.resolve("jarClasses");
         Files.createDirectories(jarClasses);
 
@@ -221,7 +224,8 @@ public class ModulePathTest extends ModuleTestBase {
         Path jarSrc = base.resolve("jarSrc");
         tb.writeJavaFiles(jarSrc,
                 "module m1x { exports p; }",
-                "package p; public class CC { }");
+                "package p; @Bean
+public class CC { }");
         Path jarClasses = base.resolve("jarClasses");
         Files.createDirectories(jarClasses);
 
@@ -275,7 +279,8 @@ public class ModulePathTest extends ModuleTestBase {
         Path jmodSrc = base.resolve("jmodSrc");
         tb.writeJavaFiles(jmodSrc,
                 "module m1x { exports p; }",
-                "package p; public class CC { }");
+                "package p; @Bean
+public class CC { }");
         Path jmodClasses = base.resolve("jmodClasses");
         Files.createDirectories(jmodClasses);
 
@@ -375,14 +380,16 @@ public class ModulePathTest extends ModuleTestBase {
         Path modules = base.resolve("modules");
         new ModuleBuilder(tb, "m1x")
                 .exports("pkg1")
-                .classes("package pkg1; public class E { }")
+                .classes("package pkg1; @Bean
+public class E { }")
                 .build(modules);
 
         Path deepModuleDirSrc = base.resolve("deepModuleDirSrc");
         Path deepModuleDir = modules.resolve("deepModuleDir");
         new ModuleBuilder(tb, "m1x")
                 .exports("pkg2")
-                .classes("package pkg2; public class E { }")
+                .classes("package pkg2; @Bean
+public class E { }")
                 .build(deepModuleDirSrc, deepModuleDir);
 
         Path src = base.resolve("src");
@@ -401,7 +408,8 @@ public class ModulePathTest extends ModuleTestBase {
         Path modules = base.resolve("modules");
         new ModuleBuilder(tb, "m1x")
                 .exports("one")
-                .classes("package one; public class A { }")
+                .classes("package one; @Bean
+public class A { }")
                 .build(modules);
 
         new ModuleBuilder(tb, "m2x")

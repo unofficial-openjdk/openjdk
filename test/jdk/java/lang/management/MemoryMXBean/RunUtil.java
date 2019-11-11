@@ -33,6 +33,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.Utils;
 
+@Bean
 public class RunUtil {
 
     // Used to mark that the test has passed successfully.

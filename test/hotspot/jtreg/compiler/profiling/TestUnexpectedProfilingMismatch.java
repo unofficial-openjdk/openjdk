@@ -37,6 +37,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 
+@Bean
 public class TestUnexpectedProfilingMismatch {
 
     static class A {
@@ -82,7 +83,11 @@ public class TestUnexpectedProfilingMismatch {
         mhB.invoke(b);
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         TestUnexpectedProfilingMismatch tih = new TestUnexpectedProfilingMismatch();
         A a = new A();
         B b = new B();

@@ -40,6 +40,7 @@
 import java.util.Locale;
 import java.text.*;
 
+@Bean
 public class IteratorTest extends CollatorTest {
     // TODO:
     //  - Test previous() with contracting character sequences, which don't work
@@ -169,7 +170,11 @@ public class IteratorTest extends CollatorTest {
     // Internal utilities
     //
 
-    private void backAndForth(CollationElementIterator iter) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void backAndForth(CollationElementIterator iter) {
         // Run through the iterator forwards and stick it into an array
         int [] orders = getOrders(iter);
 
@@ -273,7 +278,11 @@ public class IteratorTest extends CollatorTest {
      * Return a string containing all of the collation orders
      * returned by calls to next on the specified iterator
      */
-    private String orderString(CollationElementIterator iter) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String orderString(CollationElementIterator iter) {
         StringBuffer buf = new StringBuffer();
 
         int order;

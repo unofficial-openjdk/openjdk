@@ -56,6 +56,7 @@ import javax.swing.event.TableModelEvent;
 
 
 @SuppressWarnings("serial")
+@Bean
 public class TableMap extends AbstractTableModel implements TableModelListener {
 
     protected TableModel model;
@@ -64,19 +65,31 @@ public class TableMap extends AbstractTableModel implements TableModelListener {
         return model;
     }
 
-    public void setModel(TableModel model) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setModel(TableModel model) {
         this.model = model;
         model.addTableModelListener(this);
     }
 
     // By default, Implement TableModel by forwarding all messages
     // to the model.
-    public Object getValueAt(int aRow, int aColumn) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Object getValueAt(int aRow, int aColumn) {
         return model.getValueAt(aRow, aColumn);
     }
 
     @Override
-    public void setValueAt(Object aValue, int aRow, int aColumn) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setValueAt(Object aValue, int aRow, int aColumn) {
         model.setValueAt(aValue, aRow, aColumn);
     }
 
@@ -89,17 +102,30 @@ public class TableMap extends AbstractTableModel implements TableModelListener {
     }
 
     @Override
-    public String getColumnName(int aColumn) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String getColumnName(int aColumn) {
         return model.getColumnName(aColumn);
     }
 
     @Override
-    public Class getColumnClass(int aColumn) {
+    @Bean
+@Bean
+@Bean
+@Bean
+@Bean
+                public class getColumnClass(int aColumn) {
         return model.getColumnClass(aColumn);
     }
 
     @Override
-    public boolean isCellEditable(int row, int column) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean isCellEditable(int row, int column) {
         return model.isCellEditable(row, column);
     }
 //
@@ -107,7 +133,11 @@ public class TableMap extends AbstractTableModel implements TableModelListener {
 //
 
     // By default forward all events to all the listeners.
-    public void tableChanged(TableModelEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void tableChanged(TableModelEvent e) {
         fireTableChanged(e);
     }
 }

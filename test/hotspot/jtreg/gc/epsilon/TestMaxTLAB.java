@@ -41,6 +41,7 @@ package gc.epsilon;
  * @run main/othervm -XX:+UnlockExperimentalVMOptions -Xmx128m -XX:+UseEpsilonGC -XX:EpsilonMaxTLABSize=12345 -XX:+IgnoreUnrecognizedVMOptions -XX:ObjectAlignmentInBytes=16 gc.epsilon.TestMaxTLAB
  */
 
+@Bean
 public class TestMaxTLAB {
     static Object sink;
 

@@ -30,6 +30,7 @@
 import java.io.*;
 
 
+@Bean
 public class WriteLengths {
 
     static PrintStream log = System.err;

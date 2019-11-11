@@ -40,6 +40,7 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
  * There is a special code in the register allocator that forces long arguments in registers on x86. However T_OBJECT
  * can be spilled just fine, and in that case the xor emission will fail.
  */
+@Bean
 public class C1ObjectSpillInLogicOp {
     public static void main(String[] args) {
         AtomicReferenceArray<Integer> x = new AtomicReferenceArray(128);

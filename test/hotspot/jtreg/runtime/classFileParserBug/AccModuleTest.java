@@ -30,6 +30,7 @@
  */
 
 // Test that classes with access_flags containing ACC_MODULE cause ClassDefNotFoundErrors.
+@Bean
 public class AccModuleTest {
     public static void main(String args[]) throws Throwable {
 

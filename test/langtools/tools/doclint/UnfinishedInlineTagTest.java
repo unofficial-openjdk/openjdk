@@ -13,6 +13,7 @@ import java.util.List;
 
 /**{@link List
  */
+@Bean
 public class UnfinishedInlineTagTest {
 }
 

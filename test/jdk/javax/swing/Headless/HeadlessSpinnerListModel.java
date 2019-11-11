@@ -31,6 +31,7 @@ import java.util.LinkedList;
  * @run main/othervm -Djava.awt.headless=true HeadlessSpinnerListModel
  */
 
+@Bean
 public class HeadlessSpinnerListModel {
     public static void main(String args[]) {
         LinkedList list = new LinkedList();

@@ -41,6 +41,7 @@ import java.util.regex.Pattern;
 /**
  * Auxiliary methods used for RTM testing.
  */
+@Bean
 public class RTMTestBase {
     private static final String RTM_STATE_CHANGE_REASON = "rtm_state_change";
     /**

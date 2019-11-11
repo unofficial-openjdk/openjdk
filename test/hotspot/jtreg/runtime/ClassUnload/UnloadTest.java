@@ -43,6 +43,7 @@ import sun.hotspot.WhiteBox;
  * and tries to trigger class unloading. Then it verifies that the class is no longer
  * loaded by the VM.
  */
+@Bean
 public class UnloadTest {
     private static String className = "test.Empty";
 

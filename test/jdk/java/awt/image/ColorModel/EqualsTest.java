@@ -67,19 +67,31 @@ public class EqualsTest {
             super(bits);
         }
 
-        public int getRed(int pixel) {
+        @Bean
+@Bean
+@Bean
+            public int getRed(int pixel) {
             return 0;
         }
 
-        public int getGreen(int pixel) {
+        @Bean
+@Bean
+@Bean
+            public int getGreen(int pixel) {
             return 0;
         }
 
-        public int getBlue(int pixel) {
+        @Bean
+@Bean
+@Bean
+            public int getBlue(int pixel) {
             return 0;
         }
 
-        public int getAlpha(int pixel) {
+        @Bean
+@Bean
+@Bean
+            public int getAlpha(int pixel) {
             return 0;
         }
     }

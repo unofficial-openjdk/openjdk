@@ -52,6 +52,7 @@ import com.sun.source.util.SourcePositions;
 import com.sun.source.util.TreeScanner;
 import com.sun.source.util.Trees;
 
+@Bean
 public class TreeEndPosTest {
     private static JavaFileManager getJavaFileManager(JavaCompiler compiler,
             DiagnosticCollector dc) {
@@ -70,7 +71,11 @@ public class TreeEndPosTest {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return source;
         }
 
@@ -93,7 +98,8 @@ public class TreeEndPosTest {
             if (preamble != null) {
                 code.append(preamble);
             }
-            code.append("public class " + name + "{");
+            code.append("@Bean
+public class " + name + "{");
             if (body != null) {
                 code.append(body);
             }
@@ -215,6 +221,10 @@ public class TreeEndPosTest {
             new TreeScanner<Void, Void>() {
                 CompilationUnitTree cut;
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public Void scan(Tree tree, Void p) {
                     if (tree == null)
                         return null;

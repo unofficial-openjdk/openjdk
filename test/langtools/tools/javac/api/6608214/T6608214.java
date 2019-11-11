@@ -43,7 +43,8 @@ import static javax.tools.JavaFileObject.Kind;
 public class T6608214 {
     public static void main(String[] args) throws IOException {
         JavaFileObject sfo = new SimpleJavaFileObject(URI.create(""),Kind.SOURCE) {
-            public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
                 return "class Test<S> { <T extends S & Runnable> void test(){}}";
             }
         };

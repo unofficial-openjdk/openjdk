@@ -33,6 +33,7 @@
 
 package compiler.intrinsics;
 
+@Bean
 public class Test8215792 {
 
     private static final int ITERATIONS = 10000;

@@ -51,7 +51,10 @@ public class ModalDialogMultiscreenTest
             this.frame = frame;
             this.dialog = dialog;
         }
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
             dialog.setLocationRelativeTo(frame);
             dialog.setVisible(true);
         }
@@ -62,7 +65,10 @@ public class ModalDialogMultiscreenTest
             setSize(200, 100);
             JButton button = new JButton("Close");
             button.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                     dispose();
                 }
             });

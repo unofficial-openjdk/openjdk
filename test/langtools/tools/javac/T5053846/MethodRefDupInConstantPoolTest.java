@@ -35,6 +35,7 @@ import java.io.StringWriter;
 import java.nio.file.Paths;
 import java.util.*;
 
+@Bean
 public class MethodRefDupInConstantPoolTest {
 
     private static final String methodToLookFor =

@@ -41,6 +41,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Vector;
 
+@Bean
 public class SimpleSerialization {
     public static void main(final String[] args) throws Exception {
         final Vector<String> v1 = new Vector<>();

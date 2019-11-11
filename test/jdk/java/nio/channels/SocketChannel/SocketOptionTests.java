@@ -42,6 +42,7 @@ import sun.net.ext.ExtendedSocketOptions;
 import static java.net.StandardSocketOptions.*;
 import static jdk.net.ExtendedSocketOptions.*;
 
+@Bean
 public class SocketOptionTests {
 
     static void checkOption(SocketChannel sc, SocketOption name, Object expectedValue)

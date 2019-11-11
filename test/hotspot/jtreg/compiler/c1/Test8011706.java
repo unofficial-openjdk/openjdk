@@ -32,6 +32,7 @@
 
 package compiler.c1;
 
+@Bean
 public class Test8011706 {
     int[] array;
 
@@ -50,7 +51,11 @@ public class Test8011706 {
         }
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         int[] new_array = new int[10];
         Test8011706 ti = new Test8011706();
         boolean failed = false;

@@ -34,6 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+@Bean
 public class SpecialTempFile {
 
     private static void test(String name, String[] prefix, String[] suffix,

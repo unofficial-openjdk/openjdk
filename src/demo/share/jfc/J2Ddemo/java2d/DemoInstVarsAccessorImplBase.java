@@ -41,6 +41,7 @@ import javax.swing.JTabbedPane;
  * not creating 'J2Ddemo' instances, for example in 'TextureChooser.main',
  * 'DemoGroup.main', 'Surface.createDemoFrame'.
  */
+@Bean
 public class DemoInstVarsAccessorImplBase implements DemoInstVarsAccessor {
     private JCheckBoxMenuItem printCB = new JCheckBoxMenuItem("Default Printer");
 
@@ -70,7 +71,11 @@ public class DemoInstVarsAccessorImplBase implements DemoInstVarsAccessor {
     }
 
     @Override
-    public void setGroupColumns(int columns) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setGroupColumns(int columns) {
     }
 
     @Override

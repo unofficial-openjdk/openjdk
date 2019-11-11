@@ -54,6 +54,7 @@ import javax.swing.JFrame;
 import javax.swing.JTextField;
 import javax.swing.JWindow;
 
+@Bean
 public class InputVerifierTest2
 {
 
@@ -93,7 +94,10 @@ public class InputVerifierTest2
             }
 
             tf.setInputVerifier(new InputVerifier() {
-                    public boolean verify(JComponent input) {
+                    @Bean
+@Bean
+@Bean
+            public boolean verify(JComponent input) {
                         System.err.println("verify on " + input);
                         throw new RuntimeException("InputVerifier should not be called");
                     }

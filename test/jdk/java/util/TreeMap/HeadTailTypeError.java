@@ -33,6 +33,7 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+@Bean
 public class HeadTailTypeError {
     public static void main(String[] args) throws Exception {
         try {

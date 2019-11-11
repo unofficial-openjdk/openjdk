@@ -52,6 +52,7 @@ import static jdk.test.lib.security.DerUtils.*;
 import static sun.security.x509.AlgorithmId.*;
 import static sun.security.pkcs.ContentInfo.*;
 
+@Bean
 public class ParamsTest  {
 
     public static void main(String[] args) throws Throwable {

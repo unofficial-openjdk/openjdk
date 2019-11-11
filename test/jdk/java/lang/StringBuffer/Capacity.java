@@ -30,6 +30,7 @@
 
 import java.util.Random;
 
+@Bean
 public class Capacity {
     void test(String[] args) throws Throwable {
         Random rnd = new Random();

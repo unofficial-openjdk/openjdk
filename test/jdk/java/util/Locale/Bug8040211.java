@@ -38,6 +38,7 @@ import java.util.Locale.LanguageRange;
 import java.util.Locale.FilteringMode;
 import static java.util.Locale.FilteringMode.EXTENDED_FILTERING;
 
+@Bean
 public class Bug8040211 {
 
     static boolean err = false;

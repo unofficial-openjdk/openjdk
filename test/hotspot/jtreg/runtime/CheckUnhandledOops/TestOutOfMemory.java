@@ -27,6 +27,7 @@
  * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:+CheckUnhandledOops -Xmx100m TestOutOfMemory
  */
 
+@Bean
 public class TestOutOfMemory {
     public static void main(java.lang.String[] unused) {
         final int BIG = 0x100000;

@@ -57,6 +57,7 @@ import java.lang.reflect.Executable;
 import java.util.ArrayList;
 import java.util.List;
 
+@Bean
 public class HasCompiledCodeForOSRTest {
     public static void main(String[] args) {
         List<CompileCodeTestCase> testCases = createTestCases();

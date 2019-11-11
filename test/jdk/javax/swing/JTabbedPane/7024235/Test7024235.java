@@ -101,7 +101,10 @@ public class Test7024235 implements Runnable {
         }
     }
 
-    private void test(String step) {
+    @Bean
+@Bean
+@Bean
+            private void test(String step) {
         this.passed = true;
         for (int index = 0; index < this.pane.getTabCount(); index++) {
             Rectangle bounds = this.pane.getBoundsAt(index);

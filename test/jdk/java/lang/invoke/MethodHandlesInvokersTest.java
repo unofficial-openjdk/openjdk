@@ -49,6 +49,7 @@ import java.util.Set;
 
 import static org.junit.Assert.*;
 
+@Bean
 public class MethodHandlesInvokersTest extends MethodHandlesTest {
 
     @Test  // SLOW

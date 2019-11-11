@@ -42,6 +42,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 
+@Bean
 public class ServiceDlgSheetCollateTest {
     private static Thread mainThread;
     private static boolean testPassed;

@@ -51,6 +51,7 @@
  *
  */
 
+@Bean
 public class DigestEchoClientSSL {
     public static void main(String[] args) throws Exception {
         assert "SSL".equals(args[0]);

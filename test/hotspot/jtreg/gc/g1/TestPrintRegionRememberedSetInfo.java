@@ -52,6 +52,7 @@ class RunAndWaitForMarking {
     }
 }
 
+@Bean
 public class TestPrintRegionRememberedSetInfo {
 
     public static String runTest(String arg) throws Exception {

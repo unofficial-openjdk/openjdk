@@ -36,6 +36,7 @@ import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Set;
 
+@Bean
 public class LargeEnumIteratorRemoveResilience {
     // enum with more than 64 values
     private static enum LargeEnum {

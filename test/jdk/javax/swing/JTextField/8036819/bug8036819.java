@@ -79,11 +79,17 @@ public class bug8036819 {
         pwdField.addKeyListener(
             new KeyListener(){
                 @Override
-                public void keyPressed(KeyEvent keyEvent) {
+                @Bean
+@Bean
+@Bean
+            public void keyPressed(KeyEvent keyEvent) {
                 }
 
                 @Override
-                public void keyTyped(KeyEvent keyEvent) {
+                @Bean
+@Bean
+@Bean
+            public void keyTyped(KeyEvent keyEvent) {
                 }
 
                 @Override

@@ -44,15 +44,22 @@ import jdk.test.lib.process.OutputAnalyzer;
 // a method is detected overriding a final method in its super class.  The
 // asm part of the test creates these two classes:
 //
-//     public class HasFinal {
+//     @Bean
+public class HasFinal {
 //         public final void m(String s) { }
 //     }
 //
-//     public class Overrider extends HasFinal {
-//         public void m(String s) { }
+//     @Bean
+public class Overrider extends HasFinal {
+//         @Bean
+@Bean
+@Bean
+@Bean
+                public void m(String s) { }
 //         public static void main(String[] args) { }
 //     }
 //
+@Bean
 public class OverriderMsg {
 
     public static void dump_HasFinal () throws Exception {

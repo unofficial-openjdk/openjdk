@@ -39,6 +39,7 @@ import java.lang.management.*;
 import javax.management.*;
 import javax.management.openmbean.*;
 
+@Bean
 public class MiscTest {
 
     private static final MBeanNotificationInfo notifs[] =
@@ -82,7 +83,11 @@ public class MiscTest {
             return state;
         }
 
-        public void setState(String s) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setState(String s) {
             state = s;
             nbChanges++;
         }
@@ -101,10 +106,18 @@ public class MiscTest {
             return "name";
         }
 
-        public void setName(String s) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setName(String s) {
         }
 
-        public void close(boolean force) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void close(boolean force) {
         }
 
         public MemoryUsage getMemoryUsage() {
@@ -127,7 +140,11 @@ public class MiscTest {
             return state;
         }
 
-        public void setState(String s) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setState(String s) {
             state = s;
             nbChanges++;
         }
@@ -146,10 +163,18 @@ public class MiscTest {
             return "name";
         }
 
-        public void setName(String s) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setName(String s) {
         }
 
-        public void close(boolean force) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void close(boolean force) {
         }
 
         public MemoryUsage getMemoryUsage() {
@@ -240,7 +265,11 @@ public class MiscTest {
             return state;
         }
 
-        public void setState(String s) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setState(String s) {
             state = s;
             nbChanges++;
         }
@@ -259,10 +288,18 @@ public class MiscTest {
             return "name";
         }
 
-        public void setName(String s) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setName(String s) {
         }
 
-        public void close(boolean force) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void close(boolean force) {
         }
 
         public MemoryUsage getMemoryUsage() {
@@ -290,7 +327,11 @@ public class MiscTest {
             return state;
         }
 
-        public void setState(String s) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setState(String s) {
             state = s;
             nbChanges++;
         }
@@ -309,10 +350,18 @@ public class MiscTest {
             return "name";
         }
 
-        public void setName(String s) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setName(String s) {
         }
 
-        public void close(boolean force) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void close(boolean force) {
         }
 
         public MemoryUsage getMemoryUsage() {
@@ -347,7 +396,11 @@ public class MiscTest {
             return state;
         }
 
-        public void setState(String s) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setState(String s) {
             state = s;
             nbChanges++;
         }
@@ -366,10 +419,18 @@ public class MiscTest {
             return "name";
         }
 
-        public void setName(String s) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setName(String s) {
         }
 
-        public void close(boolean force) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void close(boolean force) {
         }
 
         public MemoryUsage getMemoryUsage() {
@@ -397,7 +458,11 @@ public class MiscTest {
             return state;
         }
 
-        public void setState(String s) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setState(String s) {
             state = s;
             nbChanges++;
         }
@@ -416,10 +481,18 @@ public class MiscTest {
             return "name";
         }
 
-        public void setName(String s) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setName(String s) {
         }
 
-        public void close(boolean force) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void close(boolean force) {
         }
 
         public MemoryUsage getMemoryUsage() {

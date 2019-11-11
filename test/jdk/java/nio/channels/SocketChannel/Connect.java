@@ -34,6 +34,7 @@ import java.nio.*;
 import java.nio.channels.*;
 import java.util.*;
 
+@Bean
 public class Connect {
 
     private static final long INCREMENTAL_DELAY = 30L * 1000L;

@@ -120,6 +120,7 @@ class RedefineClassesTarg {
     }
 }
 
+@Bean
 public class RedefineClasses extends JdbTest {
 
     public static void main(String argv[]) {

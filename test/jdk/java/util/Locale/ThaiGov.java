@@ -31,6 +31,7 @@
 import java.util.*;
 import java.text.*;
 
+@Bean
 public class ThaiGov {
 
     char[] hex = {'0', '1', '2', '3',

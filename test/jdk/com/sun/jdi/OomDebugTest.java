@@ -109,6 +109,7 @@ class OomDebugTestTarget {
 
 /***************** Test program ************************/
 
+@Bean
 public class OomDebugTest extends TestScaffold {
 
     private static final String[] ALL_TESTS = new String[] {
@@ -140,6 +141,10 @@ public class OomDebugTest extends TestScaffold {
             addListener(new TargetAdapter() {
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void exceptionThrown(ExceptionEvent event) {
                     String name = event.exception().referenceType().name();
                     System.err.println("DEBUG: Exception thrown in debuggee was: " + name);
@@ -285,7 +290,11 @@ public class OomDebugTest extends TestScaffold {
         }
     }
 
-    private Method getConstructorForClass(ClassType clsType) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Method getConstructorForClass(ClassType clsType) {
         List<Method> methods = clsType.methodsByName("<init>");
         if (methods.size() != 1) {
             throw new RuntimeException("FAIL. Expected only one, the default, constructor");
@@ -293,7 +302,11 @@ public class OomDebugTest extends TestScaffold {
         return methods.get(0);
     }
 
-    private void handleFailure(InvocationException e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void handleFailure(InvocationException e) {
         // There is no good way to see the OOME diagnostic message in the target since the
         // TestScaffold might throw an exception while trying to print the stack trace. I.e
         // it might get a a VMDisconnectedException before the stack trace printing finishes.
@@ -301,7 +314,11 @@ public class OomDebugTest extends TestScaffold {
         defaultHandleOOMFailure(e);
     }
 
-    private void defaultHandleOOMFailure(Exception e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void defaultHandleOOMFailure(Exception e) {
         e.printStackTrace();
         failure();
     }

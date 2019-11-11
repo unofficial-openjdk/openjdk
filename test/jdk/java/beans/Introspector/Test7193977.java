@@ -39,6 +39,7 @@ import java.beans.PropertyDescriptor;
 import java.util.Arrays;
 import java.util.List;
 
+@Bean
 public class Test7193977 {
 
     private static final List<String> names = Arrays.asList("listType", "list", "value");
@@ -66,17 +67,29 @@ public class Test7193977 {
             return this.list;
         }
 
-        public void setList(List<T> list) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setList(List<T> list) {
             this.list = list;
         }
 
-        public T getValue(int index) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public T getValue(int index) {
             return (0 <= index) && (this.list != null) && (index < this.list.size())
                     ? this.list.get(index)
                     : null;
         }
 
-        public void setValue(int index, T value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(int index, T value) {
             if ((0 <= index) && (this.list != null)) {
                 if (index == this.list.size()) {
                     this.list.add(value);
@@ -152,7 +165,11 @@ public class Test7193977 {
             return this.info.getAdditionalBeanInfo();
         }
 
-        public Image getIcon(int kind) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Image getIcon(int kind) {
             return this.info.getIcon(kind);
         }
     }

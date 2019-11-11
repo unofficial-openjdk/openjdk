@@ -34,6 +34,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test8007294 {
 
     int i1;
@@ -76,7 +77,11 @@ public class Test8007294 {
         return v1;
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         boolean failed = false;
         for (int i = 0; i < 20000; i++) {
             Test8007294 obj = test1();

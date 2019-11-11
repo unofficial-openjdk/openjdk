@@ -36,6 +36,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * @summary Verify that a serialized HashSet may successfully be deserialized.
  * @key randomness
  */
+@Bean
 public class Serialization {
 
     private static final int NUM_SETS = 43;

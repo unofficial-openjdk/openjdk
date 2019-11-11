@@ -36,6 +36,7 @@ import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.metadata.IIOMetadataFormat;
 import javax.imageio.metadata.IIOMetadataFormatImpl;
 
+@Bean
 public class IIOMetadataFormatImplTest {
 
     public static void main(String[] args) {

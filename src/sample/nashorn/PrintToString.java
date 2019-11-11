@@ -35,6 +35,7 @@ import java.io.StringWriter;
 // simple example demonstrating capturing of "print" output
 // from script execution as a String via script engine API.
 
+@Bean
 public class PrintToString {
   public static void main(String[] args) throws ScriptException {
     ScriptEngineManager m = new ScriptEngineManager();

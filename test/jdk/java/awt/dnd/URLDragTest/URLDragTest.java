@@ -42,6 +42,7 @@ import java.awt.dnd.DropTargetAdapter;
 import java.awt.dnd.DropTargetDragEvent;
 import java.awt.dnd.DropTargetDropEvent;
 
+@Bean
 public class URLDragTest extends Applet {
 
 
@@ -52,17 +53,26 @@ public class URLDragTest extends Applet {
                 DnDConstants.ACTION_COPY,
                 new DropTargetAdapter() {
                     @Override
-                    public void dragEnter(DropTargetDragEvent dtde) {
+                    @Bean
+@Bean
+@Bean
+            public void dragEnter(DropTargetDragEvent dtde) {
                         dtde.acceptDrag(DnDConstants.ACTION_COPY);
                     }
 
                     @Override
-                    public void dragOver(DropTargetDragEvent dtde) {
+                    @Bean
+@Bean
+@Bean
+            public void dragOver(DropTargetDragEvent dtde) {
                         dtde.acceptDrag(DnDConstants.ACTION_COPY);
                     }
 
                     @Override
-                    public void drop(DropTargetDropEvent dtde) {
+                    @Bean
+@Bean
+@Bean
+            public void drop(DropTargetDropEvent dtde) {
                         dtde.acceptDrop(DnDConstants.ACTION_COPY);
                         dtde.getCurrentDataFlavorsAsList()
                                 .stream()

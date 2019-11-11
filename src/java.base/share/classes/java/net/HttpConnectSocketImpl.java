@@ -141,12 +141,16 @@ import java.util.Set;
 
 
     @Override
-    protected void listen(int backlog) {
+    @Bean
+@Bean
+        protected void listen(int backlog) {
         throw new InternalError("should not get here");
     }
 
     @Override
-    protected void accept(SocketImpl s) {
+    @Bean
+@Bean
+        protected void accept(SocketImpl s) {
         throw new InternalError("should not get here");
     }
 

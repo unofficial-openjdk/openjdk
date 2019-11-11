@@ -35,6 +35,7 @@ import jdk.internal.org.objectweb.asm.*;
  * @run main ConstModule
  */
 
+@Bean
 public class ConstModule {
 
     static final int ACC_MODULE = 0x8000;

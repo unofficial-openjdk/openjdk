@@ -33,6 +33,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 @Test(groups = {"unit","string","lang","libs"})
+@Bean
 public class StringJoinTest {
     private static final String DASH = "-";
     private static final String BEGIN = "Hi there";

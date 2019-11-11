@@ -35,6 +35,7 @@
 import java.lang.management.*;
 import javax.management.*;
 
+@Bean
 public class OverloadTest {
     public static void main(String[] args) throws Exception {
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
@@ -75,7 +76,11 @@ public class OverloadTest {
     }
 
     public static class OverloadImpl implements OverloadMXBean {
-        public String notOverloaded(int x) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String notOverloaded(int x) {
             return "notOverloaded";
         }
 
@@ -83,15 +88,27 @@ public class OverloadTest {
             return "overloaded()";
         }
 
-        public String overloaded(int x) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String overloaded(int x) {
             return "overloaded(int)";
         }
 
-        public String overloaded(String x) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String overloaded(String x) {
             return "overloaded(String)";
         }
 
-        public String overloaded(int x, int y) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String overloaded(int x, int y) {
             return "overloaded(int, int)";
         }
     }

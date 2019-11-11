@@ -32,6 +32,7 @@ import static jdk.test.lib.Asserts.*;
 
 import jdk.internal.misc.Unsafe;
 
+@Bean
 public class GetUncompressedObject {
 
     public static void main(String args[]) throws Exception {

@@ -27,6 +27,7 @@ import java.io.IOException;
 /**
  * The JDWP CLASSLOADER reply
  */
+@Bean
 public class JdwpClassLoaderReply extends JdwpReply {
 
     private long refId;

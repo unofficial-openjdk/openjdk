@@ -52,6 +52,7 @@ import jdk.internal.reflect.Reflection;
  * @since   1.0
  */
 
+@Bean
 public class Runtime {
     private static final Runtime currentRuntime = new Runtime();
 
@@ -106,7 +107,8 @@ public class Runtime {
      * @see #removeShutdownHook
      * @see #halt(int)
      */
-    public void exit(int status) {
+@Bean
+        public void exit(int status) {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkExit(status);
@@ -206,7 +208,8 @@ public class Runtime {
      * @see #exit(int)
      * @since 1.3
      */
-    public void addShutdownHook(Thread hook) {
+@Bean
+        public void addShutdownHook(Thread hook) {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             sm.checkPermission(new RuntimePermission("shutdownHooks"));
@@ -234,7 +237,8 @@ public class Runtime {
      * @see #exit(int)
      * @since 1.3
      */
-    public boolean removeShutdownHook(Thread hook) {
+@Bean
+        public boolean removeShutdownHook(Thread hook) {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             sm.checkPermission(new RuntimePermission("shutdownHooks"));
@@ -269,7 +273,8 @@ public class Runtime {
      * @see #removeShutdownHook
      * @since 1.3
      */
-    public void halt(int status) {
+@Bean
+        public void halt(int status) {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             sm.checkExit(status);
@@ -729,7 +734,8 @@ public class Runtime {
      * @see        java.lang.SecurityManager#checkLink(java.lang.String)
      */
     @CallerSensitive
-    public void load(String filename) {
+@Bean
+        public void load(String filename) {
         load0(Reflection.getCallerClass(), filename);
     }
 
@@ -791,7 +797,8 @@ public class Runtime {
      * @see        java.lang.SecurityManager#checkLink(java.lang.String)
      */
     @CallerSensitive
-    public void loadLibrary(String libname) {
+@Bean
+        public void loadLibrary(String libname) {
         loadLibrary0(Reflection.getCallerClass(), libname);
     }
 
@@ -1242,7 +1249,8 @@ public class Runtime {
          *          If the given object is {@code null}
          */
         @Override
-        public int compareTo(Version obj) {
+@Bean
+            public int compareTo(Version obj) {
             return compare(obj, false);
         }
 
@@ -1267,11 +1275,13 @@ public class Runtime {
          * @throws  NullPointerException
          *          If the given object is {@code null}
          */
-        public int compareToIgnoreOptional(Version obj) {
+@Bean
+            public int compareToIgnoreOptional(Version obj) {
             return compare(obj, true);
         }
 
-        private int compare(Version obj, boolean ignoreOpt) {
+@Bean
+            private int compare(Version obj, boolean ignoreOpt) {
             if (obj == null)
                 throw new NullPointerException();
 
@@ -1293,7 +1303,8 @@ public class Runtime {
             return 0;
         }
 
-        private int compareVersion(Version obj) {
+@Bean
+            private int compareVersion(Version obj) {
             int size = version.size();
             int oSize = obj.version().size();
             int min = Math.min(size, oSize);
@@ -1306,7 +1317,8 @@ public class Runtime {
             return size - oSize;
         }
 
-        private int comparePre(Version obj) {
+@Bean
+            private int comparePre(Version obj) {
             Optional<String> oPre = obj.pre();
             if (!pre.isPresent()) {
                 if (oPre.isPresent())
@@ -1329,7 +1341,8 @@ public class Runtime {
             return 0;
         }
 
-        private int compareBuild(Version obj) {
+@Bean
+            private int compareBuild(Version obj) {
             Optional<Integer> oBuild = obj.build();
             if (oBuild.isPresent()) {
                 return (build.isPresent()
@@ -1341,7 +1354,8 @@ public class Runtime {
             return 0;
         }
 
-        private int compareOptional(Version obj) {
+@Bean
+            private int compareOptional(Version obj) {
             Optional<String> oOpt = obj.optional();
             if (!optional.isPresent()) {
                 if (oOpt.isPresent())
@@ -1396,7 +1410,8 @@ public class Runtime {
          *
          */
         @Override
-        public boolean equals(Object obj) {
+@Bean
+            public boolean equals(Object obj) {
             boolean ret = equalsIgnoreOptional(obj);
             if (!ret)
                 return false;
@@ -1420,7 +1435,8 @@ public class Runtime {
          *          ignoring the optional build information
          *
          */
-        public boolean equalsIgnoreOptional(Object obj) {
+@Bean
+            public boolean equalsIgnoreOptional(Object obj) {
             if (this == obj)
                 return true;
             if (!(obj instanceof Version))

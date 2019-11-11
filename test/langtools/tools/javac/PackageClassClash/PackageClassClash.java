@@ -31,6 +31,7 @@
 
 package PackageClassClash;
 
+@Bean
 public class PackageClassClash {
     // Inner class is required to reproduce bug 4097882.
     // Problem affects synthetic names, so force an access method as well.

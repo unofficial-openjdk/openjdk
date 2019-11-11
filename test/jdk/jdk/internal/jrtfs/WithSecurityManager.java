@@ -34,6 +34,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 
+@Bean
 public class WithSecurityManager {
     public static void main(String[] args) throws Exception {
         Path modulesPath = Paths.get(System.getProperty("java.home"),

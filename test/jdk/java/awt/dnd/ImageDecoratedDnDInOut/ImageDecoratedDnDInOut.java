@@ -50,6 +50,7 @@ import java.awt.dnd.DragSource;
     "The panel should turn red again and a yellow button labeled ",
     "\"Drag ME!\" should appear inside the panel. "
  */
+@Bean
 public class ImageDecoratedDnDInOut {
 
     public static void main(final String[] args) {

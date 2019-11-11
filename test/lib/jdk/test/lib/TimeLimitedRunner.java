@@ -29,6 +29,7 @@ import java.util.concurrent.Callable;
 /**
  * Auxiliary class to run target w/ given timeout.
  */
+@Bean
 public class TimeLimitedRunner implements Callable<Void> {
     private final long              stoptime;
     private final long              timeout;

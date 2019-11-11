@@ -34,6 +34,7 @@ import java.awt.image.*;
 import java.util.Timer;
 import java.util.TimerTask;
 
+@Bean
 public class DrawStringWithInfiniteXform {
     Timer timer;
     boolean done;

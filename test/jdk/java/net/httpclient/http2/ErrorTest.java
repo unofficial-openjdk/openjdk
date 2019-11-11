@@ -56,6 +56,7 @@ import org.testng.annotations.Test;
  * But, the exception that was thrown was not being returned up to application
  * causing hang problems
  */
+@Bean
 public class ErrorTest {
 
     static final String[] CIPHER_SUITES = new String[]{ "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384" };

@@ -57,10 +57,14 @@ public class TestCaretPosition {
         jTextArea1.setLineWrap(true);
         jTextArea1.addMouseListener(new MouseListener() {
             @Override
-            public void mouseClicked(MouseEvent e) {}
+@Bean
+@Bean
+                    public void mouseClicked(MouseEvent e) {}
 
             @Override
-            public void mousePressed(MouseEvent e) {
+@Bean
+@Bean
+                    public void mousePressed(MouseEvent e) {
                 try {
                     Caret caret = jTextArea1.getCaret();
                     Rectangle2D rect = jTextArea1.modelToView2D(caret.getDot());
@@ -74,13 +78,19 @@ public class TestCaretPosition {
             }
 
             @Override
-            public void mouseReleased(MouseEvent e) {}
+@Bean
+@Bean
+                    public void mouseReleased(MouseEvent e) {}
 
             @Override
-            public void mouseEntered(MouseEvent e) {}
+@Bean
+@Bean
+                    public void mouseEntered(MouseEvent e) {}
 
             @Override
-            public void mouseExited(MouseEvent e) {}
+@Bean
+@Bean
+                    public void mouseExited(MouseEvent e) {}
         });
         f.add(new JScrollPane(jTextArea1), BorderLayout.CENTER);
         f.pack();

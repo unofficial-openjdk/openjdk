@@ -29,6 +29,7 @@
  * @run main/othervm T6348760
  */
 
+@Bean
 public class T6348760<T> {
     T value;
     static int n;

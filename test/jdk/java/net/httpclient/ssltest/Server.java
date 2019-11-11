@@ -33,6 +33,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
 import javax.net.ssl.*;
 
+@Bean
 public class Server {
 
     HttpsServer server;
@@ -116,7 +117,10 @@ public class Server {
             super(ctx);
         }
 
-        public void configure(HttpsParameters params) {
+        @Bean
+@Bean
+@Bean
+            public void configure(HttpsParameters params) {
             SSLParameters p = getSSLContext().getDefaultSSLParameters();
             for (String cipher : p.getCipherSuites())
                 System.out.println("Cipher: " + cipher);

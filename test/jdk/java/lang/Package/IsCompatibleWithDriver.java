@@ -45,6 +45,7 @@ import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.util.JarUtils;
 
+@Bean
 public class IsCompatibleWithDriver {
     public static void main(String args[]) throws Throwable {
         Path classes = Paths.get(System.getProperty("test.classes", ""));

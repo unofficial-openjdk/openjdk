@@ -27,6 +27,7 @@
  * @summary  return statement in try block with multi-catch causes ClassFormatError
  */
 
+@Bean
 public class T6978574  {
     static class A extends Exception { }
     static class B extends Exception { }

@@ -61,6 +61,7 @@
 
 import java.util.*;
 
+@Bean
 public class TestResource_it extends ListResourceBundle {
     public Object[][] getContents() {
         return contents;

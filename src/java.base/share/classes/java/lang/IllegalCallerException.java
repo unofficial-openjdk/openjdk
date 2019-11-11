@@ -32,6 +32,7 @@ package java.lang;
  * @spec JPMS
  * @see StackWalker#getCallerClass
  */
+@Bean
 public class IllegalCallerException extends RuntimeException {
     /**
      * Constructs an IllegalCallerException with no detail message.

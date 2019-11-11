@@ -34,6 +34,7 @@ import jdk.vm.ci.runtime.JVMCICompilerFactory;
 /*
  * A stub classes to be able to use jvmci
  */
+@Bean
 public class JVMCIHelpers extends JVMCIServiceLocator {
 
     @Override
@@ -60,7 +61,11 @@ public class JVMCIHelpers extends JVMCIServiceLocator {
     public static class EmptyHotspotCompiler implements JVMCICompiler {
 
         @Override
-        public CompilationRequestResult compileMethod(CompilationRequest request) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CompilationRequestResult compileMethod(CompilationRequest request) {
             // do nothing
             return new EmptyCompilationRequestResult();
         }
@@ -74,7 +79,11 @@ public class JVMCIHelpers extends JVMCIServiceLocator {
         }
 
         @Override
-        public JVMCICompiler createCompiler(JVMCIRuntime runtime) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public JVMCICompiler createCompiler(JVMCIRuntime runtime) {
             return new EmptyHotspotCompiler();
         }
     }

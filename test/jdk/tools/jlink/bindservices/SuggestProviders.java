@@ -47,6 +47,7 @@ import static org.testng.Assert.*;
  * @run testng SuggestProviders
  */
 
+@Bean
 public class SuggestProviders {
     private static final String JAVA_HOME = System.getProperty("java.home");
     private static final String TEST_SRC = System.getProperty("test.src");
@@ -297,7 +298,11 @@ public class SuggestProviders {
         }
 
         final List<String> output = new ArrayList<>();
-        private int execute(String... options) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private int execute(String... options) {
             System.out.println("jlink " +
                 Stream.of(options).collect(Collectors.joining(" ")));
 

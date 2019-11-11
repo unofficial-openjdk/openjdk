@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+@Bean
 public class UnicodeCasingTest {
 
     private static boolean err = false;
@@ -107,7 +108,11 @@ public class UnicodeCasingTest {
         }
     }
 
-    private void test(String line) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void test(String line) {
         String[] fields = line.split(";", 15);
         int orig = convert(fields[0]);
 
@@ -130,7 +135,11 @@ public class UnicodeCasingTest {
         }
     }
 
-    private void testUpperCase(int orig, int expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testUpperCase(int orig, int expected) {
         int got = Character.toUpperCase(orig);
 
         if (expected != got) {
@@ -142,7 +151,11 @@ public class UnicodeCasingTest {
         }
     }
 
-    private void testLowerCase(int orig, int expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testLowerCase(int orig, int expected) {
         int got = Character.toLowerCase(orig);
 
         if (expected != got) {
@@ -154,7 +167,11 @@ public class UnicodeCasingTest {
         }
     }
 
-    private void testTitleCase(int orig, int expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testTitleCase(int orig, int expected) {
         int got = Character.toTitleCase(orig);
 
         if (expected != got) {
@@ -166,11 +183,19 @@ public class UnicodeCasingTest {
         }
     }
 
-    private int convert(String str) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int convert(String str) {
         return Integer.parseInt(str, 16);
     }
 
-    private String toString(int i) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String toString(int i) {
         return Integer.toHexString(i).toUpperCase();
     }
 

@@ -35,6 +35,7 @@ import java.awt.*;
  * @run main TaskUndJFrameProperties
  */
 
+@Bean
 public class TaskUndJFrameProperties extends Task<GUIUndFrame> {
 
     public static void main (String[] args) throws Exception {

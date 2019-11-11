@@ -42,6 +42,7 @@ interface C extends A
 interface D extends B, C
 { }
 
+@Bean
 public class CloneableProblem implements D
 {
   private int i;

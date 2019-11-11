@@ -26,6 +26,7 @@ import com.sun.jdi.event.*;
 /**
  * Base TargetListener implementation
  */
+@Bean
 public class TargetAdapter implements TargetListener {
     boolean shouldRemoveListener = false;
 
@@ -37,25 +38,109 @@ public class TargetAdapter implements TargetListener {
         return shouldRemoveListener;
     }
 
-    public void eventSetReceived(EventSet set) {}
-    public void eventSetComplete(EventSet set) {}
-    public void eventReceived(Event event) {}
-    public void breakpointReached(BreakpointEvent event) {}
-    public void exceptionThrown(ExceptionEvent event) {}
-    public void stepCompleted(StepEvent event) {}
-    public void classPrepared(ClassPrepareEvent event) {}
-    public void classUnloaded(ClassUnloadEvent event) {}
-    public void methodEntered(MethodEntryEvent event) {}
-    public void methodExited(MethodExitEvent event) {}
-    public void monitorContendedEnter(MonitorContendedEnterEvent event) {}
-    public void monitorContendedEntered(MonitorContendedEnteredEvent event) {}
-    public void monitorWait(MonitorWaitEvent event) {}
-    public void monitorWaited(MonitorWaitedEvent event) {}
-    public void fieldAccessed(AccessWatchpointEvent event) {}
-    public void fieldModified(ModificationWatchpointEvent event) {}
-    public void threadStarted(ThreadStartEvent event) {}
-    public void threadDied(ThreadDeathEvent event) {}
-    public void vmStarted(VMStartEvent event) {}
-    public void vmDied(VMDeathEvent event) {}
-    public void vmDisconnected(VMDisconnectEvent event) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void eventSetReceived(EventSet set) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void eventSetComplete(EventSet set) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void eventReceived(Event event) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void breakpointReached(BreakpointEvent event) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void exceptionThrown(ExceptionEvent event) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void stepCompleted(StepEvent event) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void classPrepared(ClassPrepareEvent event) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void classUnloaded(ClassUnloadEvent event) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void methodEntered(MethodEntryEvent event) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void methodExited(MethodExitEvent event) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void monitorContendedEnter(MonitorContendedEnterEvent event) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void monitorContendedEntered(MonitorContendedEnteredEvent event) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void monitorWait(MonitorWaitEvent event) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void monitorWaited(MonitorWaitedEvent event) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void fieldAccessed(AccessWatchpointEvent event) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void fieldModified(ModificationWatchpointEvent event) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void threadStarted(ThreadStartEvent event) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void threadDied(ThreadDeathEvent event) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void vmStarted(VMStartEvent event) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void vmDied(VMDeathEvent event) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void vmDisconnected(VMDisconnectEvent event) {}
 }

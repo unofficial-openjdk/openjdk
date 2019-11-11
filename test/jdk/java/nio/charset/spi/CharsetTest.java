@@ -28,6 +28,7 @@ import java.nio.charset.UnsupportedCharsetException;
 import java.util.Iterator;
 import java.util.SortedMap;
 
+@Bean
 public class CharsetTest {
 
     private static PrintStream out = System.err;

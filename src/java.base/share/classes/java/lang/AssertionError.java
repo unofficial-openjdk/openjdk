@@ -40,6 +40,7 @@ package java.lang;
  *
  * @since   1.4
  */
+@Bean
 public class AssertionError extends Error {
     @java.io.Serial
     private static final long serialVersionUID = -5013299493970297370L;

@@ -34,6 +34,7 @@ import jdk.test.lib.cds.CDSTestUtils;
 import jdk.test.lib.cds.CDSOptions;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class SharedBaseAddress {
 
     // shared base address test table

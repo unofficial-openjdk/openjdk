@@ -58,6 +58,7 @@ import java.nio.charset.UnsupportedCharsetException;
  * @since       1.1
  */
 
+@Bean
 public class PrintWriter extends Writer {
 
     /**
@@ -474,7 +475,8 @@ public class PrintWriter extends Writer {
      * Writes a single character.
      * @param c int specifying a character to be written.
      */
-    public void write(int c) {
+@Bean
+        public void write(int c) {
         try {
             synchronized (lock) {
                 ensureOpen();
@@ -500,7 +502,8 @@ public class PrintWriter extends Writer {
      *          cause the corresponding method of the underlying {@code Writer}
      *          to throw an {@code IndexOutOfBoundsException}
      */
-    public void write(char buf[], int off, int len) {
+@Bean
+        public void write(char buf[], int off, int len) {
         try {
             synchronized (lock) {
                 ensureOpen();
@@ -520,7 +523,8 @@ public class PrintWriter extends Writer {
      * Writer class because it must suppress I/O exceptions.
      * @param buf Array of characters to be written
      */
-    public void write(char buf[]) {
+@Bean
+        public void write(char buf[]) {
         write(buf, 0, buf.length);
     }
 
@@ -535,7 +539,8 @@ public class PrintWriter extends Writer {
      *          cause the corresponding method of the underlying {@code Writer}
      *          to throw an {@code IndexOutOfBoundsException}
      */
-    public void write(String s, int off, int len) {
+@Bean
+        public void write(String s, int off, int len) {
         try {
             synchronized (lock) {
                 ensureOpen();
@@ -555,7 +560,8 @@ public class PrintWriter extends Writer {
      * because it must suppress I/O exceptions.
      * @param s String to be written
      */
-    public void write(String s) {
+@Bean
+        public void write(String s) {
         write(s, 0, s.length());
     }
 
@@ -587,7 +593,8 @@ public class PrintWriter extends Writer {
      *
      * @param      b   The {@code boolean} to be printed
      */
-    public void print(boolean b) {
+@Bean
+        public void print(boolean b) {
         write(String.valueOf(b));
     }
 
@@ -599,7 +606,8 @@ public class PrintWriter extends Writer {
      *
      * @param      c   The {@code char} to be printed
      */
-    public void print(char c) {
+@Bean
+        public void print(char c) {
         write(c);
     }
 
@@ -613,7 +621,8 @@ public class PrintWriter extends Writer {
      * @param      i   The {@code int} to be printed
      * @see        java.lang.Integer#toString(int)
      */
-    public void print(int i) {
+@Bean
+        public void print(int i) {
         write(String.valueOf(i));
     }
 
@@ -627,7 +636,8 @@ public class PrintWriter extends Writer {
      * @param      l   The {@code long} to be printed
      * @see        java.lang.Long#toString(long)
      */
-    public void print(long l) {
+@Bean
+        public void print(long l) {
         write(String.valueOf(l));
     }
 
@@ -641,7 +651,8 @@ public class PrintWriter extends Writer {
      * @param      f   The {@code float} to be printed
      * @see        java.lang.Float#toString(float)
      */
-    public void print(float f) {
+@Bean
+        public void print(float f) {
         write(String.valueOf(f));
     }
 
@@ -655,7 +666,8 @@ public class PrintWriter extends Writer {
      * @param      d   The {@code double} to be printed
      * @see        java.lang.Double#toString(double)
      */
-    public void print(double d) {
+@Bean
+        public void print(double d) {
         write(String.valueOf(d));
     }
 
@@ -669,7 +681,8 @@ public class PrintWriter extends Writer {
      *
      * @throws  NullPointerException  If {@code s} is {@code null}
      */
-    public void print(char s[]) {
+@Bean
+        public void print(char s[]) {
         write(s);
     }
 
@@ -682,7 +695,8 @@ public class PrintWriter extends Writer {
      *
      * @param      s   The {@code String} to be printed
      */
-    public void print(String s) {
+@Bean
+        public void print(String s) {
         write(String.valueOf(s));
     }
 
@@ -696,7 +710,8 @@ public class PrintWriter extends Writer {
      * @param      obj   The {@code Object} to be printed
      * @see        java.lang.Object#toString()
      */
-    public void print(Object obj) {
+@Bean
+        public void print(Object obj) {
         write(String.valueOf(obj));
     }
 
@@ -718,7 +733,8 @@ public class PrintWriter extends Writer {
      *
      * @param x the {@code boolean} value to be printed
      */
-    public void println(boolean x) {
+@Bean
+        public void println(boolean x) {
         synchronized (lock) {
             print(x);
             println();
@@ -732,7 +748,8 @@ public class PrintWriter extends Writer {
      *
      * @param x the {@code char} value to be printed
      */
-    public void println(char x) {
+@Bean
+        public void println(char x) {
         synchronized (lock) {
             print(x);
             println();
@@ -746,7 +763,8 @@ public class PrintWriter extends Writer {
      *
      * @param x the {@code int} value to be printed
      */
-    public void println(int x) {
+@Bean
+        public void println(int x) {
         synchronized (lock) {
             print(x);
             println();
@@ -760,7 +778,8 @@ public class PrintWriter extends Writer {
      *
      * @param x the {@code long} value to be printed
      */
-    public void println(long x) {
+@Bean
+        public void println(long x) {
         synchronized (lock) {
             print(x);
             println();
@@ -774,7 +793,8 @@ public class PrintWriter extends Writer {
      *
      * @param x the {@code float} value to be printed
      */
-    public void println(float x) {
+@Bean
+        public void println(float x) {
         synchronized (lock) {
             print(x);
             println();
@@ -788,7 +808,8 @@ public class PrintWriter extends Writer {
      *
      * @param x the {@code double} value to be printed
      */
-    public void println(double x) {
+@Bean
+        public void println(double x) {
         synchronized (lock) {
             print(x);
             println();
@@ -802,7 +823,8 @@ public class PrintWriter extends Writer {
      *
      * @param x the array of {@code char} values to be printed
      */
-    public void println(char x[]) {
+@Bean
+        public void println(char x[]) {
         synchronized (lock) {
             print(x);
             println();
@@ -816,7 +838,8 @@ public class PrintWriter extends Writer {
      *
      * @param x the {@code String} value to be printed
      */
-    public void println(String x) {
+@Bean
+        public void println(String x) {
         synchronized (lock) {
             print(x);
             println();
@@ -832,7 +855,8 @@ public class PrintWriter extends Writer {
      *
      * @param x  The {@code Object} to be printed.
      */
-    public void println(Object x) {
+@Bean
+        public void println(Object x) {
         String s = String.valueOf(x);
         synchronized (lock) {
             print(s);
@@ -884,7 +908,8 @@ public class PrintWriter extends Writer {
      *
      * @since  1.5
      */
-    public PrintWriter printf(String format, Object ... args) {
+@Bean
+        public PrintWriter printf(String format, Object ... args) {
         return format(format, args);
     }
 
@@ -937,7 +962,8 @@ public class PrintWriter extends Writer {
      *
      * @since  1.5
      */
-    public PrintWriter printf(Locale l, String format, Object ... args) {
+@Bean
+        public PrintWriter printf(Locale l, String format, Object ... args) {
         return format(l, format, args);
     }
 
@@ -981,7 +1007,8 @@ public class PrintWriter extends Writer {
      *
      * @since  1.5
      */
-    public PrintWriter format(String format, Object ... args) {
+@Bean
+        public PrintWriter format(String format, Object ... args) {
         try {
             synchronized (lock) {
                 ensureOpen();
@@ -1041,7 +1068,8 @@ public class PrintWriter extends Writer {
      *
      * @since  1.5
      */
-    public PrintWriter format(Locale l, String format, Object ... args) {
+@Bean
+        public PrintWriter format(Locale l, String format, Object ... args) {
         try {
             synchronized (lock) {
                 ensureOpen();
@@ -1084,7 +1112,8 @@ public class PrintWriter extends Writer {
      *
      * @since  1.5
      */
-    public PrintWriter append(CharSequence csq) {
+@Bean
+        public PrintWriter append(CharSequence csq) {
         write(String.valueOf(csq));
         return this;
     }
@@ -1123,7 +1152,8 @@ public class PrintWriter extends Writer {
      *
      * @since  1.5
      */
-    public PrintWriter append(CharSequence csq, int start, int end) {
+@Bean
+        public PrintWriter append(CharSequence csq, int start, int end) {
         if (csq == null) csq = "null";
         return append(csq.subSequence(start, end));
     }
@@ -1145,7 +1175,8 @@ public class PrintWriter extends Writer {
      *
      * @since 1.5
      */
-    public PrintWriter append(char c) {
+@Bean
+        public PrintWriter append(char c) {
         write(c);
         return this;
     }

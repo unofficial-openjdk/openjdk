@@ -37,6 +37,7 @@ import java.util.List;
 import javax.smartcardio.CardTerminal;
 import javax.smartcardio.TerminalFactory;
 
+@Bean
 public class TestDefault {
 
     public static void main(String[] args) throws Exception {

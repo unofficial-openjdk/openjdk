@@ -23,6 +23,7 @@
 
 package test;
 
+@Bean
 public class TestProcess {
 
     public static void main(String[] args) throws Exception {

@@ -43,6 +43,7 @@ import com.sun.tools.javac.util.DefinedBy.Api;
  * {@link DefinedBy} annotation, and that methods that don't implement a public API are not marked
  * using the annotation.
  */
+@Bean
 public class DefinedByAnalyzer extends AbstractCodingRulesAnalyzer {
 
     public DefinedByAnalyzer(JavacTask task) {
@@ -60,13 +61,21 @@ public class DefinedByAnalyzer extends AbstractCodingRulesAnalyzer {
 
     class DefinedByVisitor extends TreeScanner {
         @Override
-        public void visitClassDef(JCClassDecl tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitClassDef(JCClassDecl tree) {
             if (MODULE.contains(tree.sym.packge().modle.name.toString())) {
                 super.visitClassDef(tree);
             }
         }
         @Override
-        public void visitMethodDef(JCMethodDecl tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitMethodDef(JCMethodDecl tree) {
             if (!isAPIPackage(packageName(tree.sym))) {
                 boolean seenAPIPackage = false;
 
@@ -99,7 +108,11 @@ public class DefinedByAnalyzer extends AbstractCodingRulesAnalyzer {
             super.visitMethodDef(tree);
         }
 
-        private boolean isAPIPackage(String pack) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private boolean isAPIPackage(String pack) {
             for (Api api : Api.values()) {
                 if (pack.startsWith(api.packageRoot))
                     return true;
@@ -108,7 +121,11 @@ public class DefinedByAnalyzer extends AbstractCodingRulesAnalyzer {
             return false;
         }
 
-        private String packageName(Symbol sym) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private String packageName(Symbol sym) {
             return elements.getPackageOf(sym).getQualifiedName().toString();
         }
     }

@@ -213,7 +213,10 @@ public class BitDepth {
         return file;
     }
 
-    private int colorDistance(int color, int r, int g, int b) {
+    @Bean
+@Bean
+@Bean
+            private int colorDistance(int color, int r, int g, int b) {
         int r0 = ((color >> 16) & 0xff) - r;
         int g0 = ((color >> 8) & 0xff) - g;
         int b0 = (color & 0xff) - b;

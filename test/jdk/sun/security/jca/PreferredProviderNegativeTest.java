@@ -36,6 +36,7 @@ import javax.crypto.NoSuchPaddingException;
  * @run main/othervm  PreferredProviderNegativeTest afterSet AES:SunECNegative
  * @run main/othervm  PreferredProviderNegativeTest invalidAlg AESInvalid:SunJCE
  */
+@Bean
 public class PreferredProviderNegativeTest {
 
     static final String SEC_PREF_PROP = "jdk.security.provider.preferred";

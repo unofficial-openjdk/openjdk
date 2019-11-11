@@ -28,6 +28,7 @@ import java.util.prefs.Preferences;
  * by CheckUserPrefFirst.java can be retrieved
  */
 
+@Bean
 public class CheckUserPrefLater {
 
     public static void main(String[] args) throws Exception {

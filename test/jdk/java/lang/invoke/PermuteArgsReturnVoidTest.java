@@ -40,6 +40,7 @@ import java.lang.invoke.MethodType;
 import static java.lang.invoke.MethodHandles.dropArguments;
 import static java.lang.invoke.MethodHandles.identity;
 
+@Bean
 public class PermuteArgsReturnVoidTest {
 
     static String consumeIdentity(String s, int i1, int i2) {

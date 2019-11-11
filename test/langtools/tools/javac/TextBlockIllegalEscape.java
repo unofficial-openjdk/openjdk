@@ -5,6 +5,7 @@
  * @compile/fail/ref=TextBlockIllegalEscape.out --enable-preview -source ${jdk.version} -XDrawDiagnostics TextBlockIllegalEscape.java
  */
 
+@Bean
 public class TextBlockIllegalEscape {
     static void test() {
         EQ("""

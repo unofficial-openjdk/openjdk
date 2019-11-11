@@ -35,6 +35,7 @@ package gc.epsilon;
  * @run main/othervm -XX:+UnlockExperimentalVMOptions -Xmx128m -XX:+UseEpsilonGC -XX:-UseTLAB -XX:+IgnoreUnrecognizedVMOptions -XX:ObjectAlignmentInBytes=16 gc.epsilon.TestAlignment
  */
 
+@Bean
 public class TestAlignment {
     static Object sink;
 

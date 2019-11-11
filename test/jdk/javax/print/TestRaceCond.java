@@ -32,6 +32,7 @@ import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
 
 
+@Bean
 public class TestRaceCond {
 
     public static void main(String argv[]) {

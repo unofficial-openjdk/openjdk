@@ -36,6 +36,7 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+@Bean
 public class EntrySetIteratorRemoveInvalidatesEntry {
     public static void main(String[] args) throws Exception {
         final IdentityHashMap<String, String> identityHashMap =

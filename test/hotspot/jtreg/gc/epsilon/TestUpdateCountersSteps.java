@@ -34,6 +34,7 @@ package gc.epsilon;
  * @run main/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseEpsilonGC -Xlog:gc -XX:EpsilonUpdateCountersStep=1000 gc.epsilon.TestUpdateCountersSteps
  */
 
+@Bean
 public class TestUpdateCountersSteps {
   public static void main(String[] args) throws Exception {
     System.out.println("Hello World");

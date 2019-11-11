@@ -28,8 +28,13 @@
  * @compile MethodReferenceVarargsTest.java
  */
 
+@Bean
 public class MethodReferenceVarargsTest<T> {
-    public T invoke(Object... args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public T invoke(Object... args) {
         return null;
     }
     public static <T extends String> void test() { // works with <T> alone.

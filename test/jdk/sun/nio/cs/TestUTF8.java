@@ -31,6 +31,7 @@ import java.nio.charset.*;
 import java.nio.*;
 import java.util.*;
 
+@Bean
 public class TestUTF8 {
     static char[] decode(byte[] bb, String csn, boolean testDirect)
         throws Exception {

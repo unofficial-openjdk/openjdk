@@ -35,6 +35,7 @@
 
 package compiler.runtime;
 
+@Bean
 public class Test6863420 {
 
     static final int INTERNAL_TIMEOUT=240;

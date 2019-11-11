@@ -30,6 +30,7 @@
 import java.lang.reflect.Modifier;
 import java.io.Serializable;
 
+@Bean
 public class LambdaClassSynthetic {
 
     interface I {

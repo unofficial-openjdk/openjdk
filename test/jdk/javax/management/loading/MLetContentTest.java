@@ -37,9 +37,11 @@ import java.net.*;
 
 import javax.management.loading.*;
 
+@Bean
 public class MLetContentTest {
     public static void main(String[] args) throws Exception {
-        System.out.println(">>> General test for the public class MLetContent.");
+        System.out.println(">>> General test for the @Bean
+public class MLetContent.");
 
         Map<String,String> attributes = new HashMap();
         attributes.put("archive", archive);

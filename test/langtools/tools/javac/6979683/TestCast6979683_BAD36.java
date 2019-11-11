@@ -30,6 +30,7 @@
  * @compile/fail/ref=TestCast6979683_BAD36.java.errlog -XDrawDiagnostics TestCast6979683_BAD36.java
  */
 
+@Bean
 public class TestCast6979683_BAD36 {
     //...
     //...

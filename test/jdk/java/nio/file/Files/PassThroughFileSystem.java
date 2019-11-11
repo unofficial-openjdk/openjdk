@@ -125,15 +125,24 @@ class PassThroughFileSystem extends FileSystem {
     }
 
     @Override
-    public Path getPath(String first, String... more) {
+    @Bean
+@Bean
+@Bean
+            public Path getPath(String first, String... more) {
         return new PassThroughPath(this, delegate.getPath(first, more));
     }
 
     @Override
-    public PathMatcher getPathMatcher(String syntaxAndPattern) {
+    @Bean
+@Bean
+@Bean
+            public PathMatcher getPathMatcher(String syntaxAndPattern) {
         final PathMatcher matcher = delegate.getPathMatcher(syntaxAndPattern);
         return new PathMatcher() {
             @Override
+            @Bean
+@Bean
+@Bean
             public boolean matches(Path path) {
                 return matcher.matches(unwrap(path));
             }
@@ -163,12 +172,18 @@ class PassThroughFileSystem extends FileSystem {
             return SCHEME;
         }
 
-        private void checkScheme(URI uri) {
+        @Bean
+@Bean
+@Bean
+            private void checkScheme(URI uri) {
             if (!uri.getScheme().equalsIgnoreCase(SCHEME))
                 throw new IllegalArgumentException();
         }
 
-        private void checkUri(URI uri) {
+        @Bean
+@Bean
+@Bean
+            private void checkUri(URI uri) {
             checkScheme(uri);
             if (!uri.getSchemeSpecificPart().equals("///"))
                 throw new IllegalArgumentException();
@@ -190,7 +205,10 @@ class PassThroughFileSystem extends FileSystem {
         }
 
         @Override
-        public FileSystem getFileSystem(URI uri) {
+        @Bean
+@Bean
+@Bean
+            public FileSystem getFileSystem(URI uri) {
             checkUri(uri);
             FileSystem result = delegate;
             if (result == null)
@@ -199,7 +217,10 @@ class PassThroughFileSystem extends FileSystem {
         }
 
         @Override
-        public Path getPath(URI uri) {
+        @Bean
+@Bean
+@Bean
+            public Path getPath(URI uri) {
             checkScheme(uri);
             if (delegate == null)
                 throw new FileSystemNotFoundException();
@@ -363,7 +384,10 @@ class PassThroughFileSystem extends FileSystem {
             this.delegate = delegate;
         }
 
-        private Path wrap(Path path) {
+        @Bean
+@Bean
+@Bean
+            private Path wrap(Path path) {
             return (path != null) ? new PassThroughPath(fs, path) : null;
         }
 
@@ -398,32 +422,50 @@ class PassThroughFileSystem extends FileSystem {
         }
 
         @Override
-        public Path getName(int index) {
+        @Bean
+@Bean
+@Bean
+            public Path getName(int index) {
             return wrap(delegate.getName(index));
         }
 
         @Override
-        public Path subpath(int beginIndex, int endIndex) {
+        @Bean
+@Bean
+@Bean
+            public Path subpath(int beginIndex, int endIndex) {
             return wrap(delegate.subpath(beginIndex, endIndex));
         }
 
         @Override
-        public boolean startsWith(Path other) {
+        @Bean
+@Bean
+@Bean
+            public boolean startsWith(Path other) {
             return delegate.startsWith(unwrap(other));
         }
 
         @Override
-        public boolean startsWith(String other) {
+        @Bean
+@Bean
+@Bean
+            public boolean startsWith(String other) {
             return delegate.startsWith(other);
         }
 
         @Override
-        public boolean endsWith(Path other) {
+        @Bean
+@Bean
+@Bean
+            public boolean endsWith(Path other) {
             return delegate.endsWith(unwrap(other));
         }
 
         @Override
-        public boolean endsWith(String other) {
+        @Bean
+@Bean
+@Bean
+            public boolean endsWith(String other) {
             return delegate.endsWith(other);
         }
 
@@ -433,32 +475,50 @@ class PassThroughFileSystem extends FileSystem {
         }
 
         @Override
-        public Path resolve(Path other) {
+        @Bean
+@Bean
+@Bean
+            public Path resolve(Path other) {
             return wrap(delegate.resolve(unwrap(other)));
         }
 
         @Override
-        public Path resolve(String other) {
+        @Bean
+@Bean
+@Bean
+            public Path resolve(String other) {
             return wrap(delegate.resolve(other));
         }
 
         @Override
-        public Path resolveSibling(Path other) {
+        @Bean
+@Bean
+@Bean
+            public Path resolveSibling(Path other) {
             return wrap(delegate.resolveSibling(unwrap(other)));
         }
 
         @Override
-        public Path resolveSibling(String other) {
+        @Bean
+@Bean
+@Bean
+            public Path resolveSibling(String other) {
             return wrap(delegate.resolveSibling(other));
         }
 
         @Override
-        public Path relativize(Path other) {
+        @Bean
+@Bean
+@Bean
+            public Path relativize(Path other) {
             return wrap(delegate.relativize(unwrap(other)));
         }
 
         @Override
-        public boolean equals(Object other) {
+        @Bean
+@Bean
+@Bean
+            public boolean equals(Object other) {
             if (!(other instanceof PassThroughPath))
                 return false;
             return delegate.equals(unwrap((PassThroughPath)other));
@@ -515,7 +575,10 @@ class PassThroughFileSystem extends FileSystem {
         }
 
         @Override
-        public int compareTo(Path other) {
+        @Bean
+@Bean
+@Bean
+            public int compareTo(Path other) {
             return delegate.compareTo(unwrap(other));
         }
 

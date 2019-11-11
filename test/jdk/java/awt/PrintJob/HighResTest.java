@@ -49,6 +49,7 @@ import java.awt.TextArea;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+@Bean
 public class HighResTest {
     static Frame f = new Frame();
 

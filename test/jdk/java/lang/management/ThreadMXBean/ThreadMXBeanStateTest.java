@@ -41,6 +41,7 @@ import java.lang.management.ThreadMXBean;
 import java.lang.management.ThreadInfo;
 import static java.lang.Thread.State.*;
 
+@Bean
 public class ThreadMXBeanStateTest {
     private static final ThreadMXBean tm = ManagementFactory.getThreadMXBean();
 

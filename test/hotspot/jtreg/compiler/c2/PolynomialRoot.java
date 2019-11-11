@@ -27,6 +27,7 @@ import jdk.test.lib.Utils;
 import java.util.Arrays;
 import java.util.Random;
 
+@Bean
 public class PolynomialRoot  {
 
 

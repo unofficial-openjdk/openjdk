@@ -52,6 +52,7 @@ import java.net.*;
  *
  * @author Jeff Dinkins
  */
+@Bean
 public class ColorChooserDemo extends DemoModule {
 
     BezierAnimationPanel bezAnim;
@@ -96,7 +97,11 @@ public class ColorChooserDemo extends DemoModule {
         gradientBButton.setIcon(new ColorSwatch("GradientB", bezAnim));
 
         ActionListener l = new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 Color current = bezAnim.getOuterColor();
 
                 if(e.getSource() == backgroundColorButton) {
@@ -116,7 +121,11 @@ public class ColorChooserDemo extends DemoModule {
 
                 chosen = null;
                 ActionListener okListener = new ActionListener() {
-                    public void actionPerformed(ActionEvent ae) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent ae) {
                         chosen = chooser.getColor();
                     }
                 };
@@ -190,7 +199,11 @@ public class ColorChooserDemo extends DemoModule {
             return 11;
         }
 
-        public void paintIcon(Component c, Graphics g, int x, int y) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void paintIcon(Component c, Graphics g, int x, int y) {
             g.setColor(Color.black);
             g.fillRect(x, y, getIconWidth(), getIconHeight());
             if(gradient.equals("GradientA")) {

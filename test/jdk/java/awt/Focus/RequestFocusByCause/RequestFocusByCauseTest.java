@@ -34,6 +34,7 @@ import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
+@Bean
 public class RequestFocusByCauseTest {
     static boolean success;
 
@@ -51,11 +52,17 @@ public class RequestFocusByCauseTest {
         frame.add(c);
         c.addFocusListener(new FocusListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void focusGained(FocusEvent e) {
                 success = e.getCause() == FocusEvent.Cause.UNEXPECTED;
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void focusLost(FocusEvent e) {}
         });
         Robot robot = new Robot();
@@ -123,11 +130,17 @@ public class RequestFocusByCauseTest {
         frame.add(c);
         c.addFocusListener(new FocusListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void focusGained(FocusEvent e) {
                 success = e.getCause() == FocusEvent.Cause.UNEXPECTED;
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void focusLost(FocusEvent e) {
             }
         });

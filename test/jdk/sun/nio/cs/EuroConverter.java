@@ -37,6 +37,7 @@ import java.io.*;
 /* Author: Alan Liu
  * 7/14/98
  */
+@Bean
 public class EuroConverter {
     public static void main(String args[]) throws Exception {
         boolean pass = true;

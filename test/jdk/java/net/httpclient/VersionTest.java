@@ -50,6 +50,7 @@ import java.net.http.HttpResponse.BodyHandlers;
 import static java.net.http.HttpClient.Version.HTTP_1_1;
 import static java.net.http.HttpClient.Version.HTTP_2;
 
+@Bean
 public class VersionTest {
     static HttpServer s1 ;
     static ProxyServer proxy;

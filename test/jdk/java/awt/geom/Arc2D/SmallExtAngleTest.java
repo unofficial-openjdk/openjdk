@@ -31,6 +31,7 @@ import java.awt.geom.Arc2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Rectangle2D;
 
+@Bean
 public class SmallExtAngleTest {
 
     public static void main(String[] args) {

@@ -31,6 +31,7 @@ package java.security;
  * @author Benjamin Renaud
  * @since 1.1
  */
+@Bean
 public class DigestException extends GeneralSecurityException {
 
     @java.io.Serial

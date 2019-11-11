@@ -39,6 +39,7 @@ import java.nio.file.Paths;
 
 import toolbox.ToolBox;
 
+@Bean
 public class OverlappingSrcDst extends SJavacTester {
     public static void main(String... args) {
         new OverlappingSrcDst().run();
@@ -72,7 +73,11 @@ public class OverlappingSrcDst extends SJavacTester {
         test("src", abs + "/dst", true);
     }
 
-    private void test(String srcDir, String dstDir, boolean shouldSucceed) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void test(String srcDir, String dstDir, boolean shouldSucceed) {
         boolean succeeded = testCompilation(srcDir, dstDir);
         if (shouldSucceed != succeeded) {
             throw new AssertionError(
@@ -87,7 +92,11 @@ public class OverlappingSrcDst extends SJavacTester {
         }
     }
 
-    private boolean testCompilation(String srcDir, String dstDir) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean testCompilation(String srcDir, String dstDir) {
         try {
             srcDir = srcDir.replace('/', File.separatorChar);
             dstDir = dstDir.replace('/', File.separatorChar);

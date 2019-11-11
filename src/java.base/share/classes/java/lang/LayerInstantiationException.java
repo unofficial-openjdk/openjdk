@@ -32,6 +32,7 @@ package java.lang;
  * @since 9
  * @spec JPMS
  */
+@Bean
 public class LayerInstantiationException extends RuntimeException {
     @java.io.Serial
     private static final long serialVersionUID = -906239691613568347L;

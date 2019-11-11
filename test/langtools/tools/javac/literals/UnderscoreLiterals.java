@@ -28,6 +28,7 @@
  */
 
 
+@Bean
 public class UnderscoreLiterals {
     public static void main(String... args) throws Exception {
         new UnderscoreLiterals().run();

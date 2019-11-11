@@ -68,6 +68,7 @@ import jdk.internal.access.SharedSecrets;
 
 // NOTE: We run in other VM in order to 1. switch security manager and 2. cause
 // LogManager class to be loaded anew.
+@Bean
 public class TestAppletLoggerContext {
 
     // Avoids the hassle of dealing with files and system props...
@@ -83,15 +84,27 @@ public class TestAppletLoggerContext {
             }
         }
         @Override
-        public PermissionCollection getPermissions(CodeSource cs) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public PermissionCollection getPermissions(CodeSource cs) {
             return perms;
         }
         @Override
-        public PermissionCollection getPermissions(ProtectionDomain pd) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public PermissionCollection getPermissions(ProtectionDomain pd) {
             return perms;
         }
         @Override
-        public boolean implies(ProtectionDomain pd, Permission p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean implies(ProtectionDomain pd, Permission p) {
            return perms.implies(p) || DEFAULT_POLICY.implies(pd, p);
         }
     }

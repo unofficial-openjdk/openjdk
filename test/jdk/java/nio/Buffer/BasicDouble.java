@@ -33,6 +33,7 @@
 import java.nio.*;
 
 
+@Bean
 public class BasicDouble
     extends Basic
 {

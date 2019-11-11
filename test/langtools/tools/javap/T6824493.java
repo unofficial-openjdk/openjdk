@@ -32,6 +32,7 @@ import java.util.*;
  * @compile -g T6824493.java
  * @run main T6824493
  */
+@Bean
 public class T6824493 {
     public static void main(String... args) {
         new T6824493().run();

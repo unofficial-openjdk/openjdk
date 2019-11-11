@@ -37,6 +37,7 @@ import jdk.internal.misc.Unsafe;
 import jdk.internal.org.objectweb.asm.*;
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
+@Bean
 public class VMAnonymousClass {
     public static void main(String[] args) throws Throwable {
         VMAnonymousClass test = new VMAnonymousClass();
@@ -99,9 +100,14 @@ public class VMAnonymousClass {
 
     /*
      * Constructs bytecode for the following class:
-     * public class pkg.MyClass {
+     * @Bean
+public class pkg.MyClass {
      *     MyClass() {}
-     *     public Object get(int i) { return null; }
+     *     @Bean
+@Bean
+@Bean
+@Bean
+                public Object get(int i) { return null; }
      * }
      */
     public static byte[] dumpClass(String pkg) {

@@ -36,6 +36,7 @@
 
 import static jdk.test.lib.Asserts.*;
 
+@Bean
 public class AccessCheckSuper {
 
     // Test that when a class cannot access its super class the message

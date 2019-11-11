@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@Bean
 public class Swap {
     static final int SIZE = 100;
 

@@ -42,6 +42,7 @@ import jdk.test.lib.compiler.InMemoryJavaCompiler;
  *      is either the same as X or has a static argument that references X through its static arguments,
  *      directly or indirectly, resolution fails with a StackOverflowError.
  */
+@Bean
 public class CondyNestedResolutionTest {
     public static void main(String args[]) throws Throwable {
         ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("CondyNestedResolution");

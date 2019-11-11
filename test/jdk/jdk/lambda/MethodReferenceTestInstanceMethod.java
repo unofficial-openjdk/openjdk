@@ -32,6 +32,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 
 @Test(groups = "lib")
+@Bean
 public class MethodReferenceTestInstanceMethod {
     public Stream<String> generate() {
         return Arrays.asList("one", "two", "three", "four", "five", "six")

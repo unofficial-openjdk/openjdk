@@ -38,6 +38,7 @@ package compiler.codecache;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class CheckReservedInitialCodeCacheSizeArgOrder {
     public static void main(String[] args) throws Exception {
         ProcessBuilder pb1,  pb2;

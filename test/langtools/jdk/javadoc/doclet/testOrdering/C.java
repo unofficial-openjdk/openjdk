@@ -56,7 +56,11 @@ public class C {
      * @param p  a param
      * @return UsedInC
      */
-    public UsedInC methodInC(UsedInC p) { return p;}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public UsedInC methodInC(UsedInC p) { return p;}
 
     /**
      * A static method

@@ -62,6 +62,7 @@ import sun.hotspot.WhiteBox;
 
 import java.lang.reflect.Field;
 
+@Bean
 public class GetResolvedJavaTypeTest {
     private static enum TestCase {
         NULL_BASE {
@@ -172,7 +173,11 @@ public class GetResolvedJavaTypeTest {
         return WB.getObjectAddress(base) + UNSAFE.staticFieldOffset(field);
     }
 
-    public void test(TestCase testCase) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void test(TestCase testCase) {
         System.out.println(testCase.name());
         HotSpotResolvedObjectType type = testCase.getResolvedJavaType();
         Asserts.assertEQ(TEST_CLASS,

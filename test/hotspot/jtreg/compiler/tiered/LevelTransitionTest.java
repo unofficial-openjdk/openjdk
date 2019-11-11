@@ -50,6 +50,7 @@ import java.lang.reflect.Method;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 
+@Bean
 public class LevelTransitionTest extends TieredLevelsTest {
     /**
      * Shows if method was profiled by being executed on levels 2 or 3
@@ -123,7 +124,11 @@ public class LevelTransitionTest extends TieredLevelsTest {
      * @param currentLevel a level the test case is compiled on
      * @return expected compilation level
      */
-    protected int getNextLevel(int currentLevel) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected int getNextLevel(int currentLevel) {
         int nextLevel = currentLevel;
         switch (currentLevel) {
             case CompilerWhiteBoxTest.COMP_LEVEL_NONE:

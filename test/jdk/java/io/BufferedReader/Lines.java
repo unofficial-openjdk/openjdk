@@ -45,6 +45,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 @Test(groups = "unit")
+@Bean
 public class Lines {
     private static final Map<String, Integer> cases = new HashMap<>();
 

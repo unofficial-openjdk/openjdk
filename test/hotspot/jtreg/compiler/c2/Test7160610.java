@@ -31,6 +31,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test7160610 {
   private static final byte[] BYTE_ARRAY = new byte[7];
   private static int[] anIntArray1190 = new int[32768];

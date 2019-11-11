@@ -34,6 +34,7 @@ package compiler.loopopts.superword;
 
 import jdk.internal.misc.Unsafe;
 
+@Bean
 public class TestVectorizationWithInvariant {
 
     private static Unsafe unsafe;

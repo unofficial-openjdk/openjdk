@@ -30,6 +30,7 @@ import java.nio.*;
 import java.nio.channels.*;
 import java.net.*;
 
+@Bean
 public class Receive {
     public static void main(String args[]) throws Exception {
         ByteBuffer bb = ByteBuffer.allocate(10);

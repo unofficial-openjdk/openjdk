@@ -70,6 +70,7 @@ class MonitorFrameInfoTarg {
 
     /********** test program **********/
 
+@Bean
 public class MonitorFrameInfo extends TestScaffold {
     ReferenceType targetClass;
     ThreadReference mainThread;

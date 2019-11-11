@@ -29,6 +29,7 @@
 import java.io.*;
 import java.nio.channels.*;
 
+@Bean
 public class ConfigureBlocking {
     public static void main (String [] str) throws Exception {
         SelectableChannel [] channels = null;

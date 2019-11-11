@@ -38,6 +38,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
+@Bean
 public class Test4092905 {
     private static final String PUBLIC = "public";
     private static final String PRIVATE = "private";
@@ -77,12 +78,20 @@ public class Test4092905 {
     }
 
     public static class PublicListener implements PropertyChangeListener, Serializable {
-        public void propertyChange(PropertyChangeEvent event) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void propertyChange(PropertyChangeEvent event) {
         }
     }
 
     private static class PrivateListener implements PropertyChangeListener {
-        public void propertyChange(PropertyChangeEvent event) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void propertyChange(PropertyChangeEvent event) {
         }
     }
 }

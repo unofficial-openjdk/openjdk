@@ -28,6 +28,7 @@
  * @compile LowerBoundBottomTypeTest.java
 */
 
+@Bean
 public class LowerBoundBottomTypeTest {
     void g() {
         f().getInIntf3().getInIntf2().getInIntf1().getA();

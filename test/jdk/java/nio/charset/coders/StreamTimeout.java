@@ -40,6 +40,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+@Bean
 public class StreamTimeout {
     static final PrintStream log = System.err;
     static String charset = "US-ASCII";

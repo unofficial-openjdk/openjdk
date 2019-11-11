@@ -36,6 +36,7 @@ import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import java.util.logging.MemoryHandler;
 
+@Bean
 public class MemoryHandlerTest {
 
     static final String CFG_FILE_PROP = "java.util.logging.config.file";
@@ -124,7 +125,11 @@ public class MemoryHandlerTest {
         }
 
         @Override
-        public void publish(LogRecord unused) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void publish(LogRecord unused) {
             numPublished++;
         }
 
@@ -141,7 +146,11 @@ public class MemoryHandlerTest {
         public static int numPublished;
 
         @Override
-        public void publish(LogRecord unused) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void publish(LogRecord unused) {
             numPublished++;
         }
 

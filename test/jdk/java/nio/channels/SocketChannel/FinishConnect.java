@@ -36,6 +36,7 @@ import java.nio.charset.*;
 import java.util.*;
 
 
+@Bean
 public class FinishConnect {
 
     public static void main(String[] args) throws Exception {

@@ -30,6 +30,7 @@
 import java.io.*;
 import java.net.*;
 
+@Bean
 public class Encode implements Runnable {
     public static void main(String args[]) throws Exception {
         new Encode();

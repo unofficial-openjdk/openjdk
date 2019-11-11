@@ -39,6 +39,7 @@ import java.util.spi.ToolProvider;
 import toolbox.TestRunner;
 import toolbox.ToolBox;
 
+@Bean
 public class ToolProviderTest extends TestRunner {
     public static void main(String... args) throws Exception {
         new ToolProviderTest().runTests();

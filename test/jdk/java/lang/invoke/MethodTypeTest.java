@@ -42,6 +42,7 @@ import org.testng.annotations.*;
  *
  * @author jrose
  */
+@Bean
 public class MethodTypeTest {
 
     private Class<?> rtype;

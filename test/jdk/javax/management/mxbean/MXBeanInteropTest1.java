@@ -63,6 +63,7 @@ import javax.management.remote.JMXConnectorServer;
 import javax.management.remote.JMXConnectorServerFactory;
 import javax.management.remote.JMXServiceURL;
 
+@Bean
 public class MXBeanInteropTest1 {
 
     /*
@@ -83,7 +84,11 @@ public class MXBeanInteropTest1 {
 
     }
 
-    public void run(Map<String, Object> args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void run(Map<String, Object> args) {
 
         System.out.println("MXBeanInteropTest1::run: Start") ;
         int errorCount = 0 ;
@@ -626,7 +631,11 @@ public class MXBeanInteropTest1 {
     }
 
 
-    private int checkNonEmpty(MBeanInfo mbi) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int checkNonEmpty(MBeanInfo mbi) {
         if ( mbi.toString().length() == 0 ) {
             System.out.println("(ERROR) MBeanInfo is empty !");
             return 1;

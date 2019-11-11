@@ -45,6 +45,7 @@ import static java.net.StandardSocketOptions.*;
 import jdk.test.lib.NetworkConfiguration;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class SocketOptionTests {
 
     public static void main(String[] args) throws IOException {

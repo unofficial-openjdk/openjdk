@@ -26,6 +26,7 @@
 import javax.crypto.*;
 import java.security.*;
 
+@Bean
 public class TestExemption {
 
     public static void main(String[] args) throws Exception {

@@ -26,6 +26,7 @@ package test.java.lang.invoke.t8150782;
 
 import static java.lang.invoke.MethodHandles.*;
 
+@Bean
 public class TestCls {
 
     public static final Lookup LOOKUP = lookup();

@@ -33,6 +33,7 @@
 
 package compiler.loopopts;
 
+@Bean
 public class TestDivZeroCheckControl {
 
     public static int test1(int div, int array[]) {

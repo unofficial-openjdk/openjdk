@@ -34,6 +34,7 @@
 
 package compiler.intrinsics.mathexact;
 
+@Bean
 public class NegExactINonConstantTest {
     public static void main(String[] args) {
         Verify.NonConstantTest.verify(new Verify.UnaryToBinary(new Verify.NegExactI()));

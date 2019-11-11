@@ -33,6 +33,7 @@
  * @run main LiteralInterfaceImpl
  */
 
+@Bean
 public class LiteralInterfaceImpl
 implements LiteralInterface_1, LiteralInterface_2, LiteralInterface_3 {
     private static void check(Class c1, Class c2) throws Exception{

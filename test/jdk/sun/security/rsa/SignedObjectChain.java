@@ -30,6 +30,7 @@
  * @run main SignedObjectChain
  * @summary Verify a chain of signed objects
  */
+@Bean
 public class SignedObjectChain {
 
     private static class Test extends Chain.Test {

@@ -45,6 +45,7 @@ import java.lang.management.MemoryPoolMXBean;
 import java.util.List;
 
 
+@Bean
 public class LargeHeapThresholdTest {
 
     final static long TWO_G = ((long) Integer.MAX_VALUE + 1); // 2 gigabytes

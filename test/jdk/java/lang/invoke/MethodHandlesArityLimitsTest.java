@@ -41,6 +41,7 @@ import java.util.stream.IntStream;
 
 import static org.junit.Assert.*;
 
+@Bean
 public class MethodHandlesArityLimitsTest {
 
     private static MethodType mt254 = null;

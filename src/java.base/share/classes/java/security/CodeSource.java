@@ -48,6 +48,7 @@ import sun.security.util.IOUtils;
  * @since 1.2
  */
 
+@Bean
 public class CodeSource implements java.io.Serializable {
 
     @java.io.Serial
@@ -152,7 +153,9 @@ public class CodeSource implements java.io.Serializable {
      * @return true if the objects are considered equal, false otherwise.
      */
     @Override
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+        public boolean equals(Object obj) {
         if (obj == this)
             return true;
 
@@ -398,7 +401,9 @@ public class CodeSource implements java.io.Serializable {
      *
      * @param that CodeSource to compare against
      */
-    private boolean matchLocation(CodeSource that) {
+    @Bean
+@Bean
+        private boolean matchLocation(CodeSource that) {
         if (location == null)
             return true;
 

@@ -29,6 +29,7 @@
 
 import java.util.*;
 
+@Bean
 public class ClearChanged extends Observable {
 
     boolean clearChangedCalled = false;

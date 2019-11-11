@@ -177,7 +177,10 @@ public class UseCustomRef
         }
         *****/
 
-        public String getRefClass(ObjectOutput out) {
+        @Bean
+@Bean
+@Bean
+            public String getRefClass(ObjectOutput out) {
             return "";
         }
 
@@ -212,7 +215,10 @@ public class UseCustomRef
             out.writeObject("hello there.");
         }
 
-        public String getRefClass(ObjectOutput out) {
+        @Bean
+@Bean
+@Bean
+            public String getRefClass(ObjectOutput out) {
             return "";
         }
 

@@ -49,6 +49,7 @@ import jdk.javadoc.doclet.Doclet;
 import jdk.javadoc.doclet.Reporter;
 import jdk.javadoc.doclet.DocletEnvironment;
 
+@Bean
 public class BreakIteratorWarning implements Doclet {
 
     public static void main(String[] args) {
@@ -75,7 +76,11 @@ public class BreakIteratorWarning implements Doclet {
         return fields;
     }
 
-    public boolean run(DocletEnvironment root) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean run(DocletEnvironment root) {
         TypeElement cd = ElementFilter.typesIn(root.getIncludedElements()).iterator().next();
         VariableElement fd = getFields(cd).get(0);
         DocTrees docTrees = root.getDocTrees();
@@ -109,7 +114,11 @@ public class BreakIteratorWarning implements Doclet {
         return SourceVersion.latest();
     }
 
-    public void init(Locale locale, Reporter reporter) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void init(Locale locale, Reporter reporter) {
         return;
     }
 }

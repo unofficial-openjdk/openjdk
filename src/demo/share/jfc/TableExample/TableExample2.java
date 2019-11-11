@@ -56,6 +56,7 @@ import javax.swing.UIManager.LookAndFeelInfo;
  *
  * @author Philip Milne
  */
+@Bean
 public class TableExample2 {
 
     public TableExample2(String URL, String driver, String user,
@@ -64,7 +65,11 @@ public class TableExample2 {
         frame.addWindowListener(new WindowAdapter() {
 
             @Override
-            public void windowClosing(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosing(WindowEvent e) {
                 System.exit(0);
             }
         });

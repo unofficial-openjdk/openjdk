@@ -54,7 +54,11 @@ public class CompletionFailure implements Doclet {
             throw new Error();
     }
 
-    public boolean run(DocletEnvironment root) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean run(DocletEnvironment root) {
         Set<TypeElement> classes = ElementFilter.typesIn(root.getIncludedElements());
         if (classes.size() != 1)
             throw new Error("1 " + Arrays.asList(classes));
@@ -77,7 +81,11 @@ public class CompletionFailure implements Doclet {
     }
 
     @Override
-    public void init(Locale locale, Reporter reporter) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void init(Locale locale, Reporter reporter) {
         // do nothing
     }
 }

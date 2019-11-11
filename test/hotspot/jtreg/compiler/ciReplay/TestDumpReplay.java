@@ -38,6 +38,7 @@ package compiler.ciReplay;
 
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class TestDumpReplay {
     private static final WhiteBox WHITE_BOX = WhiteBox.getWhiteBox();
 

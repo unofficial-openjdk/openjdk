@@ -33,6 +33,7 @@ import java.net.Socket;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 
+@Bean
 public class TemporarySelector {
 
     static volatile boolean done = false;

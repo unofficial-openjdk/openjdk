@@ -34,6 +34,7 @@
 // If this file fails to compile, then the test has failed.  The test does not
 // need to be run.
 
+@Bean
 public class EmptyDocComments
 {
     public static void Main(String [] args)

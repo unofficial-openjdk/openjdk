@@ -30,6 +30,7 @@
  *
  */
 
+@Bean
 public class Test8211698 {
 
     public static void main(String[] args) {

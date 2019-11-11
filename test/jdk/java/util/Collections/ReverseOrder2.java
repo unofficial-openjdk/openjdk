@@ -40,6 +40,7 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
+@Bean
 public class ReverseOrder2 {
     static final int N = 100;
 
@@ -77,7 +78,11 @@ public class ReverseOrder2 {
     }
 
     private static Comparator<String> cmp = new Comparator<>() {
-        public int compare(String s1, String s2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int compare(String s1, String s2) {
             int i1 = Integer.parseInt(s1);
             int i2 = Integer.parseInt(s2);
             return (i1 < i2 ? Integer.MIN_VALUE : (i1 == i2 ? 0 : 1));

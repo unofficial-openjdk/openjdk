@@ -37,6 +37,7 @@ import java.security.*;
 import java.security.cert.Certificate;
 import java.util.*;
 
+@Bean
 public class SignUsingSHA2withRSA {
 
     private static final byte[] toBeSigned = new byte[] {

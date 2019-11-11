@@ -42,6 +42,7 @@ import static jdk.test.lib.Asserts.assertEquals;
 import static jdk.test.lib.Asserts.assertFalse;
 import static jdk.test.lib.Asserts.assertTrue;
 
+@Bean
 public class JImageListTest extends JImageCliTest {
     public void testList() {
         jimage("list", getImagePath())

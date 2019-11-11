@@ -38,6 +38,7 @@ package gc.arguments;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class TestHeapFreeRatio {
 
   enum Validation {

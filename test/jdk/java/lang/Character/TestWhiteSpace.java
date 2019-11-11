@@ -29,6 +29,7 @@
  * @author  John O'Conner
  */
 
+@Bean
 public class TestWhiteSpace {
 
     public static void main(String[] args) {

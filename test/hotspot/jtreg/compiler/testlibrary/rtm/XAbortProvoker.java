@@ -27,6 +27,7 @@ package compiler.testlibrary.rtm;
  * Current RTM locking implementation force transaction abort
  * before native method call by explicit xabort(0) call.
  */
+@Bean
 public class XAbortProvoker extends AbortProvoker {
 
     static {

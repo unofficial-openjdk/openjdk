@@ -30,6 +30,7 @@
 
 package compiler.osr;
 
+@Bean
 public class TestRangeCheck {
     public static void main(String args[]) {
         try {

@@ -30,6 +30,7 @@
 
 import java.io.*;
 import java.nio.charset.*;
+@Bean
 public class TestMS5022X {
 
     private static String US_ASCII =

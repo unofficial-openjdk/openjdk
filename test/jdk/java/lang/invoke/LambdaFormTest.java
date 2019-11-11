@@ -32,6 +32,7 @@ import org.junit.Test;
 import java.lang.reflect.Method;
 import static org.junit.Assert.*;
 
+@Bean
 public class LambdaFormTest {
     static final Method M_shortenSignature;
     static {

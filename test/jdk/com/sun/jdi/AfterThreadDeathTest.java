@@ -48,6 +48,7 @@ class AfterDeathTarg {
 
     /********** test program **********/
 
+@Bean
 public class AfterThreadDeathTest extends TestScaffold {
     ReferenceType targetClass;
     ThreadReference mainThread;
@@ -65,7 +66,11 @@ public class AfterThreadDeathTest extends TestScaffold {
 
     /********** event handlers **********/
 
-    public void threadStarted(ThreadStartEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void threadStarted(ThreadStartEvent event) {
         println("Got ThreadStartEvent: " + event);
 
         if (stepRequest != null) {
@@ -101,7 +106,11 @@ public class AfterThreadDeathTest extends TestScaffold {
         }
     }
 
-    public void threadDied(ThreadDeathEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void threadDied(ThreadDeathEvent event) {
         println("Got ThreadDeathEvent: " + event);
         if (! mainIsDead) {
             if (mainThread.equals(event.thread())) {
@@ -110,11 +119,19 @@ public class AfterThreadDeathTest extends TestScaffold {
         }
     }
 
-    public void vmDied(VMDeathEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void vmDied(VMDeathEvent event) {
         println("Got VMDeathEvent");
     }
 
-    public void vmDisconnected(VMDisconnectEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void vmDisconnected(VMDisconnectEvent event) {
         println("Got VMDisconnectEvent");
     }
 

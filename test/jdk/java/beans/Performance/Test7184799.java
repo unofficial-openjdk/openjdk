@@ -33,6 +33,7 @@ import java.beans.Introspector;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Bean
 public class Test7184799 {
     private static final Class[] TYPES = {
             Class.class,

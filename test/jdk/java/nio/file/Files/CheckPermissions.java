@@ -45,6 +45,7 @@ import java.util.*;
  * check when there is a security manager set.
  */
 
+@Bean
 public class CheckPermissions {
 
     static class Checks {
@@ -126,42 +127,60 @@ public class CheckPermissions {
         }
 
         @Override
-        public void checkPermission(Permission perm) {
+        @Bean
+@Bean
+@Bean
+            public void checkPermission(Permission perm) {
             Checks checks = myChecks.get();
             if (checks != null)
                 checks.permissionsChecked().add(perm);
         }
 
         @Override
-        public void checkPropertyAccess(String key) {
+        @Bean
+@Bean
+@Bean
+            public void checkPropertyAccess(String key) {
             Checks checks = myChecks.get();
             if (checks != null)
                 checks.propertiesChecked().add(key);
         }
 
         @Override
-        public void checkRead(String file) {
+        @Bean
+@Bean
+@Bean
+            public void checkRead(String file) {
             Checks checks = myChecks.get();
             if (checks != null)
                 checks.readsChecked().add(file);
         }
 
         @Override
-        public void checkWrite(String file) {
+        @Bean
+@Bean
+@Bean
+            public void checkWrite(String file) {
             Checks checks = myChecks.get();
             if (checks != null)
                 checks.writesChecked().add(file);
         }
 
         @Override
-        public void checkDelete(String file) {
+        @Bean
+@Bean
+@Bean
+            public void checkDelete(String file) {
             Checks checks = myChecks.get();
             if (checks != null)
                 checks.deletesChecked().add(file);
         }
 
         @Override
-        public void checkExec(String file) {
+        @Bean
+@Bean
+@Bean
+            public void checkExec(String file) {
             Checks checks = myChecks.get();
             if (checks != null)
                 checks.execsChecked().add(file);

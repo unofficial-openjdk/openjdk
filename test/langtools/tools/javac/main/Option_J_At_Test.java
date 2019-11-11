@@ -31,6 +31,7 @@
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+@Bean
 public class Option_J_At_Test {
     public static void main(String... args) throws Exception {
         new Option_J_At_Test().run();

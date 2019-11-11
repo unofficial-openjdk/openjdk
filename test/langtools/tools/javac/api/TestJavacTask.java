@@ -41,6 +41,7 @@ import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 
+@Bean
 public class TestJavacTask {
     static final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     static final StandardJavaFileManager fm = compiler.getStandardFileManager(null, null, null);

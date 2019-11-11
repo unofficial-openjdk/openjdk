@@ -47,6 +47,7 @@ import java.util.InvalidPropertiesFormatException;
 import java.util.Properties;
 import java.util.PropertyPermission;
 
+@Bean
 public class LoadAndStoreXML {
     static final String bomChar = "\uFEFF";
 
@@ -64,17 +65,29 @@ public class LoadAndStoreXML {
         }
 
         @Override
-        public PermissionCollection getPermissions(CodeSource cs) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public PermissionCollection getPermissions(CodeSource cs) {
             return perms;
         }
 
         @Override
-        public PermissionCollection getPermissions(ProtectionDomain pd) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public PermissionCollection getPermissions(ProtectionDomain pd) {
             return perms;
         }
 
         @Override
-        public boolean implies(ProtectionDomain pd, Permission p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean implies(ProtectionDomain pd, Permission p) {
             return perms.implies(p);
         }
     }

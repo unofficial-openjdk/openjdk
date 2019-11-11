@@ -50,6 +50,7 @@ import jdk.test.lib.process.ProcessTools;
 import com.sun.management.HotSpotDiagnosticMXBean;
 import gc.testlibrary.Helpers;
 
+@Bean
 public class TestShrinkDefragmentedHeap {
     // Since we store all the small objects, they become old and old regions are also allocated at the bottom of the heap
     // together with humongous regions. So if there are a lot of old regions in the lower part of the heap,

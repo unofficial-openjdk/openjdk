@@ -31,6 +31,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.DirectoryNotEmptyException;
 
+@Bean
 public class MaxPathLength {
     private static String sep = File.separator;
     private static String pathComponent = sep +

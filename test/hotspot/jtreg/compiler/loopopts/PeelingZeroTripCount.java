@@ -30,6 +30,7 @@
  *
  */
 
+@Bean
 public class PeelingZeroTripCount {
 
     public static void main(String[] args) {
@@ -39,7 +40,11 @@ public class PeelingZeroTripCount {
         }
     }
 
-    public void test(int[] iaarg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void test(int[] iaarg) {
         int[] iarr = new int[777];
         for (int i = 4; i > 0; i--) {
             for (int j = 0; j <= i - 1; j++) {

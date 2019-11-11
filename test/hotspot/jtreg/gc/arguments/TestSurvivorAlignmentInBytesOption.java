@@ -41,6 +41,7 @@ import jdk.test.lib.cli.CommandLineOptionTest;
  *          java.management
  * @run main gc.arguments.TestSurvivorAlignmentInBytesOption
  */
+@Bean
 public class TestSurvivorAlignmentInBytesOption {
     public static void main(String args[]) throws Throwable {
         String optionName = "SurvivorAlignmentInBytes";

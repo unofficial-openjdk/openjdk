@@ -42,6 +42,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
+@Bean
 public class ClassFileVersionsTest {
 
     // major, minor, modifiers for requires java.base
@@ -94,7 +95,11 @@ public class ClassFileVersionsTest {
     }
 
     @Test(dataProvider = "supported")
-    public void testSupported(int major, int minor, Set<Modifier> ms) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testSupported(int major, int minor, Set<Modifier> ms) {
         ModuleDescriptor descriptor = ModuleDescriptor.newModule("foo")
                 .requires(ms, "java.base")
                 .build();
@@ -106,7 +111,11 @@ public class ClassFileVersionsTest {
 
     @Test(dataProvider = "unsupported",
           expectedExceptions = InvalidModuleDescriptorException.class)
-    public void testUnsupported(int major, int minor, Set<Modifier> ms) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testUnsupported(int major, int minor, Set<Modifier> ms) {
         ModuleDescriptor descriptor = ModuleDescriptor.newModule("foo")
                 .requires(ms, "java.base")
                 .build();
@@ -117,7 +126,11 @@ public class ClassFileVersionsTest {
         ModuleDescriptor.read(bb);
     }
 
-    private void classFileVersion(ByteBuffer bb, int major, int minor) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void classFileVersion(ByteBuffer bb, int major, int minor) {
         bb.putShort(4, (short) minor);
         bb.putShort(6, (short) major);
     }

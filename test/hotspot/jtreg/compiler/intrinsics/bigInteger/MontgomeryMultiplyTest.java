@@ -54,6 +54,7 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Random;
 
+@Bean
 public class MontgomeryMultiplyTest {
 
     private static final WhiteBox wb = WhiteBox.getWhiteBox();

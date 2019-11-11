@@ -52,6 +52,7 @@ import java.awt.image.BufferedImage;
  * We test both windowed and fullscreen mode, although the exception has
  * been observed in full screen mode only.
  */
+@Bean
 public class BufferStrategyExceptionTest {
     private static final int TEST_REPS = 20;
 

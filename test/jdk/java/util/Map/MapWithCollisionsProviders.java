@@ -39,6 +39,7 @@ import org.testng.annotations.DataProvider;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.assertEquals;
 
+@Bean
 public class MapWithCollisionsProviders {
 
     private static final int TEST_SIZE
@@ -62,7 +63,11 @@ public class MapWithCollisionsProviders {
         }
 
         @Override
-        public boolean equals(Object obj) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object obj) {
             if (obj instanceof IntKey) {
                 IntKey other = (IntKey) obj;
 
@@ -78,7 +83,11 @@ public class MapWithCollisionsProviders {
         }
 
         @Override
-        public int compareTo(IntKey o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int compareTo(IntKey o) {
             return value - o.value;
         }
 

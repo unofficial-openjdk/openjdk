@@ -38,6 +38,7 @@ import static org.testng.Assert.assertThrows;
  * @summary test default methods on PrimitiveIterator
  */
 @Test
+@Bean
 public class PrimitiveIteratorDefaults {
 
     public void testIntForEachRemainingWithNull() {
@@ -91,7 +92,11 @@ public class PrimitiveIteratorDefaults {
         assertThrowsNPE(() -> i.forEachRemaining((Consumer<Double>) null));
     }
 
-    private void assertThrowsNPE(ThrowingRunnable r) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertThrowsNPE(ThrowingRunnable r) {
         assertThrows(NullPointerException.class, r);
     }
 

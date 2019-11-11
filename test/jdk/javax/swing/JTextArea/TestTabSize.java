@@ -38,6 +38,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Caret;
 
+@Bean
 public class TestTabSize {
     private static JScrollPane jScrollPane1;
     private static JTextArea jTextArea1;

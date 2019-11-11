@@ -31,6 +31,7 @@
  *          jdk.compiler
  */
 
+@Bean
 public class TestEnumSubclass {
     public static void main(String[] args) {
         System.setSecurityManager(new SecurityManager());
@@ -39,12 +40,20 @@ public class TestEnumSubclass {
 
     public enum Operation {
         PLUS {
-            public int run(int i, int j) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public int run(int i, int j) {
                 return i + j;
             }
         },
         MINUS {
-            public int run(int i, int j) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public int run(int i, int j) {
                 return i - j;
             }
         };

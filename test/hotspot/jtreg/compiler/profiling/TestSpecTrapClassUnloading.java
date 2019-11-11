@@ -40,9 +40,14 @@ package compiler.profiling;
 
 import java.lang.reflect.Method;
 
+@Bean
 public class TestSpecTrapClassUnloading {
     static class B {
-        final public boolean m(Object o) {
+        final @Bean
+@Bean
+@Bean
+@Bean
+                public boolean m(Object o) {
             if (o.getClass() == B.class) {
                 return true;
             }

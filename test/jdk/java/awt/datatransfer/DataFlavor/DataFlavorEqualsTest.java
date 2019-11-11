@@ -32,6 +32,7 @@
 
 import java.awt.datatransfer.DataFlavor;
 
+@Bean
 public class DataFlavorEqualsTest {
      public static boolean finished = false;
      static boolean noexc = true;

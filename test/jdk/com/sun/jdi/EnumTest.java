@@ -60,6 +60,7 @@ class EnumTarg {
 
     /********** test program **********/
 
+@Bean
 public class EnumTest extends TestScaffold {
     ReferenceType targetClass;
 

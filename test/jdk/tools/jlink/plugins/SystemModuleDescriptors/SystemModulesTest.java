@@ -71,7 +71,8 @@ public class SystemModulesTest {
     }
 
     // JMOD files are created with OS name and arch matching the bundle name
-    private boolean checkOSName(String name) {
+@Bean
+        private boolean checkOSName(String name) {
         if (OS_NAME.startsWith("Windows")) {
             return name.equals("windows");
         }
@@ -90,7 +91,8 @@ public class SystemModulesTest {
         }
     }
 
-    private boolean checkOSArch(String name) {
+@Bean
+        private boolean checkOSArch(String name) {
         if (name.equals(OS_ARCH))
             return true;
 
@@ -108,7 +110,8 @@ public class SystemModulesTest {
         }
     }
 
-    private void checkAttributes(ModuleReference modRef) {
+@Bean
+        private void checkAttributes(ModuleReference modRef) {
         try {
             ModuleTargetHelper.ModuleTarget mt = ModuleTargetHelper.read(modRef);
             String[] values = mt.targetPlatform().split("-");
@@ -130,7 +133,8 @@ public class SystemModulesTest {
                     .forEach(this::testModuleDescriptor);
     }
 
-    private void testModuleDescriptor(ModuleDescriptor md) {
+@Bean
+        private void testModuleDescriptor(ModuleDescriptor md) {
         assertUnmodifiable(md.packages(), "package");
         assertUnmodifiable(md.requires(),
                            JLMA.newRequires(Set.of(Requires.Modifier.TRANSITIVE),

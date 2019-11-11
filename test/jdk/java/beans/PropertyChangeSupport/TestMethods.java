@@ -42,6 +42,7 @@ enum Fire {
     IndexedPropertyBoolean,
 }
 
+@Bean
 public class TestMethods extends PropertyChangeSupport implements PropertyChangeListener {
     private static final String NAME = "property";
 
@@ -63,13 +64,21 @@ public class TestMethods extends PropertyChangeSupport implements PropertyChange
         addPropertyChangeListener(this);
     }
 
-    public void propertyChange(PropertyChangeEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void propertyChange(PropertyChangeEvent event) {
         if (this.state != Fire.PropertyChangeEvent)
             throw new Error("Illegal state: " + this.state);
     }
 
     @Override
-    public void firePropertyChange(String property, Object oldValue, Object newValue) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void firePropertyChange(String property, Object oldValue, Object newValue) {
         if ((this.state != null) && (this.state != Fire.PropertyBoolean) && (this.state != Fire.PropertyInteger))
             throw new Error("Illegal state: " + this.state);
 
@@ -78,7 +87,11 @@ public class TestMethods extends PropertyChangeSupport implements PropertyChange
     }
 
     @Override
-    public void firePropertyChange(String property, int oldValue, int newValue) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void firePropertyChange(String property, int oldValue, int newValue) {
         if (this.state != null)
             throw new Error("Illegal state: " + this.state);
 
@@ -87,7 +100,11 @@ public class TestMethods extends PropertyChangeSupport implements PropertyChange
     }
 
     @Override
-    public void firePropertyChange(String property, boolean oldValue, boolean newValue) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void firePropertyChange(String property, boolean oldValue, boolean newValue) {
         if (this.state != null)
             throw new Error("Illegal state: " + this.state);
 
@@ -96,7 +113,11 @@ public class TestMethods extends PropertyChangeSupport implements PropertyChange
     }
 
     @Override
-    public void firePropertyChange(PropertyChangeEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void firePropertyChange(PropertyChangeEvent event) {
         if ((this.state != null) && (this.state != Fire.PropertyObject) && (this.state != Fire.IndexedPropertyObject))
             throw new Error("Illegal state: " + this.state);
 
@@ -105,7 +126,11 @@ public class TestMethods extends PropertyChangeSupport implements PropertyChange
     }
 
     @Override
-    public void fireIndexedPropertyChange(String property, int index, Object oldValue, Object newValue) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void fireIndexedPropertyChange(String property, int index, Object oldValue, Object newValue) {
         if ((this.state != null) && (this.state != Fire.IndexedPropertyBoolean) && (this.state != Fire.IndexedPropertyInteger))
             throw new Error("Illegal state: " + this.state);
 
@@ -114,7 +139,11 @@ public class TestMethods extends PropertyChangeSupport implements PropertyChange
     }
 
     @Override
-    public void fireIndexedPropertyChange(String property, int index, int oldValue, int newValue) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void fireIndexedPropertyChange(String property, int index, int oldValue, int newValue) {
         if (this.state != null)
             throw new Error("Illegal state: " + this.state);
 
@@ -123,7 +152,11 @@ public class TestMethods extends PropertyChangeSupport implements PropertyChange
     }
 
     @Override
-    public void fireIndexedPropertyChange(String property, int index, boolean oldValue, boolean newValue) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void fireIndexedPropertyChange(String property, int index, boolean oldValue, boolean newValue) {
         if (this.state != null)
             throw new Error("Illegal state: " + this.state);
 

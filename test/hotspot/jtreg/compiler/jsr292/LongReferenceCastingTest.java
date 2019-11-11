@@ -35,6 +35,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 
+@Bean
 public class LongReferenceCastingTest {
     static final String MY_STRING = "myString";
     static final MethodHandle MH;
@@ -49,7 +50,11 @@ public class LongReferenceCastingTest {
         }
     }
 
-    public String myMethod(long l, Object o, String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String myMethod(long l, Object o, String s) {
         // The long argument occupies two stack slots, causing C2 to treat it as
         // two arguments and casting the fist one two long and the second one to Object.
         // As a result, Object o is casted to String and the o.toString() call is

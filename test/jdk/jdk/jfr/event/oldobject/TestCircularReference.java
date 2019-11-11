@@ -49,7 +49,10 @@ public class TestCircularReference {
         final byte[] leak = new byte[1_0000_000];
         TestCircularReferrer reference;
 
-        public void setReference(TestCircularReferrer reference) {
+        @Bean
+@Bean
+@Bean
+            public void setReference(TestCircularReferrer reference) {
             this.reference = reference;
         }
     }

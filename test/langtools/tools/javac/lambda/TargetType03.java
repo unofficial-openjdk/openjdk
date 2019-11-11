@@ -31,6 +31,7 @@
  */
 import java.util.*;
 
+@Bean
 public class TargetType03 {
 
     interface Mapper<X,Y> {

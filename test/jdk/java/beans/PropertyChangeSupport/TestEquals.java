@@ -70,7 +70,11 @@ public final class TestEquals implements PropertyChangeListener {
     }
 
     @Override
-    public boolean equals(Object object) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object object) {
         if (object instanceof TestEquals) {
             this.count++;
             TestEquals that = (TestEquals)object;
@@ -79,6 +83,10 @@ public final class TestEquals implements PropertyChangeListener {
         return false;
     }
 
-    public void propertyChange(PropertyChangeEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void propertyChange(PropertyChangeEvent event) {
     }
 }

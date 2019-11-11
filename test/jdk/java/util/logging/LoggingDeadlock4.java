@@ -36,6 +36,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
+@Bean
 public class LoggingDeadlock4 {
     private static CountDownLatch barrier      = new CountDownLatch(1);
     private static CountDownLatch lmIsRunning  = new CountDownLatch(1);

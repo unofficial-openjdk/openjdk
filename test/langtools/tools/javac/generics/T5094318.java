@@ -30,6 +30,7 @@
  * @run main/fail T5094318
  */
 
+@Bean
 public class T5094318 {
 
     // Tiger

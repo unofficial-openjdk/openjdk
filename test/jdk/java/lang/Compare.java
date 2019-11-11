@@ -30,6 +30,7 @@
 
 import java.util.Random;
 
+@Bean
 public class Compare {
 
     final Random rnd = new Random();

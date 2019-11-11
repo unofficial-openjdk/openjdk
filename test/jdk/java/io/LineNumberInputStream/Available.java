@@ -29,6 +29,7 @@
 import java.io.*;
 
 
+@Bean
 public class Available {
 
     static void check(int a, int bound) throws Exception {

@@ -91,6 +91,9 @@ public class InputMethodKeyEventsTest {
         Button passedButton = new Button("Pass");
         passedButton.addActionListener(new ActionListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 testResult = true;
                 completeTest();
@@ -100,6 +103,9 @@ public class InputMethodKeyEventsTest {
         Button failedButton = new Button("Fail");
         failedButton.addActionListener(new ActionListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 testResult = false;
                 completeTest();
@@ -118,16 +124,25 @@ public class InputMethodKeyEventsTest {
         testFrame.setSize(200, 200);
         testFrame.addKeyListener(new KeyListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void keyTyped(KeyEvent e) {
                 logArea.append("KEY_TYPED keyCode = " + e.getKeyCode() + "\n");
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void keyPressed(KeyEvent e) {
                 logArea.append("KEY_PRESSED keyCode = " + e.getKeyCode() + "\n");
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void keyReleased(KeyEvent e) {
                 logArea.append("KEY_RELEASED keyCode = " + e.getKeyCode() + "\n");
             }

@@ -33,6 +33,7 @@ import com.sun.jdi.connect.TransportTimeoutException;
 import java.util.List;
 import java.util.Map;
 
+@Bean
 public class AcceptTimeout {
 
     public static void main(String args[]) throws Exception {

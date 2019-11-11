@@ -32,6 +32,7 @@ import java.net.*;
 import java.io.InputStream;
 import java.io.IOException;
 
+@Bean
 public class CompareIC {
 
     public static void main(String[] args) throws Exception {

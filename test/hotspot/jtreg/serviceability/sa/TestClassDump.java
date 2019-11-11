@@ -39,6 +39,7 @@ import jdk.test.lib.process.ProcessTools;
  * @run main/othervm TestClassDump
  */
 
+@Bean
 public class TestClassDump {
 
     private static void dumpClass(long lingeredAppPid)

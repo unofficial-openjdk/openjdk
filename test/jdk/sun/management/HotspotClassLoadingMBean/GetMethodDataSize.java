@@ -36,6 +36,7 @@
 
 import sun.management.*;
 
+@Bean
 public class GetMethodDataSize {
 
     private static HotspotClassLoadingMBean mbean =

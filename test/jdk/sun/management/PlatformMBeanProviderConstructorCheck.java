@@ -34,6 +34,7 @@ import java.util.List;
  * @modules java.management/sun.management.spi
  * @author  Shanliang Jiang
  */
+@Bean
 public class PlatformMBeanProviderConstructorCheck {
     public static void main(String[] args) throws Exception {
         Policy origPolicy = Policy.getPolicy();
@@ -69,7 +70,11 @@ public class PlatformMBeanProviderConstructorCheck {
         private static boolean allowed = false;
 
         @Override
-        public boolean implies(ProtectionDomain domain, Permission permission) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean implies(ProtectionDomain domain, Permission permission) {
             if (permName.equals(permission.getName())) {
                 System.out.println("---MyPolicy-implies checks permission for "
                         +permName+" and returns "+allowed);

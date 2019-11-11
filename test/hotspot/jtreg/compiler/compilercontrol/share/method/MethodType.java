@@ -61,7 +61,8 @@ public class MethodType extends MethodElementType {
     }
 
     @Override
-    public void setPattern(MethodDescriptor.PatternType patternType) {
+@Bean
+        public void setPattern(MethodDescriptor.PatternType patternType) {
         switch (patternType) {
             case EXACT:
                 break;

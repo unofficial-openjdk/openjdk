@@ -48,6 +48,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
 @Test
+@Bean
 public class StopExecutionTest extends KullaTesting {
 
     private final Object lock = new Object();

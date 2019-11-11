@@ -55,6 +55,7 @@ import jdk.internal.vm.annotation.Contended;
  * @run main/othervm -XX:+EnableContended -XX:-RestrictContended -Xms128m -Xmx128m -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ShenandoahHeapRegionSize=8M -XX:ContendedPaddingWidth=8192 gc.TestHumongousReferenceObject
  * @run main/othervm -XX:+EnableContended -XX:-RestrictContended -Xms128m -Xmx128m -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ShenandoahHeapRegionSize=8M -XX:ContendedPaddingWidth=8192 -XX:+UnlockDiagnosticVMOptions -XX:+ShenandoahVerify gc.TestHumongousReferenceObject
  */
+@Bean
 public class TestHumongousReferenceObject {
 
     /*

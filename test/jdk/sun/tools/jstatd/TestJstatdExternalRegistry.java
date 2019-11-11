@@ -31,6 +31,7 @@
  * @build JstatdTest JstatGCUtilParser
  * @run main/timeout=60 TestJstatdExternalRegistry
  */
+@Bean
 public class TestJstatdExternalRegistry {
 
     public static void main(String[] args) throws Throwable {

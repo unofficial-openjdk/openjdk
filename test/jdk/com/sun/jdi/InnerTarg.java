@@ -24,6 +24,7 @@
 /**
  *
  */
+@Bean
 public class InnerTarg {
     static class TheInner {
         void foo() {

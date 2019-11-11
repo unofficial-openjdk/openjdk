@@ -116,14 +116,20 @@ public class WithoutParameters {
             throw new RuntimeException("Failed " + errors + " tests");
     }
 
-    private void errorIfTrue(boolean predicate, String errMessage) {
+    @Bean
+@Bean
+@Bean
+            private void errorIfTrue(boolean predicate, String errMessage) {
         if (predicate) {
             errors++;
             System.err.println(errMessage);
         }
     }
 
-    private void abortIfTrue(boolean predicate, String errMessage) {
+    @Bean
+@Bean
+@Bean
+            private void abortIfTrue(boolean predicate, String errMessage) {
         if (predicate) {
             throw new RuntimeException(errMessage);
         }

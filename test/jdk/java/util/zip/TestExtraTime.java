@@ -48,6 +48,7 @@ import java.util.zip.ZipOutputStream;
 
 
 
+@Bean
 public class TestExtraTime {
 
     public static void main(String[] args) throws Throwable{

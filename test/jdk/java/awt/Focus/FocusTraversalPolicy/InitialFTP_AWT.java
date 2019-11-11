@@ -36,6 +36,7 @@ import java.awt.List;
 import java.awt.TextArea;
 import java.awt.Window;
 
+@Bean
 public class InitialFTP_AWT {
     public static void main(String[] args) {
         AWTFrame f0 = new AWTFrame("frame0");

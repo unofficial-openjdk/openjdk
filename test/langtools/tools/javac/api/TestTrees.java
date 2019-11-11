@@ -44,6 +44,7 @@ import com.sun.tools.javac.tree.TreeInfo;
 
 @Anno
 @SupportedAnnotationTypes("*")
+@Bean
 public class TestTrees extends AbstractProcessor {
     @Anno
     void annoMethod() { }
@@ -69,6 +70,10 @@ public class TestTrees extends AbstractProcessor {
         JavaCompiler tool = ToolProvider.getSystemJavaCompiler();
 
         DiagnosticListener<JavaFileObject> dl = new DiagnosticListener<JavaFileObject>() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void report(Diagnostic d) {
                     error(d.toString());
                 }
@@ -161,7 +166,11 @@ public class TestTrees extends AbstractProcessor {
 
     void testAllDeclarations(Trees trees, CompilationUnitTree cut) {
         new TreePathScanner<Void, Void>() {
-            @Override public Void scan(Tree tree, Void p) {
+            @Override @Bean
+@Bean
+@Bean
+@Bean
+                public Void scan(Tree tree, Void p) {
                 if (tree == null) return null;
                 switch (tree.getKind()) {
                     case METHOD: case CLASS: case VARIABLE: case TYPE_PARAMETER:
@@ -205,7 +214,11 @@ public class TestTrees extends AbstractProcessor {
     int errors;
 
 
-    public boolean process(Set<? extends TypeElement> annos, RoundEnvironment rEnv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annos, RoundEnvironment rEnv) {
         Trees trees = Trees.instance(processingEnv);
         messager = processingEnv.getMessager();
 
@@ -236,11 +249,19 @@ public class TestTrees extends AbstractProcessor {
             this.task = task;
         }
 
-        public void started(TaskEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void started(TaskEvent e) {
             System.err.println("started " + e);
         }
 
-        public void finished(TaskEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void finished(TaskEvent e) {
             //System.err.println("finished " + e);
             switch (e.getKind()) {
             case ANALYZE:

@@ -45,6 +45,7 @@ import jdk.test.lib.process.ProcessTools;
  * This test was created using SafeFetchInErrorHandlingTest.java
  * as a guide.
  */
+@Bean
 public class NestedThreadsListHandleInErrorHandlingTest {
   public static void main(String[] args) throws Exception {
 

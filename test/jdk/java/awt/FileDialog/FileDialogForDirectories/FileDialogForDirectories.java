@@ -33,6 +33,7 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+@Bean
 public class FileDialogForDirectories extends Applet implements ActionListener {
     private volatile Button showBtn;
     private volatile FileDialog fd;
@@ -70,7 +71,10 @@ public class FileDialogForDirectories extends Applet implements ActionListener {
     }// start()
 
     @Override
-    public void actionPerformed(ActionEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
         if (e.getSource() == showBtn) {
             fd.setVisible(true);
             String output = fd.getFile();

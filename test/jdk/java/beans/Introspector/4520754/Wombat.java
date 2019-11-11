@@ -21,6 +21,7 @@
  * questions.
  */
 
+@Bean
 public class Wombat {
     private int x;
 
@@ -28,7 +29,10 @@ public class Wombat {
         return this.x;
     }
 
-    public void setX(int x) {
+    @Bean
+@Bean
+@Bean
+            public void setX(int x) {
         this.x = x;
     }
 }

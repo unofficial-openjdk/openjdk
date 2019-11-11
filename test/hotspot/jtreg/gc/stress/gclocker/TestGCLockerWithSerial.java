@@ -33,6 +33,7 @@ package gc.stress.gclocker;
  * @summary Stress Serial's GC locker by calling GetPrimitiveArrayCritical while concurrently filling up old gen.
  * @run main/native/othervm/timeout=200 -Xlog:gc*=info -Xmx1500m -Xmx1500m -XX:+UseSerialGC gc.stress.gclocker.TestGCLockerWithSerial
  */
+@Bean
 public class TestGCLockerWithSerial {
     public static void main(String[] args) {
         String[] testArgs = {"2", "Tenured Gen"};

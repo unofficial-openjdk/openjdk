@@ -40,6 +40,7 @@ import java.util.function.ToLongFunction;
 import static org.testng.Assert.*;
 
 @Test(groups = "unit")
+@Bean
 public class BasicTest {
     private static class Thing {
         public final int intField;
@@ -91,7 +92,11 @@ public class BasicTest {
             things[i] = new Thing(intValues[i], 0L, 0.0, null);
         Comparator<Thing> comp = Comparator.comparingInt(new ToIntFunction<Thing>() {
             @Override
-            public int applyAsInt(Thing thing) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public int applyAsInt(Thing thing) {
                 return thing.getIntField();
             }
         });
@@ -105,7 +110,11 @@ public class BasicTest {
             things[i] = new Thing(0, longValues[i], 0.0, null);
         Comparator<Thing> comp = Comparator.comparingLong(new ToLongFunction<Thing>() {
             @Override
-            public long applyAsLong(Thing thing) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public long applyAsLong(Thing thing) {
                 return thing.getLongField();
             }
         });
@@ -119,7 +128,11 @@ public class BasicTest {
             things[i] = new Thing(0, 0L, doubleValues[i], null);
         Comparator<Thing> comp = Comparator.comparingDouble(new ToDoubleFunction<Thing>() {
             @Override
-            public double applyAsDouble(Thing thing) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public double applyAsDouble(Thing thing) {
                 return thing.getDoubleField();
             }
         });
@@ -133,7 +146,11 @@ public class BasicTest {
             things[i] = new Thing(0, 0L, 0.0, stringValues[i]);
         Comparator<Thing> comp = Comparator.comparing(new Function<Thing, String>() {
             @Override
-            public String apply(Thing thing) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public String apply(Thing thing) {
                 return thing.getStringField();
             }
         });

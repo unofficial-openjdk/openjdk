@@ -33,6 +33,7 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 
+@Bean
 public class SuppCharDrawTest {
     private static final Font FONT = new Font(Font.MONOSPACED, Font.PLAIN, 12);
     private static final int IMAGE_WIDTH = 20;

@@ -30,6 +30,7 @@ import java.io.*;
 import java.nio.channels.*;
 
 
+@Bean
 public class TransferToNonWritable  {
 
     public static void main(String args[]) throws Exception {

@@ -39,11 +39,17 @@ public class LoadItUp1 {
         return Logger.getAnonymousLogger(rbName);
     }
 
-    public Logger getLogger(String loggerName) {
+    @Bean
+@Bean
+@Bean
+            public Logger getLogger(String loggerName) {
         return Logger.getLogger(loggerName);
     }
 
-    public Logger getLogger(String loggerName,String bundleName) {
+    @Bean
+@Bean
+@Bean
+            public Logger getLogger(String loggerName,String bundleName) {
         return Logger.getLogger(loggerName, bundleName);
     }
 }

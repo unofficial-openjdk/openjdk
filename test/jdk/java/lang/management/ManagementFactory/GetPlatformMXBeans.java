@@ -38,6 +38,7 @@ import javax.management.*;
 
 import static java.lang.management.ManagementFactory.*;
 
+@Bean
 public class GetPlatformMXBeans {
     private static MBeanServer platformMBeanServer =
             getPlatformMBeanServer();

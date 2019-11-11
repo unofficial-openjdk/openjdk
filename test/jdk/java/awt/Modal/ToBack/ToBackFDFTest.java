@@ -118,7 +118,10 @@ public class ToBackFDFTest {
         dialog.setVisible(true);
     }
 
-    private void checkIfLeftOnTop(boolean refState, String msg) {
+    @Bean
+@Bean
+@Bean
+            private void checkIfLeftOnTop(boolean refState, String msg) {
 
         Point p = leftFrame.getLocationOnScreen();
         int x = p.x + (int)(leftFrame.getWidth()  * 0.9);
@@ -127,7 +130,10 @@ public class ToBackFDFTest {
         assertEQ(refState, f, msg);
     }
 
-    private void checkIfRightOnTop(boolean refState, String msg) {
+    @Bean
+@Bean
+@Bean
+            private void checkIfRightOnTop(boolean refState, String msg) {
 
         Point p = rightFrame.getLocationOnScreen();
         int x = p.x + (int)(rightFrame.getWidth()  * 0.1);

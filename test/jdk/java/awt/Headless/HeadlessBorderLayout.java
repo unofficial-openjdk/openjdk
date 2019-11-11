@@ -29,6 +29,7 @@ import java.awt.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessBorderLayout
  */
 
+@Bean
 public class HeadlessBorderLayout {
     public static void main (String[] args) {
         BorderLayout bl;

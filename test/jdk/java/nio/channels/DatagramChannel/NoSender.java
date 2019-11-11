@@ -30,6 +30,7 @@ import java.net.*;
 import java.nio.*;
 import java.nio.channels.*;
 
+@Bean
 public class NoSender {
     public static void main(String argv[]) throws Exception {
         DatagramChannel dc = DatagramChannel.open();

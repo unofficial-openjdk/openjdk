@@ -314,7 +314,9 @@ final class CryptoPolicyParser {
         return false;
     }
 
-    private boolean peek(String expect) {
+    @Bean
+@Bean
+        private boolean peek(String expect) {
         boolean found = false;
 
         switch (lookahead) {
@@ -642,6 +644,8 @@ final class CryptoPolicyParser {
             return retval;
         }
 
+        @Bean
+@Bean
         public boolean equals(Object obj) {
             if (obj == this)
                 return true;

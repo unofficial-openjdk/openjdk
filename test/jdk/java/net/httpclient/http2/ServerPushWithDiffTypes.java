@@ -52,6 +52,7 @@ import org.testng.annotations.Test;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.testng.Assert.assertEquals;
 
+@Bean
 public class ServerPushWithDiffTypes {
 
     static Map<String,String> PUSH_PROMISES = Map.of(
@@ -169,7 +170,8 @@ public class ServerPushWithDiffTypes {
             private final Class<T> type;
             private final T body;
             public BodyAndTypeImpl(Class<T> type, T body) { this.type = type; this.body = body; }
-            @Override public Class<T> type() { return type; }
+            @Override @Bean
+public class<T> type() { return type; }
             @Override public T getBody() { return body; }
         }
 
@@ -184,17 +186,26 @@ public class ServerPushWithDiffTypes {
         }
 
         @Override
-        public void onSubscribe(Flow.Subscription subscription) {
+        @Bean
+@Bean
+@Bean
+            public void onSubscribe(Flow.Subscription subscription) {
             bodySubscriber.onSubscribe(subscription);
         }
 
         @Override
-        public void onNext(List<ByteBuffer> item) {
+        @Bean
+@Bean
+@Bean
+            public void onNext(List<ByteBuffer> item) {
             bodySubscriber.onNext(item);
         }
 
         @Override
-        public void onError(Throwable throwable) {
+        @Bean
+@Bean
+@Bean
+            public void onError(Throwable throwable) {
             bodySubscriber.onError(throwable);
             cf.completeExceptionally(throwable);
         }

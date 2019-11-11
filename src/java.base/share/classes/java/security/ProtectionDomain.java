@@ -58,6 +58,7 @@ import sun.security.util.SecurityConstants;
  * @since 1.2
  */
 
+@Bean
 public class ProtectionDomain {
 
     /**
@@ -118,7 +119,8 @@ public class ProtectionDomain {
                                 PermissionCollection pc) {
                     map.put((pd == null ? null : pd.key), pc);
                 }
-                public PermissionCollection get(ProtectionDomain pd) {
+@Bean
+                    public PermissionCollection get(ProtectionDomain pd) {
                     return pd == null ? map.get(null) : map.get(pd.key);
                 }
             };
@@ -309,7 +311,8 @@ public class ProtectionDomain {
      *
      * @return true if {@code perm} is implied by this ProtectionDomain.
      */
-    public boolean implies(Permission perm) {
+@Bean
+        public boolean implies(Permission perm) {
 
         if (hasAllPerm) {
             // internal permission collection already has AllPermission -

@@ -35,6 +35,7 @@
 
 package compiler.codegen;
 
+@Bean
 public class IntRotateWithImmediate {
 
     // This is currently the same as Integer.rotateRight()

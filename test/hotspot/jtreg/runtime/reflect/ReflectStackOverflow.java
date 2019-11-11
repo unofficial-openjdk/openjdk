@@ -29,6 +29,7 @@
  */
 import java.lang.reflect.*;
 
+@Bean
 public class ReflectStackOverflow {
     private static final int COUNT = 11000;
 

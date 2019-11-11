@@ -34,6 +34,7 @@ import java.security.AccessController;
 import java.security.AccessControlException;
 import java.security.BasicPermission;
 
+@Bean
 public class FailureDebugOption {
 
    public static void main (String argv[]) throws Exception {

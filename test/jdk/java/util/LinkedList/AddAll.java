@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+@Bean
 public class AddAll {
     public static void main(String[] args) throws Exception {
         List head = Collections.nCopies(7, "deadly sin");

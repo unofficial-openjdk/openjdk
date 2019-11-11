@@ -40,6 +40,7 @@ package compiler.intrinsics.klass;
 
 import java.util.concurrent.Callable;
 
+@Bean
 public class TestIsPrimitive {
     static final int ITERS = Integer.getInteger("iters", 1);
 

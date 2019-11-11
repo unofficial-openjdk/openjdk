@@ -37,6 +37,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import sun.awt.AWTAccessor;
 
+@Bean
 public class EDTShutdownTest {
 
     private static boolean passed = false;

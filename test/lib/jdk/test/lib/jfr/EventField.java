@@ -111,7 +111,11 @@ public final class EventField {
         return this;
     }
 
-    private void doAssert(AssertFunction f) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void doAssert(AssertFunction f) {
         try {
             f.doAssert();
         } catch (RuntimeException e) {
@@ -120,7 +124,11 @@ public final class EventField {
         }
     }
 
-    public EventField containsAny(String... allowed) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public EventField containsAny(String... allowed) {
         final String value = getValue();
         final List<String> allowedValues = Arrays.asList(allowed);
         boolean contains = false;
@@ -136,7 +144,11 @@ public final class EventField {
         return this;
     }
 
-    private String getErrMsg(String msg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String getErrMsg(String msg) {
         final String name = desc.getName();
         final Object value = event.getValue(name);
         return String.format("%s, field='%s', value='%s'", msg, name, value);

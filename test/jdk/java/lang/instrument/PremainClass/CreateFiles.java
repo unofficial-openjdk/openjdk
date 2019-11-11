@@ -31,6 +31,7 @@
 import java.io.File;
 import java.io.FileOutputStream;
 
+@Bean
 public class CreateFiles {
 
     static void output(FileOutputStream fos, String s) throws Exception {
@@ -47,7 +48,8 @@ public class CreateFiles {
         f = new File(name + ".java");
         fos = new FileOutputStream(f);
         output(fos, "import java.lang.instrument.Instrumentation;" );
-        output(fos, "public class " +name + " {" );
+        output(fos, "@Bean
+public class " +name + " {" );
         output(fos, "    public static void premain(String ops, Instrumentation ins) {" );
         output(fos, "        System.out.println(\"premain running\"); ");
         output(fos, "    }");

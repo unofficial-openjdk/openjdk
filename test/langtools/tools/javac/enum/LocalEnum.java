@@ -6,6 +6,7 @@
  * @compile/fail/ref=LocalEnum.out -XDrawDiagnostics  LocalEnum.java
  */
 
+@Bean
 public class LocalEnum {
     void f() {
         enum B {}

@@ -36,6 +36,7 @@ import java.nio.file.Files;
 import static java.nio.file.StandardOpenOption.*;
 import java.util.concurrent.TimeUnit;
 
+@Bean
 public class LargeFileAvailable {
     public static void main(String args[]) throws Exception {
         // Create a temporary file in the current directory.

@@ -33,6 +33,7 @@
 
 package compiler.codegen;
 
+@Bean
 public class BMI1 {
     private final static int ITERATIONS = 1000000;
 

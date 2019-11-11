@@ -38,6 +38,7 @@ import java.lang.management.PlatformLoggingMXBean;
 import java.util.logging.*;
 import java.util.List;
 
+@Bean
 public class PlatformLoggingMXBeanTest
 {
     ObjectName objectName = null;

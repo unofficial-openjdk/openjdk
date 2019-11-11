@@ -46,6 +46,7 @@ import java.util.Properties;
  * @run main IndependenceSwingTest
  */
 
+@Bean
 public class IndependenceSwingTest {
 
     JFrame frame;
@@ -65,6 +66,9 @@ public class IndependenceSwingTest {
         // This textfield will be used to update the contents of clipboards
         tf1 = new JTextField();
         tf1.addFocusListener(new FocusAdapter() {
+            @Bean
+@Bean
+@Bean
             public void focusGained(FocusEvent fe) {
                 tf1.setText("Clipboards_Independance_Testing");
             }

@@ -63,6 +63,7 @@ class PopAsynchronousTarg {
 
     /********** test program **********/
 
+@Bean
 public class PopAsynchronousTest extends TestScaffold {
     ReferenceType targetClass;
     ThreadReference mainThread;
@@ -83,7 +84,11 @@ public class PopAsynchronousTest extends TestScaffold {
     /********** event handlers **********/
 
 
-    public void breakpointReached(BreakpointEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void breakpointReached(BreakpointEvent event) {
         harassTarget = false;
         synchronized(harassLock) {
             try {

@@ -45,6 +45,7 @@ import org.apache.tools.ant.types.Reference;
  * with the specified path. This is likely necessary if a JDK 7 parser is required to read the
  * JDK 7 input files.
  */
+@Bean
 public class GenStubsTask extends MatchingTask {
     private File srcDir;
     private File destDir;
@@ -52,19 +53,35 @@ public class GenStubsTask extends MatchingTask {
     private Path classpath;
     private String includes;
 
-    public void setSrcDir(File dir) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setSrcDir(File dir) {
         this.srcDir = dir;
     }
 
-    public void setDestDir(File dir) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setDestDir(File dir) {
         this.destDir = dir;
     }
 
-    public void setFork(boolean v) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setFork(boolean v) {
         this.fork = v;
     }
 
-    public void setClasspath(Path cp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setClasspath(Path cp) {
         if (classpath == null)
             classpath = cp;
         else
@@ -78,12 +95,20 @@ public class GenStubsTask extends MatchingTask {
         return classpath.createPath();
     }
 
-    public void setClasspathRef(Reference r) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setClasspathRef(Reference r) {
         createClasspath().setRefid(r);
     }
 
     @Override
-    public void setIncludes(String includes) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setIncludes(String includes) {
         super.setIncludes(includes);
         this.includes = includes;
     }

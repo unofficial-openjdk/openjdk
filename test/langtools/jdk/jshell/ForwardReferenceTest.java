@@ -42,6 +42,7 @@ import static jdk.jshell.Snippet.Status.*;
 import static org.testng.Assert.assertTrue;
 
 @Test
+@Bean
 public class ForwardReferenceTest extends KullaTesting {
 
     public void testOverwriteMethodForwardReferenceClass() {

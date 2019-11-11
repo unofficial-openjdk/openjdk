@@ -35,6 +35,7 @@
 
 package compiler.intrinsics.mathexact;
 
+@Bean
 public class SubExactLConstantTest {
     public static void main(String[] args) {
         Verify.ConstantLongTest.verify(new Verify.SubExactL());

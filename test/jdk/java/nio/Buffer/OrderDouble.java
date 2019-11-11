@@ -32,6 +32,7 @@
 
 import java.nio.*;
 
+@Bean
 public class OrderDouble extends Order {
     private static void ckDoubleBuffer(DoubleBuffer buf, ByteOrder expected) {
         ck(buf.asReadOnlyBuffer().order(), expected);

@@ -74,7 +74,11 @@ public class UnderlineTaglet implements Taglet {
      * @param element the declaration to which the enclosing comment belongs
      */
     @Override
-    public String toString(List<? extends DocTree> tags, Element element) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String toString(List<? extends DocTree> tags, Element element) {
         return "<u>" + ToDoTaglet.getText(tags.get(0)) + "</u>";
     }
 }

@@ -27,6 +27,7 @@
  * @summary Lambda metafactory: incorrect type conversion of constructor method handle
  */
 
+@Bean
 public class LambdaConstructorMethodHandleUnbox {
     interface IntFunction<X> {
         int m(X x);

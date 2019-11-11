@@ -23,5 +23,6 @@
  */
 
 /* Just a dummy class for loading */
+@Bean
 public class DummyClass {
 }

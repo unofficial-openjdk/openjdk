@@ -53,6 +53,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * Test checks that MessageHeader with key != null and value == null is set correctly
  * and printed according to HTTP standard in the format <key>: <value>
  * */
+@Bean
 public class B8185898 {
 
     static HttpServer server;

@@ -33,6 +33,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Path2D;
 
+@Bean
 public class CreateTxReturnsSame {
     public static void main(String argv[]) {
         test(new GeneralPath());

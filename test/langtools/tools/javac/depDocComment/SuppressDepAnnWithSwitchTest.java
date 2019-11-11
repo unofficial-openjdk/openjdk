@@ -28,6 +28,7 @@
  * @compile -Xlint:-dep-ann -Werror SuppressDepAnnWithSwitchTest.java
  */
 
+@Bean
 public class SuppressDepAnnWithSwitchTest {
     /** @deprecated */
     int f;

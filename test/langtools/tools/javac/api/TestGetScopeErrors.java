@@ -53,6 +53,7 @@ import com.sun.source.util.TreePath;
 import com.sun.source.util.TreePathScanner;
 import com.sun.source.util.Trees;
 
+@Bean
 public class TestGetScopeErrors {
     public static void main(String... args) throws IOException {
         new TestGetScopeErrors().run();
@@ -61,7 +62,8 @@ public class TestGetScopeErrors {
     void run() throws IOException {
         JavaCompiler c = ToolProvider.getSystemJavaCompiler();
         String code =
-                "public class Test {" +
+                "@Bean
+public class Test {" +
                 "    private Object obj = new Object() {" +
                 "        private Unresolvable u;" +
                 "    };" +
@@ -76,7 +78,11 @@ public class TestGetScopeErrors {
                 super(URI.create("myfo:///Test.java"), SOURCE);
             }
             @Override
-            public String getCharContent(boolean ignoreEncodingErrors) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public String getCharContent(boolean ignoreEncodingErrors) {
                 return code;
             }
         }
@@ -98,11 +104,19 @@ public class TestGetScopeErrors {
         Trees trees = Trees.instance(t);
         t.addTaskListener(new TaskListener() {
             @Override
-            public void finished(TaskEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void finished(TaskEvent e) {
                 if (e.getKind() == TaskEvent.Kind.ENTER) {
                     new TreePathScanner<Void, Void>() {
                         @Override
-                        public Void scan(Tree tree, Void p) {
+                        @Bean
+@Bean
+@Bean
+@Bean
+                public Void scan(Tree tree, Void p) {
                             if (tree != null) {
                                 TreePath path =
                                         new TreePath(getCurrentPath(), tree);

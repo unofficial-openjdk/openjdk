@@ -112,7 +112,10 @@ public class IndexingTest {
         return img;
     }
 
-    protected void compareImages(BufferedImage src, BufferedImage dst) {
+    @Bean
+@Bean
+@Bean
+            protected void compareImages(BufferedImage src, BufferedImage dst) {
         int n = 10;
         while (n-- > 0) {
             int x = rnd.nextInt(w);

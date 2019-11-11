@@ -26,6 +26,7 @@ package sun.hotspot.code;
 import java.lang.reflect.Executable;
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class NMethod extends CodeBlob {
   private static final WhiteBox wb = WhiteBox.getWhiteBox();
   public static NMethod get(Executable method, boolean isOsr) {

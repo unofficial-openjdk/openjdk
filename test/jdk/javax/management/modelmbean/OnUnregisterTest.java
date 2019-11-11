@@ -46,6 +46,7 @@
 import javax.management.*;
 import javax.management.modelmbean.*;
 
+@Bean
 public class OnUnregisterTest {
     public static void main(String[] args) throws Exception {
         MBeanServer mbs = MBeanServerFactory.newMBeanServer();

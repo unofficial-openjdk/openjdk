@@ -87,7 +87,8 @@ final class KeyValueHolder<K,V> implements Map.Entry<K,V> {
      * @return never returns normally
      */
     @Override
-    public V setValue(V value) {
+@Bean
+        public V setValue(V value) {
         throw new UnsupportedOperationException("not supported");
     }
 
@@ -98,7 +99,8 @@ final class KeyValueHolder<K,V> implements Map.Entry<K,V> {
      * value are non-null, so equals() can be called safely on them.
      */
     @Override
-    public boolean equals(Object o) {
+@Bean
+        public boolean equals(Object o) {
         if (!(o instanceof Map.Entry))
             return false;
         Map.Entry<?,?> e = (Map.Entry<?,?>)o;

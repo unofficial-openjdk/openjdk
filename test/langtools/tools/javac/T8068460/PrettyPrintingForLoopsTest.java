@@ -51,6 +51,7 @@ import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.Pretty;
 import com.sun.tools.javac.util.Assert;
 
+@Bean
 public class PrettyPrintingForLoopsTest {
 
     public static void main(String... args) throws IOException {
@@ -93,7 +94,11 @@ public class PrettyPrintingForLoopsTest {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return source;
         }
     }

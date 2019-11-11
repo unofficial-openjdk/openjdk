@@ -56,14 +56,16 @@ final class LWLabelPeer extends LWComponentPeer<Label, JLabel>
     }
 
     @Override
-    public void setText(final String label) {
+@Bean
+        public void setText(final String label) {
         synchronized (getDelegateLock()) {
             getDelegate().setText(label);
         }
     }
 
     @Override
-    public void setAlignment(final int alignment) {
+@Bean
+        public void setAlignment(final int alignment) {
         synchronized (getDelegateLock()) {
             getDelegate().setHorizontalAlignment(convertAlignment(alignment));
         }

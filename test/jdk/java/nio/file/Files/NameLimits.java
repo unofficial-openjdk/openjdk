@@ -33,6 +33,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+@Bean
 public class NameLimits {
 
     static final int MAX_PATH = 255;

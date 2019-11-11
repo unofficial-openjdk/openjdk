@@ -36,6 +36,7 @@
 
 import java.rmi.RMISecurityManager;
 
+@Bean
 public class CheckPackageAccess {
 
     /*

@@ -145,6 +145,7 @@ import sun.security.action.GetPropertyAction;
  * @since   1.0
  */
 
+@Bean
 public class File
     implements Serializable, Comparable<File>
 {
@@ -1396,7 +1397,10 @@ public class File
      * @throws  NullPointerException
      *          If parameter {@code dest} is {@code null}
      */
-    public boolean renameTo(File dest) {
+    @Bean
+@Bean
+@Bean
+            public boolean renameTo(File dest) {
         if (dest == null) {
             throw new NullPointerException();
         }
@@ -1437,7 +1441,10 @@ public class File
      *
      * @since 1.2
      */
-    public boolean setLastModified(long time) {
+    @Bean
+@Bean
+@Bean
+            public boolean setLastModified(long time) {
         if (time < 0) throw new IllegalArgumentException("Negative time");
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
@@ -1511,7 +1518,10 @@ public class File
      *
      * @since 1.6
      */
-    public boolean setWritable(boolean writable, boolean ownerOnly) {
+    @Bean
+@Bean
+@Bean
+            public boolean setWritable(boolean writable, boolean ownerOnly) {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkWrite(path);
@@ -1550,7 +1560,10 @@ public class File
      *
      * @since 1.6
      */
-    public boolean setWritable(boolean writable) {
+    @Bean
+@Bean
+@Bean
+            public boolean setWritable(boolean writable) {
         return setWritable(writable, true);
     }
 
@@ -1589,7 +1602,10 @@ public class File
      *
      * @since 1.6
      */
-    public boolean setReadable(boolean readable, boolean ownerOnly) {
+    @Bean
+@Bean
+@Bean
+            public boolean setReadable(boolean readable, boolean ownerOnly) {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkWrite(path);
@@ -1631,7 +1647,10 @@ public class File
      *
      * @since 1.6
      */
-    public boolean setReadable(boolean readable) {
+    @Bean
+@Bean
+@Bean
+            public boolean setReadable(boolean readable) {
         return setReadable(readable, true);
     }
 
@@ -1670,7 +1689,10 @@ public class File
      *
      * @since 1.6
      */
-    public boolean setExecutable(boolean executable, boolean ownerOnly) {
+    @Bean
+@Bean
+@Bean
+            public boolean setExecutable(boolean executable, boolean ownerOnly) {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkWrite(path);
@@ -1712,7 +1734,10 @@ public class File
      *
      * @since 1.6
      */
-    public boolean setExecutable(boolean executable) {
+    @Bean
+@Bean
+@Bean
+            public boolean setExecutable(boolean executable) {
         return setExecutable(executable, true);
     }
 
@@ -2157,7 +2182,10 @@ public class File
      *
      * @since   1.2
      */
-    public int compareTo(File pathname) {
+    @Bean
+@Bean
+@Bean
+            public int compareTo(File pathname) {
         return fs.compare(this, pathname);
     }
 
@@ -2175,7 +2203,10 @@ public class File
      * @return  {@code true} if and only if the objects are the same;
      *          {@code false} otherwise
      */
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(Object obj) {
         if ((obj != null) && (obj instanceof File)) {
             return compareTo((File)obj) == 0;
         }

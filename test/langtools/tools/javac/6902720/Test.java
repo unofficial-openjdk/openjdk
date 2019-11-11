@@ -41,6 +41,7 @@ import com.sun.tools.javac.tree.Pretty;
  *          jdk.compiler/com.sun.tools.javac.tree
  */
 
+@Bean
 public class Test {
 
     public static void main(String[] args) throws Exception {
@@ -77,6 +78,10 @@ public class Test {
             JavacTool tool2 = JavacTool.create();
             JavaFileObject fo = new SimpleJavaFileObject(URI.create("output"), JavaFileObject.Kind.SOURCE) {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public CharSequence getCharContent(boolean ignoreEncodingErrors) {
                     return out;
                 }

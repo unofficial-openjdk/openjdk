@@ -23,6 +23,7 @@
 
 import java.util.stream.Stream;
 
+@Bean
 public class ReleaseOptionSource {
     public Stream s;
 }

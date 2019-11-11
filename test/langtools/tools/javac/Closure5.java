@@ -40,6 +40,7 @@ class A {
     abstract void foo();
   }
 }
+@Bean
 public class Closure5 extends A {
   int i;
   public static void main(String[] args) {

@@ -33,6 +33,7 @@
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class PrintNMTStatisticsWithNMTDisabled {
 
   public static void main(String args[]) throws Exception {

@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 import sun.security.validator.Validator;
 
+@Bean
 public class CertReplace {
 
     /**

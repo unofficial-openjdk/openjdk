@@ -44,6 +44,7 @@ import javax.management.relation.*;
  * List<Attribute> etc, and to refuse to add any object other than
  * an Attribute etc once this method has been called, but not before.
  */
+@Bean
 public class ListTypeCheckTest {
     public static void main(String[] args) throws Exception {
         Class[] classes = {

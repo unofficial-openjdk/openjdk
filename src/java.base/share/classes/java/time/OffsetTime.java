@@ -346,7 +346,8 @@ public final class OffsetTime
      * @param time  the time to create with, not null
      * @param offset  the zone offset to create with, not null
      */
-    private OffsetTime with(LocalTime time, ZoneOffset offset) {
+@Bean
+        private OffsetTime with(LocalTime time, ZoneOffset offset) {
         if (this.time == time && this.offset.equals(offset)) {
             return this;
         }
@@ -393,7 +394,8 @@ public final class OffsetTime
      * @return true if the field is supported on this time, false if not
      */
     @Override
-    public boolean isSupported(TemporalField field) {
+@Bean
+        public boolean isSupported(TemporalField field) {
         if (field instanceof ChronoField) {
             return field.isTimeBased() || field == OFFSET_SECONDS;
         }
@@ -429,7 +431,8 @@ public final class OffsetTime
      * @return true if the unit can be added/subtracted, false if not
      */
     @Override  // override for Javadoc
-    public boolean isSupported(TemporalUnit unit) {
+@Bean
+        public boolean isSupported(TemporalUnit unit) {
         if (unit instanceof ChronoUnit) {
             return unit.isTimeBased();
         }
@@ -461,7 +464,8 @@ public final class OffsetTime
      * @throws UnsupportedTemporalTypeException if the field is not supported
      */
     @Override
-    public ValueRange range(TemporalField field) {
+@Bean
+        public ValueRange range(TemporalField field) {
         if (field instanceof ChronoField) {
             if (field == OFFSET_SECONDS) {
                 return field.range();
@@ -499,7 +503,8 @@ public final class OffsetTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override  // override for Javadoc
-    public int get(TemporalField field) {
+@Bean
+        public int get(TemporalField field) {
         return Temporal.super.get(field);
     }
 
@@ -527,7 +532,8 @@ public final class OffsetTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public long getLong(TemporalField field) {
+@Bean
+        public long getLong(TemporalField field) {
         if (field instanceof ChronoField) {
             if (field == OFFSET_SECONDS) {
                 return offset.getTotalSeconds();
@@ -566,7 +572,8 @@ public final class OffsetTime
      * @param offset  the zone offset to change to, not null
      * @return an {@code OffsetTime} based on this time with the requested offset, not null
      */
-    public OffsetTime withOffsetSameLocal(ZoneOffset offset) {
+@Bean
+        public OffsetTime withOffsetSameLocal(ZoneOffset offset) {
         return offset != null && offset.equals(this.offset) ? this : new OffsetTime(time, offset);
     }
 
@@ -588,7 +595,8 @@ public final class OffsetTime
      * @param offset  the zone offset to change to, not null
      * @return an {@code OffsetTime} based on this time with the requested offset, not null
      */
-    public OffsetTime withOffsetSameInstant(ZoneOffset offset) {
+@Bean
+        public OffsetTime withOffsetSameInstant(ZoneOffset offset) {
         if (offset.equals(this.offset)) {
             return this;
         }
@@ -677,7 +685,8 @@ public final class OffsetTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public OffsetTime with(TemporalAdjuster adjuster) {
+@Bean
+        public OffsetTime with(TemporalAdjuster adjuster) {
         // optimizations
         if (adjuster instanceof LocalTime) {
             return with((LocalTime) adjuster, offset);
@@ -725,7 +734,8 @@ public final class OffsetTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public OffsetTime with(TemporalField field, long newValue) {
+@Bean
+        public OffsetTime with(TemporalField field, long newValue) {
         if (field instanceof ChronoField) {
             if (field == OFFSET_SECONDS) {
                 ChronoField f = (ChronoField) field;
@@ -748,7 +758,8 @@ public final class OffsetTime
      * @return an {@code OffsetTime} based on this time with the requested hour, not null
      * @throws DateTimeException if the hour value is invalid
      */
-    public OffsetTime withHour(int hour) {
+@Bean
+        public OffsetTime withHour(int hour) {
         return with(time.withHour(hour), offset);
     }
 
@@ -763,7 +774,8 @@ public final class OffsetTime
      * @return an {@code OffsetTime} based on this time with the requested minute, not null
      * @throws DateTimeException if the minute value is invalid
      */
-    public OffsetTime withMinute(int minute) {
+@Bean
+        public OffsetTime withMinute(int minute) {
         return with(time.withMinute(minute), offset);
     }
 
@@ -778,7 +790,8 @@ public final class OffsetTime
      * @return an {@code OffsetTime} based on this time with the requested second, not null
      * @throws DateTimeException if the second value is invalid
      */
-    public OffsetTime withSecond(int second) {
+@Bean
+        public OffsetTime withSecond(int second) {
         return with(time.withSecond(second), offset);
     }
 
@@ -793,7 +806,8 @@ public final class OffsetTime
      * @return an {@code OffsetTime} based on this time with the requested nanosecond, not null
      * @throws DateTimeException if the nanos value is invalid
      */
-    public OffsetTime withNano(int nanoOfSecond) {
+@Bean
+        public OffsetTime withNano(int nanoOfSecond) {
         return with(time.withNano(nanoOfSecond), offset);
     }
 
@@ -820,7 +834,8 @@ public final class OffsetTime
      * @throws DateTimeException if unable to truncate
      * @throws UnsupportedTemporalTypeException if the unit is not supported
      */
-    public OffsetTime truncatedTo(TemporalUnit unit) {
+@Bean
+        public OffsetTime truncatedTo(TemporalUnit unit) {
         return with(time.truncatedTo(unit), offset);
     }
 
@@ -846,7 +861,8 @@ public final class OffsetTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public OffsetTime plus(TemporalAmount amountToAdd) {
+@Bean
+        public OffsetTime plus(TemporalAmount amountToAdd) {
         return (OffsetTime) amountToAdd.addTo(this);
     }
 
@@ -876,7 +892,8 @@ public final class OffsetTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public OffsetTime plus(long amountToAdd, TemporalUnit unit) {
+@Bean
+        public OffsetTime plus(long amountToAdd, TemporalUnit unit) {
         if (unit instanceof ChronoUnit) {
             return with(time.plus(amountToAdd, unit), offset);
         }
@@ -895,7 +912,8 @@ public final class OffsetTime
      * @param hours  the hours to add, may be negative
      * @return an {@code OffsetTime} based on this time with the hours added, not null
      */
-    public OffsetTime plusHours(long hours) {
+@Bean
+        public OffsetTime plusHours(long hours) {
         return with(time.plusHours(hours), offset);
     }
 
@@ -910,7 +928,8 @@ public final class OffsetTime
      * @param minutes  the minutes to add, may be negative
      * @return an {@code OffsetTime} based on this time with the minutes added, not null
      */
-    public OffsetTime plusMinutes(long minutes) {
+@Bean
+        public OffsetTime plusMinutes(long minutes) {
         return with(time.plusMinutes(minutes), offset);
     }
 
@@ -925,7 +944,8 @@ public final class OffsetTime
      * @param seconds  the seconds to add, may be negative
      * @return an {@code OffsetTime} based on this time with the seconds added, not null
      */
-    public OffsetTime plusSeconds(long seconds) {
+@Bean
+        public OffsetTime plusSeconds(long seconds) {
         return with(time.plusSeconds(seconds), offset);
     }
 
@@ -940,7 +960,8 @@ public final class OffsetTime
      * @param nanos  the nanos to add, may be negative
      * @return an {@code OffsetTime} based on this time with the nanoseconds added, not null
      */
-    public OffsetTime plusNanos(long nanos) {
+@Bean
+        public OffsetTime plusNanos(long nanos) {
         return with(time.plusNanos(nanos), offset);
     }
 
@@ -966,7 +987,8 @@ public final class OffsetTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public OffsetTime minus(TemporalAmount amountToSubtract) {
+@Bean
+        public OffsetTime minus(TemporalAmount amountToSubtract) {
         return (OffsetTime) amountToSubtract.subtractFrom(this);
     }
 
@@ -990,7 +1012,8 @@ public final class OffsetTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public OffsetTime minus(long amountToSubtract, TemporalUnit unit) {
+@Bean
+        public OffsetTime minus(long amountToSubtract, TemporalUnit unit) {
         return (amountToSubtract == Long.MIN_VALUE ? plus(Long.MAX_VALUE, unit).plus(1, unit) : plus(-amountToSubtract, unit));
     }
 
@@ -1006,7 +1029,8 @@ public final class OffsetTime
      * @param hours  the hours to subtract, may be negative
      * @return an {@code OffsetTime} based on this time with the hours subtracted, not null
      */
-    public OffsetTime minusHours(long hours) {
+@Bean
+        public OffsetTime minusHours(long hours) {
         return with(time.minusHours(hours), offset);
     }
 
@@ -1021,7 +1045,8 @@ public final class OffsetTime
      * @param minutes  the minutes to subtract, may be negative
      * @return an {@code OffsetTime} based on this time with the minutes subtracted, not null
      */
-    public OffsetTime minusMinutes(long minutes) {
+@Bean
+        public OffsetTime minusMinutes(long minutes) {
         return with(time.minusMinutes(minutes), offset);
     }
 
@@ -1036,7 +1061,8 @@ public final class OffsetTime
      * @param seconds  the seconds to subtract, may be negative
      * @return an {@code OffsetTime} based on this time with the seconds subtracted, not null
      */
-    public OffsetTime minusSeconds(long seconds) {
+@Bean
+        public OffsetTime minusSeconds(long seconds) {
         return with(time.minusSeconds(seconds), offset);
     }
 
@@ -1051,7 +1077,8 @@ public final class OffsetTime
      * @param nanos  the nanos to subtract, may be negative
      * @return an {@code OffsetTime} based on this time with the nanoseconds subtracted, not null
      */
-    public OffsetTime minusNanos(long nanos) {
+@Bean
+        public OffsetTime minusNanos(long nanos) {
         return with(time.minusNanos(nanos), offset);
     }
 
@@ -1118,7 +1145,8 @@ public final class OffsetTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public Temporal adjustInto(Temporal temporal) {
+@Bean
+        public Temporal adjustInto(Temporal temporal) {
         return temporal
                 .with(NANO_OF_DAY, time.toNanoOfDay())
                 .with(OFFSET_SECONDS, offset.getTotalSeconds());
@@ -1175,7 +1203,8 @@ public final class OffsetTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public long until(Temporal endExclusive, TemporalUnit unit) {
+@Bean
+        public long until(Temporal endExclusive, TemporalUnit unit) {
         OffsetTime end = OffsetTime.from(endExclusive);
         if (unit instanceof ChronoUnit) {
             long nanosUntil = end.toEpochNano() - toEpochNano();  // no overflow
@@ -1202,7 +1231,8 @@ public final class OffsetTime
      * @return the formatted time string, not null
      * @throws DateTimeException if an error occurs during printing
      */
-    public String format(DateTimeFormatter formatter) {
+@Bean
+        public String format(DateTimeFormatter formatter) {
         Objects.requireNonNull(formatter, "formatter");
         return formatter.format(this);
     }
@@ -1217,7 +1247,8 @@ public final class OffsetTime
      * @param date  the date to combine with, not null
      * @return the offset date-time formed from this time and the specified date, not null
      */
-    public OffsetDateTime atDate(LocalDate date) {
+@Bean
+        public OffsetDateTime atDate(LocalDate date) {
         return OffsetDateTime.of(date, time, offset);
     }
 
@@ -1247,7 +1278,8 @@ public final class OffsetTime
      * @return the number of seconds since the epoch of 1970-01-01T00:00:00Z, may be negative
      * @since 9
      */
-    public long toEpochSecond(LocalDate date) {
+@Bean
+        public long toEpochSecond(LocalDate date) {
         Objects.requireNonNull(date, "date");
         long epochDay = date.toEpochDay();
         long secs = epochDay * 86400 + time.toSecondOfDay();
@@ -1283,7 +1315,8 @@ public final class OffsetTime
      * @return the comparator value, negative if less, positive if greater
      */
     @Override
-    public int compareTo(OffsetTime other) {
+@Bean
+        public int compareTo(OffsetTime other) {
         if (offset.equals(other.offset)) {
             return time.compareTo(other.time);
         }
@@ -1306,7 +1339,8 @@ public final class OffsetTime
      * @param other  the other time to compare to, not null
      * @return true if this is after the instant of the specified time
      */
-    public boolean isAfter(OffsetTime other) {
+@Bean
+        public boolean isAfter(OffsetTime other) {
         return toEpochNano() > other.toEpochNano();
     }
 
@@ -1321,7 +1355,8 @@ public final class OffsetTime
      * @param other  the other time to compare to, not null
      * @return true if this is before the instant of the specified time
      */
-    public boolean isBefore(OffsetTime other) {
+@Bean
+        public boolean isBefore(OffsetTime other) {
         return toEpochNano() < other.toEpochNano();
     }
 
@@ -1336,7 +1371,8 @@ public final class OffsetTime
      * @param other  the other time to compare to, not null
      * @return true if this is equal to the instant of the specified time
      */
-    public boolean isEqual(OffsetTime other) {
+@Bean
+        public boolean isEqual(OffsetTime other) {
         return toEpochNano() == other.toEpochNano();
     }
 
@@ -1355,7 +1391,8 @@ public final class OffsetTime
      * @return true if this is equal to the other time
      */
     @Override
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (this == obj) {
             return true;
         }

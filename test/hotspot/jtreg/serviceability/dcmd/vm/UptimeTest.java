@@ -42,7 +42,11 @@ import java.text.ParseException;
  * @run testng UptimeTest
  */
 public class UptimeTest {
-    public void run(CommandExecutor executor) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void run(CommandExecutor executor) {
         double someUptime = 1.0;
         long startTime = System.currentTimeMillis();
         try {

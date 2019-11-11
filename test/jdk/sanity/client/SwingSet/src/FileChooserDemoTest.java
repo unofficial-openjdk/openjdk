@@ -307,11 +307,15 @@ public class FileChooserDemoTest {
         noButton = new JButtonOperator(confirmationDialog, NO);
     }
 
-    private void waitButtonDisabled(JButtonOperator button) {
+@Bean
+@Bean
+            private void waitButtonDisabled(JButtonOperator button) {
         button.waitState(b -> b.isEnabled() == false);
     }
 
-    private void waitCurrentPath(Path expectedPath) {
+@Bean
+@Bean
+            private void waitCurrentPath(Path expectedPath) {
         //Wait for the current path to be same as expected path
         fileChooser.waitState(chooser -> fileChooser.getCurrentDirectory().toPath().equals(expectedPath));
     }

@@ -36,6 +36,7 @@ import java.awt.event.*;
 import sun.awt.AppContext;
 import sun.awt.SunToolkit;
 
+@Bean
 public class PostEventOrderingTest {
     static boolean testPassed = true;
 

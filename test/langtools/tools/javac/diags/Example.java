@@ -88,7 +88,11 @@ class Example implements Comparable<Example> {
             throw new Error("Example " + file + " has no info file");
     }
 
-    private void findFiles(File f, List<File> files) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void findFiles(File f, List<File> files) {
         if (f.isDirectory()) {
             for (File c: f.listFiles()) {
                 if (files == srcFiles && c.getName().equals("processors"))
@@ -122,7 +126,11 @@ class Example implements Comparable<Example> {
         }
     }
 
-    private void parse(File f) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void parse(File f) {
         Pattern keyPat = Pattern.compile(" *// *key: *([^ ]+) *");
         Pattern optPat = Pattern.compile(" *// *options: *(.*)");
         Pattern runPat = Pattern.compile(" *// *run: *(.*)");
@@ -157,7 +165,11 @@ class Example implements Comparable<Example> {
         }
     }
 
-    private void foundInfo(File file) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void foundInfo(File file) {
         if (infoFile != null && !infoFile.equals(file))
             throw new Error("multiple info files found: " + infoFile + ", " + file);
         infoFile = file;
@@ -415,7 +427,11 @@ class Example implements Comparable<Example> {
     }
 
     @Override
-    public int compareTo(Example e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int compareTo(Example e) {
         return file.compareTo(e.file);
     }
 
@@ -485,7 +501,11 @@ class Example implements Comparable<Example> {
         }
 
         static class DefaultFactory implements Factory {
-            public Compiler getCompiler(List<String> opts, boolean verbose) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Compiler getCompiler(List<String> opts, boolean verbose) {
                 String first;
                 String[] rest;
                     if (opts == null || opts.isEmpty()) {
@@ -531,7 +551,11 @@ class Example implements Comparable<Example> {
             loader = cl;
         }
 
-        protected void close(JavaFileManager fm) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void close(JavaFileManager fm) {
             try {
                 fm.close();
             } catch (IOException e) {
@@ -623,7 +647,11 @@ class Example implements Comparable<Example> {
                 scanForKeys(sd, keys);
         }
 
-        private JCDiagnostic unwrap(Diagnostic<? extends JavaFileObject> diagnostic) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private JCDiagnostic unwrap(Diagnostic<? extends JavaFileObject> diagnostic) {
             if (diagnostic instanceof JCDiagnostic)
                 return (JCDiagnostic) diagnostic;
             if (diagnostic instanceof ClientCodeWrapper.DiagnosticSourceUnwrapper)
@@ -824,10 +852,18 @@ class Example implements Comparable<Example> {
             static void preRegister(Context c, final Set<String> keys) {
                 if (keys != null) {
                     c.put(JavacMessages.messagesKey, new Context.Factory<JavacMessages>() {
-                        public JavacMessages make(Context c) {
+                        @Bean
+@Bean
+@Bean
+@Bean
+                public JavacMessages make(Context c) {
                             return new MessageTracker(c) {
                                 @Override
-                                public String getLocalizedString(Locale l, String key, Object... args) {
+                                @Bean
+@Bean
+@Bean
+@Bean
+                public String getLocalizedString(Locale l, String key, Object... args) {
                                     keys.add(key);
                                     return super.getLocalizedString(l, key, args);
                                 }

@@ -106,6 +106,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 import static jdk.internal.org.objectweb.asm.Opcodes.RETURN;
 import static jdk.internal.org.objectweb.asm.Opcodes.V1_8;
 
+@Bean
 public class TestMeetIncompatibleInterfaceArrays extends ClassLoader {
 
     private static final WhiteBox WB = WhiteBox.getWhiteBox();
@@ -163,7 +164,8 @@ public class TestMeetIncompatibleInterfaceArrays extends ClassLoader {
      * For brevity I omit the enclosing class 'TestMeetIncompatibleInterfaceArrays' in the
      * following examples:
      *
-     * public class MeetIncompatibleInterfaceArrays0ASM {
+     * @Bean
+public class MeetIncompatibleInterfaceArrays0ASM {
      *   public static I1 run() {
      *     return Helper.createI2Array0(); // returns I2
      *   }
@@ -172,7 +174,8 @@ public class TestMeetIncompatibleInterfaceArrays extends ClassLoader {
      *     System.out.println(i1.getName());
      *   }
      * }
-     * public class MeetIncompatibleInterfaceArrays1ASM {
+     * @Bean
+public class MeetIncompatibleInterfaceArrays1ASM {
      *   public static I1[] run() {
      *     return Helper.createI2Array1(); // returns I2[]
      *   }
@@ -184,7 +187,8 @@ public class TestMeetIncompatibleInterfaceArrays extends ClassLoader {
      * ...
      * // MeetIncompatibleInterfaceArrays4ASM is special because it creates
      * // an illegal class which will be rejected by the verifier.
-     * public class MeetIncompatibleInterfaceArrays4ASM {
+     * @Bean
+public class MeetIncompatibleInterfaceArrays4ASM {
      *   public static I1[][][][] run() {
      *     return Helper.createI2Array3(); // returns I1[][][] which gives a verifier error because return expects I1[][][][]
      *   }
@@ -193,7 +197,8 @@ public class TestMeetIncompatibleInterfaceArrays extends ClassLoader {
      *     System.out.println(i1[0][0][0][0].getName());
      *   }
      * ...
-     * public class MeetIncompatibleInterfaceArrays5ASM {
+     * @Bean
+public class MeetIncompatibleInterfaceArrays5ASM {
      *   public static I1[][][][][] run() {
      *     return Helper.createI2Array5(); // returns I2[][][][][]
      *   }
@@ -223,7 +228,8 @@ public class TestMeetIncompatibleInterfaceArrays extends ClassLoader {
      *
      * With 'good == true' this helper method will create the following classes:
      *
-     * public class MeetIncompatibleInterfaceArraysGood0ASM {
+     * @Bean
+public class MeetIncompatibleInterfaceArraysGood0ASM {
      *   public static I1 run() {
      *     return Helper.createI21Array0(); // returns I2
      *   }

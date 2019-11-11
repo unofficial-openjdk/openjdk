@@ -42,6 +42,7 @@ import javax.swing.JPanel;
 import java.io.*;
 import java.awt.image.*;
 
+@Bean
 public class RepaintTest {
     private static int delay = 150;
 
@@ -100,7 +101,10 @@ public class RepaintTest {
         }
     }
 
-    private void initializeGUI(boolean swingControl) {
+    @Bean
+@Bean
+@Bean
+            private void initializeGUI(boolean swingControl) {
         frame = swingControl ? new JFrame() : new Frame();
         frame.setLayout(new BorderLayout());
 
@@ -120,11 +124,17 @@ public class RepaintTest {
         frame.setVisible(true);
         frame.toFront();
     }
-    private Component createButton(boolean swingControl, String txt) {
+    @Bean
+@Bean
+@Bean
+            private Component createButton(boolean swingControl, String txt) {
         if(swingControl) {
             JButton jbtn = new JButton(txt);
             jbtn.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                     buttonClicked = true;
                     synchronized (buttonLock) {
                         try {
@@ -139,7 +149,10 @@ public class RepaintTest {
         }else {
             Button btn = new Button(txt);
             btn.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                     buttonClicked = true;
                     synchronized (buttonLock) {
                         try {
@@ -154,7 +167,10 @@ public class RepaintTest {
         }
     }
 
-    public void doTest(boolean swingControl) {
+    @Bean
+@Bean
+@Bean
+            public void doTest(boolean swingControl) {
         try {
             Toolkit.getDefaultToolkit().getSystemEventQueue().invokeAndWait(new Runnable() {
                 public void run() {
@@ -205,7 +221,10 @@ public class RepaintTest {
             throw new RuntimeException("Test failed");
         }
     }
-    private boolean paintAndRepaint(Component comp, String prefix) {
+    @Bean
+@Bean
+@Bean
+            private boolean paintAndRepaint(Component comp, String prefix) {
         //Capture the component & compare it's dimensions
         //before iconifying & after frame comes back from
         //iconified to normal state
@@ -266,7 +285,10 @@ public class RepaintTest {
     }
 
     //method for comparing two images
-    public boolean compareImages(BufferedImage capturedImg, BufferedImage realImg) {
+    @Bean
+@Bean
+@Bean
+            public boolean compareImages(BufferedImage capturedImg, BufferedImage realImg) {
         int capturedPixels[], realPixels[];
         int imgWidth, imgHeight;
         boolean comparison = true;

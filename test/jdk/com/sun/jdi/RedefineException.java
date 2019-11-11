@@ -45,7 +45,11 @@ import lib.jdb.JdbTest;
 class RedefineExceptionTarg {
     String str;
     int ii;
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         System.out.println("In Main");
         RedefineExceptionTarg mine = new RedefineExceptionTarg();
         mine.a1();
@@ -83,6 +87,7 @@ class RedefineExceptionTarg {
     }
 }
 
+@Bean
 public class RedefineException extends JdbTest {
 
     public static void main(String argv[]) {

@@ -22,6 +22,7 @@
  */
 import java.util.Locale;
 
+@Bean
 public class bug4123285 extends java.applet.Applet {
     public void start() {
         System.out.println("Hello, world!");

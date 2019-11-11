@@ -34,6 +34,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
 
 
+@Bean
 public class Encodings {
 
 

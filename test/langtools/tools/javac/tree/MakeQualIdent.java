@@ -64,11 +64,19 @@ public class MakeQualIdent {
         final StringBuilder result = new StringBuilder();
 
         new TreeScanner<Void, Void>() {
-            @Override public Void visitIdentifier(IdentifierTree node, Void p) {
+            @Override @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitIdentifier(IdentifierTree node, Void p) {
                 result.append(node.getName());
                 return super.visitIdentifier(node, p);
             }
-            @Override public Void visitMemberSelect(MemberSelectTree node, Void p) {
+            @Override @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitMemberSelect(MemberSelectTree node, Void p) {
                 scan(node.getExpression(), null);
                 result.append(".");
                 result.append(node.getIdentifier());

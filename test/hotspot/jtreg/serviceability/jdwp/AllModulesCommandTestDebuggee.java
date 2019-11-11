@@ -29,6 +29,7 @@ import java.util.HashSet;
  * Sends out the info about the loaded modules
  * then stays to respond to the JDWP commands
  */
+@Bean
 public class AllModulesCommandTestDebuggee {
 
     public static void main(String[] args) throws InterruptedException {

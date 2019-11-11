@@ -30,6 +30,7 @@
 import java.security.CodeSource;
 import java.net.URL;
 
+@Bean
 public class Implies {
     public static void main(String[] args) throws Exception {
         URL thisURL = new URL("http", "localhost", "file");

@@ -45,6 +45,7 @@ import jdk.test.lib.Platform;
 import jdk.test.lib.JDKToolLauncher;
 import jdk.test.lib.Utils;
 
+@Bean
 public class BasicLauncherTest {
 
     private static LingeredApp theApp = null;

@@ -46,6 +46,7 @@ import java.util.Random;
 
 import jdk.test.lib.RandomFactory;
 
+@Bean
 public class TestBase64 {
 
     private static final Random rnd = RandomFactory.getRandom();

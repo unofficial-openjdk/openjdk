@@ -303,7 +303,11 @@ public class ModuleTestBase extends TestRunner {
                 ps.print(header);
                 new SimpleElementVisitor9<Void, Void>() {
                     @Override
-                    public Void visitModule(ModuleElement e, Void p) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitModule(ModuleElement e, Void p) {
                         ps.print(FS);
                         ps.print(e.getKind());
                         ps.print(FS);
@@ -317,7 +321,11 @@ public class ModuleTestBase extends TestRunner {
                     }
 
                     @Override
-                    public Void visitPackage(PackageElement e, Void p) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitPackage(PackageElement e, Void p) {
                         ps.print(FS);
                         ps.print(e.getKind());
                         ps.print(FS);
@@ -331,7 +339,11 @@ public class ModuleTestBase extends TestRunner {
                     }
 
                     @Override
-                    public Void visitType(TypeElement e, Void p) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitType(TypeElement e, Void p) {
                         ps.print(FS);
                         ps.print(ElementKind.CLASS);
                         ps.print(FS);
@@ -345,21 +357,37 @@ public class ModuleTestBase extends TestRunner {
                     }
 
                     @Override
-                    protected Void defaultAction(Element e, Void p) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                protected Void defaultAction(Element e, Void p) {
                         Element encl = e.getEnclosingElement();
                         CharSequence fqn = new SimpleElementVisitor9<CharSequence, Void>() {
                             @Override
-                            public CharSequence visitModule(ModuleElement e, Void p) {
+                            @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence visitModule(ModuleElement e, Void p) {
                                 return e.getQualifiedName();
                             }
 
                             @Override
-                            public CharSequence visitType(TypeElement e, Void p) {
+                            @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence visitType(TypeElement e, Void p) {
                                 return e.getQualifiedName();
                             }
 
                             @Override
-                            public CharSequence visitPackage(PackageElement e, Void p) {
+                            @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence visitPackage(PackageElement e, Void p) {
                                 return e.getQualifiedName();
                             }
 
@@ -383,7 +411,11 @@ public class ModuleTestBase extends TestRunner {
         }
 
         @Override
-        public boolean run(DocletEnvironment docenv) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean run(DocletEnvironment docenv) {
             this.docEnv = docenv;
             ps.println("ModuleMode" + FS + docenv.getModuleMode());
             printDataSet("Specified", docenv.getSpecifiedElements());
@@ -462,7 +494,11 @@ public class ModuleTestBase extends TestRunner {
                     }
 
                     @Override
-                    public boolean process(String opt, List<String> arguments) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(String opt, List<String> arguments) {
                         hasDocComments = true;
                         return true;
                     }
@@ -472,7 +508,11 @@ public class ModuleTestBase extends TestRunner {
         }
 
         @Override
-        public void init(Locale locale, Reporter reporter) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void init(Locale locale, Reporter reporter) {}
 
         @Override
         public String getName() {

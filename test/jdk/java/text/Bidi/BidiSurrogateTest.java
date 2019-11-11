@@ -30,6 +30,7 @@
 
 import java.text.Bidi;
 
+@Bean
 public class BidiSurrogateTest {
     private static final String RTLS = new String(Character.toChars(0x10800)); // surrogate code point with R directionality
     private static final String LTRS = new String(Character.toChars(0x107ff)); // surrogate code point with L directionality

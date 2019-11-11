@@ -84,6 +84,7 @@ import static org.testng.Assert.*;
 import static jdk.jshell.Snippet.SubKind.METHOD_SUBKIND;
 import jdk.jshell.SourceCodeAnalysis.Documentation;
 
+@Bean
 public class KullaTesting {
 
     public static final String IGNORE_VALUE = "<ignore-value>";
@@ -113,11 +114,19 @@ public class KullaTesting {
         DIAG_IGNORE
     }
 
-    public void setInput(String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setInput(String s) {
         setInput(new ByteArrayInputStream(s.getBytes()));
     }
 
-    public void setInput(InputStream in) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setInput(InputStream in) {
         inStream = in;
     }
 
@@ -156,11 +165,19 @@ public class KullaTesting {
                 .collect(Collectors.toList());
     }
 
-    public void addToClasspath(String path) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void addToClasspath(String path) {
         getState().addToClasspath(path);
     }
 
-    public void addToClasspath(Path path) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void addToClasspath(Path path) {
         addToClasspath(path.toString());
     }
 
@@ -169,7 +186,11 @@ public class KullaTesting {
         setUp(b -> {});
     }
 
-    public void setUp(Consumer<JShell.Builder> bc) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setUp(Consumer<JShell.Builder> bc) {
         InputStream in = new InputStream() {
             @Override
             public int read() throws IOException {
@@ -208,7 +229,12 @@ public class KullaTesting {
         idToSnippet = null;
     }
 
-    public ClassLoader createAndRunFromModule(String moduleName, Path modPath) {
+    @Bean
+@Bean
+@Bean
+@Bean
+@Bean
+                public classLoader createAndRunFromModule(String moduleName, Path modPath) {
         ModuleFinder finder = ModuleFinder.of(modPath);
         ModuleLayer parent = ModuleLayer.boot();
         Configuration cf = parent.configuration()
@@ -236,7 +262,11 @@ public class KullaTesting {
         return key;
     }
 
-    public DeclarationSnippet assertEvalUnresolvedException(String input, String name, int unresolvedSize, int diagnosticsSize) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public DeclarationSnippet assertEvalUnresolvedException(String input, String name, int unresolvedSize, int diagnosticsSize) {
         List<SnippetEvent> events = assertEval(input, null, UnresolvedReferenceException.class, DiagCheck.DIAG_OK, DiagCheck.DIAG_OK, null);
         SnippetEvent ste = events.get(0);
         DeclarationSnippet sn = ((UnresolvedReferenceException) ste.exception()).getSnippet();
@@ -246,7 +276,11 @@ public class KullaTesting {
         return sn;
     }
 
-    public Snippet assertKeyMatch(String input, boolean isExecutable, SubKind expectedSubKind, STEInfo mainInfo, STEInfo... updates) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Snippet assertKeyMatch(String input, boolean isExecutable, SubKind expectedSubKind, STEInfo mainInfo, STEInfo... updates) {
         Snippet key = key(assertEval(input, IGNORE_VALUE, mainInfo, updates));
         String source = key.source();
         assertEquals(source, input, "Key \"" + input + "\" source mismatch, got: " + source + ", expected: " + input);
@@ -261,7 +295,11 @@ public class KullaTesting {
         return key;
     }
 
-    private Kind getKind(Snippet key) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Kind getKind(Snippet key) {
         SubKind expectedSubKind = key.subKind();
         Kind expectedKind;
         switch (expectedSubKind) {
@@ -301,7 +339,11 @@ public class KullaTesting {
         return expectedKind;
     }
 
-    public ImportSnippet assertImportKeyMatch(String input, String name, SubKind subkind, STEInfo mainInfo, STEInfo... updates) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public ImportSnippet assertImportKeyMatch(String input, String name, SubKind subkind, STEInfo mainInfo, STEInfo... updates) {
         Snippet key = assertKeyMatch(input, false, subkind, mainInfo, updates);
 
         assertTrue(key instanceof ImportSnippet, "Expected an ImportKey, got: " + key.getClass().getName());
@@ -312,7 +354,11 @@ public class KullaTesting {
         return importKey;
     }
 
-    public DeclarationSnippet assertDeclarationKeyMatch(String input, boolean isExecutable, String name, SubKind subkind, STEInfo mainInfo, STEInfo... updates) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public DeclarationSnippet assertDeclarationKeyMatch(String input, boolean isExecutable, String name, SubKind subkind, STEInfo mainInfo, STEInfo... updates) {
         Snippet key = assertKeyMatch(input, isExecutable, subkind, mainInfo, updates);
 
         assertTrue(key instanceof DeclarationSnippet, "Expected a DeclarationKey, got: " + key.getClass().getName());
@@ -322,7 +368,11 @@ public class KullaTesting {
         return declKey;
     }
 
-    public VarSnippet assertVarKeyMatch(String input, boolean isExecutable, String name, SubKind kind, String typeName, STEInfo mainInfo, STEInfo... updates) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public VarSnippet assertVarKeyMatch(String input, boolean isExecutable, String name, SubKind kind, String typeName, STEInfo mainInfo, STEInfo... updates) {
         Snippet sn = assertDeclarationKeyMatch(input, isExecutable, name, kind, mainInfo, updates);
         assertTrue(sn instanceof VarSnippet, "Expected a VarKey, got: " + sn.getClass().getName());
         VarSnippet variableKey = (VarSnippet) sn;
@@ -333,7 +383,11 @@ public class KullaTesting {
         return variableKey;
     }
 
-    public void assertExpressionKeyMatch(String input, String name, SubKind kind, String typeName) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertExpressionKeyMatch(String input, String name, SubKind kind, String typeName) {
         Snippet key = assertKeyMatch(input, true, kind, added(VALID));
         assertTrue(key instanceof ExpressionSnippet, "Expected a ExpressionKey, got: " + key.getClass().getName());
         ExpressionSnippet exprKey = (ExpressionSnippet) key;
@@ -345,7 +399,11 @@ public class KullaTesting {
     }
 
     // For expressions throwing an EvalException
-    public SnippetEvent assertEvalException(String input) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public SnippetEvent assertEvalException(String input) {
         List<SnippetEvent> events = assertEval(input, null, EvalException.class,
                 DiagCheck.DIAG_OK, DiagCheck.DIAG_OK, null);
         return events.get(0);
@@ -416,7 +474,11 @@ public class KullaTesting {
         return causeSnippets;
     }
 
-    private Snippet getInitialCause(Map<Snippet, Snippet> transitions, Snippet snippet) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Snippet getInitialCause(Map<Snippet, Snippet> transitions, Snippet snippet) {
         Snippet result;
         while ((result = transitions.get(snippet)) != null) {
             snippet = result;
@@ -621,46 +683,78 @@ public class KullaTesting {
     }
 
     // Use this for all EMPTY calls to eval()
-    public void assertEvalEmpty(String input) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertEvalEmpty(String input) {
         List<SnippetEvent> events = getState().eval(input);
         assertEquals(events.size(), 0, "Expected no events, got: " + events.size());
     }
 
-    public VarSnippet varKey(List<SnippetEvent> events) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public VarSnippet varKey(List<SnippetEvent> events) {
         Snippet key = key(events);
         assertTrue(key instanceof VarSnippet, "Expected a VariableKey, got: " + key);
         return (VarSnippet) key;
     }
 
-    public MethodSnippet methodKey(List<SnippetEvent> events) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public MethodSnippet methodKey(List<SnippetEvent> events) {
         Snippet key = key(events);
         assertTrue(key instanceof MethodSnippet, "Expected a MethodKey, got: " + key);
         return (MethodSnippet) key;
     }
 
-    public TypeDeclSnippet classKey(List<SnippetEvent> events) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public TypeDeclSnippet classKey(List<SnippetEvent> events) {
         Snippet key = key(events);
         assertTrue(key instanceof TypeDeclSnippet, "Expected a ClassKey, got: " + key);
         return (TypeDeclSnippet) key;
     }
 
-    public ImportSnippet importKey(List<SnippetEvent> events) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public ImportSnippet importKey(List<SnippetEvent> events) {
         Snippet key = key(events);
         assertTrue(key instanceof ImportSnippet, "Expected a ImportKey, got: " + key);
         return (ImportSnippet) key;
     }
 
-    public Snippet key(List<SnippetEvent> events) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Snippet key(List<SnippetEvent> events) {
         assertTrue(events.size() >= 1, "Expected at least one event, got none.");
         return events.get(0).snippet();
     }
 
-    public void assertVarValue(Snippet key, String expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertVarValue(Snippet key, String expected) {
         String value = state.varValue((VarSnippet) key);
         assertEquals(value, expected, "Expected var value of: " + expected + ", but got: " + value);
     }
 
-    public Snippet assertDeclareFail(String input, String expectedErrorCode) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Snippet assertDeclareFail(String input, String expectedErrorCode) {
         return assertDeclareFail(input, expectedErrorCode, added(REJECTED));
     }
 
@@ -671,7 +765,11 @@ public class KullaTesting {
                 mainInfo, updates);
     }
 
-    public Snippet assertDeclareFail(String input, ExpectedDiagnostic expectedDiagnostic) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Snippet assertDeclareFail(String input, ExpectedDiagnostic expectedDiagnostic) {
         return assertDeclareFail(input, expectedDiagnostic, added(REJECTED));
     }
 
@@ -706,7 +804,11 @@ public class KullaTesting {
         return e.snippet();
     }
 
-    private void assertDiagnostic(String input, Diag diagnostic, ExpectedDiagnostic expectedDiagnostic) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertDiagnostic(String input, Diag diagnostic, ExpectedDiagnostic expectedDiagnostic) {
         if (expectedDiagnostic != null) expectedDiagnostic.assertDiagnostic(diagnostic);
         // assertEquals(diagnostic.getSource(), input, "Diagnostic source");
     }
@@ -757,7 +859,11 @@ public class KullaTesting {
                 + " other errors, got: " + otherCorralledErrorsCount);
     }
 
-    public void assertKey(Snippet key, Status expectedStatus, SubKind expectedSubKind) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertKey(Snippet key, Status expectedStatus, SubKind expectedSubKind) {
         String source = key.source();
         SubKind actualSubKind = key.subKind();
         assertEquals(actualSubKind, expectedSubKind,
@@ -770,27 +876,51 @@ public class KullaTesting {
         assertEquals(expectedSubKind.kind(), expectedKind, "Checking kind: ");
     }
 
-    public void assertDrop(Snippet key, STEInfo mainInfo, STEInfo... updates) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertDrop(Snippet key, STEInfo mainInfo, STEInfo... updates) {
         assertDrop(key, DiagCheck.DIAG_OK, DiagCheck.DIAG_OK, mainInfo, updates);
     }
 
-    public void assertDrop(Snippet key, DiagCheck diagMain, DiagCheck diagUpdates, STEInfo mainInfo, STEInfo... updates) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertDrop(Snippet key, DiagCheck diagMain, DiagCheck diagUpdates, STEInfo mainInfo, STEInfo... updates) {
         assertDrop(key, diagMain, diagUpdates, new EventChain(mainInfo, null, null, updates));
     }
 
-    public void assertDrop(Snippet key, DiagCheck diagMain, DiagCheck diagUpdates, EventChain... eventChains) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertDrop(Snippet key, DiagCheck diagMain, DiagCheck diagUpdates, EventChain... eventChains) {
         checkEvents(() -> getState().drop(key), "drop(" + key + ")", diagMain, diagUpdates, eventChains);
     }
 
-    public void assertAnalyze(String input, String source, String remaining, boolean isComplete) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertAnalyze(String input, String source, String remaining, boolean isComplete) {
         assertAnalyze(input, null, source, remaining, isComplete);
     }
 
-     public void assertAnalyze(String input, Completeness status, String source) {
+     @Bean
+@Bean
+@Bean
+@Bean
+                public void assertAnalyze(String input, Completeness status, String source) {
         assertAnalyze(input, status, source, null, null);
     }
 
-    public void assertAnalyze(String input, Completeness status, String source, String remaining, Boolean isComplete) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertAnalyze(String input, Completeness status, String source, String remaining, Boolean isComplete) {
         CompletionInfo ci = getAnalysis().analyzeCompletion(input);
         if (status != null) assertEquals(ci.completeness(), status, "Input : " + input + ", status: ");
         assertEquals(ci.source(), source, "Input : " + input + ", source: ");
@@ -801,19 +931,35 @@ public class KullaTesting {
         }
     }
 
-    public void assertNumberOfActiveVariables(int cnt) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertNumberOfActiveVariables(int cnt) {
         assertEquals(getState().variables().count(), cnt, "Variables : " + getState().variables().collect(toList()));
     }
 
-    public void assertNumberOfActiveMethods(int cnt) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertNumberOfActiveMethods(int cnt) {
         assertEquals(getState().methods().count(), cnt, "Methods : " + getState().methods().collect(toList()));
     }
 
-    public void assertNumberOfActiveClasses(int cnt) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertNumberOfActiveClasses(int cnt) {
         assertEquals(getState().types().count(), cnt, "Types : " + getState().types().collect(toList()));
     }
 
-    public void assertKeys(MemberInfo... expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertKeys(MemberInfo... expected) {
         int index = 0;
         List<Snippet> snippets = getState().snippets().collect(toList());
         assertEquals(allSnippets.size(), snippets.size());
@@ -833,7 +979,11 @@ public class KullaTesting {
         assertActiveKeys(expected.toArray(new Snippet[expected.size()]));
     }
 
-    public void assertActiveKeys(Snippet... expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertActiveKeys(Snippet... expected) {
         int index = 0;
         for (Snippet key : getState().snippets().collect(toList())) {
             if (state.status(key).isActive()) {
@@ -843,7 +993,11 @@ public class KullaTesting {
         }
     }
 
-    private void assertActiveSnippets(Stream<? extends Snippet> snippets, Predicate<Snippet> p, String label) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertActiveSnippets(Stream<? extends Snippet> snippets, Predicate<Snippet> p, String label) {
         Set<Snippet> active = getActiveKeys().stream()
                 .filter(p)
                 .collect(Collectors.toSet());
@@ -864,7 +1018,11 @@ public class KullaTesting {
         assertActiveSnippets(getState().types(), (key) -> key instanceof TypeDeclSnippet, "Classes");
     }
 
-    public void assertMembers(Stream<? extends Snippet> members, MemberInfo...expectedInfos) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertMembers(Stream<? extends Snippet> members, MemberInfo...expectedInfos) {
         Set<MemberInfo> expected = Stream.of(expectedInfos).collect(Collectors.toSet());
         Set<MemberInfo> got = members
                         .map(this::getMemberInfo)
@@ -873,11 +1031,19 @@ public class KullaTesting {
         assertEquals(got, expected);
     }
 
-    public void assertVariables(MemberInfo...expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertVariables(MemberInfo...expected) {
         assertMembers(getState().variables(), expected);
     }
 
-    public void assertMethods(MemberInfo...expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertMethods(MemberInfo...expected) {
         assertMembers(getState().methods(), expected);
         getState().methods().forEach(methodKey -> {
             MemberInfo expectedInfo = null;
@@ -892,24 +1058,44 @@ public class KullaTesting {
         });
     }
 
-    public void assertClasses(MemberInfo...expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertClasses(MemberInfo...expected) {
         assertMembers(getState().types(), expected);
     }
 
-    public void assertCompletion(String code, String... expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertCompletion(String code, String... expected) {
         assertCompletion(code, null, expected);
     }
 
-    public void assertCompletion(String code, Boolean isSmart, String... expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertCompletion(String code, Boolean isSmart, String... expected) {
         List<String> completions = computeCompletions(code, isSmart);
         assertEquals(completions, Arrays.asList(expected), "Input: " + code + ", " + completions.toString());
     }
 
-    public void assertCompletionIncludesExcludes(String code, Set<String> expected, Set<String> notExpected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertCompletionIncludesExcludes(String code, Set<String> expected, Set<String> notExpected) {
         assertCompletionIncludesExcludes(code, null, expected, notExpected);
     }
 
-    public void assertCompletionIncludesExcludes(String code, Boolean isSmart, Set<String> expected, Set<String> notExpected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertCompletionIncludesExcludes(String code, Boolean isSmart, Set<String> expected, Set<String> notExpected) {
         List<String> completions = computeCompletions(code, isSmart);
         assertTrue(completions.containsAll(expected), "Expected completions: "
                 + String.valueOf(expected)
@@ -933,17 +1119,29 @@ public class KullaTesting {
                           .collect(Collectors.toList());
     }
 
-    public void assertInferredType(String code, String expectedType) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertInferredType(String code, String expectedType) {
         String inferredType = getAnalysis().analyzeType(code, code.length());
 
         assertEquals(inferredType, expectedType, "Input: " + code + ", " + inferredType);
     }
 
-    public void assertInferredFQNs(String code, String... fqns) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertInferredFQNs(String code, String... fqns) {
         assertInferredFQNs(code, code.length(), false, fqns);
     }
 
-    public void assertInferredFQNs(String code, int simpleNameLen, boolean resolvable, String... fqns) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertInferredFQNs(String code, int simpleNameLen, boolean resolvable, String... fqns) {
         waitIndexingFinished();
 
         QualifiedNames candidates = getAnalysis().listQualifiedNames(code, code.length());
@@ -964,7 +1162,11 @@ public class KullaTesting {
         }
     }
 
-    public void assertSignature(String code, String... expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertSignature(String code, String... expected) {
         int cursor =  code.indexOf('|');
         code = code.replace("|", "");
         assertTrue(cursor > -1, "'|' expected, but not found in: " + code);
@@ -974,7 +1176,11 @@ public class KullaTesting {
         assertEquals(docSet, expectedSet, "Input: " + code);
     }
 
-    public void assertJavadoc(String code, String... expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertJavadoc(String code, String... expected) {
         int cursor =  code.indexOf('|');
         code = code.replace("|", "");
         assertTrue(cursor > -1, "'|' expected, but not found in: " + code);
@@ -1043,7 +1249,11 @@ public class KullaTesting {
         }
 
         @Override
-        public boolean equals(Object o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) {
             if (o instanceof MemberInfo) {
                 MemberInfo other = (MemberInfo) o;
                 return type.equals(other.type) && name.equals(other.name);
@@ -1057,7 +1267,11 @@ public class KullaTesting {
         }
     }
 
-    public MemberInfo getMemberInfo(Snippet key) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public MemberInfo getMemberInfo(Snippet key) {
         SubKind subkind = key.subKind();
         switch (subkind) {
             case CLASS_SUBKIND:
@@ -1078,7 +1292,11 @@ public class KullaTesting {
         }
     }
 
-    public String diagnosticsToString(List<Diag> diagnostics) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String diagnosticsToString(List<Diag> diagnostics) {
         StringWriter writer = new StringWriter();
         for (Diag diag : diagnostics) {
             writer.write("Error --\n");
@@ -1089,7 +1307,11 @@ public class KullaTesting {
         return writer.toString().replace("\n", System.lineSeparator());
     }
 
-    public boolean hasFatalError(List<Diag> diagnostics) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean hasFatalError(List<Diag> diagnostics) {
         for (Diag diag : diagnostics) {
             if (diag.isError()) {
                 return true;
@@ -1174,7 +1396,11 @@ public class KullaTesting {
             return null;
         }
 
-        public void assertMatch(SnippetEvent ste, Snippet mainSnippet) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void assertMatch(SnippetEvent ste, Snippet mainSnippet) {
             assertKeyMatch(ste, ste.snippet(), snippet(), mainSnippet);
             assertStatusMatch(ste, ste.previousStatus(), previousStatus());
             assertStatusMatch(ste, ste.status(), status());
@@ -1190,7 +1416,11 @@ public class KullaTesting {
             assertKeyMatch(ste, ste.causeSnippet(), causeSnippet(), mainSnippet);
         }
 
-        private void assertKeyMatch(SnippetEvent ste, Snippet sn, Snippet expected, Snippet mainSnippet) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void assertKeyMatch(SnippetEvent ste, Snippet sn, Snippet expected, Snippet mainSnippet) {
             Snippet testKey = expected;
             if (testKey != null) {
                 if (expected == MAIN_SNIPPET) {
@@ -1211,7 +1441,11 @@ public class KullaTesting {
             }
         }
 
-        private void assertStatusMatch(SnippetEvent ste, Status status, Status expected) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void assertStatusMatch(SnippetEvent ste, Status status, Status expected) {
             if (expected != null) {
                 assertEquals(status, expected, "Expected status to be: " + expected + ", got: " + status +
                         "\n   expected-event: " + this + "\n   got-event: " + toString(ste));
@@ -1227,7 +1461,11 @@ public class KullaTesting {
                     " cause: " + (causeSnippet()==null? "null" : causeSnippet().id());
         }
 
-        private String toString(SnippetEvent ste) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private String toString(SnippetEvent ste) {
             return "key: " + (ste.snippet()==MAIN_SNIPPET? "MAIN_SNIPPET" : ste.snippet().id()) + " before: " + ste.previousStatus()
                     + " status: " + ste.status() + " sig: " + ste.isSignatureChange()
                     + " cause: " + ste.causeSnippet();

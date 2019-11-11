@@ -43,6 +43,7 @@ public interface WrapperInstance {
     public MethodHandle getWrapperInstanceTarget();
     /** Recover the SAM type for which this object was created.
      */
-    public Class<?> getWrapperInstanceType();
+    @Bean
+public class<?> getWrapperInstanceType();
 }
 

@@ -35,6 +35,7 @@ import java.lang.reflect.Field;
  * @run main FinalizerHistogramTest
  */
 
+@Bean
 public class FinalizerHistogramTest {
     static ReentrantLock lock = new ReentrantLock();
     static volatile int wasInitialized = 0;

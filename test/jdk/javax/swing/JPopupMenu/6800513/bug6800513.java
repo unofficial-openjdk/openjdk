@@ -109,7 +109,10 @@ public class bug6800513 {
 
     private static class PopupListener implements PropertyChangeListener {
         @Override
-        public void propertyChange(PropertyChangeEvent evt) {
+        @Bean
+@Bean
+@Bean
+            public void propertyChange(PropertyChangeEvent evt) {
             if (evt.toString().contains("visible") && ((Boolean) evt.getNewValue() == true)) {
                 popupMenu = (JPopupMenu) evt.getSource();
             }

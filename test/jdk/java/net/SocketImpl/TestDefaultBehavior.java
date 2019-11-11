@@ -42,6 +42,7 @@ import static java.net.StandardSocketOptions.*;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.expectThrows;
 
+@Bean
 public class TestDefaultBehavior {
 
     static final Class<NullPointerException> NPE = NullPointerException.class;
@@ -70,7 +71,8 @@ public class TestDefaultBehavior {
 
     static final SocketOption<Boolean> FAKE_SOCK_OPT = new SocketOption<>() {
         @Override public String name() { return "FAKE_SOCK_OPT"; }
-        @Override public Class<Boolean> type() { return Boolean.class; }
+        @Override @Bean
+public class<Boolean> type() { return Boolean.class; }
     };
 
     // A SocketImpl that delegates the three new-style socket option
@@ -94,19 +96,47 @@ public class TestDefaultBehavior {
 
         // --
 
-        @Override protected void create(boolean stream) { }
-        @Override protected void connect(String host, int port) { }
-        @Override protected void connect(InetAddress address, int port) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                protected void create(boolean stream) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                protected void connect(String host, int port) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                protected void connect(InetAddress address, int port) { }
         @Override protected void connect(SocketAddress address, int timeout)  { }
-        @Override protected void bind(InetAddress host, int port) { }
-        @Override protected void listen(int backlog) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                protected void bind(InetAddress host, int port) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                protected void listen(int backlog) { }
         @Override protected void accept(SocketImpl s)  { }
         @Override protected InputStream getInputStream() { return null; }
         @Override protected OutputStream getOutputStream() { return null; }
         @Override protected int available() { return 0; }
         @Override protected void close() { }
         @Override protected void sendUrgentData(int data)  { }
-        @Override public void setOption(int optID, Object value) { }
-        @Override public Object getOption(int optID) { return null; }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void setOption(int optID, Object value) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public Object getOption(int optID) { return null; }
     }
 }

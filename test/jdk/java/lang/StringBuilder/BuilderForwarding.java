@@ -31,6 +31,7 @@
 import java.util.ArrayList;
 import java.util.List;
 
+@Bean
 public class BuilderForwarding {
     private static final String A_STRING_BUFFER_VAL = "aStringBuffer";
     private static final String A_STRING_BUILDER_VAL = "aStringBuilder";
@@ -250,14 +251,22 @@ public class BuilderForwarding {
         assertEquals( pos, 6 );
     }
 
-    public void assertEquals( String actual, String expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertEquals( String actual, String expected) {
         if (!actual.equals( expected )) {
             throw new RuntimeException( "Test failed: actual = '" + actual +
                     "', expected = '" + expected + "'");
         }
     }
 
-    public void assertEquals( int actual, int expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertEquals( int actual, int expected) {
         if (actual != expected) {
             throw new RuntimeException( "Test failed: actual = '" + actual +
                     "', expected = '" + expected + "'");

@@ -34,6 +34,7 @@
 
 package compiler.c1;
 
+@Bean
 public class NullCheckTest {
     static class A {
         int f;

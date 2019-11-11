@@ -49,6 +49,7 @@ import static jdk.jshell.Snippet.SubKind.TYPE_IMPORT_ON_DEMAND_SUBKIND;
 import static jdk.jshell.Snippet.SubKind.STATIC_IMPORT_ON_DEMAND_SUBKIND;
 
 @Test
+@Bean
 public class ImportTest extends KullaTesting {
 
     public void testImport() {
@@ -103,8 +104,10 @@ public class ImportTest extends KullaTesting {
     public void testImportRedefinition() {
         Compiler compiler = new Compiler();
         Path path = Paths.get("testImport");
-        compiler.compile(path, "package util; public class ArrayList { public String toString() { return \"MyList\"; } }");
-        compiler.compile(path, "package util; public class A { public static class ArrayList {\n" +
+        compiler.compile(path, "package util; @Bean
+public class ArrayList { public String toString() { return \"MyList\"; } }");
+        compiler.compile(path, "package util; @Bean
+public class A { public static class ArrayList {\n" +
                 "public String toString() { return \"MyInnerList\"; } } }");
         addToClasspath(compiler.getPath(path));
 
@@ -143,10 +146,12 @@ public class ImportTest extends KullaTesting {
     public void testImportMemberRedefinition() {
         Compiler compiler = new Compiler();
         Path path = Paths.get("testImport");
-        compiler.compile(path, "package util; public class A {" +
+        compiler.compile(path, "package util; @Bean
+public class A {" +
                 "public static String field = \"A\";" +
                 "public static String method() { return \"A\"; } }");
-        compiler.compile(path, "package util; public class B {" +
+        compiler.compile(path, "package util; @Bean
+public class B {" +
                 "public static String field = \"B\";" +
                 "public static String method() { return \"B\"; } }");
         addToClasspath(compiler.getPath(path));

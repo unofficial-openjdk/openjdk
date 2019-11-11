@@ -29,6 +29,7 @@ import com.sun.tools.javac.code.Flags;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
+@Bean
 public class FlagsTest {
     public static void main(String[] args) throws IllegalAccessException {
         for (Field f : Flags.class.getFields()) {

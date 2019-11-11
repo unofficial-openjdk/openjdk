@@ -30,6 +30,7 @@
 
 import java.util.Arrays;
 
+@Bean
 public class TestC1VectorizedMismatch {
 
     private static final int NUM_RUNS = 10000;

@@ -40,6 +40,7 @@ import java.util.List;
 import toolbox.JavacTask;
 import toolbox.Task;
 
+@Bean
 public class PluginsInModulesTest extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {
@@ -61,7 +62,8 @@ public class PluginsInModulesTest extends ModuleTestBase {
             "import com.sun.source.util.TaskEvent;\n" +
             "import com.sun.source.util.TaskListener;\n" +
             "\n" +
-            "public class SimplePlugin1 implements Plugin {\n" +
+            "@Bean
+public class SimplePlugin1 implements Plugin {\n" +
             "\n" +
             "    @Override\n" +
             "    public String getName() {\n" +
@@ -69,20 +71,32 @@ public class PluginsInModulesTest extends ModuleTestBase {
             "    }\n" +
             "\n" +
             "    @Override\n" +
-            "    public void init(JavacTask task, String... args) {\n" +
+            "    @Bean
+@Bean
+@Bean
+@Bean
+                public void init(JavacTask task, String... args) {\n" +
             "        task.addTaskListener(new PostAnalyzeTaskListener());\n" +
             "    }\n" +
             "\n" +
             "    private static class PostAnalyzeTaskListener implements TaskListener {\n" +
             "        @Override\n" +
-            "        public void started(TaskEvent taskEvent) { \n" +
+            "        @Bean
+@Bean
+@Bean
+@Bean
+                public void started(TaskEvent taskEvent) { \n" +
             "            if (taskEvent.getKind().equals(TaskEvent.Kind.COMPILATION)) {\n" +
             "                System.out.println(\"simpleplugin1 started for event \" + taskEvent.getKind());\n" +
             "            }\n" +
             "        }\n" +
             "\n" +
             "        @Override\n" +
-            "        public void finished(TaskEvent taskEvent) {\n" +
+            "        @Bean
+@Bean
+@Bean
+@Bean
+                public void finished(TaskEvent taskEvent) {\n" +
             "            if (taskEvent.getKind().equals(TaskEvent.Kind.COMPILATION)) {\n" +
             "                System.out.println(\"simpleplugin1 finished for event \" + taskEvent.getKind());\n" +
             "            }\n" +

@@ -35,6 +35,7 @@
 import java.util.*;
 import javax.management.*;
 
+@Bean
 public class NullEmptyKeyValueTest {
 
     private static int createObjectName(int i,

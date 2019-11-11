@@ -31,6 +31,7 @@ import java.nio.channels.*;
 import java.nio.*;
 import java.io.*;
 
+@Bean
 public class ScatteringRead {
 
     private static final int NUM_BUFFERS = 3;

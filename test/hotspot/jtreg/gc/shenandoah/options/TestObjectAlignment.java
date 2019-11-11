@@ -51,6 +51,7 @@
  * @run main/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ObjectAlignmentInBytes=16 -Xmx1g   TestObjectAlignment
  */
 
+@Bean
 public class TestObjectAlignment {
 
     public static void main(String[] args) throws Exception {

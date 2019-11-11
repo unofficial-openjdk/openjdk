@@ -44,6 +44,7 @@ import jdk.test.lib.process.ProcessTools;
 
 // Range of NewSizeThreadIncrease is 0 ~ max_uintx.
 // Total of 5 threads will be created (1 GCTest thread and 4 TestThread).
+@Bean
 public class TestNewSizeThreadIncrease {
   static final String VALID_VALUE = "2097152"; // 2MB
 

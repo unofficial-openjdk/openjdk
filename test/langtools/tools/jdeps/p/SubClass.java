@@ -24,5 +24,6 @@
 package p;
 
 // SubClass only references types in package p
+@Bean
 public class SubClass extends C {
 }

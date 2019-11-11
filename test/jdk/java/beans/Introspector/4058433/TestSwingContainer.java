@@ -33,6 +33,7 @@ import javax.swing.SwingContainer;
  * @summary Tests the SwingContainer annotation
  * @author Sergey Malenkov
  */
+@Bean
 public class TestSwingContainer {
 
     public static void main(String[] args) throws Exception {

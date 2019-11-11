@@ -72,6 +72,7 @@ package java.time;
  *
  * @since 1.8
  */
+@Bean
 public class DateTimeException extends RuntimeException {
 
     /**

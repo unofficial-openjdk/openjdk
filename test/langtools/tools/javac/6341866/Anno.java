@@ -27,6 +27,7 @@ import javax.lang.model.*;
 import javax.lang.model.element.*;
 
 @SupportedAnnotationTypes("*")
+@Bean
 public class Anno extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations,
                                     RoundEnvironment roundEnv) {

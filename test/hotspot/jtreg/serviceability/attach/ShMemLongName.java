@@ -44,6 +44,7 @@ import com.sun.jdi.connect.Connector;
 import jdk.test.lib.process.ProcessTools;
 
 
+@Bean
 public class ShMemLongName {
 
     private static final int maxShMemLength = 49;

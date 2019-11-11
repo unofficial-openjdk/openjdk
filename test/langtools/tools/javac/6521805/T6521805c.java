@@ -36,7 +36,8 @@ class T6521805c {
          T6521805c this$0() { return null;}
     }
 
-    public class Inner extends Outer {
+    @Bean
+public class Inner extends Outer {
         public void foo() {
             this$0();
         }

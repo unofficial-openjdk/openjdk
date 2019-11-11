@@ -314,6 +314,7 @@ import sun.security.util.SecurityConstants;
  *
  * @since   1.0
  */
+@Bean
 public class SecurityManager {
 
     /*
@@ -404,7 +405,8 @@ public class SecurityManager {
      *            {@code null}.
      * @since     1.2
      */
-    public void checkPermission(Permission perm) {
+@Bean
+        public void checkPermission(Permission perm) {
         java.security.AccessController.checkPermission(perm);
     }
 
@@ -439,7 +441,8 @@ public class SecurityManager {
      * @see java.security.AccessControlContext#checkPermission(java.security.Permission)
      * @since      1.2
      */
-    public void checkPermission(Permission perm, Object context) {
+@Bean
+        public void checkPermission(Permission perm, Object context) {
         if (context instanceof AccessControlContext) {
             ((AccessControlContext)context).checkPermission(perm);
         } else {
@@ -527,7 +530,8 @@ public class SecurityManager {
      * @see        java.lang.Thread#suspend() suspend
      * @see        #checkPermission(java.security.Permission) checkPermission
      */
-    public void checkAccess(Thread t) {
+@Bean
+        public void checkAccess(Thread t) {
         if (t == null) {
             throw new NullPointerException("thread can't be null");
         }
@@ -580,7 +584,8 @@ public class SecurityManager {
      * @see        java.lang.ThreadGroup#suspend() suspend
      * @see        #checkPermission(java.security.Permission) checkPermission
      */
-    public void checkAccess(ThreadGroup g) {
+@Bean
+        public void checkAccess(ThreadGroup g) {
         if (g == null) {
             throw new NullPointerException("thread group can't be null");
         }
@@ -616,7 +621,8 @@ public class SecurityManager {
      * @see        java.lang.Runtime#exit(int) exit
      * @see        #checkPermission(java.security.Permission) checkPermission
      */
-    public void checkExit(int status) {
+@Bean
+        public void checkExit(int status) {
         checkPermission(new RuntimePermission("exitVM."+status));
     }
 
@@ -649,7 +655,8 @@ public class SecurityManager {
      * @see     java.lang.Runtime#exec(java.lang.String[], java.lang.String[])
      * @see     #checkPermission(java.security.Permission) checkPermission
      */
-    public void checkExec(String cmd) {
+@Bean
+        public void checkExec(String cmd) {
         File f = new File(cmd);
         if (f.isAbsolute()) {
             checkPermission(new FilePermission(cmd,
@@ -687,7 +694,8 @@ public class SecurityManager {
      * @see        java.lang.Runtime#loadLibrary(java.lang.String)
      * @see        #checkPermission(java.security.Permission) checkPermission
      */
-    public void checkLink(String lib) {
+@Bean
+        public void checkLink(String lib) {
         if (lib == null) {
             throw new NullPointerException("library can't be null");
         }
@@ -716,7 +724,8 @@ public class SecurityManager {
      * @see        java.io.FileDescriptor
      * @see        #checkPermission(java.security.Permission) checkPermission
      */
-    public void checkRead(FileDescriptor fd) {
+@Bean
+        public void checkRead(FileDescriptor fd) {
         if (fd == null) {
             throw new NullPointerException("file descriptor can't be null");
         }
@@ -743,7 +752,8 @@ public class SecurityManager {
      *             {@code null}.
      * @see        #checkPermission(java.security.Permission) checkPermission
      */
-    public void checkRead(String file) {
+@Bean
+        public void checkRead(String file) {
         checkPermission(new FilePermission(file,
             SecurityConstants.FILE_READ_ACTION));
     }
@@ -778,7 +788,8 @@ public class SecurityManager {
      * @see        java.lang.SecurityManager#getSecurityContext()
      * @see        java.security.AccessControlContext#checkPermission(java.security.Permission)
      */
-    public void checkRead(String file, Object context) {
+@Bean
+        public void checkRead(String file, Object context) {
         checkPermission(
             new FilePermission(file, SecurityConstants.FILE_READ_ACTION),
             context);
@@ -806,7 +817,8 @@ public class SecurityManager {
      * @see        java.io.FileDescriptor
      * @see        #checkPermission(java.security.Permission) checkPermission
      */
-    public void checkWrite(FileDescriptor fd) {
+@Bean
+        public void checkWrite(FileDescriptor fd) {
         if (fd == null) {
             throw new NullPointerException("file descriptor can't be null");
         }
@@ -834,7 +846,8 @@ public class SecurityManager {
      *             {@code null}.
      * @see        #checkPermission(java.security.Permission) checkPermission
      */
-    public void checkWrite(String file) {
+@Bean
+        public void checkWrite(String file) {
         checkPermission(new FilePermission(file,
             SecurityConstants.FILE_WRITE_ACTION));
     }
@@ -862,7 +875,8 @@ public class SecurityManager {
      * @see        java.io.File#delete()
      * @see        #checkPermission(java.security.Permission) checkPermission
      */
-    public void checkDelete(String file) {
+@Bean
+        public void checkDelete(String file) {
         checkPermission(new FilePermission(file,
             SecurityConstants.FILE_DELETE_ACTION));
     }
@@ -896,7 +910,8 @@ public class SecurityManager {
      *             {@code null}.
      * @see        #checkPermission(java.security.Permission) checkPermission
      */
-    public void checkConnect(String host, int port) {
+@Bean
+        public void checkConnect(String host, int port) {
         if (host == null) {
             throw new NullPointerException("host can't be null");
         }
@@ -951,7 +966,8 @@ public class SecurityManager {
      * @see        java.lang.SecurityManager#getSecurityContext()
      * @see        java.security.AccessControlContext#checkPermission(java.security.Permission)
      */
-    public void checkConnect(String host, int port, Object context) {
+@Bean
+        public void checkConnect(String host, int port, Object context) {
         if (host == null) {
             throw new NullPointerException("host can't be null");
         }
@@ -986,7 +1002,8 @@ public class SecurityManager {
      *             permission to listen on the specified port.
      * @see        #checkPermission(java.security.Permission) checkPermission
      */
-    public void checkListen(int port) {
+@Bean
+        public void checkListen(int port) {
         checkPermission(new SocketPermission("localhost:"+port,
             SecurityConstants.SOCKET_LISTEN_ACTION));
     }
@@ -1016,7 +1033,8 @@ public class SecurityManager {
      * @see        java.net.ServerSocket#accept()
      * @see        #checkPermission(java.security.Permission) checkPermission
      */
-    public void checkAccept(String host, int port) {
+@Bean
+        public void checkAccept(String host, int port) {
         if (host == null) {
             throw new NullPointerException("host can't be null");
         }
@@ -1049,7 +1067,8 @@ public class SecurityManager {
      * @since      1.1
      * @see        #checkPermission(java.security.Permission) checkPermission
      */
-    public void checkMulticast(InetAddress maddr) {
+@Bean
+        public void checkMulticast(InetAddress maddr) {
         String host = maddr.getHostAddress();
         if (!host.startsWith("[") && host.indexOf(':') != -1) {
             host = "[" + host + "]";
@@ -1085,7 +1104,8 @@ public class SecurityManager {
      * @see        #checkPermission(java.security.Permission) checkPermission
      */
     @Deprecated(since="1.4")
-    public void checkMulticast(InetAddress maddr, byte ttl) {
+@Bean
+        public void checkMulticast(InetAddress maddr, byte ttl) {
         String host = maddr.getHostAddress();
         if (!host.startsWith("[") && host.indexOf(':') != -1) {
             host = "[" + host + "]";
@@ -1148,7 +1168,8 @@ public class SecurityManager {
      * @see        java.lang.System#getProperty(java.lang.String)
      * @see        #checkPermission(java.security.Permission) checkPermission
      */
-    public void checkPropertyAccess(String key) {
+@Bean
+        public void checkPropertyAccess(String key) {
         checkPermission(new PropertyPermission(key,
             SecurityConstants.PROPERTY_READ_ACTION));
     }
@@ -1316,7 +1337,8 @@ public class SecurityManager {
      * @see        java.security.Security#getProperty getProperty
      * @see        #checkPermission(Permission) checkPermission
      */
-    public void checkPackageAccess(String pkg) {
+@Bean
+        public void checkPackageAccess(String pkg) {
         Objects.requireNonNull(pkg, "package name can't be null");
 
         // check if pkg is not exported to all modules
@@ -1415,7 +1437,8 @@ public class SecurityManager {
      * @see        java.security.Security#getProperty getProperty
      * @see        #checkPermission(Permission) checkPermission
      */
-    public void checkPackageDefinition(String pkg) {
+@Bean
+        public void checkPackageDefinition(String pkg) {
         Objects.requireNonNull(pkg, "package name can't be null");
 
         // check if pkg is not exported to all modules
@@ -1517,7 +1540,8 @@ public class SecurityManager {
      * @since   1.1
      * @see        #checkPermission(java.security.Permission) checkPermission
      */
-    public void checkSecurityAccess(String target) {
+@Bean
+        public void checkSecurityAccess(String target) {
         checkPermission(new SecurityPermission(target));
     }
 

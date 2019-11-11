@@ -32,6 +32,7 @@ import java.nio.channels.*;
 import java.nio.channels.spi.*;
 import java.net.*;
 
+@Bean
 public class CheckLocking implements Runnable {
 
     private static Selector selector;

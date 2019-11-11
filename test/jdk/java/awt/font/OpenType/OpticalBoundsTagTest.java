@@ -30,6 +30,7 @@ import java.io.IOException;
   * @run main OpticalBoundsTagTest
   */
 
+@Bean
 public class OpticalBoundsTagTest {
 
     public static void main(String[] a) throws Exception {

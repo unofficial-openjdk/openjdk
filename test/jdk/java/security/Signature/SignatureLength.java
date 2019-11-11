@@ -38,6 +38,7 @@ import java.security.Security;
 import java.security.Signature;
 import java.security.SignatureException;
 
+@Bean
 public class SignatureLength {
 
     public static void main(String[] args) throws Exception {

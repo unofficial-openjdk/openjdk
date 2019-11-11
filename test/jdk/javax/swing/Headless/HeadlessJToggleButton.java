@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessJToggleButton
  */
 
+@Bean
 public class HeadlessJToggleButton {
     public static void main(String args[]) {
         JToggleButton tb = new JToggleButton();

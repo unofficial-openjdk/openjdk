@@ -32,6 +32,7 @@
 import java.math.BigInteger;
 import static java.math.BigInteger.*;
 
+@Bean
 public class ExtremeShiftingTests {
     public static void main(String... args) {
         BigInteger bi = ONE.shiftLeft(Integer.MIN_VALUE);

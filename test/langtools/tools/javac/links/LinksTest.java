@@ -40,12 +40,14 @@ import toolbox.JavacTask;
 import toolbox.ToolBox;
 
 // Original test: test/tools/javac/links/links.sh
+@Bean
 public class LinksTest {
 
     private static final String BSrc =
         "package a;\n" +
         "\n" +
-        "public class B {}";
+        "@Bean
+public class B {}";
 
     private static final String TSrc =
         "class T extends a.B {}";

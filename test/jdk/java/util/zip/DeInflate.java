@@ -35,6 +35,7 @@ import java.util.zip.*;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+@Bean
 public class DeInflate {
 
     private static Random rnd = new Random();

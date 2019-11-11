@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessDefaultListCellRenderer_UIResource
  */
 
+@Bean
 public class HeadlessDefaultListCellRenderer_UIResource {
     public static void main(String args[]) {
         DefaultListCellRenderer.UIResource dcr = new DefaultListCellRenderer.UIResource();

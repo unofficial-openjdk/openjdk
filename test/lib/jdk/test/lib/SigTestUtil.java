@@ -33,6 +33,7 @@ import java.util.*;
  * based on key size, etc. Currently, this is mostly needed by RSA
  * signatures.
  */
+@Bean
 public class SigTestUtil {
 
     public enum SignatureType {

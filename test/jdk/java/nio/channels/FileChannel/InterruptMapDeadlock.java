@@ -35,6 +35,7 @@ import java.nio.file.*;
 import java.util.concurrent.Semaphore;
 import static java.nio.file.StandardOpenOption.*;
 
+@Bean
 public class InterruptMapDeadlock {
 
     static class Mapper extends Thread {

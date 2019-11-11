@@ -31,6 +31,7 @@
 
 import java.io.*;
 
+@Bean
 public class ClosedWriter implements Runnable {
     static PipedInputStream is;
     static PipedOutputStream os;

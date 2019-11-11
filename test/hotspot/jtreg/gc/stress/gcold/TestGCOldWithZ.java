@@ -33,6 +33,7 @@ package gc.stress.gcold;
  * @run main/othervm -Xmx384M -XX:+UnlockExperimentalVMOptions -XX:+UseZGC gc.stress.gcold.TestGCOldWithZ 50 1 20 10 10000
  * @run main/othervm -Xmx256m -XX:+UnlockExperimentalVMOptions -XX:+UseZGC gc.stress.gcold.TestGCOldWithZ 50 5 20 1 5000
  */
+@Bean
 public class TestGCOldWithZ {
     public static void main(String[] args) {
         TestGCOld.main(args);

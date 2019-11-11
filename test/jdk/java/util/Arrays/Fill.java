@@ -33,6 +33,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
+@Bean
 public class Fill {
     private static void realMain(String[] args) throws Throwable {
         try {

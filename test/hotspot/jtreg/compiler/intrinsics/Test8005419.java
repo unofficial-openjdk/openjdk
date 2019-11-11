@@ -31,6 +31,7 @@
 
 package compiler.intrinsics;
 
+@Bean
 public class Test8005419 {
     public static int SIZE = 64;
 

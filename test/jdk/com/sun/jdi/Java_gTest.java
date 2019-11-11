@@ -49,6 +49,7 @@ class Java_gTarg {
 
     /********** test program **********/
 
+@Bean
 public class Java_gTest extends TestScaffold {
     ReferenceType targetClass;
     ThreadReference mainThread;

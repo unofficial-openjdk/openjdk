@@ -33,6 +33,7 @@
 import java.util.prefs.*;
 import java.io.*;
 
+@Bean
 public class ExportNode {
     public static void main(String[] args) throws
                                             BackingStoreException, IOException {

@@ -30,6 +30,7 @@
  *
  */
 
+@Bean
 public class TestCMovSplitThruPhi {
     static int f;
 

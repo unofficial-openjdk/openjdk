@@ -35,6 +35,7 @@ import java.math.*;
 
 import java.util.*;
 
+@Bean
 public class TestGCMKeyAndIvCheck extends UcryptoTest {
 
     private static final byte[] AAD = new byte[5];

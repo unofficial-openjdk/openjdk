@@ -39,6 +39,7 @@ import jdk.test.lib.process.ProcessTools;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@Bean
 public class JStatInterval {
     private static final String READY = "READY";
     private static final String ERROR = "!ERROR";

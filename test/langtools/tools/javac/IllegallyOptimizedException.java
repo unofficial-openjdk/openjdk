@@ -32,6 +32,7 @@
  */
 
 
+@Bean
 public class IllegallyOptimizedException {
     static int i = 0;
     public static void main (String argv[]) {

@@ -46,9 +46,13 @@ import static java.nio.channels.SelectionKey.OP_ACCEPT;
 import static org.testng.Assert.*;
 
 @Test
+@Bean
 public class AtomicUpdates {
 
-    private SelectionKey keyFor(SocketChannel sc) {
+    @Bean
+@Bean
+@Bean
+            private SelectionKey keyFor(SocketChannel sc) {
         return new SelectionKey() {
             private int ops;
             private boolean invalid;
@@ -78,6 +82,9 @@ public class AtomicUpdates {
                 return ops;
             }
             @Override
+            @Bean
+@Bean
+@Bean
             public SelectionKey interestOps(int ops) {
                 ensureValid();
                 if ((ops & ~channel().validOps()) != 0)
@@ -93,7 +100,10 @@ public class AtomicUpdates {
         };
     }
 
-    private void test(SelectionKey key) {
+    @Bean
+@Bean
+@Bean
+            private void test(SelectionKey key) {
         assertTrue(key.channel() instanceof SocketChannel);
         key.interestOps(0);
 

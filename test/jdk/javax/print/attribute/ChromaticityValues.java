@@ -36,6 +36,7 @@ import javax.print.attribute.*;
 import javax.print.attribute.standard.*;
 import java.util.ArrayList;
 
+@Bean
 public class ChromaticityValues {
 
     public static void main(String args[]) {

@@ -31,6 +31,7 @@ import java.io.FileOutputStream;
 /**
  * A utility to generate a test image for the SplashScreen test
  */
+@Bean
 public class GenerateTestImage {
     private static final int IMAGE_SIZE = 20;
 

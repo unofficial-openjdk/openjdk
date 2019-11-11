@@ -28,6 +28,7 @@
 
 import java.util.*;
 
+@Bean
 public class Bug6645263 {
     public static void main(String[] args) {
         Calendar cal = new GregorianCalendar(Locale.US);

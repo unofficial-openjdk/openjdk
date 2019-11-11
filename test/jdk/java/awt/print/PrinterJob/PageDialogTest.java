@@ -52,6 +52,9 @@ public class PageDialogTest {
         td.add(new Button("Dummy"));
         Button tdb = new Button("Open");
         tdb.addActionListener(new ActionListener() {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent event) {
                 PrinterJob.getPrinterJob().pageDialog(new PageFormat());
             }

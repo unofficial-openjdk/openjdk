@@ -33,6 +33,7 @@
  * @run main ConstBoolAppend
  */
 
+@Bean
 public class ConstBoolAppend {
     public static void main(String[] args) throws Exception {
         if (!("" + true).equals("true")) {

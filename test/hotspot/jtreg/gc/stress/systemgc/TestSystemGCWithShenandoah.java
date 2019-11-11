@@ -56,6 +56,7 @@ package gc.stress.systemgc;
  *      gc.stress.systemgc.TestSystemGCWithShenandoah 270
  *
  */
+@Bean
 public class TestSystemGCWithShenandoah {
     public static void main(String[] args) throws Exception {
         TestSystemGC.main(args);

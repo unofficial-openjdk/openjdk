@@ -47,6 +47,7 @@ import java.util.Collections;
  * Test spawns OldObjectTest in a separate VM and expects that it
  * completes without a RuntimeException.
  */
+@Bean
 public class TestOldObjectsOnNvdimm {
 
     public static final int ALLOCATION_SIZE = 100;

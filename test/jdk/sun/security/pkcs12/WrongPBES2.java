@@ -33,6 +33,7 @@ import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
 
+@Bean
 public class WrongPBES2 {
 
     private static final char[] PASS = "changeit".toCharArray();

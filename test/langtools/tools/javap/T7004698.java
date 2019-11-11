@@ -32,6 +32,7 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 
+@Bean
 public class T7004698 {
     public static void main(String... args) throws Exception {
         new T7004698().run();

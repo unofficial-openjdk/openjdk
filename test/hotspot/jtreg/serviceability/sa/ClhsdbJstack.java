@@ -37,6 +37,7 @@ import jtreg.SkippedException;
  * @run main/othervm/timeout=480 ClhsdbJstack
  */
 
+@Bean
 public class ClhsdbJstack {
 
     private static void testJstack(boolean withXcomp) throws Exception {

@@ -48,6 +48,7 @@ import test.java.awt.regtesthelpers.Util;
 
 
 
+@Bean
 public class NonOpaqueInternalFrame
 {
     static volatile boolean failed = false;
@@ -60,7 +61,11 @@ public class NonOpaqueInternalFrame
                 addActionListener(this);
             }
 
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 failed = true;
             }
         }

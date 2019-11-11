@@ -43,6 +43,7 @@ import com.sun.tools.javac.api.JavacTool;
 
 @Wrap
 @SupportedAnnotationTypes("Wrap")
+@Bean
 public class T6403466 extends AbstractProcessor {
 
     static final String testSrcDir = System.getProperty("test.src");
@@ -76,7 +77,11 @@ public class T6403466 extends AbstractProcessor {
         }
     }
 
-    public boolean process(Set<? extends TypeElement> annos, RoundEnvironment rEnv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annos, RoundEnvironment rEnv) {
         if (!rEnv.processingOver()) {
             Filer filer = processingEnv.getFiler();
             for (TypeElement anno: annos) {
@@ -121,15 +126,27 @@ class VerifyingTaskListener implements TaskListener {
         iter = lines.iterator();
     }
 
-    public void started(TaskEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void started(TaskEvent e) {
         check("Started " + toString(e));
     }
-    public void finished(TaskEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void finished(TaskEvent e) {
         check("Finished " + toString(e));
     }
 
     // similar to TaskEvent.toString(), but just prints basename of the file
-    private String toString(TaskEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String toString(TaskEvent e) {
         JavaFileObject file = e.getSourceFile();
         return "TaskEvent["
             + e.getKind() + ","
@@ -138,7 +155,11 @@ class VerifyingTaskListener implements TaskListener {
             + e.getTypeElement() + "]";
     }
 
-    private void check(String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void check(String s) {
         System.out.println(s); // write a reference copy of expected output to stdout
 
         String ref = iter.hasNext() ? iter.next() : null;

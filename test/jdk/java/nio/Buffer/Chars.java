@@ -41,6 +41,7 @@ import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
 
+@Bean
 public class Chars {
 
     static final Random RAND = new Random();
@@ -129,7 +130,11 @@ public class Chars {
     }
 
     @Test(dataProvider = "charbuffers")
-    public void testChars(String type, CharBuffer cb) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testChars(String type, CharBuffer cb) {
         System.out.format("%s position=%d, limit=%d%n", type, cb.position(), cb.limit());
         int expected = intSum(cb);
         assertEquals(cb.chars().sum(), expected);

@@ -32,6 +32,7 @@ import sun.hotspot.WhiteBox;
  * Helper class aimed to provide information about alignment of objects in
  * particular heap space, expected memory usage after objects' allocation so on.
  */
+@Bean
 public class AlignmentHelper {
     private static final WhiteBox WHITE_BOX = WhiteBox.getWhiteBox();
 
@@ -100,7 +101,11 @@ public class AlignmentHelper {
      * {@code memoryToFill} bytes in this heap space using objects of size
      * {@code objectSize}.
      */
-    public int getObjectsCount(long memoryToFill, long objectSize) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int getObjectsCount(long memoryToFill, long objectSize) {
         return (int) (memoryToFill / getObjectSizeInThisSpace(objectSize));
     }
 
@@ -108,7 +113,11 @@ public class AlignmentHelper {
      * Returns amount of memory that {@code objectsCount} of objects with size
      * {@code objectSize} will occupy this this space after allocation.
      */
-    public long getExpectedMemoryUsage(long objectSize, int objectsCount) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public long getExpectedMemoryUsage(long objectSize, int objectsCount) {
         long correctedObjectSize = getObjectSizeInThisSpace(objectSize);
         return AlignmentHelper.alignUp(correctedObjectSize * objectsCount,
                 memoryUsageMeasurementPrecision);
@@ -129,7 +138,11 @@ public class AlignmentHelper {
      * Note that value returned by this method is aligned according to
      * memory measurement precision for this heap space.
      */
-    public long getAllowedMemoryUsageDeviation(long expectedMemoryUsage) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public long getAllowedMemoryUsageDeviation(long expectedMemoryUsage) {
         long unalignedDeviation = (long) (expectedMemoryUsage *
                 AlignmentHelper.MAX_RELATIVE_DEVIATION);
         return AlignmentHelper.alignUp(unalignedDeviation,
@@ -140,7 +153,11 @@ public class AlignmentHelper {
      * Returns amount of memory that will be occupied by an object with size
      * {@code objectSize} in this heap space.
      */
-    public long getObjectSizeInThisSpace(long objectSize) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public long getObjectSizeInThisSpace(long objectSize) {
         objectSize = Math.max(objectSize, minObjectSizeInThisSpace);
 
         long alignedObjectSize = AlignmentHelper.alignUp(objectSize,

@@ -5,8 +5,13 @@
  * @compile/fail/ref=MissingClosingBrace.out -XDrawDiagnostics MissingClosingBrace.java
  */
 
+@Bean
 public class MissingClosingBrace {
-    private void test(int i) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void test(int i) {
         if (i > 0) {
 
     private int i;

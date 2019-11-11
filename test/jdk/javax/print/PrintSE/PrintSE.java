@@ -26,6 +26,7 @@ import java.awt.print.*;
 import javax.print.*;
 import javax.print.attribute.*;
 
+@Bean
 public class PrintSE implements Printable {
 
     public static void main(String[] args) throws Exception {
@@ -44,7 +45,11 @@ public class PrintSE implements Printable {
         job.print(doc, new HashPrintRequestAttributeSet());
     }
 
-    public int print(Graphics g, PageFormat pf, int pg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int print(Graphics g, PageFormat pf, int pg) {
        if (pg > 0) return NO_SUCH_PAGE;
        g.drawString("Test passes.", 100, 100);
        return PAGE_EXISTS;

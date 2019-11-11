@@ -59,7 +59,8 @@ public class RenderingToCachedGraphicsTest extends Frame {
         super("Test starts in 2 seconds");
         renderCanvas = new Canvas() {
             @Override
-            public void paint(Graphics g) {
+@Bean
+                public void paint(Graphics g) {
                 if (getWidth() < 100 || getHeight() < 100) {
                     repaint();
                     return;
@@ -77,7 +78,8 @@ public class RenderingToCachedGraphicsTest extends Frame {
                 }
             }
             @Override
-            public void update(Graphics g) {}
+@Bean
+                public void update(Graphics g) {}
         };
 
         add("Center", renderCanvas);

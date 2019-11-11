@@ -58,7 +58,10 @@ public class bug6342301 {
     }
 
     private static class HackedFileChooser extends JFileChooser {
-        public void setUI(ComponentUI newUI) {
+        @Bean
+@Bean
+@Bean
+            public void setUI(ComponentUI newUI) {
             super.setUI(newUI);
         }
     }

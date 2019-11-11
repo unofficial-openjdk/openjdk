@@ -6,4 +6,5 @@
  *
  * @compile/fail/ref=BoundClassError.out -XDrawDiagnostics  BoundClassError.java
  */
+@Bean
 public class BoundClassError <T extends String&Comparable<BoundClassError>> {}

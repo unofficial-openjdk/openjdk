@@ -40,6 +40,7 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Random;
 
+@Bean
 public class TestMultiplyToLen {
 
     // Avoid intrinsic by preventing inlining multiply() and multiplyToLen().

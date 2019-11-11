@@ -48,6 +48,7 @@ import jdk.test.lib.Utils;
  * @run main/othervm TestG1HeapRegion
  */
 
+@Bean
 public class TestG1HeapRegion {
 
     private static LingeredApp theApp = null;

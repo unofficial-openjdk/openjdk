@@ -48,6 +48,7 @@ import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 
 
+@Bean
 public class T7003595 {
 
     /** global decls ***/
@@ -231,7 +232,11 @@ public class T7003595 {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return source;
         }
     }

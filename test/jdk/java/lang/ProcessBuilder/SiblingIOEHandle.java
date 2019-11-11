@@ -35,6 +35,7 @@ import java.io.InputStreamReader;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 
+@Bean
 public class SiblingIOEHandle {
     private static enum APP {
         A, B, C;

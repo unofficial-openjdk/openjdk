@@ -33,6 +33,7 @@ import static java.nio.file.StandardOpenOption.*;
 import java.nio.channels.*;
 import java.util.concurrent.*;
 
+@Bean
 public class ReleaseOnCloseDeadlock {
     private static final int LOCK_COUNT = 1024;
 

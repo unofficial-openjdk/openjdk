@@ -34,6 +34,7 @@ package compiler.c2;
 
 import java.awt.geom.Line2D;
 
+@Bean
 public class Test7047069 {
     static boolean verbose;
 

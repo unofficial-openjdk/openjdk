@@ -44,6 +44,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+@Bean
 public class DelegatingIteratorForEachRemaining {
 
     static abstract class ForwardingIterator<E> implements Iterator<E> {
@@ -56,7 +57,11 @@ public class DelegatingIteratorForEachRemaining {
         @Override public boolean hasNext() { return delegate.hasNext(); }
         @Override public E next() { return delegate.next(); }
         @Override public void remove() { delegate.remove(); }
-        @Override public void forEachRemaining(Consumer<? super E> action) {
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void forEachRemaining(Consumer<? super E> action) {
             delegate.forEachRemaining(action);
         }
     }
@@ -67,7 +72,11 @@ public class DelegatingIteratorForEachRemaining {
         }
 
         @Override
-        public void forEachRemaining(Consumer<? super E> action) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void forEachRemaining(Consumer<? super E> action) {
             throw new UnsupportedOperationException();
         }
     }
@@ -81,24 +90,64 @@ public class DelegatingIteratorForEachRemaining {
 
         @Override public int size() { return delegate.size(); }
         @Override public boolean isEmpty() { return delegate.isEmpty(); }
-        @Override public boolean contains(Object o) { return delegate.contains(o); }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public boolean contains(Object o) { return delegate.contains(o); }
         @Override public Iterator<E> iterator() { return delegate.iterator(); }
         @Override public Object[] toArray() { return delegate.toArray(); }
         @Override public <T> T[] toArray( T[] ts) { return delegate.toArray(ts); }
-        @Override public boolean add(E e) { return delegate.add(e); }
-        @Override public boolean remove(Object o) { return delegate.remove(o); }
-        @Override public boolean containsAll( Collection<?> c) { return delegate.containsAll(c); }
-        @Override public boolean addAll( Collection<? extends E> c) { return delegate.addAll(c); }
-        @Override public boolean retainAll( Collection<?> c) { return delegate.retainAll(c); }
-        @Override public boolean removeAll( Collection<?> c) { return delegate.removeAll(c); }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public boolean add(E e) { return delegate.add(e); }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public boolean remove(Object o) { return delegate.remove(o); }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public boolean containsAll( Collection<?> c) { return delegate.containsAll(c); }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public boolean addAll( Collection<? extends E> c) { return delegate.addAll(c); }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public boolean retainAll( Collection<?> c) { return delegate.retainAll(c); }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public boolean removeAll( Collection<?> c) { return delegate.removeAll(c); }
         @Override public void clear() { delegate.clear(); }
-        @Override public boolean equals(Object o) { return delegate.equals(o); }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) { return delegate.equals(o); }
         @Override public int hashCode() { return delegate.hashCode(); }
         @Override public Spliterator<E> spliterator() { return delegate.spliterator(); }
-        @Override public boolean removeIf(Predicate<? super E> filter) { return delegate.removeIf(filter); }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public boolean removeIf(Predicate<? super E> filter) { return delegate.removeIf(filter); }
         @Override public Stream<E> stream() { return delegate.stream(); }
         @Override public Stream<E> parallelStream() { return delegate.parallelStream(); }
-        @Override public void forEach(Consumer<? super E> action) { delegate.forEach(action); }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void forEach(Consumer<? super E> action) { delegate.forEach(action); }
     }
 
     static class ThrowingSet<E> extends ForwardingSet<E> {
@@ -121,29 +170,101 @@ public class DelegatingIteratorForEachRemaining {
 
         @Override public int size() { return delegate.size(); }
         @Override public boolean isEmpty() { return delegate.isEmpty(); }
-        @Override public boolean containsKey(Object o) { return delegate.containsKey(o); }
-        @Override public boolean containsValue(Object o) { return delegate.containsValue(o); }
-        @Override public V get(Object o) { return delegate.get(o); }
-        @Override public V put(K k, V v) { return delegate.put(k, v); }
-        @Override public V remove(Object o) { return delegate.remove(o); }
-        @Override public void putAll(Map<? extends K, ? extends V> map) { delegate.putAll(map); }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public boolean containsKey(Object o) { return delegate.containsKey(o); }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public boolean containsValue(Object o) { return delegate.containsValue(o); }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public V get(Object o) { return delegate.get(o); }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public V put(K k, V v) { return delegate.put(k, v); }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public V remove(Object o) { return delegate.remove(o); }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void putAll(Map<? extends K, ? extends V> map) { delegate.putAll(map); }
         @Override public void clear() { delegate.clear(); }
         @Override public Set<K> keySet() { return delegate.keySet(); }
         @Override public Collection<V> values() { return delegate.values(); }
         @Override public Set<Entry<K, V>> entrySet() { return delegate.entrySet(); }
-        @Override public boolean equals(Object o) { return delegate.equals(o); }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) { return delegate.equals(o); }
         @Override public int hashCode() { return delegate.hashCode(); }
-        @Override public V getOrDefault(Object key, V defaultValue) { return delegate.getOrDefault(key, defaultValue); }
-        @Override public void forEach(BiConsumer<? super K, ? super V> action) { delegate.forEach(action); }
-        @Override public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) { delegate.replaceAll(function); }
-        @Override public V putIfAbsent(K key, V value) { return delegate.putIfAbsent(key, value); }
-        @Override public boolean remove(Object key, Object value) { return delegate.remove(key, value); }
-        @Override public boolean replace(K key, V oldValue, V newValue) { return delegate.replace(key, oldValue, newValue); }
-        @Override public V replace(K key, V value) { return delegate.replace(key, value); }
-        @Override public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) { return delegate.computeIfAbsent(key, mappingFunction); }
-        @Override public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) { return delegate.computeIfPresent(key, remappingFunction); }
-        @Override public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) { return delegate.compute(key, remappingFunction); }
-        @Override public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) { return delegate.merge(key, value, remappingFunction); }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public V getOrDefault(Object key, V defaultValue) { return delegate.getOrDefault(key, defaultValue); }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void forEach(BiConsumer<? super K, ? super V> action) { delegate.forEach(action); }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) { delegate.replaceAll(function); }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public V putIfAbsent(K key, V value) { return delegate.putIfAbsent(key, value); }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public boolean remove(Object key, Object value) { return delegate.remove(key, value); }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public boolean replace(K key, V oldValue, V newValue) { return delegate.replace(key, oldValue, newValue); }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public V replace(K key, V value) { return delegate.replace(key, value); }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) { return delegate.computeIfAbsent(key, mappingFunction); }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) { return delegate.computeIfPresent(key, remappingFunction); }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) { return delegate.compute(key, remappingFunction); }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) { return delegate.merge(key, value, remappingFunction); }
     }
 
     static class ThrowingMap<K, V> extends ForwardingMap<K, V> {

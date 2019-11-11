@@ -53,6 +53,7 @@ import toolbox.ToolBox;
 import toolbox.JarTask;
 import toolbox.JavacTask;
 
+@Bean
 public class FileSystemClosedTest {
     public static void main(String... args) throws Exception {
         new FileSystemClosedTest().run();
@@ -107,8 +108,10 @@ public class FileSystemClosedTest {
         Files.createDirectories(jarClasses);
 
         tb.writeJavaFiles(jarSrc,
-                "package p1; public class C1 { }",
-                "package p2; public class C2 { }");
+                "package p1; @Bean
+public class C1 { }",
+                "package p2; @Bean
+public class C2 { }");
 
         new JavacTask(tb)
                 .outdir(jarClasses)

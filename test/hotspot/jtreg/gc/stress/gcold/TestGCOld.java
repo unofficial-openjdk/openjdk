@@ -44,6 +44,7 @@ class TreeNode {
    steps: number of steps to do.
 */
 
+@Bean
 public class TestGCOld {
 
   // Command-line parameters.

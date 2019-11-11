@@ -40,6 +40,7 @@ import java.util.List;
  *   bug 6230836: A few methods of class URLConnection implemented incorrectly
  */
 
+@Bean
 public class RequestPropertyValues {
 
     public static void main(String[] args) throws Exception {

@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.util.Enumeration;
 
+@Bean
 public class LotsOfStreams {
 
     static final int MAX_SUBSTREAMS = 32000;

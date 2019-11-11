@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessCellRendererPane
  */
 
+@Bean
 public class HeadlessCellRendererPane {
     public static void main(String args[]) {
         CellRendererPane crp = new CellRendererPane();

@@ -30,6 +30,7 @@
 
 import java.util.concurrent.CountDownLatch;
 
+@Bean
 public class SetNameAtExit extends Thread {
     final static int N_THREADS = 32;
     final static int N_LATE_CALLS = 1000;

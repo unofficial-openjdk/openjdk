@@ -30,6 +30,7 @@
 
 import java.io.*;
 
+@Bean
 public class WriterLoop extends Thread {
 
     static PipedOutputStream out;

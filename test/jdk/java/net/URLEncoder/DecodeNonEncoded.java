@@ -33,6 +33,7 @@
 
 import java.net.URLDecoder;
 
+@Bean
 public class DecodeNonEncoded {
 
     static String[] errorStrings

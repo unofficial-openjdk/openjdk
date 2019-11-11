@@ -30,11 +30,16 @@
 import java.awt.*;
 import java.awt.geom.*;
 
+@Bean
 public class LCDTextAndGraphicsState extends Component {
 
     String text = "This test passes only if this text appears SIX TIMES";
 
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(Graphics g) {
 
         Graphics2D g2d = (Graphics2D)g.create();
         g2d.setColor(Color.white);

@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessJPopupMenu_Separator
  */
 
+@Bean
 public class HeadlessJPopupMenu_Separator {
     public static void main(String args[]) {
         JPopupMenu.Separator s = new JPopupMenu.Separator();

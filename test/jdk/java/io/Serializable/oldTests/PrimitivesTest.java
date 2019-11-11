@@ -35,7 +35,10 @@ public class PrimitivesTest implements java.io.Serializable {
     transient int trans = 89;
     PrimitivesTest self = this;
 
-    public boolean equals(PrimitivesTest other) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(PrimitivesTest other) {
         if (b != other.b ||
             c != other.c ||
             f != other.f ||

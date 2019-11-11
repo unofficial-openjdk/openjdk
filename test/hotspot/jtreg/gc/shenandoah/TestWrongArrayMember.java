@@ -30,6 +30,7 @@
  * @run main/othervm -Xmx128m -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ShenandoahGCMode=traversal TestWrongArrayMember
  */
 
+@Bean
 public class TestWrongArrayMember {
     public static void main(String... args) throws Exception {
         Object[] src = new Object[3];

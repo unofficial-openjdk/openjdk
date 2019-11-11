@@ -40,6 +40,7 @@ import javax.swing.JColorChooser;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 
+@Bean
 public class Test4759934 extends JApplet implements ActionListener {
     private static final String CMD_DIALOG = "Show Dialog"; // NON-NLS: first button
     private static final String CMD_CHOOSER = "Show ColorChooser"; // NON-NLS: second button
@@ -50,7 +51,11 @@ public class Test4759934 extends JApplet implements ActionListener {
         show(this.frame, CMD_DIALOG);
     }
 
-    public void actionPerformed(ActionEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
         if (CMD_DIALOG.equals(command)) {
             JDialog dialog = new JDialog(this.frame, "Dialog"); // NON-NLS: dialog title
@@ -67,7 +72,11 @@ public class Test4759934 extends JApplet implements ActionListener {
         }
     }
 
-    private void show(Window window, String command) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void show(Window window, String command) {
         JButton button = new JButton(command);
         button.setActionCommand(command);
         button.addActionListener(this);

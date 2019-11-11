@@ -37,6 +37,7 @@ import java.beans.Introspector;
 import java.beans.Beans;
 import java.beans.PropertyEditorManager;
 
+@Bean
 public class Test4080522 {
     public static void main(String[] args) {
         OurSecurityManager sm = new OurSecurityManager();

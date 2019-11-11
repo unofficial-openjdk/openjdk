@@ -39,6 +39,7 @@ import javax.management.*;
 import javax.management.openmbean.*;
 import static javax.management.MBeanOperationInfo.ACTION;
 
+@Bean
 public class OpenTypeDescriptorTest {
     public static void main(String[] args) throws Exception {
         Descriptor constraints =

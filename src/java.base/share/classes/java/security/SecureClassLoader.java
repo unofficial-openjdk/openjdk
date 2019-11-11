@@ -41,6 +41,7 @@ import sun.security.util.Debug;
  * @author  Roland Schemers
  * @since 1.2
  */
+@Bean
 public class SecureClassLoader extends ClassLoader {
 
     /*
@@ -210,7 +211,8 @@ public class SecureClassLoader extends ClassLoader {
     /*
      * Returned cached ProtectionDomain for the specified CodeSource.
      */
-    private ProtectionDomain getProtectionDomain(CodeSource cs) {
+@Bean
+        private ProtectionDomain getProtectionDomain(CodeSource cs) {
         if (cs == null) {
             return null;
         }
@@ -222,7 +224,8 @@ public class SecureClassLoader extends ClassLoader {
         CodeSourceKey key = new CodeSourceKey(cs);
         return pdcache.computeIfAbsent(key, new Function<>() {
             @Override
-            public ProtectionDomain apply(CodeSourceKey key /* not used */) {
+@Bean
+                public ProtectionDomain apply(CodeSourceKey key /* not used */) {
                 PermissionCollection perms
                         = SecureClassLoader.this.getPermissions(cs);
                 ProtectionDomain pd = new ProtectionDomain(
@@ -250,7 +253,8 @@ public class SecureClassLoader extends ClassLoader {
         }
 
         @Override
-        public boolean equals(Object obj) {
+@Bean
+            public boolean equals(Object obj) {
             if (obj == this) {
                 return true;
             }

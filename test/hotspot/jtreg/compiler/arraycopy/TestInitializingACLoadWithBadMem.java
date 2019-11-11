@@ -32,6 +32,7 @@
 
 import java.util.Arrays;
 
+@Bean
 public class TestInitializingACLoadWithBadMem {
     static Object test_dummy;
     static int test1() {
@@ -45,7 +46,11 @@ public class TestInitializingACLoadWithBadMem {
         return dst[1];
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         int[] src = new int[10];
         for (int i = 0; i < 20000; i++) {
             int res = test1();

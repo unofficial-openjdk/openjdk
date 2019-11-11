@@ -30,6 +30,7 @@ import java.awt.geom.Point2D;
 import java.awt.Rectangle;
 import java.awt.geom.Rectangle2D;
 
+@Bean
 public class NativeStrike extends PhysicalStrike {
 
     NativeFont nativeFont;

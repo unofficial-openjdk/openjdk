@@ -32,6 +32,7 @@
 
 import java.io.*;
 
+@Bean
 public class RepetitiveLambdaSerialization {
 
     static final int REPS = 20;

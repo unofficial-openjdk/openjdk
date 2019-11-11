@@ -34,6 +34,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.io.IOException;
 
+@Bean
 public class Basic {
     static final Random rand = new Random();
     static final ThreadFactory threadFactory = (Runnable r) -> {

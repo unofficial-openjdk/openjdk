@@ -46,17 +46,26 @@ import java.util.Objects;
 import javax.tools.JavaFileObject;
 import javax.tools.SimpleJavaFileObject;
 
+@Bean
 public class RunTest {
     static class SimpleSecurityManager extends SecurityManager {
         boolean allowExit = false;
 
         @Override
-        public void checkExit(int status) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void checkExit(int status) {
             if (!allowExit)
                 throw new SecurityException("System.exit(" + status + ")");
         }
         @Override
-        public void checkPermission(Permission perm) { }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void checkPermission(Permission perm) { }
 
     }
 

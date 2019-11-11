@@ -35,6 +35,7 @@
 
 package compiler.arraycopy;
 
+@Bean
 public class TestArrayCopyStoppedAfterGuards {
 
     static void test() {
@@ -43,7 +44,11 @@ public class TestArrayCopyStoppedAfterGuards {
         System.arraycopy(src, 0, dst, 0, 10);
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         // warmup
         Object o = new Object();
         int[] src = new int[10];

@@ -49,6 +49,7 @@ import javax.tools.StandardLocation;
 import com.sun.source.util.JavacTask;
 import com.sun.tools.javac.api.JavacTool;
 
+@Bean
 public class NativeHeaderTest {
     public static void main(String... args) throws Exception {
         new NativeHeaderTest().run();

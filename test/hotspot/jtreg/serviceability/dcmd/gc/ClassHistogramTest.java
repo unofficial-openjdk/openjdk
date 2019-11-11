@@ -50,7 +50,11 @@ public class ClassHistogramTest {
         }
     }
 
-    public void run(CommandExecutor executor) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void run(CommandExecutor executor) {
         OutputAnalyzer output = executor.execute("GC.class_histogram " + classHistogramArgs);
 
         /*

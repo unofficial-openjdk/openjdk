@@ -40,6 +40,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
+@Bean
 public class GetModuleTest {
 
     private static final Unsafe U = Unsafe.getUnsafe();
@@ -74,7 +75,11 @@ public class GetModuleTest {
     }
 
     @Test(dataProvider = "testclasses")
-    public void testGetModule(Class<?> type, String expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testGetModule(Class<?> type, String expected) {
         Module m = type.getModule();
         assertNotNull(m);
         if (expected == null) {
@@ -100,7 +105,11 @@ public class GetModuleTest {
      * Exercise Class::getModule on VM anonymous classes
      */
     @Test(dataProvider = "hostclasses")
-    public void testGetModuleOnVMAnonymousClass(Class<?> hostClass, String ignore) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testGetModuleOnVMAnonymousClass(Class<?> hostClass, String ignore) {
 
         // choose a class name in the same package as the host class
         String prefix = hostClass.getPackageName();

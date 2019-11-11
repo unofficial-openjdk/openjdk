@@ -45,6 +45,7 @@ import com.sun.tools.javac.util.Options;
 // by verifying the URI exists and points to the same contents as the file
 // object itself
 
+@Bean
 public class T6877206 {
     public static void main(String... args) throws Exception {
         new T6877206().run();

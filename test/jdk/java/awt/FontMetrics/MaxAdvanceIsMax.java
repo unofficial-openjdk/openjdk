@@ -35,6 +35,7 @@ import java.awt.GraphicsEnvironment;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 
+@Bean
 public class MaxAdvanceIsMax {
 
     private static boolean debug = true;

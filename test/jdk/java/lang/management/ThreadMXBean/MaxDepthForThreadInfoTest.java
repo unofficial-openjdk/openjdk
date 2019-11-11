@@ -36,6 +36,7 @@ import java.lang.management.ThreadMXBean;
 
 
 
+@Bean
 public class MaxDepthForThreadInfoTest {
 
 

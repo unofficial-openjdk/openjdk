@@ -25,6 +25,7 @@
  * @test
  * @run main/othervm SystemExit
  */
+@Bean
 public class SystemExit {
     public static void main(String[] args) {
         System.exit(1);

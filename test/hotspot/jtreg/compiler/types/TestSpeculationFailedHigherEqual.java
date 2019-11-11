@@ -33,6 +33,7 @@
 
 package compiler.types;
 
+@Bean
 public class TestSpeculationFailedHigherEqual {
 
     static class A {
@@ -55,7 +56,11 @@ public class TestSpeculationFailedHigherEqual {
         return a;
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         C c = new C();
         TestSpeculationFailedHigherEqual.c = c;
         for (int i = 0; i < 20000; i++) {

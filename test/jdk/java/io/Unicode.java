@@ -37,6 +37,7 @@
 import java.io.ByteArrayOutputStream;
 
 
+@Bean
 public class Unicode {
 
     static final int BOM_HIGH = 0xfe;

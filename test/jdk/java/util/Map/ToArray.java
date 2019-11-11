@@ -31,6 +31,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
+@Bean
 public class ToArray {
 
     /**
@@ -100,6 +101,10 @@ public class ToArray {
         // check the entries
         Map.Entry<Integer,Long>[] entries = map.entrySet().toArray(new Map.Entry[TEST_SIZE]);
         Arrays.sort( entries,new Comparator<Map.Entry<Integer,Long>>() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public int compare(Map.Entry<Integer,Long> o1, Map.Entry<Integer,Long> o2) {
                         return o1.getKey().compareTo(o2.getKey());
                 }});

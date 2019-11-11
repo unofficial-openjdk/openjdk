@@ -34,6 +34,7 @@ import java.awt.image.*;
 import java.awt.geom.*;
 import java.awt.color.*;
 
+@Bean
 public class FillPPathTest {
     static final int IMG_WIDTH = 100;
     static final int IMG_HEIGHT = 100;

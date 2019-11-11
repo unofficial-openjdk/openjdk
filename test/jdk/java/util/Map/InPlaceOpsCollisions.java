@@ -38,6 +38,7 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 
+@Bean
 public class InPlaceOpsCollisions extends MapWithCollisionsProviders {
 
     @Test(dataProvider = "mapsWithObjectsAndStrings")

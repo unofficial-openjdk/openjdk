@@ -39,6 +39,7 @@ import jdk.test.lib.jfr.SimpleEventHelper;
  * @library /test/lib /test/jdk
  * @run main/othervm jdk.jfr.jmx.TestCopyToInvalidPath
  */
+@Bean
 public class TestCopyToInvalidPath {
     public static void main(String[] args) throws Throwable {
         FlightRecorderMXBean bean = JmxHelper.getFlighteRecorderMXBean();

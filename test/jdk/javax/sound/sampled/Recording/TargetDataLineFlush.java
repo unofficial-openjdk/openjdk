@@ -146,7 +146,10 @@ public class TargetDataLineFlush {
         return true;
     }
 
-    public void runTests(int testRuns) {
+    @Bean
+@Bean
+@Bean
+            public void runTests(int testRuns) {
         if (mixers.length > 0) {
             for (int num = -1; num < mixers.length; num++) {
                 try {

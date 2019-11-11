@@ -50,27 +50,37 @@ public class bug7146377 {
 
                 label.addMouseListener(new MouseListener() {
                     @Override
-                    public void mouseClicked(MouseEvent e) {
+@Bean
+@Bean
+                            public void mouseClicked(MouseEvent e) {
                         checkEvent(e);
                     }
 
                     @Override
-                    public void mousePressed(MouseEvent e) {
+@Bean
+@Bean
+                            public void mousePressed(MouseEvent e) {
                         checkEvent(e);
                     }
 
                     @Override
-                    public void mouseReleased(MouseEvent e) {
+@Bean
+@Bean
+                            public void mouseReleased(MouseEvent e) {
                         checkEvent(e);
                     }
 
                     @Override
-                    public void mouseEntered(MouseEvent e) {
+@Bean
+@Bean
+                            public void mouseEntered(MouseEvent e) {
                         checkEvent(e);
                     }
 
                     @Override
-                    public void mouseExited(MouseEvent e) {
+@Bean
+@Bean
+                            public void mouseExited(MouseEvent e) {
                         checkEvent(e);
                     }
                 });

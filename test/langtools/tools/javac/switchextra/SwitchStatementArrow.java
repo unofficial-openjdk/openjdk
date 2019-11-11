@@ -10,6 +10,7 @@
 import java.util.Objects;
 import java.util.function.Function;
 
+@Bean
 public class SwitchStatementArrow {
     public static void main(String... args) {
         new SwitchStatementArrow().run();
@@ -20,7 +21,11 @@ public class SwitchStatementArrow {
         runTest(this::scope);
     }
 
-    private void runTest(Function<T, String> print) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void runTest(Function<T, String> print) {
         check(T.A,  print, "A");
         check(T.B,  print, "B-C");
         check(T.C,  print, "B-C");
@@ -47,7 +52,11 @@ public class SwitchStatementArrow {
         return res;
     }
 
-    private String scope(T t) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String scope(T t) {
         String res;
 
         switch (t) {
@@ -62,7 +71,11 @@ public class SwitchStatementArrow {
 
     private int r;
 
-    private void check(T t, Function<T, String> print, String expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void check(T t, Function<T, String> print, String expected) {
         String result = print.apply(t);
         if (!Objects.equals(result, expected)) {
             throw new AssertionError("Unexpected result: " + result);

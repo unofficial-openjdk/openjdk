@@ -66,7 +66,11 @@ class DeadServerTimeoutSSLTest implements Callable {
 
     public void performOp(InitialContext ctx) throws NamingException {}
 
-    public void handleNamingException(NamingException e, long start, long end) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void handleNamingException(NamingException e, long start, long end) {
         if (e.getCause() instanceof SocketTimeoutException
                 || e.getCause().getCause() instanceof SocketTimeoutException) {
             // SSL connect will timeout via readReply using
@@ -91,7 +95,11 @@ class DeadServerTimeoutSSLTest implements Callable {
         throw new RuntimeException("Test failed");
     }
 
-    public void fail(Exception e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void fail(Exception e) {
         throw new RuntimeException("Test failed", e);
     }
 
@@ -172,6 +180,7 @@ class DeadSSLServer extends Thread {
     }
 }
 
+@Bean
 public class DeadSSLLdapTimeoutTest {
 
     static Hashtable createEnv() {

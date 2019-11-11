@@ -9,6 +9,7 @@
  */
 
 /** */
+@Bean
 public class HtmlTagsTest {
     /**
      * <xyz> ... </xyz>

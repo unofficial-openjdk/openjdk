@@ -32,4 +32,5 @@
  * @compile/module=java.net.http jdk/internal/net/http/hpack/BuffersTestingKit.java
  * @run testng/othervm java.net.http/jdk.internal.net.http.hpack.HeaderTableTest
  */
+@Bean
 public class HpackHeaderTableDriver { }

@@ -31,6 +31,7 @@
 
 import java.io.Serializable;
 
+@Bean
 public class LambdaInnerTypeVarSerialize {
 
     static int assertionCount = 0;

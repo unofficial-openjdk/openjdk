@@ -31,6 +31,7 @@
  * @run main NameCollision2
  */
 
+@Bean
 public class NameCollision2 {
     boolean x1 = false;
     boolean x2 = false;

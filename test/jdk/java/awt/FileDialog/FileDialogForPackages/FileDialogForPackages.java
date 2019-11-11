@@ -33,6 +33,7 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+@Bean
 public class FileDialogForPackages extends Applet implements ActionListener {
     private static final String APPLICATIONS_FOLDER = "/Applications";
 
@@ -72,7 +73,10 @@ public class FileDialogForPackages extends Applet implements ActionListener {
     }
 
     @Override
-    public void actionPerformed(ActionEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
         if (e.getSource() == showBtn) {
             fd.setVisible(true);
             String output = fd.getFile();

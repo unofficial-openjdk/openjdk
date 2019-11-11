@@ -40,6 +40,7 @@ import jdk.test.lib.process.OutputAnalyzer;
  * @library /test/lib /test/jdk
  * @run main/othervm jdk.jfr.tool.TestPrint
  */
+@Bean
 public class TestPrint {
 
     public static void main(String[] args) throws Throwable {

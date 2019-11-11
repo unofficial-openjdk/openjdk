@@ -44,6 +44,7 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class SubpackageTest extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {
@@ -55,7 +56,8 @@ public class SubpackageTest extends ModuleTestBase {
     public void testUnnamedModule(Path base) throws Exception {
         Path libsrc = base.resolve("lib/src");
         tb.writeJavaFiles(libsrc,
-            "package p; public class E extends Error { }");
+            "package p; @Bean
+public class E extends Error { }");
         Path libclasses = base.resolve("lib/classes");
         Files.createDirectories(libclasses);
         new JavacTask(tb)
@@ -87,13 +89,16 @@ public class SubpackageTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src.resolve("mp"),
                 "module mp { exports p; }",
-                "package p; public class C1 { }");
+                "package p; @Bean
+public class C1 { }");
         tb.writeJavaFiles(src.resolve("mpq"),
                 "module mpq { exports p.q; }",
-                "package p.q; public class C2 { }");
+                "package p.q; @Bean
+public class C2 { }");
         tb.writeJavaFiles(src.resolve("mpqr"),
                 "module mpqr { exports p.q.r; }",
-                "package p.q.r; public class C3 { }");
+                "package p.q.r; @Bean
+public class C3 { }");
         tb.writeJavaFiles(src.resolve("m"),
                 "module m {"
                 + "  requires mp;\n"

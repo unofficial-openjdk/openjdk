@@ -171,7 +171,10 @@ public class DragWindowTest {
         }
 
         @Override
-        public void mousePressed(MouseEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void mousePressed(MouseEvent e) {
             if (dragWindow == null) {
                 dragWindow = new MyDragWindow(parent, getAbsoluteLocation(e));
             } else {
@@ -181,14 +184,20 @@ public class DragWindowTest {
         }
 
         @Override
-        public void mouseReleased(MouseEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void mouseReleased(MouseEvent e) {
             labelMouseReleasedCount++;
             if (dragWindow != null) {
                 dragWindow.setVisible(false);
             }
         }
 
-        public void mouseDragged(MouseEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void mouseDragged(MouseEvent e) {
             if (dragWindow != null) {
                 dragWindow.dragTo(getAbsoluteLocation(e));
             }
@@ -198,12 +207,18 @@ public class DragWindowTest {
     static class DragWindowMouseListener extends MouseAdapter {
 
         @Override
-        public void mouseEntered(MouseEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void mouseEntered(MouseEvent e) {
             dragWindowMouseEnteredCount++;
         }
 
         @Override
-        public void mouseReleased(MouseEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void mouseReleased(MouseEvent e) {
             dragWindowMouseReleasedCount++;
         }
     }
@@ -211,7 +226,10 @@ public class DragWindowTest {
     static class ButtonMouseListener extends MouseAdapter {
 
         @Override
-        public void mouseEntered(MouseEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void mouseEntered(MouseEvent e) {
             buttonMouseEnteredCount++;
         }
     }

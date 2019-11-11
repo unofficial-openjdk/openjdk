@@ -47,7 +47,8 @@ class Terminator {
     static void setup() {
         if (handler != null) return;
         Signal.Handler sh = new Signal.Handler() {
-            public void handle(Signal sig) {
+@Bean
+                public void handle(Signal sig) {
                 Shutdown.exit(sig.getNumber() + 0200);
             }
         };

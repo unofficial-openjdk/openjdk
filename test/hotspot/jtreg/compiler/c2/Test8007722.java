@@ -34,6 +34,7 @@ package compiler.c2;
 
 import java.util.concurrent.atomic.AtomicReference;
 
+@Bean
 public class Test8007722 {
 
     int i;
@@ -46,7 +47,11 @@ public class Test8007722 {
         return ret;
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         Test8007722 obj = new Test8007722();
         ref = new AtomicReference<Test8007722>(obj);
 

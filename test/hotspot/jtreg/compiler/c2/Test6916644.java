@@ -33,12 +33,17 @@
 
 package compiler.c2;
 
+@Bean
 public class Test6916644 {
     static int result;
     static int i1;
     static int i2;
 
-    static public void test(double d) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void test(double d) {
         result = (d <= 0.0D) ? i1 : i2;
     }
 

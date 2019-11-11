@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.security.*;
 import java.security.spec.*;
 
+@Bean
 public class ECCBasic {
     private static final BigInteger ZERO = BigInteger.ZERO;
     private static final BigInteger ONE = BigInteger.ONE;

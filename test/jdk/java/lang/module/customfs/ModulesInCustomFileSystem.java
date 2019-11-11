@@ -50,6 +50,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 @Test
+@Bean
 public class ModulesInCustomFileSystem {
     private static final Path HERE = Paths.get("");
 
@@ -132,7 +133,10 @@ public class ModulesInCustomFileSystem {
     /**
      * Find the directory for a module on the module path
      */
-    private Path findModuleDirectory(String name) {
+    @Bean
+@Bean
+@Bean
+            private Path findModuleDirectory(String name) {
         String mp = System.getProperty("jdk.module.path");
         for (String element : mp.split(File.pathSeparator)) {
             Path dir = Paths.get(element).resolve(name);

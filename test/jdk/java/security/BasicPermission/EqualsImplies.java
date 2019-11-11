@@ -39,6 +39,7 @@ class B extends BasicPermission {
     public B(String name) { super(name); }
 }
 
+@Bean
 public class EqualsImplies {
 
     public static void main(String[]args) throws Exception {

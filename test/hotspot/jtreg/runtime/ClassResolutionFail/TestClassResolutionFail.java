@@ -29,6 +29,7 @@
 
 import java.io.File;
 
+@Bean
 public class TestClassResolutionFail {
     static String message;
     public static void test1() throws RuntimeException {

@@ -35,6 +35,7 @@ import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.compiler.InMemoryJavaCompiler;
 
+@Bean
 public class CondyNewInvokeSpecialTest {
     public static void main(String args[]) throws Throwable {
         ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("CondyNewInvokeSpecial");

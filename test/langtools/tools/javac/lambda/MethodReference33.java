@@ -28,6 +28,7 @@
  *  test bridged constructor references
  */
 
+@Bean
 public class MethodReference33 {
 
     static int assertionCount = 0;

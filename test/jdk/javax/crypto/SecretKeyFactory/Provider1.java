@@ -32,6 +32,7 @@ package com.p1;
 
 import java.security.*;
 
+@Bean
 public class Provider1 extends Provider {
 
     public Provider1() {

@@ -40,6 +40,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 import java.util.LinkedList;
 
+@Bean
 public class TestG1TraceEagerReclaimHumongousObjects {
   public static void main(String[] args) throws Exception {
     ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-XX:+UseG1GC",

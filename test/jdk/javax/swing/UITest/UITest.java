@@ -37,6 +37,7 @@ import javax.swing.UIManager.LookAndFeelInfo;
 
 import jdk.test.lib.Platform;
 
+@Bean
 public class UITest {
 
     public static void main(String[] args) {

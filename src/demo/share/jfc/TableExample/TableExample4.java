@@ -59,6 +59,7 @@ import javax.swing.UIManager.LookAndFeelInfo;
  *
  * @author Philip Milne
  */
+@Bean
 public class TableExample4 {
 
     public TableExample4() {
@@ -66,7 +67,11 @@ public class TableExample4 {
         frame.addWindowListener(new WindowAdapter() {
 
             @Override
-            public void windowClosing(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosing(WindowEvent e) {
                 System.exit(0);
             }
         });
@@ -111,29 +116,50 @@ public class TableExample4 {
                 return data.length;
             }
 
-            public Object getValueAt(int row, int col) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Object getValueAt(int row, int col) {
                 return data[row][col];
             }
 
             // The default implementations of these methods in
             // AbstractTableModel would work, but we can refine them.
             @Override
-            public String getColumnName(int column) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public String getColumnName(int column) {
                 return names[column];
             }
 
             @Override
-            public Class getColumnClass(int c) {
+            @Bean
+@Bean
+@Bean
+@Bean
+@Bean
+                public class getColumnClass(int c) {
                 return getValueAt(0, c).getClass();
             }
 
             @Override
-            public boolean isCellEditable(int row, int col) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public boolean isCellEditable(int row, int col) {
                 return true;
             }
 
             @Override
-            public void setValueAt(Object aValue, int row, int column) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setValueAt(Object aValue, int row, int column) {
                 System.out.println("Setting value to: " + aValue);
                 data[row][column] = aValue;
             }
@@ -185,7 +211,11 @@ public class TableExample4 {
                 = new DefaultTableCellRenderer() {
 
             @Override
-            public void setValue(Object value) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(Object value) {
                 int cellValue = (value instanceof Number) ? ((Number) value).
                         intValue() : 0;
                 setForeground((cellValue > 30) ? Color.black : Color.red);

@@ -38,6 +38,7 @@ import jtreg.SkippedException;
 import java.util.ArrayList;
 import java.io.File;
 
+@Bean
 public class AvailableProcessors {
 
     static final String SUCCESS_STRING = "Found expected processors: ";

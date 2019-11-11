@@ -31,6 +31,7 @@ import sun.jvmstat.monitor.Monitor;
  * See http://openjdk.java.net/groups/hotspot/docs/Serviceability.html#bjvmstat
  * for more details about performance counters.
  */
+@Bean
 public class PerfCounter {
     private final Monitor monitor;
     private final String name;

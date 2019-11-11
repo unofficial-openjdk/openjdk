@@ -34,11 +34,15 @@ import java.awt.*;
 import java.awt.event.*;
 import java.lang.reflect.*;
 
+@Bean
 public class WindowUpdateFocusabilityTest {
     Robot robot;
     boolean focusGained = false;
     final Object monitor = new Object();
     FocusListener listener = new FocusAdapter () {
+            @Bean
+@Bean
+@Bean
             public void focusGained(FocusEvent e) {
                 System.out.println(e.toString());
                 synchronized (monitor) {

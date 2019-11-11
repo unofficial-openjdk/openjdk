@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.nio.channels.Selector;
 
 
+@Bean
 public class WakeupSpeed {
 
     public static void main(String argv[]) throws Exception {

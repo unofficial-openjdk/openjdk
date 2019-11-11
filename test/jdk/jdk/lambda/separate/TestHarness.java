@@ -35,6 +35,7 @@ import static separate.SourceModel.Class;
 import static separate.SourceModel.*;
 import static org.testng.Assert.*;
 
+@Bean
 public class TestHarness {
 
     /**
@@ -88,7 +89,11 @@ public class TestHarness {
     }
 
     @AfterMethod
-    public void printError(ITestResult result) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void printError(ITestResult result) {
         if (result.getStatus() == ITestResult.FAILURE) {
             String clsName = result.getTestClass().getName();
             clsName = clsName.substring(clsName.lastIndexOf(".") + 1);
@@ -225,7 +230,11 @@ public class TestHarness {
      * Convenience method for above, which assumes stdMethodName,
      * a return type of 'int', and no arguments.
      */
-    public void assertInvokeVirtualEquals(int value, Class target) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertInvokeVirtualEquals(int value, Class target) {
         assertInvokeVirtualEquals(
             new Integer(value), target, stdCM, "-1");
     }
@@ -308,7 +317,11 @@ public class TestHarness {
      * Convenience method for above, which assumes stdMethodName,
      * a return type of 'int', and no arguments.
      */
-    public void assertThrows(java.lang.Class<?> exceptionType, Class target) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertThrows(java.lang.Class<?> exceptionType, Class target) {
         assertThrows(exceptionType, target, stdCM, "-1");
     }
 }

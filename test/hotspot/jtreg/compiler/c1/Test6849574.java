@@ -34,6 +34,7 @@ package compiler.c1;
 
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
+@Bean
 public class Test6849574 extends Thread {
 
     public static void main(String[] args) {

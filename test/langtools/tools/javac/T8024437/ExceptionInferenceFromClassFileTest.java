@@ -39,6 +39,7 @@ import java.nio.file.Paths;
 import toolbox.JavacTask;
 import toolbox.ToolBox;
 
+@Bean
 public class ExceptionInferenceFromClassFileTest {
 
     static final String ABSrc =

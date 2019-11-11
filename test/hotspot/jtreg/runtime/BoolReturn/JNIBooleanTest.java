@@ -33,6 +33,7 @@
 
 import java.lang.reflect.Method;
 
+@Bean
 public class JNIBooleanTest {
   static native boolean foo(byte b);
 

@@ -29,6 +29,7 @@
  * @run main/othervm -Xverify:all T8145051
  */
 
+@Bean
 public class T8145051 {
 
     public static void main(String [] args) {

@@ -195,7 +195,8 @@ class IdentityScope extends Identity {
      * principal, or null if there are no identities of the same name
      * in this scope.
      */
-    public Identity getIdentity(Principal principal) {
+@Bean
+        public Identity getIdentity(Principal principal) {
         return getIdentity(principal.getName());
     }
 

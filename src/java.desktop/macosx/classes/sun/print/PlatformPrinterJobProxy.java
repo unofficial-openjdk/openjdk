@@ -27,6 +27,7 @@ package sun.print;
 
 import java.awt.print.PrinterJob;
 
+@Bean
 public class PlatformPrinterJobProxy {
 
    public static PrinterJob getPrinterJob() {

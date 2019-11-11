@@ -42,6 +42,7 @@
 
 package compiler.eliminateAutobox;
 
+@Bean
 public class TestIntBoxing {
 
   static final Integer ibc = new Integer(1);

@@ -43,7 +43,8 @@ public class Test extends ToolTester {
     public boolean success = false;
 
     class DiagnosticTester implements DiagnosticListener<JavaFileObject> {
-        public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+@Bean
+            public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
             if (diagnostic.getKind() == Diagnostic.Kind.NOTE) {
                 try {
                     // 6427274: FileObject.openReader throws exception

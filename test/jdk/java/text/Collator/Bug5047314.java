@@ -30,6 +30,7 @@
 import java.text.Collator;
 import java.util.Locale;
 
+@Bean
 public class Bug5047314 {
 
     private static Collator colLao = Collator.getInstance(new Locale("lo"));

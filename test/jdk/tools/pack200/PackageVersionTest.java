@@ -41,6 +41,7 @@ import java.util.jar.Pack200;
 import java.util.jar.Pack200.Packer;
 import java.util.jar.Pack200.Unpacker;
 
+@Bean
 public class PackageVersionTest {
     private static final File  javaHome = new File(System.getProperty("java.home"));
 
@@ -105,7 +106,8 @@ public class PackageVersionTest {
         try {
             fos = new FileOutputStream(outputFile);
             ps = new PrintStream(fos);
-            ps.format("public class %s {}", name);
+            ps.format("@Bean
+public class %s {}", name);
         } catch (IOException ioe) {
             throw new RuntimeException("creation of test file failed");
         } finally {

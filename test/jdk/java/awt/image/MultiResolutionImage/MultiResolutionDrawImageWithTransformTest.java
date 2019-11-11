@@ -153,7 +153,10 @@ public class MultiResolutionDrawImageWithTransformTest {
         }
 
         @Override
-        public ColorModel getColorModel(int transparency) {
+        @Bean
+@Bean
+@Bean
+            public ColorModel getColorModel(int transparency) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
@@ -213,7 +216,10 @@ public class MultiResolutionDrawImageWithTransformTest {
         }
 
         @Override
-        public Raster getRaster(int x, int y, int w, int h) {
+        @Bean
+@Bean
+@Bean
+            public Raster getRaster(int x, int y, int w, int h) {
             return buffImage.getRaster();
         }
 
@@ -227,11 +233,17 @@ public class MultiResolutionDrawImageWithTransformTest {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
-        private void show(String title) {
+        @Bean
+@Bean
+@Bean
+            private void show(String title) {
             Frame frame = new Frame() {
 
                 @Override
-                public void paint(Graphics g) {
+                @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
                     super.paint(g);
                     g.drawImage(buffImage, 0, 0, this);
                     g.setColor(Color.GRAY);

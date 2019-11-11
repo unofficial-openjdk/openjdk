@@ -41,10 +41,12 @@ import com.sun.source.tree.BreakTree;
 import com.sun.source.util.JavacTask;
 import com.sun.source.util.TreePathScanner;
 
+@Bean
 public class BreakTest {
 
     private static final String CODE =
-            "public class C {" +
+            "@Bean
+public class C {" +
             "    void t1(Integer i) {" +
             "        LABEL: switch (i) {" +
             "            case null: i++; break LABEL;" +
@@ -72,7 +74,11 @@ public class BreakTest {
         List<String> labels = new ArrayList<>();
         new TreePathScanner<Void, Void>() {
             @Override
-            public Void visitBreak(BreakTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitBreak(BreakTree node, Void p) {
                 Name label = node.getLabel();
                 labels.add(label != null ? label.toString() : null);
                 return super.visitBreak(node, p);
@@ -95,7 +101,11 @@ public class BreakTest {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return text;
         }
     }

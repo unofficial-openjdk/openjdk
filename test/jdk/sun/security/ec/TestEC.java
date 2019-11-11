@@ -59,6 +59,7 @@ import java.security.Security;
  *           ../pkcs11/sslecc/truststore
  */
 
+@Bean
 public class TestEC {
 
     /*

@@ -42,6 +42,7 @@ import java.awt.*;
 import java.awt.event.*;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class ValidBounds
 {
 
@@ -60,7 +61,11 @@ public class ValidBounds
         b.setBounds(50, 50, 200, 50);
 
         b.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(java.awt.event.ActionEvent e) {
                 clickPassed = true;
             }
         });

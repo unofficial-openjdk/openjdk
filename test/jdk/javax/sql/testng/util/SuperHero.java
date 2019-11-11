@@ -76,7 +76,10 @@ public class SuperHero implements SQLData, Serializable {
                 + firstYear + " " + secretIdentity + " ]";
     }
 
-    public void setIdentity(String identity) {
+    @Bean
+@Bean
+@Bean
+            public void setIdentity(String identity) {
         secretIdentity = identity;
     }
 
@@ -85,7 +88,10 @@ public class SuperHero implements SQLData, Serializable {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(Object obj) {
         if (this == obj) {
             return true;
         }

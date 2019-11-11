@@ -49,6 +49,7 @@ import tests.Result;
  * @build tests.*
  * @run main/othervm GenerateJLIClassesPluginTest
  */
+@Bean
 public class GenerateJLIClassesPluginTest {
 
     private static Helper helper;

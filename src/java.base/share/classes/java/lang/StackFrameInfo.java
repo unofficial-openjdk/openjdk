@@ -65,7 +65,8 @@ class StackFrameInfo implements StackFrame {
     }
 
     @Override
-    public Class<?> getDeclaringClass() {
+    @Bean
+public class<?> getDeclaringClass() {
         ensureRetainClassRefEnabled();
         return declaringClass();
     }

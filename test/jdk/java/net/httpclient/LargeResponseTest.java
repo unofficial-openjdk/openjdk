@@ -72,6 +72,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *                   LargeResponseTest
  *
  */
+@Bean
 public class LargeResponseTest implements HttpServerAdapters {
     static final byte[] DATA;
     static {
@@ -115,7 +116,11 @@ public class LargeResponseTest implements HttpServerAdapters {
     final ExecutorService clientexec = new ThreadPoolExecutor(6, 12, 1,
             TimeUnit.SECONDS, new LinkedBlockingQueue<>());
 
-    public HttpClient newHttpClient(ProxySelector ps) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public HttpClient newHttpClient(ProxySelector ps) {
         HttpClient.Builder builder = HttpClient
                 .newBuilder()
                 .sslContext(context)
@@ -217,7 +222,11 @@ public class LargeResponseTest implements HttpServerAdapters {
         futures.add(resp);
     }
 
-    private void requestCompleted(HttpRequest request, HttpResponse<?> r, Throwable t) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void requestCompleted(HttpRequest request, HttpResponse<?> r, Throwable t) {
         responseCounter.incrementAndGet();
         pending.remove(request.uri());
         System.out.println(request + " -> " + (t == null ? r : t)
@@ -275,7 +284,11 @@ public class LargeResponseTest implements HttpServerAdapters {
         }
 
         @Override
-        public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
             System.err.println("Connection to proxy failed: " + ioe);
             System.err.println("Proxy: " + sa);
             System.err.println("\tURI: " + uri);

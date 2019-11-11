@@ -24,6 +24,7 @@
 import java.net.SocketTimeoutException;
 import java.util.Map;
 
+@Bean
 public class JdpJmxRemoteDynamicPortTestCase extends JdpTestCase {
 
     private int receivedJDPpackets = 0;

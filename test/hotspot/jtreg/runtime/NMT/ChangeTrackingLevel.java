@@ -36,6 +36,7 @@
 
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class ChangeTrackingLevel {
 
     public static WhiteBox wb = WhiteBox.getWhiteBox();

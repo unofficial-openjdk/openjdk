@@ -30,6 +30,7 @@
 import java.text.*;
 import java.util.*;
 
+@Bean
 public class Bug6513074 {
 
     private static final String[][] source = {

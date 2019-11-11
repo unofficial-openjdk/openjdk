@@ -44,6 +44,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class TimSortStackSize2 {
 
     public static void main(String[] args) {
@@ -143,7 +144,11 @@ public class TimSortStackSize2 {
      * (resulting in X) using only merges on the second-to-last element.
      * @param X  The sum of the sequence that should be added to runs.
      */
-    private void generateJDKWrongElem(long X) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void generateJDKWrongElem(long X) {
         for(long newTotal; X >= 2 * minRun + 1; X = newTotal) {
             //Default strategy
             newTotal = X / 2 + 1;

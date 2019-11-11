@@ -30,6 +30,7 @@
  * @compile DeepStringConcat.java
  */
 
+@Bean
 public class DeepStringConcat {
     public static void main(String[] args) {
         if (X.length() != 32001) throw new Error();

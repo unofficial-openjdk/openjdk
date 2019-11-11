@@ -41,6 +41,7 @@ import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.MemoryCacheImageInputStream;
 import org.w3c.dom.Element;
 
+@Bean
 public class GetElementsByTagNameTest {
 
     public static void main(String[] args) throws IOException {

@@ -41,6 +41,7 @@
 
 package compiler.membars;
 
+@Bean
 public class DekkerTest {
 
     /*

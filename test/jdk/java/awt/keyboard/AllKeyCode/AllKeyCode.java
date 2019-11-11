@@ -167,10 +167,16 @@ public class AllKeyCode extends Frame {
         textArea.addKeyListener(keyListener = new KeyListener() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void keyTyped(KeyEvent ke) {
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void keyPressed(KeyEvent ke) {
                 if (allKeyArr[keyPressedIndex] != ke.getKeyCode()) {
                     throw new RuntimeException("Wrong keycode received");
@@ -178,6 +184,9 @@ public class AllKeyCode extends Frame {
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void keyReleased(KeyEvent ke) {
             }
         });

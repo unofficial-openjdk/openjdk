@@ -32,6 +32,7 @@
 import java.io.*;
 import java.nio.charset.*;
 
+@Bean
 public class ConvertSingle {
 
     public static void main(String args[]) throws Exception {

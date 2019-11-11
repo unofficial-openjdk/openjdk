@@ -38,6 +38,7 @@ import javax.imageio.spi.IIORegistry;
 import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.spi.ServiceRegistry;
 
+@Bean
 public class OrderingTest {
 
     public OrderingTest() {

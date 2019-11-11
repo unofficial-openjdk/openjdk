@@ -38,6 +38,7 @@ import java.util.Arrays;
 import org.junit.*;
 import static org.junit.Assert.*;
 
+@Bean
 public class PrivateInvokeTest {
     // Utility functions
     private static final Lookup LOOKUP = lookup();
@@ -145,14 +146,22 @@ public class PrivateInvokeTest {
             throw new Error(ex);
         }
     }
-    private Object internalMemberName(MethodHandle mh) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Object internalMemberName(MethodHandle mh) {
         try {
             return MH_INTERNAL_MEMBER_NAME.invokeExact(mh);
         } catch (Throwable ex) {
             throw new Error(ex);
         }
     }
-    private String debugString(MethodHandle mh) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String debugString(MethodHandle mh) {
         try {
             return (String) MH_DEBUG_STRING.invokeExact(mh);
         } catch (Throwable ex) {
@@ -189,7 +198,11 @@ public class PrivateInvokeTest {
             throw new IllegalArgumentException(ex);
         }
     }
-    private Object invokeWithArguments(Method m, Object... args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Object invokeWithArguments(Method m, Object... args) {
         Object recv = null;
         if (!Modifier.isStatic(m.getModifiers())) {
             recv = args[0];
@@ -201,7 +214,11 @@ public class PrivateInvokeTest {
             throw new IllegalArgumentException(ex);
         }
     }
-    private Object invokeWithArguments(MethodHandle mh, Object... args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Object invokeWithArguments(MethodHandle mh, Object... args) {
         try {
             return mh.invokeWithArguments(args);
         } catch (Throwable ex) {
@@ -209,7 +226,11 @@ public class PrivateInvokeTest {
         }
     }
     private int counter;
-    private Object makeArgument(Class<?> type) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Object makeArgument(Class<?> type) {
         final String cname = type.getSimpleName();
         final int n = ++counter;
         final int nn = (n << 10) + 13;
@@ -286,7 +307,11 @@ public class PrivateInvokeTest {
         return "<"+getClass().getSimpleName()+"#"+counter+">";
     }
     public final String hello() { return "hello from "+this; }
-    private PrivateInvokeTest withCounter(int counter) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private PrivateInvokeTest withCounter(int counter) {
         PrivateInvokeTest res = new PrivateInvokeTest();
         res.counter = counter;
         return res;

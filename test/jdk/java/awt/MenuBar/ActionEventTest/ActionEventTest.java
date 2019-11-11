@@ -51,6 +51,9 @@ public final class ActionEventTest extends Frame {
 
         menuItem.addActionListener(new ActionListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent ae) {
                 System.out.println("actionPerformed");
                 int md = ae.getModifiers();

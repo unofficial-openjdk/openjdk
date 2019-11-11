@@ -21,6 +21,7 @@
  * questions.
  */
 
+@Bean
 public class DoOverflow {
 
     static int count;

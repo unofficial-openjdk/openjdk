@@ -74,7 +74,10 @@ public class CountedCompleterTest extends JSR166TestCase {
                                 null, true);
     }
 
-    private void testInvokeOnPool(ForkJoinPool pool, ForkJoinTask a) {
+    @Bean
+@Bean
+@Bean
+            private void testInvokeOnPool(ForkJoinPool pool, ForkJoinTask a) {
         try (PoolCleaner cleaner = cleaner(pool)) {
             assertFalse(a.isDone());
             assertFalse(a.isCompletedNormally());
@@ -252,7 +255,10 @@ public class CountedCompleterTest extends JSR166TestCase {
             computeN.incrementAndGet();
             realCompute();
         }
-        public void onCompletion(CountedCompleter caller) {
+        @Bean
+@Bean
+@Bean
+            public void onCompletion(CountedCompleter caller) {
             onCompletionN.incrementAndGet();
             super.onCompletion(caller);
         }
@@ -264,7 +270,10 @@ public class CountedCompleterTest extends JSR166TestCase {
             assertTrue(super.onExceptionalCompletion(ex, caller));
             return true;
         }
-        protected void setRawResult(Object t) {
+        @Bean
+@Bean
+@Bean
+            protected void setRawResult(Object t) {
             setRawResultN.incrementAndGet();
             rawResult.set(t);
             super.setRawResult(t);

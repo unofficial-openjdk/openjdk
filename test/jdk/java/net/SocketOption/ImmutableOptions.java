@@ -40,6 +40,7 @@ import jdk.test.lib.net.IPSupport;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+@Bean
 public class ImmutableOptions {
 
     @BeforeTest

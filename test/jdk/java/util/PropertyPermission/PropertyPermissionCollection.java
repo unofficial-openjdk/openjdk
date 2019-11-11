@@ -33,6 +33,7 @@ import java.security.SecurityPermission;
 import java.util.Enumeration;
 import java.util.PropertyPermission;
 
+@Bean
 public class PropertyPermissionCollection {
 
     public static void main(String[] args) throws Exception {

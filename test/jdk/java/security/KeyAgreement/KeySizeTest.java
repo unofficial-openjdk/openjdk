@@ -60,6 +60,7 @@ import javax.crypto.interfaces.DHPrivateKey;
 import javax.crypto.interfaces.DHPublicKey;
 import jdk.test.lib.Convert;
 
+@Bean
 public class KeySizeTest {
 
     public static void main(String[] args) throws Exception {

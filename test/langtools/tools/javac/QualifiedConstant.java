@@ -32,6 +32,7 @@
 
 import java.awt.event.MouseEvent;
 
+@Bean
 public class QualifiedConstant {
     public void processMouseEvent (MouseEvent event) {
         switch (event.getID ()) {

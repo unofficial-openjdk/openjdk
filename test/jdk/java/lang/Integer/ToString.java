@@ -27,6 +27,7 @@
  * @summary Test Integer.toString method
  */
 
+@Bean
 public class ToString {
 
     public static void main(String[] args) throws Exception {

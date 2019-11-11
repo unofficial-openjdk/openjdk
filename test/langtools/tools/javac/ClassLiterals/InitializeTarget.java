@@ -31,6 +31,7 @@
  * @run main InitializeTarget
  */
 
+@Bean
 public class InitializeTarget {
     public static void main(String[] args) {
         A.class.toString();

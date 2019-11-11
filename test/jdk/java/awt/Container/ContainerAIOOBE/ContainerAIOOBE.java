@@ -37,6 +37,7 @@ import java.io.ObjectOutputStream;
  * @author Alexey Ivanov
  * @run main ContainerAIOOBE
  */
+@Bean
 public class ContainerAIOOBE {
 
     public static void main(final String[] args) throws Exception {

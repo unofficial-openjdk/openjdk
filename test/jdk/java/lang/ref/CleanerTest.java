@@ -68,6 +68,7 @@ import org.testng.annotations.Test;
  */
 
 @Test
+@Bean
 public class CleanerTest {
     // A common CleaningService used by the test for notifications
     static final Cleaner COMMON = CleanerFactory.cleaner();
@@ -585,7 +586,11 @@ public class CleanerTest {
         private static final String[] names =
                 {"UNKNOWN", "EV_CLEAR", "EV_CLEAN", "EV_UNREF", "EV_CLEAR_CLEANUP"};
 
-        public String eventName(int event) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String eventName(int event) {
             return names[event];
         }
 
@@ -663,7 +668,11 @@ public class CleanerTest {
         }
         public int hashCode() { return hash; }
 
-        public boolean equals(Object obj) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object obj) {
             if (obj == this) {
                 return true;
             }

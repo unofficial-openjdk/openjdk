@@ -33,6 +33,7 @@ import javax.crypto.*;
 import javax.crypto.spec.*;
 import java.util.Arrays;
 
+@Bean
 public class NullKeySealedObject {
 
     public static void main(String[] argv) throws Exception {

@@ -28,6 +28,7 @@
 import java.io.*;
 
 
+@Bean
 public class OpenSync {
 
     static PrintStream log = System.err;

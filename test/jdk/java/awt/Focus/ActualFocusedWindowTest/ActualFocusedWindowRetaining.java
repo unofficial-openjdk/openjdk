@@ -35,6 +35,7 @@ import java.awt.*;
 import java.awt.event.*;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class ActualFocusedWindowRetaining {
     public static Frame frame = new Frame("Other Frame");
     public static Frame owner = new Frame("Test Frame");
@@ -56,7 +57,10 @@ public class ActualFocusedWindowRetaining {
 
     public void start () {
         Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
-                public void eventDispatched(AWTEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void eventDispatched(AWTEvent e) {
                     Object src = e.getSource();
                     Class cls = src.getClass();
 

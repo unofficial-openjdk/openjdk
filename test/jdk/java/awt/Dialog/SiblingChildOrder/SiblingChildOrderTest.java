@@ -35,6 +35,7 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
+@Bean
 public class SiblingChildOrderTest
 {
     static Color[] colors = new Color[]{Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW};

@@ -40,6 +40,7 @@ enum Fire {
     PropertyBoolean,
 }
 
+@Bean
 public class TestMethods extends VetoableChangeSupport implements VetoableChangeListener {
     private static final String NAME = "property";
 
@@ -58,7 +59,11 @@ public class TestMethods extends VetoableChangeSupport implements VetoableChange
         addVetoableChangeListener(this);
     }
 
-    public void vetoableChange(PropertyChangeEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void vetoableChange(PropertyChangeEvent event) {
         if (this.state != Fire.PropertyChangeEvent)
             throw new Error("Illegal state: " + this.state);
     }

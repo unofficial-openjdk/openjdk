@@ -67,6 +67,7 @@ import javax.management.ObjectName ;
 import jdk.test.lib.JDKToolFinder;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class AuthorizationTest {
 
     static final String SERVER_CLASS_NAME = "AuthorizationTest";
@@ -241,7 +242,11 @@ public class AuthorizationTest {
 
      }
 
-    public void run(Map<String, Object> serverArgs, String clientArgs[]) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void run(Map<String, Object> serverArgs, String clientArgs[]) {
 
         System.out.println("AuthorizationTest::run: Start") ;
         int errorCount = 0;
@@ -291,7 +296,11 @@ public class AuthorizationTest {
 
         }
 
-        public void run(Map<String, Object> args) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void run(Map<String, Object> args) {
 
             int errorCount = 0 ;
 

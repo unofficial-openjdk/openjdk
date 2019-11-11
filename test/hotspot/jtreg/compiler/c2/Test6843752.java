@@ -31,6 +31,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test6843752 {
 
     Item list;
@@ -43,7 +44,11 @@ public class Test6843752 {
         Item(boolean r) { remove = r; }
     }
 
-    private void linkIn(Item item) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void linkIn(Item item) {
         Item head = list;
         if (head == null) {
             item.next = item;
@@ -57,7 +62,11 @@ public class Test6843752 {
         }
     }
 
-    private void linkOut(Item item) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void linkOut(Item item) {
         Item head = list;
         if (item.next == item) {
             list = null;
@@ -72,7 +81,11 @@ public class Test6843752 {
         item.prev = null; // this is the null pointer we are seeing
     }
 
-    private void removeItems(int numItems) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void removeItems(int numItems) {
         Item item = list;
         if (item == null) {
             return;
@@ -90,7 +103,11 @@ public class Test6843752 {
         }
     }
 
-    public void perform(int numItems) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void perform(int numItems) {
         for (int i = 0; i < numItems; i++) {
             linkIn(new Item(i == 0));
         }
@@ -98,7 +115,11 @@ public class Test6843752 {
         list = null;
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         int caseCnt = 0;
         Test6843752 bj = new Test6843752();
         try {

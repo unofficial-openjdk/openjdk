@@ -37,6 +37,7 @@ import jdk.test.lib.Asserts;
  * @compile SunBootClassPathEmptyTest.java
  * @run main/othervm SunBootClassPathEmptyTest
  */
+@Bean
 public class SunBootClassPathEmptyTest {
 
     /**

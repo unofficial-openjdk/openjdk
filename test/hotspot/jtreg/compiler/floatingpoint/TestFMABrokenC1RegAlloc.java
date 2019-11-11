@@ -29,6 +29,7 @@
  *
  */
 
+@Bean
 public class TestFMABrokenC1RegAlloc {
 
     double dummy0;
@@ -156,7 +157,11 @@ public class TestFMABrokenC1RegAlloc {
             dummy39;
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         TestFMABrokenC1RegAlloc t = new TestFMABrokenC1RegAlloc();
         for (int i = 0; i < 5000; i++) {
             if (t.test(5.0, 10.0, 7.0) != 57.0) {

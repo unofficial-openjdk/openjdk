@@ -36,6 +36,7 @@ import java.lang.instrument.*;
 import java.security.ProtectionDomain;
 import java.util.*;
 
+@Bean
 public class TransformerManagementThreadAddTests extends ATestCaseScaffold
 {
     public static void

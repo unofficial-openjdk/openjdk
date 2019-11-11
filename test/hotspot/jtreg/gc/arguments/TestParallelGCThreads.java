@@ -45,6 +45,7 @@ import jdk.test.lib.process.ProcessTools;
 import jtreg.SkippedException;
 import sun.hotspot.gc.GC;
 
+@Bean
 public class TestParallelGCThreads {
 
   public static void main(String args[]) throws Exception {

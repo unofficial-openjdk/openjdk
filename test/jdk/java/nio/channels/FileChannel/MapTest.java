@@ -42,6 +42,7 @@ import java.util.Random;
  * Testing FileChannel's mapping capabilities.
  */
 
+@Bean
 public class MapTest {
 
     private static PrintStream out = System.out;

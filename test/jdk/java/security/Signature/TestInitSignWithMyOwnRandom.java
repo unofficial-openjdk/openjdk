@@ -29,6 +29,7 @@
  */
 import java.security.*;
 
+@Bean
 public class TestInitSignWithMyOwnRandom {
 
     public static void main(String[] argv) throws Exception {
@@ -56,7 +57,11 @@ class TestRandomSource extends SecureRandom {
     int count = 0;
 
     @Override
-    public void nextBytes(byte[] rs) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void nextBytes(byte[] rs) {
         count++;
     }
 

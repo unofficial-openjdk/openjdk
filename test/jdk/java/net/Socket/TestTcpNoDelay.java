@@ -34,6 +34,7 @@ import java.net.*;
 import java.io.IOException;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class TestTcpNoDelay
 {
     public static void main(String[] args) {

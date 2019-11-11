@@ -35,6 +35,7 @@ package compiler.intrinsics.string;
 
 import jdk.test.lib.Asserts;
 
+@Bean
 public class TestStringIntrinsicMemoryFlow {
 
     public static void main(String[] args) {

@@ -64,6 +64,7 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.fail;
 
 @Test
+@Bean
 public class ToolBasicTest extends ReplToolTesting {
 
     public void elideStartUpFromList() {
@@ -147,7 +148,11 @@ public class ToolBasicTest extends ReplToolTesting {
     private PrintWriter out;
     private boolean isStopped;
     private Thread t;
-    private void assertStop(boolean after, String cmd, String output) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertStop(boolean after, String cmd, String output) {
         if (!after) {
             isStopped = false;
             StringWriter writer = new StringWriter();
@@ -277,7 +282,8 @@ public class ToolBasicTest extends ReplToolTesting {
     public void testClasspathDirectory() {
         Compiler compiler = new Compiler();
         Path outDir = Paths.get("testClasspathDirectory");
-        compiler.compile(outDir, "package pkg; public class A { public String toString() { return \"A\"; } }");
+        compiler.compile(outDir, "package pkg; @Bean
+public class A { public String toString() { return \"A\"; } }");
         Path classpath = compiler.getPath(outDir);
         test(
                 (a) -> assertCommand(a, "/env --class-path " + classpath,
@@ -292,7 +298,8 @@ public class ToolBasicTest extends ReplToolTesting {
     public void testEnvInStartUp() {
         Compiler compiler = new Compiler();
         Path outDir = Paths.get("testClasspathDirectory");
-        compiler.compile(outDir, "package pkg; public class A { public String toString() { return \"A\"; } }");
+        compiler.compile(outDir, "package pkg; @Bean
+public class A { public String toString() { return \"A\"; } }");
         Path classpath = compiler.getPath(outDir);
         Path sup = compiler.getPath("startup.jsh");
         compiler.writeToFile(sup,
@@ -318,7 +325,8 @@ public class ToolBasicTest extends ReplToolTesting {
     private String makeSimpleJar() {
         Compiler compiler = new Compiler();
         Path outDir = Paths.get("testClasspathJar");
-        compiler.compile(outDir, "package pkg; public class A { public String toString() { return \"A\"; } }");
+        compiler.compile(outDir, "package pkg; @Bean
+public class A { public String toString() { return \"A\"; } }");
         String jarName = "test.jar";
         compiler.jar(outDir, jarName, "pkg/A.class");
         return compiler.getPath(outDir).resolve(jarName).toString();
@@ -371,7 +379,8 @@ public class ToolBasicTest extends ReplToolTesting {
         Compiler compiler = new Compiler();
         Path outDir = Paths.get("testClasspathJar");
         Path src = compiler.getPath(outDir.resolve("pkg/A.java"));
-        compiler.writeToFile(src, "package pkg; /** \u0086 */public class A { public String toString() { return \"A\"; } }");
+        compiler.writeToFile(src, "package pkg; /** \u0086 */@Bean
+public class A { public String toString() { return \"A\"; } }");
         String jarName = "test.jar";
         compiler.jar(outDir, jarName, "pkg/A.java");
         return compiler.getPath(outDir).resolve(jarName).toString();
@@ -399,7 +408,8 @@ public class ToolBasicTest extends ReplToolTesting {
         Compiler compiler = new Compiler();
         Path modsDir = Paths.get("mods");
         Path outDir = Paths.get("mods", "org.astro");
-        compiler.compile(outDir, "package org.astro; public class World { public static String name() { return \"world\"; } }");
+        compiler.compile(outDir, "package org.astro; @Bean
+public class World { public static String name() { return \"world\"; } }");
         compiler.compile(outDir, "module org.astro { exports org.astro; }");
         Path modsPath = compiler.getPath(modsDir);
         test(new String[] { "--module-path", modsPath.toString(), "--add-modules", "org.astro" },

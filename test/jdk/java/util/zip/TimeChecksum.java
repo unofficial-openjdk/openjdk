@@ -32,6 +32,7 @@ import java.util.*;
 import java.util.zip.*;
 import java.nio.*;
 
+@Bean
 public class TimeChecksum {
 
     static long time(Adler32 adler32, byte[] data, int iters, int len) {

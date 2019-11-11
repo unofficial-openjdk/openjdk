@@ -47,6 +47,7 @@ import com.foo.BreakIteratorProviderImpl;
 import sun.util.locale.provider.LocaleProviderAdapter;
 import sun.util.locale.provider.ResourceBundleBasedAdapter;
 
+@Bean
 public class BreakIteratorProviderTest extends ProviderTest {
 
     BreakIteratorProviderImpl bip = new BreakIteratorProviderImpl();

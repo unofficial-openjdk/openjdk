@@ -31,9 +31,14 @@
  */
 import javax.management.MBeanOperationInfo;
 
+@Bean
 public class MBeanOperationInfoImpactRangeTest {
 
-    private void checkInRange(int impact) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkInRange(int impact) {
         int impactValue;
 
         System.out.println("checking that no exception is thrown when a "
@@ -49,7 +54,11 @@ public class MBeanOperationInfoImpactRangeTest {
 
     }
 
-    private void checkOutOfRange(int impact) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkOutOfRange(int impact) {
         int impactValue;
 
         try {

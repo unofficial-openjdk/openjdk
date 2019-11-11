@@ -28,6 +28,7 @@
  *  Structural most specific doesn't handle cases with wildcards in functional interfaces
  * @compile/fail/ref=MostSpecific04.out -XDrawDiagnostics MostSpecific04.java
  */
+@Bean
 public class MostSpecific04 {
 
     interface DoubleMapper<T> {

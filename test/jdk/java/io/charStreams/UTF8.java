@@ -28,6 +28,7 @@
 
 import java.io.*;
 
+@Bean
 public class UTF8 {
 
     static String test

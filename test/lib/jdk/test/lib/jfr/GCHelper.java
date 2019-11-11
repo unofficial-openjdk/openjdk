@@ -248,7 +248,11 @@ public class GCHelper {
             return getEvent(event_garbage_collection);
         }
 
-        public boolean addEvent(RecordedEvent event) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean addEvent(RecordedEvent event) {
             if (!events.isEmpty()) {
                 assertEquals(getGcId(), GCHelper.getGcId(event), "Wrong gcId in event. Error in test code.");
             }
@@ -272,7 +276,11 @@ public class GCHelper {
             return events.size();
         }
 
-        public RecordedEvent getEvent(int index) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public RecordedEvent getEvent(int index) {
             return events.get(index);
         }
 
@@ -280,7 +288,11 @@ public class GCHelper {
             return events;
         }
 
-        public RecordedEvent getEvent(String eventPath) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public RecordedEvent getEvent(String eventPath) {
             for (RecordedEvent event : events) {
                 if (eventPath.equals(event.getEventType().getName())) {
                     return event;
@@ -289,7 +301,11 @@ public class GCHelper {
             return null;
         }
 
-        public boolean containsEvent(String eventPath) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean containsEvent(String eventPath) {
             return getEvent(eventPath) != null;
         }
 
@@ -369,7 +385,11 @@ public class GCHelper {
         public long collectionTimeYoung;
         private Set<String> names = new HashSet<>();
 
-        public void add(String collectorName, boolean isYoung, long count, long time) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void add(String collectorName, boolean isYoung, long count, long time) {
             if (isYoung) {
                 collectionCountYoung += count;
                 collectionTimeYoung += time;
@@ -386,7 +406,11 @@ public class GCHelper {
             return collectionCountOld + collectionCountYoung;
         }
 
-        public CollectionSummary calcDelta(CollectionSummary prev) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CollectionSummary calcDelta(CollectionSummary prev) {
             CollectionSummary delta = new CollectionSummary();
             delta.collectionCountOld = this.collectionCountOld - prev.collectionCountOld;
             delta.collectionTimeOld = this.collectionTimeOld - prev.collectionTimeOld;

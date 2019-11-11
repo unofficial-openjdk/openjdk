@@ -63,6 +63,9 @@ public class ToArray {
         CompletableFuture<?> foreman = CompletableFuture.runAsync(new Runnable() {
             private int prevSize = 0;
 
+            @Bean
+@Bean
+@Bean
             private boolean checkProgress(Object[] a) {
                 int size = a.length;
                 if (size < prevSize || size > maxSize)

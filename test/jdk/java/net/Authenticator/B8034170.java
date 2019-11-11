@@ -36,6 +36,7 @@ import jdk.test.lib.net.URIBuilder;
  * @run main/othervm -Djava.net.preferIPv6Addresses=true B8034170 unquoted
  */
 
+@Bean
 public class B8034170 {
 
     static boolean expectQuotes;

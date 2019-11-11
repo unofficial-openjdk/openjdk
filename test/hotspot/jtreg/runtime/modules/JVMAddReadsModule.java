@@ -34,6 +34,7 @@
 
 import static jdk.test.lib.Asserts.*;
 
+@Bean
 public class JVMAddReadsModule {
 
     public static void main(String args[]) throws Throwable {

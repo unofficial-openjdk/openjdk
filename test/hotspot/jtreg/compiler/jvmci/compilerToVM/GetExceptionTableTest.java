@@ -51,6 +51,7 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 
+@Bean
 public class GetExceptionTableTest {
 
     public static final int TRY_CATCH_COUNT = 3;

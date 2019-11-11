@@ -41,6 +41,7 @@ import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.compiler.InMemoryJavaCompiler;
 
+@Bean
 public class invokespecialTests {
 
     public static void runTest(String classFileVersion, String option) throws Exception {
@@ -69,7 +70,8 @@ public class invokespecialTests {
 
     public static void main(String args[]) throws Throwable {
         // Get current major class file version and test with it.
-        byte klassbuf[] = InMemoryJavaCompiler.compile("blah", "public class blah { }");
+        byte klassbuf[] = InMemoryJavaCompiler.compile("blah", "@Bean
+public class blah { }");
         int major_version = klassbuf[6] << 8 | klassbuf[7];
         runTest(String.valueOf(major_version), "-Xint");
         runTest(String.valueOf(major_version), "-Xcomp");

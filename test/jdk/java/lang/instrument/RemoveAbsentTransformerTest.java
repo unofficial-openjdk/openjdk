@@ -33,6 +33,7 @@
  */
 import java.lang.instrument.*;
 
+@Bean
 public class
 RemoveAbsentTransformerTest
     extends ATransformerManagementTestCase

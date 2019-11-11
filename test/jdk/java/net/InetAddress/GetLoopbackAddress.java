@@ -28,6 +28,7 @@
  */
 import java.net.*;
 
+@Bean
 public class GetLoopbackAddress
 {
     static InetAddress IPv4Loopback;

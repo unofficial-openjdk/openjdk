@@ -34,6 +34,7 @@ import javax.print.attribute.HashPrintRequestAttributeSet;
 */
 
 
+@Bean
 public class Services_getDocFl {
     public static void main (String [] args) {
 

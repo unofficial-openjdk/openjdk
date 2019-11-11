@@ -75,6 +75,9 @@ public class JSplitPaneOverlapping extends OverlappingTestBase {
         button.setBackground(Color.RED);
         button.addActionListener(new ActionListener() {
 
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 clicked = true;
             }

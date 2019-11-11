@@ -26,6 +26,7 @@
 import java.io.*;
 
 
+@Bean
 public class ABCInputStream extends InputStream {
 
     int len;
@@ -64,7 +65,11 @@ public class ABCInputStream extends InputStream {
         return (byte) c;
     }
 
-    public int read(byte buf[], int off, int len) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int read(byte buf[], int off, int len) {
         int n = (len > chunk) ? chunk : len;
         for (int i = off; i < off + n; i++) {
             int c = read();

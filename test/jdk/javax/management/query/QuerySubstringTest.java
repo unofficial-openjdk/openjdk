@@ -39,6 +39,7 @@ import javax.management.ObjectName;
 import javax.management.Query;
 import javax.management.QueryExp;
 
+@Bean
 public class QuerySubstringTest {
 
     public static interface SimpleMBean {

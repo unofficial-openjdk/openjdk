@@ -83,26 +83,38 @@ public class bug7199708 {
 
                     doAction(fileChooser, new ComponentAction() {
                         @Override
-                        public boolean accept(Component component) {
+                        @Bean
+@Bean
+@Bean
+            public boolean accept(Component component) {
                             return (component instanceof AbstractButton)
                                 && detailsTooltip.equals(
                                 ((AbstractButton) component).getToolTipText());
                         }
 
                         @Override
-                        public void perform(Component component) {
+                        @Bean
+@Bean
+@Bean
+            public void perform(Component component) {
                             ((AbstractButton) component).doClick();
                         }
                     });
 
                     doAction(fileChooser, new ComponentAction() {
                         @Override
-                        public boolean accept(Component component) {
+                        @Bean
+@Bean
+@Bean
+            public boolean accept(Component component) {
                             return (component instanceof JTable);
                         }
 
                         @Override
-                        public void perform(Component component) {
+                        @Bean
+@Bean
+@Bean
+            public void perform(Component component) {
                             Point tableLocation = component.getLocationOnScreen();
                             locationX = (int) tableLocation.getX();
                             locationY = (int) tableLocation.getY();

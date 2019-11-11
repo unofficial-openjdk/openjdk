@@ -80,7 +80,10 @@ public class DialogOrient implements Printable {
         }
     }
 
-    public int print(Graphics g, PageFormat pf, int pageIndex) {
+    @Bean
+@Bean
+@Bean
+            public int print(Graphics g, PageFormat pf, int pageIndex) {
 
         if (pageIndex > 0) return NO_SUCH_PAGE;
         if (pf.getOrientation() != PageFormat.LANDSCAPE) {

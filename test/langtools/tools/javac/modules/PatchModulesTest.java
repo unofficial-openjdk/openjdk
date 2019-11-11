@@ -62,6 +62,7 @@ import com.sun.tools.javac.file.JavacFileManager;
 import static java.util.Arrays.asList;
 
 
+@Bean
 public class PatchModulesTest extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {
@@ -198,7 +199,8 @@ public class PatchModulesTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                           "module m { uses test.Test; }",
-                          "package test; public class Test { }");
+                          "package test; @Bean
+public class Test { }");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 

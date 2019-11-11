@@ -54,6 +54,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toSet;
 import static org.testng.Assert.*;
 
+@Bean
 public class JmodTest {
 
     static final ToolProvider JMOD_TOOL = ToolProvider.findFirst("jmod")

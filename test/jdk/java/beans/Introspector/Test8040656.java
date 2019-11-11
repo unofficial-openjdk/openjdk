@@ -31,6 +31,7 @@ import java.beans.MethodDescriptor;
  * @author Sergey Malenkov
  */
 
+@Bean
 public class Test8040656 {
     public static void main(String[] args) throws Exception {
         test(String.class, C.class);
@@ -59,14 +60,16 @@ public class Test8040656 {
         public Object getFoo();
     }
 
-    public class C implements A {
+    @Bean
+public class C implements A {
         @Override
         public String getFoo() {
             return null;
         }
     }
 
-    public class C1 implements A {
+    @Bean
+public class C1 implements A {
         @Override
         public String getFoo() {
             return null;
@@ -77,7 +80,8 @@ public class Test8040656 {
         }
     }
 
-    public class C2 implements A {
+    @Bean
+public class C2 implements A {
         @Override
         public String getFoo() {
             return null;
@@ -92,7 +96,8 @@ public class Test8040656 {
         }
     }
 
-    public class C3 implements A {
+    @Bean
+public class C3 implements A {
         @Override
         public String getFoo() {
             return null;
@@ -111,7 +116,8 @@ public class Test8040656 {
         }
     }
 
-    public class C4 implements A {
+    @Bean
+public class C4 implements A {
         @Override
         public String getFoo() {
             return null;
@@ -134,7 +140,8 @@ public class Test8040656 {
         }
     }
 
-    public class C5 implements A {
+    @Bean
+public class C5 implements A {
         @Override
         public String getFoo() {
             return null;
@@ -161,7 +168,8 @@ public class Test8040656 {
         }
     }
 
-    public class C6 implements A {
+    @Bean
+public class C6 implements A {
         @Override
         public String getFoo() {
             return null;
@@ -192,7 +200,8 @@ public class Test8040656 {
         }
     }
 
-    public class C7 implements A {
+    @Bean
+public class C7 implements A {
         @Override
         public String getFoo() {
             return null;
@@ -227,7 +236,8 @@ public class Test8040656 {
         }
     }
 
-    public class C8 implements A {
+    @Bean
+public class C8 implements A {
         @Override
         public String getFoo() {
             return null;
@@ -266,7 +276,8 @@ public class Test8040656 {
         }
     }
 
-    public class C9 implements A {
+    @Bean
+public class C9 implements A {
         @Override
         public String getFoo() {
             return null;

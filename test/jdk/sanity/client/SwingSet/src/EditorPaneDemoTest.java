@@ -174,7 +174,9 @@ public class EditorPaneDemoTest {
      * @param pageName : name of the page
      * @return : URL corresponding to page
      */
-    private URL getPageURL(String pageName) {
+@Bean
+@Bean
+            private URL getPageURL(String pageName) {
         String url = null;
         for (String sourceFile : SOURCE_FILES) {
             if(sourceFile.endsWith(pageName)) {

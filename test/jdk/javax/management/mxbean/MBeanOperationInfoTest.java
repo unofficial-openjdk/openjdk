@@ -36,6 +36,7 @@ import java.lang.management.*;
 import javax.management.*;
 import javax.management.openmbean.*;
 
+@Bean
 public class MBeanOperationInfoTest {
     private static final String[][] returnTypes = {
         { "dumpAllThreads(boolean,boolean)", "[Ljavax.management.openmbean.CompositeData;" },

@@ -347,6 +347,7 @@ import java.util.Locale;
  * @since 1.1
  */
 
+@Bean
 public class MessageFormat extends Format {
 
     @java.io.Serial
@@ -408,7 +409,8 @@ public class MessageFormat extends Format {
      *
      * @param locale the locale to be used when creating or comparing subformats
      */
-    public void setLocale(Locale locale) {
+@Bean
+        public void setLocale(Locale locale) {
         this.locale = locale;
     }
 
@@ -435,7 +437,8 @@ public class MessageFormat extends Format {
      *            {@code null}
      */
     @SuppressWarnings("fallthrough") // fallthrough in switch is expected, suppress it
-    public void applyPattern(String pattern) {
+@Bean
+        public void applyPattern(String pattern) {
             StringBuilder[] segments = new StringBuilder[4];
             // Allocate only segments[SEG_RAW] here. The rest are
             // allocated on demand.
@@ -617,7 +620,8 @@ public class MessageFormat extends Format {
      * @throws    NullPointerException if {@code newFormats} is null
      * @since 1.4
      */
-    public void setFormatsByArgumentIndex(Format[] newFormats) {
+@Bean
+        public void setFormatsByArgumentIndex(Format[] newFormats) {
         for (int i = 0; i <= maxOffset; i++) {
             int j = argumentNumbers[i];
             if (j < newFormats.length) {
@@ -648,7 +652,8 @@ public class MessageFormat extends Format {
      * @param newFormats the new formats to use
      * @throws    NullPointerException if {@code newFormats} is null
      */
-    public void setFormats(Format[] newFormats) {
+@Bean
+        public void setFormats(Format[] newFormats) {
         int runsToCopy = newFormats.length;
         if (runsToCopy > maxOffset + 1) {
             runsToCopy = maxOffset + 1;
@@ -676,7 +681,8 @@ public class MessageFormat extends Format {
      * @param newFormat the new format to use
      * @since 1.4
      */
-    public void setFormatByArgumentIndex(int argumentIndex, Format newFormat) {
+@Bean
+        public void setFormatByArgumentIndex(int argumentIndex, Format newFormat) {
         for (int j = 0; j <= maxOffset; j++) {
             if (argumentNumbers[j] == argumentIndex) {
                 formats[j] = newFormat;
@@ -701,7 +707,8 @@ public class MessageFormat extends Format {
      * @throws    ArrayIndexOutOfBoundsException if {@code formatElementIndex} is equal to or
      *            larger than the number of format elements in the pattern string
      */
-    public void setFormat(int formatElementIndex, Format newFormat) {
+@Bean
+        public void setFormat(int formatElementIndex, Format newFormat) {
 
         if (formatElementIndex > maxOffset) {
             throw new ArrayIndexOutOfBoundsException(formatElementIndex);
@@ -921,7 +928,8 @@ public class MessageFormat extends Format {
      *            expected by the format element(s) that use it.
      * @since 1.4
      */
-    public AttributedCharacterIterator formatToCharacterIterator(Object arguments) {
+@Bean
+        public AttributedCharacterIterator formatToCharacterIterator(Object arguments) {
         StringBuffer result = new StringBuffer();
         ArrayList<AttributedCharacterIterator> iterators = new ArrayList<>();
 
@@ -1093,7 +1101,8 @@ public class MessageFormat extends Format {
      *         error, returns null.
      * @throws NullPointerException if {@code pos} is null.
      */
-    public Object parseObject(String source, ParsePosition pos) {
+@Bean
+        public Object parseObject(String source, ParsePosition pos) {
         return parse(source, pos);
     }
 
@@ -1121,7 +1130,8 @@ public class MessageFormat extends Format {
     /**
      * Equality comparison between two message format objects
      */
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (this == obj)                      // quick check
             return true;
         if (obj == null || getClass() != obj.getClass())
@@ -1369,7 +1379,8 @@ public class MessageFormat extends Format {
      * Convenience method to append all the characters in
      * {@code iterator} to the StringBuffer {@code result}.
      */
-    private void append(StringBuffer result, CharacterIterator iterator) {
+@Bean
+        private void append(StringBuffer result, CharacterIterator iterator) {
         if (iterator.first() != CharacterIterator.DONE) {
             char aChar;
 

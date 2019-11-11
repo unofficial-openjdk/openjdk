@@ -43,6 +43,7 @@ import jdk.test.lib.process.ProcessTools;
  * not block because of entropy scarcity. {@code -Jvm-options} is supported
  * as an argument.
  */
+@Bean
 public class SecurityTools {
 
     /**

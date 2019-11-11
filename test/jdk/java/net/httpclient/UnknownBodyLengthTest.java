@@ -56,6 +56,7 @@ import jdk.test.lib.net.SimpleSSLContext;
  *                   -Djdk.tls.acknowledgeCloseNotify=true UnknownBodyLengthTest SSL true
  */
 
+@Bean
 public class UnknownBodyLengthTest {
     static final byte[] BUF = new byte[32 * 10234 + 2];
 

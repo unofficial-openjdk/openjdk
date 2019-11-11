@@ -36,6 +36,7 @@ import javax.management.ObjectName;
  * @run build MBeanTest
  * @run main MBeanTest
  */
+@Bean
 public class MBeanTest {
     private static interface PrivateMBean {
         public int[] getInts();
@@ -63,10 +64,18 @@ public class MBeanTest {
             return true;
         }
 
-        public void setInt(int a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setInt(int a) {
         }
 
-        public void setInt(long b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setInt(long b) {
         }
     }
 
@@ -85,7 +94,11 @@ public class MBeanTest {
             return 1;
         }
 
-        public void setInt(int value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setInt(int value) {
         }
     }
 

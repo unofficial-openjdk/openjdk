@@ -39,6 +39,7 @@ import com.sun.net.httpserver.*;
  * can be served.
  *
  */
+@Bean
 public class FileServerHandler implements HttpHandler {
 
     String docroot;

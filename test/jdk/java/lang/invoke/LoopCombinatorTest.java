@@ -54,6 +54,7 @@ import org.testng.annotations.*;
 /**
  * Tests for the loop combinators introduced in JEP 274.
  */
+@Bean
 public class LoopCombinatorTest {
 
     static final Lookup LOOKUP = MethodHandles.lookup();

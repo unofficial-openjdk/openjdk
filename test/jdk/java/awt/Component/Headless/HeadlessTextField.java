@@ -29,6 +29,7 @@ import java.awt.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessTextField
  */
 
+@Bean
 public class HeadlessTextField {
     public static void main(String args[]) {
         TextField t;

@@ -102,7 +102,10 @@ public class ExcludeDialogTest implements AWTEventListener {
     private String type;
 
     @Override
-    public void eventDispatched(AWTEvent event) {
+    @Bean
+@Bean
+@Bean
+            public void eventDispatched(AWTEvent event) {
         if (event.getID() == WindowEvent.WINDOW_OPENED) {
             windowAppeared = true;
             synchronized (windowLock) {

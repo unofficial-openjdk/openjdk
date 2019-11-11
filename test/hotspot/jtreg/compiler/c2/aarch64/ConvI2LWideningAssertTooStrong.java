@@ -30,6 +30,7 @@
  *
  */
 
+@Bean
 public class ConvI2LWideningAssertTooStrong {
 
     public static final int N = 400;

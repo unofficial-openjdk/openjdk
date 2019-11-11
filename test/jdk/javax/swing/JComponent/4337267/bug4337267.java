@@ -204,7 +204,10 @@ public class bug4337267 {
         }
 
         @Override
-        public boolean equals(Object other) {
+        @Bean
+@Bean
+@Bean
+            public boolean equals(Object other) {
             if (! (other instanceof TestBufferedImage)) {
                 return false;
             }
@@ -237,12 +240,18 @@ public class bug4337267 {
                                                 BufferedImage.TYPE_INT_ARGB);
         }
 
-        public void setPreferredSize(Dimension size) {
+        @Bean
+@Bean
+@Bean
+            public void setPreferredSize(Dimension size) {
             super.setPreferredSize(size);
             image = createImage(size);
         }
 
-        public void paint(Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
             Graphics g0 = image.getGraphics();
             super.paint(g0);
             g.drawImage(image, 0, 0, this);

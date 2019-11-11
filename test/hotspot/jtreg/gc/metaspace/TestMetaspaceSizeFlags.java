@@ -37,6 +37,7 @@ import jdk.test.lib.process.OutputAnalyzer;
  *          java.management
  * @run main gc.metaspace.TestMetaspaceSizeFlags
  */
+@Bean
 public class TestMetaspaceSizeFlags {
   public static final long K = 1024L;
   public static final long M = 1024L * K;

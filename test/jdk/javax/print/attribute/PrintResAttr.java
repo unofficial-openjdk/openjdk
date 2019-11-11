@@ -38,6 +38,7 @@ import javax.print.*;
 import javax.print.attribute.*;
 import javax.print.attribute.standard.*;
 
+@Bean
 public class PrintResAttr {
 
    public static void main(String args[]) throws Exception {

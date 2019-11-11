@@ -33,6 +33,7 @@ import java.nio.file.attribute.*;
 import java.io.IOException;
 import java.util.Set;
 
+@Bean
 public class TemporaryFiles {
 
     static void checkInDirectory(Path file, Path dir) {

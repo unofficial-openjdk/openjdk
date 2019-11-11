@@ -37,13 +37,18 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.LinkedBlockingDeque;
 
+@Bean
 public class ChorusLine {
     private interface Tweaker {
         void run(Deque<Integer> deq);
     }
 
     private static final Tweaker[] tweakers = {
-        new Tweaker() { public void run(Deque<Integer> deq) {
+        new Tweaker() { @Bean
+@Bean
+@Bean
+@Bean
+                public void run(Deque<Integer> deq) {
             for (int i = 0; i < 7; i++)
                 deq.addLast(i);
             deq.removeFirst();
@@ -72,7 +77,11 @@ public class ChorusLine {
 
             System.out.println(deq);
         }},
-        new Tweaker() { public void run(Deque<Integer> deq) {
+        new Tweaker() { @Bean
+@Bean
+@Bean
+@Bean
+                public void run(Deque<Integer> deq) {
             deq.clear();
             check(deq.isEmpty());
             check(deq.size() == 0);
@@ -87,7 +96,11 @@ public class ChorusLine {
             catch (NoSuchElementException e) {pass();}
             catch (Throwable t) {unexpected(t);}
         }},
-        new Tweaker() { public void run(Deque<Integer> deq) {
+        new Tweaker() { @Bean
+@Bean
+@Bean
+@Bean
+                public void run(Deque<Integer> deq) {
             for (int i = 0; i < 11; i++)
                 deq.add(i);
             Iterator<Integer> it = deq.iterator();
@@ -120,7 +133,11 @@ public class ChorusLine {
             it.remove();
             System.out.println(deq);
         }},
-        new Tweaker() { public void run(Deque<Integer> deq) {
+        new Tweaker() { @Bean
+@Bean
+@Bean
+@Bean
+                public void run(Deque<Integer> deq) {
             while (deq.size() > 1) {
                 Iterator<Integer> it = deq.iterator();
                 it.next(); it.remove();

@@ -31,6 +31,7 @@
 import java.lang.reflect.Method;
 import java.util.Locale;
 
+@Bean
 public class GetLCIDFromLocale {
 
      static Method getLCIDMethod = null;

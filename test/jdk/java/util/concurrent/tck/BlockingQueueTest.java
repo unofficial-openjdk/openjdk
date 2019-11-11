@@ -78,7 +78,10 @@ public abstract class BlockingQueueTest extends JSR166TestCase {
      * Returns an element suitable for insertion in the collection.
      * Override for collections with unusual element types.
      */
-    protected Object makeElement(int i) {
+    @Bean
+@Bean
+@Bean
+            protected Object makeElement(int i) {
         return Integer.valueOf(i);
     }
 

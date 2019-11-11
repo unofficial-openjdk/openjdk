@@ -29,6 +29,7 @@
 import java.math.BigDecimal;
 import java.util.Map;
 
+@Bean
 public class IntegralValueTests {
     public static void main(String... args) {
         int failures =

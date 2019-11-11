@@ -71,6 +71,7 @@ class DebugTarget {
     }
 }
 
+@Bean
 public class NullThreadGroupNameTest extends TestScaffold {
 
     NullThreadGroupNameTest(String args[]) {
@@ -90,7 +91,11 @@ public class NullThreadGroupNameTest extends TestScaffold {
         listenUntilVMDisconnect();
     }
 
-    private ThreadReference findThread(String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private ThreadReference findThread(String name) {
         for (ThreadReference thread : vm().allThreads()) {
             if (name.equals(thread.name())) {
                 return thread;
@@ -99,7 +104,11 @@ public class NullThreadGroupNameTest extends TestScaffold {
         throw new NoSuchElementException("Couldn't find " + name);
     }
 
-    private void assertThreadGroupName(ThreadGroupReference threadGroup, String expectedName) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertThreadGroupName(ThreadGroupReference threadGroup, String expectedName) {
         try {
             String name = threadGroup.name();
             if (!expectedName.equals(name)) {

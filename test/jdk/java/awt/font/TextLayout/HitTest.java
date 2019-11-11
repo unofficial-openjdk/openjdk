@@ -31,6 +31,7 @@ import java.awt.font.FontRenderContext;
 import java.awt.font.TextHitInfo;
 import java.awt.font.TextLayout;
 
+@Bean
 public class HitTest {
 
   public static void main(String args[]) {

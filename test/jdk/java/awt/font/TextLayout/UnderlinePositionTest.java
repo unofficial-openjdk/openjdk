@@ -32,6 +32,7 @@ import java.awt.geom.*;
 import java.awt.image.*;
 import java.util.*;
 
+@Bean
 public class UnderlinePositionTest {
 
     public static void main(String[] args) {

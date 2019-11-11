@@ -36,6 +36,7 @@ import static java.lang.Thread.State.*;
  * @run main/othervm -Xmixed ThreadStateTest
  */
 
+@Bean
 public class ThreadStateTest {
     private static boolean testFailed = false;
 

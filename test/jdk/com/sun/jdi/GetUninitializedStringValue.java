@@ -48,6 +48,7 @@ class GetUninitializedStringValueTarg {
 
  /********** test program **********/
 
+@Bean
 public class GetUninitializedStringValue extends TestScaffold {
     ReferenceType targetClass;
     ThreadReference mainThread;

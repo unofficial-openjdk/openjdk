@@ -31,6 +31,7 @@ import java.io.*;
 
 
 
+@Bean
 public class Available{
 
     private static void dotest(PushbackInputStream in , int expected)

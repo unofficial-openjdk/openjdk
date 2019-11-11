@@ -69,6 +69,7 @@ import com.sun.tools.javac.util.Context.Factory;
 
 import static javax.tools.JavaFileObject.Kind.SOURCE;
 
+@Bean
 public class TestGetScopeResult {
     public static void main(String... args) throws IOException {
         new TestGetScopeResult().run();
@@ -165,6 +166,10 @@ public class TestGetScopeResult {
                     super(URI.create("myfo:///Test.java"), SOURCE);
                 }
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public String getCharContent(boolean ignoreEncodingErrors) {
                     return code;
                 }
@@ -177,6 +182,10 @@ public class TestGetScopeResult {
 
             new TreePathScanner<Void, Void>() {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public Void visitLambdaExpression(LambdaExpressionTree node, Void p) {
                     Scope scope = Trees.instance(t).getScope(new TreePath(getCurrentPath(), node.getBody()));
                     while (scope.getEnclosingClass() != null) {
@@ -206,6 +215,10 @@ public class TestGetScopeResult {
                     super(URI.create("myfo:///Test.java"), SOURCE);
                 }
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public String getCharContent(boolean ignoreEncodingErrors) {
                     return "class Test {" +
                            "    void test() { cand(() -> { System.err.println(); }); }" +
@@ -229,6 +242,10 @@ public class TestGetScopeResult {
 
             new TreePathScanner<Void, Void>() {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public Void visitLambdaExpression(LambdaExpressionTree node, Void p) {
                     analyzer.analyzeCalled = false;
                     Trees.instance(t).getScope(new TreePath(getCurrentPath(), node.getBody()));
@@ -239,6 +256,10 @@ public class TestGetScopeResult {
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public Void visitVariable(VariableTree node, Void p) {
                     if (node.getInitializer() != null) {
                         analyzer.analyzeCalled = false;
@@ -267,7 +288,11 @@ public class TestGetScopeResult {
         }
 
         @Override
-        protected void analyze(JCStatement statement, Env<AttrContext> env) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void analyze(JCStatement statement, Env<AttrContext> env) {
             analyzeCalled = true;
             super.analyze(statement, env);
         }
@@ -281,6 +306,10 @@ public class TestGetScopeResult {
                     super(URI.create("myfo:///Test.java"), SOURCE);
                 }
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public String getCharContent(boolean ignoreEncodingErrors) {
                     return "class Test {" +
                            "    void test() {\n" +
@@ -308,6 +337,10 @@ public class TestGetScopeResult {
 
             new TreePathScanner<Void, Void>() {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public Void visitMethodInvocation(MethodInvocationTree node, Void p) {
                     Trees.instance(t).getScope(getCurrentPath());
                     return super.visitMethodInvocation(node, p);
@@ -324,6 +357,10 @@ public class TestGetScopeResult {
                     super(URI.create("myfo:///Test.java"), SOURCE);
                 }
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public String getCharContent(boolean ignoreEncodingErrors) {
                     return "class Test {" +
                            "    void test() {\n" +
@@ -346,12 +383,20 @@ public class TestGetScopeResult {
 
             new TreePathScanner<Void, Void>() {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public Void visitConditionalExpression(ConditionalExpressionTree node, Void p) {
                     Trees.instance(t).getScope(new TreePath(getCurrentPath(), node.getCondition()));
                     return super.visitConditionalExpression(node, p);
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public Void visitBlock(BlockTree node, Void p) {
                     Trees.instance(t).getScope(getCurrentPath());
                     return super.visitBlock(node, p);
@@ -368,6 +413,10 @@ public class TestGetScopeResult {
                     super(URI.create("myfo:///Test.java"), SOURCE);
                 }
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public String getCharContent(boolean ignoreEncodingErrors) {
                     return "class Test {" +
                            "    void test() {\n" +
@@ -389,6 +438,10 @@ public class TestGetScopeResult {
 
             new TreePathScanner<Void, Void>() {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public Void visitIdentifier(IdentifierTree node, Void p) {
                     if (node.getName().contentEquals("A")) {
                         Trees.instance(t).getScope(getCurrentPath());
@@ -397,6 +450,10 @@ public class TestGetScopeResult {
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public Void visitMethod(MethodTree node, Void p) {
                     super.visitMethod(node, p);
                     if (node.getReturnType() != null) {
@@ -416,6 +473,10 @@ public class TestGetScopeResult {
                     super(URI.create("myfo:///Test.java"), SOURCE);
                 }
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public String getCharContent(boolean ignoreEncodingErrors) {
                     return "import java.lang.annotation.*;\n" +
                            "\n" +
@@ -441,11 +502,19 @@ public class TestGetScopeResult {
                                                 List.of(new MyFileObject()), ctx);
             t.addTaskListener(new TaskListener() {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void finished(TaskEvent e) {
                     if (e.getKind() == TaskEvent.Kind.ANALYZE) {
                         new TreePathScanner<Void, Void>() {
                             @Override
-                            public Void scan(Tree tree, Void p) {
+                            @Bean
+@Bean
+@Bean
+@Bean
+                public Void scan(Tree tree, Void p) {
                                 if (tree != null) {
                                     Trees.instance(t).getScope(new TreePath(getCurrentPath(), tree));
                                 }
@@ -468,6 +537,10 @@ public class TestGetScopeResult {
                     super(URI.create("myfo:///Test.java"), SOURCE);
                 }
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public String getCharContent(boolean ignoreEncodingErrors) {
                     return "class Test extends Test {" +
                            "    {\n" +
@@ -485,6 +558,10 @@ public class TestGetScopeResult {
 
             new TreePathScanner<Void, Void>() {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public Void visitBlock(BlockTree node, Void p) {
                     Trees.instance(t).getScope(getCurrentPath());
                     return super.visitBlock(node, p);

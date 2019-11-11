@@ -195,6 +195,9 @@ class TestDialog extends JDialog {
         run.addActionListener(new ActionListener() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent ae) {
                 FileChooserTest.fileChooser = new JFileChooser();
                 FileChooserTest.fileChooser.showOpenDialog(null);
@@ -206,6 +209,9 @@ class TestDialog extends JDialog {
         passB.addActionListener(new ActionListener() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent ae) {
                 FileChooserTest.pass();
             }
@@ -214,6 +220,9 @@ class TestDialog extends JDialog {
         failB.addActionListener(new ActionListener() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent ae) {
                 FileChooserTest.fail();
             }
@@ -223,7 +232,10 @@ class TestDialog extends JDialog {
         setVisible(true);
     }
 
-    public void printInstructions(String[] instructions) {
+    @Bean
+@Bean
+@Bean
+            public void printInstructions(String[] instructions) {
         instructionsText.setText("");
 
         String printStr, remainingStr;
@@ -250,7 +262,10 @@ class TestDialog extends JDialog {
 
     }
 
-    public void displayMessage(String messageIn) {
+    @Bean
+@Bean
+@Bean
+            public void displayMessage(String messageIn) {
         messageText.append(messageIn + "\n");
     }
 }

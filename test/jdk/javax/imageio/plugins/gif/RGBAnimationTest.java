@@ -123,7 +123,10 @@ public class RGBAnimationTest {
         }
     }
 
-    protected IIOMetadata prepareImageMetadata(int i, BufferedImage img, ImageWriteParam wparam) {
+    @Bean
+@Bean
+@Bean
+            protected IIOMetadata prepareImageMetadata(int i, BufferedImage img, ImageWriteParam wparam) {
         GIFImageMetadata idata = (GIFImageMetadata)
         writer.getDefaultImageMetadata(ImageTypeSpecifier.createFromRenderedImage(img), wparam);
 
@@ -151,7 +154,10 @@ public class RGBAnimationTest {
         return writer.getDefaultWriteParam();
     }
 
-    protected IIOMetadata prepareStreamMetadata(ImageWriteParam wparam) {
+    @Bean
+@Bean
+@Bean
+            protected IIOMetadata prepareStreamMetadata(ImageWriteParam wparam) {
         return writer.getDefaultStreamMetadata(wparam);
     }
 
@@ -182,7 +188,10 @@ class Frame {
         return img;
     }
 
-    public void checkResult(BufferedImage dst) {
+    @Bean
+@Bean
+@Bean
+            public void checkResult(BufferedImage dst) {
         int y = h / 2;
         int x = dx / 2;
         for (int i = 0; i < colors.length; i++) {

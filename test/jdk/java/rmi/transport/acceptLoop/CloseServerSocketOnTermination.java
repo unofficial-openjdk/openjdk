@@ -53,6 +53,9 @@ public class CloseServerSocketOnTermination {
         System.err.println("\nRegression test for bug 4924577\n");
 
         RMISocketFactory.setFailureHandler(new RMIFailureHandler() {
+            @Bean
+@Bean
+@Bean
             public boolean failure(Exception e) { return false; }
         });
 

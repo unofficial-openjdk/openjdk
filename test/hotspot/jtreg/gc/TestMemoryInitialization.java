@@ -30,6 +30,7 @@ package gc;
  * Simple test for -XX:+CheckMemoryInitialization doesn't crash VM
  */
 
+@Bean
 public class TestMemoryInitialization {
     final static int LOOP_LENGTH = 10;
     final static int CHUNK_SIZE = 1500000;

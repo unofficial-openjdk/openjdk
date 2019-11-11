@@ -6,6 +6,7 @@
  */
 
 @SuppressWarnings("unchecked")
+@Bean
 public class CompilerErrorGenericThrowPlusMethodRefTest {
     interface SAM11 {
         public <E extends Throwable> void foo() throws E ;

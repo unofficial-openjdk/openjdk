@@ -348,7 +348,8 @@ public class Desktop {
      *         the current platform; {@code false} otherwise
      * @see Desktop.Action
      */
-    public boolean isSupported(Action action) {
+@Bean
+        public boolean isSupported(Action action) {
         return peer.isSupported(action);
     }
 
@@ -641,7 +642,8 @@ public class Desktop {
      * @see java.awt.desktop.UserSessionListener
      * @since 9
      */
-    public void addAppEventListener(final SystemEventListener listener) {
+@Bean
+        public void addAppEventListener(final SystemEventListener listener) {
         checkEventsProcessingPermission();
         peer.addAppEventListener(listener);
     }
@@ -668,7 +670,8 @@ public class Desktop {
      * @see java.awt.desktop.UserSessionListener
      * @since 9
      */
-    public void removeAppEventListener(final SystemEventListener listener) {
+@Bean
+        public void removeAppEventListener(final SystemEventListener listener) {
         checkEventsProcessingPermission();
         peer.removeAppEventListener(listener);
     }
@@ -691,7 +694,8 @@ public class Desktop {
      *
      * @since 9
      */
-    public void setAboutHandler(final AboutHandler aboutHandler) {
+@Bean
+        public void setAboutHandler(final AboutHandler aboutHandler) {
         checkEventsProcessingPermission();
         checkActionSupport(Action.APP_ABOUT);
         peer.setAboutHandler(aboutHandler);
@@ -714,7 +718,8 @@ public class Desktop {
      * does not support the {@link Desktop.Action#APP_PREFERENCES} action
      * @since 9
      */
-    public void setPreferencesHandler(final PreferencesHandler preferencesHandler) {
+@Bean
+        public void setPreferencesHandler(final PreferencesHandler preferencesHandler) {
         checkEventsProcessingPermission();
         checkActionSupport(Action.APP_PREFERENCES);
         peer.setPreferencesHandler(preferencesHandler);
@@ -744,7 +749,8 @@ public class Desktop {
      * does not support the {@link Desktop.Action#APP_OPEN_FILE} action
      * @since 9
      */
-    public void setOpenFileHandler(final OpenFilesHandler openFileHandler) {
+@Bean
+        public void setOpenFileHandler(final OpenFilesHandler openFileHandler) {
         checkEventsProcessingPermission();
         checkExec();
         checkRead();
@@ -773,7 +779,8 @@ public class Desktop {
      * does not support the {@link Desktop.Action#APP_PRINT_FILE} action
      * @since 9
      */
-    public void setPrintFileHandler(final PrintFilesHandler printFileHandler) {
+@Bean
+        public void setPrintFileHandler(final PrintFilesHandler printFileHandler) {
         checkEventsProcessingPermission();
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
@@ -808,7 +815,8 @@ public class Desktop {
      * does not support the {@link Desktop.Action#APP_OPEN_URI} action
      * @since 9
      */
-    public void setOpenURIHandler(final OpenURIHandler openURIHandler) {
+@Bean
+        public void setOpenURIHandler(final OpenURIHandler openURIHandler) {
         checkEventsProcessingPermission();
         checkExec();
         checkActionSupport(Action.APP_OPEN_URI);
@@ -831,7 +839,8 @@ public class Desktop {
      * does not support the {@link Desktop.Action#APP_QUIT_HANDLER} action
      * @since 9
      */
-    public void setQuitHandler(final QuitHandler quitHandler) {
+@Bean
+        public void setQuitHandler(final QuitHandler quitHandler) {
         checkEventsProcessingPermission();
         checkQuitPermission();
         checkActionSupport(Action.APP_QUIT_HANDLER);
@@ -852,7 +861,8 @@ public class Desktop {
      * @see QuitStrategy
      * @since 9
      */
-    public void setQuitStrategy(final QuitStrategy strategy) {
+@Bean
+        public void setQuitStrategy(final QuitStrategy strategy) {
         checkEventsProcessingPermission();
         checkQuitPermission();
         checkActionSupport(Action.APP_QUIT_STRATEGY);
@@ -920,7 +930,8 @@ public class Desktop {
      * does not support the {@link Desktop.Action#APP_REQUEST_FOREGROUND} action
      * @since 9
      */
-    public void requestForeground(final boolean allWindows) {
+@Bean
+        public void requestForeground(final boolean allWindows) {
         checkEventsProcessingPermission();
         checkActionSupport(Action.APP_REQUEST_FOREGROUND);
         peer.requestForeground(allWindows);
@@ -961,7 +972,8 @@ public class Desktop {
      * does not support the {@link Desktop.Action#APP_MENU_BAR} action
      * @since 9
      */
-    public void setDefaultMenuBar(final JMenuBar menuBar) {
+@Bean
+        public void setDefaultMenuBar(final JMenuBar menuBar) {
         checkEventsProcessingPermission();
         checkActionSupport(Action.APP_MENU_BAR);
 
@@ -993,7 +1005,8 @@ public class Desktop {
      *         doesn't exist
      * @since 9
      */
-    public void browseFileDirectory(File file) {
+@Bean
+        public void browseFileDirectory(File file) {
         file = new File(file.getPath());
         checkAWTPermission();
         checkExec();
@@ -1021,7 +1034,8 @@ public class Desktop {
      *
      * @since 9
      */
-    public boolean moveToTrash(File file) {
+@Bean
+        public boolean moveToTrash(File file) {
         file = new File(file.getPath());
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {

@@ -27,6 +27,7 @@ import  java.io.*;
  * Copyright 2003 Wily Technology, Inc.
  */
 
+@Bean
 public class NamedBuffer
 {
     private final String    fName;

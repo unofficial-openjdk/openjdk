@@ -48,6 +48,7 @@ import static java.util.Calendar.WEDNESDAY;
  * A Calendar instance created with ja_JP_kids should use the week parameters
  * provided by com.bar.CalendarDataProviderImpl.
  */
+@Bean
 public class CalendarDataProviderTest {
 
     public static void main(String[] s) {

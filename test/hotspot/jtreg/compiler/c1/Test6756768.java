@@ -48,7 +48,11 @@ public final class Test6756768 extends Test6756768a
 {
     final static int var = var_1 ^ (Test6756768b.var_24 ? var_1 : var_1) ? Test6756768b.var_25 : 1;
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         if (var != 0) {
             throw new InternalError("var = " + var);
         }

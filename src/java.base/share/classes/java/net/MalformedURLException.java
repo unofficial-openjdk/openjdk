@@ -35,6 +35,7 @@ import java.io.IOException;
  * @author  Arthur van Hoff
  * @since   1.0
  */
+@Bean
 public class MalformedURLException extends IOException {
     @java.io.Serial
     private static final long serialVersionUID = -182787522200415866L;

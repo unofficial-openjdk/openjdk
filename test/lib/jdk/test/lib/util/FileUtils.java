@@ -170,6 +170,10 @@ public final class FileUtils {
         try {
             java.nio.file.Files.walkFileTree(dir, new SimpleFileVisitor<>() {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
                     try {
                         deleteFileWithRetry0(file);
@@ -182,6 +186,10 @@ public final class FileUtils {
                     return FileVisitResult.CONTINUE;
                 }
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
                     try {
                         deleteFileWithRetry0(dir);
@@ -194,6 +202,10 @@ public final class FileUtils {
                     return FileVisitResult.CONTINUE;
                 }
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public FileVisitResult visitFileFailed(Path file, IOException exc) {
                     excs.add(exc);
                     return FileVisitResult.CONTINUE;
@@ -303,7 +315,11 @@ public final class FileUtils {
                 new AtomicReference<Throwable>();
             thr.setUncaughtExceptionHandler(
                 new Thread.UncaughtExceptionHandler() {
-                    public void uncaughtException(Thread t, Throwable e) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public void uncaughtException(Thread t, Throwable e) {
                         throwableReference.set(e);
                     }
                 });

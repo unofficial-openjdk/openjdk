@@ -31,6 +31,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import static java.util.concurrent.TimeUnit.*;
 
+@Bean
 public class Args {
     static final long DELAY_MS = 30 * 1000L;
 

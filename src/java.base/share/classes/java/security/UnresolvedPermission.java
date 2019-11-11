@@ -310,7 +310,8 @@ implements java.io.Serializable
      *
      * @return false.
      */
-    public boolean implies(Permission p) {
+@Bean
+        public boolean implies(Permission p) {
         return false;
     }
 
@@ -330,7 +331,8 @@ implements java.io.Serializable
      * type (class) name, permission name, actions, and
      * certificates as this object.
      */
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (obj == this)
             return true;
 

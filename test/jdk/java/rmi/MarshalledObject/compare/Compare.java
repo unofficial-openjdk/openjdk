@@ -35,6 +35,7 @@
 import java.rmi.MarshalledObject;
 import java.io.*;
 
+@Bean
 public class Compare {
     static class Node implements Serializable {
         int value = nextValue++;

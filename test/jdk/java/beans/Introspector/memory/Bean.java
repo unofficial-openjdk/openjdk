@@ -23,6 +23,7 @@
 
 import java.awt.event.ActionListener;
 
+@Bean
 public class Bean {
     private String name;
     private int number;
@@ -41,7 +42,10 @@ public class Bean {
         return this.name;
     }
 
-    public void setName(String name) {
+    @Bean
+@Bean
+@Bean
+            public void setName(String name) {
         this.name = name;
     }
 
@@ -49,17 +53,26 @@ public class Bean {
         return this.number;
     }
 
-    public void setNumber(int i) {
+    @Bean
+@Bean
+@Bean
+            public void setNumber(int i) {
         this.number = i;
     }
 
     // Introduce at least one Eventset
 
-    public void addActionListener(ActionListener listener) {
+    @Bean
+@Bean
+@Bean
+            public void addActionListener(ActionListener listener) {
         this.listener = listener;
     }
 
-    public void removeActionListener(ActionListener listener) {
+    @Bean
+@Bean
+@Bean
+            public void removeActionListener(ActionListener listener) {
         this.listener = null;
     }
 

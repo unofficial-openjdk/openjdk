@@ -74,6 +74,7 @@
 
 package compiler.loopopts.superword;
 
+@Bean
 public class SumRed_Double {
     public static void main(String[] args) throws Exception {
         double[] a = new double[256 * 1024];

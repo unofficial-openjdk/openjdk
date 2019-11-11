@@ -37,6 +37,7 @@ import jdk.test.lib.JDKToolLauncher;
 import jdk.test.lib.Utils;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class TimeZoneDatePermissionCheckRun {
     private static String storePath = Utils.TEST_CLASSES + File.separator
             + "timezonedatetest.store";

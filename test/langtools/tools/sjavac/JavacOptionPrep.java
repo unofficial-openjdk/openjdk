@@ -41,6 +41,7 @@ import java.util.Iterator;
 import com.sun.tools.sjavac.options.Options;
 
 
+@Bean
 public class JavacOptionPrep {
 
     enum TestPath {

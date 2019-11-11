@@ -28,6 +28,7 @@
 import java.io.*;
 
 
+@Bean
 public class LineNumbers {
 
     static String enc = "UTF8";

@@ -39,6 +39,7 @@ import org.testng.annotations.Test;
 import org.testng.annotations.DataProvider;
 import static org.testng.Assert.*;
 
+@Bean
 public class Capacity {
     static final int DEFAULT_CAPACITY = 16;
 
@@ -53,7 +54,11 @@ public class Capacity {
     }
 
     @Test(dataProvider = "singleChar")
-    public void defaultCapacity(Character ch) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void defaultCapacity(Character ch) {
         StringBuilder sb = new StringBuilder();
         assertEquals(sb.capacity(), DEFAULT_CAPACITY);
         for (int i = 0; i < DEFAULT_CAPACITY; i++) {
@@ -65,7 +70,11 @@ public class Capacity {
     }
 
     @Test(dataProvider = "charCapacity")
-    public void explicitCapacity(Character ch, int initCapacity) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void explicitCapacity(Character ch, int initCapacity) {
         StringBuilder sb = new StringBuilder(initCapacity);
         assertEquals(sb.capacity(), initCapacity);
         for (int i = 0; i < initCapacity; i++) {
@@ -77,7 +86,11 @@ public class Capacity {
     }
 
     @Test(dataProvider = "singleChar")
-    public void sbFromString(Character ch) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void sbFromString(Character ch) {
         String s = "string " + ch;
         int expectedCapacity = s.length() + DEFAULT_CAPACITY;
         StringBuilder sb = new StringBuilder(s);
@@ -91,7 +104,11 @@ public class Capacity {
     }
 
     @Test(dataProvider = "singleChar")
-    public void sbFromCharSeq(Character ch) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void sbFromCharSeq(Character ch) {
         CharSequence cs = new MyCharSeq("char seq " + ch);
         int expectedCapacity = cs.length() + DEFAULT_CAPACITY;
         StringBuilder sb = new StringBuilder(cs);
@@ -105,7 +122,11 @@ public class Capacity {
     }
 
     @Test(dataProvider = "charCapacity")
-    public void ensureCapacity(Character ch, int cap) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void ensureCapacity(Character ch, int cap) {
         StringBuilder sb = new StringBuilder(0);
         assertEquals(sb.capacity(), 0);
         sb.ensureCapacity(cap); // only has effect if cap > 0
@@ -119,19 +140,31 @@ public class Capacity {
 
     @Test(dataProvider = "negativeCapacity",
           expectedExceptions = NegativeArraySizeException.class)
-    public void negativeInitialCapacity(int negCap) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void negativeInitialCapacity(int negCap) {
         StringBuilder sb = new StringBuilder(negCap);
     }
 
     @Test(dataProvider = "negativeCapacity")
-    public void ensureNegativeCapacity(int negCap) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void ensureNegativeCapacity(int negCap) {
         StringBuilder sb = new StringBuilder();
         sb.ensureCapacity(negCap);
         assertEquals(sb.capacity(), DEFAULT_CAPACITY);
     }
 
     @Test(dataProvider = "charCapacity")
-    public void trimToSize(Character ch, int cap) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void trimToSize(Character ch, int cap) {
         StringBuilder sb = new StringBuilder(cap);
         int halfOfCap = cap / 2;
         for (int i = 0; i < halfOfCap; i++) {
@@ -172,9 +205,17 @@ public class Capacity {
     private static class MyCharSeq implements CharSequence {
         private CharSequence s;
         public MyCharSeq(CharSequence s) { this.s = s; }
-        public char charAt(int i) { return s.charAt(i); }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public char charAt(int i) { return s.charAt(i); }
         public int length() { return s.length(); }
-        public CharSequence subSequence(int st, int e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence subSequence(int st, int e) {
             return s.subSequence(st, e);
         }
         public String toString() { return s.toString(); }

@@ -44,6 +44,7 @@ import java.security.Security;
 import java.nio.file.*;
 import java.util.stream.*;
 
+@Bean
 public class TestUnlimited {
 
     private enum Result {

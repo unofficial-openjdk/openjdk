@@ -52,6 +52,7 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.Locale;
 
+@Bean
 public class ZWJLigatureTest {
 
    // These are fonts and scripts on Windows that should support

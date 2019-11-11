@@ -224,6 +224,9 @@ class TestUI {
         failButton.setActionCommand("Fail");
         failButton.addActionListener(new ActionListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 outputImageFrame.dispose();
                 inputImageFrame.dispose();

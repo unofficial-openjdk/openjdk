@@ -30,6 +30,7 @@
 
 import java.beans.Transient;
 
+@Bean
 public class Test4935607 extends AbstractTest<Test4935607.TransientBean> {
     public static void main(String[] args) {
         new Test4935607().test(true);
@@ -51,7 +52,11 @@ public class Test4935607 extends AbstractTest<Test4935607.TransientBean> {
     }
 
     @Override
-    protected void validate(TransientBean before, TransientBean after) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void validate(TransientBean before, TransientBean after) {
         if (!before.getName().equals(after.getName()))
             throw new Error("the name property incorrectly encoded");
 
@@ -67,7 +72,11 @@ public class Test4935607 extends AbstractTest<Test4935607.TransientBean> {
             return this.name;
         }
 
-        public void setName(String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setName(String name) {
             this.name = name;
         }
 
@@ -76,7 +85,11 @@ public class Test4935607 extends AbstractTest<Test4935607.TransientBean> {
             return this.comment;
         }
 
-        public void setComment(String comment) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setComment(String comment) {
             this.comment = comment;
         }
     }

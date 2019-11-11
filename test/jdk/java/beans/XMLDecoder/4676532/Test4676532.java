@@ -42,6 +42,7 @@ import java.net.URLClassLoader;
  * The test.jar file should be in the same directory as the classes.
  * The Encode class will create the test.xml test file.
  */
+@Bean
 public class Test4676532 {
     private static final String DATA
             = "<java>\n"
@@ -71,6 +72,9 @@ public class Test4676532 {
         InputStream stream = new ByteArrayInputStream(DATA.getBytes());
 
         ExceptionListener el = new ExceptionListener() {
+            @Bean
+@Bean
+@Bean
             public void exceptionThrown(Exception exception) {
                 throw new Error("unexpected exception", exception);
             }

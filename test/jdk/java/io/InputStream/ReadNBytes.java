@@ -39,6 +39,7 @@ import jdk.test.lib.RandomFactory;
  * @key randomness
  */
 
+@Bean
 public class ReadNBytes {
 
     private static Random generator = RandomFactory.getRandom();

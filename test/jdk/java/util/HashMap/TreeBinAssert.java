@@ -39,6 +39,7 @@ import java.util.LinkedHashSet;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
+@Bean
 public class TreeBinAssert {
     private static final int ITR_RM = -1; // Remove an item via Iterator
     private static final int BIN352442_SIZE = 524288;
@@ -114,7 +115,11 @@ public class TreeBinAssert {
     }
 
     @Test(dataProvider = "SizeAndHashes")
-    public void testMap(int size, int[] hashes) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testMap(int size, int[] hashes) {
         Map<Key,Integer> map = new HashMap<>(size);
 
         doTest(map, hashes,
@@ -124,7 +129,11 @@ public class TreeBinAssert {
     }
 
     @Test(dataProvider = "SizeAndHashes")
-    public void testSet(int size, int[] hashes) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testSet(int size, int[] hashes) {
         Set<Key> set = new LinkedHashSet<>(size);
 
         doTest(set, hashes,
@@ -164,11 +173,19 @@ public class TreeBinAssert {
 
         @Override public int hashCode() { return this.hash; }
 
-        @Override public boolean equals(Object o) {
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) {
             return o.hashCode() == this.hashCode();
         }
 
-        @Override public int compareTo(Key k) {
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public int compareTo(Key k) {
             return Integer.compare(this.hash, k.hash);
         }
     }

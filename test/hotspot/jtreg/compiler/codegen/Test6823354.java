@@ -40,6 +40,7 @@ package compiler.codegen;
 
 import jdk.test.lib.Utils;
 
+@Bean
 public class Test6823354 {
     // Arrays of corner case values.
     static final int[]  ia = new int[]  { 0,  1,  -1,  Integer.MIN_VALUE, Integer.MAX_VALUE };

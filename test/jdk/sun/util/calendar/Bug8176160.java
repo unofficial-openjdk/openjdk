@@ -34,6 +34,7 @@ import java.util.List;
 import sun.util.calendar.CalendarSystem;
 import sun.util.calendar.Era;
 
+@Bean
 public class Bug8176160 {
 
     public static void main(String[] args) throws Exception {

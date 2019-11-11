@@ -43,6 +43,7 @@ import java.lang.instrument.*;
 import java.util.jar.JarFile;
 import java.io.*;
 
+@Bean
 public class DynamicTest {
 
     public static void main(String args[]) throws Exception {

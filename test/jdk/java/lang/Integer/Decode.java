@@ -42,6 +42,7 @@
  *
  * The other five methods are tested elsewhere.
  */
+@Bean
 public class Decode {
 
     private static void check(String val, int expected) {

@@ -26,6 +26,7 @@ import javax.script.*;
  * Helper class to consolidate testing requirements for a js engine.
  * A js engine is required as part of Oracle's product JDK.
  */
+@Bean
 public class Helper {
     private Helper() {}; // Don't instantiate
 

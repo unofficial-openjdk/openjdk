@@ -64,6 +64,7 @@ import java.io.*;
 /**
  *  A Locale can never contain the following language codes: he, yi or id.
  */
+@Bean
 public class Bug4184873Test extends IntlTest {
     public static void main(String[] args) throws Exception {
         if (args.length == 1 && args[0].equals("prepTest")) {
@@ -79,7 +80,11 @@ public class Bug4184873Test extends IntlTest {
         verify("id");
     }
 
-    private void verify(String lang) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void verify(String lang) {
         try {
             ObjectInputStream in = getStream(lang);
             if (in != null) {
@@ -99,7 +104,11 @@ public class Bug4184873Test extends IntlTest {
         }
     }
 
-    private ObjectInputStream getStream(String lang) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private ObjectInputStream getStream(String lang) {
         try {
             final File f = new File(System.getProperty("test.src", "."), "Bug4184873_"+lang);
             return new ObjectInputStream(new FileInputStream(f));

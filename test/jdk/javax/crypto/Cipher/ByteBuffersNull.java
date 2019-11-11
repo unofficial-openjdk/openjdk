@@ -43,6 +43,7 @@ import javax.crypto.NoSuchPaddingException;
 import java.security.GeneralSecurityException;
 import java.nio.ByteBuffer;
 
+@Bean
 public class ByteBuffersNull {
 
     static final int bufSize = 1024;
@@ -122,7 +123,8 @@ public class ByteBuffersNull {
         public ByteBuffer buf;
     }
 
-    public class CipherSpiImpl extends CipherSpi {
+    @Bean
+public class CipherSpiImpl extends CipherSpi {
 
         public CipherSpiImpl() {
             super();
@@ -138,7 +140,11 @@ public class ByteBuffersNull {
             return 0;
         }
 
-        public int engineGetOutputSize(int inputLen) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int engineGetOutputSize(int inputLen) {
             return 0;
         }
 

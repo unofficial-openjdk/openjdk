@@ -29,6 +29,7 @@ import java.util.Set;
 
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class ModuleHelper {
 
     public static void DefineModule(Object module, boolean is_open, String version,

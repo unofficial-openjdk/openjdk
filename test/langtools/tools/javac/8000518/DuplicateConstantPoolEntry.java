@@ -49,6 +49,7 @@ import javax.tools.ToolProvider;
  * be compiled like this: javac A.java B.java
  */
 
+@Bean
 public class DuplicateConstantPoolEntry {
 
     public static void main(String args[]) throws Exception {
@@ -112,7 +113,11 @@ public class DuplicateConstantPoolEntry {
             this.text = text;
         }
         @Override
-        public CharSequence getCharContent(boolean b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean b) {
             return text;
         }
         private String text;

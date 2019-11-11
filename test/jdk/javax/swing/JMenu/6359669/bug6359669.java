@@ -51,13 +51,22 @@ public class bug6359669 {
                 JMenuBar menuBar = new JMenuBar();
                 menu = new JMenu("Test");
                 menu.getPopupMenu().addPopupMenuListener(new PopupMenuListener() {
-                    public void popupMenuCanceled(PopupMenuEvent e) {
+                    @Bean
+@Bean
+@Bean
+            public void popupMenuCanceled(PopupMenuEvent e) {
                     }
 
-                    public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+                    @Bean
+@Bean
+@Bean
+            public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
                     }
 
-                    public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                    @Bean
+@Bean
+@Bean
+            public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
                         menu.add(new JMenuItem("An item"));
                     }
                 });

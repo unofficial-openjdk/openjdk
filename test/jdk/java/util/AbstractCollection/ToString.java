@@ -37,6 +37,7 @@ import java.util.Vector;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+@Bean
 public class ToString {
     private static void realMain(String[] args) {
         testCollection(new LinkedHashSet<Object>() {

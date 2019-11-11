@@ -62,6 +62,7 @@ import sun.hotspot.code.NMethod;
 
 import java.util.List;
 
+@Bean
 public class InvalidateInstalledCodeTest {
     private static final CodeCacheProvider CACHE_PROVIDER
             = HotSpotJVMCIRuntime.runtime().getHostJVMCIBackend()
@@ -83,7 +84,11 @@ public class InvalidateInstalledCodeTest {
                 NullPointerException.class);
     }
 
-    private void check(CompileCodeTestCase testCase) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void check(CompileCodeTestCase testCase) {
         System.out.println(testCase);
         HotSpotResolvedJavaMethod javaMethod
                 = CTVMUtilities.getResolvedMethod(testCase.executable);

@@ -27,6 +27,7 @@
  *      @author Daryl Puryear
  *      @copyright 1999-2004 Wily Technology, Inc.  All rights reserved.
  */
+@Bean
 public class TestClass1
 {
         public

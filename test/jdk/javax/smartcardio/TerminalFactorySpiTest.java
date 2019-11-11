@@ -34,6 +34,7 @@ import javax.smartcardio.CardTerminals;
 import javax.smartcardio.TerminalFactory;
 import javax.smartcardio.TerminalFactorySpi;
 
+@Bean
 public class TerminalFactorySpiTest {
 
     static boolean callMethod = false;

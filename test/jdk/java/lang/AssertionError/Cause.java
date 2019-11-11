@@ -28,6 +28,7 @@
  * @author Josh Bloch
  */
 
+@Bean
 public class Cause {
     public static void main(String[] args) throws Exception {
         Exception e = new Exception();

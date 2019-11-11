@@ -34,6 +34,7 @@
  * @run main/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:+AlwaysPreTouch                           -Xms1g -Xmx1g TestAlwaysPreTouch
  */
 
+@Bean
 public class TestAlwaysPreTouch {
 
     public static void main(String[] args) throws Exception {

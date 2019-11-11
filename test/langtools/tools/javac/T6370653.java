@@ -28,6 +28,7 @@
  * @run main T6370653
  */
 
+@Bean
 public class T6370653 {
     static boolean test() {
         int x = 10;

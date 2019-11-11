@@ -61,6 +61,7 @@ import static com.sun.tools.classfile.AccessFlags.ACC_ENUM;
 import static com.sun.tools.classfile.AccessFlags.ACC_FINAL;
 import static com.sun.tools.classfile.AccessFlags.ACC_STATIC;
 
+@Bean
 public class DetectMutableStaticFields {
 
     private final String[] modules = {

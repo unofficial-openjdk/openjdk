@@ -44,6 +44,7 @@ import jdk.tools.jlink.internal.ResourcePoolManager;
 import jdk.tools.jlink.plugin.PluginException;
 import jdk.tools.jlink.plugin.ResourcePoolEntry;
 
+@Bean
 public class ResourceDuplicateCheckTest {
     public static void main(String[] args) throws Exception {
         new ResourceDuplicateCheckTest().test();

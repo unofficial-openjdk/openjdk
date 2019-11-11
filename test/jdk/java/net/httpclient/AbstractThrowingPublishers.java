@@ -118,7 +118,11 @@ public abstract class AbstractThrowingPublishers implements HttpServerAdapters {
         }
 
         @Override
-        public void execute(Runnable command) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void execute(Runnable command) {
             long id = tasks.incrementAndGet();
             executor.execute(() -> {
                 try {
@@ -201,6 +205,10 @@ public abstract class AbstractThrowingPublishers implements HttpServerAdapters {
         public Consumer<Where> select(Consumer<Where> consumer) {
             return new Consumer<Where>() {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void accept(Where where) {
                     if (Where.this == where) {
                         consumer.accept(where);
@@ -502,13 +510,21 @@ public abstract class AbstractThrowingPublishers implements HttpServerAdapters {
 
     static final class UncheckedCustomExceptionThrower implements Thrower {
         @Override
-        public void accept(Where where) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void accept(Where where) {
             out.println(now() + "Throwing in " + where);
             throw new UncheckedCustomException(where.name());
         }
 
         @Override
-        public boolean test(Where w, Throwable throwable) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean test(Where w, Throwable throwable) {
             switch (w) {
                 case AFTER_REQUEST:
                 case BEFORE_NEXT_REQUEST:
@@ -529,13 +545,21 @@ public abstract class AbstractThrowingPublishers implements HttpServerAdapters {
 
     static final class UncheckedIOExceptionThrower implements Thrower {
         @Override
-        public void accept(Where where) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void accept(Where where) {
             out.println(now() + "Throwing in " + where);
             throw new UncheckedIOException(new CustomIOException(where.name()));
         }
 
         @Override
-        public boolean test(Where w, Throwable throwable) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean test(Where w, Throwable throwable) {
             switch (w) {
                 case AFTER_REQUEST:
                 case BEFORE_NEXT_REQUEST:
@@ -589,7 +613,11 @@ public abstract class AbstractThrowingPublishers implements HttpServerAdapters {
         }
 
         @Override
-        public void subscribe(Flow.Subscriber<? super ByteBuffer> subscriber) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void subscribe(Flow.Subscriber<? super ByteBuffer> subscriber) {
             try {
                 throwing.accept(Where.BEFORE_SUBSCRIBE);
                 publisher.subscribe(new SubscriberWrapper(subscriber));
@@ -612,7 +640,11 @@ public abstract class AbstractThrowingPublishers implements HttpServerAdapters {
                 this.subscription = subscription;
             }
             @Override
-            public void request(long n) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void request(long n) {
                 long count = requestCount.incrementAndGet();
                 System.out.printf("%s request-%d(%d)%n", now(), count, n);
                 if (count > 1) throwing.accept(Where.BEFORE_NEXT_REQUEST);
@@ -636,11 +668,19 @@ public abstract class AbstractThrowingPublishers implements HttpServerAdapters {
                 this.subscriber = subscriber;
             }
             @Override
-            public void onSubscribe(Flow.Subscription subscription) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void onSubscribe(Flow.Subscription subscription) {
                 subscriber.onSubscribe(new SubscriptionWrapper(subscription));
             }
             @Override
-            public void onNext(ByteBuffer item) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(ByteBuffer item) {
                 subscriber.onNext(item);
             }
             @Override
@@ -649,7 +689,11 @@ public abstract class AbstractThrowingPublishers implements HttpServerAdapters {
             }
 
             @Override
-            public void onError(Throwable throwable) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void onError(Throwable throwable) {
                 subscriber.onError(throwable);
             }
         }

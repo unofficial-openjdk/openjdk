@@ -35,6 +35,7 @@
 
 import static jdk.test.lib.Asserts.*;
 
+@Bean
 public class AccessCheckJavaBase {
 
     // Test that a class defined to module_two always can read java.base.

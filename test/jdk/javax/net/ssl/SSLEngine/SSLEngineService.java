@@ -56,7 +56,10 @@ public class SSLEngineService {
         init(pathToStores);
     }
 
-    private void init(String pathToStores) {
+    @Bean
+@Bean
+@Bean
+            private void init(String pathToStores) {
         this.pathToStores = pathToStores;
         this.keyFilename =
             System.getProperty("test.src", "./") + "/" + pathToStores +

@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Locale.FilteringMode;
 import java.util.stream.Collectors;
 
+@Bean
 public class FilteringModeTest {
     private static boolean err = false;
     private static List<String> modeNames = List.of("AUTOSELECT_FILTERING",

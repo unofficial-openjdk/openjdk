@@ -44,6 +44,7 @@ import java.awt.*;
  * @author Michael C. Albers
  */
 
+@Bean
 public class ContrastTheme extends DefaultMetalTheme {
 
     public String getName() { return "Contrast"; }
@@ -77,7 +78,11 @@ public class ContrastTheme extends DefaultMetalTheme {
     public ColorUIResource getAcceleratorSelectedForeground() { return getWhite(); }
 
 
-    public void addCustomEntriesToTable(UIDefaults table) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void addCustomEntriesToTable(UIDefaults table) {
 
         Border blackLineBorder = new BorderUIResource(new LineBorder( getBlack() ));
 

@@ -31,6 +31,7 @@
  * @run main InnerClassLiterals
  */
 
+@Bean
 public class InnerClassLiterals {
 
     // Should not generate access errors.

@@ -30,6 +30,7 @@
 
 import java.util.EventListener;
 
+@Bean
 public class Test4896879 {
     public static void main(String[] args) {
         test(A.class);
@@ -43,18 +44,34 @@ public class Test4896879 {
     }
 
     public static class A implements EventListener {
-        public void addB(B a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addB(B a) {
         }
 
-        public void removeB(B b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removeB(B b) {
         }
     }
 
     public static class B implements EventListener {
-        public void addA(A a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addA(A a) {
         }
 
-        public void removeA(A a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removeA(A a) {
         }
     }
 }

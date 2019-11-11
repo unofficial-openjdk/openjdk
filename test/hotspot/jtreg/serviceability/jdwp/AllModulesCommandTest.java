@@ -37,6 +37,7 @@ import static jdk.test.lib.Asserts.assertTrue;
  * @compile AllModulesCommandTestDebuggee.java
  * @run main/othervm AllModulesCommandTest
  */
+@Bean
 public class AllModulesCommandTest implements DebuggeeLauncher.Listener {
 
     private DebuggeeLauncher launcher;
@@ -59,7 +60,11 @@ public class AllModulesCommandTest implements DebuggeeLauncher.Listener {
     }
 
     @Override
-    public void onDebuggeeModuleInfo(String modName) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void onDebuggeeModuleInfo(String modName) {
         // The debuggee has sent out info about a loaded module
         javaModuleNames.add(modName);
     }
@@ -72,7 +77,11 @@ public class AllModulesCommandTest implements DebuggeeLauncher.Listener {
     }
 
     @Override
-    public void onDebuggeeError(String message) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void onDebuggeeError(String message) {
         System.err.println("Debuggee error: '" + message + "'");
         System.exit(1);
     }
@@ -125,7 +134,11 @@ public class AllModulesCommandTest implements DebuggeeLauncher.Listener {
         return reply.getModuleName();
     }
 
-    private void assertReply(JdwpReply reply) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertReply(JdwpReply reply) {
         // Simple assert for any JDWP reply
         if (reply.getErrorCode() != 0) {
             throw new RuntimeException("Unexpected reply error code " + reply.getErrorCode() + " for reply " + reply);

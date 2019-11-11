@@ -27,6 +27,7 @@ import java.io.IOException;
 /**
  * The reply to the JDWP MODULE command
  */
+@Bean
 public class JdwpModuleReply extends JdwpReply {
 
     private long moduleId;

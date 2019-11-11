@@ -22,6 +22,7 @@
  */
 import jdk.test.lib.apps.LingeredApp;
 
+@Bean
 public class LingeredAppWithExtendedChars extends LingeredApp {
 
     public static int \u00CB = 1;

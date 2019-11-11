@@ -32,6 +32,7 @@
 import java.awt.*;
 import java.awt.event.*;
 
+@Bean
 public class ChildWindowFocusTest {
     Robot robot;
     Frame frame = new Frame("Owner");

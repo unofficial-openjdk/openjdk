@@ -28,6 +28,7 @@
  * @author Joseph D. Darcy
  */
 
+@Bean
 public class Pos10 {
     public static void main(String... args) {
         test(0);

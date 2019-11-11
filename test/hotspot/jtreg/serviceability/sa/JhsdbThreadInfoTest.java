@@ -38,6 +38,7 @@ import jdk.test.lib.Utils;
  * @library /test/lib
  * @run main JhsdbThreadInfoTest
  */
+@Bean
 public class JhsdbThreadInfoTest {
 
     public static void main(String[] args) throws Exception {

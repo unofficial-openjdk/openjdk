@@ -32,6 +32,7 @@ package gc.stress.gcold;
  * @summary Stress the Serial GC by trying to make old objects more likely to be garbage than young objects.
  * @run main/othervm -Xmx384M -XX:+UseSerialGC gc.stress.gcold.TestGCOldWithSerial 50 1 20 10 10000
  */
+@Bean
 public class TestGCOldWithSerial {
     public static void main(String[] args) {
         TestGCOld.main(args);

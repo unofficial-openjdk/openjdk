@@ -39,6 +39,7 @@ import java.security.spec.*;
 import javax.crypto.*;
 import javax.crypto.spec.*;
 
+@Bean
 public class RC2PermCheck {
 
     public static void main(String[] args) throws Exception {

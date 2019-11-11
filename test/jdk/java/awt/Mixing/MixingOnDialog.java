@@ -46,6 +46,7 @@ import test.java.awt.regtesthelpers.Util;
 
 
 
+@Bean
 public class MixingOnDialog
 {
     static volatile boolean heavyClicked = false;
@@ -61,7 +62,11 @@ public class MixingOnDialog
         // Actions for the buttons add appropriate number to the test sequence
         heavy.addActionListener(new java.awt.event.ActionListener()
                 {
-                    public void actionPerformed(java.awt.event.ActionEvent e) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(java.awt.event.ActionEvent e) {
                         heavyClicked = true;
                     }
                 }
@@ -69,7 +74,11 @@ public class MixingOnDialog
 
         light.addActionListener(new java.awt.event.ActionListener()
                 {
-                    public void actionPerformed(java.awt.event.ActionEvent e) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(java.awt.event.ActionEvent e) {
                         lightClicked = true;
                     }
                 }

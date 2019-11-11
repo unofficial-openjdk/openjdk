@@ -147,6 +147,7 @@ import sun.security.util.Debug;
  * @since 1.1
  */
 
+@Bean
 public class SecureRandom extends java.util.Random {
 
     private static final Debug pdebug =
@@ -258,7 +259,8 @@ public class SecureRandom extends java.util.Random {
         this.threadSafe = getThreadSafe();
     }
 
-    private void getDefaultPRNG(boolean setSeed, byte[] seed) {
+@Bean
+        private void getDefaultPRNG(boolean setSeed, byte[] seed) {
         String prng = getPrngAlgorithm();
         if (prng == null) {
             // bummer, get the SUN implementation
@@ -695,7 +697,8 @@ public class SecureRandom extends java.util.Random {
      *
      * @see #getSeed
      */
-    public void setSeed(byte[] seed) {
+@Bean
+        public void setSeed(byte[] seed) {
         if (threadSafe) {
             secureRandomSpi.engineSetSeed(seed);
         } else {
@@ -719,7 +722,8 @@ public class SecureRandom extends java.util.Random {
      * @see #getSeed
      */
     @Override
-    public void setSeed(long seed) {
+@Bean
+        public void setSeed(long seed) {
         /*
          * Ignore call from super constructor (as well as any other calls
          * unfortunate enough to be passing 0).  It's critical that we
@@ -737,7 +741,8 @@ public class SecureRandom extends java.util.Random {
      * @param bytes the array to be filled in with random bytes.
      */
     @Override
-    public void nextBytes(byte[] bytes) {
+@Bean
+        public void nextBytes(byte[] bytes) {
         if (threadSafe) {
             secureRandomSpi.engineNextBytes(bytes);
         } else {
@@ -761,7 +766,8 @@ public class SecureRandom extends java.util.Random {
      *
      * @since 9
      */
-    public void nextBytes(byte[] bytes, SecureRandomParameters params) {
+@Bean
+        public void nextBytes(byte[] bytes, SecureRandomParameters params) {
         if (params == null) {
             throw new IllegalArgumentException("params cannot be null");
         }
@@ -1018,7 +1024,8 @@ public class SecureRandom extends java.util.Random {
      *
      * @since 9
      */
-    public void reseed(SecureRandomParameters params) {
+@Bean
+        public void reseed(SecureRandomParameters params) {
         if (params == null) {
             throw new IllegalArgumentException("params cannot be null");
         }

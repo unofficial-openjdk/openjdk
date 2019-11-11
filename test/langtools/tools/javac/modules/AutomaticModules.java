@@ -47,6 +47,7 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.Task.Mode;
 
+@Bean
 public class AutomaticModules extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {
@@ -94,7 +95,12 @@ public class AutomaticModules extends ModuleTestBase {
 
         tb.writeJavaFiles(m1,
                           "module m1x { requires test.api; requires java.desktop; }",
-                          "package impl; public class Impl { public void e(api.Api api) { api.actionPerformed(null); } }");
+                          "package impl; @Bean
+public class Impl { @Bean
+@Bean
+@Bean
+@Bean
+                public void e(api.Api api) { api.actionPerformed(null); } }");
 
         new JavacTask(tb)
                 .options("--module-source-path", moduleSrc.toString(), "--module-path", modulePath.toString())
@@ -108,7 +114,11 @@ public class AutomaticModules extends ModuleTestBase {
     public void testUnnamedModule(Path base) throws Exception {
         Path legacySrc = base.resolve("legacy-src");
         tb.writeJavaFiles(legacySrc,
-                          "package api; public abstract class Api { public void run(CharSequence str) { } private void run(base.Base base) { } }",
+                          "package api; public abstract class Api { @Bean
+@Bean
+@Bean
+@Bean
+                public void run(CharSequence str) { } private void run(base.Base base) { } }",
                           "package base; public interface Base { public void run(); }");
         Path legacyClasses = base.resolve("legacy-classes");
         Files.createDirectories(legacyClasses);
@@ -152,7 +162,12 @@ public class AutomaticModules extends ModuleTestBase {
 
         tb.writeJavaFiles(m1,
                           "module m1x { requires test.api; }",
-                          "package impl; public class Impl { public void e(api.Api api) { api.run(\"\"); } }");
+                          "package impl; @Bean
+public class Impl { @Bean
+@Bean
+@Bean
+@Bean
+                public void e(api.Api api) { api.run(\"\"); } }");
 
         new JavacTask(tb)
                 .options("--module-source-path", moduleSrc.toString(), "--module-path", modulePath.toString(), "--class-path", baseJar.toString())
@@ -165,7 +180,8 @@ public class AutomaticModules extends ModuleTestBase {
     @Test
     public void testModuleInfoFromClassFileDependsOnAutomatic(Path base) throws Exception {
         Path automaticSrc = base.resolve("automaticSrc");
-        tb.writeJavaFiles(automaticSrc, "package api; public class Api {}");
+        tb.writeJavaFiles(automaticSrc, "package api; @Bean
+public class Api {}");
         Path automaticClasses = base.resolve("automaticClasses");
         tb.createDirectories(automaticClasses);
 
@@ -198,7 +214,8 @@ public class AutomaticModules extends ModuleTestBase {
 
         tb.writeJavaFiles(depSrc,
                           "module m1x { requires transitive automatic; }",
-                          "package dep; public class Dep { api.Api api; }");
+                          "package dep; @Bean
+public class Dep { api.Api api; }");
 
         new JavacTask(tb)
                 .options("--module-path", modulePath.toString())
@@ -222,7 +239,8 @@ public class AutomaticModules extends ModuleTestBase {
 
         tb.writeJavaFiles(testSrc,
                           "module m2x { requires automatic; }",
-                          "package test; public class Test { }");
+                          "package test; @Bean
+public class Test { }");
 
         new JavacTask(tb)
                 .options("--module-path", modulePath.toString())
@@ -240,7 +258,8 @@ public class AutomaticModules extends ModuleTestBase {
 
         for (char c : new char[] {'A', 'B'}) {
             Path automaticSrc = base.resolve("automaticSrc" + c);
-            tb.writeJavaFiles(automaticSrc, "package api" + c + "; public class Api {}");
+            tb.writeJavaFiles(automaticSrc, "package api" + c + "; @Bean
+public class Api {}");
             Path automaticClasses = base.resolve("automaticClasses" + c);
             tb.createDirectories(automaticClasses);
 
@@ -266,11 +285,13 @@ public class AutomaticModules extends ModuleTestBase {
 
         tb.writeJavaFiles(moduleSrc.resolve("m1x"),
                           "module m1x { requires static automaticA; }",
-                          "package impl; public class Impl { apiA.Api a; apiB.Api b; m2x.M2 m;}");
+                          "package impl; @Bean
+public class Impl { apiA.Api a; apiB.Api b; m2x.M2 m;}");
 
         tb.writeJavaFiles(moduleSrc.resolve("m2x"),
                           "module m2x { exports m2x; }",
-                          "package m2x; public class M2 { }");
+                          "package m2x; @Bean
+public class M2 { }");
 
         Path classes = base.resolve("classes");
 
@@ -316,7 +337,8 @@ public class AutomaticModules extends ModuleTestBase {
     public void testWithTrailingVersion(Path base) throws Exception {
         Path legacySrc = base.resolve("legacy-src");
         tb.writeJavaFiles(legacySrc,
-                          "package api; public class Api {}");
+                          "package api; @Bean
+public class Api {}");
         Path legacyClasses = base.resolve("legacy-classes");
         Files.createDirectories(legacyClasses);
 
@@ -352,7 +374,12 @@ public class AutomaticModules extends ModuleTestBase {
 
         tb.writeJavaFiles(m,
                           "module m { requires test1; }",
-                          "package impl; public class Impl { public void e(api.Api api) { } }");
+                          "package impl; @Bean
+public class Impl { @Bean
+@Bean
+@Bean
+@Bean
+                public void e(api.Api api) { } }");
 
         new JavacTask(tb)
                 .options("--module-source-path", moduleSrc.toString(), "--module-path", modulePath.toString())
@@ -370,7 +397,8 @@ public class AutomaticModules extends ModuleTestBase {
 
         for (char c : new char[] {'A', 'B'}) {
             Path automaticSrc = base.resolve("automaticSrc" + c);
-            tb.writeJavaFiles(automaticSrc, "package api" + c + "; public class Api {}");
+            tb.writeJavaFiles(automaticSrc, "package api" + c + "; @Bean
+public class Api {}");
             Path automaticClasses = base.resolve("automaticClasses" + c);
             tb.createDirectories(automaticClasses);
 
@@ -395,7 +423,8 @@ public class AutomaticModules extends ModuleTestBase {
         Path src = base.resolve("src");
 
         tb.writeJavaFiles(src.resolve("m1x"),
-                          "package impl; public class Impl { apiA.Api a; apiB.Api b; }");
+                          "package impl; @Bean
+public class Impl { apiA.Api a; apiB.Api b; }");
 
         Path classes = base.resolve("classes");
 
@@ -436,7 +465,8 @@ public class AutomaticModules extends ModuleTestBase {
 
         for (char c : new char[] {'A', 'B'}) {
             Path automaticSrc = base.resolve("automaticSrc" + c);
-            tb.writeJavaFiles(automaticSrc, "package api" + c + "; public class Api {}");
+            tb.writeJavaFiles(automaticSrc, "package api" + c + "; @Bean
+public class Api {}");
             Path automaticClasses = base.resolve("automaticClasses" + c);
             tb.createDirectories(automaticClasses);
 
@@ -625,7 +655,8 @@ public class AutomaticModules extends ModuleTestBase {
         Files.createDirectories(modulePath);
 
         Path automaticSrc = base.resolve("automaticSrc");
-        tb.writeJavaFiles(automaticSrc, "package api; public class Api {}");
+        tb.writeJavaFiles(automaticSrc, "package api; @Bean
+public class Api {}");
         Path automaticClasses = base.resolve("automaticClasses");
         tb.createDirectories(automaticClasses);
 
@@ -651,7 +682,8 @@ public class AutomaticModules extends ModuleTestBase {
 
         tb.writeJavaFiles(src,
                           "module m { requires custom.module.name; }",
-                          "package impl; public class Impl { api.Api a; }");
+                          "package impl; @Bean
+public class Impl { api.Api a; }");
 
         Path classes = base.resolve("classes");
 
@@ -698,7 +730,8 @@ public class AutomaticModules extends ModuleTestBase {
             Files.createDirectories(modulePath);
 
             Path automaticSrc = base.resolve("automaticSrc");
-            tb.writeJavaFiles(automaticSrc, "package api; public class Api {}");
+            tb.writeJavaFiles(automaticSrc, "package api; @Bean
+public class Api {}");
             Path automaticClasses = base.resolve("automaticClasses");
             tb.createDirectories(automaticClasses);
 
@@ -723,7 +756,8 @@ public class AutomaticModules extends ModuleTestBase {
             Path src = base.resolve("src");
 
             tb.writeJavaFiles(src,
-                              "package impl; public class Impl { api.Api a; }");
+                              "package impl; @Bean
+public class Impl { api.Api a; }");
 
             Path classes = base.resolve("classes");
 
@@ -757,7 +791,8 @@ public class AutomaticModules extends ModuleTestBase {
         Files.createDirectories(modulePath);
 
         Path automaticSrc = base.resolve("automaticSrc");
-        tb.writeJavaFiles(automaticSrc, "package api; public class Api {}");
+        tb.writeJavaFiles(automaticSrc, "package api; @Bean
+public class Api {}");
         Path automaticClasses = base.resolve("automaticClasses");
         tb.createDirectories(automaticClasses);
 
@@ -782,7 +817,8 @@ public class AutomaticModules extends ModuleTestBase {
 
         tb.writeJavaFiles(src,
                           "module m { requires automatic; }",
-                          "package impl; public class Impl { api.Api a; }");
+                          "package impl; @Bean
+public class Impl { api.Api a; }");
 
         Path classes = base.resolve("classes");
 
@@ -827,7 +863,8 @@ public class AutomaticModules extends ModuleTestBase {
         Path libaSrc = base.resolve("libaSrc");
         tb.writeJavaFiles(libaSrc,
                           "module liba { exports api1; }",
-                          "package api1; public class Api1 {}");
+                          "package api1; @Bean
+public class Api1 {}");
         Path libaClasses = modulePath.resolve("liba");
         tb.createDirectories(libaClasses);
 
@@ -840,7 +877,8 @@ public class AutomaticModules extends ModuleTestBase {
         Path libbSrc = base.resolve("libbSrc");
         tb.writeJavaFiles(libbSrc,
                           "module libb { exports api2; }",
-                          "package api2; public class Api2 {}");
+                          "package api2; @Bean
+public class Api2 {}");
         Path libbClasses = modulePath.resolve("libb");
         tb.createDirectories(libbClasses);
 
@@ -851,7 +889,8 @@ public class AutomaticModules extends ModuleTestBase {
             .writeAll();
 
         Path automaticSrc = base.resolve("automaticSrc");
-        tb.writeJavaFiles(automaticSrc, "package aut; public class Aut1 { api1.Api1 a1; }");
+        tb.writeJavaFiles(automaticSrc, "package aut; @Bean
+public class Aut1 { api1.Api1 a1; }");
         Path automaticClasses = base.resolve("automaticClasses");
         tb.createDirectories(automaticClasses);
 
@@ -874,7 +913,8 @@ public class AutomaticModules extends ModuleTestBase {
         Path src = base.resolve("src");
 
         tb.writeJavaFiles(src,
-                          "package aut; public class Aut2 { api2.Api2 a2; aut.Aut1 aut1;}");
+                          "package aut; @Bean
+public class Aut2 { api2.Api2 a2; aut.Aut1 aut1;}");
 
         Path classes = base.resolve("classes");
 

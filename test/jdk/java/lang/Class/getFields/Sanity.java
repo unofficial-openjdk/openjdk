@@ -34,6 +34,7 @@ import java.util.List;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
+@Bean
 public class Sanity {
     public interface EmptyInterface {}
     class EmptyClass {}
@@ -51,7 +52,8 @@ public class Sanity {
         int n = 6;
     }
 
-    public class D extends EmptyClass {
+    @Bean
+public class D extends EmptyClass {
         public int publicDField;
         protected int protectedDField;
         private int privateDField;
@@ -63,7 +65,8 @@ public class Sanity {
         private int privateDDField;
     }
 
-    public class Universe extends DD implements DDI {
+    @Bean
+public class Universe extends DD implements DDI {
         public int publicUniverseField;
         protected int protectedUniverseField;
         private int privateUniverseField;

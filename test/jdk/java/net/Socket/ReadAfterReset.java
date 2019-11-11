@@ -40,6 +40,7 @@ import java.net.Socket;
  * only to ensure that the behavior doesn't change between JDK releases.
  */
 
+@Bean
 public class ReadAfterReset {
     private static final PrintStream out = System.out;
 

@@ -134,7 +134,11 @@ public interface HttpServerAdapters {
                 return headers.get(name);
             }
             @Override
-            public boolean containsKey(String name) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public boolean containsKey(String name) {
                 return headers.containsKey(name);
             }
         }
@@ -156,7 +160,11 @@ public interface HttpServerAdapters {
                 return headers.allValues(name);
             }
             @Override
-            public boolean containsKey(String name) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public boolean containsKey(String name) {
                 return headers.firstValue(name).isPresent();
             }
         }
@@ -179,7 +187,11 @@ public interface HttpServerAdapters {
             private final Headers headers;
             Http1TestResponseHeaders(Headers h) { this.headers = h; }
             @Override
-            public void addHeader(String name, String value) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void addHeader(String name, String value) {
                 headers.add(name, value);
             }
         }
@@ -187,7 +199,11 @@ public interface HttpServerAdapters {
             private final HttpHeadersBuilder headersBuilder;
             Http2TestResponseHeaders(HttpHeadersBuilder hb) { this.headersBuilder = hb; }
             @Override
-            public void addHeader(String name, String value) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void addHeader(String name, String value) {
                 headersBuilder.addHeader(name, value);
             }
         }
@@ -207,11 +223,19 @@ public interface HttpServerAdapters {
         public abstract URI getRequestURI();
         public abstract String getRequestMethod();
         public abstract void close();
-        public void serverPush(URI uri, HttpHeaders headers, byte[] body) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void serverPush(URI uri, HttpHeaders headers, byte[] body) {
             ByteArrayInputStream bais = new ByteArrayInputStream(body);
             serverPush(uri, headers, bais);
         }
-        public void serverPush(URI uri, HttpHeaders headers, InputStream body) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void serverPush(URI uri, HttpHeaders headers, InputStream body) {
             throw new UnsupportedOperationException("serverPush with " + getExchangeVersion());
         }
         public boolean serverPushAllowed() {
@@ -311,7 +335,11 @@ public interface HttpServerAdapters {
                 return exchange.serverPushAllowed();
             }
             @Override
-            public void serverPush(URI uri, HttpHeaders headers, InputStream body) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void serverPush(URI uri, HttpHeaders headers, InputStream body) {
                 exchange.serverPush(uri, headers, body);
             }
             void doFilter(Filter.Chain filter) throws IOException {
@@ -525,7 +553,11 @@ public interface HttpServerAdapters {
                 impl.stop(0);
             }
             @Override
-            public HttpTestContext addHandler(HttpTestHandler handler, String path) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public HttpTestContext addHandler(HttpTestHandler handler, String path) {
                 System.out.println("Http1TestServer[" + getAddress()
                         + "]::addHandler " + handler + ", " + path);
                 return new Http1TestContext(impl.createContext(path, handler.toHttpHandler()));
@@ -547,12 +579,20 @@ public interface HttpServerAdapters {
                 return context.getPath();
             }
             @Override
-            public void addFilter(HttpTestFilter filter) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void addFilter(HttpTestFilter filter) {
                 System.out.println("Http1TestContext::addFilter " + filter.description());
                 context.getFilters().add(filter.toFilter());
             }
             @Override
-            public void setAuthenticator(com.sun.net.httpserver.Authenticator authenticator) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setAuthenticator(com.sun.net.httpserver.Authenticator authenticator) {
                 context.setAuthenticator(authenticator);
             }
             @Override public Version getVersion() { return Version.HTTP_1_1; }
@@ -574,7 +614,11 @@ public interface HttpServerAdapters {
                 impl.stop();
             }
             @Override
-            public HttpTestContext addHandler(HttpTestHandler handler, String path) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public HttpTestContext addHandler(HttpTestHandler handler, String path) {
                 System.out.println("Http2TestServerImpl[" + getAddress()
                                    + "]::addHandler " + handler + ", " + path);
                 Http2TestContext context = new Http2TestContext(handler, path);
@@ -601,7 +645,11 @@ public interface HttpServerAdapters {
             @Override
             public String getPath() { return path; }
             @Override
-            public void addFilter(HttpTestFilter filter) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void addFilter(HttpTestFilter filter) {
                 System.out.println("Http2TestContext::addFilter " + filter.description());
                 filters.add(filter);
             }
@@ -611,7 +659,11 @@ public interface HttpServerAdapters {
                 HttpChain.of(filters, handler).doFilter(exchange);
             }
             @Override
-            public void setAuthenticator(com.sun.net.httpserver.Authenticator authenticator) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setAuthenticator(com.sun.net.httpserver.Authenticator authenticator) {
                 throw new UnsupportedOperationException("Can't set HTTP/1.1 authenticator on HTTP/2 context");
             }
             @Override public Version getVersion() { return Version.HTTP_2; }

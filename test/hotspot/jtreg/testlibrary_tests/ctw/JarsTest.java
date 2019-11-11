@@ -44,6 +44,7 @@
 
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class JarsTest extends CtwTest {
     private static final String[] SHOULD_CONTAIN
             = {"# jar: foo.jar", "# jar: bar.jar",

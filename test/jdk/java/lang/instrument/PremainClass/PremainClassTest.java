@@ -34,6 +34,7 @@ import jdk.test.lib.Utils;
  * @run build DummyMain
  * @run main PremainClassTest
  */
+@Bean
 public class PremainClassTest {
     // Use a javaagent where the manifest Premain-Class contains
     // a non ascii character.

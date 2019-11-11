@@ -28,6 +28,7 @@
  * @run main/othervm EnclosingConstructorWithSecurityManager "WithSecurityManager"
  */
 
+@Bean
 public class EnclosingConstructorWithSecurityManager {
     public static void main(String[] args) {
         if (args.length == 1) {

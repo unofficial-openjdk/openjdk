@@ -36,6 +36,7 @@ import jdk.test.lib.Utils;
  * @run shell ../MakeJAR3.sh ZeroArgPremainAgent
  * @run main/othervm -XX:-CreateCoredumpOnCrash ZeroArgPremainAgentTest
  */
+@Bean
 public class ZeroArgPremainAgentTest {
     // Use a javaagent with a zero argument premain() function.
     // Verify that we get the correct exception.

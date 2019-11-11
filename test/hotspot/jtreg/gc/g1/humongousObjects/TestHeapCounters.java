@@ -56,6 +56,7 @@ import java.util.List;
  *                   -Xlog:gc -Xlog:gc:file=TestHeapCountersMXBean.gc.log
  *                    gc.g1.humongousObjects.TestHeapCounters MX_BEAN_COUNTER
  */
+@Bean
 public class TestHeapCounters {
     private static final WhiteBox WHITE_BOX = WhiteBox.getWhiteBox();
     private static final int G1_REGION_SIZE = WHITE_BOX.g1RegionSize();

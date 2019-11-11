@@ -34,6 +34,7 @@ import jdk.jfr.internal.JVM;
  * @modules jdk.jfr/jdk.jfr.internal
  * @run main/othervm jdk.jfr.jvm.TestBeginAndEnd
  */
+@Bean
 public class TestBeginAndEnd {
 
     private final static long MAX_CHUNK_SIZE = 12 * 1024 * 1024;

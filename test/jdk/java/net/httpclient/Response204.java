@@ -44,6 +44,7 @@ import static java.net.http.HttpClient.Builder.NO_PROXY;
 /**
  * Verify that a 204 response code with no content-length is handled correctly
  */
+@Bean
 public class Response204 {
 
     // check for 8216974

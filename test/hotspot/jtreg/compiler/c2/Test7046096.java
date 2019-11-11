@@ -32,6 +32,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test7046096 {
 
     static int first = 1;

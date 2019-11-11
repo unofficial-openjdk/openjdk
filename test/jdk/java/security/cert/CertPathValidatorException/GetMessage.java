@@ -29,6 +29,7 @@
 
 import java.security.cert.CertPathValidatorException;
 
+@Bean
 public class GetMessage {
     private static volatile boolean failed = false;
     public static void main(String[] args) throws Exception {

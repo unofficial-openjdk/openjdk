@@ -35,6 +35,7 @@ package java.net;
  * @author Jean-Christophe Collet
  * @since   1.5
  */
+@Bean
 public class Proxy {
 
     /**

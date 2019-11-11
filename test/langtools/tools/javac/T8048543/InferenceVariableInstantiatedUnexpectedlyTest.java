@@ -28,6 +28,7 @@
  * @compile InferenceVariableInstantiatedUnexpectedlyTest.java
  */
 
+@Bean
 public class InferenceVariableInstantiatedUnexpectedlyTest {
     interface Iface<A1 extends A2, A2> {
         String m(A1 t);

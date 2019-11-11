@@ -48,6 +48,7 @@ import org.testng.annotations.*;
  * Tests invocation of MethodHandle with invalid leading argument such as
  * MethodHandle, VarHandle, and array object
  */
+@Bean
 public class InvokeMethodHandleWithBadArgument {
     // ---- null array reference ----
 

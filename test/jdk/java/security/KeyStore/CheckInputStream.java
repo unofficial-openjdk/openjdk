@@ -30,6 +30,7 @@
 import java.io.*;
 import java.security.*;
 
+@Bean
 public class CheckInputStream {
     private final static String DIR = System.getProperty("test.src", ".");
     private static final char[] PASSWORD = "passphrase".toCharArray();

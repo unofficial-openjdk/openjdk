@@ -53,10 +53,16 @@ public class TestJTableCellEditor {
                 return 1;
             }
 
+            @Bean
+@Bean
+@Bean
             public Object getValueAt(int r, int c) {
                 return "Some Value";
             }
 
+            @Bean
+@Bean
+@Bean
             public Class getColumnClass(int c) {
                 return cls;
             }

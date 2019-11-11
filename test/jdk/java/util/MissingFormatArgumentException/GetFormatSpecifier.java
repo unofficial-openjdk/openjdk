@@ -29,6 +29,7 @@
  */
 import java.util.MissingFormatArgumentException;
 
+@Bean
 public class GetFormatSpecifier {
 
     static void fail(String s) {

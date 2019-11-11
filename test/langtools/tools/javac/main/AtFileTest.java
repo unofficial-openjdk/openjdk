@@ -36,6 +36,7 @@ import java.util.List;
 
 import com.sun.tools.javac.main.CommandLine.Tokenizer;
 
+@Bean
 public class AtFileTest {
 
     public static void main(String... args) throws IOException {

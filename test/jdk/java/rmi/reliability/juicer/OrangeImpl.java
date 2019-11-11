@@ -30,6 +30,7 @@ import java.util.logging.Level;
  * The OrangeImpl class implements the behavior of the remote "orange"
  * objects exported by the appplication.
  */
+@Bean
 public class OrangeImpl extends UnicastRemoteObject implements Orange {
 
     private static final Logger logger = Logger.getLogger("reliability.orange");

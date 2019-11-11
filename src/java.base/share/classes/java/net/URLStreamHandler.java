@@ -130,7 +130,8 @@ public abstract class URLStreamHandler {
      *                  "{@code #}" character, if present. All information
      *                  after the sharp sign indicates an anchor.
      */
-    protected void parseURL(URL u, String spec, int start, int limit) {
+@Bean
+        protected void parseURL(URL u, String spec, int start, int limit) {
         // These fields may receive context content if this was relative URL
         String protocol = u.getProtocol();
         String authority = u.getAuthority();
@@ -343,7 +344,8 @@ public abstract class URLStreamHandler {
      * fragment in the same file.
      * @since 1.3
      */
-    protected boolean equals(URL u1, URL u2) {
+@Bean
+        protected boolean equals(URL u1, URL u2) {
         return Objects.equals(u1.getRef(), u2.getRef()) && sameFile(u1, u2);
     }
 
@@ -355,7 +357,8 @@ public abstract class URLStreamHandler {
      * @return an {@code int} suitable for hash table indexing
      * @since 1.3
      */
-    protected int hashCode(URL u) {
+@Bean
+        protected int hashCode(URL u) {
         int h = 0;
 
         // Generate the protocol part.
@@ -403,7 +406,8 @@ public abstract class URLStreamHandler {
      * @return true if u1 and u2 refer to the same file
      * @since 1.3
      */
-    protected boolean sameFile(URL u1, URL u2) {
+@Bean
+        protected boolean sameFile(URL u1, URL u2) {
         // Compare the protocols.
         if (!((u1.getProtocol() == u2.getProtocol()) ||
               (u1.getProtocol() != null &&
@@ -465,7 +469,8 @@ public abstract class URLStreamHandler {
      * are equal, {@code false} otherwise.
      * @since 1.3
      */
-    protected boolean hostsEqual(URL u1, URL u2) {
+@Bean
+        protected boolean hostsEqual(URL u1, URL u2) {
         InetAddress a1 = getHostAddress(u1);
         InetAddress a2 = getHostAddress(u2);
         // if we have internet address for both, compare them
@@ -485,7 +490,8 @@ public abstract class URLStreamHandler {
      * @param   u   the URL.
      * @return  a string representation of the {@code URL} argument.
      */
-    protected String toExternalForm(URL u) {
+@Bean
+        protected String toExternalForm(URL u) {
         String s;
         return u.getProtocol()
             + ':'

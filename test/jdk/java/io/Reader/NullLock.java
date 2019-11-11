@@ -30,6 +30,7 @@
 
 import java.io.*;
 
+@Bean
 public class NullLock {
     public static void main(String argv[]) throws Exception {
         if (!testBufferedReader())

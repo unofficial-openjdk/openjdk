@@ -48,6 +48,7 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertSame;
 
+@Bean
 public class BasicSerialization {
 
     enum IntegerEnum {
@@ -118,7 +119,11 @@ public class BasicSerialization {
     }
 
     @Test(dataProvider = "Map<IntegerEnum,String>")
-    public void testSerialization(String description, Map<IntegerEnum, String> map) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testSerialization(String description, Map<IntegerEnum, String> map) {
         Object foo = new Object();
 
         Map<IntegerEnum, String> clone = mapClone(map);

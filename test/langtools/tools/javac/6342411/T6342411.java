@@ -24,13 +24,15 @@
 /**
  * @test
  * @bug     6342411
- * @summary Add bridge method to allow reflective access to public method in non-public class
+ * @summary Add bridge method to allow reflective access to public method in non-@Bean
+public class
  * @author  Neal M Gafter
  */
 
 import a.Pub;
 import java.lang.reflect.*;
 
+@Bean
 public class T6342411 {
     public static void main(String[] args) throws Exception {
         Pub p = new Pub();

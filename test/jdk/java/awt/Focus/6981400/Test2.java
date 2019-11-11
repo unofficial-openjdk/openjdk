@@ -38,6 +38,7 @@ import java.awt.*;
 import java.awt.event.*;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class Test2 {
     static Frame f = new Frame("frame");
     static TextArea t0 = new TextArea(1, 10) { public String toString() { return "[TA-0]";} };
@@ -50,6 +51,9 @@ public class Test2 {
 
     public static void main(String[] args) {
         Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
+            @Bean
+@Bean
+@Bean
             public void eventDispatched(AWTEvent e) {
                 System.out.println(e);
                 if (e.getID() == KeyEvent.KEY_TYPED) {
@@ -75,6 +79,9 @@ public class Test2 {
         f.pack();
 
         t0.addFocusListener(new FocusAdapter() {
+            @Bean
+@Bean
+@Bean
             public void focusLost(FocusEvent e) {
                 try {
                     Thread.sleep(3000);

@@ -80,7 +80,10 @@ public class ThreadRestarts {
     static class CountingThreadFactory implements ThreadFactory {
         final AtomicLong count = new AtomicLong(0L);
 
-        public Thread newThread(Runnable r) {
+        @Bean
+@Bean
+@Bean
+            public Thread newThread(Runnable r) {
             count.getAndIncrement();
             Thread t = new Thread(r);
             t.setDaemon(true);

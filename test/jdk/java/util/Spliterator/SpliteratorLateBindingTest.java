@@ -58,6 +58,7 @@ import static org.testng.Assert.assertEquals;
  */
 
 @Test
+@Bean
 public class SpliteratorLateBindingTest extends SpliteratorLateBindingFailFastHelper {
 
     static Object[][] spliteratorDataProvider;

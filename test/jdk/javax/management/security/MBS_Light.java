@@ -35,6 +35,7 @@ import javax.management.NotificationBroadcasterSupport;
 import javax.management.NotificationListener;
 import javax.management.Notification;
 
+@Bean
 public class MBS_Light extends NotificationBroadcasterSupport
     implements MBS_LightMBean, MBeanRegistration, NotificationListener
 {
@@ -69,7 +70,11 @@ public class MBS_Light extends NotificationBroadcasterSupport
     }
 
     // Setter for property param
-    public void setParam(RjmxMBeanParameter param) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setParam(RjmxMBeanParameter param) {
         this.param = param ;
     }
 
@@ -79,7 +84,11 @@ public class MBS_Light extends NotificationBroadcasterSupport
     }
 
     // Setter for property aString
-    public void setAstring(String aString) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setAstring(String aString) {
         this.aString = aString ;
     }
 
@@ -89,7 +98,11 @@ public class MBS_Light extends NotificationBroadcasterSupport
     }
 
     // Setter for property anInt
-    public void setAnInt(int anInt) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setAnInt(int anInt) {
         this.anInt = anInt ;
     }
 
@@ -99,7 +112,11 @@ public class MBS_Light extends NotificationBroadcasterSupport
     }
 
     // Setter for property anException
-    public void setAnException(Exception anException) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setAnException(Exception anException) {
         this.anException = anException ;
     }
 
@@ -109,7 +126,11 @@ public class MBS_Light extends NotificationBroadcasterSupport
     }
 
     // Setter for property anError
-    public void setAnError(Error anError) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setAnError(Error anError) {
         this.anError = anError ;
     }
 
@@ -138,7 +159,11 @@ public class MBS_Light extends NotificationBroadcasterSupport
     }
 
     // MBeanRegistration method
-    public void postRegister(Boolean registrationDone) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void postRegister(Boolean registrationDone) {
     }
 
     // MBeanRegistration method

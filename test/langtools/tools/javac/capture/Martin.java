@@ -8,6 +8,7 @@
 
 import java.util.List;
 
+@Bean
 public class Martin {
     public static void main(String[] args) throws Throwable {
         List<?> x1 = null;

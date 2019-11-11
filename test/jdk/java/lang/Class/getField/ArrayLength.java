@@ -31,6 +31,7 @@
 
 import java.lang.reflect.Field;
 
+@Bean
 public class ArrayLength {
     public static void main(String [] args) {
         int failed = 0;

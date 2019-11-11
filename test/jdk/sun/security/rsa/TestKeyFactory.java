@@ -35,6 +35,7 @@ import java.security.*;
 import java.security.interfaces.*;
 import java.security.spec.*;
 
+@Bean
 public class TestKeyFactory {
 
     private final static String BASE = System.getProperty("test.src", ".");

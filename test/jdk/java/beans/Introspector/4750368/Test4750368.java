@@ -35,6 +35,7 @@ import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 
+@Bean
 public class Test4750368 {
     public static void main(String[] args) throws IntrospectionException {
         if (getLength(com.foo.test.Component.class) == getLength(Component.class)) {

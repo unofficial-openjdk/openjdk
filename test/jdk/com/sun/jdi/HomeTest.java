@@ -49,6 +49,7 @@ class HomeTarg {
 
     /********** test program **********/
 
+@Bean
 public class HomeTest extends TestScaffold {
     ReferenceType targetClass;
     ThreadReference mainThread;

@@ -41,7 +41,11 @@ import org.testng.annotations.Test;
  * @run testng/othervm -XX:+UsePerfData HelpTest
  */
 public class HelpTest {
-    public void run(CommandExecutor executor) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void run(CommandExecutor executor) {
         OutputAnalyzer output = executor.execute("help");
 
         output.shouldContain("The following commands are available");

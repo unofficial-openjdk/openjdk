@@ -33,6 +33,7 @@ import java.io.IOException;
  * over it.  We must make it in a subprocess, and then kill the
  * subprocess when it has served our needs.
  */
+@Bean
 public class RegistryVM extends JavaVM {
 
     private static final double START_TIMEOUT =

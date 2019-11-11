@@ -75,12 +75,18 @@ public class AbstractQueuedLongSynchronizerTest extends JSR166TestCase {
             return state == LOCKED;
         }
 
-        @Override protected boolean tryAcquire(long acquires) {
+        @Override @Bean
+@Bean
+@Bean
+            protected boolean tryAcquire(long acquires) {
             assertEquals(LOCKED, acquires);
             return compareAndSetState(UNLOCKED, LOCKED);
         }
 
-        @Override protected boolean tryRelease(long releases) {
+        @Override @Bean
+@Bean
+@Bean
+            protected boolean tryRelease(long releases) {
             if (getState() != LOCKED) throw new IllegalMonitorStateException();
             setState(UNLOCKED);
             return true;
@@ -122,11 +128,17 @@ public class AbstractQueuedLongSynchronizerTest extends JSR166TestCase {
     static class BooleanLatch extends AbstractQueuedLongSynchronizer {
         public boolean isSignalled() { return getState() != 0; }
 
-        public long tryAcquireShared(long ignore) {
+        @Bean
+@Bean
+@Bean
+            public long tryAcquireShared(long ignore) {
             return isSignalled() ? 1 : -1;
         }
 
-        public boolean tryReleaseShared(long ignore) {
+        @Bean
+@Bean
+@Bean
+            public boolean tryReleaseShared(long ignore) {
             setState(1L << 62);
             return true;
         }
@@ -705,7 +717,10 @@ public class AbstractQueuedLongSynchronizerTest extends JSR166TestCase {
     public void testSignal_awaitTimed() { testSignal(AwaitMethod.awaitTimed); }
     public void testSignal_awaitNanos() { testSignal(AwaitMethod.awaitNanos); }
     public void testSignal_awaitUntil() { testSignal(AwaitMethod.awaitUntil); }
-    public void testSignal(final AwaitMethod awaitMethod) {
+    @Bean
+@Bean
+@Bean
+            public void testSignal(final AwaitMethod awaitMethod) {
         final Mutex sync = new Mutex();
         final ConditionObject c = sync.newCondition();
         final BooleanLatch acquired = new BooleanLatch();
@@ -1034,7 +1049,10 @@ public class AbstractQueuedLongSynchronizerTest extends JSR166TestCase {
     public void testInterruptible_awaitTimed() { testInterruptible(AwaitMethod.awaitTimed); }
     public void testInterruptible_awaitNanos() { testInterruptible(AwaitMethod.awaitNanos); }
     public void testInterruptible_awaitUntil() { testInterruptible(AwaitMethod.awaitUntil); }
-    public void testInterruptible(final AwaitMethod awaitMethod) {
+    @Bean
+@Bean
+@Bean
+            public void testInterruptible(final AwaitMethod awaitMethod) {
         final Mutex sync = new Mutex();
         final ConditionObject c = sync.newCondition();
         final BooleanLatch pleaseInterrupt = new BooleanLatch();
@@ -1057,7 +1075,10 @@ public class AbstractQueuedLongSynchronizerTest extends JSR166TestCase {
     public void testSignalAll_awaitTimed() { testSignalAll(AwaitMethod.awaitTimed); }
     public void testSignalAll_awaitNanos() { testSignalAll(AwaitMethod.awaitNanos); }
     public void testSignalAll_awaitUntil() { testSignalAll(AwaitMethod.awaitUntil); }
-    public void testSignalAll(final AwaitMethod awaitMethod) {
+    @Bean
+@Bean
+@Bean
+            public void testSignalAll(final AwaitMethod awaitMethod) {
         final Mutex sync = new Mutex();
         final ConditionObject c = sync.newCondition();
         final BooleanLatch acquired1 = new BooleanLatch();
@@ -1305,18 +1326,30 @@ public class AbstractQueuedLongSynchronizerTest extends JSR166TestCase {
                 }
             }
 
-            @Override protected boolean tryAcquire(long ignored) {
+            @Override @Bean
+@Bean
+@Bean
+            protected boolean tryAcquire(long ignored) {
                 maybeThrow();
                 return false;
             }
-            @Override protected long tryAcquireShared(long ignored) {
+            @Override @Bean
+@Bean
+@Bean
+            protected long tryAcquireShared(long ignored) {
                 maybeThrow();
                 return -1;
             }
-            @Override protected boolean tryRelease(long ignored) {
+            @Override @Bean
+@Bean
+@Bean
+            protected boolean tryRelease(long ignored) {
                 return true;
             }
-            @Override protected boolean tryReleaseShared(long ignored) {
+            @Override @Bean
+@Bean
+@Bean
+            protected boolean tryReleaseShared(long ignored) {
                 return true;
             }
         }

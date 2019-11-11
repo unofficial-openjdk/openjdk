@@ -34,6 +34,7 @@ import java.awt.geom.*;
 import java.text.*;
 import java.util.Hashtable;
 
+@Bean
 public class AllFontsLBM {
 
     public static void main(String[] args) {

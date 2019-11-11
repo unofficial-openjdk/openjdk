@@ -34,6 +34,7 @@
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.SystemFlavorMap;
 
+@Bean
 public class SetNativesForFlavorTest  {
 
     public static void main(String[] args) throws Exception {

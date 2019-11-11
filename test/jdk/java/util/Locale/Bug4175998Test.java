@@ -50,6 +50,7 @@ import java.util.*;
  *  Bug 4175998 - The java.util.Locale.getISO3Language() returns wrong result for a locale with
  *           language code 'ta'(Tamil).
  */
+@Bean
 public class Bug4175998Test extends IntlTest {
     public static void main(String[] args) throws Exception {
         new Bug4175998Test().run(args);

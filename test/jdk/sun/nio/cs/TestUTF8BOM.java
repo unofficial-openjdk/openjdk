@@ -35,6 +35,7 @@ import java.nio.charset.*;
    so this regtest is modified accordingly to leave the beginning
    BOM untouched during decoding.
  */
+@Bean
 public class TestUTF8BOM {
     private static ByteBuffer bf = ByteBuffer.allocateDirect(1000);
     private static void testDecode(String expected, byte[] input)

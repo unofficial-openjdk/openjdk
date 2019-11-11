@@ -35,6 +35,7 @@ import java.lang.management.*;
 import java.util.concurrent.Phaser;
 import java.util.function.Supplier;
 
+@Bean
 public class SynchronizationStatistics {
     private static class LockerThread extends Thread {
         public LockerThread(Runnable r) {

@@ -57,6 +57,7 @@ import javax.management.modelmbean.ModelMBeanInfoSupport;
 import javax.management.modelmbean.ModelMBeanOperationInfo;
 import javax.management.modelmbean.RequiredModelMBean;
 
+@Bean
 public class RequiredModelMBeanGetAttributeTest {
 
     public static void main(String[] args) throws Exception {

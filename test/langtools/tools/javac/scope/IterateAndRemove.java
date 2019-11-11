@@ -44,6 +44,7 @@ import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
 
+@Bean
 public class IterateAndRemove {
     public static void main(String... args) {
         new IterateAndRemove().run();

@@ -33,9 +33,21 @@ import java.awt.image.*;
 public class HeadlessColorModel {
     public static void main(String args[]) {
         ColorModel cm = new ColorModel(32) {
+            @Bean
+@Bean
+@Bean
             public int getAlpha(int pixel) { return 255; }
+            @Bean
+@Bean
+@Bean
             public int getBlue(int pixel) { return 255; }
+            @Bean
+@Bean
+@Bean
             public int getGreen(int pixel) { return 255; }
+            @Bean
+@Bean
+@Bean
             public int getRed(int pixel) { return 255; }
         };
 

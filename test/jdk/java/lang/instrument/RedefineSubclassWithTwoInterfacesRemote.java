@@ -21,6 +21,7 @@
  * questions.
  */
 
+@Bean
 public class RedefineSubclassWithTwoInterfacesRemote {
     // This class is acting in the role of:
     // wlstest.unit.diagnostics.common.apps.echoejb.EchoBean4_nh7k_EchoRemoteImpl

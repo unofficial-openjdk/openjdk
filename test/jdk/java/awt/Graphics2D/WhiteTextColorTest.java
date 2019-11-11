@@ -34,6 +34,7 @@ import javax.swing.*;
  * @author ceisserer
  */
 
+@Bean
 public class WhiteTextColorTest extends Frame {
     public static volatile boolean success = false;
 

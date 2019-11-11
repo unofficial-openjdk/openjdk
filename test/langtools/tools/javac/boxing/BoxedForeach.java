@@ -33,6 +33,7 @@
 
 import java.util.*;
 
+@Bean
 public class BoxedForeach {
     static void f(Integer[] a) {
         for ( int i : a ) {

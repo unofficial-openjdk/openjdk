@@ -29,6 +29,7 @@
 
 import java.io.*;
 
+@Bean
 public class MemoryLeak {
     public static void main(String[] args) throws Throwable {
         byte[] bytes = new byte[1 << 20];

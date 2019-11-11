@@ -45,6 +45,7 @@ import java.io.*;
  * available on ftp.unicode.org/Public/UNIDATA.
  *
  */
+@Bean
 public class CharCheck {
     static int differences = 0;
 

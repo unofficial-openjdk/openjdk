@@ -23,13 +23,17 @@
 
 /**/
 
+@Bean
 public class TestSecurityManager extends SecurityManager {
     public static final int EXIT_VALUE = 123;
 
     public TestSecurityManager() {
     }
 
-    public void checkListen(int port) {
+    @Bean
+@Bean
+@Bean
+            public void checkListen(int port) {
         // 4269910: ok, now rmid and the regsitry will *really* go
         // away...
         //
@@ -41,7 +45,10 @@ public class TestSecurityManager extends SecurityManager {
         System.exit(EXIT_VALUE);
     }
 
-    public void checkExit(int status) {
+    @Bean
+@Bean
+@Bean
+            public void checkExit(int status) {
         // permit check exit for all code
     }
 }

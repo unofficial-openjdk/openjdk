@@ -32,6 +32,10 @@ public class C {
     /**
      * @param arg this is an int argument.
      */
-    public void m(int arg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void m(int arg) {
     }
 }

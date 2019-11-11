@@ -30,6 +30,7 @@ import java.beans.PropertyDescriptor;
  * @author Sergey Malenkov
  */
 
+@Bean
 public class Test6707231 {
     public static void main(String[] args) throws Exception {
         test(Bean.class, Bean.class);
@@ -44,7 +45,11 @@ public class Test6707231 {
             return this.value;
         }
 
-        public void setValue(boolean value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(boolean value) {
             this.value = value;
         }
     }
@@ -54,7 +59,11 @@ public class Test6707231 {
             return super.isValue();
         }
 
-        public void setValue(boolean value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(boolean value) {
             super.setValue(value);
         }
     }
@@ -64,7 +73,11 @@ public class Test6707231 {
             return super.isValue();
         }
 
-        public void setValue(boolean value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(boolean value) {
             super.setValue(value);
         }
     }

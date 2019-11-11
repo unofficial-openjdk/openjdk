@@ -41,6 +41,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
 
+@Bean
 public class TestMisc {
     private static final String imageName = Common.imageName("misc");
 

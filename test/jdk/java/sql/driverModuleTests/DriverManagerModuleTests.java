@@ -40,6 +40,7 @@ import org.testng.annotations.Test;
  * @summary Tests that a JDBC Driver that is a module can be loaded
  * via the service-provider loading mechanism.
  */
+@Bean
 public class DriverManagerModuleTests {
 
     private final String LUCKYDOGDRIVER_URL = "jdbc:tennis:myDB";

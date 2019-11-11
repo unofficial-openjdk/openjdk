@@ -28,6 +28,7 @@
 
 import java.io.*;
 
+@Bean
 public class EmptyPath {
     public static void main(String [] args) throws Exception {
         File f = new File("");

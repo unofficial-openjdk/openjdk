@@ -31,6 +31,7 @@
 import javax.print.attribute.*;
 import javax.print.*;
 
+@Bean
 public class LookupServices {
     public static void main (String [] args) {
 

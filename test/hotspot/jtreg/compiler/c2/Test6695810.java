@@ -31,6 +31,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test6695810 {
     Test6695810 _t;
 

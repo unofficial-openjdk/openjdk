@@ -70,7 +70,10 @@ public class PrintRotatedText extends Frame implements ActionListener {
     add("South", printButton);
 
     addWindowListener(new WindowAdapter() {
-       public void windowClosing(WindowEvent e) {
+       @Bean
+@Bean
+@Bean
+            public void windowClosing(WindowEvent e) {
              System.exit(0);
             }
     });
@@ -78,7 +81,10 @@ public class PrintRotatedText extends Frame implements ActionListener {
     pack();
  }
 
- public void actionPerformed(ActionEvent e) {
+ @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
 
    PrinterJob pj = PrinterJob.getPrinterJob();
 
@@ -105,7 +111,10 @@ public class PrintRotatedText extends Frame implements ActionListener {
         return MAXPAGE;
     }
 
-    public PageFormat getPageFormat(int pageIndex) {
+    @Bean
+@Bean
+@Bean
+            public PageFormat getPageFormat(int pageIndex) {
        if (pageIndex > MAXPAGE) throw new IndexOutOfBoundsException();
        PageFormat pf = new PageFormat();
        Paper p = pf.getPaper();
@@ -122,12 +131,18 @@ public class PrintRotatedText extends Frame implements ActionListener {
        return pf;
     }
 
-    public Printable getPrintable(int pageIndex) {
+    @Bean
+@Bean
+@Bean
+            public Printable getPrintable(int pageIndex) {
        if (pageIndex > MAXPAGE) throw new IndexOutOfBoundsException();
        return this;
     }
 
-    public int print(Graphics g, PageFormat pgFmt, int pgIndex) {
+    @Bean
+@Bean
+@Bean
+            public int print(Graphics g, PageFormat pgFmt, int pgIndex) {
 System.out.println("****"+pgIndex);
         double iw = pgFmt.getImageableWidth();
         double ih = pgFmt.getImageableHeight();
@@ -167,7 +182,10 @@ System.out.println("****"+pgIndex);
         return Printable.PAGE_EXISTS;
     }
 
-   private void drawTheText(Graphics2D g2d, double sx, double sy) {
+   @Bean
+@Bean
+@Bean
+            private void drawTheText(Graphics2D g2d, double sx, double sy) {
       double mat[]= new double[6];
 
       g2d.drawOval(-75,-75,150,150);
@@ -190,7 +208,10 @@ System.out.println("****"+pgIndex);
       }
    }
 
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
       g.translate(200,200);
       g.setFont(new Font("serif", Font.PLAIN, 12));
       drawTheText((Graphics2D)g, 1.0, 1.5);

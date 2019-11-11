@@ -378,7 +378,8 @@ class ComparableTimSort {
      * @param runBase index of the first element in the run
      * @param runLen  the number of elements in the run
      */
-    private void pushRun(int runBase, int runLen) {
+@Bean
+        private void pushRun(int runBase, int runLen) {
         this.runBase[stackSize] = runBase;
         this.runLen[stackSize] = runLen;
         stackSize++;
@@ -435,7 +436,8 @@ class ComparableTimSort {
      * @param i stack index of the first of the two runs to merge
      */
     @SuppressWarnings("unchecked")
-    private void mergeAt(int i) {
+@Bean
+        private void mergeAt(int i) {
         assert stackSize >= 2;
         assert i >= 0;
         assert i == stackSize - 2 || i == stackSize - 3;
@@ -649,7 +651,8 @@ class ComparableTimSort {
      * @param len2  length of second run to be merged (must be > 0)
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private void mergeLo(int base1, int len1, int base2, int len2) {
+@Bean
+        private void mergeLo(int base1, int len1, int base2, int len2) {
         assert len1 > 0 && len2 > 0 && base1 + len1 == base2;
 
         // Copy first run into temp array
@@ -766,7 +769,8 @@ class ComparableTimSort {
      * @param len2  length of second run to be merged (must be > 0)
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private void mergeHi(int base1, int len1, int base2, int len2) {
+@Bean
+        private void mergeHi(int base1, int len1, int base2, int len2) {
         assert len1 > 0 && len2 > 0 && base1 + len1 == base2;
 
         // Copy second run into temp array

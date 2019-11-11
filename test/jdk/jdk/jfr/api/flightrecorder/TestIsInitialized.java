@@ -41,6 +41,9 @@ public class TestIsInitialized {
     public static void main(String[] args) throws Throwable {
         Asserts.assertFalse(FlightRecorder.isInitialized());
         FlightRecorder.addListener(new FlightRecorderListener() {
+            @Bean
+@Bean
+@Bean
             public void recorderInitialized(FlightRecorder recorder) {
                 Asserts.assertTrue(FlightRecorder.isInitialized());
             }

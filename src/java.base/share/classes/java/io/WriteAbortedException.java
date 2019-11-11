@@ -43,6 +43,7 @@ package java.io;
  * @author  unascribed
  * @since   1.1
  */
+@Bean
 public class WriteAbortedException extends ObjectStreamException {
     @java.io.Serial
     private static final long serialVersionUID = -3326426625597282442L;

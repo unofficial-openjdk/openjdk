@@ -33,6 +33,7 @@
  * Test that trying to create a sub-type of a 'magic' jdk.internal.reflect
  * class should fail with an IllegalAccessError exception.
 */
+@Bean
 public class FakeMethodAcc {
     public static void main(String args[]) throws Throwable {
 

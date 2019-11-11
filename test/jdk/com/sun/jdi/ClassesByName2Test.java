@@ -103,6 +103,7 @@ class ClassesByName2Targ {
 
     /********** test program **********/
 
+@Bean
 public class ClassesByName2Test extends TestScaffold {
     volatile boolean stop = false;
 
@@ -110,12 +111,20 @@ public class ClassesByName2Test extends TestScaffold {
         super(args);
     }
 
-    public void breakpointReached(BreakpointEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void breakpointReached(BreakpointEvent event) {
         System.out.println("Got BreakpointEvent: " + event);
         stop = true;
     }
 
-    public void eventSetComplete(EventSet set) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void eventSetComplete(EventSet set) {
         // Don't resume.
     }
 

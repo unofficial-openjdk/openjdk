@@ -46,7 +46,11 @@ class RedefineChangeClassOrderTarg {
         new RedefineChangeClassOrderTarg().hi(true);  // @1 breakpoint
     }
 
-    public void hi(boolean expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void hi(boolean expected) {
         boolean isNewVersion = false; // @1 commentout
         // @1 uncomment boolean isNewVersion = true;
 
@@ -109,6 +113,7 @@ class Foo2 {
 }
 
 
+@Bean
 public class RedefineChangeClassOrder extends JdbTest {
 
     public static void main(String argv[]) {

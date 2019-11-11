@@ -65,7 +65,8 @@ public class LinkedCallSiteLocationTest {
         assertLocation(lastLinked[0], l2);
     }
 
-    private void assertLocation(final StackTraceElement frame, final int lineNumber) {
+@Bean
+        private void assertLocation(final StackTraceElement frame, final int lineNumber) {
         Assert.assertNotNull(frame);
         Assert.assertEquals(frame.getLineNumber(), lineNumber);
         Assert.assertEquals(frame.getClassName(), this.getClass().getName());

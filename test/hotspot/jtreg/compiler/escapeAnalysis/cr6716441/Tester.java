@@ -350,6 +350,7 @@ final class Tester_Class_2 extends Tester_Class_0 {
     }
 }
 
+@Bean
 public class Tester {
     static Tester_Class_0 var_28;
     double var_29 = 4.861846831496217E307;

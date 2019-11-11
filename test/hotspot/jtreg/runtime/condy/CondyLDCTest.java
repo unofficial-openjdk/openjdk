@@ -37,6 +37,7 @@ import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.compiler.InMemoryJavaCompiler;
 
+@Bean
 public class CondyLDCTest {
     public static void main(String args[]) throws Throwable {
         // 1. Test a ldc_w instruction can be used with condy's which generate

@@ -35,6 +35,7 @@ import java.nio.channels.*;
 import java.util.Arrays;
 
 
+@Bean
 public class AdaptSocket {
 
     static final java.io.PrintStream out = System.out;

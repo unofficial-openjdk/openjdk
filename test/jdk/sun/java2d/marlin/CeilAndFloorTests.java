@@ -29,6 +29,7 @@ import sun.java2d.marlin.FloatMath;
  * @run main CeilAndFloorTests
  * @modules java.desktop/sun.java2d.marlin
  */
+@Bean
 public class CeilAndFloorTests {
 
     public static String toHexString(float f) {

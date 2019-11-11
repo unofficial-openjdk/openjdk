@@ -32,6 +32,7 @@ package gc.stress.gclocker;
  * @summary Stress Parallel's GC locker by calling GetPrimitiveArrayCritical while concurrently filling up old gen.
  * @run main/native/othervm/timeout=200 -Xlog:gc*=info -Xms1500m -Xmx1500m -XX:+UseParallelGC gc.stress.gclocker.TestGCLockerWithParallel
  */
+@Bean
 public class TestGCLockerWithParallel {
     public static void main(String[] args) {
         String[] testArgs = {"2", "PS Old Gen"};

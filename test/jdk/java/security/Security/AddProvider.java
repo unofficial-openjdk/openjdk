@@ -33,6 +33,7 @@
 import java.security.Provider;
 import java.security.Security;
 
+@Bean
 public class AddProvider {
 
     public static void main(String[] args) throws Exception {

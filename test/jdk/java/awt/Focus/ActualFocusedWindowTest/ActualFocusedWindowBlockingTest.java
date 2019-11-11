@@ -35,6 +35,7 @@ import java.awt.*;
 import java.awt.event.*;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class ActualFocusedWindowBlockingTest {
     Robot robot = Util.createRobot();
     Frame owner = new Frame("Owner Frame");
@@ -52,7 +53,10 @@ public class ActualFocusedWindowBlockingTest {
 
     public void init() {
         Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
-                public void eventDispatched(AWTEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void eventDispatched(AWTEvent e) {
                     System.out.println("--> " + e);
                 }
             }, FocusEvent.FOCUS_EVENT_MASK | WindowEvent.WINDOW_FOCUS_EVENT_MASK);

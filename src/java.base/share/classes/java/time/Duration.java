@@ -544,7 +544,10 @@ public final class Duration
      * @throws UnsupportedTemporalTypeException if the unit is not supported
      */
     @Override
-    public long get(TemporalUnit unit) {
+    @Bean
+@Bean
+@Bean
+            public long get(TemporalUnit unit) {
         if (unit == SECONDS) {
             return seconds;
         } else if (unit == NANOS) {
@@ -656,7 +659,10 @@ public final class Duration
      * @param seconds  the seconds to represent, may be negative
      * @return a {@code Duration} based on this period with the requested seconds, not null
      */
-    public Duration withSeconds(long seconds) {
+    @Bean
+@Bean
+@Bean
+            public Duration withSeconds(long seconds) {
         return create(seconds, nanos);
     }
 
@@ -672,7 +678,10 @@ public final class Duration
      * @return a {@code Duration} based on this period with the requested nano-of-second, not null
      * @throws DateTimeException if the nano-of-second is invalid
      */
-    public Duration withNanos(int nanoOfSecond) {
+    @Bean
+@Bean
+@Bean
+            public Duration withNanos(int nanoOfSecond) {
         NANO_OF_SECOND.checkValidIntValue(nanoOfSecond);
         return create(seconds, nanoOfSecond);
     }
@@ -687,7 +696,10 @@ public final class Duration
      * @return a {@code Duration} based on this duration with the specified duration added, not null
      * @throws ArithmeticException if numeric overflow occurs
      */
-    public Duration plus(Duration duration) {
+    @Bean
+@Bean
+@Bean
+            public Duration plus(Duration duration) {
         return plus(duration.getSeconds(), duration.getNano());
      }
 
@@ -707,7 +719,10 @@ public final class Duration
      * @throws UnsupportedTemporalTypeException if the unit is not supported
      * @throws ArithmeticException if numeric overflow occurs
      */
-    public Duration plus(long amountToAdd, TemporalUnit unit) {
+    @Bean
+@Bean
+@Bean
+            public Duration plus(long amountToAdd, TemporalUnit unit) {
         Objects.requireNonNull(unit, "unit");
         if (unit == DAYS) {
             return plus(Math.multiplyExact(amountToAdd, SECONDS_PER_DAY), 0);
@@ -744,7 +759,10 @@ public final class Duration
      * @return a {@code Duration} based on this duration with the specified days added, not null
      * @throws ArithmeticException if numeric overflow occurs
      */
-    public Duration plusDays(long daysToAdd) {
+    @Bean
+@Bean
+@Bean
+            public Duration plusDays(long daysToAdd) {
         return plus(Math.multiplyExact(daysToAdd, SECONDS_PER_DAY), 0);
     }
 
@@ -757,7 +775,10 @@ public final class Duration
      * @return a {@code Duration} based on this duration with the specified hours added, not null
      * @throws ArithmeticException if numeric overflow occurs
      */
-    public Duration plusHours(long hoursToAdd) {
+    @Bean
+@Bean
+@Bean
+            public Duration plusHours(long hoursToAdd) {
         return plus(Math.multiplyExact(hoursToAdd, SECONDS_PER_HOUR), 0);
     }
 
@@ -770,7 +791,10 @@ public final class Duration
      * @return a {@code Duration} based on this duration with the specified minutes added, not null
      * @throws ArithmeticException if numeric overflow occurs
      */
-    public Duration plusMinutes(long minutesToAdd) {
+    @Bean
+@Bean
+@Bean
+            public Duration plusMinutes(long minutesToAdd) {
         return plus(Math.multiplyExact(minutesToAdd, SECONDS_PER_MINUTE), 0);
     }
 
@@ -783,7 +807,10 @@ public final class Duration
      * @return a {@code Duration} based on this duration with the specified seconds added, not null
      * @throws ArithmeticException if numeric overflow occurs
      */
-    public Duration plusSeconds(long secondsToAdd) {
+    @Bean
+@Bean
+@Bean
+            public Duration plusSeconds(long secondsToAdd) {
         return plus(secondsToAdd, 0);
     }
 
@@ -796,7 +823,10 @@ public final class Duration
      * @return a {@code Duration} based on this duration with the specified milliseconds added, not null
      * @throws ArithmeticException if numeric overflow occurs
      */
-    public Duration plusMillis(long millisToAdd) {
+    @Bean
+@Bean
+@Bean
+            public Duration plusMillis(long millisToAdd) {
         return plus(millisToAdd / 1000, (millisToAdd % 1000) * 1000_000);
     }
 
@@ -809,7 +839,10 @@ public final class Duration
      * @return a {@code Duration} based on this duration with the specified nanoseconds added, not null
      * @throws ArithmeticException if numeric overflow occurs
      */
-    public Duration plusNanos(long nanosToAdd) {
+    @Bean
+@Bean
+@Bean
+            public Duration plusNanos(long nanosToAdd) {
         return plus(0, nanosToAdd);
     }
 
@@ -823,7 +856,10 @@ public final class Duration
      * @return a {@code Duration} based on this duration with the specified seconds added, not null
      * @throws ArithmeticException if numeric overflow occurs
      */
-    private Duration plus(long secondsToAdd, long nanosToAdd) {
+    @Bean
+@Bean
+@Bean
+            private Duration plus(long secondsToAdd, long nanosToAdd) {
         if ((secondsToAdd | nanosToAdd) == 0) {
             return this;
         }
@@ -844,7 +880,10 @@ public final class Duration
      * @return a {@code Duration} based on this duration with the specified duration subtracted, not null
      * @throws ArithmeticException if numeric overflow occurs
      */
-    public Duration minus(Duration duration) {
+    @Bean
+@Bean
+@Bean
+            public Duration minus(Duration duration) {
         long secsToSubtract = duration.getSeconds();
         int nanosToSubtract = duration.getNano();
         if (secsToSubtract == Long.MIN_VALUE) {
@@ -868,7 +907,10 @@ public final class Duration
      * @return a {@code Duration} based on this duration with the specified duration subtracted, not null
      * @throws ArithmeticException if numeric overflow occurs
      */
-    public Duration minus(long amountToSubtract, TemporalUnit unit) {
+    @Bean
+@Bean
+@Bean
+            public Duration minus(long amountToSubtract, TemporalUnit unit) {
         return (amountToSubtract == Long.MIN_VALUE ? plus(Long.MAX_VALUE, unit).plus(1, unit) : plus(-amountToSubtract, unit));
     }
 
@@ -885,7 +927,10 @@ public final class Duration
      * @return a {@code Duration} based on this duration with the specified days subtracted, not null
      * @throws ArithmeticException if numeric overflow occurs
      */
-    public Duration minusDays(long daysToSubtract) {
+    @Bean
+@Bean
+@Bean
+            public Duration minusDays(long daysToSubtract) {
         return (daysToSubtract == Long.MIN_VALUE ? plusDays(Long.MAX_VALUE).plusDays(1) : plusDays(-daysToSubtract));
     }
 
@@ -900,7 +945,10 @@ public final class Duration
      * @return a {@code Duration} based on this duration with the specified hours subtracted, not null
      * @throws ArithmeticException if numeric overflow occurs
      */
-    public Duration minusHours(long hoursToSubtract) {
+    @Bean
+@Bean
+@Bean
+            public Duration minusHours(long hoursToSubtract) {
         return (hoursToSubtract == Long.MIN_VALUE ? plusHours(Long.MAX_VALUE).plusHours(1) : plusHours(-hoursToSubtract));
     }
 
@@ -915,7 +963,10 @@ public final class Duration
      * @return a {@code Duration} based on this duration with the specified minutes subtracted, not null
      * @throws ArithmeticException if numeric overflow occurs
      */
-    public Duration minusMinutes(long minutesToSubtract) {
+    @Bean
+@Bean
+@Bean
+            public Duration minusMinutes(long minutesToSubtract) {
         return (minutesToSubtract == Long.MIN_VALUE ? plusMinutes(Long.MAX_VALUE).plusMinutes(1) : plusMinutes(-minutesToSubtract));
     }
 
@@ -928,7 +979,10 @@ public final class Duration
      * @return a {@code Duration} based on this duration with the specified seconds subtracted, not null
      * @throws ArithmeticException if numeric overflow occurs
      */
-    public Duration minusSeconds(long secondsToSubtract) {
+    @Bean
+@Bean
+@Bean
+            public Duration minusSeconds(long secondsToSubtract) {
         return (secondsToSubtract == Long.MIN_VALUE ? plusSeconds(Long.MAX_VALUE).plusSeconds(1) : plusSeconds(-secondsToSubtract));
     }
 
@@ -941,7 +995,10 @@ public final class Duration
      * @return a {@code Duration} based on this duration with the specified milliseconds subtracted, not null
      * @throws ArithmeticException if numeric overflow occurs
      */
-    public Duration minusMillis(long millisToSubtract) {
+    @Bean
+@Bean
+@Bean
+            public Duration minusMillis(long millisToSubtract) {
         return (millisToSubtract == Long.MIN_VALUE ? plusMillis(Long.MAX_VALUE).plusMillis(1) : plusMillis(-millisToSubtract));
     }
 
@@ -954,7 +1011,10 @@ public final class Duration
      * @return a {@code Duration} based on this duration with the specified nanoseconds subtracted, not null
      * @throws ArithmeticException if numeric overflow occurs
      */
-    public Duration minusNanos(long nanosToSubtract) {
+    @Bean
+@Bean
+@Bean
+            public Duration minusNanos(long nanosToSubtract) {
         return (nanosToSubtract == Long.MIN_VALUE ? plusNanos(Long.MAX_VALUE).plusNanos(1) : plusNanos(-nanosToSubtract));
     }
 
@@ -968,7 +1028,10 @@ public final class Duration
      * @return a {@code Duration} based on this duration multiplied by the specified scalar, not null
      * @throws ArithmeticException if numeric overflow occurs
      */
-    public Duration multipliedBy(long multiplicand) {
+    @Bean
+@Bean
+@Bean
+            public Duration multipliedBy(long multiplicand) {
         if (multiplicand == 0) {
             return ZERO;
         }
@@ -987,7 +1050,10 @@ public final class Duration
      * @return a {@code Duration} based on this duration divided by the specified divisor, not null
      * @throws ArithmeticException if the divisor is zero or if numeric overflow occurs
      */
-    public Duration dividedBy(long divisor) {
+    @Bean
+@Bean
+@Bean
+            public Duration dividedBy(long divisor) {
         if (divisor == 0) {
             throw new ArithmeticException("Cannot divide by zero");
         }
@@ -1008,7 +1074,10 @@ public final class Duration
      * @throws ArithmeticException if the divisor is zero, or if numeric overflow occurs
      * @since 9
      */
-    public long dividedBy(Duration divisor) {
+    @Bean
+@Bean
+@Bean
+            public long dividedBy(Duration divisor) {
         Objects.requireNonNull(divisor, "divisor");
         BigDecimal dividendBigD = toBigDecimalSeconds();
         BigDecimal divisorBigD = divisor.toBigDecimalSeconds();
@@ -1098,7 +1167,10 @@ public final class Duration
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public Temporal addTo(Temporal temporal) {
+    @Bean
+@Bean
+@Bean
+            public Temporal addTo(Temporal temporal) {
         if (seconds != 0) {
             temporal = temporal.plus(seconds, SECONDS);
         }
@@ -1133,7 +1205,10 @@ public final class Duration
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public Temporal subtractFrom(Temporal temporal) {
+    @Bean
+@Bean
+@Bean
+            public Temporal subtractFrom(Temporal temporal) {
         if (seconds != 0) {
             temporal = temporal.minus(seconds, SECONDS);
         }
@@ -1375,7 +1450,10 @@ public final class Duration
      * @throws UnsupportedTemporalTypeException if the unit is not supported
      * @since 9
      */
-    public Duration truncatedTo(TemporalUnit unit) {
+    @Bean
+@Bean
+@Bean
+            public Duration truncatedTo(TemporalUnit unit) {
         Objects.requireNonNull(unit, "unit");
         if (unit == ChronoUnit.SECONDS && (seconds >= 0 || nanos == 0)) {
             return new Duration(seconds, 0);
@@ -1406,7 +1484,10 @@ public final class Duration
      * @return the comparator value, negative if less, positive if greater
      */
     @Override
-    public int compareTo(Duration otherDuration) {
+    @Bean
+@Bean
+@Bean
+            public int compareTo(Duration otherDuration) {
         int cmp = Long.compare(seconds, otherDuration.seconds);
         if (cmp != 0) {
             return cmp;
@@ -1424,7 +1505,10 @@ public final class Duration
      * @return true if the other duration is equal to this one
      */
     @Override
-    public boolean equals(Object otherDuration) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(Object otherDuration) {
         if (this == otherDuration) {
             return true;
         }

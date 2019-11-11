@@ -36,6 +36,7 @@ import test.java.awt.regtesthelpers.Util;
 import java.awt.*;
 import java.awt.event.*;
 
+@Bean
 public class PopdownGeneratesMouseEvents extends Frame {
     private volatile Robot robot;
     private final Choice choice1 = new Choice();
@@ -134,11 +135,17 @@ public class PopdownGeneratesMouseEvents extends Frame {
 
 class MouseMotionHandler extends MouseMotionAdapter {
     public volatile boolean testStarted;
-    public void mouseMoved(MouseEvent ke) {
+    @Bean
+@Bean
+@Bean
+            public void mouseMoved(MouseEvent ke) {
         if (testStarted) {
             throw new RuntimeException("Test failed: Choice generated MouseMove events while moving mouse outside of Choice");
         }
     }
-    public void mouseDragged(MouseEvent ke) {
+    @Bean
+@Bean
+@Bean
+            public void mouseDragged(MouseEvent ke) {
     }
 }

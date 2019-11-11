@@ -21,6 +21,7 @@
  * questions.
  */
 
+@Bean
 public class ManifestTestApp {
     public static void main(String args[]) {
         System.out.println("Hello from ManifestTestApp!");

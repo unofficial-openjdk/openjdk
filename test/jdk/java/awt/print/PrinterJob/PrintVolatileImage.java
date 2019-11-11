@@ -57,7 +57,10 @@ public class PrintVolatileImage extends Component
        return new Dimension(100,100);
     }
 
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
        if (vimg == null) {
            vimg = createVolatileImage(100,100);
            Graphics ig = vimg.getGraphics();
@@ -70,7 +73,10 @@ public class PrintVolatileImage extends Component
         g.drawImage(vimg, 0,0, null);
     }
 
-   public void actionPerformed(ActionEvent e) {
+   @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
 
        PrinterJob pj = PrinterJob.getPrinterJob();
 
@@ -86,7 +92,10 @@ public class PrintVolatileImage extends Component
    }
 
 
-    public int print(Graphics g, PageFormat pgFmt, int pgIndex) {
+    @Bean
+@Bean
+@Bean
+            public int print(Graphics g, PageFormat pgFmt, int pgIndex) {
       if (pgIndex > 0)
          return Printable.NO_SUCH_PAGE;
 

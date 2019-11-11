@@ -43,6 +43,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 @Test
+@Bean
 public class ExceptionsTest extends KullaTesting {
 
     public void throwUncheckedException() {
@@ -262,7 +263,11 @@ public class ExceptionsTest extends KullaTesting {
         assertExecuteException("f();", StackOverflowError.class);
     }
 
-    private StackTraceElement newStackTraceElement(String className, String methodName, Snippet key, int lineNumber) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private StackTraceElement newStackTraceElement(String className, String methodName, Snippet key, int lineNumber) {
         return new StackTraceElement(className, methodName, "#" + key.id(), lineNumber);
     }
 
@@ -305,15 +310,27 @@ public class ExceptionsTest extends KullaTesting {
         }
     }
 
-    private void assertExecuteException(String input, Class<? extends Throwable> exception) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertExecuteException(String input, Class<? extends Throwable> exception) {
         assertExceptionMatch(assertEvalException(input), new ExceptionInfo(exception, null));
     }
 
-    private void assertExceptionMatch(SnippetEvent cr, ExceptionInfo exceptionInfo) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertExceptionMatch(SnippetEvent cr, ExceptionInfo exceptionInfo) {
         assertExceptionMatch(cr.exception(), cr.snippet().source(), exceptionInfo);
     }
 
-    private void assertExceptionMatch(Throwable exception, String source, ExceptionInfo exceptionInfo) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertExceptionMatch(Throwable exception, String source, ExceptionInfo exceptionInfo) {
         assertNotNull(exception, "Expected exception was not thrown: " + exceptionInfo.exception);
         if (exception instanceof EvalException) {
             EvalException ex = (EvalException) exception;
@@ -336,7 +353,11 @@ public class ExceptionsTest extends KullaTesting {
         }
     }
 
-    private void assertStackMatch(JShellException exception, String source, AnyExceptionInfo exceptionInfo) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertStackMatch(JShellException exception, String source, AnyExceptionInfo exceptionInfo) {
         if (exceptionInfo.stackTraceElements != null) {
             assertStackTrace(exception.getStackTrace(), exceptionInfo.stackTraceElements,
                     String.format("Given \"%s\"%nStack trace:%n%s%n",
@@ -344,7 +365,11 @@ public class ExceptionsTest extends KullaTesting {
         }
     }
 
-    private void assertAnyExceptionMatch(Throwable exception, AnyExceptionInfo exceptionInfo) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertAnyExceptionMatch(Throwable exception, AnyExceptionInfo exceptionInfo) {
         if (exceptionInfo instanceof ExceptionInfo) {
             assertExceptionMatch(exception, "", (ExceptionInfo) exceptionInfo);
         } else {
@@ -358,7 +383,11 @@ public class ExceptionsTest extends KullaTesting {
         }
     }
 
-    private void assertStackTrace(StackTraceElement[] actual, StackTraceElement[] expected, String message) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertStackTrace(StackTraceElement[] actual, StackTraceElement[] expected, String message) {
         if (actual != expected) {
             if (actual == null || expected == null) {
                 fail(message);
@@ -383,7 +412,11 @@ public class ExceptionsTest extends KullaTesting {
         }
     }
 
-    private String getStackTrace(Throwable ex) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String getStackTrace(Throwable ex) {
         StringWriter st = new StringWriter();
         ex.printStackTrace(new PrintWriter(st));
         return st.toString();

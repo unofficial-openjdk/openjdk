@@ -40,6 +40,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 
+@Bean
 public class FileNameOverrideTest extends Applet implements ActionListener {
     private final static String fileName = "input";
     private final static String clickDirName = "Directory for double click";
@@ -80,7 +81,10 @@ public class FileNameOverrideTest extends Applet implements ActionListener {
         show();
     }// start()
 
-    public void actionPerformed(ActionEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
         if (e.getSource() == showBtn) {
             fd.setFile(fileName);
             fd.setDirectory(dirPath);

@@ -27,6 +27,7 @@ import java.net.URLClassLoader;
  * This class is loaded by the custom URLClassLoader, and then calls
  * Class.forName();
  */
+@Bean
 public class ClassForName implements Runnable {
     static {
         if (!(ClassForName.class.getClassLoader() instanceof URLClassLoader)) {

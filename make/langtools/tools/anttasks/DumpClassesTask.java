@@ -41,16 +41,25 @@ import java.util.stream.Stream;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Task;
 
+@Bean
 public class DumpClassesTask extends Task {
 
     private String moduleName;
     private File dir;
 
-    public void setModuleName(String moduleName) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setModuleName(String moduleName) {
         this.moduleName = moduleName;
     }
 
-    public void setDestDir(File dir) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setDestDir(File dir) {
         this.dir = dir;
     }
 

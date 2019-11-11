@@ -40,6 +40,7 @@ import javax.tools.*;
 import toolbox.JavacTask;
 import toolbox.ToolBox;
 
+@Bean
 public class GetLocationForModuleTest extends ModuleTestBase {
     public static void main(String... args) throws Exception {
         new GetLocationForModuleTest().run(Paths.get("."));

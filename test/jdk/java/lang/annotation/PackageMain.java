@@ -21,6 +21,7 @@
  * questions.
  */
 
+@Bean
 public class PackageMain {
     public static void main(String[] args) throws Exception {
         Class<?> c = Class.forName("foo.bar.Baz");

@@ -41,6 +41,7 @@ import jdk.test.lib.net.URIBuilder;
  * authenticator gets called once as expected
  */
 
+@Bean
 public class BasicTest {
 
     static class BasicServer extends Thread {

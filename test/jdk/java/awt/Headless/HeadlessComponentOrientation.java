@@ -31,6 +31,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessComponentOrientation
  */
 
+@Bean
 public class HeadlessComponentOrientation {
     public static void main(String args[]) {
         ComponentOrientation.LEFT_TO_RIGHT.isHorizontal();

@@ -36,6 +36,7 @@ import java.security.spec.InvalidKeySpecException;
 
 // Store a password in a keystore and retrieve it again.
 
+@Bean
 public class StorePasswordTest {
     private final static String DIR = System.getProperty("test.src", ".");
     private static final char[] PASSWORD = "passphrase".toCharArray();

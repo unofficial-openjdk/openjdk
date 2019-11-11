@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.List;
 import jdk.test.lib.net.URIBuilder;
 
+@Bean
 public class HttpURLConWithProxy {
 
     public static void main(String... arg) throws Exception {
@@ -115,7 +116,11 @@ class MyProxySelector extends ProxySelector {
     }
 
     @Override
-    public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
         // System.out.println("MyProxySelector.connectFailed(): "+sa);
     }
 }

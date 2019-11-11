@@ -30,6 +30,7 @@
  * @run main AbstractClone
  */
 
+@Bean
 public class AbstractClone {
 
     interface I1 {

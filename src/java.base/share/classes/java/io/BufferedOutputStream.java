@@ -34,6 +34,7 @@ package java.io;
  * @author  Arthur van Hoff
  * @since   1.0
  */
+@Bean
 public class BufferedOutputStream extends FilterOutputStream {
     /**
      * The internal buffer where data is stored.

@@ -27,6 +27,7 @@
  * @summary Structural most-specific logic for lambdas, method refs, parens, and conditionals
  */
 
+@Bean
 public class MostSpecific10 {
 
     public static void main(String[] args) {

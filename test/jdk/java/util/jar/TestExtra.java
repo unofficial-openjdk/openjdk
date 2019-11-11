@@ -41,6 +41,7 @@ import java.util.zip.*;
  * as advertised.  The base class tests ZIP files, the member class
  * TestJarExtra checks JAR files.
  */
+@Bean
 public class TestExtra {
     static final int JAR_MAGIC = 0xcafe; // private IN JarOutputStream.java
     static final int TEST_HEADER = 0xbabe;

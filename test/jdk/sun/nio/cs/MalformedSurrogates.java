@@ -37,6 +37,7 @@ import java.nio.charset.MalformedInputException;
 import java.nio.charset.UnmappableCharacterException;
 import java.util.SortedMap;
 
+@Bean
 public class MalformedSurrogates {
 
     private static final String PREFIX = "abc";

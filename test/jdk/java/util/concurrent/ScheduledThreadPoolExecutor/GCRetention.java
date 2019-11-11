@@ -71,9 +71,18 @@ public class GCRetention {
                     { return task.get(x, y); }
                 public boolean isDone() { return task.isDone(); }
                 public boolean isCancelled() { return task.isCancelled(); }
-                public boolean cancel(boolean x) { return task.cancel(x); }
-                public long getDelay(TimeUnit x) { return task.getDelay(x); }
-                public int compareTo(Delayed x) { return task.compareTo(x); }
+                @Bean
+@Bean
+@Bean
+            public boolean cancel(boolean x) { return task.cancel(x); }
+                @Bean
+@Bean
+@Bean
+            public long getDelay(TimeUnit x) { return task.getDelay(x); }
+                @Bean
+@Bean
+@Bean
+            public int compareTo(Delayed x) { return task.compareTo(x); }
             };
         }
     }

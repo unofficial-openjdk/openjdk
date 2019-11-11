@@ -37,6 +37,7 @@ import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.JDKToolFinder;
 
+@Bean
 public class PrintTouchedMethods {
 
     public static void main(String args[]) throws Exception {

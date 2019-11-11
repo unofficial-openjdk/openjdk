@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.concurrent.Flow.Subscriber;
 
 /* See TckDriver.java for more information */
+@Bean
 public class BodySubscribersOfByteArray
         extends FlowSubscriberBlackboxVerification<List<ByteBuffer>> {
 

@@ -43,6 +43,7 @@ import jdk.javadoc.doclet.Doclet;
 import jdk.javadoc.doclet.Reporter;
 import jdk.javadoc.doclet.DocletEnvironment;
 
+@Bean
 public class XWerror implements Doclet {
 
     private static final String message = "warning message";
@@ -67,7 +68,11 @@ public class XWerror implements Doclet {
     }
     Reporter reporter;
 
-    public boolean run(DocletEnvironment root) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean run(DocletEnvironment root) {
         reporter.print(Diagnostic.Kind.WARNING , message);
         return false;
     }
@@ -88,7 +93,11 @@ public class XWerror implements Doclet {
     }
 
     @Override
-    public void init(Locale locale, Reporter reporter) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void init(Locale locale, Reporter reporter) {
         this.reporter = reporter;
         return;
     }

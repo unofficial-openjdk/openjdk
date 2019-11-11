@@ -55,7 +55,10 @@ import java.awt.print.*;
 public class CompareImageable implements Printable {
 
 
-    public int print(Graphics g, PageFormat pgFmt, int pgIndex) {
+    @Bean
+@Bean
+@Bean
+            public int print(Graphics g, PageFormat pgFmt, int pgIndex) {
 
        //get the printable width and height of the paper.
         int pageHeight = (int)pgFmt.getImageableHeight();
@@ -78,7 +81,10 @@ public class CompareImageable implements Printable {
         frame.getContentPane().add(panel);
 
         printBtn.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
 
                         CompareImageable test = new CompareImageable();
                         PrinterJob pj = PrinterJob.getPrinterJob();

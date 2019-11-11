@@ -47,7 +47,10 @@ public class CheckAccess {
      */
     static class PrintHater extends SecurityManager {
 
-        public void checkPermission(Permission p) {
+        @Bean
+@Bean
+@Bean
+            public void checkPermission(Permission p) {
            // We're easy.
         }
 

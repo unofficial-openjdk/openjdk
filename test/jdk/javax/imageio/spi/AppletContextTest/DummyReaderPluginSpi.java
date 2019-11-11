@@ -67,7 +67,10 @@ public class DummyReaderPluginSpi extends ImageReaderSpi {
         registered = true;
     }
 
-    public String getDescription(Locale locale) {
+    @Bean
+@Bean
+@Bean
+            public String getDescription(Locale locale) {
         return "Standard Dummy Image Reader";
     }
 

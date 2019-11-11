@@ -66,7 +66,11 @@ public class ScopeTest {
             "    }\n" +
             "}\n" +
             "class InvokeOn {\n" +
-            "    public void run(I i) { }\n" +
+            "    @Bean
+@Bean
+@Bean
+@Bean
+                public void run(I i) { }\n" +
             "}\n" +
             "class FooBar {\n" +
             "    public void correct() { }\n" +
@@ -86,7 +90,11 @@ public class ScopeTest {
             @Override public CharSequence getCharContent(boolean ignoreEncodingErrors) throws IOException {
                 return packageClause + SOURCE_CODE;
             }
-            @Override public boolean isNameCompatible(String simpleName, Kind kind) {
+            @Override @Bean
+@Bean
+@Bean
+@Bean
+                public boolean isNameCompatible(String simpleName, Kind kind) {
                 return !"module-info".equals(simpleName);
             }
         };
@@ -99,7 +107,11 @@ public class ScopeTest {
         task.analyze();
 
         new TreePathScanner<Void, Void>() {
-            @Override public Void visitMemberSelect(MemberSelectTree node, Void p) {
+            @Override @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitMemberSelect(MemberSelectTree node, Void p) {
                 if (node.getIdentifier().contentEquals("correct")) {
                     TypeMirror xType = trees.getTypeMirror(new TreePath(getCurrentPath(), node.getExpression()));
                     Scope scope = trees.getScope(getCurrentPath());

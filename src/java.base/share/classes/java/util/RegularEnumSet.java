@@ -138,7 +138,8 @@ class RegularEnumSet<E extends Enum<E>> extends EnumSet<E> {
      * @param e element to be checked for containment in this collection
      * @return {@code true} if this set contains the specified element
      */
-    public boolean contains(Object e) {
+@Bean
+        public boolean contains(Object e) {
         if (e == null)
             return false;
         Class<?> eClass = e.getClass();
@@ -158,7 +159,8 @@ class RegularEnumSet<E extends Enum<E>> extends EnumSet<E> {
      *
      * @throws NullPointerException if {@code e} is null
      */
-    public boolean add(E e) {
+@Bean
+        public boolean add(E e) {
         typeCheck(e);
 
         long oldElements = elements;
@@ -172,7 +174,8 @@ class RegularEnumSet<E extends Enum<E>> extends EnumSet<E> {
      * @param e element to be removed from this set, if present
      * @return {@code true} if the set contained the specified element
      */
-    public boolean remove(Object e) {
+@Bean
+        public boolean remove(Object e) {
         if (e == null)
             return false;
         Class<?> eClass = e.getClass();
@@ -195,7 +198,8 @@ class RegularEnumSet<E extends Enum<E>> extends EnumSet<E> {
      *        in the specified collection
      * @throws NullPointerException if the specified collection is null
      */
-    public boolean containsAll(Collection<?> c) {
+@Bean
+        public boolean containsAll(Collection<?> c) {
         if (!(c instanceof RegularEnumSet))
             return super.containsAll(c);
 
@@ -214,7 +218,8 @@ class RegularEnumSet<E extends Enum<E>> extends EnumSet<E> {
      * @throws NullPointerException if the specified collection or any
      *     of its elements are null
      */
-    public boolean addAll(Collection<? extends E> c) {
+@Bean
+        public boolean addAll(Collection<? extends E> c) {
         if (!(c instanceof RegularEnumSet))
             return super.addAll(c);
 
@@ -240,7 +245,8 @@ class RegularEnumSet<E extends Enum<E>> extends EnumSet<E> {
      * @return {@code true} if this set changed as a result of the call
      * @throws NullPointerException if the specified collection is null
      */
-    public boolean removeAll(Collection<?> c) {
+@Bean
+        public boolean removeAll(Collection<?> c) {
         if (!(c instanceof RegularEnumSet))
             return super.removeAll(c);
 
@@ -261,7 +267,8 @@ class RegularEnumSet<E extends Enum<E>> extends EnumSet<E> {
      * @return {@code true} if this set changed as a result of the call
      * @throws NullPointerException if the specified collection is null
      */
-    public boolean retainAll(Collection<?> c) {
+@Bean
+        public boolean retainAll(Collection<?> c) {
         if (!(c instanceof RegularEnumSet))
             return super.retainAll(c);
 
@@ -293,7 +300,8 @@ class RegularEnumSet<E extends Enum<E>> extends EnumSet<E> {
      * @param o object to be compared for equality with this set
      * @return {@code true} if the specified object is equal to this set
      */
-    public boolean equals(Object o) {
+@Bean
+        public boolean equals(Object o) {
         if (!(o instanceof RegularEnumSet))
             return super.equals(o);
 

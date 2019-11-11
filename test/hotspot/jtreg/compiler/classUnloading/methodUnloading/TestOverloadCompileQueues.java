@@ -38,6 +38,7 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 
+@Bean
 public class TestOverloadCompileQueues {
     public static final int ITERS = 500; // Increase for longer stress testing
 

@@ -30,6 +30,7 @@
 
 import java.io.IOException;
 
+@Bean
 public class FinalVariableAssignedToInCatchBlockTest {
     public void m1(int o)
     {

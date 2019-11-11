@@ -37,6 +37,7 @@ import jdk.test.lib.process.ProcessTools;
  * Throws a runtime exception if an error occurs while communicating with the
  * currently executing VM.
  */
+@Bean
 public class PerfCounters {
     private final static MonitoredVm vm;
 

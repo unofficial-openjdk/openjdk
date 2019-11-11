@@ -38,6 +38,7 @@ import javax.smartcardio.CardTerminal;
 import javax.smartcardio.CardTerminals;
 import javax.smartcardio.TerminalFactory;
 
+@Bean
 public class TestDirect {
     public static void main(String[] args) throws Exception {
         TerminalFactory terminalFactory = TerminalFactory.getDefault();

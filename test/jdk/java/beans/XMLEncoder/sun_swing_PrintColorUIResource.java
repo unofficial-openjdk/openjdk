@@ -46,7 +46,11 @@ public final class sun_swing_PrintColorUIResource extends AbstractTest<Color> {
         return new PrintColorUIResource(0, Color.WHITE);
     }
 
-    protected void validate(Color before, Color after) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void validate(Color before, Color after) {
         before.equals(after);
     }
 }

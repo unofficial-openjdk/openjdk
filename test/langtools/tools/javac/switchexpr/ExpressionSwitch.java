@@ -10,6 +10,7 @@
 import java.util.Objects;
 import java.util.function.Supplier;
 
+@Bean
 public class ExpressionSwitch {
     public static void main(String... args) {
         new ExpressionSwitch().run();
@@ -36,7 +37,11 @@ public class ExpressionSwitch {
         assertEquals(castSwitchExpressions(T.A), "A");
     }
 
-    private String print(T t) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String print(T t) {
         return switch (t) {
             case A -> "A";
             case B -> { yield "B"; }
@@ -62,7 +67,11 @@ public class ExpressionSwitch {
         };
     }
 
-    private String scopesIsolated(T t) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String scopesIsolated(T t) {
         return switch (t) {
             case A -> { String res = "A"; yield res;}
             case B -> { String res = "B"; yield res;}
@@ -104,7 +113,11 @@ public class ExpressionSwitch {
         };
     }
 
-    private void localClass(T t) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void localClass(T t) {
         String good = "good";
         class L {
             public String c() {
@@ -122,19 +135,31 @@ public class ExpressionSwitch {
         }
     }
 
-    private String castSwitchExpressions(T t) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String castSwitchExpressions(T t) {
         return (String) switch (t) {
             case A -> "A";
             default -> 1;
         };
     }
 
-    private void check(T t, String expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void check(T t, String expected) {
         String result = print(t);
         assertEquals(result, expected);
     }
 
-    private void assertEquals(Object result, Object expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertEquals(Object result, Object expected) {
         if (!Objects.equals(result, expected)) {
             throw new AssertionError("Unexpected result: " + result);
         }

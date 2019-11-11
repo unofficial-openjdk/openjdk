@@ -54,6 +54,7 @@
  * values.  Therefore, no addition leeway is afforded when testing
  * sinh and cosh.
  */
+@Bean
 public class WorstCaseTests {
     private WorstCaseTests() {throw new AssertionError("No instances for you.");}
 

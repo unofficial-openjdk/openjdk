@@ -129,6 +129,7 @@ import compiler.whitebox.CompilerWhiteBoxTest;
 import sun.hotspot.code.Compiler;
 import jtreg.SkippedException;
 
+@Bean
 public class TestAESMain {
     public static void main(String[] args) {
         String mode = System.getProperty("mode", "CBC");

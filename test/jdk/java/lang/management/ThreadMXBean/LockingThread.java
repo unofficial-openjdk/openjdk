@@ -38,6 +38,7 @@
 import java.lang.management.*;
 import java.util.*;
 
+@Bean
 public class LockingThread extends Thread {
     static Lock lock1 = new Lock("lock1");
     static Lock lock2 = new Lock("lock2");

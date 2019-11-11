@@ -31,6 +31,7 @@
 import java.io.*;
 
 
+@Bean
 public class StringConvert {
 
     static String enc = "UTF8";

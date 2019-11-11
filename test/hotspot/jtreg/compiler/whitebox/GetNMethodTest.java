@@ -43,6 +43,7 @@ import jdk.test.lib.Asserts;
 import sun.hotspot.code.BlobType;
 import sun.hotspot.code.NMethod;
 
+@Bean
 public class GetNMethodTest extends CompilerWhiteBoxTest {
     public static void main(String[] args) throws Exception {
         CompilerWhiteBoxTest.main(GetNMethodTest::new, args);
@@ -97,7 +98,11 @@ public class GetNMethodTest extends CompilerWhiteBoxTest {
                 "nmethod of non-compiled method isn't null");
     }
 
-    private void checkBlockType(NMethod nmethod, BlobType expectedType) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkBlockType(NMethod nmethod, BlobType expectedType) {
         Asserts.assertEQ(nmethod.code_blob_type, expectedType,
                 String.format("blob_type[%s] for %d level isn't %s",
                         nmethod.code_blob_type, nmethod.comp_level, expectedType));

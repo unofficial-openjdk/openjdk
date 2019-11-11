@@ -42,7 +42,11 @@ import org.testng.annotations.Test;
  */
 public class InvalidCommandTest {
 
-    public void run(CommandExecutor executor) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void run(CommandExecutor executor) {
         OutputAnalyzer output = executor.execute("asdf");
         output.shouldContain("Unknown diagnostic command");
     }

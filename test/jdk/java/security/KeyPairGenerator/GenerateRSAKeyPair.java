@@ -32,6 +32,7 @@ import java.security.KeyPairGenerator;
 import java.security.KeyPair;
 import java.security.spec.RSAKeyGenParameterSpec;
 
+@Bean
 public class GenerateRSAKeyPair {
 
     public static void main(String[] args) throws Exception {

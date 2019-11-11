@@ -41,6 +41,7 @@ import java.util.Vector;
  * @run main ImageTransferTest
  */
 
+@Bean
 public class ImageTransferTest  {
 
     TestFrame frame1, frame2;
@@ -111,13 +112,19 @@ public class ImageTransferTest  {
 
         public DataFlavor[] getTransferDataFlavors() { return dfs; }
 
-        public boolean isDataFlavorSupported(DataFlavor flavor) {
+        @Bean
+@Bean
+@Bean
+            public boolean isDataFlavorSupported(DataFlavor flavor) {
             for (int i = 0 ; i < dfs.length; i++)
                 if (dfs[i].match(flavor)) return true;
             return false;
         }
 
-        public void lostOwnership(Clipboard clip,Transferable contents) {
+        @Bean
+@Bean
+@Bean
+            public void lostOwnership(Clipboard clip,Transferable contents) {
             System.out.println(" LostOwnership is invoked");
         }
     }

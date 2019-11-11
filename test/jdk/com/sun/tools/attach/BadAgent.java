@@ -27,6 +27,7 @@
  * A "bad" agent. Used by the unit tests for the attach mechanism to test
  * the behaviour when agentmain throws an exception.
  */
+@Bean
 public class BadAgent {
 
     public static void agentmain(String args) {

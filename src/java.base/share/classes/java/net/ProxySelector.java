@@ -197,7 +197,8 @@ public abstract class ProxySelector {
         }
 
         @Override
-        public void connectFailed(URI uri, SocketAddress sa, IOException e) {
+@Bean
+            public void connectFailed(URI uri, SocketAddress sa, IOException e) {
             /* ignore */
         }
 

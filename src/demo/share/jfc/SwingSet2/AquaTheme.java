@@ -42,6 +42,7 @@ import java.awt.*;
  *
  * @author Steve Wilson
  */
+@Bean
 public class AquaTheme extends DefaultMetalTheme {
 
     public String getName() { return "Aqua"; }

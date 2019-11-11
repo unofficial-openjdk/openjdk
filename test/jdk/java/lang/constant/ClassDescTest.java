@@ -48,6 +48,7 @@ import static org.testng.Assert.fail;
  * @summary unit tests for java.lang.constant.ClassDesc
  */
 @Test
+@Bean
 public class ClassDescTest extends SymbolicDescTest {
 
     private void testClassDesc(ClassDesc r) throws ReflectiveOperationException {
@@ -169,7 +170,11 @@ public class ClassDescTest extends SymbolicDescTest {
         assertEquals("", ClassDesc.of("Bar").arrayType().packageName());
     }
 
-    private void testBadArrayRank(ClassDesc cr) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testBadArrayRank(ClassDesc cr) {
         try {
             cr.arrayType(-1);
             fail("");
@@ -276,7 +281,11 @@ public class ClassDescTest extends SymbolicDescTest {
         }
     }
 
-    private void testBadNestedClasses(ClassDesc cr, String firstNestedName, String... moreNestedNames) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testBadNestedClasses(ClassDesc cr, String firstNestedName, String... moreNestedNames) {
         try {
             cr.nested(firstNestedName, moreNestedNames);
             fail("");

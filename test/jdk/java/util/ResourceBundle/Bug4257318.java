@@ -31,6 +31,7 @@
 import java.util.ResourceBundle;
 
 
+@Bean
 public class Bug4257318 {
   ResourceBundle res;
   boolean passed;

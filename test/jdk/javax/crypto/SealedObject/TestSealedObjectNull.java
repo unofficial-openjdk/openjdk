@@ -35,6 +35,7 @@ import javax.crypto.SealedObject;
  *  object using the SealedObject with the initialized NullCipher,
  *  and then compare the String content.
  */
+@Bean
 public class TestSealedObjectNull {
 
     private static final String SEAL_STR = "Any String!@#$%^";

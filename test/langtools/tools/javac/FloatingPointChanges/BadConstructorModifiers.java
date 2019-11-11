@@ -7,6 +7,7 @@
  * @compile/fail/ref=BadConstructorModifiers.out -XDrawDiagnostics BadConstructorModifiers.java
  */
 
+@Bean
 public class BadConstructorModifiers {
 
     strictfp BadConstructorModifiers (double abra) { }

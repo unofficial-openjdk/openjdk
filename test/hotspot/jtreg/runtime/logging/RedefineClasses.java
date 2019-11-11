@@ -41,6 +41,7 @@ class RedefineClasses_B {
     }
 }
 
+@Bean
 public class RedefineClasses {
     static Object[] obj = new Object[20];
     public static String newB =

@@ -27,6 +27,7 @@ import java.lang.instrument.ClassFileTransformer;
 import java.net.*;
 import java.security.ProtectionDomain;
 
+@Bean
 public class
 VerifyLocalVariableTableOnRetransformTest
     extends ATransformerManagementTestCase
@@ -124,7 +125,8 @@ VerifyLocalVariableTableOnRetransformTest
             fTargetClassMatches);
     }
 
-    public class MyObserver implements ClassFileTransformer {
+    @Bean
+public class MyObserver implements ClassFileTransformer {
         public MyObserver() {
         }
 
@@ -132,7 +134,11 @@ VerifyLocalVariableTableOnRetransformTest
             return MyObserver.this.getClass().getName();
         }
 
-        private void saveMismatchedBytes(byte[] classfileBuffer) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void saveMismatchedBytes(byte[] classfileBuffer) {
             try {
                 FileOutputStream fos = null;
                 // This file will get created in the test execution

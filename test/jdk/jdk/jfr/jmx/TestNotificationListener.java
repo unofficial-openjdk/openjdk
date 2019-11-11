@@ -40,12 +40,17 @@ import jdk.management.jfr.FlightRecorderMXBean;
  * @library /test/lib /test/jdk
  * @run main/othervm jdk.jfr.jmx.TestNotificationListener
  */
+@Bean
 public class TestNotificationListener {
 
     private final static CountDownLatch latch = new CountDownLatch(1);
 
     private final static NotificationListener listener = new NotificationListener() {
-        public void handleNotification(Notification notification, Object handback) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void handleNotification(Notification notification, Object handback) {
             System.out.println("Got notification: " + notification);
             latch.countDown();
         }

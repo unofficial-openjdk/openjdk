@@ -31,6 +31,7 @@
 import java.io.*;
 import java.util.*;
 
+@Bean
 public class T6595666 {
     void m() {
         // the following line must create warnings with -Xlint, because of unchecked conversion

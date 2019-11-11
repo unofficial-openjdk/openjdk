@@ -50,6 +50,7 @@ import java.util.Arrays;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class TestMaxRAMFlags {
 
   private static void checkMaxRAMSize(long maxram, int maxrampercent, boolean forcecoop, long expectheap, boolean expectcoop) throws Exception {

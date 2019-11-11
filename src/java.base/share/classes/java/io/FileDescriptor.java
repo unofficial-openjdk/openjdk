@@ -68,19 +68,31 @@ public final class FileDescriptor {
     static {
         SharedSecrets.setJavaIOFileDescriptorAccess(
                 new JavaIOFileDescriptorAccess() {
-                    public void set(FileDescriptor fdo, int fd) {
+                    @Bean
+@Bean
+@Bean
+            public void set(FileDescriptor fdo, int fd) {
                         fdo.set(fd);
                     }
 
-                    public int get(FileDescriptor fdo) {
+                    @Bean
+@Bean
+@Bean
+            public int get(FileDescriptor fdo) {
                         return fdo.fd;
                     }
 
-                    public void setAppend(FileDescriptor fdo, boolean append) {
+                    @Bean
+@Bean
+@Bean
+            public void setAppend(FileDescriptor fdo, boolean append) {
                         fdo.append = append;
                     }
 
-                    public boolean getAppend(FileDescriptor fdo) {
+                    @Bean
+@Bean
+@Bean
+            public boolean getAppend(FileDescriptor fdo) {
                         return fdo.append;
                     }
 
@@ -89,7 +101,10 @@ public final class FileDescriptor {
                     }
 
                     /* Register for a normal FileCleanable fd/handle cleanup. */
-                    public void registerCleanup(FileDescriptor fdo) {
+                    @Bean
+@Bean
+@Bean
+            public void registerCleanup(FileDescriptor fdo) {
                         FileCleanable.register(fdo);
                     }
 
@@ -99,15 +114,24 @@ public final class FileDescriptor {
                         fdo.registerCleanup(cleanup);
                     }
 
-                    public void unregisterCleanup(FileDescriptor fdo) {
+                    @Bean
+@Bean
+@Bean
+            public void unregisterCleanup(FileDescriptor fdo) {
                         fdo.unregisterCleanup();
                     }
 
-                    public void setHandle(FileDescriptor fdo, long handle) {
+                    @Bean
+@Bean
+@Bean
+            public void setHandle(FileDescriptor fdo, long handle) {
                         fdo.setHandle(handle);
                     }
 
-                    public long getHandle(FileDescriptor fdo) {
+                    @Bean
+@Bean
+@Bean
+            public long getHandle(FileDescriptor fdo) {
                         return fdo.handle;
                     }
                 }

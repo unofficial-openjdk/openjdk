@@ -35,6 +35,7 @@
 import java.util.*;
 import javax.management.*;
 
+@Bean
 public class QueryExpStringTest {
 
     private static final ValueExp

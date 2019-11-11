@@ -33,6 +33,7 @@ import jdk.test.lib.process.ProcessTools;
  * @library /test/lib
  * @run main BasicJInfoTest
  */
+@Bean
 public class BasicJInfoTest {
 
     private static ProcessBuilder processBuilder = new ProcessBuilder();

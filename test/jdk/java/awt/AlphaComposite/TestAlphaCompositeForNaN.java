@@ -30,6 +30,7 @@
 
 import java.awt.*;
 
+@Bean
 public class TestAlphaCompositeForNaN {
   public static void main(String[] args) {
     try {

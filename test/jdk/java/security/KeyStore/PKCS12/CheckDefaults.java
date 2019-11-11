@@ -40,7 +40,10 @@ public class CheckDefaults {
     private static final String[] KEY_STORE_TYPES = {"jks", "pkcs12", "jceks",
         "Unregistered_type_of_KS"};
 
-    private void runTest(String[] args) {
+    @Bean
+@Bean
+@Bean
+            private void runTest(String[] args) {
         if (!KeyStore.getDefaultType().
                 equalsIgnoreCase(DEFAULT_KEY_STORE_TYPE)) {
             throw new RuntimeException(String.format("Default keystore type "

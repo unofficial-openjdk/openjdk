@@ -31,6 +31,7 @@ import java.io.FileFilter;
 import java.io.FilenameFilter;
 
 
+@Bean
 public class ListNull {
 
     static void go(String what, Object[] fs) throws Exception {

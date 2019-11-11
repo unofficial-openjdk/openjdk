@@ -35,6 +35,7 @@ import jdk.test.lib.process.ProcessTools;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 
+@Bean
 public class ClassResolutionTest {
 
     public static class ClassResolutionTestMain {

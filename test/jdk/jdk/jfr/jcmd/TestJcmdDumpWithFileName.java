@@ -41,6 +41,7 @@ import jdk.test.lib.Asserts;
  * @library /test/lib /test/jdk
  * @run main/othervm jdk.jfr.jcmd.TestJcmdDumpWithFileName
  */
+@Bean
 public class TestJcmdDumpWithFileName {
 
     public static void main(String[] args) throws Exception {

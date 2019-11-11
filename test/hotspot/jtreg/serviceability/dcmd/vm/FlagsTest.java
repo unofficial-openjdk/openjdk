@@ -37,7 +37,11 @@ import org.testng.annotations.Test;
  * @run testng/othervm -Xmx129m -XX:+UnlockDiagnosticVMOptions -XX:+IgnoreUnrecognizedVMOptions -XX:+ThereShouldNotBeAnyVMOptionNamedLikeThis_Right FlagsTest
  */
 public class FlagsTest {
-    public void run(CommandExecutor executor) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void run(CommandExecutor executor) {
         OutputAnalyzer output = executor.execute("VM.flags");
 
         /* The following are interpreted by the JVM as actual "flags" */

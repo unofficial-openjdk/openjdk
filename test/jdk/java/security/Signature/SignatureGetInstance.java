@@ -34,6 +34,7 @@ import java.security.interfaces.*;
 import java.security.spec.*;
 import sun.security.util.SignatureUtil;
 
+@Bean
 public class SignatureGetInstance {
 
     private static final String SIGALG = "RSASSA-PSS";

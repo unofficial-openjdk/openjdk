@@ -30,6 +30,7 @@
 
 import javax.smartcardio.*;
 
+@Bean
 public class TestCardPermission {
 
     public static void main(String[] args) throws Exception {

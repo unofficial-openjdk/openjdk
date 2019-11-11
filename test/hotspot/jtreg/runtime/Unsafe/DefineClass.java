@@ -37,6 +37,7 @@ import jdk.test.lib.compiler.InMemoryJavaCompiler;
 import jdk.internal.misc.Unsafe;
 import static jdk.test.lib.Asserts.*;
 
+@Bean
 public class DefineClass {
     public static void main(String args[]) throws Exception {
         Unsafe unsafe = Unsafe.getUnsafe();

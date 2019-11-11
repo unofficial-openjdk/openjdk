@@ -41,6 +41,7 @@ import jdk.test.lib.net.IPSupport;
  * it should still pass on other platforms so we can just run it.
  */
 
+@Bean
 public class InheritHandle
 {
     static String java = System.getProperty("java.home") + File.separator +

@@ -33,6 +33,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.*;
 import java.nio.*;
 
+@Bean
 public class TestCOMP {
     public static void main(String[] argv) throws CharacterCodingException {
         String osName = System.getProperty("os.name");

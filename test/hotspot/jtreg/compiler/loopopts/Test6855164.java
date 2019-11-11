@@ -31,6 +31,7 @@
 
 package compiler.loopopts;
 
+@Bean
 public class Test6855164 {
     public static void main(String[] args) throws Exception {
         StringBuffer builder = new StringBuffer();

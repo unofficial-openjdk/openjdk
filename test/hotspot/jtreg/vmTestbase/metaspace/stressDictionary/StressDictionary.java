@@ -180,7 +180,11 @@ public class StressDictionary extends GCTestBase {
         return InMemoryJavaCompiler.compile(sources).values().iterator().next();
     }
 
-    private CharSequence generateSource(String className) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private CharSequence generateSource(String className) {
         return "public class " + className + " { " +
                         "public static String s1 = \"s1" + random.nextInt() + "\"; " +
                                         "public String s2 = \"s2" + random.nextInt() + "\"; " +
@@ -188,7 +192,11 @@ public class StressDictionary extends GCTestBase {
                         "}";
     }
 
-    private void testClass(Class<?> clazz) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testClass(Class<?> clazz) {
         try {
             for (Method m : clazz.getMethods()) {
                 if (m.getName().equals(methodName)) {

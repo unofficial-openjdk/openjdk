@@ -32,6 +32,7 @@ package compiler.runtime;
  *                   compiler.runtime.TestFloatsOnStackDeopt
  */
 
+@Bean
 public class TestFloatsOnStackDeopt {
 
     private static final int ARRLEN = 97;

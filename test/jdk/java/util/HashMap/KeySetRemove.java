@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
+@Bean
 public class KeySetRemove {
     public static void main(String[] args) throws Exception {
         Map[] m = {new HashMap(), new TreeMap()};

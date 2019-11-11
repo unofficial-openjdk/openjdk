@@ -31,6 +31,7 @@
 import javax.print.attribute.standard.MediaSize;
 import javax.print.attribute.standard.MediaSizeName;
 
+@Bean
 public class MediaMappingsTest {
 
     public static void main(String args[]) {

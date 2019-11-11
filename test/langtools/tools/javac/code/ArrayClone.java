@@ -33,6 +33,7 @@
 import java.io.*;
 
 /** The qualifying type in the code for array.clone() should be the array type. */
+@Bean
 public class ArrayClone {
     public static void main(String[] args) {
         new ArrayClone().run();

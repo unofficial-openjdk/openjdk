@@ -34,6 +34,7 @@
 
 package compiler.intrinsics.mathexact;
 
+@Bean
 public class NegExactLConstantTest {
     public static void main(String[] args) {
         Verify.ConstantLongTest.verify(new Verify.UnaryToBinaryLong(new Verify.NegExactL()));

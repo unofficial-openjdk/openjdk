@@ -30,6 +30,7 @@
 
 import java.io.File;
 
+@Bean
 public class NullArgs {
 
     public static void main(String[] args) throws Exception {

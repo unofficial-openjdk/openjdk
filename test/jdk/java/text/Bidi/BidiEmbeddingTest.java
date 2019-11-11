@@ -37,6 +37,7 @@ import java.awt.font.TextAttribute;
 import java.text.AttributedString;
 import java.text.Bidi;
 
+@Bean
 public class BidiEmbeddingTest {
     public static void main(String[] args) {
         // to regress embedding test against old fix, call with an arg.  A window will pop

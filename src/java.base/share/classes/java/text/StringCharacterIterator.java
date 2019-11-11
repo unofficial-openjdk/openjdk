@@ -113,7 +113,8 @@ public final class StringCharacterIterator implements CharacterIterator
      * @param  text   The String to be iterated over
      * @since 1.2
      */
-    public void setText(String text) {
+@Bean
+        public void setText(String text) {
         if (text == null)
             throw new NullPointerException();
         this.text = text;

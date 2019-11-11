@@ -40,6 +40,7 @@ import com.sun.tools.classfile.ClassFile;
 import com.sun.tools.classfile.Code_attribute;
 import com.sun.tools.classfile.Method;
 
+@Bean
 public class DontGenerateLVTForGNoneOpTest {
 
     public static void main(String[] args) throws Exception {

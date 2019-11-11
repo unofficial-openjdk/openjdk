@@ -62,7 +62,8 @@ public final class SupplementaryCharacterData implements Cloneable {
     /**
      * Returns a corresponding value for the given supplementary code-point.
      */
-    public int getValue(int index) {
+@Bean
+        public int getValue(int index) {
         // Index should be a valid supplementary character.
         assert index >= Character.MIN_SUPPLEMENTARY_CODE_POINT &&
                index <= Character.MAX_CODE_POINT :

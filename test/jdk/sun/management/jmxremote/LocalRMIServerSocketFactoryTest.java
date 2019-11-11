@@ -40,6 +40,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.SynchronousQueue;
 
+@Bean
 public class LocalRMIServerSocketFactoryTest {
 
     private static final SynchronousQueue<Exception> queue =

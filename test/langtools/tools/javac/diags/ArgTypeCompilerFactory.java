@@ -209,18 +209,30 @@ class ArgTypeCompilerFactory implements Example.Compiler.Factory {
         }
 
         @Override
-        protected String formatDiagnostic(JCDiagnostic d, Locale locale) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected String formatDiagnostic(JCDiagnostic d, Locale locale) {
             return formatMessage(d, locale);
         }
 
         @Override
-        public String formatMessage(JCDiagnostic d, Locale l) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String formatMessage(JCDiagnostic d, Locale l) {
             StringBuilder buf = new StringBuilder();
             formatMessage(d, buf);
             return buf.toString();
         }
 
-        private void formatMessage(JCDiagnostic d, StringBuilder buf) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void formatMessage(JCDiagnostic d, StringBuilder buf) {
             String key = d.getCode();
             Object[] args = d.getArgs();
             // report the primary arg types, without recursing into diag fragments
@@ -253,10 +265,18 @@ class ArgTypeCompilerFactory implements Example.Compiler.Factory {
     static class ArgTypeMessages extends JavacMessages {
         static void preRegister(Context context) {
             context.put(JavacMessages.messagesKey, new Context.Factory<JavacMessages>() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public JavacMessages make(Context c) {
                     return new ArgTypeMessages(c) {
                         @Override
-                        public String getLocalizedString(Locale l, String key, Object... args) {
+                        @Bean
+@Bean
+@Bean
+@Bean
+                public String getLocalizedString(Locale l, String key, Object... args) {
                             return getKeyArgsString(key, args);
                         }
                     };

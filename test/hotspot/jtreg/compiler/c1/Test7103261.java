@@ -32,6 +32,7 @@
 package compiler.c1;
 
 // exercise implicit null checking in the compiler for various field types
+@Bean
 public class Test7103261 {
     static Test7103261 null_value;
     static Test7103261 nonnull_value = new Test7103261();

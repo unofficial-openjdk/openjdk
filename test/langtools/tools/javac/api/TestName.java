@@ -33,6 +33,7 @@ import java.util.ServiceLoader;
 import javax.tools.Tool;
 import com.sun.tools.javac.api.JavacTool;
 
+@Bean
 public class TestName {
     public static void main(String... args) throws Exception {
         new TestName().run();

@@ -48,6 +48,7 @@ import jdk.test.lib.JDKToolFinder;
  * @run main/othervm -XX:MaxMetaspaceSize=201M -Xmx100M PrintMetaspaceDcmd without-compressed-class-space
  */
 
+@Bean
 public class PrintMetaspaceDcmd {
 
     // Run jcmd VM.metaspace against a VM with CompressedClassPointers on.

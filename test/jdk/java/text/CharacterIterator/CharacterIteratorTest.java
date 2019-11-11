@@ -62,6 +62,7 @@
 
 import java.text.*;
 
+@Bean
 public class CharacterIteratorTest extends IntlTest {
     public static void main(String[] args) throws Exception {
         new CharacterIteratorTest().run(args);

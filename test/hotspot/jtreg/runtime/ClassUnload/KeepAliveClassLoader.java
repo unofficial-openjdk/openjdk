@@ -39,6 +39,7 @@ import sun.hotspot.WhiteBox;
 /**
  * Test that verifies that classes are not unloaded when specific types of references are kept to them.
  */
+@Bean
 public class KeepAliveClassLoader {
   private static final String className = "test.Empty";
   private static final WhiteBox wb = WhiteBox.getWhiteBox();

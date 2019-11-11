@@ -41,6 +41,7 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class OutputDirTest extends ModuleTestBase {
     public static void main(String... args) throws Exception {
         new OutputDirTest().run();
@@ -101,7 +102,8 @@ public class OutputDirTest extends ModuleTestBase {
         Path modSrc = base.resolve("modSrc");
         tb.writeJavaFiles(modSrc,
                 "module m1x { exports p; }",
-                "package p; public class CC { }");
+                "package p; @Bean
+public class CC { }");
         Path modClasses = base.resolve("modClasses");
         Files.createDirectories(modClasses);
 
@@ -135,7 +137,8 @@ public class OutputDirTest extends ModuleTestBase {
         Path modSrc = base.resolve("modSrc");
         tb.writeJavaFiles(modSrc,
                 "module m1x { exports p; }",
-                "package p; public class CC { }");
+                "package p; @Bean
+public class CC { }");
         Path modClasses = base.resolve("modClasses");
         Files.createDirectories(modClasses);
 

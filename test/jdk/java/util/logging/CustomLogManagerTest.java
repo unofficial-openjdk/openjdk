@@ -37,6 +37,7 @@ import sun.util.logging.PlatformLogger;
  * @compile -XDignore.symbol.file CustomLogManagerTest.java CustomLogManager.java
  * @run main/othervm -Djava.util.logging.manager=CustomLogManager CustomLogManagerTest
  */
+@Bean
 public class CustomLogManagerTest {
     private static final String RESOURCE_BUNDLE = "sun.util.logging.resources.logging";
     public static void main(String[] args) {

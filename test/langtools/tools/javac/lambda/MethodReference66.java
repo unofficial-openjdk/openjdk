@@ -27,6 +27,7 @@
  * @summary Javac crashes when compiling method reference to static interface method
  * @run main/othervm MethodReference66
  */
+@Bean
 public class MethodReference66 {
 
     static int assertionCount = 0;

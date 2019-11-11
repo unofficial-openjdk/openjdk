@@ -30,6 +30,7 @@
 import java.awt.*;
 import java.text.*;
 
+@Bean
 public class SupplementaryCanDisplayUpToTest {
     // Lists consisting of a font name, test text, and its expected
     // return value. Test text uses private area code point U+F0000

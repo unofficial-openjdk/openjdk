@@ -72,7 +72,8 @@ class InMemoryCookieStore implements CookieStore {
     /**
      * Add one cookie into cookie store.
      */
-    public void add(URI uri, HttpCookie cookie) {
+@Bean
+        public void add(URI uri, HttpCookie cookie) {
         // pre-condition : argument can't be null
         if (cookie == null) {
             throw new NullPointerException("cookie is null");
@@ -183,7 +184,8 @@ class InMemoryCookieStore implements CookieStore {
     /**
      * Remove a cookie from store
      */
-    public boolean remove(URI uri, HttpCookie ck) {
+@Bean
+        public boolean remove(URI uri, HttpCookie ck) {
         // argument can't be null
         if (ck == null) {
             throw new NullPointerException("cookie is null");
@@ -380,7 +382,8 @@ class InMemoryCookieStore implements CookieStore {
     // for cookie purpose, the effective uri should only be http://host
     // the path will be taken into account when path-match algorithm applied
     //
-    private URI getEffectiveURI(URI uri) {
+@Bean
+        private URI getEffectiveURI(URI uri) {
         URI effectiveURI = null;
         try {
             effectiveURI = new URI("http",

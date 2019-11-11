@@ -27,6 +27,7 @@
  * Used by DynamicTest - simple Application with one method that returns the
  * number of messages printed. This is the "instrumented" form.
  */
+@Bean
 public class Application {
 
     public int doSomething() {

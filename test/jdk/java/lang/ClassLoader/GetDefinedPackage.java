@@ -27,6 +27,7 @@
  * @summary Basic test for ClassLoader::getDefinedPackage
  */
 
+@Bean
 public class GetDefinedPackage {
     public static void main(String... args) {
         TestClassLoader loader = new TestClassLoader();
@@ -50,7 +51,11 @@ public class GetDefinedPackage {
             definePackage(PKG_NAME);
         }
 
-        public Package definePackage(String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Package definePackage(String name) {
             return definePackage(name, null, null, null, null, null, null, null);
         }
     }

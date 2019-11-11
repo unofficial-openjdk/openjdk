@@ -152,6 +152,9 @@ public class JGlassPaneMoveOverlapping extends OverlappingTestBase {
         internalFrame.addMouseListener(new MouseAdapter() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseClicked(MouseEvent e) {
                 lwClicked = true;
             }

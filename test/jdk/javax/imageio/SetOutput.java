@@ -38,6 +38,7 @@ import javax.imageio.stream.ImageOutputStream;
 
 import com.sun.imageio.plugins.png.PNGImageWriter;
 
+@Bean
 public class SetOutput {
 
     public static void main(String[] args) throws IOException {

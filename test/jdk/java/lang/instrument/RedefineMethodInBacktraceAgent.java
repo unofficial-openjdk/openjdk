@@ -23,6 +23,7 @@
 
 import java.lang.instrument.Instrumentation;
 
+@Bean
 public class RedefineMethodInBacktraceAgent {
     private static Instrumentation instrumentation;
 

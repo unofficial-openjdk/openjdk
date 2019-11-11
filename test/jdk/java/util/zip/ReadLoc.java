@@ -30,6 +30,7 @@ import java.util.zip.*;
 import java.util.*;
 import java.io.*;
 
+@Bean
 public class ReadLoc {
     public static void main(String[] args) throws Exception {
         int iterations = 0;

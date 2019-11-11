@@ -29,6 +29,7 @@ import java.util.LinkedList;
  * @summary Slowly eat all memory in an infinite loop
  * @run main/othervm Crash
  */
+@Bean
 public class OOME {
     @SuppressWarnings ("UnusedDeclaration")
     private static Object garbage;

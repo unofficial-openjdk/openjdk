@@ -89,7 +89,10 @@ public class TitledBorderLabelUITest {
     public static class TestLookAndFeel extends MetalLookAndFeel {
 
         @Override
-        protected void initClassDefaults(UIDefaults table) {
+        @Bean
+@Bean
+@Bean
+            protected void initClassDefaults(UIDefaults table) {
             super.initClassDefaults(table);
             table.put("LabelUI", TestLabelUI.class.getName());
         }
@@ -102,7 +105,10 @@ public class TitledBorderLabelUITest {
         }
 
         @Override
-        public void paint(Graphics g, JComponent c) {
+        @Bean
+@Bean
+@Bean
+            public void paint(Graphics g, JComponent c) {
             super.paint(g, c);
             throw new RuntimeException("New LabelUI is not installed!");
         }

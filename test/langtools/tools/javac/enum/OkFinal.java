@@ -30,7 +30,11 @@
 
 public enum OkFinal {
     A {
-        protected void finalize(Void nil) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void finalize(Void nil) {
             System.out.println("FISK");
         }
     };

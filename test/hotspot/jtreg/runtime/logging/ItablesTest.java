@@ -38,6 +38,7 @@ import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.Platform;
 
+@Bean
 public class ItablesTest {
     public static void main(String[] args) throws Exception {
         if (Platform.isDebugBuild()) {

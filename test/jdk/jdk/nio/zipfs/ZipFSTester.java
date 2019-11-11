@@ -80,6 +80,7 @@ import static java.nio.file.StandardCopyOption.*;
  * @run main/othervm/java.security.policy=test.policy ZipFSTester
  */
 
+@Bean
 public class ZipFSTester {
     public static void main(String[] args) throws Exception {
         // create JAR file for test, actual contents don't matter

@@ -92,6 +92,7 @@ import toolbox.Task;
 import toolbox.Task.Mode;
 import toolbox.Task.OutputKind;
 
+@Bean
 public class AnnotationProcessing extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {
@@ -110,7 +111,8 @@ public class AnnotationProcessing extends ModuleTestBase {
 
         tb.writeJavaFiles(m1,
                           "module m1x { }",
-                          "package impl; public class Impl { }");
+                          "package impl; @Bean
+public class Impl { }");
 
         String log = new JavacTask(tb)
                 .options("--module-source-path", moduleSrc.toString(),
@@ -138,11 +140,13 @@ public class AnnotationProcessing extends ModuleTestBase {
 
         tb.writeJavaFiles(m1,
                           "module m1x { }",
-                          "package impl1; public class Impl1 { }");
+                          "package impl1; @Bean
+public class Impl1 { }");
 
         tb.writeJavaFiles(m2,
                           "module m2x { }",
-                          "package impl2; public class Impl2 { }");
+                          "package impl2; @Bean
+public class Impl2 { }");
 
         String log = new JavacTask(tb)
                 .options("--module-source-path", moduleSrc.toString(),
@@ -166,7 +170,11 @@ public class AnnotationProcessing extends ModuleTestBase {
         private Set<String> seenModules = new HashSet<>();
 
         @Override
-        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             if (module2ExpectedEnclosedElements == null) {
                 module2ExpectedEnclosedElements = new HashMap<>();
 
@@ -191,12 +199,20 @@ public class AnnotationProcessing extends ModuleTestBase {
 
                 module.accept(new ElementScanner9<Void, Void>() {
                     @Override
-                    public Void visitModule(ModuleElement e, Void p) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitModule(ModuleElement e, Void p) {
                         seenModule[0] = true;
                         return null;
                     }
                     @Override
-                    public Void scan(Element e, Void p) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public Void scan(Element e, Void p) {
                         throw new AssertionError("Shouldn't get here.");
                     }
                 }, null);
@@ -243,8 +259,10 @@ public class AnnotationProcessing extends ModuleTestBase {
 
         tb.writeJavaFiles(m1,
                           "module m1x { exports api; uses api.Api; provides api.Api with impl.Impl; }",
-                          "package api; public class Api { }",
-                          "package impl; public class Impl extends api.Api { }");
+                          "package api; @Bean
+public class Api { }",
+                          "package impl; @Bean
+public class Impl extends api.Api { }");
 
         String log = new JavacTask(tb)
                 .options("-doe", "-processor", VerifyUsesProvidesAP.class.getName())
@@ -262,7 +280,11 @@ public class AnnotationProcessing extends ModuleTestBase {
     public static final class VerifyUsesProvidesAP extends AbstractProcessor {
 
         @Override
-        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             TypeElement api = processingEnv.getElementUtils().getTypeElement("api.Api");
 
             assertNonNull("Cannot find api.Api", api);
@@ -298,7 +320,8 @@ public class AnnotationProcessing extends ModuleTestBase {
         Files.createDirectories(classes);
 
         tb.writeJavaFiles(src,
-                          "package api; public class Api { }");
+                          "package api; @Bean
+public class Api { }");
 
         String log = new JavacTask(tb)
                 .options("-processor", VerifyPackageNoModule.class.getName(),
@@ -318,7 +341,11 @@ public class AnnotationProcessing extends ModuleTestBase {
     public static final class VerifyPackageNoModule extends AbstractProcessor {
 
         @Override
-        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             TypeElement api = processingEnv.getElementUtils().getTypeElement("api.Api");
 
             assertNonNull("Cannot find api.Api", api);
@@ -349,11 +376,13 @@ public class AnnotationProcessing extends ModuleTestBase {
 
         tb.writeJavaFiles(m1,
                           "module m1x { }",
-                          "package impl; public class Impl { int m1x; }");
+                          "package impl; @Bean
+public class Impl { int m1x; }");
 
         tb.writeJavaFiles(m2,
                           "module m2x { }",
-                          "package impl; public class Impl { int m2x; }");
+                          "package impl; @Bean
+public class Impl { int m2x; }");
 
         new JavacTask(tb)
             .options("--module-source-path", moduleSrc.toString())
@@ -384,7 +413,11 @@ public class AnnotationProcessing extends ModuleTestBase {
     public static final class QualifiedClassForProcessing extends AbstractProcessor {
 
         @Override
-        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             if (processingEnv.getElementUtils().getModuleElement("m1x") == null) {
                 throw new AssertionError("No m1x module found.");
             }
@@ -418,7 +451,8 @@ public class AnnotationProcessing extends ModuleTestBase {
 
         tb.writeJavaFiles(m1,
                           "module m1x { exports api; }",
-                          "package api; public class Api { }");
+                          "package api; @Bean
+public class Api { }");
 
         List<String> log = new JavacTask(tb)
                 .options("-processor", ModuleInRootElementsAP.class.getName())
@@ -435,7 +469,11 @@ public class AnnotationProcessing extends ModuleTestBase {
     public static final class ModuleInRootElementsAP extends AbstractProcessor {
 
         @Override
-        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             roundEnv.getRootElements()
                     .stream()
                     .filter(el -> el.getKind() == ElementKind.MODULE)
@@ -493,7 +531,11 @@ public class AnnotationProcessing extends ModuleTestBase {
     public static final class AnnotationsInModuleInfoPrint extends AbstractProcessor {
 
         @Override
-        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             processingEnv.getMessager().printMessage(Kind.NOTE, "AP Invoked");
             return false;
         }
@@ -509,7 +551,11 @@ public class AnnotationProcessing extends ModuleTestBase {
     public static final class AnnotationsInModuleInfoFail extends AbstractProcessor {
 
         @Override
-        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             throw new AssertionError();
         }
 
@@ -531,8 +577,10 @@ public class AnnotationProcessing extends ModuleTestBase {
 
         tb.writeJavaFiles(m1,
                           "module m1x { exports api1; }",
-                          "package api1; public class Api { }",
-                          "package clash; public class C { }");
+                          "package api1; @Bean
+public class Api { }",
+                          "package clash; @Bean
+public class C { }");
 
         writeFile("1", m1, "api1", "api");
         writeFile("2", m1, "clash", "clash");
@@ -541,8 +589,10 @@ public class AnnotationProcessing extends ModuleTestBase {
 
         tb.writeJavaFiles(m2,
                           "module m2x { requires m1x; exports api2; }",
-                          "package api2; public class Api { }",
-                          "package clash; public class C { }");
+                          "package api2; @Bean
+public class Api { }",
+                          "package clash; @Bean
+public class C { }");
 
         writeFile("3", m2, "api2", "api");
         writeFile("4", m2, "clash", "api");
@@ -557,7 +607,8 @@ public class AnnotationProcessing extends ModuleTestBase {
                 runCompiler(base,
                             moduleSrc,
                             classes,
-                            "createSource(() -> filer.createSourceFile(\"" + module + "api1.Impl\"" + originating + "), \"api1.Impl\", \"package api1; public class Impl {}\")",
+                            "createSource(() -> filer.createSourceFile(\"" + module + "api1.Impl\"" + originating + "), \"api1.Impl\", \"package api1; @Bean
+public class Impl {}\")",
                             "--module-source-path", moduleSrc.toString());
                 assertFileExists(classes, "m1x", "api1", "Impl.class");
 
@@ -565,7 +616,8 @@ public class AnnotationProcessing extends ModuleTestBase {
                 runCompiler(base,
                             moduleSrc,
                             classes,
-                            "createClass(() -> filer.createClassFile(\"" + module + "api1.Impl\"" + originating + "), \"api1.Impl\", \"package api1; public class Impl {}\")",
+                            "createClass(() -> filer.createClassFile(\"" + module + "api1.Impl\"" + originating + "), \"api1.Impl\", \"package api1; @Bean
+public class Impl {}\")",
                             "--module-source-path", moduleSrc.toString());
                 assertFileExists(classes, "m1x", "api1", "Impl.class");
 
@@ -606,7 +658,8 @@ public class AnnotationProcessing extends ModuleTestBase {
                         "createSource(() -> filer.createSourceFile(\"" + pack + ".Pass\")," +
                         "                                          \"" + pack + ".Pass\"," +
                         "                                          \"package " + pack + ";" +
-                        "                                            public class Pass { }\")",
+                        "                                            @Bean
+public class Pass { }\")",
                         "--module-source-path", moduleSrc.toString(),
                         "--default-module-for-created-files=m1x");
             assertFileExists(classes, "m1x", pack, "Pass.class");
@@ -618,7 +671,8 @@ public class AnnotationProcessing extends ModuleTestBase {
                         "createClass(() -> filer.createClassFile(\"" + pack + ".Pass\")," +
                         "                                        \"" + pack + ".Pass\"," +
                         "                                        \"package " + pack + ";" +
-                        "                                          public class Pass { }\")",
+                        "                                          @Bean
+public class Pass { }\")",
                         "--module-source-path", moduleSrc.toString(),
                         "--default-module-for-created-files=m1x");
             assertFileExists(classes, "m1x", pack, "Pass.class");
@@ -697,7 +751,11 @@ public class AnnotationProcessing extends ModuleTestBase {
 
     public static abstract class GeneratingAP extends AbstractProcessor {
 
-        public void createSource(CreateFileObject file, String name, String content) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void createSource(CreateFileObject file, String name, String content) {
             try (Writer out = file.create().openWriter()) {
                 out.write(content);
             } catch (IOException ex) {
@@ -705,7 +763,11 @@ public class AnnotationProcessing extends ModuleTestBase {
             }
         }
 
-        public void createClass(CreateFileObject file, String name, String content) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void createClass(CreateFileObject file, String name, String content) {
             String fileNameStub = name.replace(".", File.separator);
 
             try (OutputStream out = file.create().openOutputStream()) {
@@ -741,7 +803,11 @@ public class AnnotationProcessing extends ModuleTestBase {
             }
         }
 
-        public void doReadResource(CreateFileObject file, String expectedContent) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void doReadResource(CreateFileObject file, String expectedContent) {
             try {
                 StringBuilder actualContent = new StringBuilder();
 
@@ -760,7 +826,11 @@ public class AnnotationProcessing extends ModuleTestBase {
             }
         }
 
-        public void checkResourceExists(CreateFileObject file) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void checkResourceExists(CreateFileObject file) {
             try {
                 file.create().openInputStream().close();
             } catch (IOException ex) {
@@ -772,7 +842,11 @@ public class AnnotationProcessing extends ModuleTestBase {
             public FileObject create() throws IOException;
         }
 
-        public void expectFilerException(Callable<Object> c) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void expectFilerException(Callable<Object> c) {
             try {
                 c.call();
                 throw new AssertionError("Expected exception not thrown");
@@ -783,7 +857,11 @@ public class AnnotationProcessing extends ModuleTestBase {
             }
         }
 
-        public void expectException(Callable<Object> c) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void expectException(Callable<Object> c) {
             try {
                 c.call();
                 throw new AssertionError("Expected exception not thrown");
@@ -831,7 +909,8 @@ public class AnnotationProcessing extends ModuleTestBase {
                     runCompiler(base,
                                 m1,
                                 classes,
-                                "createSource(() -> filer.createSourceFile(\"" + module + "impl.Impl\"" + originating + "), \"impl.Impl\", \"package impl; public class Impl {}\")",
+                                "createSource(() -> filer.createSourceFile(\"" + module + "impl.Impl\"" + originating + "), \"impl.Impl\", \"package impl; @Bean
+public class Impl {}\")",
                                 options);
                     assertFileExists(classes, modulePath, "impl", "Impl.class");
 
@@ -839,7 +918,8 @@ public class AnnotationProcessing extends ModuleTestBase {
                     runCompiler(base,
                                 m1,
                                 classes,
-                                "createClass(() -> filer.createClassFile(\"" + module + "impl.Impl\"" + originating + "), \"impl.Impl\", \"package impl; public class Impl {}\")",
+                                "createClass(() -> filer.createClassFile(\"" + module + "impl.Impl\"" + originating + "), \"impl.Impl\", \"package impl; @Bean
+public class Impl {}\")",
                                 options);
                     assertFileExists(classes, modulePath, "impl", "Impl.class");
 
@@ -985,7 +1065,11 @@ public class AnnotationProcessing extends ModuleTestBase {
           .writeAll();
     }
 
-    private void compileAP(Path target, String code) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void compileAP(Path target, String code) {
         String processorCode =
             "import java.util.*;\n" +
             "import javax.annotation.processing.*;\n" +
@@ -1000,7 +1084,11 @@ public class AnnotationProcessing extends ModuleTestBase {
             "        int round;\n" +
             "\n" +
             "        @Override\n" +
-            "        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {\n" +
+            "        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {\n" +
             "            if (round++ != 0)\n" +
             "                return false;\n" +
             "            Filer filer = processingEnv.getFiler();\n" +
@@ -1075,7 +1163,11 @@ public class AnnotationProcessing extends ModuleTestBase {
         }
 
         @Override
-        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             if (round++ != 0)
                 return false;
 
@@ -1115,13 +1207,15 @@ public class AnnotationProcessing extends ModuleTestBase {
 
         tb.writeJavaFiles(m3,
                           "module m3x { requires m1x; }",
-                          "package impl; import api.*; @A @B public class T {}");
+                          "package impl; import api.*; @A @B @Bean
+public class T {}");
 
         Path m4 = src.resolve("m4x");
 
         tb.writeJavaFiles(m4,
                           "module m4x { requires m2x; }",
-                          "package impl; import api.*; @A @B public class T {}");
+                          "package impl; import api.*; @A @B @Bean
+public class T {}");
 
         List<String> log;
         List<String> expected;
@@ -1191,7 +1285,8 @@ public class AnnotationProcessing extends ModuleTestBase {
         tb.writeJavaFiles(src,
                           "package api; public @interface A {}",
                           "package api; public @interface B {}",
-                          "package impl; import api.*; @A @B public class T {}");
+                          "package impl; import api.*; @A @B @Bean
+public class T {}");
 
         List<String> log = new JavacTask(tb)
             .options("-processor", SelectAnnotationATestAP.class.getName() + "," +
@@ -1222,7 +1317,8 @@ public class AnnotationProcessing extends ModuleTestBase {
         tb.writeJavaFiles(src,
                           "package api; public @interface A {}",
                           "package api; public @interface B {}",
-                          "package impl; import api.*; @A @B public class T {}");
+                          "package impl; import api.*; @A @B @Bean
+public class T {}");
 
         List<String> log = new JavacTask(tb)
             .options("-processor", SelectAnnotationATestAP.class.getName() + "," +
@@ -1249,7 +1345,11 @@ public class AnnotationProcessing extends ModuleTestBase {
     public static final class SelectAnnotationATestAP extends AbstractProcessor {
 
         @Override
-        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             System.err.println("SelectAnnotationATestAP");
 
             return false;
@@ -1261,7 +1361,11 @@ public class AnnotationProcessing extends ModuleTestBase {
     public static final class SelectAnnotationBTestAP extends AbstractProcessor {
 
         @Override
-        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             System.err.println("SelectAnnotationBTestAP");
 
             return false;
@@ -1272,7 +1376,11 @@ public class AnnotationProcessing extends ModuleTestBase {
     public static final class SelectAnnotationAStrictTestAP extends AbstractProcessor {
 
         @Override
-        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             System.err.println("SelectAnnotationAStrictTestAP");
 
             return false;
@@ -1304,7 +1412,8 @@ public class AnnotationProcessing extends ModuleTestBase {
         Path src = base.resolve("src");
 
         tb.writeJavaFiles(src,
-                          "package impl.conflict.src; public class Impl { }");
+                          "package impl.conflict.src; @Bean
+public class Impl { }");
 
         Path moduleSrc = base.resolve("module-src");
         Path m1 = moduleSrc.resolve("m1x");
@@ -1318,19 +1427,27 @@ public class AnnotationProcessing extends ModuleTestBase {
 
         tb.writeJavaFiles(m1,
                           "module m1x { }",
-                          "package impl1; public class Impl { }",
+                          "package impl1; @Bean
+public class Impl { }",
                           "package impl.conflict.module; class Impl { }",
-                          "package impl.conflict.clazz; public class pkg { public static class I { } }",
-                          "package impl.conflict.src; public class Impl { }",
-                          "package nested.pack.pack; public class Impl { }",
-                          "package unique.nested; public class Impl { }");
+                          "package impl.conflict.clazz; @Bean
+public class pkg { public static class I { } }",
+                          "package impl.conflict.src; @Bean
+public class Impl { }",
+                          "package nested.pack.pack; @Bean
+public class Impl { }",
+                          "package unique.nested; @Bean
+public class Impl { }");
 
         tb.writeJavaFiles(m2,
                           "module m2x { }",
-                          "package impl2; public class Impl { }",
+                          "package impl2; @Bean
+public class Impl { }",
                           "package impl.conflict.module; class Impl { }",
-                          "package impl.conflict; public class clazz { public static class pkg { } }",
-                          "package nested.pack; public class Impl { }");
+                          "package impl.conflict; @Bean
+public class clazz { public static class pkg { } }",
+                          "package nested.pack; @Bean
+public class Impl { }");
 
         //from source:
         String log = new JavacTask(tb)
@@ -1408,7 +1525,11 @@ public class AnnotationProcessing extends ModuleTestBase {
     public static final class UnboundLookup extends AbstractProcessor {
 
         @Override
-        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             assertTypeElementExists("impl1.Impl", "m1x");
             assertPackageElementExists("impl1", "m1x");
             assertTypeElementExists("impl2.Impl", "m2x");
@@ -1431,15 +1552,27 @@ public class AnnotationProcessing extends ModuleTestBase {
             return false;
         }
 
-        private void assertTypeElementExists(String name, String expectedModule) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void assertTypeElementExists(String name, String expectedModule) {
             assertElementExists(name, "class", processingEnv.getElementUtils() :: getTypeElement, expectedModule);
         }
 
-        private void assertPackageElementExists(String name, String expectedModule) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void assertPackageElementExists(String name, String expectedModule) {
             assertElementExists(name, "package", processingEnv.getElementUtils() :: getPackageElement, expectedModule);
         }
 
-        private void assertElementExists(String name, String type, Function<String, Element> getter, String expectedModule) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void assertElementExists(String name, String type, Function<String, Element> getter, String expectedModule) {
             Element clazz = getter.apply(name);
 
             if (clazz == null) {
@@ -1453,15 +1586,27 @@ public class AnnotationProcessing extends ModuleTestBase {
             }
         }
 
-        private void assertTypeElementNotFound(String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void assertTypeElementNotFound(String name) {
             assertElementNotFound(name, processingEnv.getElementUtils() :: getTypeElement);
         }
 
-        private void assertPackageElementNotFound(String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void assertPackageElementNotFound(String name) {
             assertElementNotFound(name, processingEnv.getElementUtils() :: getPackageElement);
         }
 
-        private void assertElementNotFound(String name, Function<String, Element> getter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void assertElementNotFound(String name, Function<String, Element> getter) {
             Element found = getter.apply(name);
 
             if (found != null) {
@@ -1480,7 +1625,11 @@ public class AnnotationProcessing extends ModuleTestBase {
     public static final class UnboundLookup8 extends AbstractProcessor {
 
         @Override
-        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             if (processingEnv.getElementUtils().getTypeElement("impl.conflict.src.Impl") == null) {
                 throw new AssertionError("impl.conflict.src.Impl.");
             }
@@ -1503,10 +1652,15 @@ public class AnnotationProcessing extends ModuleTestBase {
     public static final class UnboundLookupGenerate extends AbstractProcessor {
 
         @Override
-        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             if (processingEnv.getElementUtils().getTypeElement("nue.Nue") == null) {
                 try (Writer w = processingEnv.getFiler().createSourceFile("m1x/nue.Nue").openWriter()) {
-                    w.write("package nue; public class Nue {}");
+                    w.write("package nue; @Bean
+public class Nue {}");
                 } catch (IOException ex) {
                     throw new IllegalStateException(ex);
                 }
@@ -1527,7 +1681,8 @@ public class AnnotationProcessing extends ModuleTestBase {
         Path src = base.resolve("src");
 
         tb.writeJavaFiles(src,
-                          "package test; public class Test { }");
+                          "package test; @Bean
+public class Test { }");
 
         Path classes = base.resolve("classes");
 

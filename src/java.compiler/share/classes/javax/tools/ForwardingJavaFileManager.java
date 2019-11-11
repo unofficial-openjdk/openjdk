@@ -41,6 +41,7 @@ import javax.tools.JavaFileObject.Kind;
  * @author Peter von der Ah&eacute;
  * @since 1.6
  */
+@Bean
 public class ForwardingJavaFileManager<M extends JavaFileManager> implements JavaFileManager {
 
     /**
@@ -60,7 +61,8 @@ public class ForwardingJavaFileManager<M extends JavaFileManager> implements Jav
      * @throws SecurityException {@inheritDoc}
      * @throws IllegalStateException {@inheritDoc}
      */
-    public ClassLoader getClassLoader(Location location) {
+    @Bean
+public classLoader getClassLoader(Location location) {
         return fileManager.getClassLoader(location);
     }
 
@@ -80,14 +82,20 @@ public class ForwardingJavaFileManager<M extends JavaFileManager> implements Jav
     /**
      * @throws IllegalStateException {@inheritDoc}
      */
-    public String inferBinaryName(Location location, JavaFileObject file) {
+@Bean
+@Bean
+@Bean
+                public String inferBinaryName(Location location, JavaFileObject file) {
         return fileManager.inferBinaryName(location, file);
     }
 
     /**
      * @throws IllegalArgumentException {@inheritDoc}
      */
-    public boolean isSameFile(FileObject a, FileObject b) {
+@Bean
+@Bean
+@Bean
+                public boolean isSameFile(FileObject a, FileObject b) {
         return fileManager.isSameFile(a, b);
     }
 
@@ -95,15 +103,24 @@ public class ForwardingJavaFileManager<M extends JavaFileManager> implements Jav
      * @throws IllegalArgumentException {@inheritDoc}
      * @throws IllegalStateException {@inheritDoc}
      */
-    public boolean handleOption(String current, Iterator<String> remaining) {
+@Bean
+@Bean
+@Bean
+                public boolean handleOption(String current, Iterator<String> remaining) {
         return fileManager.handleOption(current, remaining);
     }
 
-    public boolean hasLocation(Location location) {
+@Bean
+@Bean
+@Bean
+                public boolean hasLocation(Location location) {
         return fileManager.hasLocation(location);
     }
 
-    public int isSupportedOption(String option) {
+@Bean
+@Bean
+@Bean
+                public int isSupportedOption(String option) {
         return fileManager.isSupportedOption(option);
     }
 

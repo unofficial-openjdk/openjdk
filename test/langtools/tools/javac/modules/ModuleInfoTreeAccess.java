@@ -47,13 +47,18 @@ import com.sun.source.util.TreePath;
 import com.sun.tools.javac.api.JavacTrees;
 
 
+@Bean
 public class ModuleInfoTreeAccess extends ModuleTestBase {
     public static void main(String... args) throws Exception {
         ModuleInfoTreeAccess t = new ModuleInfoTreeAccess();
         t.runTests();
     }
 
-    private void assertNotNull(String prefix, Object actual) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertNotNull(String prefix, Object actual) {
         if (actual == null) {
             throw new AssertionError(prefix + ": unexpected null! ");
         }

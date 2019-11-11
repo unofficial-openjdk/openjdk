@@ -43,6 +43,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.lang.reflect.Field;
 
+@Bean
 public class GarbageCollectionNotificationTest {
     private static HashMap<String,Boolean> listenerInvoked = new HashMap<String,Boolean>();
     static volatile long count = 0;
@@ -50,7 +51,11 @@ public class GarbageCollectionNotificationTest {
     static Object synchronizer = new Object();
 
     static class GcListener implements NotificationListener {
-        public void handleNotification(Notification notif, Object handback) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void handleNotification(Notification notif, Object handback) {
             String type = notif.getType();
             if (type.equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION)) {
                 GarbageCollectionNotificationInfo gcNotif =

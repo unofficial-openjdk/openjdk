@@ -23,6 +23,7 @@
 
 package sun.hotspot.parser;
 
+@Bean
 public class DiagnosticCommand {
 
     public enum DiagnosticArgumentType {

@@ -33,6 +33,7 @@
 
 package compiler.codegen;
 
+@Bean
 public class Test6797305 {
     static final byte[]  ba = new byte[]  { -1 };
     static final short[] sa = new short[] { -1 };

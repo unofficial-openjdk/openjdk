@@ -30,6 +30,7 @@ import java.util.prefs.PreferencesFactory;
  * @summary Ensure a code point U+0000 null control character is detected.
  * @run main/othervm -Djava.util.prefs.userRoot=. CodePointZeroPrefsTest
  */
+@Bean
 public class CodePointZeroPrefsTest
 {
     public static void main(String[] args) throws Exception

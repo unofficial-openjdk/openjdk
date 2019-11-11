@@ -30,6 +30,7 @@
  * @run main DocLintTester -Xmsgs:html EmptyPreTest.java
  */
 
+@Bean
 public class EmptyPreTest {
     /** <pre> {@code xyzzy} </pre> */
     public void m1() { }

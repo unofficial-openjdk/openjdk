@@ -28,6 +28,7 @@
 */
 
 
+@Bean
 public class ExceptionHidingLoader extends ClassLoader {
 
     protected Class findClass(String name) throws ClassNotFoundException {

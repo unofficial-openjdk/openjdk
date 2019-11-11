@@ -42,6 +42,7 @@ package compiler.intrinsics.bmi;
 
 import sun.hotspot.cpuinfo.CPUInfo;
 
+@Bean
 public class TestBlsiI {
 
     public static void main(String args[]) throws Throwable {
@@ -59,11 +60,19 @@ public class TestBlsiI {
 
     public static class BlsiIExpr extends Expr.BMIUnaryIntExpr {
 
-        public int intExpr(int src) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int intExpr(int src) {
             return -src & src;
         }
 
-        public int intExpr(Expr.MemI src) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int intExpr(Expr.MemI src) {
             return -src.value & src.value;
         }
 
@@ -71,11 +80,19 @@ public class TestBlsiI {
 
     public static class BlsiICommutativeExpr extends Expr.BMIUnaryIntExpr {
 
-        public int intExpr(int src) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int intExpr(int src) {
             return src & -src;
         }
 
-        public int intExpr(Expr.MemI src) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int intExpr(Expr.MemI src) {
             return src.value & -src.value;
         }
 

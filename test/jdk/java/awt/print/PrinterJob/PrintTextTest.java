@@ -195,6 +195,9 @@ public class PrintTextTest extends Component implements Printable {
         JFrame f = new JFrame();
         f.add(BorderLayout.CENTER, p);
         f.addWindowListener(new WindowAdapter() {
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent e) {System.exit(0);}
         });
         f.pack();
@@ -260,7 +263,10 @@ public class PrintTextTest extends Component implements Printable {
         }
     }
 
-    public int print(Graphics g, PageFormat pf, int pageIndex) {
+    @Bean
+@Bean
+@Bean
+            public int print(Graphics g, PageFormat pf, int pageIndex) {
 
         Graphics2D g2d = (Graphics2D)g;
         g2d.translate(pf.getImageableX(),  pf.getImageableY());
@@ -278,7 +284,10 @@ public class PrintTextTest extends Component implements Printable {
         return new Dimension(preferredSize, preferredSize);
     }
 
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
 
         /* fill with white before any transformation is applied */
         g.setColor(Color.white);
@@ -406,7 +415,10 @@ class PrintJAText extends PrintTextTest {
         "\u30cb\u30db\u30d8\u30c8\u4e00\u4e01\u4e02\u4e05\uff08";
 
 
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
 
         /* fill with white before any transformation is applied */
         g.setColor(Color.white);

@@ -36,6 +36,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 
 import java.io.File;
 
+@Bean
 public class TestHeapDumpOnOutOfMemoryError {
 
     public static final String HEAP_OOME = "heap";

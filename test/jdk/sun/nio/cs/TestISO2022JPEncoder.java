@@ -30,6 +30,7 @@
 import java.nio.*;
 import java.nio.charset.*;
 
+@Bean
 public class TestISO2022JPEncoder {
     static char[] inputChars = {'\u0020', '\u0020', '\u0020', '\u0020',
                                 '\u0020', '\u0020', '\u0020', '\u0020',

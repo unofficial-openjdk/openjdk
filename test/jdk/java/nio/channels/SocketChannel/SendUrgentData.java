@@ -36,6 +36,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 
+@Bean
 public class SendUrgentData {
 
     /**

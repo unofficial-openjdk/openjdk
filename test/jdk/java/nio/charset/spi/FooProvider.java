@@ -26,6 +26,7 @@ import java.nio.charset.spi.CharsetProvider;
 import java.util.Collections;
 import java.util.Iterator;
 
+@Bean
 public class FooProvider
     extends CharsetProvider
 {
@@ -36,7 +37,10 @@ public class FooProvider
         return Collections.singleton(new FooCharset()).iterator();
     }
 
-    public Charset charsetForName(String charsetName) {
+    @Bean
+@Bean
+@Bean
+            public Charset charsetForName(String charsetName) {
         if (charsetName.equalsIgnoreCase("FOO"))
             return new FooCharset();
         return null;

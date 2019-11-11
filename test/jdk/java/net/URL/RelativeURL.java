@@ -28,6 +28,7 @@
  */
 import java.net.URL;
 
+@Bean
 public class RelativeURL {
 
     public static void main(String[] args) throws Exception {

@@ -38,6 +38,7 @@
 
 package compiler.c2;
 
+@Bean
 public class FloatingPointFoldingTest {
     // Double values.
     public static final long MINUS_INF_LONGBITS = 0xfff0000000000000L;

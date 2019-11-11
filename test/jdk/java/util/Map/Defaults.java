@@ -67,17 +67,26 @@ import static org.testng.Assert.assertThrows;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
+@Bean
 public class Defaults {
 
     @Test(dataProvider = "Map<IntegerEnum,String> rw=all keys=withNull values=withNull")
-    public void testGetOrDefaultNulls(String description, Map<IntegerEnum, String> map) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testGetOrDefaultNulls(String description, Map<IntegerEnum, String> map) {
         assertTrue(map.containsKey(null), description + ": null key absent");
         assertNull(map.get(null), description + ": value not null");
         assertSame(map.get(null), map.getOrDefault(null, EXTRA_VALUE), description + ": values should match");
     }
 
     @Test(dataProvider = "Map<IntegerEnum,String> rw=all keys=all values=all")
-    public void testGetOrDefault(String description, Map<IntegerEnum, String> map) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testGetOrDefault(String description, Map<IntegerEnum, String> map) {
         assertTrue(map.containsKey(KEYS[1]), "expected key missing");
         assertSame(map.get(KEYS[1]), map.getOrDefault(KEYS[1], EXTRA_VALUE), "values should match");
         assertFalse(map.containsKey(EXTRA_KEY), "expected absent key");
@@ -86,7 +95,11 @@ public class Defaults {
     }
 
     @Test(dataProvider = "Map<IntegerEnum,String> rw=true keys=withNull values=withNull")
-    public void testPutIfAbsentNulls(String description, Map<IntegerEnum, String> map) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testPutIfAbsentNulls(String description, Map<IntegerEnum, String> map) {
         // null -> null
         assertTrue(map.containsKey(null), "null key absent");
         assertNull(map.get(null), "value not null");
@@ -110,7 +123,11 @@ public class Defaults {
     }
 
     @Test(dataProvider = "Map<IntegerEnum,String> rw=true keys=all values=all")
-    public void testPutIfAbsent(String description, Map<IntegerEnum, String> map) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testPutIfAbsent(String description, Map<IntegerEnum, String> map) {
         // 1 -> 1
         assertTrue(map.containsKey(KEYS[1]));
         Object expected = map.get(KEYS[1]);
@@ -127,7 +144,11 @@ public class Defaults {
     }
 
     @Test(dataProvider = "Map<IntegerEnum,String> rw=all keys=all values=all")
-    public void testForEach(String description, Map<IntegerEnum, String> map) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testForEach(String description, Map<IntegerEnum, String> map) {
         IntegerEnum[] EACH_KEY = new IntegerEnum[map.size()];
 
         map.forEach((k, v) -> {
@@ -196,7 +217,11 @@ public class Defaults {
     }
 
     @Test(dataProvider = "Map<IntegerEnum,String> rw=true keys=withNull values=withNull")
-    public void testReplaceKVNulls(String description, Map<IntegerEnum, String> map) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testReplaceKVNulls(String description, Map<IntegerEnum, String> map) {
         assertTrue(map.containsKey(null), "null key absent");
         assertNull(map.get(null), "value not null");
         assertSame(map.replace(null, EXTRA_VALUE), null);
@@ -204,7 +229,11 @@ public class Defaults {
     }
 
     @Test(dataProvider = "Map<IntegerEnum,String> rw=true keys=nonNull values=nonNull")
-    public void testReplaceKVNoNulls(String description, Map<IntegerEnum, String> map) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testReplaceKVNoNulls(String description, Map<IntegerEnum, String> map) {
         assertTrue(map.containsKey(FIRST_KEY), "expected key missing");
         assertSame(map.get(FIRST_KEY), FIRST_VALUE, "found wrong value");
         assertThrowsNPE(() -> map.replace(FIRST_KEY, null));
@@ -213,7 +242,11 @@ public class Defaults {
     }
 
     @Test(dataProvider = "Map<IntegerEnum,String> rw=true keys=all values=all")
-    public void testReplaceKV(String description, Map<IntegerEnum, String> map) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testReplaceKV(String description, Map<IntegerEnum, String> map) {
         assertTrue(map.containsKey(KEYS[1]));
         Object expected = map.get(KEYS[1]);
         assertTrue(null == expected || expected == VALUES[1]);
@@ -231,7 +264,11 @@ public class Defaults {
     }
 
     @Test(dataProvider = "Map<IntegerEnum,String> rw=true keys=withNull values=withNull")
-    public void testReplaceKVVNulls(String description, Map<IntegerEnum, String> map) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testReplaceKVVNulls(String description, Map<IntegerEnum, String> map) {
         assertTrue(map.containsKey(null), "null key absent");
         assertNull(map.get(null), "value not null");
         assertFalse(map.replace(null, EXTRA_VALUE, EXTRA_VALUE));
@@ -243,7 +280,11 @@ public class Defaults {
     }
 
     @Test(dataProvider = "Map<IntegerEnum,String> rw=true keys=nonNull values=nonNull")
-    public void testReplaceKVVNoNulls(String description, Map<IntegerEnum, String> map) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testReplaceKVVNoNulls(String description, Map<IntegerEnum, String> map) {
         assertTrue(map.containsKey(FIRST_KEY), "expected key missing");
         assertSame(map.get(FIRST_KEY), FIRST_VALUE, "found wrong value");
         assertThrowsNPE(() -> map.replace(FIRST_KEY, FIRST_VALUE, null));
@@ -258,7 +299,11 @@ public class Defaults {
     }
 
     @Test(dataProvider = "Map<IntegerEnum,String> rw=true keys=all values=all")
-    public void testReplaceKVV(String description, Map<IntegerEnum, String> map) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testReplaceKVV(String description, Map<IntegerEnum, String> map) {
         assertTrue(map.containsKey(KEYS[1]));
         Object expected = map.get(KEYS[1]);
         assertTrue(null == expected || expected == VALUES[1]);
@@ -281,7 +326,11 @@ public class Defaults {
     }
 
     @Test(dataProvider = "Map<IntegerEnum,String> rw=true keys=withNull values=withNull")
-    public void testComputeIfAbsentNulls(String description, Map<IntegerEnum, String> map) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testComputeIfAbsentNulls(String description, Map<IntegerEnum, String> map) {
         // null -> null
         assertTrue(map.containsKey(null), "null key absent");
         assertNull(map.get(null), "value not null");
@@ -302,7 +351,11 @@ public class Defaults {
     }
 
     @Test(dataProvider = "Map<IntegerEnum,String> rw=true keys=all values=all")
-    public void testComputeIfAbsent(String description, Map<IntegerEnum, String> map) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testComputeIfAbsent(String description, Map<IntegerEnum, String> map) {
         // 1 -> 1
         assertTrue(map.containsKey(KEYS[1]));
         Object expected = map.get(KEYS[1]);
@@ -321,12 +374,20 @@ public class Defaults {
     }
 
     @Test(dataProvider = "Map<IntegerEnum,String> rw=true keys=all values=all")
-    public void testComputeIfAbsentNullFunction(String description, Map<IntegerEnum, String> map) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testComputeIfAbsentNullFunction(String description, Map<IntegerEnum, String> map) {
         assertThrowsNPE(() -> map.computeIfAbsent(KEYS[1], null));
     }
 
     @Test(dataProvider = "Map<IntegerEnum,String> rw=true keys=withNull values=withNull")
-    public void testComputeIfPresentNulls(String description, Map<IntegerEnum, String> map) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testComputeIfPresentNulls(String description, Map<IntegerEnum, String> map) {
         assertTrue(map.containsKey(null), description + ": null key absent");
         assertNull(map.get(null), description + ": value not null");
         assertSame(map.computeIfPresent(null, (k, v) -> {
@@ -345,7 +406,11 @@ public class Defaults {
     }
 
     @Test(dataProvider = "Map<IntegerEnum,String> rw=true keys=all values=all")
-    public void testComputeIfPresent(String description, Map<IntegerEnum, String> map) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testComputeIfPresent(String description, Map<IntegerEnum, String> map) {
         assertTrue(map.containsKey(KEYS[1]));
         Object value = map.get(KEYS[1]);
         assertTrue(null == value || value == VALUES[1], description + String.valueOf(value));
@@ -366,12 +431,20 @@ public class Defaults {
     }
 
     @Test(dataProvider = "Map<IntegerEnum,String> rw=true keys=all values=all")
-    public void testComputeIfPresentNullFunction(String description, Map<IntegerEnum, String> map) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testComputeIfPresentNullFunction(String description, Map<IntegerEnum, String> map) {
         assertThrowsNPE(() -> map.computeIfPresent(KEYS[1], null));
     }
 
      @Test(dataProvider = "Map<IntegerEnum,String> rw=true keys=withNull values=withNull")
-    public void testComputeNulls(String description, Map<IntegerEnum, String> map) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testComputeNulls(String description, Map<IntegerEnum, String> map) {
         assertTrue(map.containsKey(null), "null key absent");
         assertNull(map.get(null), "value not null");
         assertSame(map.compute(null, (k, v) -> {
@@ -431,7 +504,11 @@ public class Defaults {
     }
 
     @Test(dataProvider = "Map<IntegerEnum,String> rw=true keys=all values=all")
-    public void testCompute(String description, Map<IntegerEnum, String> map) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testCompute(String description, Map<IntegerEnum, String> map) {
         assertTrue(map.containsKey(KEYS[1]));
         Object value = map.get(KEYS[1]);
         assertTrue(null == value || value == VALUES[1], description + String.valueOf(value));
@@ -457,12 +534,20 @@ public class Defaults {
     }
 
     @Test(dataProvider = "Map<IntegerEnum,String> rw=true keys=all values=all")
-    public void testComputeNullFunction(String description, Map<IntegerEnum, String> map) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testComputeNullFunction(String description, Map<IntegerEnum, String> map) {
         assertThrowsNPE(() -> map.compute(KEYS[1], null));
     }
 
     @Test(dataProvider = "MergeCases")
-    private void testMerge(String description, Map<IntegerEnum, String> map, Merging.Value oldValue, Merging.Value newValue, Merging.Merger merger, Merging.Value put, Merging.Value result) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testMerge(String description, Map<IntegerEnum, String> map, Merging.Value oldValue, Merging.Value newValue, Merging.Merger merger, Merging.Value put, Merging.Value result) {
             // add and check initial conditions.
             switch (oldValue) {
                 case ABSENT :
@@ -527,7 +612,11 @@ public class Defaults {
     }
 
     @Test(dataProvider = "Map<IntegerEnum,String> rw=true keys=all values=all")
-    public void testMergeNullMerger(String description, Map<IntegerEnum, String> map) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testMergeNullMerger(String description, Map<IntegerEnum, String> map) {
         assertThrowsNPE(() -> map.merge(KEYS[1], VALUES[1], null));
     }
 
@@ -923,17 +1012,29 @@ public class Defaults {
 
         public enum Merger implements BiFunction<String,String,String> {
             UNUSED {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public String apply(String oldValue, String newValue) {
                     fail("should not be called");
                     return null;
                 }
             },
             NULL {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public String apply(String oldValue, String newValue) {
                     return null;
                 }
             },
             RESULT {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public String apply(String oldValue, String newValue) {
                     return VALUES[3];
                 }
@@ -1003,13 +1104,21 @@ public class Defaults {
                     };
                 }
 
-                @Override public boolean add(Map.Entry<K,V> e) {
+                @Override @Bean
+@Bean
+@Bean
+@Bean
+                public boolean add(Map.Entry<K,V> e) {
                     return map.entrySet().add(e);
                 }
             };
         }
 
-        @Override public V put(K key, V value) {
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public V put(K key, V value) {
             return map.put(key, value);
         }
     }
@@ -1029,21 +1138,37 @@ public class Defaults {
         //
         // Unlike ConcurrentHashMap, we have zero tolerance for null values.
 
-        @Override public V replace(K k, V v) {
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public V replace(K k, V v) {
             return map.replace(requireNonNull(k), requireNonNull(v));
         }
 
-        @Override public boolean replace(K k, V v, V vv) {
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public boolean replace(K k, V v, V vv) {
             return map.replace(requireNonNull(k),
                                requireNonNull(v),
                                requireNonNull(vv));
         }
 
-        @Override public boolean remove(Object k, Object v) {
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public boolean remove(Object k, Object v) {
             return map.remove(requireNonNull(k), requireNonNull(v));
         }
 
-        @Override public V putIfAbsent(K k, V v) {
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public V putIfAbsent(K k, V v) {
             return map.putIfAbsent(requireNonNull(k), requireNonNull(v));
         }
     }

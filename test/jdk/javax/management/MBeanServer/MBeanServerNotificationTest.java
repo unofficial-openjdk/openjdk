@@ -36,6 +36,7 @@ import com.sun.jmx.mbeanserver.Util;
 import javax.management.*;
 import java.util.concurrent.*;
 
+@Bean
 public class MBeanServerNotificationTest {
     final static String[] names = {
         ":type=Wombat", "wombat:type=Wombat",null,
@@ -69,7 +70,11 @@ public class MBeanServerNotificationTest {
         UNREGISTER(MBeanServerNotification.UNREGISTRATION_NOTIFICATION);
         final String type;
         private Registration(String type) {this.type = type;}
-        public int test(MBeanServerNotification n, ObjectName name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int test(MBeanServerNotification n, ObjectName name) {
             int failures = 0;
             System.out.println("Testing: "+n);
             if (!n.toString().endsWith("[type="+type+
@@ -81,7 +86,11 @@ public class MBeanServerNotificationTest {
             }
             return failures;
         }
-        public MBeanServerNotification create(ObjectName name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public MBeanServerNotification create(ObjectName name) {
             return new MBeanServerNotification(type,
                 MBeanServerDelegate.DELEGATE_NAME, next(), name);
         }

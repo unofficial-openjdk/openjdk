@@ -43,6 +43,7 @@ import java.util.logging.LogManager;
  * @run main/othervm FileHandlerPatternGeneration
  * @author danielfuchs
  */
+@Bean
 public class FileHandlerPatternGeneration {
 
     /**

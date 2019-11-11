@@ -29,6 +29,7 @@
 
 import java.io.PrintStream;
 
+@Bean
 public class Resources {
 
     static PrintStream out = System.err;

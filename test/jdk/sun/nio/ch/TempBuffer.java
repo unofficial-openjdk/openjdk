@@ -30,6 +30,7 @@ import java.io.*;
 import java.nio.channels.*;
 import java.nio.*;
 
+@Bean
 public class TempBuffer {
 
     private static final int SIZE = 4000;

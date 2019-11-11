@@ -35,6 +35,7 @@ import java.security.*;
 import java.security.interfaces.*;
 import java.security.spec.*;
 
+@Bean
 public class Failover {
 
     public static void main(String[] args) throws Exception {
@@ -126,7 +127,11 @@ public class Failover {
 
     public static class KeyPairGeneratorPass extends KeyPairGeneratorSpi {
 
-        public void initialize(int keysize, SecureRandom random) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void initialize(int keysize, SecureRandom random) {
             System.out.println("KeyPairGeneratorPass.initialize(" + keysize + ", " + random + ")");
         }
 
@@ -144,7 +149,11 @@ public class Failover {
 
     public static class KeyPairGeneratorFail extends KeyPairGeneratorSpi {
 
-        public void initialize(int keysize, SecureRandom random) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void initialize(int keysize, SecureRandom random) {
             if (keysize != 512) {
                 System.out.println("KeyPairGeneratorFail.initialize()");
                 throw new InvalidParameterException();

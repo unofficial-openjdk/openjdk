@@ -31,6 +31,7 @@ import java.util.Calendar;
 import java.util.Locale;
 import static java.util.Calendar.*;
 
+@Bean
 public class Bug6448234 {
     public static void main(String[] args) {
         Calendar jcal = Calendar.getInstance(new Locale("ja", "JP", "JP"));

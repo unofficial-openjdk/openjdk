@@ -64,6 +64,9 @@ public class ArrayBlockingQueueTest extends JSR166TestCase {
                 boolean fair = randomBoolean();
                 return populatedQueue(0, SIZE, 2 * SIZE, fair);
             }
+            @Bean
+@Bean
+@Bean
             public Object makeElement(int i) { return i; }
             public boolean isConcurrent() { return true; }
             public boolean permitsNulls() { return false; }

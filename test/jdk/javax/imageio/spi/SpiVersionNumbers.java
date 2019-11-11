@@ -37,6 +37,7 @@ import com.sun.imageio.spi.OutputStreamImageOutputStreamSpi;
 import com.sun.imageio.spi.RAFImageInputStreamSpi;
 import com.sun.imageio.spi.RAFImageOutputStreamSpi;
 
+@Bean
 public class SpiVersionNumbers {
 
     private static void check(IIOServiceProvider spi) {

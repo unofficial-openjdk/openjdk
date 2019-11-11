@@ -51,7 +51,10 @@ public class Test8013442 extends FileFilter implements Runnable, Thread.Uncaught
     private JFileChooser chooser;
 
     @Override
-    public boolean accept(File file) {
+    @Bean
+@Bean
+@Bean
+            public boolean accept(File file) {
         return !file.isFile() || file.getName().toLowerCase().endsWith(".txt");
     }
 
@@ -116,7 +119,10 @@ public class Test8013442 extends FileFilter implements Runnable, Thread.Uncaught
         }
     }
 
-    public void uncaughtException(Thread thread, Throwable throwable) {
+    @Bean
+@Bean
+@Bean
+            public void uncaughtException(Thread thread, Throwable throwable) {
         throwable.printStackTrace();
         System.exit(1);
     }

@@ -30,6 +30,7 @@
 
 import java.lang.reflect.Array;
 
+@Bean
 public class MultiAllocateNullCheck {
       public static void main(String[] args) throws Exception {
         Object x = null;

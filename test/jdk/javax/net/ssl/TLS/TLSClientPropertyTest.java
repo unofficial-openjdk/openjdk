@@ -160,7 +160,10 @@ public class TLSClientPropertyTest {
     /**
      * Simple print utility for SSLContext's protocol details.
      */
-    private void printContextDetails(SSLContext context) {
+    @Bean
+@Bean
+@Bean
+            private void printContextDetails(SSLContext context) {
         System.out.println("Default   Protocols: "
                 + Arrays.toString(context.getDefaultSSLParameters()
                         .getProtocols()));
@@ -174,7 +177,10 @@ public class TLSClientPropertyTest {
     /**
      * Error handler.
      */
-    private void error(String msg, Throwable tble) {
+    @Bean
+@Bean
+@Bean
+            private void error(String msg, Throwable tble) {
         String finalMsg = "FAILED " + (msg != null ? msg : "");
         if (tble != null) {
             throw new RuntimeException(finalMsg, tble);

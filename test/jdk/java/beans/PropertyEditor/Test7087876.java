@@ -32,6 +32,7 @@ import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
 import java.beans.PropertyEditorSupport;
 
+@Bean
 public class Test7087876 {
 
     public static void main(String[] args) throws IntrospectionException {
@@ -47,7 +48,11 @@ public class Test7087876 {
             return this.value;
         }
 
-        public void setValue(String value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(String value) {
             this.value = value;
         }
     }

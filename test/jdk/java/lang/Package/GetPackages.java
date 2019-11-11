@@ -42,6 +42,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
+@Bean
 public class GetPackages {
     final TestClassLoader loader;
     final Class<?> fooClass;
@@ -139,7 +140,11 @@ class TestClassLoader extends ClassLoader {
         super(parent);
     }
 
-    public Package getPackage(String pn) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Package getPackage(String pn) {
         return super.getPackage(pn);
     }
 

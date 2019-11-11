@@ -47,6 +47,7 @@ import jdk.test.lib.Utils;
 
 import java.lang.reflect.Executable;
 
+@Bean
 public class ClearDirectivesStackTest extends AbstractTestBase {
     private static final int AMOUNT = Utils.getRandomInstance().nextInt(100);
     private final CommandGenerator cmdGen = new CommandGenerator();

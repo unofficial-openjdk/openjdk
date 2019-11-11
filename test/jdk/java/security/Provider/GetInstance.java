@@ -35,6 +35,7 @@ import java.util.*;
 import java.security.*;
 import java.security.cert.*;
 
+@Bean
 public class GetInstance {
 
     private static void same(Provider p1, Provider p2) throws Exception {
@@ -176,14 +177,30 @@ public class GetInstance {
     public static class FooDigest extends MessageDigestSpi {
         public byte[] engineDigest() { return new byte[0]; }
         public void engineReset() {}
-        public void engineUpdate(byte input) {}
-        public void engineUpdate(byte[] b, int ofs, int len) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void engineUpdate(byte input) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void engineUpdate(byte[] b, int ofs, int len) {}
     }
 
     public static class FooStore extends CertStoreSpi {
         public FooStore(CertStoreParameters params) throws InvalidAlgorithmParameterException { super(params); }
-        public Collection engineGetCertificates(CertSelector sel) { return Collections.EMPTY_LIST; }
-        public Collection engineGetCRLs(CRLSelector sel) { return Collections.EMPTY_LIST; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Collection engineGetCertificates(CertSelector sel) { return Collections.EMPTY_LIST; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Collection engineGetCRLs(CRLSelector sel) { return Collections.EMPTY_LIST; }
     }
 
     public static class BaseSignatureSpi extends SignatureSpi {

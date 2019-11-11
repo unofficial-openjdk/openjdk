@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.lang.StackWalker.StackFrame;
 
+@Bean
 public class LocalLongHelper {
     static StackWalker sw;
     static Method longValue;

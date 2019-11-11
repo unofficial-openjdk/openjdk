@@ -44,6 +44,7 @@ import jdk.test.lib.process.ExitCode;
 import jdk.test.lib.Platform;
 import jdk.test.lib.cli.CommandLineOptionTest;
 
+@Bean
 public class TestUseRTMLockingOptionOnUnsupportedCPU {
     private static final String DEFAULT_VALUE = "false";
 

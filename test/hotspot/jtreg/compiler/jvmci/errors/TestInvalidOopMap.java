@@ -58,12 +58,17 @@ import org.junit.Test;
 /**
  * Tests for errors in oop maps.
  */
+@Bean
 public class TestInvalidOopMap extends CodeInstallerTest {
 
     private static class InvalidReferenceMap extends ReferenceMap {
     }
 
-    private void test(ReferenceMap refMap) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void test(ReferenceMap refMap) {
         BytecodePosition pos = new BytecodePosition(null, dummyMethod, 0);
         DebugInfo info = new DebugInfo(pos);
         info.setReferenceMap(refMap);

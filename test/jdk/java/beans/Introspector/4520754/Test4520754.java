@@ -45,6 +45,7 @@ import javax.swing.JApplet;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 
+@Bean
 public class Test4520754 {
     /**
      * This is here to force the BeanInfo classes to be compiled

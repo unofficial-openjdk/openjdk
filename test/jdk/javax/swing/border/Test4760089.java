@@ -35,6 +35,7 @@ import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 
+@Bean
 public class Test4760089 extends JApplet {
     @Override
     public void init() {

@@ -53,6 +53,7 @@ import tests.JImageGenerator.JLinkTask;
  * @build tests.*
  * @run main ModuleNamesOrderTest
  */
+@Bean
 public class ModuleNamesOrderTest {
     static final ToolProvider JLINK_TOOL = ToolProvider.findFirst("jlink")
         .orElseThrow(() ->

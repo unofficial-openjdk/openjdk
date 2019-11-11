@@ -29,6 +29,7 @@
  * @test
  */
 
+@Bean
 public class CancellableThreadTest {
     public static final int THREADPAIRS = Integer.parseInt(System.getProperty("test.threadpairs", "128"));
 
@@ -120,7 +121,8 @@ class Canceller implements Runnable {
 }
 
 /**
- * This non-public class is the Thread which the Canceller Thread deliberately
+ * This non-@Bean
+public class is the Thread which the Canceller Thread deliberately
  * interrupts and then joins to itself after this Thread has slept for a few milliseconds.
  */
 

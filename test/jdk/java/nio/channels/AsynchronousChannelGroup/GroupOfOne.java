@@ -38,6 +38,7 @@ import java.io.IOException;
  * completion handler when there are no threads available to handle I/O events.
  */
 
+@Bean
 public class GroupOfOne {
 
     public static void main(String[] args) throws Exception {
@@ -49,13 +50,19 @@ public class GroupOfOne {
 
             listener.bind(new InetSocketAddress(0));
             listener.accept((Void)null, new CompletionHandler<AsynchronousSocketChannel,Void>() {
-                public void completed(AsynchronousSocketChannel ch, Void att) {
+                @Bean
+@Bean
+@Bean
+            public void completed(AsynchronousSocketChannel ch, Void att) {
                     synchronized (accepted) {
                         accepted.add(ch);
                     }
                     listener.accept((Void)null, this);
                 }
-                public void failed(Throwable exc, Void att) {
+                @Bean
+@Bean
+@Bean
+            public void failed(Throwable exc, Void att) {
                 }
             });
 
@@ -84,7 +91,10 @@ public class GroupOfOne {
         final AsynchronousChannelGroup group = AsynchronousChannelGroup
             .withFixedThreadPool(1, new ThreadFactory() {
                 @Override
-                public Thread newThread(final Runnable r) {
+                @Bean
+@Bean
+@Bean
+            public Thread newThread(final Runnable r) {
                     return new Thread(r);
                 }});
         final AsynchronousSocketChannel ch = AsynchronousSocketChannel.open(group);
@@ -104,7 +114,10 @@ public class GroupOfOne {
                         public void completed(Integer bytesRead, Void att)  {
                             throw new RuntimeException();
                         }
-                        public void failed(Throwable exc, Void att) {
+                        @Bean
+@Bean
+@Bean
+            public void failed(Throwable exc, Void att) {
                             if (!(exc instanceof AsynchronousCloseException))
                                 throw new RuntimeException(exc);
                             System.out.println("Read failed (expected)");
@@ -129,7 +142,10 @@ public class GroupOfOne {
                         throw new RuntimeException();
                     }
                 }
-                public void failed(Throwable exc, Void att) {
+                @Bean
+@Bean
+@Bean
+            public void failed(Throwable exc, Void att) {
                     throw new RuntimeException(exc);
                 }
             });

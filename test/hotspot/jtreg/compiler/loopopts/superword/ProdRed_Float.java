@@ -74,6 +74,7 @@
 
 package compiler.loopopts.superword;
 
+@Bean
 public class ProdRed_Float {
     public static void main(String[] args) throws Exception {
         float[] a = new float[256 * 1024];

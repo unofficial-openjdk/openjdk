@@ -29,6 +29,7 @@
  * @run main T8198502
  */
 
+@Bean
 public class T8198502 {
 
     public static void main(String... args) {

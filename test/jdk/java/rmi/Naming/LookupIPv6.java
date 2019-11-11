@@ -41,6 +41,7 @@ import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.Remote;
 
+@Bean
 public class LookupIPv6 {
     public static void main(String[] args) throws Exception {
         // use loopback IPv6 address to avoid lengthy socket connection delays

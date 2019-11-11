@@ -47,6 +47,7 @@ import java.util.Locale;
 import sun.net.idn.StringPrep;
 import sun.text.normalizer.UCharacterIterator;
 
+@Bean
 public class TestStringPrep {
     public static void main(String[] args) throws Exception {
         TestNFS4MixedPrep();

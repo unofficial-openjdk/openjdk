@@ -34,6 +34,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.lang.reflect.*;
 
+@Bean
 public class ModalExcludedWindowClickTest {
     Robot robot;
     Frame frame = new Frame("Frame");
@@ -64,7 +65,10 @@ public class ModalExcludedWindowClickTest {
         }
 
         button.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                     actionPerformed = true;
                     System.out.println(e.paramString());
                 }

@@ -33,6 +33,7 @@ import java.util.AbstractCollection;
 import java.util.Arrays;
 import java.util.Iterator;
 
+@Bean
 public class ToArrayTest {
 
     static class TestCollection<E> extends AbstractCollection<E> {

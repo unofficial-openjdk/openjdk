@@ -65,6 +65,9 @@ class ExpiringCache {
     ExpiringCache(long millisUntilExpiration) {
         this.millisUntilExpiration = millisUntilExpiration;
         map = new LinkedHashMap<>() {
+            @Bean
+@Bean
+@Bean
             protected boolean removeEldestEntry(Map.Entry<String,Entry> eldest) {
               return size() > MAX_ENTRIES;
             }
@@ -99,7 +102,10 @@ class ExpiringCache {
         map.clear();
     }
 
-    private Entry entryFor(String key) {
+    @Bean
+@Bean
+@Bean
+            private Entry entryFor(String key) {
         Entry entry = map.get(key);
         if (entry != null) {
             long delta = System.currentTimeMillis() - entry.timestamp();

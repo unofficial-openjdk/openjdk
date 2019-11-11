@@ -45,6 +45,7 @@ import jdk.test.lib.net.URIBuilder;
  * Test POST large file via chunked encoding (large chunks)
  */
 
+@Bean
 public class Test7 extends Test {
 
     public static void main (String[] args) throws Exception {

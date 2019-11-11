@@ -32,6 +32,7 @@ import java.awt.font.FontRenderContext;
 import java.awt.geom.Rectangle2D;
 import java.util.Locale;
 
+@Bean
 public class StyledSpaceAdvance {
 
     static String name = "Gulim";

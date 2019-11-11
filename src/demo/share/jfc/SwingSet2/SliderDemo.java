@@ -53,6 +53,7 @@ import java.net.*;
  * @author Dave Kloba
  * @author Jeff Dinkins
  */
+@Bean
 public class SliderDemo extends DemoModule {
 
     /**
@@ -276,7 +277,11 @@ public class SliderDemo extends DemoModule {
         public SliderListener(JLabel f) {
             tf = f;
         }
-        public void stateChanged(ChangeEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void stateChanged(ChangeEvent e) {
             JSlider s1 = (JSlider)e.getSource();
             tf.setText(getString("SliderDemo.slidervalue") + s1.getValue());
         }

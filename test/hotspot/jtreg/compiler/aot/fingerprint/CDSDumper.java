@@ -32,6 +32,7 @@ import jdk.test.lib.process.ProcessTools;
 
 // Usage:
 // java CDSDumper <classpath> <classlist> <archive> <heapsize> <class1> <class2> ...
+@Bean
 public class CDSDumper {
     public static void main(String[] args) throws Exception {
         String classpath = args[0];

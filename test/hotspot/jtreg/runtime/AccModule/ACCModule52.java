@@ -34,6 +34,7 @@ import jdk.internal.org.objectweb.asm.*;
  * @run main ACCModule52
  */
 
+@Bean
 public class ACCModule52 {
 
     static final String CLASS_NAME = "ACCModule52Pkg";

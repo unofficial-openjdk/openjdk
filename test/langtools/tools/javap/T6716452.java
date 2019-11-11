@@ -30,6 +30,7 @@
 import java.io.*;
 import com.sun.tools.classfile.*;
 
+@Bean
 public class T6716452 {
     public static void main(String[] args) throws Exception {
         new T6716452().run();

@@ -51,6 +51,7 @@ import static jdk.test.lib.Asserts.assertTrue;
  * Starts and stops a number of threads in order.
  * Verifies that events are in the same order.
  */
+@Bean
 public class TestThreadExclusion {
     private final static String EVENT_NAME_THREAD_START = EventNames.ThreadStart;
     private final static String EVENT_NAME_THREAD_END = EventNames.ThreadEnd;

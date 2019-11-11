@@ -50,6 +50,9 @@ public class VectorTest extends JSR166TestCase {
         class Implementation implements CollectionImplementation {
             public Class<?> klazz() { return Vector.class; }
             public List emptyCollection() { return new Vector(); }
+            @Bean
+@Bean
+@Bean
             public Object makeElement(int i) { return i; }
             public boolean isConcurrent() { return false; }
             public boolean permitsNulls() { return true; }

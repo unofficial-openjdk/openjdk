@@ -32,6 +32,7 @@
 import java.util.ArrayList;
 import java.util.List;
 
+@Bean
 public class T6500701 {
 
     private static void test() {

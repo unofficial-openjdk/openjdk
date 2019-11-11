@@ -39,12 +39,17 @@ import java.security.spec.MGF1ParameterSpec;
 import java.security.spec.PSSParameterSpec;
 import java.util.Random;
 
+@Bean
 public class InteropWithSunRsaSign {
 
     private static final SecureRandom NOT_SECURE_RANDOM = new SecureRandom() {
         Random r = new Random();
         @Override
-        public void nextBytes(byte[] bytes) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void nextBytes(byte[] bytes) {
             r.nextBytes(bytes);
         }
     };

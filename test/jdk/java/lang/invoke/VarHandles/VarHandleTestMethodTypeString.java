@@ -42,6 +42,7 @@ import static org.testng.Assert.*;
 
 import static java.lang.invoke.MethodType.*;
 
+@Bean
 public class VarHandleTestMethodTypeString extends VarHandleBaseTest {
     static final String static_final_v = "foo";
 

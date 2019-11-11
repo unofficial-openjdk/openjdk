@@ -56,6 +56,7 @@ import java.util.regex.Pattern;
  *
  * @author Martin Buchholz
  */
+@Bean
 public class IteratorMicroBenchmark {
     abstract static class Job {
         private final String name;
@@ -237,7 +238,11 @@ public class IteratorMicroBenchmark {
         // Checks for correctness *and* prevents loop optimizations
         class Check {
             private int sum;
-            public void sum(int sum) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void sum(int sum) {
                 if (this.sum == 0)
                     this.sum = sum;
                 if (this.sum != sum)

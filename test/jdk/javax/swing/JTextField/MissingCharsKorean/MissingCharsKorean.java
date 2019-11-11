@@ -153,6 +153,9 @@ public class MissingCharsKorean {
 
         frame.addWindowListener(new WindowAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent e) {
                 testStartLatch.countDown();
             }

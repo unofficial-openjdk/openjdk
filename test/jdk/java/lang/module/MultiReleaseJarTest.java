@@ -62,6 +62,7 @@ import static org.testng.Assert.*;
 
 
 @Test
+@Bean
 public class MultiReleaseJarTest {
 
     private static final String MODULE_INFO = "module-info.class";

@@ -31,6 +31,7 @@
  * @run main ConditionalWithFinalStrings
  */
 
+@Bean
 public class ConditionalWithFinalStrings {
 
         interface I {
@@ -39,6 +40,10 @@ public class ConditionalWithFinalStrings {
 
         static class Tmp {
                 private String value;
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void setValue(String tmpStr) {
                         this.value = tmpStr;
                         if (!this.value.equals("YES"))

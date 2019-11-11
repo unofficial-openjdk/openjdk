@@ -48,6 +48,7 @@ import java.util.Locale;
  * in its own VM (othervm mode), such that the ensuing tests can run unperturbed,
  * regardless of the outcome.
  */
+@Bean
 public class I18NJarTest extends TestHelper {
     private static final File cwd = new File(".");
     private static final File dir = new File("\uFF66\uFF67\uFF68\uFF69");

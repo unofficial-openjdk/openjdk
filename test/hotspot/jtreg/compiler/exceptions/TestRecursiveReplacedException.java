@@ -33,6 +33,7 @@
 
 package compiler.exceptions;
 
+@Bean
 public class TestRecursiveReplacedException {
 
     public static void main(String args[]) {

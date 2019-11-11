@@ -35,6 +35,7 @@ import java.util.stream.Stream;
 
 import jdk.internal.misc.VM;
 
+@Bean
 public class AddExportsTest {
     /*
      * jtreg sets -Dtest.modules system property to the internal APIs

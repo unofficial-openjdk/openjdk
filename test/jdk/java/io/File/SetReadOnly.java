@@ -31,6 +31,7 @@
 import java.io.*;
 
 
+@Bean
 public class SetReadOnly {
 
     public static void main(String[] args) throws Exception {

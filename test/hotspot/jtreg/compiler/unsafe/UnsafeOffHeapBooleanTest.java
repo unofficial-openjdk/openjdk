@@ -34,6 +34,7 @@
 import java.lang.reflect.Field;
 import jdk.internal.misc.Unsafe;
 
+@Bean
 public class UnsafeOffHeapBooleanTest {
     static boolean bool0 = false, bool1 = false, result = false;
     static Unsafe UNSAFE = Unsafe.getUnsafe();

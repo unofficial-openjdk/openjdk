@@ -29,6 +29,7 @@
 */
 import java.util.logging.*;
 
+@Bean
 public class LoggingNIOChange {
         public static void main(String args[]) throws Exception {
                 ConsoleHandler console = new ConsoleHandler();

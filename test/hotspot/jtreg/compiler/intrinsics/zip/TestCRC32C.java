@@ -35,6 +35,7 @@ import java.nio.ByteBuffer;
 import java.util.zip.CRC32C;
 import java.util.zip.Checksum;
 
+@Bean
 public class TestCRC32C {
     // CRC32C (Castagnoli) polynomial
     // coefficients in different forms

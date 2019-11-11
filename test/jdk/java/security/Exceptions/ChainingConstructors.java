@@ -32,6 +32,7 @@ import java.security.cert.*;
 import java.security.spec.*;
 import javax.net.ssl.*;
 
+@Bean
 public class ChainingConstructors {
 
     private static final String MSG = "msg";

@@ -32,6 +32,7 @@ import java.lang.reflect.Field;
 import java.math.RoundingMode;
 import java.util.EnumSet;
 
+@Bean
 public class OneUniverse {
 
     private static final Field universeField;

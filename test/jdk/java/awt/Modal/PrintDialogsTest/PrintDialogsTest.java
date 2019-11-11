@@ -49,7 +49,10 @@ public class PrintDialogsTest extends Applet implements ActionListener {
     private CheckboxGroup groupDialog, groupParent, groupModType;
 
 
-    public void actionPerformed(ActionEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
 
         if (!btnTest.equals(e.getSource())) { return; }
 

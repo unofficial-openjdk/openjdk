@@ -56,6 +56,7 @@ import org.testng.annotations.Test;
 
 import static org.testng.Assert.*;
 
+@Bean
 public class ExcludeJmodSectionPluginTest {
     static final ToolProvider JMOD_TOOL = ToolProvider.findFirst("jmod")
         .orElseThrow(() ->
@@ -93,7 +94,11 @@ public class ExcludeJmodSectionPluginTest {
         m3.build();
     }
 
-    private String imageDir(String dir) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String imageDir(String dir) {
         return IMAGES_DIR.resolve(dir).toString();
     }
 

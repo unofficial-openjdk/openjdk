@@ -46,6 +46,7 @@ import java.util.regex.Pattern;
  * JavaScript, different places to place those fragments, and whether or not to allow the use
  * of JavaScript.
  */
+@Bean
 public class TestScriptInComment {
     public static void main(String... args) throws Exception {
         new TestScriptInComment().run();
@@ -93,19 +94,32 @@ public class TestScriptInComment {
      * if the comment contains JavaScript and JavaScript is not allowed.
      */
     enum Template {
-        OVR("<html><body> overview #COMMENT </body></html>", "package p; public class C { }"),
-        PKGINFO("#COMMENT package p;", "package p; public class C { }"),
-        PKGHTML("<html><body>#COMMENT package p;</body></html>", "package p; public class C { }"),
-        CLS("package p; #COMMENT public class C { }"),
-        CON("package p; public class C { #COMMENT public C() { } }"),
-        FLD("package p; public class C { #COMMENT public int f; }"),
-        MTH("package p; public class C { #COMMENT public void m() { } }"),
-        TOP("-top", "lorem #COMMENT ipsum", "package p; public class C { }"),
-        HDR("-header", "lorem #COMMENT ipsum", "package p; public class C { }"),
-        FTR("-footer", "lorem #COMMENT ipsum", "package p; public class C { }"),
-        BTM("-bottom", "lorem #COMMENT ipsum", "package p; public class C { }"),
-        DTTL("-doctitle", "lorem #COMMENT ipsum", "package p; public class C { }"),
-        PHDR("-packagesheader", "lorem #COMMENT ipsum", "package p; public class C { }");
+        OVR("<html><body> overview #COMMENT </body></html>", "package p; @Bean
+public class C { }"),
+        PKGINFO("#COMMENT package p;", "package p; @Bean
+public class C { }"),
+        PKGHTML("<html><body>#COMMENT package p;</body></html>", "package p; @Bean
+public class C { }"),
+        CLS("package p; #COMMENT @Bean
+public class C { }"),
+        CON("package p; @Bean
+public class C { #COMMENT public C() { } }"),
+        FLD("package p; @Bean
+public class C { #COMMENT public int f; }"),
+        MTH("package p; @Bean
+public class C { #COMMENT public void m() { } }"),
+        TOP("-top", "lorem #COMMENT ipsum", "package p; @Bean
+public class C { }"),
+        HDR("-header", "lorem #COMMENT ipsum", "package p; @Bean
+public class C { }"),
+        FTR("-footer", "lorem #COMMENT ipsum", "package p; @Bean
+public class C { }"),
+        BTM("-bottom", "lorem #COMMENT ipsum", "package p; @Bean
+public class C { }"),
+        DTTL("-doctitle", "lorem #COMMENT ipsum", "package p; @Bean
+public class C { }"),
+        PHDR("-packagesheader", "lorem #COMMENT ipsum", "package p; @Bean
+public class C { }");
 
         Template(String... args) {
             opts = new ArrayList<String>();

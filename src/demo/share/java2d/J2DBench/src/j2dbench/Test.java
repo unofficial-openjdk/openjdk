@@ -47,15 +47,18 @@ public abstract class Test extends Option.Enable {
         super(parent, nodeName, description, false);
     }
 
-    public void addDependency(Modifier mod) {
+@Bean
+        public void addDependency(Modifier mod) {
         addDependency(mod, null);
     }
 
-    public void addDependency(Modifier mod, Modifier.Filter filter) {
+@Bean
+        public void addDependency(Modifier mod, Modifier.Filter filter) {
         dependencies = DependentLink.add(dependencies, mod, filter);
     }
 
-    public void addDependencies(Group g, boolean recursive) {
+@Bean
+        public void addDependencies(Group g, boolean recursive) {
         addDependencies(g, recursive, null);
     }
 
@@ -74,13 +77,15 @@ public abstract class Test extends Option.Enable {
         }
     }
 
-    public void runTest(TestEnvironment env) {
+@Bean
+        public void runTest(TestEnvironment env) {
         if (!env.isStopped() && isEnabled()) {
             dependencies.recurseAndRun(env, this);
         }
     }
 
-    public void runOneTest(TestEnvironment env) {
+@Bean
+        public void runOneTest(TestEnvironment env) {
         if (!env.isStopped()) {
             Result result = new Result(this);
             env.erase();
@@ -110,7 +115,8 @@ public abstract class Test extends Option.Enable {
     public abstract void runTest(Object context, int numReps);
     public abstract void cleanupTest(TestEnvironment env, Object context);
 
-    public void runTestLoop(TestEnvironment env, Result result, Object ctx) {
+@Bean
+        public void runTestLoop(TestEnvironment env, Result result, Object ctx) {
         // Prime the pump
         runTest(ctx, 1);
 
@@ -138,7 +144,8 @@ public abstract class Test extends Option.Enable {
         }
     }
 
-    public int calibrate(TestEnvironment env, Object ctx) {
+@Bean
+        public int calibrate(TestEnvironment env, Object ctx) {
         long testTime = env.getTestTime();
         int numReps = 0;
         int totalReps = 0;
@@ -270,7 +277,8 @@ public abstract class Test extends Option.Enable {
             return next;
         }
 
-        public void recurseAndRun(TestEnvironment env, Test test) {
+@Bean
+            public void recurseAndRun(TestEnvironment env, Test test) {
             Modifier.Iterator iter = mod.getIterator(env);
             while (iter.hasNext()) {
                 Object val = iter.next();

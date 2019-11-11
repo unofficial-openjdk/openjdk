@@ -40,6 +40,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import jdk.test.lib.net.URIBuilder;
 
+@Bean
 public class AuthSchemesTest {
     static class BasicServer extends Thread {
 

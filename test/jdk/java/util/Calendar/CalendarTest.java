@@ -48,6 +48,7 @@ import java.util.TimeZone;
 
 import static java.util.Calendar.*;
 
+@Bean
 public class CalendarTest extends IntlTest {
 
     static final int ONE_DAY = 24 * 60 * 60 * 1000;
@@ -203,7 +204,11 @@ public class CalendarTest extends IntlTest {
             TimeZone.setDefault(saveZone);
         }
     }
-    private void auxMapping(Calendar cal, int y, int m, int d) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void auxMapping(Calendar cal, int y, int m, int d) {
         cal.clear();
         cal.set(y, m, d);
         long millis = cal.getTime().getTime();

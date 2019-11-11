@@ -455,7 +455,8 @@ public final class Instant
      * @return true if the field is supported on this instant, false if not
      */
     @Override
-    public boolean isSupported(TemporalField field) {
+@Bean
+        public boolean isSupported(TemporalField field) {
         if (field instanceof ChronoField) {
             return field == INSTANT_SECONDS || field == NANO_OF_SECOND || field == MICRO_OF_SECOND || field == MILLI_OF_SECOND;
         }
@@ -492,7 +493,8 @@ public final class Instant
      * @return true if the unit can be added/subtracted, false if not
      */
     @Override
-    public boolean isSupported(TemporalUnit unit) {
+@Bean
+        public boolean isSupported(TemporalUnit unit) {
         if (unit instanceof ChronoUnit) {
             return unit.isTimeBased() || unit == DAYS;
         }
@@ -524,7 +526,8 @@ public final class Instant
      * @throws UnsupportedTemporalTypeException if the field is not supported
      */
     @Override  // override for Javadoc
-    public ValueRange range(TemporalField field) {
+@Bean
+        public ValueRange range(TemporalField field) {
         return Temporal.super.range(field);
     }
 
@@ -556,7 +559,8 @@ public final class Instant
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override  // override for Javadoc and performance
-    public int get(TemporalField field) {
+@Bean
+        public int get(TemporalField field) {
         if (field instanceof ChronoField) {
             switch ((ChronoField) field) {
                 case NANO_OF_SECOND: return nanos;
@@ -592,7 +596,8 @@ public final class Instant
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public long getLong(TemporalField field) {
+@Bean
+        public long getLong(TemporalField field) {
         if (field instanceof ChronoField) {
             switch ((ChronoField) field) {
                 case NANO_OF_SECOND: return nanos;
@@ -652,7 +657,8 @@ public final class Instant
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public Instant with(TemporalAdjuster adjuster) {
+@Bean
+        public Instant with(TemporalAdjuster adjuster) {
         return (Instant) adjuster.adjustInto(this);
     }
 
@@ -701,7 +707,8 @@ public final class Instant
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public Instant with(TemporalField field, long newValue) {
+@Bean
+        public Instant with(TemporalField field, long newValue) {
         if (field instanceof ChronoField) {
             ChronoField f = (ChronoField) field;
             f.checkValidValue(newValue);
@@ -745,7 +752,8 @@ public final class Instant
      * @throws DateTimeException if the unit is invalid for truncation
      * @throws UnsupportedTemporalTypeException if the unit is not supported
      */
-    public Instant truncatedTo(TemporalUnit unit) {
+@Bean
+        public Instant truncatedTo(TemporalUnit unit) {
         if (unit == ChronoUnit.NANOS) {
             return this;
         }
@@ -784,7 +792,8 @@ public final class Instant
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public Instant plus(TemporalAmount amountToAdd) {
+@Bean
+        public Instant plus(TemporalAmount amountToAdd) {
         return (Instant) amountToAdd.addTo(this);
     }
 
@@ -847,7 +856,8 @@ public final class Instant
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public Instant plus(long amountToAdd, TemporalUnit unit) {
+@Bean
+        public Instant plus(long amountToAdd, TemporalUnit unit) {
         if (unit instanceof ChronoUnit) {
             switch ((ChronoUnit) unit) {
                 case NANOS: return plusNanos(amountToAdd);
@@ -875,7 +885,8 @@ public final class Instant
      * @throws DateTimeException if the result exceeds the maximum or minimum instant
      * @throws ArithmeticException if numeric overflow occurs
      */
-    public Instant plusSeconds(long secondsToAdd) {
+@Bean
+        public Instant plusSeconds(long secondsToAdd) {
         return plus(secondsToAdd, 0);
     }
 
@@ -889,7 +900,8 @@ public final class Instant
      * @throws DateTimeException if the result exceeds the maximum or minimum instant
      * @throws ArithmeticException if numeric overflow occurs
      */
-    public Instant plusMillis(long millisToAdd) {
+@Bean
+        public Instant plusMillis(long millisToAdd) {
         return plus(millisToAdd / 1000, (millisToAdd % 1000) * 1000_000);
     }
 
@@ -903,7 +915,8 @@ public final class Instant
      * @throws DateTimeException if the result exceeds the maximum or minimum instant
      * @throws ArithmeticException if numeric overflow occurs
      */
-    public Instant plusNanos(long nanosToAdd) {
+@Bean
+        public Instant plusNanos(long nanosToAdd) {
         return plus(0, nanosToAdd);
     }
 
@@ -918,7 +931,8 @@ public final class Instant
      * @throws DateTimeException if the result exceeds the maximum or minimum instant
      * @throws ArithmeticException if numeric overflow occurs
      */
-    private Instant plus(long secondsToAdd, long nanosToAdd) {
+@Bean
+        private Instant plus(long secondsToAdd, long nanosToAdd) {
         if ((secondsToAdd | nanosToAdd) == 0) {
             return this;
         }
@@ -951,7 +965,8 @@ public final class Instant
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public Instant minus(TemporalAmount amountToSubtract) {
+@Bean
+        public Instant minus(TemporalAmount amountToSubtract) {
         return (Instant) amountToSubtract.subtractFrom(this);
     }
 
@@ -975,7 +990,8 @@ public final class Instant
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public Instant minus(long amountToSubtract, TemporalUnit unit) {
+@Bean
+        public Instant minus(long amountToSubtract, TemporalUnit unit) {
         return (amountToSubtract == Long.MIN_VALUE ? plus(Long.MAX_VALUE, unit).plus(1, unit) : plus(-amountToSubtract, unit));
     }
 
@@ -990,7 +1006,8 @@ public final class Instant
      * @throws DateTimeException if the result exceeds the maximum or minimum instant
      * @throws ArithmeticException if numeric overflow occurs
      */
-    public Instant minusSeconds(long secondsToSubtract) {
+@Bean
+        public Instant minusSeconds(long secondsToSubtract) {
         if (secondsToSubtract == Long.MIN_VALUE) {
             return plusSeconds(Long.MAX_VALUE).plusSeconds(1);
         }
@@ -1007,7 +1024,8 @@ public final class Instant
      * @throws DateTimeException if the result exceeds the maximum or minimum instant
      * @throws ArithmeticException if numeric overflow occurs
      */
-    public Instant minusMillis(long millisToSubtract) {
+@Bean
+        public Instant minusMillis(long millisToSubtract) {
         if (millisToSubtract == Long.MIN_VALUE) {
             return plusMillis(Long.MAX_VALUE).plusMillis(1);
         }
@@ -1024,7 +1042,8 @@ public final class Instant
      * @throws DateTimeException if the result exceeds the maximum or minimum instant
      * @throws ArithmeticException if numeric overflow occurs
      */
-    public Instant minusNanos(long nanosToSubtract) {
+@Bean
+        public Instant minusNanos(long nanosToSubtract) {
         if (nanosToSubtract == Long.MIN_VALUE) {
             return plusNanos(Long.MAX_VALUE).plusNanos(1);
         }
@@ -1091,7 +1110,8 @@ public final class Instant
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public Temporal adjustInto(Temporal temporal) {
+@Bean
+        public Temporal adjustInto(Temporal temporal) {
         return temporal.with(INSTANT_SECONDS, seconds).with(NANO_OF_SECOND, nanos);
     }
 
@@ -1140,7 +1160,8 @@ public final class Instant
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public long until(Temporal endExclusive, TemporalUnit unit) {
+@Bean
+        public long until(Temporal endExclusive, TemporalUnit unit) {
         Instant end = Instant.from(endExclusive);
         if (unit instanceof ChronoUnit) {
             ChronoUnit f = (ChronoUnit) unit;
@@ -1159,13 +1180,15 @@ public final class Instant
         return unit.between(this, end);
     }
 
-    private long nanosUntil(Instant end) {
+@Bean
+        private long nanosUntil(Instant end) {
         long secsDiff = Math.subtractExact(end.seconds, seconds);
         long totalNanos = Math.multiplyExact(secsDiff, NANOS_PER_SECOND);
         return Math.addExact(totalNanos, end.nanos - nanos);
     }
 
-    private long secondsUntil(Instant end) {
+@Bean
+        private long secondsUntil(Instant end) {
         long secsDiff = Math.subtractExact(end.seconds, seconds);
         long nanosDiff = end.nanos - nanos;
         if (secsDiff > 0 && nanosDiff < 0) {
@@ -1191,7 +1214,8 @@ public final class Instant
      * @return the offset date-time formed from this instant and the specified offset, not null
      * @throws DateTimeException if the result exceeds the supported range
      */
-    public OffsetDateTime atOffset(ZoneOffset offset) {
+@Bean
+        public OffsetDateTime atOffset(ZoneOffset offset) {
         return OffsetDateTime.ofInstant(this, offset);
     }
 
@@ -1209,7 +1233,8 @@ public final class Instant
      * @return the zoned date-time formed from this instant and the specified zone, not null
      * @throws DateTimeException if the result exceeds the supported range
      */
-    public ZonedDateTime atZone(ZoneId zone) {
+@Bean
+        public ZonedDateTime atZone(ZoneId zone) {
         return ZonedDateTime.ofInstant(this, zone);
     }
 
@@ -1251,7 +1276,8 @@ public final class Instant
      * @throws NullPointerException if otherInstant is null
      */
     @Override
-    public int compareTo(Instant otherInstant) {
+@Bean
+        public int compareTo(Instant otherInstant) {
         int cmp = Long.compare(seconds, otherInstant.seconds);
         if (cmp != 0) {
             return cmp;
@@ -1268,7 +1294,8 @@ public final class Instant
      * @return true if this instant is after the specified instant
      * @throws NullPointerException if otherInstant is null
      */
-    public boolean isAfter(Instant otherInstant) {
+@Bean
+        public boolean isAfter(Instant otherInstant) {
         return compareTo(otherInstant) > 0;
     }
 
@@ -1281,7 +1308,8 @@ public final class Instant
      * @return true if this instant is before the specified instant
      * @throws NullPointerException if otherInstant is null
      */
-    public boolean isBefore(Instant otherInstant) {
+@Bean
+        public boolean isBefore(Instant otherInstant) {
         return compareTo(otherInstant) < 0;
     }
 
@@ -1295,7 +1323,8 @@ public final class Instant
      * @return true if the other instant is equal to this one
      */
     @Override
-    public boolean equals(Object otherInstant) {
+@Bean
+        public boolean equals(Object otherInstant) {
         if (this == otherInstant) {
             return true;
         }

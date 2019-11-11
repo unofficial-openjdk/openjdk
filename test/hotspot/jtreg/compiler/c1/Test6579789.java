@@ -33,6 +33,7 @@
 
 package compiler.c1;
 
+@Bean
 public class Test6579789 {
     public static void main(String[] args) {
         bug(4);

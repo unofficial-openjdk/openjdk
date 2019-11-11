@@ -34,6 +34,7 @@
 import java.math.BigInteger;
 import jdk.test.lib.RandomFactory;
 
+@Bean
 public class MultiplicationTests {
     private MultiplicationTests(){}
 

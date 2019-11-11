@@ -34,6 +34,7 @@ package compiler.c2;
 
 import java.io.PrintStream;
 
+@Bean
 public class Test6910605_1 {
         public static int buf=0;
 

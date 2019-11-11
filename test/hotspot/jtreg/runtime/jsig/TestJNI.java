@@ -21,6 +21,7 @@
  * questions.
  */
 
+@Bean
 public class TestJNI {
     static {
         System.loadLibrary("TestJNI");

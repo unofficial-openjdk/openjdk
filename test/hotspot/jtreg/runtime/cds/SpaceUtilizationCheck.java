@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.lang.Integer;
 
+@Bean
 public class SpaceUtilizationCheck {
     // [1] Each region must have strictly less than
     //     WhiteBox.metaspaceReserveAlignment() bytes of unused space.

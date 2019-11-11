@@ -31,6 +31,7 @@
 import java.lang.StackWalker.StackFrame;
 import java.util.stream.Stream;
 
+@Bean
 public class StackStreamState {
     public static void main(String... args) {
         StackStreamState test = new StackStreamState();

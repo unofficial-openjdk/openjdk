@@ -35,6 +35,7 @@ import java.io.StreamTokenizer;
 import java.io.IOException;
 
 
+@Bean
 public class ReadAhead {
 
 
@@ -122,13 +123,21 @@ public class ReadAhead {
 
         /* InputStream case */
         test(new StreamTokenizerMaker() {
-            public StreamTokenizer create(String input, int limit) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public StreamTokenizer create(String input, int limit) {
                 return new StreamTokenizer(new LimitedInputStream(input, limit));
             }});
 
         /* Reader case */
         test(new StreamTokenizerMaker() {
-            public StreamTokenizer create(String input, int limit) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public StreamTokenizer create(String input, int limit) {
                 return new StreamTokenizer(new LimitedReader(input, limit));
             }});
 

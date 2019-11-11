@@ -10,11 +10,16 @@
 package tests;
 
 class T1 {
-    public void print(Inner1 inf) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void print(Inner1 inf) {
         inf.print();
     }
 
-    public class Inner1 {
+    @Bean
+public class Inner1 {
         public void print() {
             System.out.println("Inner1");
         }

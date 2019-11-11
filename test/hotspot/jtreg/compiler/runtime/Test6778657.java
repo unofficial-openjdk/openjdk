@@ -31,6 +31,7 @@
 
 package compiler.runtime;
 
+@Bean
 public class Test6778657 {
     public static void check_f2i(int expect) {
         float check = expect;

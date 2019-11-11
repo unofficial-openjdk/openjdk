@@ -30,6 +30,7 @@ import java.io.*;
 import java.nio.*;
 import java.nio.charset.*;
 
+@Bean
 public class TestUTF_32 {
     private static void testDecode(String charset,
                                    String expected,

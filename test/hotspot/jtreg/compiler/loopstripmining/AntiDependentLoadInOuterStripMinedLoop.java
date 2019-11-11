@@ -30,6 +30,7 @@
  *
  */
 
+@Bean
 public class AntiDependentLoadInOuterStripMinedLoop {
     private static int field;
     private static volatile int barrier;

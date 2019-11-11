@@ -6,6 +6,7 @@
  * @compile/fail/ref=Neg07.out -XDrawDiagnostics Neg07.java
  */
 
+@Bean
 public class Neg07 {
     private static void test(int i) {
         try {

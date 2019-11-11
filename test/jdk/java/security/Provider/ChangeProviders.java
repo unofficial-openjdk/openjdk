@@ -33,6 +33,7 @@ import java.util.*;
 
 import java.security.*;
 
+@Bean
 public class ChangeProviders extends Provider {
 
     private ChangeProviders() {

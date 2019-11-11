@@ -31,6 +31,7 @@
  * @run main/othervm -Xverify:all StackMapCheck
  */
 
+@Bean
 public class StackMapCheck {
     public static void main(String args[]) throws Throwable {
 

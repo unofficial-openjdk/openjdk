@@ -41,6 +41,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 
+@Bean
 public class UninitializedDisplayModeChangeTest {
     public static volatile boolean failed = false;
     public static void main(String[] args) {

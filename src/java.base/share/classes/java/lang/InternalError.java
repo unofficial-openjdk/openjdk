@@ -32,6 +32,7 @@ package java.lang;
  * @author  unascribed
  * @since   1.0
  */
+@Bean
 public class InternalError extends VirtualMachineError {
     private static final long serialVersionUID = -9062593416125562365L;
 

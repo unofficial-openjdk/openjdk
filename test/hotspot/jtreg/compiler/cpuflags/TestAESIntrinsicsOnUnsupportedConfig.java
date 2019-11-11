@@ -44,6 +44,7 @@ import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.cli.predicate.NotPredicate;
 import static jdk.test.lib.cli.CommandLineOptionTest.*;
 
+@Bean
 public class TestAESIntrinsicsOnUnsupportedConfig extends AESIntrinsicsBase {
 
     private static final String INTRINSICS_NOT_AVAILABLE_MSG = "warning: AES "

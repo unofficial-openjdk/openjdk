@@ -45,6 +45,7 @@ import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.apps.LingeredApp;
 import jdk.test.lib.hprof.parser.HprofReader;
 
+@Bean
 public class HeapDumpTest {
 
     private static LingeredAppWithExtendedChars theApp = null;

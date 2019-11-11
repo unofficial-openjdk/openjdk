@@ -44,6 +44,7 @@ import jdk.test.lib.net.URIBuilder;
  * Test POST large file via fixed len encoding
  */
 
+@Bean
 public class Test8a extends Test {
 
     public static void main (String[] args) throws Exception {

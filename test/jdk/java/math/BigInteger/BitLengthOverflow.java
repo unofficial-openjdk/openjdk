@@ -29,6 +29,7 @@
  */
 import java.math.BigInteger;
 
+@Bean
 public class BitLengthOverflow {
 
     public static void main(String[] args) {

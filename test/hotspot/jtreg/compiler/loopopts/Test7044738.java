@@ -31,6 +31,7 @@
 
 package compiler.loopopts;
 
+@Bean
 public class Test7044738 {
 
     private static final int INITSIZE = 10000;

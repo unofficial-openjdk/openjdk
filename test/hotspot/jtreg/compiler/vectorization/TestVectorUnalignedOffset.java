@@ -31,6 +31,7 @@
 
 package compiler.vectorization;
 
+@Bean
 public class TestVectorUnalignedOffset {
 
     static void test1(int[] src_array, int[] dst_array, int l) {
@@ -45,7 +46,11 @@ public class TestVectorUnalignedOffset {
         }
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         int[] int_array = new int[1000];
         byte[] byte_array = new byte[1000];
         for (int i = 0; i < 20000; i++) {

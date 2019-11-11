@@ -35,6 +35,7 @@ import java.nio.channels.spi.SelectorProvider;
 /**
  * Testing PipeChannel
  */
+@Bean
 public class EmptyRead {
     public static void main(String[] args) throws Exception {
         SelectorProvider sp = SelectorProvider.provider();

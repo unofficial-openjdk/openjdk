@@ -35,6 +35,7 @@ import java.io.File;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class DuplAttributesTest {
 
     static final String testsrc = System.getProperty("test.src");

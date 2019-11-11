@@ -44,6 +44,7 @@ import javax.swing.*;
 import test.java.awt.regtesthelpers.Util;
 
 
+@Bean
 public class ShownOffScreenOnWin98Test
 {
 

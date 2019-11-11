@@ -38,6 +38,7 @@ import java.net.SocketException;
  * @run main/othervm ReuseAddressTest
  */
 
+@Bean
 public class ReuseAddressTest {
 
     String getInfo(DatagramSocket soc) {

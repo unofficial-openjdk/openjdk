@@ -288,7 +288,11 @@ public class TestLargePagesFlags {
   private static class FlagTester {
     private Flag [] useFlags;
 
-    public FlagTester use(Flag... useFlags) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public FlagTester use(Flag... useFlags) {
       this.useFlags = useFlags;
       return this;
     }

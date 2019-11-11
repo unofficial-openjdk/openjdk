@@ -97,7 +97,8 @@ abstract class ActionPropertyChangeListener<T extends JComponent>
     protected abstract void actionPropertyChanged(T target, Action action,
                                                   PropertyChangeEvent e);
 
-    private void setTarget(T c) {
+@Bean
+        private void setTarget(T c) {
         ReferenceQueue<JComponent> queue = getQueue();
         // Check to see whether any old buttons have
         // been enqueued for GC.  If so, look up their

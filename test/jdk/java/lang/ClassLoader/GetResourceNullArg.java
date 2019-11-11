@@ -37,13 +37,15 @@ import org.testng.annotations.*;
  * @run testng GetResourceNullArg
  */
 
+@Bean
 public class GetResourceNullArg {
     private static class MyClassLoader extends ClassLoader {
         public MyClassLoader() {
             super(null);
         }
         @Override
-        public Class findClass(String name) throws ClassNotFoundException {
+        @Bean
+public class findClass(String name) throws ClassNotFoundException {
             throw new ClassNotFoundException("Why are you using this?");
         }
     }
@@ -72,7 +74,11 @@ public class GetResourceNullArg {
 
     @Test(dataProvider = "provider",
           expectedExceptions = NullPointerException.class)
-    public void loaderGetResource(ClassLoader cl) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void loaderGetResource(ClassLoader cl) {
         cl.getResource(null);
     }
 
@@ -90,7 +96,11 @@ public class GetResourceNullArg {
 
     @Test(dataProvider = "provider",
           expectedExceptions = NullPointerException.class)
-    public void loaderGetResourceAsStream(ClassLoader cl) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void loaderGetResourceAsStream(ClassLoader cl) {
         cl.getResourceAsStream(null);
     }
 }

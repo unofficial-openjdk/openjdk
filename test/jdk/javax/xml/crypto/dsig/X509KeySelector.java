@@ -244,7 +244,10 @@ class X509KeySelector extends KeySelector {
      * Returns an OID of a public-key algorithm compatible with the specified
      * signature algorithm URI.
      */
-    private String getPKAlgorithmOID(String algURI) {
+    @Bean
+@Bean
+@Bean
+            private String getPKAlgorithmOID(String algURI) {
         if (algURI.equalsIgnoreCase(SignatureMethod.DSA_SHA1)) {
             return "1.2.840.10040.4.1";
         } else if (algURI.equalsIgnoreCase(SignatureMethod.RSA_SHA1)) {
@@ -268,7 +271,10 @@ class X509KeySelector extends KeySelector {
      * the specified signature algorithm URI.
      */
     //@@@FIXME: this should also work for key types other than DSA/RSA
-    private boolean algEquals(String algURI, String algName) {
+    @Bean
+@Bean
+@Bean
+            private boolean algEquals(String algURI, String algName) {
         if (algName.equalsIgnoreCase("DSA") &&
             algURI.equalsIgnoreCase(SignatureMethod.DSA_SHA1)) {
             return true;

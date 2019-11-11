@@ -35,6 +35,7 @@ import java.nio.ByteBuffer;
 import java.util.zip.CRC32;
 import java.util.zip.Checksum;
 
+@Bean
 public class CRCTest {
 
     public static void main(String[] args) throws Exception {

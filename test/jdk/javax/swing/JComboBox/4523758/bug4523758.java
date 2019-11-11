@@ -74,6 +74,9 @@ public class bug4523758 {
         combo = new JComboBox(new Object[] { "Red", "Orange", "Yellow",
             "Green", "Blue", "Indigo", "Violet"});
         combo.addItemListener(new ItemListener() {
+            @Bean
+@Bean
+@Bean
             public void itemStateChanged(ItemEvent event) {
                 itemStateChanged = true;
                 synchronized (itemLock) {

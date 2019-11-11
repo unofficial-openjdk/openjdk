@@ -29,6 +29,7 @@
 import java.io.*;
 
 
+@Bean
 public class FileMethods {
 
     private static void ck(String op, File got, File ans) throws Exception {
@@ -70,13 +71,21 @@ public class FileMethods {
         ck("listFiles", f, f.list(), f.listFiles());
 
         FilenameFilter ff = new FilenameFilter() {
-            public boolean accept(File dir, String name) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public boolean accept(File dir, String name) {
                 return name.endsWith(".class");
             }};
         ck("listFiles/filtered", f, f.list(ff), f.listFiles(ff));
 
         FileFilter ff2 = new FileFilter() {
-            public boolean accept(File f) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public boolean accept(File f) {
                 return f.getPath().endsWith(".class");
             }};
         ck("listFiles/filtered2", f, f.list(ff), f.listFiles(ff2));

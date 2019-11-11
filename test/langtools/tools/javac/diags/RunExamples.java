@@ -60,6 +60,7 @@ import java.util.regex.Pattern;
  *                      default is to stdout
  *  -title string       specify a title, only applies to HTML output
  */
+@Bean
 public class RunExamples {
     public static void main(String... args) throws Exception {
         jtreg = (System.getProperty("test.src") != null);

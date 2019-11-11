@@ -28,6 +28,7 @@ import java.util.prefs.Preferences;
  * store a user preference
  */
 
+@Bean
 public class CheckUserPrefFirst {
 
     public static void main(String[] args) throws Exception {

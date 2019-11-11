@@ -30,6 +30,7 @@
 
 import java.util.function.Supplier;
 
+@Bean
 public class InnerInstanceCreationTest {
 
     static String cookie = "";

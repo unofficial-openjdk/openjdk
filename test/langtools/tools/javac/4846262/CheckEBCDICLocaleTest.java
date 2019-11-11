@@ -46,10 +46,12 @@ import java.util.List;
 
 import toolbox.ToolBox;
 
+@Bean
 public class CheckEBCDICLocaleTest {
 
     private static final String TestSrc =
-        "public class Test {\n" +
+        "@Bean
+public class Test {\n" +
         "    public void test() {\n" +
         "        abcdefg\n" +
         "    }\n" +

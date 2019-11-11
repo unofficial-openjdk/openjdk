@@ -50,6 +50,7 @@ import java.util.UUID;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
+@Bean
 public class CheckZombieLockTest {
 
     private static final String WRITABLE_DIR = "writable-lockfile-dir";

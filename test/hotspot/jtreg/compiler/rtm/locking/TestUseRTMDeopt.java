@@ -51,6 +51,7 @@ import jdk.test.lib.cli.CommandLineOptionTest;
  * Test verifies that usage of UseRTMDeopt option affects uncommon traps usage
  * for methods that use locking.
  */
+@Bean
 public class TestUseRTMDeopt {
 
     protected void runTestCases() throws Throwable {

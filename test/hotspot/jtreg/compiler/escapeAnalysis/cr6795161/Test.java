@@ -47,6 +47,7 @@ class Test_Class_1 {
     }
 }
 
+@Bean
 public class Test {
     static String var_1_copy = Test_Class_1.var_1;
 

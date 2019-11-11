@@ -51,6 +51,7 @@ import java.util.ArrayDeque;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Test
+@Bean
 public class WhiteBox {
     final ThreadLocalRandom rnd = ThreadLocalRandom.current();
     final VarHandle ELEMENTS, HEAD, TAIL;

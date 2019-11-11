@@ -37,6 +37,7 @@ import java.util.List;
  *      FilePermissionTest falsefalsefalsefalsefalsefalse
  * @run main FilePermissionTest falsefalsefalsefalsefalsefalse
  */
+@Bean
 public class FilePermissionTest {
 
     public static void main(String[] args) throws Exception {

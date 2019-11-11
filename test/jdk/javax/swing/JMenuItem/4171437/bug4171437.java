@@ -74,6 +74,9 @@ public class bug4171437 {
         fmi2 = new JMenuItem("Close");
         fmi2.setMnemonic('c');
         fmi2.addActionListener(new ActionListener() {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 closeActivated = true;
             }
@@ -91,10 +94,19 @@ public class bug4171437 {
         cmi.setMnemonic('p');
         custom.add( cmi);
         custom.addMenuListener(new MenuListener() {
+            @Bean
+@Bean
+@Bean
             public void menuSelected(MenuEvent e) {
                 customActivated = true;
             }
+            @Bean
+@Bean
+@Bean
             public void menuDeselected(MenuEvent e) {}
+            @Bean
+@Bean
+@Bean
             public void menuCanceled(MenuEvent e) {}
         });
         menubar.add( custom);

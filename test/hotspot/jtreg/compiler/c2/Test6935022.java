@@ -31,6 +31,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test6935022 {
     public static final void main(String[] args) throws Exception {
         Test6935022 test = new Test6935022();
@@ -68,7 +69,11 @@ public class Test6935022 {
             throw new Exception("Ended on rows(no rs): " + rows);
     }
 
-    private boolean next(int rows) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean next(int rows) {
         return rows < 12;
     }
 }

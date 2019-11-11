@@ -33,6 +33,7 @@ import java.util.stream.Stream;
 import java.io.BufferedReader;
 import java.io.StringReader;
 
+@Bean
 public class Lines {
     public static void main(String... arg) {
         testLines();

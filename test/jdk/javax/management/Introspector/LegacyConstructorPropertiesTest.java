@@ -44,6 +44,7 @@ import javax.management.ObjectName;
  * @run main LegacyConstructorPropertiesTest
  */
 
+@Bean
 public class LegacyConstructorPropertiesTest {
     public static class CustomType {
         private String name;
@@ -67,7 +68,11 @@ public class LegacyConstructorPropertiesTest {
             return name;
         }
 
-        public void setName(String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setName(String name) {
             this.name = name;
         }
 
@@ -75,7 +80,11 @@ public class LegacyConstructorPropertiesTest {
             return value;
         }
 
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(int value) {
             this.value = value;
         }
     }
@@ -94,7 +103,11 @@ public class LegacyConstructorPropertiesTest {
         }
 
         @Override
-        public void setProp(CustomType prop) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setProp(CustomType prop) {
             this.prop = prop;
         }
     }

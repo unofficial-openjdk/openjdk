@@ -31,6 +31,7 @@
 import java.util.Arrays;
 import java.util.Random;
 
+@Bean
 public class NextBytes {
     private static void realMain(String[] args) throws Throwable {
         byte[] expected = new byte[]

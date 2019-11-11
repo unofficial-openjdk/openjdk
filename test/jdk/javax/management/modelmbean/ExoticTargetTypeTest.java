@@ -36,6 +36,7 @@
 import javax.management.*;
 import javax.management.modelmbean.*;
 
+@Bean
 public class ExoticTargetTypeTest {
     public static void main(String[] args) throws Exception {
         System.out.println("Testing that ModelMBeanOperationInfo can contain" +

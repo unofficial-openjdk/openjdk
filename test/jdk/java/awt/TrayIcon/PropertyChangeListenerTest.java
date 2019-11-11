@@ -35,6 +35,7 @@ import java.beans.PropertyChangeListener;
  * @run main PropertyChangeListenerTest
  */
 
+@Bean
 public class PropertyChangeListenerTest implements PropertyChangeListener {
 
     Object property;
@@ -50,7 +51,11 @@ public class PropertyChangeListenerTest implements PropertyChangeListener {
         }
     }
 
-    public void propertyChange(PropertyChangeEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void propertyChange(PropertyChangeEvent event) {
         if (! "trayIcons".equals(event.getPropertyName()))
             throw new RuntimeException("ERROR: PropertyName not matching. Event " +
                     "triggered for a different property\n"+

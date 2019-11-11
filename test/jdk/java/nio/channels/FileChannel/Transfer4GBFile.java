@@ -43,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.testng.annotations.Test;
 
+@Bean
 public class Transfer4GBFile {
 
     private static PrintStream err = System.err;

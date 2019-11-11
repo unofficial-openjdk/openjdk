@@ -49,6 +49,7 @@ import static jdk.javadoc.internal.tool.Main.Result.*;
 import toolbox.TestRunner;
 import toolbox.ToolBox;
 
+@Bean
 public class EnablePreviewOption extends TestRunner {
     public static void main(String... args) throws Exception {
         new EnablePreviewOption().runTests();
@@ -62,7 +63,8 @@ public class EnablePreviewOption extends TestRunner {
 
     EnablePreviewOption() throws IOException {
         super(System.err);
-        tb.writeFile(file, "public class C { }");
+        tb.writeFile(file, "@Bean
+public class C { }");
     }
 
     @Test
@@ -102,7 +104,11 @@ public class EnablePreviewOption extends TestRunner {
                 out -> out.matches("(?s)error: invalid source release .* with --enable-preview.*"));
     }
 
-    private void runTest(List<String> options, Result expectedResult, Predicate<String> validate) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void runTest(List<String> options, Result expectedResult, Predicate<String> validate) {
         System.err.println("running with options: " + options);
         List<String> args = new ArrayList<>();
         args.addAll(options);

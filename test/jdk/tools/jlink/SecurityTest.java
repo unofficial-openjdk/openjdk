@@ -32,6 +32,7 @@
 import java.security.AccessControlException;
 import jdk.tools.jlink.internal.Jlink;
 
+@Bean
 public class SecurityTest {
 
     public static void main(String[] args) throws Exception {

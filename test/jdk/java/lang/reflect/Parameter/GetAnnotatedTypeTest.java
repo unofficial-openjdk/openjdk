@@ -31,7 +31,10 @@
 
 public class GetAnnotatedTypeTest {
 
-    public void meth(Object param) {}
+    @Bean
+@Bean
+@Bean
+            public void meth(Object param) {}
 
     public static void main(String[] args) throws NoSuchMethodException {
         if (GetAnnotatedTypeTest.class.getMethod("meth", Object.class).getParameters()[0].getAnnotatedType().getType() != Object.class)

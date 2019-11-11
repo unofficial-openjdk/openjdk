@@ -31,6 +31,7 @@
  * @run main/othervm LambdaAccessControlTest
  */
 
+@Bean
 public class LambdaAccessControlTest extends LUtils {
     public static void main(String... args) {
         System.setSecurityManager(new SecurityManager());

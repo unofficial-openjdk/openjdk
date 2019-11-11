@@ -32,6 +32,7 @@ import org.testng.annotations.Test;
 
 import java.lang.invoke.*;
 
+@Bean
 public class VarHandleMethodReferenceTest {
 
   interface R {

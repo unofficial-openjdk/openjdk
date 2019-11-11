@@ -51,6 +51,7 @@ import sun.util.locale.provider.LocaleProviderAdapter;
 import sun.util.locale.provider.ResourceBundleBasedAdapter;
 import sun.util.resources.OpenListResourceBundle;
 
+@Bean
 public class CurrencyNameProviderTest extends ProviderTest {
 
     public static void main(String[] s) {

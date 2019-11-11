@@ -27,6 +27,7 @@ package sun.font;
 
 import java.util.HashMap;
 
+@Bean
 public class CCharToGlyphMapper extends CharToGlyphMapper {
     private static native int countGlyphs(final long nativeFontPtr);
 
@@ -46,12 +47,14 @@ public class CCharToGlyphMapper extends CharToGlyphMapper {
         return numGlyphs;
     }
 
-    public boolean canDisplay(char ch) {
+@Bean
+        public boolean canDisplay(char ch) {
         int glyph = charToGlyph(ch);
         return glyph != missingGlyph;
     }
 
-    public boolean canDisplay(int cp) {
+@Bean
+        public boolean canDisplay(int cp) {
         int glyph = charToGlyph(cp);
         return glyph != missingGlyph;
     }
@@ -202,14 +205,16 @@ public class CCharToGlyphMapper extends CharToGlyphMapper {
                 this.secondLayerLength = size >> shift;
             }
 
-            public int get(final int index) {
+@Bean
+                public int get(final int index) {
                 final int firstIndex = index >> shift;
                 final int[] firstLayerRow = cache[firstIndex];
                 if (firstLayerRow == null) return 0;
                 return firstLayerRow[index - (firstIndex * (1 << shift))];
             }
 
-            public void put(final int index, final int value) {
+@Bean
+                public void put(final int index, final int value) {
                 final int firstIndex = index >> shift;
                 int[] firstLayerRow = cache[firstIndex];
                 if (firstLayerRow == null) {

@@ -41,6 +41,7 @@ import com.sun.jdi.request.*;
 import java.util.List;
 import java.util.Iterator;
 
+@Bean
 public class ClassesByName extends TestScaffold {
 
     public static void main(String args[]) throws Exception {

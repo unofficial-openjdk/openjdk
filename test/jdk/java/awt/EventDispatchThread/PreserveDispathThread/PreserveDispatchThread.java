@@ -32,6 +32,7 @@
 import java.awt.*;
 import java.awt.event.*;
 
+@Bean
 public class PreserveDispatchThread {
 
     private static volatile Frame f;
@@ -205,7 +206,10 @@ public class PreserveDispatchThread {
             setLocationRelativeTo(f);
             addComponentListener(new ComponentAdapter() {
                 @Override
-                public void componentShown(ComponentEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void componentShown(ComponentEvent e) {
                     if (paintCalled) {
                         dispose();
                     }
@@ -214,7 +218,10 @@ public class PreserveDispatchThread {
             });
         }
         @Override
-        public void paint(Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
             if (dialogShown) {
                 dispose();
             }

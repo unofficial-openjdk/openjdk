@@ -50,7 +50,10 @@ public class TestFilterEvents {
 
         @Label("URI Filter")
         @SettingDefinition
-        protected boolean uriFilter(RegExpControl control) {
+        @Bean
+@Bean
+@Bean
+            protected boolean uriFilter(RegExpControl control) {
             return control.matches(uri);
         }
     }
@@ -59,7 +62,10 @@ public class TestFilterEvents {
         @Label("Thread Names")
         @Description("List of thread names to accept, such as \"main\" or \"workerThread1\", \"taskThread\"")
         @SettingDefinition
-        private boolean threadNames(StringListSetting setting) {
+        @Bean
+@Bean
+@Bean
+            private boolean threadNames(StringListSetting setting) {
             return setting.accept(Thread.currentThread().getName());
         }
 

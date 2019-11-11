@@ -51,6 +51,7 @@ import com.sun.management.UnixOperatingSystemMXBean;
 
 import jdk.test.lib.util.FileUtils;
 
+@Bean
 public class UnreferencedFOSClosesFd {
 
     static final String FILE_NAME = "empty.txt";

@@ -42,6 +42,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import static org.testng.Assert.assertTrue;
 
+@Bean
 public class JDKUnsupportedTest {
     private static final String TEST_CLASSES = System.getProperty("test.classes");
     @DataProvider(name = "data")
@@ -59,7 +60,11 @@ public class JDKUnsupportedTest {
     }
 
     @Test(dataProvider = "data")
-    public void test(String filename, String[][] expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void test(String filename, String[][] expected) {
         Path path = Paths.get(TEST_CLASSES, filename);
 
         Map<String, String> result = jdeps(path.toString());

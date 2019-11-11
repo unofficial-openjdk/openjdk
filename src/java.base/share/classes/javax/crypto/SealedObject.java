@@ -91,6 +91,7 @@ import java.security.NoSuchProviderException;
  * @since 1.4
  */
 
+@Bean
 public class SealedObject implements Serializable {
 
     @java.io.Serial

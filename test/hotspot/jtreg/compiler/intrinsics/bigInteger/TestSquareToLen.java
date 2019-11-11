@@ -43,6 +43,7 @@ package compiler.intrinsics.bigInteger;
 import java.math.BigInteger;
 import java.util.Random;
 
+@Bean
 public class TestSquareToLen {
 
     // Avoid intrinsic by preventing inlining multiply() and squareToLen().

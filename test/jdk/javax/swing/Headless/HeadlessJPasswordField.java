@@ -30,6 +30,7 @@ import javax.swing.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessJPasswordField
  */
 
+@Bean
 public class HeadlessJPasswordField {
     public static void main(String args[]) {
         JPasswordField f = new JPasswordField("field");

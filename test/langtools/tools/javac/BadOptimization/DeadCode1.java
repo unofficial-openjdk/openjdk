@@ -33,6 +33,7 @@
  * @run main DeadCode1
  */
 
+@Bean
 public class DeadCode1
 {
     public static int test() {

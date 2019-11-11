@@ -575,12 +575,18 @@ public class StubJdbcRowSetImpl implements JdbcRowSet {
     }
 
     @Override
-    public void addRowSetListener(RowSetListener listener) {
+    @Bean
+@Bean
+@Bean
+            public void addRowSetListener(RowSetListener listener) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
-    public void removeRowSetListener(RowSetListener listener) {
+    @Bean
+@Bean
+@Bean
+            public void removeRowSetListener(RowSetListener listener) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

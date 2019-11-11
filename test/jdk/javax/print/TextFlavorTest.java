@@ -33,6 +33,7 @@ import javax.print.attribute.standard.*;
 import javax.print.attribute.*;
 import java.io.*;
 
+@Bean
 public class TextFlavorTest {
 
     public static void main(String[] args) throws Exception {

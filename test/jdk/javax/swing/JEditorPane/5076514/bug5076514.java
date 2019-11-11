@@ -56,7 +56,10 @@ public class bug5076514 {
 
     private static class MySecurityManager extends SecurityManager {
         @Override
-        public void checkPermission(Permission perm) {
+        @Bean
+@Bean
+@Bean
+            public void checkPermission(Permission perm) {
             if (ACCESS_CLIPBOARD.equals(perm.getName())) {
                 isCheckPermissionCalled = true;
             }

@@ -44,6 +44,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.SwingUtilities;
 
+@Bean
 public class TestNoScreenMenuBar
 {
     static TestNoScreenMenuBar theTest;
@@ -146,7 +147,11 @@ public class TestNoScreenMenuBar
         }
     }
 
-    private void execute(String[] cmd) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void execute(String[] cmd) {
         try {
             Process p = Runtime.getRuntime().exec(cmd);
             p.waitFor();

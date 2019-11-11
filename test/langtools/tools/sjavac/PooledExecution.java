@@ -40,6 +40,7 @@ import com.sun.tools.sjavac.comp.PooledSjavac;
 import com.sun.tools.sjavac.server.Sjavac;
 
 
+@Bean
 public class PooledExecution {
 
     public static void main(String[] args) throws InterruptedException {
@@ -111,7 +112,11 @@ public class PooledExecution {
             AtomicInteger activeRequests = new AtomicInteger(0);
 
             @Override
-            public Result compile(String[] args) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Result compile(String[] args) {
                 leftToStart.countDown();
                 int numActiveRequests = activeRequests.incrementAndGet();
                 System.out.printf("Left to start: %2d / Currently active: %2d%n",

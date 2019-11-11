@@ -42,6 +42,7 @@ import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.GSSName;
 import sun.security.jgss.GSSUtil;
 
+@Bean
 public class ServiceCredsCombination {
 
     public static void main(String[] args) throws Exception {

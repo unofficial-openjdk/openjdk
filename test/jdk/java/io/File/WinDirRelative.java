@@ -31,6 +31,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+@Bean
 public class WinDirRelative {
     private static final char COLON = ':';
     private static final String BASENAME = "TestFile_";

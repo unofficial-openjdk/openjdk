@@ -30,6 +30,7 @@
 import java.security.AccessControlContext;
 import java.security.ProtectionDomain;
 
+@Bean
 public class CheckCtor {
 
     public static void main(String[] args) throws Exception {

@@ -47,6 +47,7 @@ import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Robot;
 
+@Bean
 public class TestBrowserBGColor extends JFrame implements HyperlinkListener {
 
     private static TestBrowserBGColor b;
@@ -64,6 +65,10 @@ public class TestBrowserBGColor extends JFrame implements HyperlinkListener {
             b.setVisible(true);
             b.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
             b.addWindowListener(new WindowAdapter() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void windowClosing(WindowEvent e) {
                     b.dispose();
                     b = null;
@@ -97,7 +102,11 @@ public class TestBrowserBGColor extends JFrame implements HyperlinkListener {
         getContentPane().add(scroll);
     }
 
-    public void hyperlinkUpdate(final HyperlinkEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void hyperlinkUpdate(final HyperlinkEvent e) {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
             JEditorPane pane = (JEditorPane) e.getSource();
             if (e instanceof HTMLFrameHyperlinkEvent) {

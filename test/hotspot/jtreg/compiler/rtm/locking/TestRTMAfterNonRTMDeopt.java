@@ -78,6 +78,7 @@ import java.util.List;
  * ratio will be below 100% and there should be enough lock
  * attempts to recompile method without RTM profiling.
  */
+@Bean
 public class TestRTMAfterNonRTMDeopt {
     private static final int ABORT_THRESHOLD = 1000;
     private static final String RANGE_CHECK = "range_check";
@@ -163,7 +164,11 @@ public class TestRTMAfterNonRTMDeopt {
                                   XAbortProvoker.class.getName() + "::doAbort()" };
         }
 
-        public void forceAbort(int a[], boolean abort) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void forceAbort(int a[], boolean abort) {
             try {
                 synchronized(monitor) {
                     a[0]++;

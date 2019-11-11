@@ -39,6 +39,7 @@ import java.util.regex.Pattern;
  * Utility tool aimed to verify presence or absence of specified uncommon trap
  * in compilation log.
  */
+@Bean
 public class Verifier {
     public static final String PROPERTIES_FILE_SUFFIX = ".verify.properties";
     public static final String VERIFICATION_SHOULD_BE_SKIPPED

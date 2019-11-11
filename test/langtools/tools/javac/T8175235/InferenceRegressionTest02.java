@@ -54,6 +54,7 @@ import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.util.Assert;
 import com.sun.tools.javac.util.Context;
 
+@Bean
 public class InferenceRegressionTest02 {
     public static void main(String... args) throws Exception {
         new InferenceRegressionTest02().run();
@@ -97,7 +98,11 @@ public class InferenceRegressionTest02 {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return source;
         }
     }

@@ -35,7 +35,11 @@ class T {
 
 class T6356217 {
 
-    public void f(T t1, T t2) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void f(T t1, T t2) {
         boolean b = false;
 
         do {

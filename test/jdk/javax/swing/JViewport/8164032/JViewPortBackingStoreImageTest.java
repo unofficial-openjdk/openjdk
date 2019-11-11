@@ -129,6 +129,9 @@ public class JViewPortBackingStoreImageTest {
         failButton.setActionCommand("Fail");
         failButton.addActionListener(new ActionListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 mainFrame.dispose();
                 countDownLatch.countDown();
@@ -154,6 +157,9 @@ public class JViewPortBackingStoreImageTest {
         mainFrame.addWindowListener(new WindowAdapter() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent e) {
                 mainFrame.dispose();
                 countDownLatch.countDown();

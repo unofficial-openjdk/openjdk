@@ -38,6 +38,7 @@ package java.io;
  * @since       1.1
  */
 
+@Bean
 public class StringWriter extends Writer {
 
     private StringBuffer buf;
@@ -73,7 +74,8 @@ public class StringWriter extends Writer {
     /**
      * Write a single character.
      */
-    public void write(int c) {
+@Bean
+        public void write(int c) {
         buf.append((char) c);
     }
 
@@ -89,7 +91,8 @@ public class StringWriter extends Writer {
      *          or {@code off + len} is negative or greater than the length
      *          of the given array
      */
-    public void write(char cbuf[], int off, int len) {
+@Bean
+        public void write(char cbuf[], int off, int len) {
         if ((off < 0) || (off > cbuf.length) || (len < 0) ||
             ((off + len) > cbuf.length) || ((off + len) < 0)) {
             throw new IndexOutOfBoundsException();
@@ -102,7 +105,8 @@ public class StringWriter extends Writer {
     /**
      * Write a string.
      */
-    public void write(String str) {
+@Bean
+        public void write(String str) {
         buf.append(str);
     }
 
@@ -146,7 +150,8 @@ public class StringWriter extends Writer {
      *
      * @since  1.5
      */
-    public StringWriter append(CharSequence csq) {
+@Bean
+        public StringWriter append(CharSequence csq) {
         write(String.valueOf(csq));
         return this;
     }
@@ -185,7 +190,8 @@ public class StringWriter extends Writer {
      *
      * @since  1.5
      */
-    public StringWriter append(CharSequence csq, int start, int end) {
+@Bean
+        public StringWriter append(CharSequence csq, int start, int end) {
         if (csq == null) csq = "null";
         return append(csq.subSequence(start, end));
     }
@@ -206,7 +212,8 @@ public class StringWriter extends Writer {
      *
      * @since 1.5
      */
-    public StringWriter append(char c) {
+@Bean
+        public StringWriter append(char c) {
         write(c);
         return this;
     }

@@ -380,7 +380,8 @@ public class BorderLayout implements LayoutManager2,
      * @param hgap the horizontal gap between components
      * @since   1.1
      */
-    public void setHgap(int hgap) {
+@Bean
+        public void setHgap(int hgap) {
         this.hgap = hgap;
     }
 
@@ -400,7 +401,8 @@ public class BorderLayout implements LayoutManager2,
      * @param vgap the vertical gap between components
      * @since   1.1
      */
-    public void setVgap(int vgap) {
+@Bean
+        public void setVgap(int vgap) {
         this.vgap = vgap;
     }
 
@@ -422,7 +424,8 @@ public class BorderLayout implements LayoutManager2,
      *              a string, or if it not one of the five specified constants.
      * @since   1.1
      */
-    public void addLayoutComponent(Component comp, Object constraints) {
+@Bean
+        public void addLayoutComponent(Component comp, Object constraints) {
       synchronized (comp.getTreeLock()) {
         if ((constraints == null) || (constraints instanceof String)) {
             addLayoutComponent((String)constraints, comp);
@@ -436,7 +439,8 @@ public class BorderLayout implements LayoutManager2,
      * @deprecated  replaced by {@code addLayoutComponent(Component, Object)}.
      */
     @Deprecated
-    public void addLayoutComponent(String name, Component comp) {
+@Bean
+        public void addLayoutComponent(String name, Component comp) {
       synchronized (comp.getTreeLock()) {
         /* Special case:  treat null the same as "Center". */
         if (name == null) {
@@ -478,7 +482,8 @@ public class BorderLayout implements LayoutManager2,
      * @see     java.awt.Container#remove(java.awt.Component)
      * @see     java.awt.Container#removeAll()
      */
-    public void removeLayoutComponent(Component comp) {
+@Bean
+        public void removeLayoutComponent(Component comp) {
       synchronized (comp.getTreeLock()) {
         if (comp == center) {
             center = null;
@@ -518,7 +523,8 @@ public class BorderLayout implements LayoutManager2,
      * @see     #addLayoutComponent(java.awt.Component, java.lang.Object)
      * @since 1.5
      */
-    public Component getLayoutComponent(Object constraints) {
+@Bean
+        public Component getLayoutComponent(Object constraints) {
         if (CENTER.equals(constraints)) {
             return center;
         } else if (NORTH.equals(constraints)) {
@@ -567,7 +573,8 @@ public class BorderLayout implements LayoutManager2,
      * @see     #addLayoutComponent(java.awt.Component, java.lang.Object)
      * @since 1.5
      */
-    public Component getLayoutComponent(Container target, Object constraints) {
+@Bean
+        public Component getLayoutComponent(Container target, Object constraints) {
         boolean ltr = target.getComponentOrientation().isLeftToRight();
         Component result = null;
 
@@ -605,7 +612,8 @@ public class BorderLayout implements LayoutManager2,
      * @see #addLayoutComponent(java.awt.Component, java.lang.Object)
      * @since 1.5
      */
-    public Object getConstraints(Component comp) {
+@Bean
+        public Object getConstraints(Component comp) {
         //fix for 6242148 : API method java.awt.BorderLayout.getConstraints(null) should return null
         if (comp == null){
             return null;
@@ -646,7 +654,8 @@ public class BorderLayout implements LayoutManager2,
      * @see     java.awt.BorderLayout#preferredLayoutSize
      * @see     java.awt.Container#getMinimumSize()
      */
-    public Dimension minimumLayoutSize(Container target) {
+@Bean
+        public Dimension minimumLayoutSize(Container target) {
       synchronized (target.getTreeLock()) {
         Dimension dim = new Dimension(0, 0);
 
@@ -702,7 +711,8 @@ public class BorderLayout implements LayoutManager2,
      * @see     java.awt.BorderLayout#minimumLayoutSize
      * @see     java.awt.Container#getPreferredSize()
      */
-    public Dimension preferredLayoutSize(Container target) {
+@Bean
+        public Dimension preferredLayoutSize(Container target) {
       synchronized (target.getTreeLock()) {
         Dimension dim = new Dimension(0, 0);
 
@@ -751,7 +761,8 @@ public class BorderLayout implements LayoutManager2,
      * @see #minimumLayoutSize
      * @see #preferredLayoutSize
      */
-    public Dimension maximumLayoutSize(Container target) {
+@Bean
+        public Dimension maximumLayoutSize(Container target) {
         return new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE);
     }
 
@@ -762,7 +773,8 @@ public class BorderLayout implements LayoutManager2,
      * where 0 represents alignment along the origin, 1 is aligned
      * the furthest away from the origin, 0.5 is centered, etc.
      */
-    public float getLayoutAlignmentX(Container parent) {
+@Bean
+        public float getLayoutAlignmentX(Container parent) {
         return 0.5f;
     }
 
@@ -773,7 +785,8 @@ public class BorderLayout implements LayoutManager2,
      * where 0 represents alignment along the origin, 1 is aligned
      * the furthest away from the origin, 0.5 is centered, etc.
      */
-    public float getLayoutAlignmentY(Container parent) {
+@Bean
+        public float getLayoutAlignmentY(Container parent) {
         return 0.5f;
     }
 
@@ -781,7 +794,8 @@ public class BorderLayout implements LayoutManager2,
      * Invalidates the layout, indicating that if the layout manager
      * has cached information it should be discarded.
      */
-    public void invalidateLayout(Container target) {
+@Bean
+        public void invalidateLayout(Container target) {
     }
 
     /**
@@ -803,7 +817,8 @@ public class BorderLayout implements LayoutManager2,
      * @see     java.awt.Container
      * @see     java.awt.Container#doLayout()
      */
-    public void layoutContainer(Container target) {
+@Bean
+        public void layoutContainer(Container target) {
       synchronized (target.getTreeLock()) {
         Insets insets = target.getInsets();
         int top = insets.top;
@@ -851,7 +866,8 @@ public class BorderLayout implements LayoutManager2,
      *                  either NORTH, SOUTH, EAST, or WEST.
      * @param   ltr     Is the component line direction left-to-right?
      */
-    private Component getChild(String key, boolean ltr) {
+@Bean
+        private Component getChild(String key, boolean ltr) {
         Component result = null;
 
         if (key == NORTH) {

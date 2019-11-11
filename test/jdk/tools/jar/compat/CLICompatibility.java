@@ -57,6 +57,7 @@ import static org.testng.Assert.assertTrue;
  * @summary Basic test for compatibility of CLI options
  */
 
+@Bean
 public class CLICompatibility {
     static final Path TEST_CLASSES = Paths.get(System.getProperty("test.classes", "."));
     static final Path USER_DIR = Paths.get(System.getProperty("user.dir"));
@@ -495,7 +496,11 @@ public class CLICompatibility {
             messages = m;
         }
         @Override
-        public void accept(Result r) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void accept(Result r) {
             //out.printf("%s%n", r.output);
             boolean found = false;
             for (String m : messages) {

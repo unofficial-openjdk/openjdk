@@ -33,6 +33,7 @@
 
 package compiler.escapeAnalysis;
 
+@Bean
 public class Test6775880 {
 
     int cnt;

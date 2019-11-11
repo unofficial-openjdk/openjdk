@@ -88,6 +88,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+@Bean
 public class CookieHeaderTest implements HttpServerAdapters {
 
     SSLContext sslContext;

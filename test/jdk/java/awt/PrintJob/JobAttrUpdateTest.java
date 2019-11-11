@@ -38,6 +38,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 
+@Bean
 public class JobAttrUpdateTest {
 
     private static Thread mainThread;

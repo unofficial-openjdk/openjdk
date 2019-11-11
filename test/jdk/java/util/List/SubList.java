@@ -49,12 +49,17 @@ import org.testng.annotations.DataProvider;
 import jdk.test.lib.RandomFactory;
 
 
+@Bean
 public class SubList extends org.testng.Assert {
 
     final Random rnd = RandomFactory.getRandom();
 
     @Test(dataProvider = "modifiable")
-    public void testAdd(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testAdd(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         Integer e = rnd.nextInt();
         subList.add(e);
@@ -64,7 +69,11 @@ public class SubList extends org.testng.Assert {
 
     @Test(dataProvider = "modifiable",
           expectedExceptions = ConcurrentModificationException.class)
-    public void testModAdd(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testModAdd(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         list.add(42);
         subList.add(42);
@@ -72,13 +81,21 @@ public class SubList extends org.testng.Assert {
 
     @Test(dataProvider = "unresizable",
           expectedExceptions = UnsupportedOperationException.class)
-    public void testUnmodAdd(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testUnmodAdd(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         subList.add(42);
     }
 
     @Test(dataProvider = "modifiable")
-    public void testAddAtPos(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testAddAtPos(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         int i = rnd.nextInt(1 + to - from);
         Integer e = rnd.nextInt();
@@ -89,7 +106,11 @@ public class SubList extends org.testng.Assert {
 
     @Test(dataProvider = "modifiable",
           expectedExceptions = ConcurrentModificationException.class)
-    public void testModAddAtPos(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testModAddAtPos(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         list.add(42);
         int i = rnd.nextInt(1 + to - from);
@@ -98,14 +119,22 @@ public class SubList extends org.testng.Assert {
 
     @Test(dataProvider = "unresizable",
           expectedExceptions = UnsupportedOperationException.class)
-    public void testUnmodAddAtPos(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testUnmodAddAtPos(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         int i = rnd.nextInt(1 + to - from);
         subList.add(i, 42);
     }
 
     @Test(dataProvider = "modifiable")
-    public void testClear(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testClear(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         subList.clear();
         assertTrue(subList.isEmpty());
@@ -114,7 +143,11 @@ public class SubList extends org.testng.Assert {
 
     @Test(dataProvider = "modifiable",
           expectedExceptions = ConcurrentModificationException.class)
-    public void testModClear(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testModClear(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         list.add(42);
         subList.clear();
@@ -122,13 +155,21 @@ public class SubList extends org.testng.Assert {
 
     @Test(dataProvider = "unresizable",
           expectedExceptions = UnsupportedOperationException.class)
-    public void testUnmodClear(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testUnmodClear(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         subList.clear();
     }
 
     @Test(dataProvider = "all")
-    public void testEquals(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testEquals(List<Integer> list, int from, int to) {
         List<Integer> subList1 = list.subList(from, to);
         List<Integer> subList2 = list.subList(from, to);
         assertTrue(subList1.equals(subList2));
@@ -146,7 +187,11 @@ public class SubList extends org.testng.Assert {
 
 //    @Test(dataProvider = "modifiable",
 //          expectedExceptions = ConcurrentModificationException.class)
-//    public void testModEquals(List<Integer> list, int from, int to) {
+//    @Bean
+@Bean
+@Bean
+@Bean
+                public void testModEquals(List<Integer> list, int from, int to) {
 //        List<Integer> subList = list.subList(from, to);
 //        list.add(42);
 //        subList.equals(subList);
@@ -154,14 +199,22 @@ public class SubList extends org.testng.Assert {
 
     @Test(dataProvider = "modifiable",
           expectedExceptions = ConcurrentModificationException.class)
-    public void testModHashCode(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testModHashCode(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         list.add(42);
         subList.hashCode();
     }
 
     @Test(dataProvider = "all")
-    public void testGet(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testGet(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         for (int i = 0; i < to - from; ++i)
             assertEquals(list.get(from + i), subList.get(i));
@@ -169,14 +222,22 @@ public class SubList extends org.testng.Assert {
 
     @Test(dataProvider = "modifiable",
           expectedExceptions = ConcurrentModificationException.class)
-    public void testModGet(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testModGet(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         list.add(42);
         subList.get(from);
     }
 
     @Test(dataProvider = "all")
-    public void testIndexOf(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testIndexOf(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         if (from < to) {
             Integer e = list.get(from);
@@ -204,14 +265,22 @@ public class SubList extends org.testng.Assert {
 
     @Test(dataProvider = "modifiable",
           expectedExceptions = ConcurrentModificationException.class)
-    public void testModIndexOf(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testModIndexOf(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         list.add(42);
         subList.indexOf(from);
     }
 
     @Test(dataProvider = "all")
-    public void testIterator(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testIterator(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         Iterator<Integer> it = subList.iterator();
         for (int i = from; i < to; ++i) {
@@ -223,7 +292,11 @@ public class SubList extends org.testng.Assert {
 
     @Test(dataProvider = "modifiable",
           expectedExceptions = ConcurrentModificationException.class)
-    public void testModIteratorNext(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testModIteratorNext(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         Iterator<Integer> it = subList.iterator();
         list.add(42);
@@ -231,7 +304,11 @@ public class SubList extends org.testng.Assert {
     }
 
     @Test(dataProvider = "modifiable")
-    public void testIteratorRemove(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testIteratorRemove(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         Iterator<Integer> it = subList.iterator();
         for (int i = from; i < to; ++i) {
@@ -245,7 +322,11 @@ public class SubList extends org.testng.Assert {
 
     @Test(dataProvider = "modifiable",
           expectedExceptions = ConcurrentModificationException.class)
-    public void testModIteratorRemove(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testModIteratorRemove(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         Iterator<Integer> it = subList.iterator();
         it.next();
@@ -255,7 +336,11 @@ public class SubList extends org.testng.Assert {
 
     @Test(dataProvider = "unresizable",
           expectedExceptions = UnsupportedOperationException.class)
-    public void testUnmodIteratorRemove(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testUnmodIteratorRemove(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         Iterator<Integer> it = subList.iterator();
         it.next();
@@ -263,7 +348,11 @@ public class SubList extends org.testng.Assert {
     }
 
     @Test(dataProvider = "all")
-    public void testIteratorForEachRemaining(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testIteratorForEachRemaining(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         for (int k = 0; k < 16; ++k) {
             int r = from + rnd.nextInt(1 + to - from);
@@ -283,7 +372,11 @@ public class SubList extends org.testng.Assert {
     }
 
     @Test(dataProvider = "all")
-    public void testLastIndexOf(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testLastIndexOf(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         if (from < to) {
             Integer e = list.get(to - 1);
@@ -310,14 +403,22 @@ public class SubList extends org.testng.Assert {
 
     @Test(dataProvider = "modifiable",
           expectedExceptions = ConcurrentModificationException.class)
-    public void testModLastIndexOf(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testModLastIndexOf(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         list.add(42);
         subList.lastIndexOf(42);
     }
 
     @Test(dataProvider = "unresizable")
-    public void testListIterator(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testListIterator(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         ListIterator<Integer> it = subList.listIterator();
         for (int i = from; i < to; ++i) {
@@ -330,7 +431,11 @@ public class SubList extends org.testng.Assert {
 
     @Test(dataProvider = "modifiable",
           expectedExceptions = ConcurrentModificationException.class)
-    public void testModListIteratorNext(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testModListIteratorNext(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         ListIterator<Integer> it = subList.listIterator();
         list.add(42);
@@ -338,7 +443,11 @@ public class SubList extends org.testng.Assert {
     }
 
     @Test(dataProvider = "modifiable")
-    public void testListIteratorSet(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testListIteratorSet(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         ListIterator<Integer> it = subList.listIterator();
         for (int i = from; i < to; ++i) {
@@ -354,7 +463,11 @@ public class SubList extends org.testng.Assert {
 
     @Test(dataProvider = "modifiable",
           expectedExceptions = ConcurrentModificationException.class)
-    public void testModListIteratorSet(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testModListIteratorSet(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         ListIterator<Integer> it = subList.listIterator();
         it.next();
@@ -364,7 +477,11 @@ public class SubList extends org.testng.Assert {
 
     @Test(dataProvider = "unsettable",
           expectedExceptions = UnsupportedOperationException.class)
-    public void testUnmodListIteratorSet(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testUnmodListIteratorSet(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         ListIterator<Integer> it = subList.listIterator();
         it.next();
@@ -372,7 +489,11 @@ public class SubList extends org.testng.Assert {
     }
 
     @Test(dataProvider = "unresizable")
-    public void testListIteratorPrevious(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testListIteratorPrevious(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         ListIterator<Integer> it = subList.listIterator(subList.size());
         for (int i = to - 1; i >= from; --i) {
@@ -385,7 +506,11 @@ public class SubList extends org.testng.Assert {
 
     @Test(dataProvider = "modifiable",
           expectedExceptions = ConcurrentModificationException.class)
-    public void testModListIteratorPrevious(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testModListIteratorPrevious(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         ListIterator<Integer> it = subList.listIterator(to - from);
         list.add(42);
@@ -393,7 +518,11 @@ public class SubList extends org.testng.Assert {
     }
 
     @Test(dataProvider = "modifiable")
-    public void testListIteratorSetPrevious(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testListIteratorSetPrevious(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         ListIterator<Integer> it = subList.listIterator(subList.size());
         for (int i = to - 1; i >= from; --i) {
@@ -409,7 +538,11 @@ public class SubList extends org.testng.Assert {
 
     @Test(dataProvider = "unsettable",
           expectedExceptions = UnsupportedOperationException.class)
-    public void testUnmodListIteratorSetPrevious(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testUnmodListIteratorSetPrevious(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         ListIterator<Integer> it = subList.listIterator(to - from);
         it.previous();
@@ -417,7 +550,11 @@ public class SubList extends org.testng.Assert {
     }
 
     @Test(dataProvider = "modifiable")
-    public void testListIteratorAdd(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testListIteratorAdd(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         for (int i = 0; i < 16; ++i) {
             int r = rnd.nextInt(1 + subList.size());
@@ -431,7 +568,11 @@ public class SubList extends org.testng.Assert {
 
     @Test(dataProvider = "unresizable",
           expectedExceptions = UnsupportedOperationException.class)
-    public void testUnmodListIteratorAdd(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testUnmodListIteratorAdd(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         int r = rnd.nextInt(1 + subList.size());
         ListIterator<Integer> it = subList.listIterator(r);
@@ -440,7 +581,11 @@ public class SubList extends org.testng.Assert {
 
     @Test(dataProvider = "modifiable",
           expectedExceptions = ConcurrentModificationException.class)
-    public void testModListIteratorAdd(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testModListIteratorAdd(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         ListIterator<Integer> it = subList.listIterator();
         it.next();
@@ -449,7 +594,11 @@ public class SubList extends org.testng.Assert {
     }
 
     @Test(dataProvider = "modifiable")
-    public void testListIteratorRemoveNext(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testListIteratorRemoveNext(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         ListIterator<Integer> it = subList.listIterator();
         for (int i = from; i < to; ++i) {
@@ -464,7 +613,11 @@ public class SubList extends org.testng.Assert {
 
     @Test(dataProvider = "unresizable",
           expectedExceptions = UnsupportedOperationException.class)
-    public void testUnmodListIteratorRemoveNext(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testUnmodListIteratorRemoveNext(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         ListIterator<Integer> it = subList.listIterator();
         it.next();
@@ -473,7 +626,11 @@ public class SubList extends org.testng.Assert {
 
     @Test(dataProvider = "modifiable",
           expectedExceptions = ConcurrentModificationException.class)
-    public void testModListIteratorRemove(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testModListIteratorRemove(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         ListIterator<Integer> it = subList.listIterator();
         it.next();
@@ -482,7 +639,11 @@ public class SubList extends org.testng.Assert {
     }
 
     @Test(dataProvider = "modifiable")
-    public void testListIteratorRemovePrevious(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testListIteratorRemovePrevious(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         ListIterator<Integer> it = subList.listIterator(subList.size());
         for (int i = to - 1; i >= from; --i) {
@@ -497,7 +658,11 @@ public class SubList extends org.testng.Assert {
 
     @Test(dataProvider = "unresizable",
           expectedExceptions = UnsupportedOperationException.class)
-    public void testUnmodListIteratorRemovePrevious(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testUnmodListIteratorRemovePrevious(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         ListIterator<Integer> it = subList.listIterator(subList.size());
         it.previous();
@@ -505,7 +670,11 @@ public class SubList extends org.testng.Assert {
     }
 
     @Test(dataProvider = "modifiable")
-    public void testRemove(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testRemove(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         for (int i = 0; i < 16; ++i) {
             if (subList.isEmpty()) break;
@@ -517,7 +686,11 @@ public class SubList extends org.testng.Assert {
 
     @Test(dataProvider = "unresizable",
           expectedExceptions = UnsupportedOperationException.class)
-    public void testUnmodRemove(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testUnmodRemove(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         int r = rnd.nextInt(subList.size());
         subList.remove(r);
@@ -525,14 +698,22 @@ public class SubList extends org.testng.Assert {
 
     @Test(dataProvider = "modifiable",
           expectedExceptions = ConcurrentModificationException.class)
-    public void testModRemove(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testModRemove(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         list.add(42);
         subList.remove(0);
     }
 
     @Test(dataProvider = "modifiable")
-    public void testSet(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testSet(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         for (int i = 0; i < to - from; ++i) {
             Integer e0 = list.get(from + i);
@@ -544,14 +725,22 @@ public class SubList extends org.testng.Assert {
 
     @Test(dataProvider = "modifiable",
           expectedExceptions = ConcurrentModificationException.class)
-    public void testModSet(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testModSet(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         list.add(42);
         subList.set(0, 42);
     }
 
     @Test(dataProvider = "all")
-    public void testSubList(List<Integer> list, int from, int to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testSubList(List<Integer> list, int from, int to) {
         List<Integer> subList = list.subList(from, to);
         for (int i = 0; i < 16 && from < to; ++i) {
             int from1 = rnd.nextInt(to - from);
@@ -670,7 +859,11 @@ public class SubList extends org.testng.Assert {
     static class MyList extends AbstractList<Integer> {
         private int size;
         MyList(int s) { size = s; }
-        public Integer get(int index) { return 42; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Integer get(int index) { return 42; }
         public int size() { return size; }
     }
 }

@@ -53,6 +53,7 @@ import compiler.aot.HelloWorldPrinter;
 import jdk.test.lib.process.ExitCode;
 import jdk.test.lib.cli.CommandLineOptionTest;
 
+@Bean
 public class SingleAOTOptionTest {
     private static final String[] EXPECTED_MESSAGES = new String[] {
         HelloWorldPrinter.MESSAGE
@@ -67,7 +68,11 @@ public class SingleAOTOptionTest {
         }
     }
 
-    private void runTest(String arg1, String arg2, String arg3) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void runTest(String arg1, String arg2, String arg3) {
         try {
             String exitCodeErrorMessage = String.format("Unexpected exit code "
                     + "using %s %s %s", arg1, arg2, arg3);

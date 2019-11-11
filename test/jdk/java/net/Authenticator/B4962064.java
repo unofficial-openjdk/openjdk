@@ -35,6 +35,7 @@
 import java.io.*;
 import java.net.*;
 
+@Bean
 public class B4962064 implements HttpCallback {
 
     static int count = 0;

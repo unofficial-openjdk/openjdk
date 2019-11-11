@@ -32,6 +32,7 @@ import java.io.*;
 import java.net.URLClassLoader;
 import java.net.URL;
 
+@Bean
 public class Versions {
     static String getProperty(String prop) throws Exception {
         String value = System.getProperty(prop);

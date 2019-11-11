@@ -33,6 +33,7 @@ import java.nio.*;
 import java.nio.channels.*;
 
 
+@Bean
 public class Open {
     public static void main(String args[]) throws IOException {
         ServerSocketChannel ssc = ServerSocketChannel.open();

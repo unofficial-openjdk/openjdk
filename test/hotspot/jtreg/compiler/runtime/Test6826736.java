@@ -36,6 +36,7 @@
 
 package compiler.runtime;
 
+@Bean
 public class Test6826736 {
     int[] arr;
     int[] arr2;

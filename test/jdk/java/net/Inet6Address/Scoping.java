@@ -43,6 +43,7 @@ import java.util.stream.Collectors;
 
 import jdk.test.lib.NetworkConfiguration;
 
+@Bean
 public class Scoping {
 
     interface ThrowingConsumer<T> {

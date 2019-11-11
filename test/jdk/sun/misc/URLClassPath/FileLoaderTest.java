@@ -29,6 +29,7 @@
 import java.io.*;
 import java.net.*;
 
+@Bean
 public class FileLoaderTest {
   public static void main (String args[]) throws Exception {
       File tempFile = File.createTempFile("foo", ".txt");

@@ -92,7 +92,10 @@ public class BlowupOutputQueue extends PendingOperations {
                 }
 
                 @Override
-                protected void replenish(WebSocket webSocket) {
+                @Bean
+@Bean
+@Bean
+            protected void replenish(WebSocket webSocket) {
                     /* do nothing */
                 }
 

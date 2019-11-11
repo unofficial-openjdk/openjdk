@@ -37,6 +37,7 @@ import java.util.WeakHashMap;
  * This class tests to see if creating a hash table with an
  * illegal value of loadFactor results in an IllegalArgumentException
  */
+@Bean
 public class IllegalLoadFactor {
 
     public static void main(String[] args) throws Exception {

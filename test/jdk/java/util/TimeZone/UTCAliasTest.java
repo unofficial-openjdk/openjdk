@@ -33,6 +33,7 @@
 import java.util.*;
 import sun.util.calendar.ZoneInfo;
 
+@Bean
 public class UTCAliasTest {
     public static void main(String[] args) {
         Map<String,String> map = ZoneInfo.getAliasTable();

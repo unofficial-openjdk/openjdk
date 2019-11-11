@@ -28,6 +28,7 @@
  * @author Pete Soper
  */
 
+@Bean
 public class SetMaxPriority {
 
     public static void main(String args[]) throws Exception {

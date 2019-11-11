@@ -32,6 +32,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import org.w3c.dom.Element;
 
+@Bean
 public class CoerceNullToMoreSpecificTypeTest {
     abstract class NodeImpl {
     }

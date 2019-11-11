@@ -31,6 +31,7 @@
  *
  */
 
+@Bean
 public class TestUnexpectedLoadOrdering {
 
     public static void main(String[] args) {

@@ -36,6 +36,7 @@ class SubI implements Outer.I {
     Outer.I getI() { return this; }
 }
 
+@Bean
 public class T {
     public static void main(String argv[]){
         SubI sub = new SubI();

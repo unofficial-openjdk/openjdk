@@ -31,6 +31,7 @@ import java.beans.PropertyDescriptor;
  * @author Sergey Malenkov
  */
 
+@Bean
 public class Test8027648 {
 
     public static void main(String[] args) {
@@ -62,15 +63,27 @@ public class Test8027648 {
             return this.value;
         }
 
-        public void setValue(Object value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(Object value) {
             this.value = value;
         }
 
-        public Object getIndex(int index) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Object getIndex(int index) {
             return getValue();
         }
 
-        public void setIndex(int index, Object value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setIndex(int index, Object value) {
             setValue(value);
         }
     }
@@ -81,16 +94,28 @@ public class Test8027648 {
             return (String) super.getValue();
         }
 
-        public void setValue(String value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(String value) {
             setValue((Object) value);
         }
 
         @Override
-        public String getIndex(int index) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String getIndex(int index) {
             return getValue();
         }
 
-        public void setIndex(int index, String value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setIndex(int index, String value) {
             setValue(value);
         }
     }

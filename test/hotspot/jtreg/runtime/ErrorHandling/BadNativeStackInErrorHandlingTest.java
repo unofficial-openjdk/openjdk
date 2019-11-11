@@ -40,6 +40,7 @@ import jdk.test.lib.process.ProcessTools;
  */
 
 // This test was adapted from SafeFetchInErrorHandlingTest.java.
+@Bean
 public class BadNativeStackInErrorHandlingTest {
   public static void main(String[] args) throws Exception {
     if (!Platform.isDebugBuild() || Platform.isZero()) {

@@ -101,12 +101,18 @@ public class TrayIconPopupTest {
         SystemTray tray = SystemTray.getSystemTray();
         icon = new TrayIcon(new BufferedImage(20, 20, BufferedImage.TYPE_INT_RGB), "Sample Icon");
         icon.addMouseListener(new MouseAdapter() {
+            @Bean
+@Bean
+@Bean
             public void mousePressed(MouseEvent event) {
                 if (event.isPopupTrigger()) {
                     popup.show(window, 0, 0);
                 }
             }
 
+            @Bean
+@Bean
+@Bean
             public void mouseReleased(MouseEvent event) {
                 if (event.isPopupTrigger()) {
                     popup.show(window, 0, 0);

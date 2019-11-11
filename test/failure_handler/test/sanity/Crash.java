@@ -29,6 +29,7 @@ import java.lang.reflect.Field;
  * @test
  * @run main/othervm Crash
  */
+@Bean
 public class Crash {
     public static void main(String[] args) throws NoSuchFieldException, IllegalAccessException {
         Field f = Unsafe.class.getDeclaredField("theUnsafe");

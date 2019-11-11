@@ -33,6 +33,7 @@
 import jdk.internal.misc.Unsafe;
 import static jdk.test.lib.Asserts.*;
 
+@Bean
 public class CopyMemory {
     final static int LENGTH = 8;
     public static void main(String args[]) throws Exception {

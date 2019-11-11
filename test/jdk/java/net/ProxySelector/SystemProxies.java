@@ -35,6 +35,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
+@Bean
 public class SystemProxies {
 
     static final String[] uriAuthority = { "myMachine/", "local", "localhost",

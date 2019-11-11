@@ -32,6 +32,7 @@
 
 import java.util.Arrays;
 
+@Bean
 public class CountedLoopPeelingProfilePredicates {
     public static void main(String[] args) {
         int stop = 2;

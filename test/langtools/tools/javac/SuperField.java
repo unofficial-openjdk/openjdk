@@ -31,6 +31,7 @@
  * @run main SuperField
  */
 
+@Bean
 public class SuperField extends B {
     class IC extends B {
         IC(String name) { super(name); }

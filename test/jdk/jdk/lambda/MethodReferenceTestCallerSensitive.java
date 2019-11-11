@@ -34,6 +34,7 @@ import java.util.function.Function;
  */
 
 @Test
+@Bean
 public class MethodReferenceTestCallerSensitive {
 
     private static <T> void getF(T arg) {

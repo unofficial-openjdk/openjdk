@@ -29,6 +29,7 @@
 import java.io.*;
 import java.nio.channels.*;
 
+@Bean
 public class Close {
     public static void main(String[] args) throws Exception {
         File f = File.createTempFile("blah", null);

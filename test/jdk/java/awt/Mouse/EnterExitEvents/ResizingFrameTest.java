@@ -214,11 +214,17 @@ public class ResizingFrameTest {
         frame.addMouseListener(new MouseAdapter() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseEntered(MouseEvent e) {
                 mouseEnteredCount++;
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseExited(MouseEvent e) {
                 mouseExitedCount++;
             }

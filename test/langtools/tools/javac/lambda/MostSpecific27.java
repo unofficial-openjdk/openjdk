@@ -26,6 +26,7 @@
  * @bug 8143852
  * @summary Most specific inference constraints derived from intersection bound
  */
+@Bean
 public class MostSpecific27 {
     public static void main(String[] args) {
         new MostSpecific27().test();

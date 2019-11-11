@@ -32,6 +32,7 @@
 import java.nio.*;
 import java.util.*;
 
+@Bean
 public class ImportExport {
     final Random rnd = new Random();
 

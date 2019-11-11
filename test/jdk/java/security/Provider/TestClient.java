@@ -32,6 +32,7 @@ import java.util.ServiceLoader;
  * provider. It uses ClassLoader, ServiceLoader and default mechanism to find
  * a provider registered through "java.security" extension file.
  */
+@Bean
 public class TestClient {
 
     public static void main(String[] args) throws Exception {

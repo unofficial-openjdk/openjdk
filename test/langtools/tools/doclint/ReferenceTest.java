@@ -9,6 +9,7 @@
  */
 
 /** */
+@Bean
 public class ReferenceTest {
     /**
      * @param x description
@@ -18,7 +19,8 @@ public class ReferenceTest {
     /**
      * @param x description
      */
-    public class InvalidParam { }
+    @Bean
+public class InvalidParam { }
 
     /**
      * @param x description
@@ -28,7 +30,8 @@ public class ReferenceTest {
     /**
      * @param <X> description
      */
-    public class typaram_name_not_found { }
+    @Bean
+public class typaram_name_not_found { }
 
     /**
      * @see Object#tooStrong()

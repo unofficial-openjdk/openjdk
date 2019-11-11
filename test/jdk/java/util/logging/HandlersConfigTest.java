@@ -103,7 +103,11 @@ public abstract class HandlersConfigTest implements Runnable {
         // activate security
         System.setSecurityManager(new SecurityManager() {
             @Override
-            public void checkConnect(String host, int port) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void checkConnect(String host, int port) {
                 // allow socket connections
             }
         });
@@ -288,14 +292,22 @@ public abstract class HandlersConfigTest implements Runnable {
 
     public static class SpecifiedFormatter extends Formatter {
         @Override
-        public String format(LogRecord record) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String format(LogRecord record) {
             return String.valueOf(record);
         }
     }
 
     public static class SpecifiedHandler extends Handler {
         @Override
-        public void publish(LogRecord record) { }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void publish(LogRecord record) { }
 
         @Override
         public void flush() { }
@@ -306,21 +318,33 @@ public abstract class HandlersConfigTest implements Runnable {
 
     public static class ConfiguredFormatter extends Formatter {
         @Override
-        public String format(LogRecord record) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String format(LogRecord record) {
             return String.valueOf(record);
         }
     }
 
     public static class ConfiguredFilter implements Filter {
         @Override
-        public boolean isLoggable(LogRecord record) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean isLoggable(LogRecord record) {
             return true;
         }
     }
 
     public static class ConfiguredHandler extends Handler {
         @Override
-        public void publish(LogRecord record) { }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void publish(LogRecord record) { }
 
         @Override
         public void flush() { }

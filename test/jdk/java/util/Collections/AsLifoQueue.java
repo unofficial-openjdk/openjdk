@@ -31,6 +31,7 @@
 import java.util.*;
 import java.util.concurrent.*;
 
+@Bean
 public class AsLifoQueue {
 
     private static void realMain(String[] args) throws Throwable {

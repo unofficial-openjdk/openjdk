@@ -40,6 +40,7 @@ import java.io.IOException;
 import static pkg.ClassToBeStaticallyImportedA.staticFieldA;
 import static pkg.ClassToBeStaticallyImportedB.staticFieldB;
 
+@Bean
 public class CPoolRefClassContainingInlinedCts {
 
     public static void main(String args[]) throws Exception {

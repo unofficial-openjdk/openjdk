@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.util.*;
 import java.nio.file.*;
 
+@Bean
 public class CompileCircularSources extends SJavacTester {
     public static void main(String... args) throws Exception {
         CompileCircularSources ccs = new CompileCircularSources();
@@ -52,11 +53,14 @@ public class CompileCircularSources extends SJavacTester {
         Map<String,Long> previous_bin_state = collectState(BIN);
 
         tb.writeFile(GENSRC.resolve("alfa/omega/A.java"),
-                     "package alfa.omega; public class A { beta.B b; }");
+                     "package alfa.omega; @Bean
+public class A { beta.B b; }");
         tb.writeFile(GENSRC.resolve("beta/B.java"),
-                     "package beta; public class B { gamma.C c; }");
+                     "package beta; @Bean
+public class B { gamma.C c; }");
         tb.writeFile(GENSRC.resolve("gamma/C.java"),
-                     "package gamma; public class C { alfa.omega.A a; }");
+                     "package gamma; @Bean
+public class C { alfa.omega.A a; }");
 
         compile(GENSRC.toString(),
                 "-d", BIN.toString(),

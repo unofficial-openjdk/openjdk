@@ -47,6 +47,7 @@ import java.util.Map;
  * LogManager.drainLoggerRefQueueBounded() (which could happen by calling
  * Logger.getLogger() and LogManager.readConfiguration() in different threads)
  */
+@Bean
 public class DrainFindDeadlockTest {
     private LogManager mgr = LogManager.getLogManager();
     private static final int MAX_ITERATIONS = 100;
@@ -182,7 +183,11 @@ public class DrainFindDeadlockTest {
             }
         }
 
-        private void dumpStack(StackTraceElement[] aStackElt, Thread aThread) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void dumpStack(StackTraceElement[] aStackElt, Thread aThread) {
             if (aStackElt != null) {
                  System.out.println("Thread:" + aThread.getName() + ": " +
                                     aThread.getState());

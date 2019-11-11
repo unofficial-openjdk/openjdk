@@ -29,6 +29,7 @@
 import java.net.*;
 import java.nio.channels.*;
 
+@Bean
 public class UnboundSocketTests {
 
     static int failures = 0;

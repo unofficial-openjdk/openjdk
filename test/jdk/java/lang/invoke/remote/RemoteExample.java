@@ -29,6 +29,7 @@ import test.java.lang.invoke.MethodHandlesTest;
 /**
  * Out-of-package access into protected members of test.java.lang.invoke.remote.MethodHandle.PubExample.
  */
+@Bean
 public class RemoteExample extends MethodHandlesTest.PubExample {
     public RemoteExample() { super("RemoteExample"); }
     public static Lookup lookup() { return MethodHandles.lookup(); }

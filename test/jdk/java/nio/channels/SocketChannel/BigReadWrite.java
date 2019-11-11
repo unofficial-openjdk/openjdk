@@ -30,6 +30,7 @@ import java.io.*;
 import java.nio.*;
 import java.nio.channels.*;
 
+@Bean
 public class BigReadWrite {
 
     static int testSize = 15;

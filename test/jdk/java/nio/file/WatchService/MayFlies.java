@@ -35,6 +35,7 @@ import static java.nio.file.StandardWatchEventKinds.*;
 import java.util.*;
 import java.util.concurrent.*;
 
+@Bean
 public class MayFlies {
 
     static volatile boolean stopped;

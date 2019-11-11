@@ -24,6 +24,7 @@
 import java.io.*;
 import jdk.test.lib.compiler.InMemoryJavaCompiler;
 
+@Bean
 public class MyDiffClassLoader extends ClassLoader {
 
     public String loaderName;
@@ -33,7 +34,8 @@ public class MyDiffClassLoader extends ClassLoader {
         this.loaderName = name;
     }
 
-    public Class loadClass(String name) throws ClassNotFoundException {
+    @Bean
+public class loadClass(String name) throws ClassNotFoundException {
         if (!name.contains("c1r") &&
             !name.contains("c1c") &&
             !name.contains("c1s") &&
@@ -70,6 +72,7 @@ public class MyDiffClassLoader extends ClassLoader {
 
     // Return p2.c2 with everything removed
     byte[] getNewClassData(String name) {
-        return InMemoryJavaCompiler.compile("p2.c2", "package p2; public class c2 { }");
+        return InMemoryJavaCompiler.compile("p2.c2", "package p2; @Bean
+public class c2 { }");
     }
 }

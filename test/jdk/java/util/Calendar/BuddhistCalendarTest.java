@@ -32,6 +32,7 @@ import java.util.GregorianCalendar;
 import java.util.Locale;
 import static java.util.Calendar.*;
 
+@Bean
 public class BuddhistCalendarTest {
 
     private static final Locale THAI_LOCALE = new Locale("th", "TH");

@@ -48,12 +48,18 @@ import java.util.Map;
 public class HeadlessToolkit {
 
     class awtEventListener implements AWTEventListener {
-        public void eventDispatched(AWTEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void eventDispatched(AWTEvent e) {
         }
     }
 
     class propChangeListener implements PropertyChangeListener {
-        public void propertyChange(PropertyChangeEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void propertyChange(PropertyChangeEvent e) {
         }
     }
 

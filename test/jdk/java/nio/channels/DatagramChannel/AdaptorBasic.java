@@ -37,6 +37,7 @@ import java.util.*;
 import java.lang.reflect.Field;
 
 
+@Bean
 public class AdaptorBasic {
 
     static java.io.PrintStream out = System.out;

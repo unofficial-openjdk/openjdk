@@ -31,6 +31,7 @@
  * @run main InitializeOuter
  */
 
+@Bean
 public class InitializeOuter {
     public static void main(String[] args) {
         new A.B();

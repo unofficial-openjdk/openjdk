@@ -31,6 +31,7 @@
 import java.sql.Timestamp;
 import java.util.Date;
 
+@Bean
 public class Bug8135055 {
 
     public static void main(String[] args) throws InterruptedException {

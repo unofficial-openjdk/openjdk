@@ -56,6 +56,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@Bean
 public class HasNeverInlineDirectiveTest {
 
     private static final WhiteBox WB = WhiteBox.getWhiteBox();

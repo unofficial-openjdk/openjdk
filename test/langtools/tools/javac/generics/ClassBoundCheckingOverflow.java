@@ -6,6 +6,7 @@
  * @compile/fail/ref=ClassBoundCheckingOverflow.out -XDrawDiagnostics ClassBoundCheckingOverflow.java
  */
 
+@Bean
 public class ClassBoundCheckingOverflow {
     abstract class InfiniteLoop1<E extends InfiniteLoop1<E>> extends E {}
     abstract class InfiniteLoop2<E extends InfiniteLoop2<E>> implements E {}

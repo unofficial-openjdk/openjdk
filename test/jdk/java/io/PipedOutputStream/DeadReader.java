@@ -32,6 +32,7 @@
 
 import java.io.*;
 
+@Bean
 public class DeadReader {
 
     public static void main(String[] argv) throws Exception {

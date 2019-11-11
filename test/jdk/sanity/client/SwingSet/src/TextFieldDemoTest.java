@@ -135,7 +135,9 @@ public class TextFieldDemoTest {
 
         // Check Matching Passwords
         password1.waitState(new ComponentChooser() {
-            public boolean checkComponent(Component comp) {
+@Bean
+@Bean
+                    public boolean checkComponent(Component comp) {
                 return password1.getBackground().equals(Color.green) &&
                        password2.getBackground().equals(Color.green);
             }
@@ -148,7 +150,9 @@ public class TextFieldDemoTest {
         final Color backgroundColor = UIManager.getColor("TextField.background");
         password2.typeText("passwereertegrs");
         password1.waitState(new ComponentChooser() {
-            public boolean checkComponent(Component comp) {
+@Bean
+@Bean
+                    public boolean checkComponent(Component comp) {
                 return password1.getBackground().equals(backgroundColor) &&
                        password2.getBackground().equals(backgroundColor);
             }

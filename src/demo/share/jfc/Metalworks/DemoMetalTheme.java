@@ -54,6 +54,7 @@ import javax.swing.plaf.metal.MetalIconFactory;
  * @author Steve Wilson
  * @author Alexander Kouznetsov
  */
+@Bean
 public class DemoMetalTheme extends DefaultMetalTheme {
 
     @Override
@@ -100,7 +101,11 @@ public class DemoMetalTheme extends DefaultMetalTheme {
     }
 
     @Override
-    public void addCustomEntriesToTable(UIDefaults table) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void addCustomEntriesToTable(UIDefaults table) {
         super.addCustomEntriesToTable(table);
 
         final int internalFrameIconSize = 22;

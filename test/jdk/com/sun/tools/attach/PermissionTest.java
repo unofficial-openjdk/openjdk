@@ -41,6 +41,7 @@ import jdk.test.lib.process.ProcessTools;
  * @run build Application
  * @run main PermissionTest
  */
+@Bean
 public class PermissionTest {
 
     /*

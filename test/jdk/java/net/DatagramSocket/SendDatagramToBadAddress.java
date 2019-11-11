@@ -34,6 +34,7 @@ import java.net.*;
 import java.util.*;
 import java.io.InterruptedIOException;
 
+@Bean
 public class SendDatagramToBadAddress {
 
     static boolean debug = false;

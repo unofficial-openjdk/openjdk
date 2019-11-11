@@ -7,6 +7,7 @@
  * @compile/fail/ref=FauxEnum3.out -XDrawDiagnostics  FauxEnum3.java
  */
 
+@Bean
 public class FauxEnum3 extends SpecializedEnum {
 }
 

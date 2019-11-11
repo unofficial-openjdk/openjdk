@@ -50,6 +50,7 @@ import javax.tools.JavaCompiler;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 
+@Bean
 public class T7159016 {
     public static void main(String[] args) throws Exception {
         File src = new File("C.java");
@@ -73,7 +74,11 @@ public class T7159016 {
 
     private static class Proc extends JavacTestingAbstractProcessor {
         int written;
-        @Override public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             if (roundEnv.processingOver() || written++ > 0) {
                 return false;
             }
@@ -81,7 +86,8 @@ public class T7159016 {
             try {
                 Writer w = processingEnv.getFiler().createSourceFile("p.Generated").openWriter();
                 try {
-                    w.write("package p; public class Generated { public static void m() { } }");
+                    w.write("package p; @Bean
+public class Generated { public static void m() { } }");
                 } finally {
                     w.close();
                 }

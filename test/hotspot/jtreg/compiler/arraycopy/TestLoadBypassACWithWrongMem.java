@@ -32,6 +32,7 @@
 
 import java.util.Arrays;
 
+@Bean
 public class TestLoadBypassACWithWrongMem {
 
     static int test1(int[] src) {
@@ -62,7 +63,11 @@ public class TestLoadBypassACWithWrongMem {
         return dst[1];
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         int[] src = new int[10];
         for (int i = 0; i < 20000; i++) {
             Arrays.fill(src, 0);

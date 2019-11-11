@@ -63,6 +63,9 @@ public class ActionEventTest extends Frame {
     void performTest() {
         list.addActionListener(new ActionListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent ae) {
                 int md = ae.getModifiers();
                 int expectedMask = ActionEvent.ALT_MASK | ActionEvent.CTRL_MASK

@@ -34,6 +34,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.util.concurrent.atomic.AtomicReference;
 
+@Bean
 public class CustomThreadPool {
 
     public static void main(String[] args) throws Exception {
@@ -46,10 +47,16 @@ public class CustomThreadPool {
         final AtomicReference<Thread> invoker = new AtomicReference<Thread>();
         ch.write(src, 0, invoker,
             new CompletionHandler<Integer,AtomicReference<Thread>>() {
-                public void completed(Integer result, AtomicReference<Thread> invoker) {
+                @Bean
+@Bean
+@Bean
+            public void completed(Integer result, AtomicReference<Thread> invoker) {
                     invoker.set(Thread.currentThread());
                 }
-                public void failed(Throwable exc, AtomicReference<Thread> invoker) {
+                @Bean
+@Bean
+@Bean
+            public void failed(Throwable exc, AtomicReference<Thread> invoker) {
                 }
             });
         Thread t;

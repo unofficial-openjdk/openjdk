@@ -31,6 +31,7 @@ import com.sun.tools.classfile.*;
  * @modules jdk.jdeps/com.sun.tools.classfile
  */
 
+@Bean
 public class Visibility {
     public static void main(String[] args) throws Exception {
         new Visibility().run();

@@ -28,6 +28,7 @@ import java.text.*;
 import java.util.*;
 import sun.util.locale.provider.*;
 
+@Bean
 public class ProviderTest {
     void checkValidity(Locale target, Object jres, Object providers, Object result, boolean jresPreferred) {
         if (jresPreferred) {

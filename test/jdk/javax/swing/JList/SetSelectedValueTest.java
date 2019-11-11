@@ -36,6 +36,7 @@ import javax.swing.ListSelectionModel;
 import java.util.Collections;
 import java.util.List;
 
+@Bean
 public class SetSelectedValueTest {
     public static void main(String[] args) throws Exception {
 

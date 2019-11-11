@@ -55,6 +55,7 @@ interface B4 extends D4 { void m(); }
 interface C4 extends D4 {}
 interface D4 { void m(); }
 
+@Bean
 public class StarInheritance {
     private static int n = 1;
 

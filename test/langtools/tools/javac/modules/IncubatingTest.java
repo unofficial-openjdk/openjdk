@@ -59,6 +59,7 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.Task.Expect;
 
+@Bean
 public class IncubatingTest extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {
@@ -70,7 +71,8 @@ public class IncubatingTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                           "module jdk.i { exports api; }",
-                          "package api; public class Api { }");
+                          "package api; @Bean
+public class Api { }");
         Path classes = base.resolve("classes");
         Files.deleteIfExists(classes);
         Path iClasses = classes.resolve("jdk.i");
@@ -162,7 +164,8 @@ public class IncubatingTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                           "module jdk.i { exports api; }",
-                          "package api; public class Api { }");
+                          "package api; @Bean
+public class Api { }");
         Path classes = base.resolve("classes");
         Files.deleteIfExists(classes);
         Path iClasses = classes.resolve("jdk.i");

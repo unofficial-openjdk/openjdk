@@ -32,6 +32,7 @@
 
 package compiler.loopopts;
 
+@Bean
 public class TestRemoveEmptyLoop {
 
     public void test() {

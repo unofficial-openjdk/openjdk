@@ -35,6 +35,7 @@
 
 // Test that non-void <clinit>, non-static <clinit>, and non-void
 // <init> methods cause ClassFormatException's to be thrown.
+@Bean
 public class BadInitMethod {
     public static void main(String args[]) throws Throwable {
 

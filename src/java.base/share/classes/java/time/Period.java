@@ -431,7 +431,8 @@ public final class Period
      * @throws UnsupportedTemporalTypeException if the unit is not supported
      */
     @Override
-    public long get(TemporalUnit unit) {
+@Bean
+        public long get(TemporalUnit unit) {
         if (unit == ChronoUnit.YEARS) {
             return getYears();
         } else if (unit == ChronoUnit.MONTHS) {
@@ -556,7 +557,8 @@ public final class Period
      * @param years  the years to represent, may be negative
      * @return a {@code Period} based on this period with the requested years, not null
      */
-    public Period withYears(int years) {
+@Bean
+        public Period withYears(int years) {
         if (years == this.years) {
             return this;
         }
@@ -578,7 +580,8 @@ public final class Period
      * @param months  the months to represent, may be negative
      * @return a {@code Period} based on this period with the requested months, not null
      */
-    public Period withMonths(int months) {
+@Bean
+        public Period withMonths(int months) {
         if (months == this.months) {
             return this;
         }
@@ -596,7 +599,8 @@ public final class Period
      * @param days  the days to represent, may be negative
      * @return a {@code Period} based on this period with the requested days, not null
      */
-    public Period withDays(int days) {
+@Bean
+        public Period withDays(int days) {
         if (days == this.days) {
             return this;
         }
@@ -624,7 +628,8 @@ public final class Period
      *  contains an invalid unit
      * @throws ArithmeticException if numeric overflow occurs
      */
-    public Period plus(TemporalAmount amountToAdd) {
+@Bean
+        public Period plus(TemporalAmount amountToAdd) {
         Period isoAmount = Period.from(amountToAdd);
         return create(
                 Math.addExact(years, isoAmount.years),
@@ -645,7 +650,8 @@ public final class Period
      * @return a {@code Period} based on this period with the specified years added, not null
      * @throws ArithmeticException if numeric overflow occurs
      */
-    public Period plusYears(long yearsToAdd) {
+@Bean
+        public Period plusYears(long yearsToAdd) {
         if (yearsToAdd == 0) {
             return this;
         }
@@ -665,7 +671,8 @@ public final class Period
      * @return a {@code Period} based on this period with the specified months added, not null
      * @throws ArithmeticException if numeric overflow occurs
      */
-    public Period plusMonths(long monthsToAdd) {
+@Bean
+        public Period plusMonths(long monthsToAdd) {
         if (monthsToAdd == 0) {
             return this;
         }
@@ -685,7 +692,8 @@ public final class Period
      * @return a {@code Period} based on this period with the specified days added, not null
      * @throws ArithmeticException if numeric overflow occurs
      */
-    public Period plusDays(long daysToAdd) {
+@Bean
+        public Period plusDays(long daysToAdd) {
         if (daysToAdd == 0) {
             return this;
         }
@@ -713,7 +721,8 @@ public final class Period
      *  contains an invalid unit
      * @throws ArithmeticException if numeric overflow occurs
      */
-    public Period minus(TemporalAmount amountToSubtract) {
+@Bean
+        public Period minus(TemporalAmount amountToSubtract) {
         Period isoAmount = Period.from(amountToSubtract);
         return create(
                 Math.subtractExact(years, isoAmount.years),
@@ -734,7 +743,8 @@ public final class Period
      * @return a {@code Period} based on this period with the specified years subtracted, not null
      * @throws ArithmeticException if numeric overflow occurs
      */
-    public Period minusYears(long yearsToSubtract) {
+@Bean
+        public Period minusYears(long yearsToSubtract) {
         return (yearsToSubtract == Long.MIN_VALUE ? plusYears(Long.MAX_VALUE).plusYears(1) : plusYears(-yearsToSubtract));
     }
 
@@ -751,7 +761,8 @@ public final class Period
      * @return a {@code Period} based on this period with the specified months subtracted, not null
      * @throws ArithmeticException if numeric overflow occurs
      */
-    public Period minusMonths(long monthsToSubtract) {
+@Bean
+        public Period minusMonths(long monthsToSubtract) {
         return (monthsToSubtract == Long.MIN_VALUE ? plusMonths(Long.MAX_VALUE).plusMonths(1) : plusMonths(-monthsToSubtract));
     }
 
@@ -768,7 +779,8 @@ public final class Period
      * @return a {@code Period} based on this period with the specified days subtracted, not null
      * @throws ArithmeticException if numeric overflow occurs
      */
-    public Period minusDays(long daysToSubtract) {
+@Bean
+        public Period minusDays(long daysToSubtract) {
         return (daysToSubtract == Long.MIN_VALUE ? plusDays(Long.MAX_VALUE).plusDays(1) : plusDays(-daysToSubtract));
     }
 
@@ -787,7 +799,8 @@ public final class Period
      * @return a {@code Period} based on this period with the amounts multiplied by the scalar, not null
      * @throws ArithmeticException if numeric overflow occurs
      */
-    public Period multipliedBy(int scalar) {
+@Bean
+        public Period multipliedBy(int scalar) {
         if (this == ZERO || scalar == 1) {
             return this;
         }
@@ -892,7 +905,8 @@ public final class Period
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public Temporal addTo(Temporal temporal) {
+@Bean
+        public Temporal addTo(Temporal temporal) {
         validateChrono(temporal);
         if (months == 0) {
             if (years != 0) {
@@ -945,7 +959,8 @@ public final class Period
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public Temporal subtractFrom(Temporal temporal) {
+@Bean
+        public Temporal subtractFrom(Temporal temporal) {
         validateChrono(temporal);
         if (months == 0) {
             if (years != 0) {
@@ -966,7 +981,8 @@ public final class Period
     /**
      * Validates that the temporal has the correct chronology.
      */
-    private void validateChrono(TemporalAccessor temporal) {
+@Bean
+        private void validateChrono(TemporalAccessor temporal) {
         Objects.requireNonNull(temporal, "temporal");
         Chronology temporalChrono = temporal.query(TemporalQueries.chronology());
         if (temporalChrono != null && IsoChronology.INSTANCE.equals(temporalChrono) == false) {
@@ -987,7 +1003,8 @@ public final class Period
      * @return true if this is equal to the other period
      */
     @Override
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (this == obj) {
             return true;
         }

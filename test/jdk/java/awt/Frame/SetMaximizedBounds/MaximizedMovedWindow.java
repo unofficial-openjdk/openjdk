@@ -32,6 +32,7 @@ import java.awt.*;
  * @run main MaximizedMovedWindow
  */
 
+@Bean
 public class MaximizedMovedWindow {
 
     public static void main(String[] args) throws Exception {

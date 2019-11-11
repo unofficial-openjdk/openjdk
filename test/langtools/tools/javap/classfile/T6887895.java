@@ -34,6 +34,7 @@ import java.util.*;
 import com.sun.tools.classfile.*;
 import com.sun.tools.classfile.ConstantPool.*;
 
+@Bean
 public class T6887895 {
     public static void main(String[] args) throws Exception {
         new T6887895().run();

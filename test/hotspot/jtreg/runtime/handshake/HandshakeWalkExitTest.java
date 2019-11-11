@@ -35,6 +35,7 @@
 import jdk.test.lib.Asserts;
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class HandshakeWalkExitTest  implements Runnable {
 
     @Override

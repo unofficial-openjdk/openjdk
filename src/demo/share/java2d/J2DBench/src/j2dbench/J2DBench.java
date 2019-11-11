@@ -372,7 +372,8 @@ public class J2DBench {
         }
         if (verbose.isEnabled()) {
             Group.root.traverse(new Node.Visitor() {
-                public void visit(Node node) {
+@Bean
+                    public void visit(Node node) {
                     System.out.println(node);
                 }
             });
@@ -706,7 +707,8 @@ public class J2DBench {
         p.setLayout(new BoxLayout(p, BoxLayout.X_AXIS));
         JButton b = new JButton("Run Tests...");
         b.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 if (!saveOrDiscardLastResults()) {
                     return;
                 }
@@ -728,7 +730,8 @@ public class J2DBench {
 
         b = new JButton("Load Options");
         b.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 JFileChooser fc = getFileChooser();
                 int ret = fc.showOpenDialog(f);
                 if (ret == JFileChooser.APPROVE_OPTION) {
@@ -743,7 +746,8 @@ public class J2DBench {
 
         b = new JButton("Save Options");
         b.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 JFileChooser fc = getFileChooser();
                 int ret = fc.showSaveDialog(f);
                 if (ret == JFileChooser.APPROVE_OPTION) {
@@ -758,7 +762,8 @@ public class J2DBench {
 
         b = new JButton("Save Results");
         b.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 if (saveResults()) {
                     lastResults = null;
                 }
@@ -768,7 +773,8 @@ public class J2DBench {
 
         b = new JButton("Quit");
         b.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 if (!saveOrDiscardLastResults()) {
                     return;
                 }
@@ -789,7 +795,8 @@ public class J2DBench {
         if (showresults) {
             f = new Frame("J2DBench test run");
             f.addWindowListener(new WindowAdapter() {
-                public void windowClosing(WindowEvent e) {
+@Bean
+                    public void windowClosing(WindowEvent e) {
                     env.stop();
                 }
             });

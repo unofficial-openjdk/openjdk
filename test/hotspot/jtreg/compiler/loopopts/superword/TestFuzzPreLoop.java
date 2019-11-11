@@ -30,6 +30,7 @@
 
 package compiler.loopopts.superword;
 
+@Bean
 public class TestFuzzPreLoop {
     static Object sink;
     short sFld = -19206;

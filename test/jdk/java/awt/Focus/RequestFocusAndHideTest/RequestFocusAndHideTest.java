@@ -42,6 +42,7 @@ import java.awt.Robot;
 
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class RequestFocusAndHideTest {
     public static void main(String[] args) throws InterruptedException, java.lang.reflect.InvocationTargetException
     {

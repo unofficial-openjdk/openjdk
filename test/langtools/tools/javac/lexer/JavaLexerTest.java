@@ -43,6 +43,7 @@ import com.sun.tools.javac.parser.Tokens.TokenKind;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.Log;
 
+@Bean
 public class JavaLexerTest {
     public static void main(String... args) throws Exception {
         new JavaLexerTest().run();

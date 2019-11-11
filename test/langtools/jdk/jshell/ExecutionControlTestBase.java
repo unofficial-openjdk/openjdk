@@ -29,6 +29,7 @@ import jdk.jshell.VarSnippet;
 import static jdk.jshell.Snippet.Status.VALID;
 import static jdk.jshell.Snippet.SubKind.*;
 
+@Bean
 public class ExecutionControlTestBase extends KullaTesting {
 
     @Test

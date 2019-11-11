@@ -58,6 +58,7 @@ import java.net.*;
  *
  * @author Jeff Dinkins
  */
+@Bean
 public class ListDemo extends DemoModule {
     JList list;
 
@@ -226,13 +227,21 @@ public class ListDemo extends DemoModule {
     }
 
     private FocusListener listFocusListener = new FocusAdapter() {
-        public void focusGained(FocusEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void focusGained(FocusEvent e) {
             JComponent c = (JComponent)e.getComponent();
             c.scrollRectToVisible(new Rectangle(0, 0, c.getWidth(), c.getHeight()));
         }
     };
 
-    public void addPrefix(String prefix, boolean selected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void addPrefix(String prefix, boolean selected) {
         if(prefixAction == null) {
             prefixAction = new UpdatePrefixListAction(listModel);
         }
@@ -246,7 +255,11 @@ public class ListDemo extends DemoModule {
         cb.addFocusListener(listFocusListener);
     }
 
-    public void addSuffix(String suffix, boolean selected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void addSuffix(String suffix, boolean selected) {
         if(suffixAction == null) {
             suffixAction = new UpdateSuffixListAction(listModel);
         }
@@ -266,7 +279,11 @@ public class ListDemo extends DemoModule {
             this.listModel = listModel;
         }
 
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             JCheckBox cb = (JCheckBox) e.getSource();
             if(cb.isSelected()) {
                 listModel.addPrefix(cb.getText());
@@ -282,7 +299,11 @@ public class ListDemo extends DemoModule {
             this.listModel = listModel;
         }
 
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             JCheckBox cb = (JCheckBox) e.getSource();
             if(cb.isSelected()) {
                 listModel.addSuffix(cb.getText());
@@ -309,26 +330,42 @@ public class ListDemo extends DemoModule {
             fireContentsChanged(this, 0, getSize());
         }
 
-        public void addPrefix(String s) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addPrefix(String s) {
             if(!prefix.contains(s)) {
                 prefix.addElement(s);
                 update();
             }
         }
 
-        public void removePrefix(String s) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePrefix(String s) {
             prefix.removeElement(s);
             update();
         }
 
-        public void addSuffix(String s) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addSuffix(String s) {
             if(!suffix.contains(s)) {
                 suffix.addElement(s);
                 update();
             }
         }
 
-        public void removeSuffix(String s) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removeSuffix(String s) {
             suffix.removeElement(s);
             update();
         }
@@ -337,7 +374,11 @@ public class ListDemo extends DemoModule {
             return prefix.size() * suffix.size();
         }
 
-        public Object getElementAt(int index) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Object getElementAt(int index) {
             if(permuter == null) {
                 update();
             }

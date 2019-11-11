@@ -43,6 +43,7 @@ import com.sun.tools.javac.util.*;
 
 
 @SupportedAnnotationTypes("*")
+@Bean
 public class T6358024 extends AbstractProcessor {
     static JavacFileManager fm;
     public static void main(String... args) throws Throwable {
@@ -93,16 +94,28 @@ public class T6358024 extends AbstractProcessor {
                                      + "expected " + expect + ", found " + tl.started);
     }
 
-    public boolean process(Set<? extends TypeElement> tes, RoundEnvironment renv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> tes, RoundEnvironment renv) {
         return true;
     }
 
     static class MyTaskListener implements TaskListener {
-        public void started(TaskEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void started(TaskEvent e) {
             System.err.println("Started: " + e);
             started++;
         }
-        public void finished(TaskEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void finished(TaskEvent e) {
         }
 
         int started = 0;

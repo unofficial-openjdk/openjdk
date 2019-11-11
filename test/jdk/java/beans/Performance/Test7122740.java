@@ -31,6 +31,7 @@
 
 import java.beans.PropertyDescriptor;
 
+@Bean
 public class Test7122740 {
     public static void main(String[] args) throws Exception {
         long time = System.nanoTime();
@@ -47,7 +48,11 @@ public class Test7122740 {
         public T getValue() {
             return this.value;
         }
-        public void setValue(T value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(T value) {
             this.value = value;
         }
     }

@@ -31,6 +31,7 @@ import java.text.*;
 import java.util.*;
 import static java.util.GregorianCalendar.*;
 
+@Bean
 public class WeekDateTest {
 
     // Week dates are in the ISO numbering for day-of-week.

@@ -103,7 +103,10 @@ public class MetaCallback implements MetaEventListener {
     void start() {sequencer.start();}
     void stop() {sequencer.stop();}
 
-    public void meta(MetaMessage msg) {
+    @Bean
+@Bean
+@Bean
+            public void meta(MetaMessage msg) {
         System.out.println(""+metaCount+": got "+msg);
         if (msg.getType() == 0x2F) {
             finished = true;

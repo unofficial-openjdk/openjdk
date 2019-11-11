@@ -45,6 +45,7 @@ import javax.print.event.*;
 import java.io.*;
 import java.util.Locale;
 
+@Bean
 public class ServiceDialogTest {
         /**
          * Constructor
@@ -184,7 +185,8 @@ class TestPrintService implements PrintService
         return false;
     }
 
-    public Class[] getSupportedAttributeCategories()
+    @Bean
+public class[] getSupportedAttributeCategories()
     {
         int i = otherAttrCats.length;
         Class aclass[] = new Class[i];
@@ -206,7 +208,11 @@ class TestPrintService implements PrintService
         return false;
     }
 
-    public boolean isAttributeValueSupported(Attribute attrval, DocFlavor flavor, AttributeSet attributes) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean isAttributeValueSupported(Attribute attrval, DocFlavor flavor, AttributeSet attributes) {
 
         if (attrval == OrientationRequested.PORTRAIT)
                 return true;
@@ -255,7 +261,11 @@ class TestPrintService implements PrintService
         return null;
     }
 
-    public AttributeSet getUnsupportedAttributes(DocFlavor docflavor, AttributeSet attributeset) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public AttributeSet getUnsupportedAttributes(DocFlavor docflavor, AttributeSet attributeset) {
 
         if (docflavor != null && !isDocFlavorSupported(docflavor)) {
             throw new IllegalArgumentException("flavor " + docflavor + "is not supported");
@@ -296,7 +306,11 @@ class TestPrintService implements PrintService
         return "Printer : " + getName();
     }
 
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object obj) {
         return obj == this || (obj instanceof TestPrintService) && ((TestPrintService)obj).getName().equals(getName());
     }
 

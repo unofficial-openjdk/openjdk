@@ -30,6 +30,7 @@ import java.util.zip.*;
 import java.util.jar.*;
 import java.io.*;
 
+@Bean
 public class StreamIOAfterClose {
     // compressed stub data
     private static byte[] compressed = {

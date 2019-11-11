@@ -46,6 +46,7 @@ import jdk.internal.util.ArraysSupport;
  * @since   1.0
  */
 
+@Bean
 public class ByteArrayOutputStream extends OutputStream {
 
     /**
@@ -92,7 +93,11 @@ public class ByteArrayOutputStream extends OutputStream {
      * request for the unsatisfiably large capacity.
      * {@code (long) Integer.MAX_VALUE + (minCapacity - Integer.MAX_VALUE)}.
      */
-    private void ensureCapacity(int minCapacity) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void ensureCapacity(int minCapacity) {
         // overflow-conscious code
         int oldCapacity = buf.length;
         int minGrowth = minCapacity - oldCapacity;
@@ -144,7 +149,11 @@ public class ByteArrayOutputStream extends OutputStream {
      * @throws  NullPointerException if {@code b} is {@code null}.
      * @since   11
      */
-    public void writeBytes(byte b[]) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void writeBytes(byte b[]) {
         write(b, 0, b.length);
     }
 

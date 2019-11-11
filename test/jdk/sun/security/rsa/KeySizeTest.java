@@ -43,6 +43,7 @@ import java.security.spec.RSAPublicKeySpec;
  * @run main KeySizeTest 2048 5
  * @run main KeySizeTest 4096 1
  */
+@Bean
 public class KeySizeTest {
 
     /**

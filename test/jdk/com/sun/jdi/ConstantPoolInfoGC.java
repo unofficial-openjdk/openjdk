@@ -51,6 +51,7 @@ class ConstantPoolGCTarg {
 
     /********** test program **********/
 
+@Bean
 public class ConstantPoolInfoGC extends TestScaffold {
     ReferenceType targetClass;
 

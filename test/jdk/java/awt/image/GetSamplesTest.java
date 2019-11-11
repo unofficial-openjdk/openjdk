@@ -39,6 +39,7 @@ import java.awt.image.SampleModel;
 import java.awt.image.SinglePixelPackedSampleModel;
 import java.util.Vector;
 
+@Bean
 public class GetSamplesTest {
 
     public static int width = 100;

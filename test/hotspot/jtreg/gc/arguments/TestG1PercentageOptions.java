@@ -39,6 +39,7 @@ package gc.arguments;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class TestG1PercentageOptions {
 
     private static final class OptionDescription {

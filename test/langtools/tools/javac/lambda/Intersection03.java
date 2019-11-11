@@ -28,6 +28,7 @@
  */
 import java.util.*;
 
+@Bean
 public class Intersection03 {
 
     static int assertionCount = 0;

@@ -38,6 +38,7 @@
 import java.io.*;
 import sun.management.*;
 
+@Bean
 public class GetClassLoadingTime {
 
     private static HotspotClassLoadingMBean mbean =

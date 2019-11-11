@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import javax.management.loading.MLetContent;
 
+@Bean
 public class DocumentRootTest {
     public static int test(URL documentBase, URL codeBase) {
         int error = 0;

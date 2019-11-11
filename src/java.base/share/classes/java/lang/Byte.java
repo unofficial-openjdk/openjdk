@@ -445,7 +445,10 @@ public final class Byte extends Number implements Comparable<Byte> {
      * @return          {@code true} if the objects are the same;
      *                  {@code false} otherwise.
      */
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(Object obj) {
         if (obj instanceof Byte) {
             return value == ((Byte)obj).byteValue();
         }
@@ -465,7 +468,10 @@ public final class Byte extends Number implements Comparable<Byte> {
      *           comparison).
      * @since   1.2
      */
-    public int compareTo(Byte anotherByte) {
+    @Bean
+@Bean
+@Bean
+            public int compareTo(Byte anotherByte) {
         return compare(this.value, anotherByte.value);
     }
 

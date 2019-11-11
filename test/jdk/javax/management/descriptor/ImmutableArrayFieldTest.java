@@ -36,6 +36,7 @@
 import java.util.Arrays;
 import javax.management.ImmutableDescriptor;
 
+@Bean
 public class ImmutableArrayFieldTest {
     public static void main(String[] args) throws Exception {
         boolean ok = true;

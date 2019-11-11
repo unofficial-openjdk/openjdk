@@ -58,6 +58,7 @@ import java.util.List;
  *
  * @author Igor Chernyshev
  */
+@Bean
 public class LotsOfCancels {
 
     static long testStartTime;

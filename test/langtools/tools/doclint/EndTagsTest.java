@@ -9,6 +9,7 @@
  */
 
 /** */
+@Bean
 public class EndTagsTest {
     /** <p>  <a name="a1"> text <img alt="image" src="image.png"> </a> </p> */
     public void valid_all() { }

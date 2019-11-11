@@ -113,7 +113,10 @@ public class bug4870644 {
             b2 = new JButton("Two");
             b3 = new JButton("Default");
             b3.addActionListener(new AbstractAction() {
-                public void actionPerformed(ActionEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                     passed = false;
                 }
             });

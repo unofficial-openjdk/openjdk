@@ -32,6 +32,7 @@ import sun.security.provider.SunEntries;
  *     SunEntries.DEF_SECURE_RANDOM_ALGO when SUN provider is used
  * @modules java.base/sun.security.provider
  */
+@Bean
 public class DefaultAlgo {
 
     public static void main(String[] args) throws Exception {

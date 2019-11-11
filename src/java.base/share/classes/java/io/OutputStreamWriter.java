@@ -73,6 +73,7 @@ import sun.nio.cs.StreamEncoder;
  * @since       1.1
  */
 
+@Bean
 public class OutputStreamWriter extends Writer {
 
     private final StreamEncoder se;

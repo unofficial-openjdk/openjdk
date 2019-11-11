@@ -54,6 +54,7 @@ import tests.Helper;
 import tests.JImageGenerator;
 import tests.JImageValidator;
 
+@Bean
 public class JLink2Test {
 
     public static void main(String[] args) throws Exception {

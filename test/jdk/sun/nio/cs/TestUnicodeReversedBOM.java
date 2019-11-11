@@ -36,6 +36,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 @Test
+@Bean
 public class TestUnicodeReversedBOM {
     private static byte[] A_REVERSED_BE =
         {(byte)0x0, (byte)'A', (byte)0xff, (byte)0xfe};

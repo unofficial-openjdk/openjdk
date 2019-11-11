@@ -104,6 +104,7 @@ package gc.arguments;
  * @run main/othervm gc.arguments.TestUseCompressedOopsErgo -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC
  */
 
+@Bean
 public class TestUseCompressedOopsErgo {
 
   public static void main(String args[]) throws Exception {

@@ -48,6 +48,7 @@ import jdk.test.lib.Asserts;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class TestReclaimStringsLeaksMemory {
 
     // The amount of memory in kB reserved in the "Symbol" category that indicates a memory leak for

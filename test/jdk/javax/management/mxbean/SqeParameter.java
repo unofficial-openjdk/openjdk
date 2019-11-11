@@ -29,6 +29,7 @@ import java.io.Serializable;
  * reconstructible following MXBean specification, so that SqeParameter can be
  * used for what it is designed to.
  */
+@Bean
 public class SqeParameter implements Serializable {
 
     private static boolean weird;
@@ -57,7 +58,11 @@ public class SqeParameter implements Serializable {
         return glop;
     }
 
-    public void setGlop(String value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setGlop(String value) {
         glop = value;
     }
 }

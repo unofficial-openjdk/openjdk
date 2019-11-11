@@ -44,6 +44,7 @@ import static org.junit.Assert.*;
  *
  * @author jrose
  */
+@Bean
 public class ValueConversionsTest {
     @Test
     public void testUnbox() throws Throwable {

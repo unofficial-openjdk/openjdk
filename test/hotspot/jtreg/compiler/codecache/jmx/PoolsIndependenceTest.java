@@ -58,6 +58,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@Bean
 public class PoolsIndependenceTest implements NotificationListener {
 
     private final Map<String, AtomicInteger> counters;
@@ -125,7 +126,11 @@ public class PoolsIndependenceTest implements NotificationListener {
     }
 
     @Override
-    public void handleNotification(Notification notification, Object handback) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void handleNotification(Notification notification, Object handback) {
         String nType = notification.getType();
         String poolName
                 = CodeCacheUtils.getPoolNameFromNotification(notification);

@@ -184,7 +184,8 @@ public class Choice extends Component implements ItemSelectable, Accessible {
      * @return the item at the specified index
      * @see    #getItemCount
      */
-    public String getItem(int index) {
+@Bean
+        public String getItem(int index) {
         return getItemImpl(index);
     }
 
@@ -203,7 +204,8 @@ public class Choice extends Component implements ItemSelectable, Accessible {
      *                  {@code null}
      * @since      1.1
      */
-    public void add(String item) {
+@Bean
+        public void add(String item) {
         addItem(item);
     }
 
@@ -216,7 +218,8 @@ public class Choice extends Component implements ItemSelectable, Accessible {
      * @exception NullPointerException if the item's value is equal to
      *          {@code null}
      */
-    public void addItem(String item) {
+@Bean
+        public void addItem(String item) {
         synchronized (this) {
             insertNoInvalidate(item, pItems.size());
         }
@@ -235,7 +238,8 @@ public class Choice extends Component implements ItemSelectable, Accessible {
      * @exception NullPointerException if the item's value is equal to
      *          {@code null}
      */
-    private void insertNoInvalidate(String item, int index) {
+@Bean
+        private void insertNoInvalidate(String item, int index) {
         if (item == null) {
             throw new
                 NullPointerException("cannot add null item to Choice");
@@ -270,7 +274,8 @@ public class Choice extends Component implements ItemSelectable, Accessible {
      * @param index the position at which the item should be inserted
      * @exception IllegalArgumentException if index is less than 0
      */
-    public void insert(String item, int index) {
+@Bean
+        public void insert(String item, int index) {
         synchronized (this) {
             if (index < 0) {
                 throw new IllegalArgumentException("index less than zero.");
@@ -298,7 +303,8 @@ public class Choice extends Component implements ItemSelectable, Accessible {
      *                     exist in the choice menu
      * @since      1.1
      */
-    public void remove(String item) {
+@Bean
+        public void remove(String item) {
         synchronized (this) {
             int index = pItems.indexOf(item);
             if (index < 0) {
@@ -326,7 +332,8 @@ public class Choice extends Component implements ItemSelectable, Accessible {
      *          position is out of bounds
      * @since      1.1
      */
-    public void remove(int position) {
+@Bean
+        public void remove(int position) {
         synchronized (this) {
             removeNoInvalidate(position);
         }
@@ -342,7 +349,8 @@ public class Choice extends Component implements ItemSelectable, Accessible {
      * own synchronization before invoking this method.
      * @param      position   the position of the item
      */
-    private void removeNoInvalidate(int position) {
+@Bean
+        private void removeNoInvalidate(int position) {
         pItems.removeElementAt(position);
         ChoicePeer peer = (ChoicePeer)this.peer;
         if (peer != null) {
@@ -598,7 +606,8 @@ public class Choice extends Component implements ItemSelectable, Accessible {
      * @see        #processItemEvent
      * @since      1.1
      */
-    protected void processEvent(AWTEvent e) {
+@Bean
+        protected void processEvent(AWTEvent e) {
         if (e instanceof ItemEvent) {
             processItemEvent((ItemEvent)e);
             return;
@@ -630,7 +639,8 @@ public class Choice extends Component implements ItemSelectable, Accessible {
      * @see         java.awt.Component#enableEvents
      * @since       1.1
      */
-    protected void processItemEvent(ItemEvent e) {
+@Bean
+        protected void processItemEvent(ItemEvent e) {
         ItemListener listener = itemListener;
         if (listener != null) {
             listener.itemStateChanged(e);
@@ -813,7 +823,8 @@ public class Choice extends Component implements ItemSelectable, Accessible {
          * @return a String description of the action
          * @see #getAccessibleActionCount
          */
-        public String getAccessibleActionDescription(int i) {
+@Bean
+            public String getAccessibleActionDescription(int i) {
             return null;  //  To be fully implemented in a future release
         }
 
@@ -824,7 +835,8 @@ public class Choice extends Component implements ItemSelectable, Accessible {
          * @return true if the action was performed; otherwise false.
          * @see #getAccessibleActionCount
          */
-        public boolean doAccessibleAction(int i) {
+@Bean
+            public boolean doAccessibleAction(int i) {
             return false;  //  To be fully implemented in a future release
         }
 

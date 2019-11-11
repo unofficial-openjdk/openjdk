@@ -30,6 +30,7 @@ import javax.tools.*;
 // More general parameter limit testing framework, and designed so
 // that it could be expanded into a general limits-testing framework
 // in the future.
+@Bean
 public class NumArgsTest {
 
     private static final NumArgsTest.NestingDef[] NO_NESTING = {};
@@ -136,7 +137,8 @@ public class NumArgsTest {
                                  final PrintWriter stream)
         throws IOException {
         final String fullName = testName + (pass ? "Pass" : "Fail");
-        stream.write("public class ");
+        stream.write("@Bean
+public class ");
         stream.write(fullName);
         stream.write(" {\n");
         for(int i = 0; i < nesting.length; i++)
@@ -239,19 +241,28 @@ public class NumArgsTest {
             this.name = name;
             this.isStatic = isStatic;
         }
-        public void writeBefore(final PrintWriter stream) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void writeBefore(final PrintWriter stream) {
             stream.write("public ");
             if (isStatic) stream.write("static");
             stream.write(" class ");
             stream.write(name);
             stream.write(" {\n");
         }
-        public void writeAfter(final PrintWriter stream) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void writeAfter(final PrintWriter stream) {
             stream.write("}\n");
         }
     }
 
-    public class TestDiagnosticHandler<T> implements DiagnosticListener<T> {
+    @Bean
+public class TestDiagnosticHandler<T> implements DiagnosticListener<T> {
         public boolean sawError;
         public final String target;
 
@@ -259,7 +270,11 @@ public class NumArgsTest {
             this.target = target;
         }
 
-        public void report(final Diagnostic<? extends T> diag) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void report(final Diagnostic<? extends T> diag) {
             if (diag.getCode().equals(target))
                 sawError = true;
         }

@@ -55,7 +55,10 @@ public class ExecCommand {
             return str;
         }
 
-        @Override public void checkExec(String cmd) {
+        @Override @Bean
+@Bean
+@Bean
+            public void checkExec(String cmd) {
             String ncmd = (new File(unquote(cmd))).getPath();
             if ( ncmd.equals(".\\Program")
               || ncmd.equals("\".\\Program")
@@ -68,8 +71,14 @@ public class ExecCommand {
             super.checkExec(cmd);
         }
 
-        @Override public void checkDelete(String file) {}
-        @Override public void checkRead(String file) {}
+        @Override @Bean
+@Bean
+@Bean
+            public void checkDelete(String file) {}
+        @Override @Bean
+@Bean
+@Bean
+            public void checkRead(String file) {}
     }
 
     // Parameters for the Runtime.exec calls

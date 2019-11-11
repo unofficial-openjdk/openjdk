@@ -47,6 +47,7 @@ import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 
+@Bean
 public class UnderlineTest {
     static class FontsPanel extends Container {
         FontsPanel(Font[] fonts) {
@@ -69,7 +70,10 @@ public class UnderlineTest {
             setSize(fpd);
         }
 
-        public void paintComponent(Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paintComponent(Graphics g) {
             g.setColor(Color.WHITE);
             g.fillRect(0, 0, fpd.width, fpd.height);
 

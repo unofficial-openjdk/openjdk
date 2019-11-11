@@ -32,6 +32,7 @@ import java.net.*;
 import java.io.*;
 import java.nio.file.Path;
 
+@Bean
 public class B6896088 {
 
    public static void main(String[] args) throws Exception {

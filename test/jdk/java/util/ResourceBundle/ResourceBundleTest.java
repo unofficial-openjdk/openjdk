@@ -67,6 +67,7 @@ import java.util.ResourceBundle.Control;
 import java.io.*;
 import java.net.URL;
 
+@Bean
 public class ResourceBundleTest extends RBTestFmwk {
     public static void main(String[] args) throws Exception {
         new ResourceBundleTest().run(args);
@@ -156,7 +157,11 @@ public class ResourceBundleTest extends RBTestFmwk {
         doListResourceBundleTest(bundle);
     }
 
-    private void doListResourceBundleTest(ResourceBundle bundle) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void doListResourceBundleTest(ResourceBundle bundle) {
         // load up the resource and check to make sure we got the right class
         // all of these resources are defined in TestResource; it doesn' inherit from anybody
         String  test1 = bundle.getString("Now");
@@ -413,7 +418,11 @@ public class ResourceBundleTest extends RBTestFmwk {
         }
     }
 
-    private void checkKeys(Enumeration testKeys, String[] expectedKeys) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkKeys(Enumeration testKeys, String[] expectedKeys) {
         Hashtable   hash = new Hashtable();
         String      element;
         int         elementCount = 0;
@@ -438,15 +447,24 @@ public class ResourceBundleTest extends RBTestFmwk {
             super(DummyClassLoader.class.getClassLoader());
         }
 
-        public Class<?> loadClass(String name) throws ClassNotFoundException {
+        @Bean
+public class<?> loadClass(String name) throws ClassNotFoundException {
             return DummyClassLoader.class.getClassLoader().loadClass(name);
         }
 
-        public URL getResource(String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public URL getResource(String name) {
             return DummyClassLoader.class.getClassLoader().getResource(name);
         }
 
-        public InputStream getResourceAsStream(String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public InputStream getResourceAsStream(String name) {
             return DummyClassLoader.class.getClassLoader().getResourceAsStream(name);
         }
     }

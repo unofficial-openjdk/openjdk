@@ -35,6 +35,7 @@ import java.util.TimeZone;
 import java.util.Arrays;
 import java.util.List;
 
+@Bean
 public class Bug8149452 {
 
     public static void main(String[] args) {

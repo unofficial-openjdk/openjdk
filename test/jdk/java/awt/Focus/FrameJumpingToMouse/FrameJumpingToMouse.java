@@ -37,6 +37,7 @@ import java.awt.event.InputEvent;
 import javax.swing.JFrame;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class FrameJumpingToMouse {
 
     JFrame frame = new JFrame("Test jumping frame");

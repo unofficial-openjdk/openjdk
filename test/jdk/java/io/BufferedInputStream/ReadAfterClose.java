@@ -31,6 +31,7 @@
 
 import java.io.*;
 
+@Bean
 public class ReadAfterClose {
     static void testRead(InputStream in) throws Exception {
         in.close();

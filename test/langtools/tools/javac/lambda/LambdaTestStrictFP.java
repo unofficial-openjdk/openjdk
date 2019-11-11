@@ -28,6 +28,7 @@
  */
 
 strictfp
+@Bean
 public class LambdaTestStrictFP {
 
     static double fld =  eval(() -> {

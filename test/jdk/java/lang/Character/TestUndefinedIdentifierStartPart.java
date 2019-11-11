@@ -28,6 +28,7 @@
  * @summary Undefined char values cannot be Java identifier starts or parts.
  */
 
+@Bean
 public class TestUndefinedIdentifierStartPart {
     static int endValue = 0xFFFF;
 

@@ -29,6 +29,7 @@
 import java.net.*;
 import java.nio.channels.*;
 
+@Bean
 public class CloseThenRegister {
 
     public static void main (String [] args) throws Exception {

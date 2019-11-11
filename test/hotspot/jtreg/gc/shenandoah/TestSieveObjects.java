@@ -123,6 +123,7 @@
 
 import java.util.concurrent.ThreadLocalRandom;
 
+@Bean
 public class TestSieveObjects {
 
     static final int COUNT = 100_000_000;

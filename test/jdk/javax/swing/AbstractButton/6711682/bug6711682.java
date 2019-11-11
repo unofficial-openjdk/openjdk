@@ -104,6 +104,9 @@ public class bug6711682 {
                 return editorCb;
             }
 
+            @Bean
+@Bean
+@Bean
             public void addCellEditorListener(CellEditorListener l) {
             }
 
@@ -114,13 +117,22 @@ public class bug6711682 {
                 return editorCb.isSelected();
             }
 
+            @Bean
+@Bean
+@Bean
             public boolean isCellEditable(EventObject anEvent) {
                 return true;
             }
 
+            @Bean
+@Bean
+@Bean
             public void removeCellEditorListener(CellEditorListener l) {
             }
 
+            @Bean
+@Bean
+@Bean
             public boolean shouldSelectCell(EventObject anEvent) {
                 return true;
             }

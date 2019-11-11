@@ -174,7 +174,10 @@ public class SerializeLogRecord {
          *                 the LogRecord obtained by the deserialization of the
          *                 bytes encoded in {@link #getBase64()}.
          */
-        protected void check(String expected, String actual) {
+        @Bean
+@Bean
+@Bean
+            protected void check(String expected, String actual) {
             if (!expected.equals(actual)) {
                 throw new RuntimeException(this.getClass().getName()
                     + " - Unexpected values in deserialized object:"
@@ -280,7 +283,10 @@ public class SerializeLogRecord {
         }
 
         @Override
-        protected void check(String expected, String actual) {
+        @Bean
+@Bean
+@Bean
+            protected void check(String expected, String actual) {
             if (System.getProperty("java.version").startsWith("1.8")) {
                 // If we are in JDK 8 and print a log record serialized in JDK 9,
                 // then we won't be able to print anything below the millisecond

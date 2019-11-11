@@ -42,6 +42,7 @@ import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Random;
 
+@Bean
 public class VeryLongAlias {
 
     static String alias = String.format("%0512d", new Random().nextInt(100000));

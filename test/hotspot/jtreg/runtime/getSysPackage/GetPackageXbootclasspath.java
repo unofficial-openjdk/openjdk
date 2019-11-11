@@ -35,13 +35,15 @@ import jdk.test.lib.compiler.InMemoryJavaCompiler;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class GetPackageXbootclasspath {
 
     public static void main(String args[]) throws Exception {
 
         String Test_src =
             "package P; " +
-            "public class Test { " +
+            "@Bean
+public class Test { " +
                 "public static void main(String[] args) throws Exception { " +
                     "Package p = Test.class.getPackage(); " +
                     "System.out.println(\"Test Passed\"); " +

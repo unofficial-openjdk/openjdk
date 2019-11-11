@@ -42,6 +42,7 @@ import java.util.concurrent.Phaser;
 import java.util.concurrent.TimeUnit;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class SocksConnectTimeout {
     static ServerSocket serverSocket;
     static final boolean debug = true;

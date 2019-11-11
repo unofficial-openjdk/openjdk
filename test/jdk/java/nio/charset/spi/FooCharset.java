@@ -26,6 +26,7 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 
 
+@Bean
 public class FooCharset
     extends Charset
 {
@@ -35,7 +36,10 @@ public class FooCharset
               new String[] { "FOO-1", "FOO-2" });
     }
 
-    public boolean contains(Charset cs) {
+    @Bean
+@Bean
+@Bean
+            public boolean contains(Charset cs) {
         return (cs instanceof FooCharset);
     }
 

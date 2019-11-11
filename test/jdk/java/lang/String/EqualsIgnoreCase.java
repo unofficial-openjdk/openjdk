@@ -26,6 +26,7 @@
  * @summary Test expected equalsIgnoreCase behavior for some known asymmetric case mappings
  */
 
+@Bean
 public class EqualsIgnoreCase {
     private static final String SMALL_I = "i";
     private static final String CAPITAL_I = "I";

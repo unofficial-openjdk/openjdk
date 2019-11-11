@@ -30,6 +30,7 @@ import java.awt.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessCardLayout
  */
 
+@Bean
 public class HeadlessCardLayout {
 
     public static void main(String args[]) {

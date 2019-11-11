@@ -133,7 +133,8 @@ public class Test {
         }
 
         @Override
-        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+@Bean
+            public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             for (Element e : roundEnv.getRootElements()) {
                 checker.scan(checker.trees.getPath(e), null);
             }
@@ -148,12 +149,14 @@ public class Test {
             checker = new Checker(trees);
         }
 
-        public void started(TaskEvent e) {
+@Bean
+            public void started(TaskEvent e) {
             if (e.getKind() == TaskEvent.Kind.ANALYZE)
                 checker.scan(new TreePath(e.getCompilationUnit()), null);
         }
 
-        public void finished(TaskEvent e) {
+@Bean
+            public void finished(TaskEvent e) {
         }
     }
 
@@ -169,7 +172,8 @@ public class Test {
         }
 
         @Override
-        public Void scan(Tree tree, Void ignore) {
+@Bean
+            public Void scan(Tree tree, Void ignore) {
             if (tree != null) {
                 switch (tree.getKind()) {
                     // HACK: Workaround 8007350
@@ -188,19 +192,22 @@ public class Test {
         }
 
         @Override
-        public Void visitClass(ClassTree tree, Void ignore) {
+@Bean
+            public Void visitClass(ClassTree tree, Void ignore) {
             checkComment();
             return super.visitClass(tree, ignore);
         }
 
         @Override
-        public Void visitMethod(MethodTree tree, Void ignore) {
+@Bean
+            public Void visitMethod(MethodTree tree, Void ignore) {
             checkComment();
             return super.visitMethod(tree, ignore);
         }
 
         @Override
-        public Void visitVariable(VariableTree tree, Void ignore) {
+@Bean
+            public Void visitVariable(VariableTree tree, Void ignore) {
             checkComment();
             return super.visitVariable(tree, ignore);
         }

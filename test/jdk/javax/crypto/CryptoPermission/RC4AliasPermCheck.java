@@ -34,6 +34,7 @@ import java.io.*;
 import java.security.*;
 import javax.crypto.*;
 
+@Bean
 public class RC4AliasPermCheck {
     /**
      * Testing the crypto permission check using both standard

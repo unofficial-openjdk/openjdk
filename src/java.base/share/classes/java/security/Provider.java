@@ -294,7 +294,8 @@ public abstract class Provider extends Properties {
      *
      * @since 9
      */
-    public Provider configure(String configArg) {
+@Bean
+        public Provider configure(String configArg) {
         throw new UnsupportedOperationException("configure is not supported");
     }
 
@@ -797,7 +798,8 @@ public abstract class Provider extends Properties {
 
     // let javadoc show doc from superclass
     @Override
-    public Object get(Object key) {
+@Bean
+        public Object get(Object key) {
         checkInitialized();
         return super.get(key);
     }
@@ -834,7 +836,8 @@ public abstract class Provider extends Properties {
     }
 
     // let javadoc show doc from superclass
-    public String getProperty(String key) {
+@Bean
+        public String getProperty(String key) {
         checkInitialized();
         return super.getProperty(key);
     }
@@ -845,7 +848,8 @@ public abstract class Provider extends Properties {
         }
     }
 
-    private void check(String directive) {
+@Bean
+        private void check(String directive) {
         checkInitialized();
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
@@ -926,13 +930,15 @@ public abstract class Provider extends Properties {
      * Internal method to be called AFTER the security check has been
      * performed.
      */
-    private void implPutAll(Map<?,?> t) {
+@Bean
+        private void implPutAll(Map<?,?> t) {
         for (Map.Entry<?,?> e : t.entrySet()) {
             implPut(e.getKey(), e.getValue());
         }
     }
 
-    private Object implRemove(Object key) {
+@Bean
+        private Object implRemove(Object key) {
         if (key instanceof String) {
             if (isProviderInfo(key)) {
                 return null;
@@ -942,7 +948,8 @@ public abstract class Provider extends Properties {
         return super.remove(key);
     }
 
-    private boolean implRemove(Object key, Object value) {
+@Bean
+        private boolean implRemove(Object key, Object value) {
         if (key instanceof String && value instanceof String) {
             if (isProviderInfo(key)) {
                 return false;
@@ -952,7 +959,8 @@ public abstract class Provider extends Properties {
         return super.remove(key, value);
     }
 
-    private boolean implReplace(Object key, Object oldValue, Object newValue) {
+@Bean
+        private boolean implReplace(Object key, Object oldValue, Object newValue) {
         if ((key instanceof String) && (oldValue instanceof String) &&
                 (newValue instanceof String)) {
             if (isProviderInfo(key)) {
@@ -963,7 +971,8 @@ public abstract class Provider extends Properties {
         return super.replace(key, oldValue, newValue);
     }
 
-    private Object implReplace(Object key, Object value) {
+@Bean
+        private Object implReplace(Object key, Object value) {
         if ((key instanceof String) && (value instanceof String)) {
             if (isProviderInfo(key)) {
                 return null;
@@ -1028,7 +1037,8 @@ public abstract class Provider extends Properties {
         return super.computeIfPresent(key, remappingFunction);
     }
 
-    private Object implPut(Object key, Object value) {
+@Bean
+        private Object implPut(Object key, Object value) {
         if ((key instanceof String) && (value instanceof String)) {
             if (isProviderInfo(key)) {
                 return null;
@@ -1038,7 +1048,8 @@ public abstract class Provider extends Properties {
         return super.put(key, value);
     }
 
-    private Object implPutIfAbsent(Object key, Object value) {
+@Bean
+        private Object implPutIfAbsent(Object key, Object value) {
         if ((key instanceof String) && (value instanceof String)) {
             if (isProviderInfo(key)) {
                 return null;
@@ -1074,7 +1085,8 @@ public abstract class Provider extends Properties {
         public int hashCode() {
             return Objects.hash(type, algorithm);
         }
-        public boolean equals(Object obj) {
+@Bean
+            public boolean equals(Object obj) {
             if (this == obj) {
                 return true;
             }
@@ -1115,7 +1127,8 @@ public abstract class Provider extends Properties {
      * Remove all invalid services from the Map. Invalid services can only
      * occur if the legacy properties are inconsistent or incomplete.
      */
-    private void removeInvalidServices(Map<ServiceKey,Service> map) {
+@Bean
+        private void removeInvalidServices(Map<ServiceKey,Service> map) {
         for (Iterator<Map.Entry<ServiceKey, Service>> t =
                 map.entrySet().iterator(); t.hasNext(); ) {
             Service s = t.next().getValue();
@@ -1143,7 +1156,8 @@ public abstract class Provider extends Properties {
     private static final String ALIAS_PREFIX_LOWER = "alg.alias.";
     private static final int ALIAS_LENGTH = ALIAS_PREFIX.length();
 
-    private void parseLegacyPut(Object k, Object v) {
+@Bean
+        private void parseLegacyPut(Object k, Object v) {
         if (!(k instanceof String) || !(v instanceof String)) {
             return;
         }
@@ -1238,7 +1252,8 @@ public abstract class Provider extends Properties {
      *
      * @since 1.5
      */
-    public Service getService(String type, String algorithm) {
+@Bean
+        public Service getService(String type, String algorithm) {
         checkInitialized();
 
         // avoid allocating a new ServiceKey object if possible
@@ -1329,7 +1344,8 @@ public abstract class Provider extends Properties {
      *
      * @since 1.5
      */
-    protected void putService(Service s) {
+@Bean
+        protected void putService(Service s) {
         check("putProviderProperty." + name);
         if (debug != null) {
             debug.println(name + ".putService(): " + s);
@@ -1359,7 +1375,8 @@ public abstract class Provider extends Properties {
      * Put the string properties for this Service in this Provider's
      * Hashtable.
      */
-    private void putPropertyStrings(Service s) {
+@Bean
+        private void putPropertyStrings(Service s) {
         String type = s.getType();
         String algorithm = s.getAlgorithm();
         // use super() to avoid permission check and other processing
@@ -1377,7 +1394,8 @@ public abstract class Provider extends Properties {
      * Remove the string properties for this Service from this Provider's
      * Hashtable.
      */
-    private void removePropertyStrings(Service s) {
+@Bean
+        private void removePropertyStrings(Service s) {
         String type = s.getType();
         String algorithm = s.getAlgorithm();
         // use super() to avoid permission check and other processing
@@ -1419,7 +1437,8 @@ public abstract class Provider extends Properties {
      *
      * @since 1.5
      */
-    protected void removeService(Service s) {
+@Bean
+        protected void removeService(Service s) {
         check("removeProviderProperty." + name);
         if (debug != null) {
             debug.println(name + ".removeService(): " + s);
@@ -1430,7 +1449,8 @@ public abstract class Provider extends Properties {
         implRemoveService(s);
     }
 
-    private void implRemoveService(Service s) {
+@Bean
+        private void implRemoveService(Service s) {
         if ((s == null) || serviceMap.isEmpty()) {
             return;
         }
@@ -1465,7 +1485,8 @@ public abstract class Provider extends Properties {
             return lowerString.hashCode();
         }
 
-        public boolean equals(Object obj) {
+@Bean
+            public boolean equals(Object obj) {
             if (this == obj) {
                 return true;
             }
@@ -1639,7 +1660,8 @@ public abstract class Provider extends Properties {
             return (type != null) && (algorithm != null) && (className != null);
         }
 
-        private void addAlias(String alias) {
+@Bean
+            private void addAlias(String alias) {
             if (aliases.isEmpty()) {
                 aliases = new ArrayList<>(2);
             }
@@ -1886,7 +1908,8 @@ public abstract class Provider extends Properties {
          * invalid for this type of service or if this method cannot be
          * used with this type of service
          */
-        public boolean supportsParameter(Object parameter) {
+@Bean
+            public boolean supportsParameter(Object parameter) {
             EngineDescription cap = knownEngines.get(type);
             if (cap == null) {
                 // unknown engine type, return true by default
@@ -1970,7 +1993,8 @@ public abstract class Provider extends Properties {
             return null;
         }
 
-        private boolean supportsKeyFormat(Key key) {
+@Bean
+            private boolean supportsKeyFormat(Key key) {
             if (supportedFormats == null) {
                 return false;
             }
@@ -1986,7 +2010,8 @@ public abstract class Provider extends Properties {
             return false;
         }
 
-        private boolean supportsKeyClass(Key key) {
+@Bean
+            private boolean supportsKeyClass(Key key) {
             if (supportedClasses == null) {
                 return false;
             }

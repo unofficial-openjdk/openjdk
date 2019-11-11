@@ -34,6 +34,7 @@ package compiler.escapeAnalysis;
 import java.util.ArrayList;
 import java.util.List;
 
+@Bean
 public class Test8020215 {
     public static class NamedObject {
         public int id;
@@ -47,7 +48,11 @@ public class Test8020215 {
     public static class NamedObjectList {
         public List<NamedObject> namedObjectList = new ArrayList<NamedObject>();
 
-        public NamedObject getBest(int id) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public NamedObject getBest(int id) {
             NamedObject bestObject = null;
             for (NamedObject o : namedObjectList) {
                 bestObject = id==o.id ? getBetter(bestObject, o) : bestObject;

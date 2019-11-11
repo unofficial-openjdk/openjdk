@@ -43,6 +43,7 @@ import jdk.test.lib.net.URIBuilder;
  * addresses when selecting proxies. This is the existing behaviour.
  */
 
+@Bean
 public class LoopbackAddresses implements HttpCallback {
     static TestHttpServer server;
 

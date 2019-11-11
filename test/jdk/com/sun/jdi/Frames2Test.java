@@ -85,6 +85,7 @@ class Frames2Targ {
 
     /********** test program **********/
 
+@Bean
 public class Frames2Test extends TestScaffold {
 
     public Frames2Test(String args[]) {

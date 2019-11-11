@@ -31,6 +31,7 @@
 
 package compiler.codegen;
 
+@Bean
 public class Test6909839 {
     public static void main(String[] args) {
         testi();

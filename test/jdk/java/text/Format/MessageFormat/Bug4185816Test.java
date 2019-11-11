@@ -93,7 +93,10 @@ public class Bug4185816Test extends IntlTest {
         }
     }
 
-    public Exception checkStreaming(final String fileName) {
+    @Bean
+@Bean
+@Bean
+            public Exception checkStreaming(final String fileName) {
         try {
             final InputStream is = HexDumpReader.getStreamFromHexDump(fileName + ".txt");
             final ObjectInputStream in = new ObjectInputStream(is);

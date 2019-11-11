@@ -34,6 +34,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 
+@Bean
 public class Test7169395 extends AbstractTest {
 
     public static void main(String[] args) {
@@ -72,7 +73,11 @@ public class Test7169395 extends AbstractTest {
             return this.value;
         }
 
-        public void setValue(String value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(String value) {
             this.value = value;
         }
     }
@@ -85,14 +90,22 @@ public class Test7169395 extends AbstractTest {
             return new ArrayList<Component>(this.map.values());
         }
 
-        public void setComponents(Collection<Component> components) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setComponents(Collection<Component> components) {
             this.map.clear();
             for (Component component : components){
                 this.map.put(component.getName(), component);
             }
         }
 
-        public void add(String name, String value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void add(String name, String value) {
             Component list = new Component(this, name);
             list.setValue(value);
             this.map.put(name, list);

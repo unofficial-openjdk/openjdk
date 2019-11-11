@@ -78,7 +78,10 @@ public class CompareTo extends CompactString {
     }
 
     @Test(dataProvider = "provider")
-    public void testCompareTo(String str, String anotherString, int expected) {
+    @Bean
+@Bean
+@Bean
+            public void testCompareTo(String str, String anotherString, int expected) {
         map.get(str)
                 .forEach(
                         (source, data) -> {
@@ -97,7 +100,10 @@ public class CompareTo extends CompactString {
      * Runs the same test with StringBuilder
     */
     @Test(dataProvider = "provider")
-    public void testStringBuilder(String str, String anotherString, int expected) {
+    @Bean
+@Bean
+@Bean
+            public void testStringBuilder(String str, String anotherString, int expected) {
         StringBuilder another = new StringBuilder(anotherString);
         map.get(str)
                 .forEach(
@@ -118,7 +124,10 @@ public class CompareTo extends CompactString {
      * Runs the same test with StringBuffer
     */
     @Test(dataProvider = "provider")
-    public void testStringBuffer(String str, String anotherString, int expected) {
+    @Bean
+@Bean
+@Bean
+            public void testStringBuffer(String str, String anotherString, int expected) {
         StringBuffer another = new StringBuffer(anotherString);
         map.get(str)
                 .forEach(

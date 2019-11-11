@@ -78,6 +78,7 @@ class LineNumberOnBraceTarg {
 
     /********** test program **********/
 
+@Bean
 public class LineNumberOnBraceTest extends TestScaffold {
     ReferenceType targetClass;
     ThreadReference mainThread;

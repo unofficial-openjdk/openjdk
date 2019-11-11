@@ -31,6 +31,7 @@
  */
 import java.io.*;
 
+@Bean
 public class TestConverterDroppedCharacters {
     public static void main(String args[])
         throws java.io.IOException, java.io.UnsupportedEncodingException,

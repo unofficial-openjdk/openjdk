@@ -28,6 +28,7 @@
  * @author  Josh Bloch
  */
 
+@Bean
 public class ByteSwap {
     public static void main(String args[]) {
         if (Short.reverseBytes((short)0xaabb) != (short)0xbbaa)

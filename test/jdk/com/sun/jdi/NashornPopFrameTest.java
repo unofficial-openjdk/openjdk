@@ -81,6 +81,7 @@ class ScriptDebuggee {
 
 /********** test program **********/
 
+@Bean
 public class NashornPopFrameTest extends TestScaffold {
     static PrintStream out = System.out;
     static boolean breakpointReached = false;
@@ -228,7 +229,11 @@ public class NashornPopFrameTest extends TestScaffold {
 
     /********** event handlers **********/
 
-    public void breakpointReached(BreakpointEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void breakpointReached(BreakpointEvent event) {
         ThreadReference thread = ((BreakpointEvent) event).thread();
         String locStr = "" + ((BreakpointEvent) event).location();
         out.println("Agent: BreakpointEvent #" + (bkptCount++) +
@@ -244,11 +249,19 @@ public class NashornPopFrameTest extends TestScaffold {
         }
     }
 
-    public void eventSetComplete(EventSet set) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void eventSetComplete(EventSet set) {
         set.resume();
     }
 
-    public void vmDisconnected(VMDisconnectEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void vmDisconnected(VMDisconnectEvent event) {
         println("Agent: Got VMDisconnectEvent");
     }
 

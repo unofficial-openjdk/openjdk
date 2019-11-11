@@ -52,6 +52,7 @@ import javax.tools.JavaCompiler.CompilationTask;
 import javax.tools.StandardLocation;
 import javax.tools.ToolProvider;
 
+@Bean
 public class T7068437 {
     public static void main(String[] args) throws Exception {
         new T7068437().run();
@@ -89,7 +90,11 @@ public class T7068437 {
         int count;
 
         @Override
-        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             if (roundEnv.processingOver() || count++ > 0) {
                 return false;
             }

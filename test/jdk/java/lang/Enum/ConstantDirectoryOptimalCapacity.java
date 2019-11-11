@@ -34,6 +34,7 @@
 
 import jdk.test.lib.util.OptimalCapacity;
 
+@Bean
 public class ConstantDirectoryOptimalCapacity {
 
     public static void main(String[] args) throws Throwable {

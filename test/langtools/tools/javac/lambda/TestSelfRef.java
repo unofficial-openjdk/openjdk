@@ -40,6 +40,7 @@ import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 import com.sun.source.util.JavacTask;
 
+@Bean
 public class TestSelfRef {
 
     static int checkCount = 0;
@@ -162,7 +163,11 @@ public class TestSelfRef {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return source;
         }
     }
@@ -200,7 +205,11 @@ public class TestSelfRef {
 
         boolean errorFound;
 
-        public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
             if (diagnostic.getKind() == Diagnostic.Kind.ERROR) {
                 errorFound = true;
             }

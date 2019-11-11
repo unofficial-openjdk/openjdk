@@ -67,7 +67,10 @@ public class WritingInterruptionTest implements IIOWriteProgressListener {
     protected abstract static class Action implements Runnable {
         protected ImageWriter target;
 
-        public void setTarget(ImageWriter target) {
+        @Bean
+@Bean
+@Bean
+            public void setTarget(ImageWriter target) {
             this.target = target;
         }
 
@@ -173,7 +176,10 @@ public class WritingInterruptionTest implements IIOWriteProgressListener {
         }
     };
 
-    public void imageComplete(ImageWriter source) {};
+    @Bean
+@Bean
+@Bean
+            public void imageComplete(ImageWriter source) {};
 
     public void thumbnailStarted(ImageWriter source,
                                  int imageIndex,
@@ -182,9 +188,15 @@ public class WritingInterruptionTest implements IIOWriteProgressListener {
     public void thumbnailProgress(ImageWriter source,
                                   float percentageDone) {};
 
-    public void thumbnailComplete(ImageWriter source) {};
+    @Bean
+@Bean
+@Bean
+            public void thumbnailComplete(ImageWriter source) {};
 
-    public void writeAborted(ImageWriter source) {};
+    @Bean
+@Bean
+@Bean
+            public void writeAborted(ImageWriter source) {};
 
 
     private static BufferedImage createTestImage() {

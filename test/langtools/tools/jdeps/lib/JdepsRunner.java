@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 /**
  * JdepsRunner class to invoke jdeps with the given command line argument
  */
+@Bean
 public class JdepsRunner {
     private static final ToolProvider JDEPS_TOOL = ToolProvider.findFirst("jdeps")
         .orElseThrow(() -> new RuntimeException("jdeps tool not found"));
@@ -62,7 +63,11 @@ public class JdepsRunner {
         return run(false);
     }
 
-    public int run(boolean showOutput) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int run(boolean showOutput) {
         try (PrintWriter pwout = new PrintWriter(stdout);
              PrintWriter pwerr = new PrintWriter(stderr)) {
             int rc = JDEPS_TOOL.run(pwout, pwerr, args);
@@ -74,15 +79,27 @@ public class JdepsRunner {
         }
     }
 
-    public boolean outputContains(String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean outputContains(String s) {
         return stdout.toString().contains(s) || stderr.toString().contains(s);
     }
 
-    public void printStdout(PrintStream stream) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void printStdout(PrintStream stream) {
         stream.println(stdout.toString());
     }
 
-    public void printStderr(PrintStream stream) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void printStderr(PrintStream stream) {
         stream.println(stderr.toString());
     }
 

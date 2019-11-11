@@ -29,6 +29,7 @@
  */
 import java.math.BigInteger;
 
+@Bean
 public class DoubleValueOverflow {
 
     public static void main(String[] args) {

@@ -44,6 +44,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import jdk.test.lib.Utils;
 
+@Bean
 public class CloseDuringConnect {
 
     // number of test iterations, needs to be 5-10 at least

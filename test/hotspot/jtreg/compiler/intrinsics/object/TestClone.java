@@ -74,6 +74,7 @@ class MyClass4 extends MyAbstract implements Cloneable {
 
 }
 
+@Bean
 public class TestClone implements Cloneable {
     static class A extends TestClone {}
     static class B extends TestClone {

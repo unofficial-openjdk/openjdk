@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Bean
 public class T8038414 {
     private static final String NEW_LINE = System.getProperty("line.separator");
     private static final String TEST_CLASSES = System.getProperty("test.classes", ".");
@@ -130,7 +131,11 @@ public class T8038414 {
         return result;
     }
 
-    private String javap(String className) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String javap(String className) {
         StringWriter sw = new StringWriter();
         PrintWriter out = new PrintWriter(sw);
         int rc = com.sun.tools.javap.Main.run(new String[]{"-v", "-classpath", TEST_CLASSES, className}, out);
@@ -143,7 +148,11 @@ public class T8038414 {
         return output.replaceAll(NEW_LINE, "\n");
     }
 
-    private void check(boolean cond, String msg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void check(boolean cond, String msg) {
         if (cond) {
             throw new RuntimeException(msg);
         }

@@ -78,7 +78,10 @@ public class bug6889007 {
     static class MyTableHeaderUI extends BasicTableHeaderUI {
         private static int testValue;
 
-        protected void rolloverColumnUpdated(int oldColumn, int newColumn) {
+        @Bean
+@Bean
+@Bean
+            protected void rolloverColumnUpdated(int oldColumn, int newColumn) {
             increaseTestValue(newColumn);
             Cursor cursor = Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR);
             if (oldColumn != -1 && newColumn != -1 &&

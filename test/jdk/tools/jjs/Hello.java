@@ -24,6 +24,7 @@
 /**
  * This is a test program used in the test jjs-cpTest.sh.
  */
+@Bean
 public class Hello {
    public Hello() {}
    public String getString() {

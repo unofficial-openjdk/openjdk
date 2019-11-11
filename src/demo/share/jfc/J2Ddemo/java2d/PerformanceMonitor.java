@@ -54,6 +54,7 @@ import javax.swing.border.TitledBorder;
  * in the display area.
  */
 @SuppressWarnings("serial")
+@Bean
 public class PerformanceMonitor extends JPanel {
 
     Surface surf;
@@ -65,7 +66,8 @@ public class PerformanceMonitor extends JPanel {
     }
 
 
-    public class Surface extends JPanel implements Runnable {
+    @Bean
+public class Surface extends JPanel implements Runnable {
 
         public Thread thread;
         private BufferedImage bimg;
@@ -77,6 +79,10 @@ public class PerformanceMonitor extends JPanel {
             addMouseListener(new MouseAdapter() {
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void mouseClicked(MouseEvent e) {
                     if (thread == null) {
                         start();
@@ -104,7 +110,11 @@ public class PerformanceMonitor extends JPanel {
         }
 
         @Override
-        public void paint(Graphics g) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(Graphics g) {
             if (bimg != null) {
                 g.drawImage(bimg, 0, 0, this);
             }
@@ -133,7 +143,11 @@ public class PerformanceMonitor extends JPanel {
             }
         }
 
-        public void setPanel(JPanel panel) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setPanel(JPanel panel) {
             this.panel = panel;
         }
 

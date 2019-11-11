@@ -30,6 +30,7 @@ import java.awt.HeadlessException;
  * @run main/othervm -Djava.awt.headless=true HeadlessJApplet
  */
 
+@Bean
 public class HeadlessJApplet {
     public static void main(String args[]) {
         boolean exceptions = false;

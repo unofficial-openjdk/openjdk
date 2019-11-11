@@ -45,6 +45,7 @@
 
 import java.lang.invoke.*;
 
+@Bean
 public class PrivateInterfaceCall {
     interface I1 {
         private void priv_m() { throw new Error("Should not call this"); };

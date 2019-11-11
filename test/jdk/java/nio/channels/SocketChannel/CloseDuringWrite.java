@@ -34,6 +34,7 @@ import java.net.*;
 import java.util.concurrent.*;
 import java.util.Random;
 
+@Bean
 public class CloseDuringWrite {
 
     static final Random rand = new Random();

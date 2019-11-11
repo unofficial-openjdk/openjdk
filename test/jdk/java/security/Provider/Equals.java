@@ -30,6 +30,7 @@
 
 import java.security.*;
 
+@Bean
 public class Equals {
 
     public static void main(String[] args) throws Exception {

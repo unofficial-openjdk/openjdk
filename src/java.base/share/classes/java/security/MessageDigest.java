@@ -319,7 +319,8 @@ public abstract class MessageDigest extends MessageDigestSpi {
      *
      * @param input the byte with which to update the digest.
      */
-    public void update(byte input) {
+@Bean
+        public void update(byte input) {
         engineUpdate(input);
         state = IN_PROGRESS;
     }
@@ -335,7 +336,8 @@ public abstract class MessageDigest extends MessageDigestSpi {
      * @param len the number of bytes to use, starting at
      * {@code offset}.
      */
-    public void update(byte[] input, int offset, int len) {
+@Bean
+        public void update(byte[] input, int offset, int len) {
         if (input == null) {
             throw new IllegalArgumentException("No input buffer given");
         }
@@ -351,7 +353,8 @@ public abstract class MessageDigest extends MessageDigestSpi {
      *
      * @param input the array of bytes.
      */
-    public void update(byte[] input) {
+@Bean
+        public void update(byte[] input) {
         engineUpdate(input, 0, input.length);
         state = IN_PROGRESS;
     }
@@ -605,15 +608,18 @@ public abstract class MessageDigest extends MessageDigestSpi {
             return digestSpi.engineGetDigestLength();
         }
 
-        protected void engineUpdate(byte input) {
+@Bean
+            protected void engineUpdate(byte input) {
             digestSpi.engineUpdate(input);
         }
 
-        protected void engineUpdate(byte[] input, int offset, int len) {
+@Bean
+            protected void engineUpdate(byte[] input, int offset, int len) {
             digestSpi.engineUpdate(input, offset, len);
         }
 
-        protected void engineUpdate(ByteBuffer input) {
+@Bean
+            protected void engineUpdate(ByteBuffer input) {
             digestSpi.engineUpdate(input);
         }
 

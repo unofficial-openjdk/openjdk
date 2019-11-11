@@ -74,7 +74,11 @@ public class IORedirector extends Thread {
     /**
      * Set the prefix for redirected messages;
      */
-    public void setPrefix(String prefix) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setPrefix(String prefix) {
         this.prefix = prefix;
     }
 

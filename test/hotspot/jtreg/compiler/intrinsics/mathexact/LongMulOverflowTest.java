@@ -34,6 +34,7 @@
 
 package compiler.intrinsics.mathexact;
 
+@Bean
 public class LongMulOverflowTest {
     public static void main(String[] args) {
         LongMulOverflowTest test = new LongMulOverflowTest();

@@ -177,6 +177,7 @@ class ModificationWatchpointsTarg {
     }
 }
 
+@Bean
 public class ModificationWatchpoints extends TestScaffold {
     ReferenceType targ;
     List allMWP = new ArrayList();
@@ -191,7 +192,11 @@ public class ModificationWatchpoints extends TestScaffold {
 
     /********** event handlers **********/
 
-    public void fieldModified(ModificationWatchpointEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void fieldModified(ModificationWatchpointEvent event) {
         MWP mwp = (MWP)event.request().getProperty("executor");
         mwp.fieldModified(event);
     }
@@ -282,7 +287,11 @@ public class ModificationWatchpoints extends TestScaffold {
         /**
          * Sets watchpoint for given class.
          */
-        public void set(ReferenceType clazz) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void set(ReferenceType clazz) {
             Field f = clazz.fieldByName(fieldName);
             ModificationWatchpointRequest mwr =
                        eventRequestManager().createModificationWatchpointRequest(f);
@@ -291,7 +300,11 @@ public class ModificationWatchpoints extends TestScaffold {
             println("set watchpoint: " + className +"." + f);
         }
 
-        public void fieldModified(ModificationWatchpointEvent event) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void fieldModified(ModificationWatchpointEvent event) {
             Value val = event.valueToBe();
            println("Watchpoint reached: " + className + "." + fieldName +
                    ", new value: " + val);
@@ -306,7 +319,11 @@ public class ModificationWatchpoints extends TestScaffold {
             eventCount++;
         }
 
-        public void checkEventCounts(int expectedCount) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void checkEventCounts(int expectedCount) {
             if (eventCount != expectedCount) {
                 failure(className + "." + fieldName +
                         " - only got " + eventCount + " events");

@@ -47,6 +47,7 @@ import javax.management.ObjectName;
 import javax.management.monitor.StringMonitor;
 import javax.management.monitor.StringMonitorMBean;
 
+@Bean
 public class StringMonitorDeadlockTest {
 
     public static void main(String[] args) throws Exception {
@@ -120,7 +121,11 @@ public class StringMonitorDeadlockTest {
             if (when == When.IN_NOTIFY) {
                 final AtomicInteger notifCount = new AtomicInteger();
                 final NotificationListener listener = new NotificationListener() {
-                    public void handleNotification(Notification n, Object h) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public void handleNotification(Notification n, Object h) {
                         Thread t = new Thread(sensitiveThing);
                         t.start();
                         try {
@@ -210,7 +215,11 @@ public class StringMonitorDeadlockTest {
             return thing;
         }
 
-        public void setThing(String thing) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setThing(String thing) {
             this.thing = thing;
         }
 

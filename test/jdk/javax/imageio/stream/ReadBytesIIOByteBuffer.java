@@ -35,6 +35,7 @@ import javax.imageio.stream.IIOByteBuffer;
 import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.MemoryCacheImageInputStream;
 
+@Bean
 public class ReadBytesIIOByteBuffer {
 
     public static void main(String[] argv) {

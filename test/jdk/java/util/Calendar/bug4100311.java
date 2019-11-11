@@ -31,6 +31,7 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Date;
 
+@Bean
 public class bug4100311
 {
     @SuppressWarnings("deprecation")

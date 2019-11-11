@@ -31,6 +31,7 @@
 import java.util.ArrayList;
 import java.util.List;
 
+@Bean
 public class MultipleUpperBoundsIncorporationTest {
 
     static class TestCase1 {

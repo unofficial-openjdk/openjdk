@@ -31,6 +31,7 @@
  *          jdk.compiler
  */
 
+@Bean
 public class TestLongClassValue {
     public static void main(String[] args) {
         TestEditor test = new TestEditor(Long.class);

@@ -30,6 +30,7 @@
 import java.io.*;
 import java.lang.reflect.Method;
 
+@Bean
 public class SerializedLambdaInInit {
     static int assertionCount = 0;
 

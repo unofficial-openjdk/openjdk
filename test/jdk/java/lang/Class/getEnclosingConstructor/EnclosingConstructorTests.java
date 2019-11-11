@@ -31,6 +31,7 @@
 import java.lang.reflect.Constructor;
 import java.lang.annotation.*;
 
+@Bean
 public class EnclosingConstructorTests {
     static Class<?> anonymousClass;
     static Class<?> localClass;

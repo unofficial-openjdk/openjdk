@@ -51,6 +51,7 @@ import sun.hotspot.WhiteBox;
 
 import java.lang.reflect.Executable;
 
+@Bean
 public class ClearDirectivesFileStackTest extends AbstractTestBase {
     private static final WhiteBox WHITE_BOX = WhiteBox.getWhiteBox();
     private static final int LIMIT = WHITE_BOX.getIntVMFlag("CompilerDirectivesLimit").intValue();

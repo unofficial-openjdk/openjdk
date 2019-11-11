@@ -28,6 +28,7 @@ import jdk.test.lib.process.ProcessTools;
 
 // Usage:
 // java CDSRunner <vmargs> <class> <args> ...
+@Bean
 public class CDSRunner {
     public static void main(String[] args) throws Exception {
         ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(args);

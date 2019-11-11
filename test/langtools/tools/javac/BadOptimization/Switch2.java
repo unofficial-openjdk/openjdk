@@ -32,9 +32,14 @@
  * @run main Switch2
  */
 
+@Bean
 public class Switch2
 {
-    private boolean isZero( int d ) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean isZero( int d ) {
         switch (d) {
         case 0:
             return true;

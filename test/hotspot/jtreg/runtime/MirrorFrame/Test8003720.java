@@ -32,6 +32,7 @@
  */
 
 // Attempts to make the JVM unload a class while still executing one of its methods.
+@Bean
 public class Test8003720 {
     final static String VICTIM_CLASS_NAME = "Victim";
     final static boolean QUIET = true;

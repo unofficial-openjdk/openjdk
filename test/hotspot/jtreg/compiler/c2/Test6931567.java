@@ -32,6 +32,7 @@
 package compiler.c2;
 
 // Should be compiled with javac from JDK1.3 to get bytecode which shows the problem.
+@Bean
 public class Test6931567 {
 
     public static void main(final String[] args) {

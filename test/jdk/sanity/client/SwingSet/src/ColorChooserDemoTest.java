@@ -154,7 +154,9 @@ public class ColorChooserDemoTest {
         initializeDialog();
     }
 
-    private void initializePanelButtons(JFrameOperator frame) {
+@Bean
+@Bean
+            private void initializePanelButtons(JFrameOperator frame) {
         backgroundButton = new JButtonOperator(frame, BACKGROUND);
         gradient1Button = new JButtonOperator(frame, GRADIENT_1);
         gradient2Button = new JButtonOperator(frame, GRADIENT_2);
@@ -215,11 +217,15 @@ public class ColorChooserDemoTest {
         pushButtonAndWaitDialogClosed(okButton);
     }
 
-    private void waitJColorChooserColor(Color expectedColor) {
+@Bean
+@Bean
+            private void waitJColorChooserColor(Color expectedColor) {
         colorChooser.waitStateOnQueue(jColorChooser -> colorChooser.getColor().equals(expectedColor));
     }
 
-    private void setAndWaitColor(Color color) {
+@Bean
+@Bean
+            private void setAndWaitColor(Color color) {
         colorChooser.setColor(color);
         // Wait for the Color to be set
         waitJColorChooserColor(color);
@@ -299,28 +305,36 @@ public class ColorChooserDemoTest {
         setAndCheckSpinner(spinners[CMYK_ALPHA_INDEX], 255, new Color(139, 139, 130, 255));
     }
 
-    private void setAndCheckSlider(JSliderOperator slider, int sliderValue, Color expectedColor) {
+@Bean
+@Bean
+            private void setAndCheckSlider(JSliderOperator slider, int sliderValue, Color expectedColor) {
         slider.setValue(sliderValue);
         // Wait for slider to attain the specified value
         slider.waitStateOnQueue(jSlider -> slider.getValue() == sliderValue);
         colorChooser.waitStateOnQueue(jColorChooser -> (colorChooser.getColor().equals(expectedColor)));
     }
 
-    private void setAndCheckSpinner(JSpinnerOperator spinner, int spinnerValue, Color expectedColor) {
+@Bean
+@Bean
+            private void setAndCheckSpinner(JSpinnerOperator spinner, int spinnerValue, Color expectedColor) {
         spinner.setValue(spinnerValue);
         // Wait for spinner to attain the specified value
         spinner.waitStateOnQueue(jSpinner -> (int) spinner.getValue() == spinnerValue);
         colorChooser.waitStateOnQueue(jColorChooser -> (colorChooser.getColor().equals(expectedColor)));
     }
 
-    private void initializeSliderAndSpinner(int numberOfSlidersAndSpinners) {
+@Bean
+@Bean
+            private void initializeSliderAndSpinner(int numberOfSlidersAndSpinners) {
         for (int i = 0; i < numberOfSlidersAndSpinners; i++) {
             sliders[i] = new JSliderOperator(colorChooserDialog, i);
             spinners[i] = new JSpinnerOperator(colorChooserDialog, i);
         }
     }
 
-    private void pushButtonAndWaitDialogClosed(JButtonOperator button) {
+@Bean
+@Bean
+            private void pushButtonAndWaitDialogClosed(JButtonOperator button) {
         button.push();
         // Wait for the color chooser dialog to close.
         colorChooserDialog.waitClosed();

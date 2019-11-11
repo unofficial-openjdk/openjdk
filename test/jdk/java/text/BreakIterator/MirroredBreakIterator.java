@@ -29,6 +29,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+@Bean
 public class MirroredBreakIterator extends BreakIterator {
     private final List<Integer> boundaries;
     private int charIndex;
@@ -64,7 +65,11 @@ public class MirroredBreakIterator extends BreakIterator {
     }
 
     @Override
-    public int next(int n) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int next(int n) {
         if (n == 0) {
             return current();
         }
@@ -97,7 +102,11 @@ public class MirroredBreakIterator extends BreakIterator {
     }
 
     @Override
-    public int following(int offset) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int following(int offset) {
         validateOffset(offset);
         for (int b = 0; b <= lastBoundary(); b++) {
             int i = boundaries.get(b);
@@ -109,7 +118,11 @@ public class MirroredBreakIterator extends BreakIterator {
     }
 
     @Override
-    public int preceding(int offset) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int preceding(int offset) {
         validateOffset(offset);
         for (int b = lastBoundary(); b >= 0; b--) {
             int i = boundaries.get(b);
@@ -121,7 +134,11 @@ public class MirroredBreakIterator extends BreakIterator {
     }
 
     @Override
-    public boolean isBoundary(int offset) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean isBoundary(int offset) {
         // Call the default impelementation in BreakIterator
         return super.isBoundary(offset);
     }
@@ -137,7 +154,11 @@ public class MirroredBreakIterator extends BreakIterator {
     }
 
     @Override
-    public void setText(CharacterIterator newText) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setText(CharacterIterator newText) {
         throw new UnsupportedOperationException();
     }
 
@@ -145,12 +166,20 @@ public class MirroredBreakIterator extends BreakIterator {
         return boundaries.size() - 1;
     }
 
-    private int changeIndices(int newCharIndex, int newBoundary) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int changeIndices(int newCharIndex, int newBoundary) {
         boundaryIndex = newBoundary;
         return charIndex = newCharIndex;
     }
 
-    private int changeIndices(int newBoundary) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int changeIndices(int newBoundary) {
         try {
             return changeIndices(boundaries.get(newBoundary), newBoundary);
         } catch (IndexOutOfBoundsException e) {
@@ -158,7 +187,11 @@ public class MirroredBreakIterator extends BreakIterator {
         }
     }
 
-    private void validateOffset(int offset) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void validateOffset(int offset) {
         if (offset < boundaries.get(0) || offset > boundaries.get(lastBoundary())) {
             throw new IllegalArgumentException();
         }

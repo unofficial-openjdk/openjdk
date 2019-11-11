@@ -29,6 +29,7 @@
 import java.net.URLDecoder;
 import java.io.UnsupportedEncodingException;
 
+@Bean
 public class URLDecoderArgs {
     public static void main (String[] args) {
         try {

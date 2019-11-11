@@ -31,6 +31,7 @@ import java.rmi.RemoteException;
 import java.rmi.activation.ActivationException;
 import java.rmi.server.ServerCloneException;
 
+@Bean
 public class Chaining {
     static void check(Throwable t, String msg, Throwable cause)
         throws Exception

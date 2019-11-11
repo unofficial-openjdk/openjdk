@@ -42,7 +42,10 @@ class FileListTransferable implements Transferable {
         return supportedFlavors;
     }
 
-    public boolean isDataFlavorSupported(DataFlavor flavor) {
+    @Bean
+@Bean
+@Bean
+            public boolean isDataFlavorSupported(DataFlavor flavor) {
         for (DataFlavor df:supportedFlavors) {
             if (df.equals(flavor)) return true;
         }

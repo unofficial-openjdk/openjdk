@@ -43,6 +43,7 @@ import java.beans.Introspector;
  * java -verbose:class      to print out class loading.
  * java -verbose:gc         to print out gc events.
  */
+@Bean
 public class Test4809008 {
     public static void main(String[] args) throws Exception {
         printMemory("Start Memory");

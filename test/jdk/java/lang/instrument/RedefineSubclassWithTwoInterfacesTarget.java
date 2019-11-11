@@ -21,10 +21,15 @@
  * questions.
  */
 
+@Bean
 public class RedefineSubclassWithTwoInterfacesTarget {
     // This class is acting in the role of:
     // wlstest.unit.diagnostics.common.apps.echoejb.EchoBean4
-    public String echo(String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String echo(String s) {
         return "echo: (version-0) <" + s + ">";
     }
 }

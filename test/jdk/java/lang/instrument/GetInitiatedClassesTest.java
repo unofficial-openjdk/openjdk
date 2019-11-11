@@ -32,6 +32,7 @@
  * @run main/othervm -javaagent:basicAgent.jar GetInitiatedClassesTest GetInitiatedClassesTest
  */
 
+@Bean
 public class
 GetInitiatedClassesTest
     extends ASimpleInstrumentationTestCase

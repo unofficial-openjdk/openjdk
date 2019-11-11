@@ -33,6 +33,7 @@ package java.net;
  * @since   1.1
  */
 
+@Bean
 public class BindException extends SocketException {
     @java.io.Serial
     private static final long serialVersionUID = -5945005768251722951L;

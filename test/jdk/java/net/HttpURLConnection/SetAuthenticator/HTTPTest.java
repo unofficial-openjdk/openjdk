@@ -70,6 +70,7 @@ import static java.net.Proxy.NO_PROXY;
  *
  * @author danielfuchs
  */
+@Bean
 public class HTTPTest {
 
     public static final boolean DEBUG =
@@ -143,7 +144,10 @@ public class HTTPTest {
     static {
         try {
             HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier() {
-                public boolean verify(String hostname, SSLSession session) {
+                @Bean
+@Bean
+@Bean
+            public boolean verify(String hostname, SSLSession session) {
                     return true;
                 }
             });
@@ -179,7 +183,10 @@ public class HTTPTest {
                  + expected(AUTHENTICATOR.count.get()));
     }
 
-    public void test(HttpAuthType mode) {
+    @Bean
+@Bean
+@Bean
+            public void test(HttpAuthType mode) {
         for (HttpProtocolType type: HttpProtocolType.values()) {
             test(type, mode);
         }
@@ -189,7 +196,10 @@ public class HTTPTest {
         return DEFAULT_SCHEME_TYPE;
     }
 
-    public void test(HttpProtocolType protocol, HttpAuthType mode) {
+    @Bean
+@Bean
+@Bean
+            public void test(HttpProtocolType protocol, HttpAuthType mode) {
         if (mode == HttpAuthType.PROXY305 && protocol == HttpProtocolType.HTTPS ) {
             // silently skip unsupported test combination
             return;

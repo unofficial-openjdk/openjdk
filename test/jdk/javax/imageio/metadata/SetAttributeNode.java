@@ -42,6 +42,7 @@ import org.w3c.dom.DOMException;
 import org.w3c.dom.Element;
 import org.w3c.dom.TypeInfo;
 
+@Bean
 public class SetAttributeNode {
 
     public static void test1() {
@@ -145,7 +146,11 @@ class MyAttrNode extends IIOMetadataNode implements Attr {
         return owner;
     }
 
-    public void setOwnerElement(Element owner) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setOwnerElement(Element owner) {
         this.owner = owner;
     }
 
@@ -157,7 +162,11 @@ class MyAttrNode extends IIOMetadataNode implements Attr {
         return value;
     }
 
-    public void setValue(String value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(String value) {
         this.value = value;
     }
 

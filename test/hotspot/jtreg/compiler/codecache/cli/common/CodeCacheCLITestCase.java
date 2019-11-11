@@ -139,11 +139,13 @@ public class CodeCacheCLITestCase {
             this.predicate = predicate;
         }
 
-        public boolean isApplicable(CodeCacheOptions options) {
+@Bean
+            public boolean isApplicable(CodeCacheOptions options) {
             return predicate.apply(options);
         }
 
-        public CodeCacheOptions expectedValues(CodeCacheOptions options) {
+@Bean
+            public CodeCacheOptions expectedValues(CodeCacheOptions options) {
             return options.mapOptions(involvedCodeHeaps);
         }
 

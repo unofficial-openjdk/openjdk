@@ -35,6 +35,7 @@ package compiler.eliminateAutobox;
 
 import static jdk.test.lib.Asserts.assertEQ;
 
+@Bean
 public class UnsignedLoads {
     public static int testUnsignedByte() {
         byte[] bytes = new byte[] {-1};

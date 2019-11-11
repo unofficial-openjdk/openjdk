@@ -33,6 +33,7 @@ import java.net.*;
 import java.util.*;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class IPv4Only {
     public static void main(String[] args) throws Exception {
         if (IPSupport.hasIPv4()) {

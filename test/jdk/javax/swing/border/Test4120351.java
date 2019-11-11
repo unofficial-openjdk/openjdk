@@ -33,6 +33,7 @@ import java.awt.Color;
 import javax.swing.BorderFactory;
 import javax.swing.border.EtchedBorder;
 
+@Bean
 public class Test4120351 {
     public static void main(String[] args) {
         BorderFactory.createEtchedBorder(EtchedBorder.RAISED);

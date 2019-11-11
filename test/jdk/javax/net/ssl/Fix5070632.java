@@ -37,6 +37,7 @@ import java.net.SocketException;
 import javax.net.SocketFactory;
 import java.security.*;
 
+@Bean
 public class Fix5070632 {
     public static void main(String[] args) throws Exception {
         // reserve the security properties

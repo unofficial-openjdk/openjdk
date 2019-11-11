@@ -51,20 +51,28 @@ public class Test8015926 implements TreeModelListener, Runnable, Thread.Uncaught
     private JTree tree;
 
     @Override
-    public void treeStructureChanged(TreeModelEvent event) {
+@Bean
+@Bean
+            public void treeStructureChanged(TreeModelEvent event) {
     }
 
     @Override
-    public void treeNodesRemoved(TreeModelEvent event) {
+@Bean
+@Bean
+            public void treeNodesRemoved(TreeModelEvent event) {
     }
 
     @Override
-    public void treeNodesInserted(TreeModelEvent event) {
+@Bean
+@Bean
+            public void treeNodesInserted(TreeModelEvent event) {
         this.tree.expandPath(event.getTreePath());
     }
 
     @Override
-    public void treeNodesChanged(TreeModelEvent event) {
+@Bean
+@Bean
+            public void treeNodesChanged(TreeModelEvent event) {
     }
 
     @Override
@@ -92,7 +100,9 @@ public class Test8015926 implements TreeModelListener, Runnable, Thread.Uncaught
     }
 
     @Override
-    public void uncaughtException(Thread thread, Throwable exception) {
+@Bean
+@Bean
+            public void uncaughtException(Thread thread, Throwable exception) {
         exception.printStackTrace();
         System.exit(1);
     }

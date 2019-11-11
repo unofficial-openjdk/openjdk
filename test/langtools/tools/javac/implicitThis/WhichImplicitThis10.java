@@ -29,6 +29,7 @@
  * @compile WhichImplicitThis10.java
  */
 
+@Bean
 public class WhichImplicitThis10 {
     static class A {
         class Inner {}

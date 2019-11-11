@@ -409,7 +409,11 @@ public class TestModulePackages extends JavadocTester {
     }
 
 
-    private void checkCaption(String moduleName, TabKind... kinds) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkCaption(String moduleName, TabKind... kinds) {
         String expect;
         if (kinds.length > 1) {
             Set<TabKind> kindSet = Set.of(kinds);
@@ -452,7 +456,11 @@ public class TestModulePackages extends JavadocTester {
     }
 
 
-    private void checkTableHead(String moduleName, ColKind... kinds) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkTableHead(String moduleName, ColKind... kinds) {
         Set<ColKind> kindSet = Set.of(kinds);
         StringBuilder sb = new StringBuilder();
         sb.append("<tr>\n"

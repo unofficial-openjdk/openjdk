@@ -84,6 +84,7 @@
  *
  * @key randomness
  */
+@Bean
 public class TckDriver {
    /*
         #### General Information

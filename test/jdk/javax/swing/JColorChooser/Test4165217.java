@@ -38,6 +38,7 @@ import java.io.ObjectOutputStream;
 import java.util.Random;
 import javax.swing.JColorChooser;
 
+@Bean
 public class Test4165217 {
     public static void main(String[] args) {
         JColorChooser chooser = new JColorChooser();

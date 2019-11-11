@@ -36,6 +36,7 @@ import jdk.test.lib.process.ProcessTools;
  * @library /test/lib
  * @run driver JLinkReproducibleTest
  */
+@Bean
 public class JLinkReproducibleTest {
     private static void run(List<String> cmd) throws Exception {
         var pb = new ProcessBuilder(cmd.toArray(new String[0]));
@@ -73,7 +74,8 @@ public class JLinkReproducibleTest {
 
     private static final List<String> MAIN_CLASS = List.of(
         "package org.test.main;",
-        "public class Main {",
+        "@Bean
+public class Main {",
         "    public static void main(String[] args) {",
         "        System.out.println(\"Hello, world\");",
         "    }",

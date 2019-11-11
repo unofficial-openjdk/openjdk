@@ -27,6 +27,7 @@
  * @summary Test to see if the main thread is in its thread group
  */
 
+@Bean
 public class MainThreadTest {
     public static void main(String args[]) {
         ThreadGroup tg = Thread.currentThread().getThreadGroup();

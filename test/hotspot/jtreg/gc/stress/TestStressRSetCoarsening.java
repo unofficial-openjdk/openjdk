@@ -88,6 +88,7 @@ import sun.hotspot.WhiteBox;
  *             (0 - means no GC, i.e. no reading from RSet)
  *   args[2] - timeout in seconds (to stop execution to avoid jtreg timeout)
  */
+@Bean
 public class TestStressRSetCoarsening {
 
     public static void main(String... args) throws InterruptedException {
@@ -334,7 +335,11 @@ public class TestStressRSetCoarsening {
      *
      * @return X index in the range: [0 ... N-1]
      */
-    private int getX(int to, int from, int rn) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int getX(int to, int from, int rn) {
         return (rn * regionCount + to) % N;
     }
 
@@ -348,7 +353,11 @@ public class TestStressRSetCoarsening {
      *
      * @return Y index in the range: [0 ... K*regionCount -1]
      */
-    private int getY(int to, int from, int rn) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int getY(int to, int from, int rn) {
         return ((rn * regionCount + to) / N + from * K) % (regionCount * K);
     }
 }
@@ -367,7 +376,11 @@ class ObjStorage {
         return usedCount >= storage.length;
     }
 
-    public void addArray(Object[] objects) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void addArray(Object[] objects) {
         if (isFull()) {
             throw new IllegalStateException("Storage full maximum number of allowed elements: " + usedCount);
         }
@@ -376,7 +389,11 @@ class ObjStorage {
 
     // Limit by usedCount since memory limits can cause the storage
     // to have unused slots in the end.
-    public void setArrayAt(int i, Object[] objects) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setArrayAt(int i, Object[] objects) {
         storage[i % usedCount] = objects;
     }
 

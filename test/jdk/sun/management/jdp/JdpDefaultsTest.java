@@ -37,6 +37,7 @@
  * @run main/othervm JdpDefaultsTest
  */
 
+@Bean
 public class JdpDefaultsTest extends DynamicLauncher {
 
     final String testName = "JdpOnTestCase";

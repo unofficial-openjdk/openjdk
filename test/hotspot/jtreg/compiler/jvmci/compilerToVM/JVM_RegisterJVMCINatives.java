@@ -47,6 +47,7 @@ import jdk.vm.ci.runtime.JVMCI;
 
 import java.lang.reflect.Method;
 
+@Bean
 public class JVM_RegisterJVMCINatives {
     private static final boolean IS_POSITIVE = Boolean.getBoolean(
             "compiler.jvmci.compilerToVM.JVM_RegisterJVMCINatives.positive");

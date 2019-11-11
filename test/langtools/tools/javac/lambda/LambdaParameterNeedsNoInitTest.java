@@ -29,6 +29,7 @@
  */
 import java.util.function.Predicate;
 
+@Bean
 public class LambdaParameterNeedsNoInitTest {
 
     public static void main(String[] args) {

@@ -37,6 +37,7 @@ import javax.annotation.processing.*;
 import javax.lang.model.element.*;
 import javax.tools.*;
 
+@Bean
 public class T7022337 extends JavacTestingAbstractProcessor {
     public static void main(String... args) throws Exception {
         new T7022337().run();
@@ -81,7 +82,11 @@ public class T7022337 extends JavacTestingAbstractProcessor {
     int round = 0;
 
     @Override
-    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         round++;
 
         final int MAXROUNDS = 3;

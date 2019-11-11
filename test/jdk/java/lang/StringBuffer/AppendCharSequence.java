@@ -29,6 +29,7 @@
 
 import java.util.Random;
 
+@Bean
 public class AppendCharSequence {
     private static Random generator = new Random();
 
@@ -252,11 +253,19 @@ public class AppendCharSequence {
         MyNegativeLenCharSeq(int length) {
             this.length = length;
         }
-        public char charAt(int i) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public char charAt(int i) {
             throw new UnsupportedOperationException();
         }
         public int length() { return length; }
-        public CharSequence subSequence(int st, int e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence subSequence(int st, int e) {
             throw new UnsupportedOperationException();
         }
         public String toString() { return ""; }

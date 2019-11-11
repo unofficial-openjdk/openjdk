@@ -39,6 +39,7 @@ import java.util.Properties;
  * test with the 'write' flag, and copy the resulting output back into this
  * file, replacing the existing String declaration(s).
  */
+@Bean
 public class PropertiesSerialization {
     private static final Properties TEST_PROPS;
     static {

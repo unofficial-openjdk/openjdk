@@ -31,6 +31,7 @@
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
+@Bean
 public class Test8076596 extends SecurityManager {
     public Test8076596() {
         // 1. Using lambda

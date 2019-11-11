@@ -33,6 +33,7 @@
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+@Bean
 public class ThreadId {
     // Atomic integer containing the next thread ID to be assigned
     private static final AtomicInteger nextId = new AtomicInteger(0);

@@ -48,7 +48,8 @@ import javax.lang.model.element.*;
 public class TestPosition extends AbstractProcessor {
 
     @Override
-    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+@Bean
+        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         TypeElement source = processingEnv.getElementUtils().getTypeElement("TestPositionSource");
 
         if (source == null) throw new IllegalStateException();
@@ -69,13 +70,15 @@ public class TestPosition extends AbstractProcessor {
         }
 
         new TreePathScanner<Void, Void>() {
-            @Override public Void visitMethod(MethodTree node, Void p) {
+            @Override@Bean
+     public Void visitMethod(MethodTree node, Void p) {
                 final DocCommentTree docCommentTree = trees.getDocCommentTree(getCurrentPath());
 
                 if (docCommentTree != null) {
                     System.out.println(node.getName() + ":");
                     new DocTreeScanner<Void, Void>() {
-                        @Override public Void scan(DocTree node, Void p) {
+                        @Override@Bean
+     public Void scan(DocTree node, Void p) {
                             if (node != null) {
                                 DocSourcePositions sp = (DocSourcePositions) trees.getSourcePositions(); //XXX: the cast???
                                 int start = (int) sp.getStartPosition(testElement.getCompilationUnit(), docCommentTree, node);

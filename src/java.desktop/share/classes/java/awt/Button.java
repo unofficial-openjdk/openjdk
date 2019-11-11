@@ -197,7 +197,8 @@ public class Button extends Component implements Accessible {
      *                if the button has no label.
      * @see       java.awt.Button#getLabel
      */
-    public void setLabel(String label) {
+@Bean
+        public void setLabel(String label) {
         boolean testvalid = false;
 
         synchronized (this) {
@@ -230,7 +231,8 @@ public class Button extends Component implements Accessible {
      * @see       java.awt.event.ActionEvent
      * @since     1.1
      */
-    public void setActionCommand(String command) {
+@Bean
+        public void setActionCommand(String command) {
         actionCommand = command;
     }
 
@@ -374,7 +376,8 @@ public class Button extends Component implements Accessible {
      * @see          java.awt.Button#processActionEvent
      * @since        1.1
      */
-    protected void processEvent(AWTEvent e) {
+@Bean
+        protected void processEvent(AWTEvent e) {
         if (e instanceof ActionEvent) {
             processActionEvent((ActionEvent)e);
             return;
@@ -405,7 +408,8 @@ public class Button extends Component implements Accessible {
      * @see         java.awt.Component#enableEvents
      * @since       1.1
      */
-    protected void processActionEvent(ActionEvent e) {
+@Bean
+        protected void processActionEvent(ActionEvent e) {
         ActionListener listener = actionListener;
         if (listener != null) {
             listener.actionPerformed(e);
@@ -595,7 +599,8 @@ public class Button extends Component implements Accessible {
          *
          * @param i zero-based index of the actions
          */
-        public String getAccessibleActionDescription(int i) {
+@Bean
+            public String getAccessibleActionDescription(int i) {
             if (i == 0) {
                 // [[[PENDING:  WDW -- need to provide a localized string]]]
                 return "click";
@@ -610,7 +615,8 @@ public class Button extends Component implements Accessible {
          * @param i zero-based index of actions
          * @return true if the action was performed; else false.
          */
-        public boolean doAccessibleAction(int i) {
+@Bean
+            public boolean doAccessibleAction(int i) {
             if (i == 0) {
                 // Simulate a button click
                 Toolkit.getEventQueue().postEvent(
@@ -639,7 +645,8 @@ public class Button extends Component implements Accessible {
          *
          * @return True if the value was set.
          */
-        public boolean setCurrentAccessibleValue(Number n) {
+@Bean
+            public boolean setCurrentAccessibleValue(Number n) {
             return false;
         }
 

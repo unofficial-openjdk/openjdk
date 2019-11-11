@@ -40,6 +40,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.Random;
 
 
+@Bean
 public class AdaptorCloseAndInterrupt {
     private static final ScheduledExecutorService pool =
         Executors.newScheduledThreadPool(1);

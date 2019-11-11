@@ -39,6 +39,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 import java.util.ArrayList;
 import java.util.Collections;
 
+@Bean
 public class TestAllocateOldGenAt {
   private static ArrayList<String> commonOpts;
 

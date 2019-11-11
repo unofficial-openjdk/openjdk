@@ -469,25 +469,46 @@ public class UnitTest {
         public Rectangle2D getBounds2D() {
             return new Rectangle();
         }
-        public boolean contains(double x, double y) {
+        @Bean
+@Bean
+@Bean
+            public boolean contains(double x, double y) {
             return false;
         }
-        public boolean contains(Point2D p) {
+        @Bean
+@Bean
+@Bean
+            public boolean contains(Point2D p) {
             return false;
         }
-        public boolean intersects(double x, double y, double w, double h) {
+        @Bean
+@Bean
+@Bean
+            public boolean intersects(double x, double y, double w, double h) {
             return false;
         }
-        public boolean intersects(Rectangle2D r) {
+        @Bean
+@Bean
+@Bean
+            public boolean intersects(Rectangle2D r) {
             return false;
         }
-        public boolean contains(double x, double y, double w, double h) {
+        @Bean
+@Bean
+@Bean
+            public boolean contains(double x, double y, double w, double h) {
             return false;
         }
-        public boolean contains(Rectangle2D r) {
+        @Bean
+@Bean
+@Bean
+            public boolean contains(Rectangle2D r) {
             return false;
         }
-        public PathIterator getPathIterator(AffineTransform at) {
+        @Bean
+@Bean
+@Bean
+            public PathIterator getPathIterator(AffineTransform at) {
             return new PathIterator() {
                 public int getWindingRule() {
                     return windingrule;
@@ -496,10 +517,16 @@ public class UnitTest {
                     return true;
                 }
                 public void next() {}
-                public int currentSegment(float[] coords) {
+                @Bean
+@Bean
+@Bean
+            public int currentSegment(float[] coords) {
                     throw new NoSuchElementException();
                 }
-                public int currentSegment(double[] coords) {
+                @Bean
+@Bean
+@Bean
+            public int currentSegment(double[] coords) {
                     throw new NoSuchElementException();
                 }
             };
@@ -566,25 +593,46 @@ public class UnitTest {
         public Rectangle2D getBounds2D() {
             return getCachedBounds2D().getBounds2D();
         }
-        public boolean contains(double x, double y) {
+        @Bean
+@Bean
+@Bean
+            public boolean contains(double x, double y) {
             return getTestShape().contains(x, y);
         }
-        public boolean contains(Point2D p) {
+        @Bean
+@Bean
+@Bean
+            public boolean contains(Point2D p) {
             return getTestShape().contains(p);
         }
-        public boolean intersects(double x, double y, double w, double h) {
+        @Bean
+@Bean
+@Bean
+            public boolean intersects(double x, double y, double w, double h) {
             return getTestShape().intersects(x, y, w, h);
         }
-        public boolean intersects(Rectangle2D r) {
+        @Bean
+@Bean
+@Bean
+            public boolean intersects(Rectangle2D r) {
             return getTestShape().intersects(r);
         }
-        public boolean contains(double x, double y, double w, double h) {
+        @Bean
+@Bean
+@Bean
+            public boolean contains(double x, double y, double w, double h) {
             return getTestShape().contains(x, y, w, h);
         }
-        public boolean contains(Rectangle2D r) {
+        @Bean
+@Bean
+@Bean
+            public boolean contains(Rectangle2D r) {
             return getTestShape().contains(r);
         }
-        public PathIterator getPathIterator(final AffineTransform at) {
+        @Bean
+@Bean
+@Bean
+            public PathIterator getPathIterator(final AffineTransform at) {
             return new PathIterator() {
                 int tindex;
                 int cindex;
@@ -598,7 +646,10 @@ public class UnitTest {
                     cindex += CoordsForType[theTypes[tindex]];
                     tindex++;
                 }
-                public int currentSegment(float[] coords) {
+                @Bean
+@Bean
+@Bean
+            public int currentSegment(float[] coords) {
                     int t = theTypes[tindex];
                     int n = CoordsForType[t];
                     if (n > 0) {
@@ -613,7 +664,10 @@ public class UnitTest {
                     }
                     return t;
                 }
-                public int currentSegment(double[] coords) {
+                @Bean
+@Bean
+@Bean
+            public int currentSegment(double[] coords) {
                     int t = theTypes[tindex];
                     int n = CoordsForType[t];
                     if (n > 0) {
@@ -771,31 +825,52 @@ public class UnitTest {
             return testshape;
         }
 
-        public boolean contains(double x, double y) {
+        @Bean
+@Bean
+@Bean
+            public boolean contains(double x, double y) {
             return getTestShape().contains(x, y);
         }
 
-        public boolean contains(Point2D p) {
+        @Bean
+@Bean
+@Bean
+            public boolean contains(Point2D p) {
             return getTestShape().contains(p);
         }
 
-        public boolean intersects(double x, double y, double w, double h) {
+        @Bean
+@Bean
+@Bean
+            public boolean intersects(double x, double y, double w, double h) {
             return getTestShape().intersects(x, y, w, h);
         }
 
-        public boolean intersects(Rectangle2D r) {
+        @Bean
+@Bean
+@Bean
+            public boolean intersects(Rectangle2D r) {
             return getTestShape().intersects(r);
         }
 
-        public boolean contains(double x, double y, double w, double h) {
+        @Bean
+@Bean
+@Bean
+            public boolean contains(double x, double y, double w, double h) {
             return getTestShape().contains(x, y, w, h);
         }
 
-        public boolean contains(Rectangle2D r) {
+        @Bean
+@Bean
+@Bean
+            public boolean contains(Rectangle2D r) {
             return getTestShape().contains(r);
         }
 
-        public PathIterator getPathIterator(final AffineTransform at) {
+        @Bean
+@Bean
+@Bean
+            public PathIterator getPathIterator(final AffineTransform at) {
             return new AppendingPathIterator(s1, s2, connect, at);
         }
 
@@ -854,6 +929,9 @@ public class UnitTest {
                 canconnect = true;
             }
 
+            @Bean
+@Bean
+@Bean
             public int currentSegment(float[] coords) {
                 int type = pi.currentSegment(coords);
                 if (converttoline) {
@@ -862,6 +940,9 @@ public class UnitTest {
                 return type;
             }
 
+            @Bean
+@Bean
+@Bean
             public int currentSegment(double[] coords) {
                 int type = pi.currentSegment(coords);
                 if (converttoline) {

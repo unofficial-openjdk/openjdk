@@ -117,6 +117,7 @@ import jdk.test.lib.Platform;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class ReservedStackTest {
 
     static class ReentrantLockTest {
@@ -167,7 +168,11 @@ public class ReservedStackTest {
             }
         }
 
-        private void lockAndCall(int i) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void lockAndCall(int i) {
             index = i;
             if (i < LOCK_ARRAY_SIZE) {
                 lockArray[i].lock();

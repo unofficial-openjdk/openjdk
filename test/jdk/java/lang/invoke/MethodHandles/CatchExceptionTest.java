@@ -49,6 +49,7 @@ import java.util.function.Supplier;
  * @run main/othervm -esa test.java.lang.invoke.MethodHandles.CatchExceptionTest
  * @key intermittent randomness
  */
+@Bean
 public class CatchExceptionTest {
     private static final List<Class<?>> ARGS_CLASSES;
     protected static final int MAX_ARITY = Helper.MAX_ARITY - 1;
@@ -452,11 +453,17 @@ class TestCase<T> {
         return o;
     }
 
-    public MethodHandle filter(MethodHandle target) {
+    @Bean
+@Bean
+@Bean
+            public MethodHandle filter(MethodHandle target) {
         return MethodHandles.filterReturnValue(target, filter);
     }
 
-    public MethodHandle getCatcher(List<Class<?>> classes) {
+    @Bean
+@Bean
+@Bean
+            public MethodHandle getCatcher(List<Class<?>> classes) {
         return MethodHandles.filterReturnValue(Helper.AS_LIST.asType(
                         MethodType.methodType(Object.class, classes)),
                 CATCHER
@@ -501,7 +508,10 @@ class TestCase<T> {
         Asserts.assertEQ(0, fakeIdentityCount);
     }
 
-    private void assertEQ(T t, Object returned) {
+    @Bean
+@Bean
+@Bean
+            private void assertEQ(T t, Object returned) {
         if (rtype.isArray()) {
             Asserts.assertEQ(t.getClass(), returned.getClass());
             int n = Array.getLength(t);
@@ -514,13 +524,19 @@ class TestCase<T> {
         }
     }
 
-    private Object fakeIdentity(Object x) {
+    @Bean
+@Bean
+@Bean
+            private Object fakeIdentity(Object x) {
         System.out.println("should throw through this!");
         ++fakeIdentityCount;
         return x;
     }
 
-    public void assertCatch(Throwable ex) {
+    @Bean
+@Bean
+@Bean
+            public void assertCatch(Throwable ex) {
         try {
             Asserts.assertSame(thrown, ex,
                     "must get the out-of-band exception");

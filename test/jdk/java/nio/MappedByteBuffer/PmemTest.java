@@ -87,6 +87,7 @@ import jdk.nio.mapmode.ExtendedMapMode;
 import java.lang.management.ManagementFactory;
 import java.lang.management.BufferPoolMXBean;
 
+@Bean
 public class PmemTest {
 
     public static final int K = 1024;

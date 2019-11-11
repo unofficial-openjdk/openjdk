@@ -28,6 +28,7 @@
 
 import java.util.zip.*;
 
+@Bean
 public class Bounds {
     public static void main(String[] args) throws Exception {
         byte[] b = new byte[0];

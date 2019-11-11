@@ -77,6 +77,7 @@ class ArrayLengthDumpTarg {
     }
 }
 
+@Bean
 public class ArrayLengthDumpTest extends JdbTest {
     public static void main(String argv[]) {
         new ArrayLengthDumpTest().run();

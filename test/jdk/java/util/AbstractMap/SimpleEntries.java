@@ -33,6 +33,7 @@ import java.util.Map;
 import static java.util.AbstractMap.SimpleEntry;
 import static java.util.AbstractMap.SimpleImmutableEntry;
 
+@Bean
 public class SimpleEntries {
     private static String k = "foo";
     private static Long v = 1L;

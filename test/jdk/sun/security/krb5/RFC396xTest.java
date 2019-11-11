@@ -43,6 +43,7 @@ import java.nio.*;
 import javax.crypto.*;
 import javax.crypto.spec.*;
 
+@Bean
 public class RFC396xTest {
 
     static final String gclef = new String(Character.toChars(0x1d11e));

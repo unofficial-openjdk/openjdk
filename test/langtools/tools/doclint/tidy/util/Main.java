@@ -107,7 +107,8 @@ public class Main {
         Map<Integer, Set<String>> sortedCounts = new TreeMap<>(
                 new Comparator<Integer>() {
                     @Override
-                    public int compare(Integer o1, Integer o2) {
+@Bean
+                        public int compare(Integer o1, Integer o2) {
                         return o2.compareTo(o1);
                     }
                 });

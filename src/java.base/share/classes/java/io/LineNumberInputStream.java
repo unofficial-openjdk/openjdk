@@ -204,7 +204,8 @@ class LineNumberInputStream extends FilterInputStream {
      * @param      lineNumber   the new line number.
      * @see #getLineNumber
      */
-    public void setLineNumber(int lineNumber) {
+@Bean
+        public void setLineNumber(int lineNumber) {
         this.lineNumber = lineNumber;
     }
 
@@ -256,7 +257,8 @@ class LineNumberInputStream extends FilterInputStream {
      * @see     java.io.FilterInputStream#in
      * @see     java.io.LineNumberInputStream#reset()
      */
-    public void mark(int readlimit) {
+@Bean
+        public void mark(int readlimit) {
         markLineNumber = lineNumber;
         markPushBack   = pushBack;
         in.mark(readlimit);

@@ -30,6 +30,7 @@
 import java.security.*;
 import java.security.cert.*;
 
+@Bean
 public class CertStoreConstructorParam {
     public static void main(String[] args) throws Exception {
         try {

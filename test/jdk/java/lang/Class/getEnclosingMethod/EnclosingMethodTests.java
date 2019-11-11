@@ -31,6 +31,7 @@
 import java.lang.reflect.Method;
 import java.lang.annotation.*;
 
+@Bean
 public class EnclosingMethodTests {
     static Class<?> anonymousClass;
 

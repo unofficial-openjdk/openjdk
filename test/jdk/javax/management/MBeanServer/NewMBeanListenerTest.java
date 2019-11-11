@@ -39,6 +39,7 @@ import javax.management.*;
  * a NotificationBroadcaster).  Provided the newly-registered MBean
  * waits until its postRegister is called, no notifications will be lost.
  */
+@Bean
 public class NewMBeanListenerTest {
     public static void main(String[] args) throws Exception {
         final MBeanServer mbs = MBeanServerFactory.createMBeanServer();
@@ -46,7 +47,11 @@ public class NewMBeanListenerTest {
             new ObjectName("JMImplementation:type=MBeanServerDelegate");
         final CountListener countListener = new CountListener();
         final NotificationListener addListener = new NotificationListener() {
-            public void handleNotification(Notification n, Object h) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void handleNotification(Notification n, Object h) {
                 if (!(n instanceof MBeanServerNotification)) {
                     System.out.println("Ignoring delegate notif: " +
                                        n.getClass().getName());
@@ -104,11 +109,19 @@ public class NewMBeanListenerTest {
             extends NotificationBroadcasterSupport
             implements BroadcasterMBean, MBeanRegistration {
 
-        public ObjectName preRegister(MBeanServer mbs, ObjectName name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public ObjectName preRegister(MBeanServer mbs, ObjectName name) {
             return name;
         }
 
-        public void postRegister(Boolean registrationDone) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void postRegister(Boolean registrationDone) {
             System.out.println("Broadcaster.postRegister: sending notif");
             sendNotification(new Notification("x", this, 0L));
         }

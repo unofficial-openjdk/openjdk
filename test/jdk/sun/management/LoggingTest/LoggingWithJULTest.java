@@ -35,6 +35,7 @@ import java.nio.file.Paths;
  * @build LoggingTest LoggingWithJULTest
  * @run main/othervm LoggingWithJULTest
  */
+@Bean
 public class LoggingWithJULTest {
 
     public static void main(String[] args) {

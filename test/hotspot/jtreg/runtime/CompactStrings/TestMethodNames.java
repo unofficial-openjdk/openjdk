@@ -31,6 +31,7 @@ import java.util.function.*;
  * @run main/othervm -XX:+CompactStrings TestMethodNames
  * @run main/othervm -XX:-CompactStrings TestMethodNames
  */
+@Bean
 public class TestMethodNames {
     public static void main(String[] args) throws Exception {
         ScriptEngineManager m = new ScriptEngineManager();

@@ -35,6 +35,7 @@ import java.io.*;
 import java.util.Locale;
 import java.net.URL;
 
+@Bean
 public class URLPDFPrinting {
         /**
          * Constructor

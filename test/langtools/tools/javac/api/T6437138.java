@@ -35,6 +35,7 @@ import javax.tools.*;
 import static javax.tools.JavaFileObject.Kind.*;
 
 
+@Bean
 public class T6437138 {
     static class JFO extends SimpleJavaFileObject {
         public JFO(URI uri, JavaFileObject.Kind kind) {

@@ -59,6 +59,7 @@ import static javax.tools.StandardLocation.CLASS_PATH;
 import static javax.tools.StandardLocation.SOURCE_PATH;
 import static javax.tools.StandardLocation.CLASS_OUTPUT;
 
+@Bean
 public class TestJavacTaskScanner extends ToolTester {
 
     final JavacTaskImpl task;
@@ -132,7 +133,11 @@ public class TestJavacTaskScanner extends ToolTester {
         }
     }
 
-    private void testGetAllMembers(TypeElement clazz) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testGetAllMembers(TypeElement clazz) {
         for (Element member : elements.getAllMembers(clazz)) {
             System.out.format("elem#%d: %s : %s%n",
                 numAllMembers, member.getSimpleName(), member.asType());
@@ -171,7 +176,11 @@ class MyScanner extends Scanner {
         }
 
         @Override
-        public Scanner newScanner(CharSequence input, boolean keepDocComments) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Scanner newScanner(CharSequence input, boolean keepDocComments) {
             if (input instanceof CharBuffer) {
                 return new MyScanner(this, (CharBuffer)input, test);
             } else {
@@ -181,7 +190,11 @@ class MyScanner extends Scanner {
         }
 
         @Override
-        public Scanner newScanner(char[] input, int inputLength, boolean keepDocComments) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Scanner newScanner(char[] input, int inputLength, boolean keepDocComments) {
             return new MyScanner(this, input, inputLength, test);
         }
 

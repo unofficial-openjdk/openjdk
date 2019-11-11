@@ -38,6 +38,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Collectors;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class B6210227 {
     public static void main(String[] args) throws Exception
     {

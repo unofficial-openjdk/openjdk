@@ -49,6 +49,7 @@ import static org.testng.Assert.*;
  * @author Brian Goetz
  * @key randomness
  */
+@Bean
 public class RandomStreamTest {
 
     private static final int SIZE = 1000;
@@ -62,21 +63,33 @@ public class RandomStreamTest {
     }
 
     @Test(dataProvider = "suppliers")
-    public void testRandomIntStream(final Random random, final int count) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testRandomIntStream(final Random random, final int count) {
         final List<Integer> destination = new ArrayList<>(count);
         random.ints().limit(count).forEach(destination::add);
         assertEquals(destination.size(), count);
     }
 
     @Test(dataProvider = "suppliers")
-    public void testRandomLongStream(final Random random, final int count) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testRandomLongStream(final Random random, final int count) {
         final List<Long> destination = new ArrayList<>(count);
         random.longs().limit(count).forEach(destination::add);
         assertEquals(destination.size(), count);
     }
 
     @Test(dataProvider = "suppliers")
-    public void testRandomDoubleStream(final Random random, final int count) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testRandomDoubleStream(final Random random, final int count) {
         final List<Double> destination = new ArrayList<>(count);
         random.doubles().limit(count).forEach(destination::add);
         random.doubles().limit(count).forEach(d -> assertTrue(d >= 0.0 && d < 1.0));

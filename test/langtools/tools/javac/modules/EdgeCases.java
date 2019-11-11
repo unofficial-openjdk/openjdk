@@ -76,6 +76,7 @@ import toolbox.Task;
 import toolbox.Task.Expect;
 import toolbox.Task.OutputKind;
 
+@Bean
 public class EdgeCases extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {
@@ -85,7 +86,8 @@ public class EdgeCases extends ModuleTestBase {
     @Test
     public void testAddExportUndefinedModule(Path base) throws Exception {
         Path src = base.resolve("src");
-        tb.writeJavaFiles(src, "package test; import undefPackage.Any; public class Test {}");
+        tb.writeJavaFiles(src, "package test; import undefPackage.Any; @Bean
+public class Test {}");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
@@ -171,15 +173,18 @@ public class EdgeCases extends ModuleTestBase {
         Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
                           "module m1x { exports api1; }",
-                          "package api1; public class Api1 { public void call() { } }");
+                          "package api1; @Bean
+public class Api1 { public void call() { } }");
         Path src_m2 = src.resolve("m2x");
         tb.writeJavaFiles(src_m2,
                           "module m2x { requires m1x; exports api2; }",
-                          "package api2; public class Api2 { public static api1.Api1 get() { return null; } }");
+                          "package api2; @Bean
+public class Api2 { public static api1.Api1 get() { return null; } }");
         Path src_m3 = src.resolve("m3x");
         tb.writeJavaFiles(src_m3,
                           "module m3x { requires m2x; }",
-                          "package test; public class Test { { api2.Api2.get().call(); api2.Api2.get().toString(); } }");
+                          "package test; @Bean
+public class Test { { api2.Api2.get().call(); api2.Api2.get().toString(); } }");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
@@ -202,7 +207,8 @@ public class EdgeCases extends ModuleTestBase {
         //check that if a ClassSymbol belongs to an automatic module, it is properly assigned and not
         //duplicated when being accessed through a classfile.
         Path automaticSrc = base.resolve("automaticSrc");
-        tb.writeJavaFiles(automaticSrc, "package api1; public class Api1 {}");
+        tb.writeJavaFiles(automaticSrc, "package api1; @Bean
+public class Api1 {}");
         Path automaticClasses = base.resolve("automaticClasses");
         tb.createDirectories(automaticClasses);
 
@@ -231,11 +237,13 @@ public class EdgeCases extends ModuleTestBase {
         Path src_m2 = src.resolve("m2x");
         tb.writeJavaFiles(src_m2,
                           "module m2x { requires a; exports api2; }",
-                          "package api2; public class Api2 { public static api1.Api1 get() { return null; } }");
+                          "package api2; @Bean
+public class Api2 { public static api1.Api1 get() { return null; } }");
         Path src_m3 = src.resolve("m3x");
         tb.writeJavaFiles(src_m3,
                           "module m3x { requires a; requires m2x; }",
-                          "package test; public class Test { { api2.Api2.get(); api1.Api1 a1; } }");
+                          "package test; @Bean
+public class Test { { api2.Api2.get(); api1.Api1 a1; } }");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
@@ -263,7 +271,8 @@ public class EdgeCases extends ModuleTestBase {
         Files.createDirectories(src_m1);
         try (Writer w = Files.newBufferedWriter(src_m1.resolve("module-info.java"))) {}
         tb.writeJavaFiles(src_m1,
-                          "package test; public class Test {}");
+                          "package test; @Bean
+public class Test {}");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
@@ -303,12 +312,14 @@ public class EdgeCases extends ModuleTestBase {
         tb.writeJavaFiles(src_m1,
                           "module m1x { exports test.m1x; }",
                           "package test.m1x;\n" +
-                          "public class Test {}\n");
+                          "@Bean
+public class Test {}\n");
         Path src_m2 = src.resolve("m2x");
         tb.writeJavaFiles(src_m2,
                           "module m2x { requires m1x; }",
                           "package test;\n" +
-                          "public class m1x {}\n");
+                          "@Bean
+public class m1x {}\n");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
@@ -338,7 +349,8 @@ public class EdgeCases extends ModuleTestBase {
         Files.createDirectories(src_java_base);
         tb.writeJavaFiles(src_java_base, "module java.base { exports java.lang; }");
         tb.writeJavaFiles(src_java_base,
-                          "package java.lang; public class Object {}");
+                          "package java.lang; @Bean
+public class Object {}");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
@@ -409,7 +421,8 @@ public class EdgeCases extends ModuleTestBase {
         Path m1 = src.resolve("m1x");
         Files.createDirectories(m1);
         tb.writeJavaFiles(m1, "module other { }",
-                              "package test; public class Test {}");
+                              "package test; @Bean
+public class Test {}");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
@@ -437,7 +450,8 @@ public class EdgeCases extends ModuleTestBase {
         Path src = base.resolve("src");
         Files.createDirectories(src);
         tb.writeJavaFiles(src, "module other { }",
-                               "package test; public class Test {}");
+                               "package test; @Bean
+public class Test {}");
         Path classes = base.resolve("classes");
         Path m1Classes = classes.resolve("m1x");
         tb.createDirectories(m1Classes);
@@ -516,14 +530,17 @@ public class EdgeCases extends ModuleTestBase {
         tb.writeJavaFiles(src_m1,
                           "module m1x { }",
                           "package m1x;\n" +
-                          "import m1x.a.*; public class Test { A a; }\n",
+                          "import m1x.a.*; @Bean
+public class Test { A a; }\n",
                           "package m1x.a;\n" +
-                          "public class A { }\n");
+                          "@Bean
+public class A { }\n");
         Path src_m2 = src.resolve("m2x");
         tb.writeJavaFiles(src_m2,
                           "module m2x { }",
                           "package m1x;\n" +
-                          "public class a { public static class A { } }\n");
+                          "@Bean
+public class a { public static class A { } }\n");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
@@ -557,7 +574,8 @@ public class EdgeCases extends ModuleTestBase {
         Path src_compile = src.resolve("compile");
         tb.writeJavaFiles(src_compile,
                           "module compile { exports p to test; }",
-                          "package p; public class Test { }");
+                          "package p; @Bean
+public class Test { }");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
@@ -589,7 +607,11 @@ public class EdgeCases extends ModuleTestBase {
         private int round;
 
         @Override
-        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             if (round++ == 0) {
                 ModuleElement compileE = processingEnv.getElementUtils().getModuleElement("compile");
                 ModuleElement testE = ElementFilter.exportsIn(compileE.getDirectives()).get(0).getTargetModules().get(0);
@@ -677,7 +699,8 @@ public class EdgeCases extends ModuleTestBase {
         Path src8 = base.resolve("src8");
         Files.createDirectories(src8);
         tb.writeJavaFiles(src8,
-                          "package test; public class Test {}");
+                          "package test; @Bean
+public class Test {}");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
@@ -701,7 +724,8 @@ public class EdgeCases extends ModuleTestBase {
         Path srcUnnamed = base.resolve("srcUnnamed");
         Files.createDirectories(srcUnnamed);
         tb.writeJavaFiles(srcUnnamed,
-                          "public class Test {}");
+                          "@Bean
+public class Test {}");
         Path classesUnnamed = base.resolve("classesUnnamed");
         tb.createDirectories(classesUnnamed);
 
@@ -725,7 +749,8 @@ public class EdgeCases extends ModuleTestBase {
         Files.createDirectories(srcNamed);
         tb.writeJavaFiles(srcNamed,
                           "module m {}",
-                          "public class Test {}");
+                          "@Bean
+public class Test {}");
         Path classesNamed = base.resolve("classesNamed");
         tb.createDirectories(classesNamed);
 
@@ -752,12 +777,14 @@ public class EdgeCases extends ModuleTestBase {
         Files.createDirectories(srcNamed2m1);
         tb.writeJavaFiles(srcNamed2m1,
                           "module m1x {}",
-                          "public class Test {}");
+                          "@Bean
+public class Test {}");
         Path srcNamed2m2 = srcNamed2.resolve("m2x");
         Files.createDirectories(srcNamed2m2);
         tb.writeJavaFiles(srcNamed2m2,
                           "module m2x {}",
-                          "public class Test {}");
+                          "@Bean
+public class Test {}");
         Path classesNamed2 = base.resolve("classesNamed2");
         tb.createDirectories(classesNamed2);
 
@@ -788,7 +815,11 @@ public class EdgeCases extends ModuleTestBase {
         int round = 0;
 
         @Override
-        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             if (round++ != 0)
                 return false;
 
@@ -917,7 +948,8 @@ public class EdgeCases extends ModuleTestBase {
         Path apiFile = m.resolve("api").resolve("Api.java");
         Files.createDirectories(apiFile.getParent());
         try (BufferedWriter w = Files.newBufferedWriter(apiFile)) {
-            w.write("package impl; public class Api { }");
+            w.write("package impl; @Bean
+public class Api { }");
         }
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
@@ -963,8 +995,10 @@ public class EdgeCases extends ModuleTestBase {
     public void testDependOnUnnamedAccessibility(Path base) throws Exception {
         Path unnamedSrc = base.resolve("unnamed-src");
         tb.writeJavaFiles(unnamedSrc,
-                          "package p1; public class First { public static p2.Second get() { return null; } }",
-                          "package p2; public class Second { public void test() { } }");
+                          "package p1; @Bean
+public class First { public static p2.Second get() { return null; } }",
+                          "package p2; @Bean
+public class Second { public void test() { } }");
         Path unnamedClasses = base.resolve("unnamed-classes");
         tb.createDirectories(unnamedClasses);
 
@@ -981,7 +1015,8 @@ public class EdgeCases extends ModuleTestBase {
         Path m = src.resolve("m");
         tb.writeJavaFiles(m,
                           "module m { }",
-                          "package p; public class Test { { p1.First.get().test(); } }");
+                          "package p; @Bean
+public class Test { { p1.First.get().test(); } }");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 

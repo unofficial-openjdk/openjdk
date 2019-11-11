@@ -50,7 +50,11 @@ public class CGT {
         new CGT(args).run();
     }
 
-    public void outputStats(String[] args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void outputStats(String[] args) {
         System.out.println("CGT command line options:");
         for (String arg : args) {
             System.out.println("# " + arg);
@@ -136,7 +140,11 @@ public class CGT {
         return System.currentTimeMillis() >= finishTime;
     }
 
-    public void parse(String args[]) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void parse(String args[]) {
         for (int i = 0; i < args.length; i++) {
             String arg = args[i].toLowerCase();
             switch (arg) {

@@ -39,6 +39,7 @@ import java.util.Properties;
  * This class tests to see if the properties object saves
  * and loads keys and values properly
  */
+@Bean
 public class SaveEncoding {
 
     public static void main(String argv[]) {

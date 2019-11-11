@@ -68,6 +68,7 @@ package gc;
  * @run main/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC gc.TestSystemGC
  * @run main/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:+ExplicitGCInvokesConcurrent gc.TestSystemGC
  */
+@Bean
 public class TestSystemGC {
   public static void main(String args[]) throws Exception {
     System.gc();

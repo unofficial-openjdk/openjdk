@@ -33,6 +33,7 @@ import com.sun.jdi.*;
 import com.sun.jdi.connect.*;
 import java.util.*;
 
+@Bean
 public class CompatibleConnectors {
 
     // number of tests that fail

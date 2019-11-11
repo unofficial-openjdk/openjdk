@@ -27,6 +27,7 @@
  * @summary Add lambda tests
  *  missing erasure on intersection supertype of generated lambda class
  */
+@Bean
 public class TargetType35 {
 
     static int assertionCount = 0;

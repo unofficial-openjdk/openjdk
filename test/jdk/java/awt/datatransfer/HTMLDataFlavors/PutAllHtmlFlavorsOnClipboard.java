@@ -24,6 +24,7 @@
 
 import java.awt.*;
 
+@Bean
 public class PutAllHtmlFlavorsOnClipboard {
     public static void main(String[] args) {
         System.out.println("PutAllHtmlFlavorsOnClipboard has been started.");

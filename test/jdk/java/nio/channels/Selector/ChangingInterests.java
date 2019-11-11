@@ -33,6 +33,7 @@ import java.nio.channels.*;
 import static java.nio.channels.SelectionKey.*;
 import java.io.IOException;
 
+@Bean
 public class ChangingInterests {
 
     static int OPS[] = { 0, OP_WRITE, OP_READ, (OP_WRITE|OP_READ) };

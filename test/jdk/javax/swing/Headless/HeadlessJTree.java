@@ -35,6 +35,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessJTree
  */
 
+@Bean
 public class HeadlessJTree {
     public static void main(String args[]) {
         JTree t;

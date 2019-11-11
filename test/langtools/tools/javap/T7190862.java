@@ -23,6 +23,7 @@ import javax.tools.JavaFileObject;
 import javax.tools.SimpleJavaFileObject;
 import javax.tools.ToolProvider;
 
+@Bean
 public class T7190862 {
 
     enum TypeWideInstructionMap {
@@ -48,7 +49,11 @@ public class T7190862 {
         new T7190862().run(comp);
     }
 
-    private void run(JavaCompiler comp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void run(JavaCompiler comp) {
         String code;
         for (TypeWideInstructionMap typeInstructionMap: TypeWideInstructionMap.values()) {
             if (typeInstructionMap != TypeWideInstructionMap.OBJECT) {
@@ -68,7 +73,11 @@ public class T7190862 {
         check(new String[]{"iinc_w"});
     }
 
-    private void compile(JavaCompiler comp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void compile(JavaCompiler comp) {
         JavacTask ct = (JavacTask)comp.getTask(null, null, null, null, null, Arrays.asList(source));
         try {
             if (!ct.call()) {
@@ -79,7 +88,11 @@ public class T7190862 {
         }
     }
 
-    private void check(String[] instructions) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void check(String[] instructions) {
         String out = javap(Arrays.asList("-c"), Arrays.asList("Test.class"));
         for (String line: out.split(System.getProperty("line.separator"))) {
             line = line.trim();
@@ -91,7 +104,11 @@ public class T7190862 {
         }
     }
 
-    private String javap(List<String> args, List<String> classes) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String javap(List<String> args, List<String> classes) {
         DiagnosticCollector<JavaFileObject> dc = new DiagnosticCollector<JavaFileObject>();
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
@@ -109,7 +126,11 @@ public class T7190862 {
 
     }
 
-    private String createWideLocalSource(String type, int numberOfVars) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String createWideLocalSource(String type, int numberOfVars) {
         String result = "    " + type + " x0 = 0;\n";
         for (int i = 1; i < numberOfVars; i++) {
             result += "        " + type + " x" + i + " = x" + (i - 1) + " + 1;\n";
@@ -117,7 +138,11 @@ public class T7190862 {
         return result;
     }
 
-    private String createWideLocalSourceForObject(int numberOfVars) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String createWideLocalSourceForObject(int numberOfVars) {
         String result = "    Object x0 = new Object();\n";
         for (int i = 1; i < numberOfVars; i++) {
             result += "        Object x" + i + " = x0;\n";
@@ -150,7 +175,11 @@ public class T7190862 {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return source;
         }
     }

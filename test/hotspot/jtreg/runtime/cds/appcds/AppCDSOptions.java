@@ -30,12 +30,20 @@ public class AppCDSOptions extends CDSOptions {
     public String appJar;
     public String appJarDir;
 
-    public AppCDSOptions setAppJar(String appJar) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public AppCDSOptions setAppJar(String appJar) {
         this.appJar = appJar;
         return this;
     }
 
-    public AppCDSOptions setAppJarDir(String appJarDir) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public AppCDSOptions setAppJarDir(String appJarDir) {
         this.appJarDir = appJarDir;
         return this;
     }

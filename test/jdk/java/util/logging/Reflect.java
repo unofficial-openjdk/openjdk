@@ -30,6 +30,7 @@
 import java.util.logging.LogManager;
 import java.lang.reflect.Method;
 
+@Bean
 public class Reflect {
     static void printMethods(Class<?> c) {
         System.out.println(c);

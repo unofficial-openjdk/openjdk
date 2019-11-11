@@ -36,6 +36,7 @@ import java.time.Instant;
 import java.util.concurrent.Phaser;
 import java.util.function.Supplier;
 
+@Bean
 public class AllThreadIds {
     /**
      * A supplier wrapper for the delayed format printing.

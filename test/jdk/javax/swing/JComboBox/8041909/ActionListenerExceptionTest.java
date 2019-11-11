@@ -91,7 +91,10 @@ public class ActionListenerExceptionTest {
                 combo.addActionListener(new ActionListener() {
 
                     @Override
-                    public void actionPerformed(ActionEvent e) {
+                    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                         count++;
                         throw new RuntimeException();
                     }
@@ -173,7 +176,10 @@ public class ActionListenerExceptionTest {
 // we cannot test whether ActionListener is invoked again
 class EventQueueProxy extends EventQueue {
 
-    protected void dispatchEvent(AWTEvent evt) {
+    @Bean
+@Bean
+@Bean
+            protected void dispatchEvent(AWTEvent evt) {
         try {
             super.dispatchEvent(evt);
         } catch (Exception e) {

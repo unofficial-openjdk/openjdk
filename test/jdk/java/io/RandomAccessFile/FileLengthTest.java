@@ -36,6 +36,7 @@ import java.io.RandomAccessFile;
  *
  * @author vyom.tewari@oracle.com
  */
+@Bean
 public class FileLengthTest {
 
     private static final int BUF_SIZE = 4096;

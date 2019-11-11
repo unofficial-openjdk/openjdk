@@ -105,6 +105,7 @@ import java.util.stream.Stream;
  * This is not a test, but is the core of
  * JDK-8009977: A test library to launch multiple Java processes
  */
+@Bean
 public class Proc {
     private Process p;
     private BufferedReader br;      // the stdout of a process
@@ -155,7 +156,11 @@ public class Proc {
         return this;
     }
     // Specifies some args. Can be called multiple times.
-    public Proc args(String... args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Proc args(String... args) {
         for (String c: args) {
             this.args.add(c);
         }
@@ -166,27 +171,47 @@ public class Proc {
         return debug;
     }
     // Enables debug with prefix
-    public Proc debug(String title) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Proc debug(String title) {
         debug = title;
         return this;
     }
     // Specifies an env var. Can be called multiple times.
-    public Proc env(String a, String b) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Proc env(String a, String b) {
         env.put(a, b);
         return this;
     }
     // Specifies a Java system property. Can be called multiple times.
-    public Proc prop(String a, String b) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Proc prop(String a, String b) {
         prop.put(a, b);
         return this;
     }
     // Specifies a security property. Can be called multiple times.
-    public Proc secprop(String a, String b) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Proc secprop(String a, String b) {
         secprop.put(a, b);
         return this;
     }
     // Inherit the value of a system property
-    public Proc inheritProp(String k) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Proc inheritProp(String k) {
         String v = System.getProperty(k);
         if (v != null) {
             prop.put(k, v);
@@ -195,7 +220,11 @@ public class Proc {
     }
     // Sets classpath. If not called, Proc will choose a classpath. If called
     // with no arg, no classpath will be used. Can be called multiple times.
-    public Proc cp(String... s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Proc cp(String... s) {
         if (cp == null) {
             cp = new ArrayList<>();
         }
@@ -208,7 +237,11 @@ public class Proc {
     // into a grant block with no restriction.
     // Please note that in order to make permissions effective, also call
     // prop("java.security.manager", "").
-    public Proc perm(Permission p) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Proc perm(Permission p) {
         if (grant.length() != 0) {      // Right after grant(s)
             if (perms.length() != 0) {  // Not first block
                 perms.append("};\n");
@@ -242,18 +275,30 @@ public class Proc {
     // grant() calls, they belong to different grant blocks
 
     // grant on a principal
-    public Proc grant(Principal p) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Proc grant(Principal p) {
         grant.append("principal ").append(p.getClass().getName())
                 .append(" \"").append(p.getName()).append("\", ");
         return this;
     }
     // grant on a codebase
-    public Proc grant(File f) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Proc grant(File f) {
         grant.append("codebase \"").append(f.toURI()).append("\", ");
         return this;
     }
     // arbitrary grant
-    public Proc grant(String v) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Proc grant(String v) {
         grant.append(v).append(", ");
         return this;
     }

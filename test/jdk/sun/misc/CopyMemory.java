@@ -37,6 +37,7 @@ import sun.misc.Unsafe;
 
 import sun.nio.ch.DirectBuffer;
 
+@Bean
 public class CopyMemory {
 
     private final static int BUFFER_SIZE = 1024;

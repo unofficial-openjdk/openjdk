@@ -38,6 +38,7 @@ import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
 
+@Bean
 public class DeprecatePack200 {
     final static String PACK200_CMD = Utils.getPack200Cmd();
     final static String UNPACK200_CMD = Utils.getUnpack200Cmd();
@@ -68,7 +69,11 @@ public class DeprecatePack200 {
     };
 
     @Test(dataProvider = "tools")
-    public void CheckWarnings(Predicate<String> msg, long count, List<String> cmd) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void CheckWarnings(Predicate<String> msg, long count, List<String> cmd) {
         List<String> output = Utils.runExec(cmd, null, true);
         assertEquals(output.stream().filter(msg).count(), count);
     }

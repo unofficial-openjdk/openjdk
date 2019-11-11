@@ -39,6 +39,7 @@ import java.util.logging.LogManager;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
+@Bean
 public class PlatformMBeanServerTest {
     public static void main(String[] argv) throws Exception {
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();

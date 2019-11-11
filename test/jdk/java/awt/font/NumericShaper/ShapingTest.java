@@ -32,6 +32,7 @@ import java.awt.font.NumericShaper;
 import java.util.EnumSet;
 import static java.awt.font.NumericShaper.*;
 
+@Bean
 public class ShapingTest {
 
     private static boolean err = false;

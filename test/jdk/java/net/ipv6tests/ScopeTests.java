@@ -34,6 +34,7 @@
 import java.net.*;
 import java.util.*;
 
+@Bean
 public class ScopeTests extends Tests {
 
     public static void main (String[] args) throws Exception {

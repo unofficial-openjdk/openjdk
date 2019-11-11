@@ -33,6 +33,7 @@ import java.nio.file.Files;
 import java.util.Arrays;
 import jdk.tools.jlink.internal.plugins.ResourceFilter;
 
+@Bean
 public class ResourceFilterTest {
 
     public static void main(String[] args) throws Exception {

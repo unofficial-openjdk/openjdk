@@ -61,7 +61,10 @@ public class bug6777378 {
                         return 10;
                     }
 
-                    public Object getValueAt(int rowIndex, int columnIndex) {
+                    @Bean
+@Bean
+@Bean
+            public Object getValueAt(int rowIndex, int columnIndex) {
                         return "" + rowIndex + " " + columnIndex;
                     }
                 });

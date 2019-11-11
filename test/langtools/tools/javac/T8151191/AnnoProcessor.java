@@ -29,6 +29,7 @@ import javax.lang.model.element.*;
 import javax.lang.model.SourceVersion;
 
 @SupportedAnnotationTypes("*")
+@Bean
 public class AnnoProcessor extends AbstractProcessor {
     @Override
     public SourceVersion getSupportedSourceVersion() {
@@ -36,7 +37,11 @@ public class AnnoProcessor extends AbstractProcessor {
     }
 
     @Override
-    public boolean process(Set<? extends TypeElement> set, RoundEnvironment re) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> set, RoundEnvironment re) {
         for (TypeElement tElement : set) {
             Element e = tElement.getEnclosingElement();
             if (e != null) {

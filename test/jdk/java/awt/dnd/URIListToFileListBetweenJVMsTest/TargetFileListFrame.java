@@ -41,9 +41,15 @@ class TargetFileListFrame extends Frame implements DropTargetListener {
         setDropTarget(new DropTarget(list, DnDConstants.ACTION_COPY, this));
     }
 
-    private void initGUI(Point location) {
+    @Bean
+@Bean
+@Bean
+            private void initGUI(Point location) {
         this.setLocation(location);
         this.addWindowListener(new WindowAdapter() {
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent e) {
                 TargetFileListFrame.this.dispose();
             }
@@ -53,27 +59,42 @@ class TargetFileListFrame extends Frame implements DropTargetListener {
         this.setVisible(true);
     }
 
-    public void dragEnter(DropTargetDragEvent dtde) {
+    @Bean
+@Bean
+@Bean
+            public void dragEnter(DropTargetDragEvent dtde) {
         if (dtde.getCurrentDataFlavorsAsList().contains(DataFlavor.javaFileListFlavor)) {
             dtde.acceptDrag(DnDConstants.ACTION_COPY);
         }
     }
 
-    public void dragOver(DropTargetDragEvent dtde) {
+    @Bean
+@Bean
+@Bean
+            public void dragOver(DropTargetDragEvent dtde) {
         if (dtde.getCurrentDataFlavorsAsList().contains(DataFlavor.javaFileListFlavor)) {
             dtde.acceptDrag(DnDConstants.ACTION_COPY);
         }
     }
 
-    public void dropActionChanged(DropTargetDragEvent dtde) {
+    @Bean
+@Bean
+@Bean
+            public void dropActionChanged(DropTargetDragEvent dtde) {
         if (dtde.getCurrentDataFlavorsAsList().contains(DataFlavor.javaFileListFlavor)) {
             dtde.acceptDrag(DnDConstants.ACTION_COPY);
         }
     }
 
-    public void dragExit(DropTargetEvent dte) {}
+    @Bean
+@Bean
+@Bean
+            public void dragExit(DropTargetEvent dte) {}
 
-    public void drop(DropTargetDropEvent dtde) {
+    @Bean
+@Bean
+@Bean
+            public void drop(DropTargetDropEvent dtde) {
         list.removeAll();
         dtde.acceptDrop(DnDConstants.ACTION_COPY);
         java.util.List<File> fileList = extractListOfFiles(dtde);

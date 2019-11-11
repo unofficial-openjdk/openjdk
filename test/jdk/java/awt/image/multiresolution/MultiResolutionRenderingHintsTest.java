@@ -147,7 +147,10 @@ public class MultiResolutionRenderingHintsTest {
         }
 
         @Override
-        public ColorModel getColorModel(int transparency) {
+        @Bean
+@Bean
+@Bean
+            public ColorModel getColorModel(int transparency) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
@@ -202,7 +205,10 @@ public class MultiResolutionRenderingHintsTest {
         }
 
         @Override
-        public Raster getRaster(int x, int y, int w, int h) {
+        @Bean
+@Bean
+@Bean
+            public Raster getRaster(int x, int y, int w, int h) {
             return buffImage.getRaster();
         }
 

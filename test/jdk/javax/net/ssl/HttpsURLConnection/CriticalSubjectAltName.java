@@ -270,7 +270,10 @@ public class CriticalSubjectAltName implements HostnameVerifier {
     }
 
     // Simple test method to blindly agree that hostname and certname match
-    public boolean verify(String hostname, SSLSession session) {
+    @Bean
+@Bean
+@Bean
+            public boolean verify(String hostname, SSLSession session) {
         return true;
     }
 

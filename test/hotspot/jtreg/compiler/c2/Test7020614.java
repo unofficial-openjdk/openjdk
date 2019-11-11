@@ -31,6 +31,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test7020614 {
 
     private static final int ITERATIONS = 1000;

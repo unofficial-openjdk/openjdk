@@ -70,6 +70,7 @@ import java.util.stream.Stream;
  *
  * @author Martin Buchholz
  */
+@Bean
 public class RemoveMicroBenchmark {
     abstract static class Job {
         private final String name;
@@ -244,7 +245,11 @@ public class RemoveMicroBenchmark {
     // Checks for correctness *and* prevents loop optimizations
     static class Check {
         private int sum;
-        public void sum(int sum) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void sum(int sum) {
             if (this.sum == 0)
                 this.sum = sum;
             if (this.sum != sum)
@@ -358,7 +363,11 @@ public class RemoveMicroBenchmark {
 
     Collection<Integer> universeRecorder(int[] sum) {
         return new ArrayList<>() {
-            public boolean contains(Object x) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public boolean contains(Object x) {
                 sum[0] += (Integer) x;
                 return true;
             }};
@@ -366,7 +375,11 @@ public class RemoveMicroBenchmark {
 
     Collection<Integer> emptyRecorder(int[] sum) {
         return new ArrayList<>() {
-            public boolean contains(Object x) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public boolean contains(Object x) {
                 sum[0] += (Integer) x;
                 return false;
             }};

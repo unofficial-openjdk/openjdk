@@ -30,6 +30,7 @@ import java.io.*;
  * @modules jdk.jdeps/com.sun.tools.javap
  */
 
+@Bean
 public class T6863746 {
     public static void main(String... args) throws Exception{
         new T6863746().run();

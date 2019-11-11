@@ -101,6 +101,9 @@ public class MouseModifiersUnitTest_Standard {
         final String [] modifierNames = {"InputEvent.SHIFT_MASK", "InputEvent.CTRL_MASK"};
         f.setLayout(new FlowLayout());
         f.addMouseWheelListener(new MouseWheelListener() {
+            @Bean
+@Bean
+@Bean
             public void mouseWheelMoved(MouseWheelEvent e) {
                 System.out.println("WHEEL "+e);
             }
@@ -594,7 +597,10 @@ class CheckingModifierAdapter extends MouseAdapter{
         this.modifier = modifier;
     }
 
-    public void mousePressed(MouseEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void mousePressed(MouseEvent e) {
         System.out.println("PRESSED "+e);
         if (e.getButton() > MouseEvent.BUTTON3) {
             System.out.println("Extra button affected. Skip.");
@@ -602,7 +608,10 @@ class CheckingModifierAdapter extends MouseAdapter{
             MouseModifiersUnitTest_Standard.checkPressedModifiersTest(modifier, e); // e.getButton(), e.getModifiers(), e.getModifiersEx(),
         }
     }
-    public void mouseReleased(MouseEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void mouseReleased(MouseEvent e) {
         System.out.println("RELEASED "+e);
         if (e.getButton() > MouseEvent.BUTTON3) {
             System.out.println("Extra button affected. Skip.");
@@ -610,7 +619,10 @@ class CheckingModifierAdapter extends MouseAdapter{
             MouseModifiersUnitTest_Standard.checkReleasedModifiersTest(modifier, e); // e.getButton(), e.getModifiers(), e.getModifiersEx()
         }
     }
-    public void mouseClicked(MouseEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void mouseClicked(MouseEvent e) {
         System.out.println("CLICKED "+e);
         if (e.getButton() > MouseEvent.BUTTON3) {
             System.out.println("Extra button affected. Skip.");

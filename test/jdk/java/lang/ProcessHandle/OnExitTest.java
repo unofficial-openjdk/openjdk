@@ -48,6 +48,7 @@ import org.testng.TestNG;
  * @author Roger Riggs
  */
 
+@Bean
 public class OnExitTest extends ProcessUtil {
 
     @SuppressWarnings("raw_types")

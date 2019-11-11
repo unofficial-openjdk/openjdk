@@ -9,6 +9,7 @@
 import javax.tools.SimpleJavaFileObject;
 import java.io.Serializable;
 
+@Bean
 public class WarnSerializableLambdaTestc {
     public interface SerializableIntf<T> extends Serializable {
         String get(T o);

@@ -32,6 +32,7 @@ import java.util.Set;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.*;
 
+@Bean
 public class SunioAlias {
     public static void main(String argv[]) throws UnsupportedEncodingException {
         Set<String> keys = aliasTable.keySet();

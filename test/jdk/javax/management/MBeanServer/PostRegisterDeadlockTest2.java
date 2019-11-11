@@ -32,18 +32,27 @@
 
 import javax.management.*;
 
+@Bean
 public class PostRegisterDeadlockTest2 {
     private static String failed;
 
     public static interface EmptyMBean {}
 
     public static class Empty implements EmptyMBean, MBeanRegistration {
-        public ObjectName preRegister(MBeanServer mbs, ObjectName on) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public ObjectName preRegister(MBeanServer mbs, ObjectName on) {
             this.mbs = mbs;
             this.on = on;
             return on;
         }
-        public void postRegister(Boolean done) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void postRegister(Boolean done) {
             Thread t = new Thread() {
                 public void run() {
                     if (!mbs.isRegistered(on))

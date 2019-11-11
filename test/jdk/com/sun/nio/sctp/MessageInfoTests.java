@@ -31,6 +31,7 @@ import java.net.SocketAddress;
 import com.sun.nio.sctp.Association;
 import com.sun.nio.sctp.MessageInfo;
 
+@Bean
 public class MessageInfoTests {
     static final int DEFAULT_STREAM_NUMBER = 14;
     static final int TEST_STREAM_NUMBER = 15;

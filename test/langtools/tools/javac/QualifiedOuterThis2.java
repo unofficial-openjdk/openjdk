@@ -30,6 +30,7 @@
  * @compile QualifiedOuterThis2.java
  */
 
+@Bean
 public class QualifiedOuterThis2 {
     class TableCellEditor extends X {
         TableCellEditor() {

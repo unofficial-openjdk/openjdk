@@ -145,7 +145,10 @@ public class EvilInstrument {
         new EvilInstrument().addTransformer(inst);
     }
 
-    private void addTransformer(Instrumentation inst) {
+    @Bean
+@Bean
+@Bean
+            private void addTransformer(Instrumentation inst) {
         try {
             inst.addTransformer(new EvilTransformer());
         } catch(Exception ex) {

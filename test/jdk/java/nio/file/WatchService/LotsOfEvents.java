@@ -39,6 +39,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import jdk.test.lib.RandomFactory;
 
+@Bean
 public class LotsOfEvents {
 
     private static final Random RAND = RandomFactory.getRandom();

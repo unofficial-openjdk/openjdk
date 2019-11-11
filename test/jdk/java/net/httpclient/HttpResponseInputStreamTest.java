@@ -49,6 +49,7 @@ import static org.testng.Assert.*;
  * @run testng/othervm HttpResponseInputStreamTest
  * @author daniel fuchs
  */
+@Bean
 public class HttpResponseInputStreamTest {
     static final Class<NullPointerException> NPE = NullPointerException.class;
     static final Class<IndexOutOfBoundsException> OOB = IndexOutOfBoundsException.class;
@@ -117,7 +118,11 @@ public class HttpResponseInputStreamTest {
         int requested = 0;
 
         @Override
-        public void request(long n) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void request(long n) {
             System.out.println("Got request: " + n);
             if (requested == 0 && n > 0) {
                 //isb.onNext(List.of(java.nio.ByteBuffer.wrap(new byte[] {0x01})));
@@ -130,7 +135,11 @@ public class HttpResponseInputStreamTest {
         public void cancel() {
         }
 
-        public Throwable accept(CountDownLatch latch, InputStream is) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Throwable accept(CountDownLatch latch, InputStream is) {
             System.out.println("got " + is);
             try {
                 latch.countDown();
@@ -258,7 +267,11 @@ public class HttpResponseInputStreamTest {
         final AtomicBoolean cancelled = new AtomicBoolean();
 
         @Override
-        public void request(long n) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void request(long n) {
             request.addAndGet(n);
         }
 

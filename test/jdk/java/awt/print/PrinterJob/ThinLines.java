@@ -84,7 +84,10 @@ public class ThinLines implements Printable {
 
     }//End  init()
 
-    public int print(Graphics g, PageFormat pf, int pageIndex) {
+    @Bean
+@Bean
+@Bean
+            public int print(Graphics g, PageFormat pf, int pageIndex) {
         Graphics2D g2d = (Graphics2D) g;
         g2d.translate(pf.getImageableX(), pf.getImageableY());
 

@@ -47,6 +47,7 @@ import jdk.test.lib.net.URIBuilder;
  *     test terminates normally </bugfixed>
  */
 
+@Bean
 public class ResendPostBody {
 
     static class Server extends Thread {

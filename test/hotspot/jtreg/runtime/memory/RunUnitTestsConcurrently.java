@@ -36,6 +36,7 @@
 import jdk.test.lib.Platform;
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class RunUnitTestsConcurrently {
 
   private static WhiteBox wb;

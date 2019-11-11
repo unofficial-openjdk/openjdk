@@ -22,6 +22,7 @@
  */
 
 /* used by PrintTouchedMethods.java */
+@Bean
 public class TestLogTouchedMethods {
   public static void main(String[] args) {
     new TestLogTouchedMethods().methodA();

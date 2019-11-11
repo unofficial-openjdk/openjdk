@@ -35,6 +35,7 @@
 
 import java.lang.management.ManagementFactory;
 
+@Bean
 public class JdpJmxRemoteDynamicPortTest  extends DynamicLauncher {
     final String testName = "JdpJmxRemoteDynamicPortTestCase";
 

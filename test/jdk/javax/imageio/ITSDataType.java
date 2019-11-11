@@ -34,6 +34,7 @@ import java.awt.image.DataBuffer;
 
 import javax.imageio.ImageTypeSpecifier;
 
+@Bean
 public class ITSDataType {
 
     public static final int[] dataTypes = new int[] {

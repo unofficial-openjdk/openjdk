@@ -80,7 +80,8 @@ public class CheckboxMenuItem extends MenuItem implements ItemSelectable, Access
 
         AWTAccessor.setCheckboxMenuItemAccessor(
             new AWTAccessor.CheckboxMenuItemAccessor() {
-                public boolean getState(CheckboxMenuItem cmi) {
+@Bean
+                    public boolean getState(CheckboxMenuItem cmi) {
                     return cmi.state;
                 }
             });
@@ -359,7 +360,8 @@ public class CheckboxMenuItem extends MenuItem implements ItemSelectable, Access
      * @see          #processItemEvent
      * @since        1.1
      */
-    protected void processEvent(AWTEvent e) {
+@Bean
+        protected void processEvent(AWTEvent e) {
         if (e instanceof ItemEvent) {
             processItemEvent((ItemEvent)e);
             return;
@@ -390,7 +392,8 @@ public class CheckboxMenuItem extends MenuItem implements ItemSelectable, Access
      * @see         java.awt.MenuItem#enableEvents
      * @since       1.1
      */
-    protected void processItemEvent(ItemEvent e) {
+@Bean
+        protected void processItemEvent(ItemEvent e) {
         ItemListener listener = itemListener;
         if (listener != null) {
             listener.itemStateChanged(e);
@@ -576,7 +579,8 @@ public class CheckboxMenuItem extends MenuItem implements ItemSelectable, Access
          *
          * @param i zero-based index of the actions
          */
-        public String getAccessibleActionDescription(int i) {
+@Bean
+            public String getAccessibleActionDescription(int i) {
             return null;  //  To be fully implemented in a future release
         }
 
@@ -586,7 +590,8 @@ public class CheckboxMenuItem extends MenuItem implements ItemSelectable, Access
          * @param i zero-based index of actions
          * @return true if the action was performed; otherwise false.
          */
-        public boolean doAccessibleAction(int i) {
+@Bean
+            public boolean doAccessibleAction(int i) {
             return false;    //  To be fully implemented in a future release
         }
 
@@ -607,7 +612,8 @@ public class CheckboxMenuItem extends MenuItem implements ItemSelectable, Access
          * @return true if the value was set; otherwise false
          * @see #getCurrentAccessibleValue
          */
-        public boolean setCurrentAccessibleValue(Number n) {
+@Bean
+            public boolean setCurrentAccessibleValue(Number n) {
             return false;  //  To be fully implemented in a future release
         }
 

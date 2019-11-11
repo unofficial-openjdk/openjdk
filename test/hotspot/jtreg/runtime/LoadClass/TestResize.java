@@ -42,6 +42,7 @@ import java.lang.Process;
 import java.lang.ProcessBuilder;
 import java.util.Scanner;
 
+@Bean
 public class TestResize {
 
   static double MAX_LOAD_FACTOR = 5.0; // see _resize_load_trigger in dictionary.cpp

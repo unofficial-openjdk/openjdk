@@ -35,6 +35,7 @@ import java.util.Base64;
  *
  */
 
+@Bean
 public class TestEncodingDecodingLength {
 
     public static void main(String[] args) {

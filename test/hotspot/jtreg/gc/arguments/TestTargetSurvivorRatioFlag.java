@@ -62,6 +62,7 @@ import sun.hotspot.WhiteBox;
  * then we verify that after MaxTenuringThreshold minor GC cycles survivor space
  * is almost empty.
  */
+@Bean
 public class TestTargetSurvivorRatioFlag {
 
     public static final long M = 1024 * 1024;

@@ -32,6 +32,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.lang.ProcessHandle;
 
+@Bean
 public class ProcessIdTest {
     public static void main(String args[]) {
         RuntimeMXBean mbean = ManagementFactory.getRuntimeMXBean();

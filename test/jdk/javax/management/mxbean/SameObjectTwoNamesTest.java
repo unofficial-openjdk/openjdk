@@ -38,6 +38,7 @@ import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
 import javax.management.ObjectName;
 
+@Bean
 public class SameObjectTwoNamesTest {
 
     public static void main(String[] args) throws Exception {

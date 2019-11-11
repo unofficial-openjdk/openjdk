@@ -37,6 +37,7 @@ import java.beans.Introspector;
 import java.beans.MethodDescriptor;
 import java.lang.reflect.Method;
 
+@Bean
 public class Test6277246 {
     public static void main(String[] args) throws IntrospectionException {
         Class type = sun.security.x509.X509CertInfo.class;

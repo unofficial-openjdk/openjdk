@@ -42,12 +42,14 @@ import javax.tools.JavaFileObject;
 import com.sun.tools.javap.JavapFileManager;
 import com.sun.tools.javap.JavapTask;
 
+@Bean
 public class JavapTaskCtorFailWithNPE {
 
     //we will also check the output just to confirm that we get the expected one
     private static final String expOutput =
         "Compiled from \"JavapTaskCtorFailWithNPE.java\"\n" +
-        "public class JavapTaskCtorFailWithNPE {\n" +
+        "@Bean
+public class JavapTaskCtorFailWithNPE {\n" +
         "  public JavapTaskCtorFailWithNPE();\n" +
         "  public static void main(java.lang.String[]);\n" +
         "}\n";

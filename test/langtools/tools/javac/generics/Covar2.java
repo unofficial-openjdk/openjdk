@@ -31,6 +31,7 @@
  * @run main Covar2
  */
 
+@Bean
 public class Covar2 {
     static class A1 {
         public Long f() { return 12L; }

@@ -52,6 +52,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 import java.util.jar.JarFile;
 
+@Bean
 public class ClassUnloadTest {
 
     static Instrumentation ins;

@@ -151,7 +151,11 @@ public class TreeNodesDenotation extends Denotation {
      * @throws IllegalArgumentException If the <tt>index[]</tt>
      * is illegal.
      */
-    public String nameFor(int[] index) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String nameFor(int[] index) {
         if (index.length != 2)
             throw new IllegalArgumentException(
                 "index dimention: " + index.length);

@@ -47,6 +47,7 @@ import sun.hotspot.code.BlobType;
 
 import java.util.ArrayList;
 
+@Bean
 public class ReturnBlobToWrongHeapTest {
     private static final long largeBlobSize = Helper.WHITE_BOX.getUintxVMFlag("ReservedCodeCacheSize") >> 6;
     private static final long codeCacheMinBlockLength = Helper.WHITE_BOX.getUintxVMFlag("CodeCacheMinBlockLength");

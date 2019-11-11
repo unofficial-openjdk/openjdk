@@ -33,6 +33,7 @@ import javax.management.remote.MBeanServerForwarder;
  * MBeanServerBuilder that returns an MBeanServer which
  * throws a RuntimeException in the getAttribute method.
  */
+@Bean
 public class MBeanServerBuilderImpl extends MBeanServerBuilder {
 
     private final MBeanServerBuilder inner;

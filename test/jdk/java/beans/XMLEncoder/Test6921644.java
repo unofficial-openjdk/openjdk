@@ -86,7 +86,11 @@ public final class Test6921644 extends AbstractTest {
             return this.list;
         }
 
-        public void setList(List<T> list) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setList(List<T> list) {
             this.list = list;
         }
     }
@@ -111,7 +115,11 @@ public final class Test6921644 extends AbstractTest {
             return this.id;
         }
 
-        public void setId(Integer id) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setId(Integer id) {
             this.id = id;
         }
 
@@ -119,7 +127,11 @@ public final class Test6921644 extends AbstractTest {
             return this.ref;
         }
 
-        public void setRef(Integer ref) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setRef(Integer ref) {
             this.ref = ref;
         }
 
@@ -127,11 +139,19 @@ public final class Test6921644 extends AbstractTest {
             return this.list;
         }
 
-        public void setList(List<Document> list) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setList(List<Document> list) {
             this.list = list;
         }
 
-        public void addDocument(Document document) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addDocument(Document document) {
             this.list.add(document);
             document.setAuthor(this);
         }
@@ -154,11 +174,19 @@ public final class Test6921644 extends AbstractTest {
             return this.list;
         }
 
-        public void setList(List<Document> list) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setList(List<Document> list) {
             this.list = list;
         }
 
-        public void addDocument(Document document) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addDocument(Document document) {
             this.list.add(document);
             document.setCategory(this);
         }
@@ -182,7 +210,11 @@ public final class Test6921644 extends AbstractTest {
             return this.author;
         }
 
-        public void setAuthor(Author author) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAuthor(Author author) {
             this.author = author;
         }
 
@@ -190,7 +222,11 @@ public final class Test6921644 extends AbstractTest {
             return this.category;
         }
 
-        public void setCategory(Category category) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setCategory(Category category) {
             this.category = category;
         }
     }

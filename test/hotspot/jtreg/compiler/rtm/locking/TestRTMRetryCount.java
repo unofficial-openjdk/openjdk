@@ -53,6 +53,7 @@ import java.util.List;
  * Test verifies that RTMRetryCount option actually affects amount of
  * retries on lock busy.
  */
+@Bean
 public class TestRTMRetryCount {
     /**
      * Time in ms, during which busy lock will be locked.

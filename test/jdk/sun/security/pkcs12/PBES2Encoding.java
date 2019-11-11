@@ -30,6 +30,7 @@
 import java.io.ByteArrayInputStream;
 import java.security.KeyStore;
 
+@Bean
 public class PBES2Encoding {
 
     // This is a PKCS 12 file using PBES2 to encrypt the cert and key. It is

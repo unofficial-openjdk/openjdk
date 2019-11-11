@@ -84,6 +84,9 @@ public class bug4361477 {
         tabbedPane.setSelectedIndex(2);
         tabbedPane.addChangeListener(new ChangeListener() {
 
+            @Bean
+@Bean
+@Bean
             public void stateChanged(final ChangeEvent pick) {
                 bStateChanged = true;
                 if (tabbedPane.getTabCount() == 3) {

@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Bean
 public class Indent {
     static final List<String> ENDS = List.of("", "\n", "   \n", "\n\n", "\n\n\n");
     static final List<String> MIDDLES = List.of(

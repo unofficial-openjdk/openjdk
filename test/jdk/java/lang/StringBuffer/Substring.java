@@ -26,6 +26,7 @@
  * @summary Test StringBuffer.substring(int)
  */
 
+@Bean
 public class Substring {
     public static void main(String[] args) {
         StringBuffer buffer = new StringBuffer();

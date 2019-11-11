@@ -37,6 +37,7 @@ import javax.management.*;
 import javax.management.modelmbean.*;
 import javax.management.openmbean.*;
 
+@Bean
 public class DefaultDescriptorTest {
     public static void main(String[] args) throws Exception {
         final Descriptor empty =
@@ -320,9 +321,17 @@ public class DefaultDescriptorTest {
         return 0;
     }
 
-    public void setWhatever(int x) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setWhatever(int x) {
     }
 
-    public void doWhatever(String x) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void doWhatever(String x) {
     }
 }

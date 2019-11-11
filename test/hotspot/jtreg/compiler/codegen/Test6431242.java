@@ -30,6 +30,7 @@
 
 package compiler.codegen;
 
+@Bean
 public class Test6431242 {
 
     int _len = 8;

@@ -40,6 +40,7 @@ import java.util.Random;
  * The test has a fixed running time of 5 seconds.
  */
 
+@Bean
 public class TestFalseDeadLock {
     private static ThreadMXBean bean;
     private static volatile boolean running = true;
@@ -84,7 +85,11 @@ public class TestFalseDeadLock {
             }
         }
 
-        private void recurse(int i) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void recurse(int i) {
             if (!running) {
                 // It is important for the test to call println here
                 // since there are locks inside that path.

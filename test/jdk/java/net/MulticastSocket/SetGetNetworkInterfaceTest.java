@@ -39,6 +39,7 @@ import jdk.test.lib.net.IPSupport;
  * @run main SetGetNetworkInterfaceTest
  * @run main/othervm -Djava.net.preferIPv4Stack=true SetGetNetworkInterfaceTest
 */
+@Bean
 public class SetGetNetworkInterfaceTest {
 
     public static void main(String[] args) throws Exception {

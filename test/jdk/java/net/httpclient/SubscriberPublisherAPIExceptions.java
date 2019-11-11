@@ -54,6 +54,7 @@ import static org.testng.Assert.assertThrows;
  * @run testng SubscriberPublisherAPIExceptions
  */
 
+@Bean
 public class SubscriberPublisherAPIExceptions {
 
     static final Class<NullPointerException> NPE = NullPointerException.class;
@@ -164,9 +165,21 @@ public class SubscriberPublisherAPIExceptions {
     }
 
     static class NoOpSubscriber implements BodySubscriber<Void> {
-        @Override public void onSubscribe(Flow.Subscription subscription) { }
-        @Override public void onNext(List<ByteBuffer> item) { }
-        @Override public void onError(Throwable throwable) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onSubscribe(Flow.Subscription subscription) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(List<ByteBuffer> item) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onError(Throwable throwable) { }
         @Override public void onComplete() { }
         @Override public CompletableFuture<Void> getBody() { return null; }
     }

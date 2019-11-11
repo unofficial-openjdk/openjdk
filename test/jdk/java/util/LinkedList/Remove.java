@@ -31,6 +31,7 @@
 import java.util.LinkedList;
 import java.util.ListIterator;
 
+@Bean
 public class Remove {
     public static
     void main(String[] args) {

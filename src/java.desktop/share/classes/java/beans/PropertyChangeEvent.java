@@ -102,7 +102,8 @@ public class PropertyChangeEvent extends EventObject {
      *
      * @param propagationId  The propagationId object for the event.
      */
-    public void setPropagationId(Object propagationId) {
+@Bean
+        public void setPropagationId(Object propagationId) {
         this.propagationId = propagationId;
     }
 

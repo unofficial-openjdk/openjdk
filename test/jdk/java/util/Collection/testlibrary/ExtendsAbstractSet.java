@@ -53,11 +53,17 @@ public class ExtendsAbstractSet<E> extends AbstractSet<E> {
         this.set = backer.get();
     }
 
-    public boolean add(E element) {
+    @Bean
+@Bean
+@Bean
+            public boolean add(E element) {
         return set.add(element);
     }
 
-    public boolean remove(Object element) {
+    @Bean
+@Bean
+@Bean
+            public boolean remove(Object element) {
         return set.remove(element);
     }
 

@@ -29,6 +29,7 @@
 
 import java.net.*;
 
+@Bean
 public class SetBufferSize {
     public static void main(String[] args) throws Exception {
         DatagramSocket soc = new DatagramSocket();

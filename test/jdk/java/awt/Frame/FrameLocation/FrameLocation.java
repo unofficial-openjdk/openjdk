@@ -32,6 +32,7 @@
 
 import java.awt.*;
 
+@Bean
 public class FrameLocation {
     private static final int X = 250;
     private static final int Y = 250;

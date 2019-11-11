@@ -49,6 +49,7 @@ import java.util.Collections;
  * Test spawns MixedGCProvoker in a separate VM and expects to find a message
  * telling that a mixed gc has happened
  */
+@Bean
 public class TestLogging {
     private static final String[] COMMON_OPTIONS = new String[]{
             "-Xbootclasspath/a:.", "-XX:+UseG1GC",

@@ -32,6 +32,7 @@ import java.util.Locale;
 
 import javax.crypto.Cipher;
 
+@Bean
 public class Turkish {
 
     public static void main(String[] args) throws Exception {

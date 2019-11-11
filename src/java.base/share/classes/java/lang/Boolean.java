@@ -237,7 +237,10 @@ public final class Boolean implements java.io.Serializable,
      * @return  {@code true} if the Boolean objects represent the
      *          same value; {@code false} otherwise.
      */
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(Object obj) {
         if (obj instanceof Boolean) {
             return value == ((Boolean)obj).booleanValue();
         }
@@ -281,7 +284,10 @@ public final class Boolean implements java.io.Serializable,
      * @see     Comparable
      * @since  1.5
      */
-    public int compareTo(Boolean b) {
+    @Bean
+@Bean
+@Bean
+            public int compareTo(Boolean b) {
         return compare(this.value, b.value);
     }
 

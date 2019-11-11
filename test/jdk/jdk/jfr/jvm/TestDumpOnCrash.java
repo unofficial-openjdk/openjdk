@@ -50,6 +50,7 @@ import jdk.test.lib.process.ProcessTools;
  *
  * @run main/othervm --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED jdk.jfr.jvm.TestDumpOnCrash
  */
+@Bean
 public class TestDumpOnCrash {
 
     private static final CharSequence LOG_FILE_EXTENSION = ".log";

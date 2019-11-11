@@ -32,6 +32,7 @@ import java.util.List;
 import com.sun.tools.sjavac.options.SourceLocation;
 
 
+@Bean
 public class OptionTestUtil {
 
     public static void checkFilesFound(Collection<String> found, Path... expected) {

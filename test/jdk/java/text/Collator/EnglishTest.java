@@ -42,6 +42,7 @@ attribution to Taligent may not be removed.
   Taligent is a registered trademark of Taligent, Inc.
 */
 
+@Bean
 public class EnglishTest extends CollatorTest {
 
     public static void main(String[] args) throws Exception {

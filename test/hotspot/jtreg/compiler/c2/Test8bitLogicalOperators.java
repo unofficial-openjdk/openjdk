@@ -32,6 +32,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test8bitLogicalOperators {
     private static byte and = 0b0011, or = 0b0011, xor = 0b0011;
     private static byte mask = 0b0101;

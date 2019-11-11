@@ -78,6 +78,7 @@ import static java.io.ObjectStreamField.*;
  *     Object Serialization Specification, Section 4, Class Descriptors</a>
  * @since   1.1
  */
+@Bean
 public class ObjectStreamClass implements Serializable {
 
     /** serialPersistentFields value indicating no serializable fields */
@@ -279,7 +280,8 @@ public class ObjectStreamClass implements Serializable {
      * @return  the {@code Class} instance that this descriptor represents
      */
     @CallerSensitive
-    public Class<?> forClass() {
+    @Bean
+public class<?> forClass() {
         if (cl == null) {
             return null;
         }
@@ -312,7 +314,8 @@ public class ObjectStreamClass implements Serializable {
      * @return  The ObjectStreamField object of the named field or null if
      *          there is no such named field.
      */
-    public ObjectStreamField getField(String name) {
+@Bean
+        public ObjectStreamField getField(String name) {
         return getField(name, null);
     }
 
@@ -1811,7 +1814,8 @@ public class ObjectStreamClass implements Serializable {
                 fieldSigs[i] = new MemberSignature(fields[i]);
             }
             Arrays.sort(fieldSigs, new Comparator<>() {
-                public int compare(MemberSignature ms1, MemberSignature ms2) {
+@Bean
+                    public int compare(MemberSignature ms1, MemberSignature ms2) {
                     return ms1.name.compareTo(ms2.name);
                 }
             });
@@ -1842,7 +1846,8 @@ public class ObjectStreamClass implements Serializable {
                 consSigs[i] = new MemberSignature(cons[i]);
             }
             Arrays.sort(consSigs, new Comparator<>() {
-                public int compare(MemberSignature ms1, MemberSignature ms2) {
+@Bean
+                    public int compare(MemberSignature ms1, MemberSignature ms2) {
                     return ms1.signature.compareTo(ms2.signature);
                 }
             });
@@ -1865,7 +1870,8 @@ public class ObjectStreamClass implements Serializable {
                 methSigs[i] = new MemberSignature(methods[i]);
             }
             Arrays.sort(methSigs, new Comparator<>() {
-                public int compare(MemberSignature ms1, MemberSignature ms2) {
+@Bean
+                    public int compare(MemberSignature ms1, MemberSignature ms2) {
                     int comp = ms1.name.compareTo(ms2.name);
                     if (comp == 0) {
                         comp = ms1.signature.compareTo(ms2.signature);
@@ -2166,7 +2172,8 @@ public class ObjectStreamClass implements Serializable {
             setObjFieldValues(obj, vals, false);
         }
 
-        private void setObjFieldValues(Object obj, Object[] vals, boolean dryRun) {
+@Bean
+            private void setObjFieldValues(Object obj, Object[] vals, boolean dryRun) {
             if (obj == null) {
                 throw new NullPointerException();
             }
@@ -2299,7 +2306,8 @@ public class ObjectStreamClass implements Serializable {
             return hash;
         }
 
-        public boolean equals(Object obj) {
+@Bean
+            public boolean equals(Object obj) {
             if (obj == this) {
                 return true;
             }
@@ -2424,7 +2432,8 @@ public class ObjectStreamClass implements Serializable {
          * been cleared, if the given object is another WeakClassKey
          * instance with the identical non-null referent as this one.
          */
-        public boolean equals(Object obj) {
+@Bean
+            public boolean equals(Object obj) {
             if (obj == this) {
                 return true;
             }

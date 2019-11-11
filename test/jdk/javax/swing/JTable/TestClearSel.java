@@ -44,6 +44,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 
+@Bean
 public class TestClearSel {
 
     static DefaultTableModel model;
@@ -119,7 +120,11 @@ class ClearSelTest implements Runnable {
         final MouseAdapter adapt = new MouseAdapter() {
 
             @Override
-            public void mouseMoved(final MouseEvent pE) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void mouseMoved(final MouseEvent pE) {
                 final int row = table.rowAtPoint(pE.getPoint());
                 if (row > -1) {
                     table.setRowSelectionInterval(row, row);
@@ -129,7 +134,11 @@ class ClearSelTest implements Runnable {
             }
 
             @Override
-            public void mouseEntered(final MouseEvent pE) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void mouseEntered(final MouseEvent pE) {
                 final int row = table.rowAtPoint(pE.getPoint());
                 if (row > -1) {
                     table.setRowSelectionInterval(row, row);
@@ -139,7 +148,11 @@ class ClearSelTest implements Runnable {
             }
 
             @Override
-            public void mouseExited(final MouseEvent pE) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void mouseExited(final MouseEvent pE) {
                 table.clearSelection();
             }
         };

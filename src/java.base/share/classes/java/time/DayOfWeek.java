@@ -223,7 +223,10 @@ public enum DayOfWeek implements TemporalAccessor, TemporalAdjuster {
      * @param locale  the locale to use, not null
      * @return the text value of the day-of-week, not null
      */
-    public String getDisplayName(TextStyle style, Locale locale) {
+    @Bean
+@Bean
+@Bean
+            public String getDisplayName(TextStyle style, Locale locale) {
         return new DateTimeFormatterBuilder().appendText(DAY_OF_WEEK, style).toFormatter(locale).format(this);
     }
 
@@ -248,7 +251,10 @@ public enum DayOfWeek implements TemporalAccessor, TemporalAdjuster {
      * @return true if the field is supported on this day-of-week, false if not
      */
     @Override
-    public boolean isSupported(TemporalField field) {
+    @Bean
+@Bean
+@Bean
+            public boolean isSupported(TemporalField field) {
         if (field instanceof ChronoField) {
             return field == DAY_OF_WEEK;
         }
@@ -278,7 +284,10 @@ public enum DayOfWeek implements TemporalAccessor, TemporalAdjuster {
      * @throws UnsupportedTemporalTypeException if the field is not supported
      */
     @Override
-    public ValueRange range(TemporalField field) {
+    @Bean
+@Bean
+@Bean
+            public ValueRange range(TemporalField field) {
         if (field == DAY_OF_WEEK) {
             return field.range();
         }
@@ -311,7 +320,10 @@ public enum DayOfWeek implements TemporalAccessor, TemporalAdjuster {
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public int get(TemporalField field) {
+    @Bean
+@Bean
+@Bean
+            public int get(TemporalField field) {
         if (field == DAY_OF_WEEK) {
             return getValue();
         }
@@ -341,7 +353,10 @@ public enum DayOfWeek implements TemporalAccessor, TemporalAdjuster {
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public long getLong(TemporalField field) {
+    @Bean
+@Bean
+@Bean
+            public long getLong(TemporalField field) {
         if (field == DAY_OF_WEEK) {
             return getValue();
         } else if (field instanceof ChronoField) {
@@ -362,7 +377,10 @@ public enum DayOfWeek implements TemporalAccessor, TemporalAdjuster {
      * @param days  the days to add, positive or negative
      * @return the resulting day-of-week, not null
      */
-    public DayOfWeek plus(long days) {
+    @Bean
+@Bean
+@Bean
+            public DayOfWeek plus(long days) {
         int amount = (int) (days % 7);
         return ENUMS[(ordinal() + (amount + 7)) % 7];
     }
@@ -378,7 +396,10 @@ public enum DayOfWeek implements TemporalAccessor, TemporalAdjuster {
      * @param days  the days to subtract, positive or negative
      * @return the resulting day-of-week, not null
      */
-    public DayOfWeek minus(long days) {
+    @Bean
+@Bean
+@Bean
+            public DayOfWeek minus(long days) {
         return plus(-(days % 7));
     }
 
@@ -450,7 +471,10 @@ public enum DayOfWeek implements TemporalAccessor, TemporalAdjuster {
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public Temporal adjustInto(Temporal temporal) {
+    @Bean
+@Bean
+@Bean
+            public Temporal adjustInto(Temporal temporal) {
         return temporal.with(DAY_OF_WEEK, getValue());
     }
 

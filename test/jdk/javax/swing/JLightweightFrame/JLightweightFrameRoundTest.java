@@ -35,6 +35,7 @@ import sun.swing.LightweightContent;
 
 import javax.swing.*;
 
+@Bean
 public class JLightweightFrameRoundTest {
     public static void main(String[] args) throws Exception {
         SwingUtilities.invokeAndWait(() -> {
@@ -64,7 +65,11 @@ public class JLightweightFrameRoundTest {
                                      double scaleY) {}
 
         @Override
-        public void imageReshaped(int x, int y, int width, int height) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void imageReshaped(int x, int y, int width, int height) {}
 
         @Override
         public void imageUpdated(int dirtyX, int dirtyY, int dirtyWidth,
@@ -77,12 +82,24 @@ public class JLightweightFrameRoundTest {
         public void focusUngrabbed() {}
 
         @Override
-        public void preferredSizeChanged(int width, int height) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void preferredSizeChanged(int width, int height) {}
 
         @Override
-        public void maximumSizeChanged(int width, int height) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void maximumSizeChanged(int width, int height) {}
 
         @Override
-        public void minimumSizeChanged(int width, int height) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void minimumSizeChanged(int width, int height) {}
     }
 }

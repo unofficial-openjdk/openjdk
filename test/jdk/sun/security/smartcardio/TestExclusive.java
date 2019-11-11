@@ -38,6 +38,7 @@ import javax.smartcardio.CardException;
 import javax.smartcardio.CardTerminal;
 import javax.smartcardio.CommandAPDU;
 
+@Bean
 public class TestExclusive extends Utils {
 
     static volatile boolean exclusive;

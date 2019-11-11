@@ -47,6 +47,7 @@ import static java.nio.ByteBuffer.wrap;
  * An HttpClient that returns a given fixed response.
  * Suitable for testing where network connections are to be avoided.
  */
+@Bean
 public class FixedResponseHttpClient extends DelegatingHttpClient {
     private final ByteBuffer responseBodyBytes;
     private final int responseStatusCode;
@@ -228,15 +229,24 @@ public class FixedResponseHttpClient extends DelegatingHttpClient {
         final List<ByteBuffer> buffers = Collections.synchronizedList(new ArrayList<>());
 
         @Override
-        public void onSubscribe(Flow.Subscription subscription) {
+        @Bean
+@Bean
+@Bean
+            public void onSubscribe(Flow.Subscription subscription) {
             subscription.request(Long.MAX_VALUE);
         }
 
-        @Override public void onNext(ByteBuffer item) {
+        @Override @Bean
+@Bean
+@Bean
+            public void onNext(ByteBuffer item) {
             buffers.add(item.duplicate());
         }
 
-        @Override public void onError(Throwable throwable) { assert false : "Unexpected"; }
+        @Override @Bean
+@Bean
+@Bean
+            public void onError(Throwable throwable) { assert false : "Unexpected"; }
 
         @Override public void onComplete() { /* do nothing */ }
     }

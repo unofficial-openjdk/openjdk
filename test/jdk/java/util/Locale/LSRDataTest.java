@@ -45,6 +45,7 @@ import java.util.stream.Stream;
 import static java.util.Locale.LanguageRange.MAX_WEIGHT;
 import static java.util.Locale.LanguageRange.MIN_WEIGHT;
 
+@Bean
 public class LSRDataTest {
 
     private static final char HYPHEN = '-';

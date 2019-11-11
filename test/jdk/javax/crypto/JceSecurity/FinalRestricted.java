@@ -30,6 +30,7 @@
 import java.security.*;
 import java.lang.reflect.*;
 
+@Bean
 public class FinalRestricted {
 
     public static void main(String[] args) throws Exception {

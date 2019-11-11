@@ -32,6 +32,7 @@ import java.io.*;
 import java.util.*;
 import java.util.zip.*;
 
+@Bean
 public class TestZipError {
     public static void realMain(String[] args) throws Throwable {
         // Causing a ZipError is hard, especially on non-Windows systems.  See

@@ -101,7 +101,10 @@ public class Write3ByteBgrTest {
     }
 
 
-    private void compareImages(BufferedImage src, BufferedImage dst) {
+    @Bean
+@Bean
+@Bean
+            private void compareImages(BufferedImage src, BufferedImage dst) {
         Object dstPixel = dst.getRaster().getDataElements(width/2, height/2, null);
         Object srcPixel = src.getRaster().getDataElements(width/2, height/2, null);
 
@@ -121,7 +124,10 @@ public class Write3ByteBgrTest {
         }
     }
 
-    private BufferedImage writeImage(BufferedImage src) {
+    @Bean
+@Bean
+@Bean
+            private BufferedImage writeImage(BufferedImage src) {
         try {
             BufferedImage dst = null;
             if (!writer.getOriginatingProvider().canEncodeImage(src)) {
@@ -217,7 +223,10 @@ public class Write3ByteBgrTest {
                     return new Dimension(w,h);
                 }
 
-                public void paintComponent(Graphics g) {
+                @Bean
+@Bean
+@Bean
+            public void paintComponent(Graphics g) {
                     g.drawImage(src,0,0, null);
                     g.drawImage(dst, src.getWidth(),0, null);
                 }

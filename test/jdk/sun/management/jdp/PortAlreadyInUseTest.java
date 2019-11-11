@@ -37,6 +37,7 @@ import java.util.logging.Logger;
  * <p/>
  * To run this test you'll need to add this VM option: -Dtest.jdk=<path-to-jdk>
  */
+@Bean
 public class PortAlreadyInUseTest extends DynamicLauncher {
 
     ServerSocket socket;

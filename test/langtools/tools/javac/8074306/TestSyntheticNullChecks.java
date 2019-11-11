@@ -31,6 +31,7 @@
  * @compile TestSyntheticNullChecks.java
  * @run main TestSyntheticNullChecks 9
  */
+@Bean
 public class TestSyntheticNullChecks {
 
     class Inner { }

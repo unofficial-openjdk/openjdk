@@ -105,6 +105,7 @@ comp[unfocusable]               - <comp> is set unfocusable.
 
 */
 
+@Bean
 public class LayoutFTPTest {
     final int TESTS_NUMBER = 11;
 
@@ -198,15 +199,24 @@ class PolicyTest1 extends AbstractPolicyTest {
         return new String[] {"jframe"};
     }
 
-    protected String getDefaultComp(String focusCycleRoot_id) {
+    @Bean
+@Bean
+@Bean
+            protected String getDefaultComp(String focusCycleRoot_id) {
         return "btn 0";
     }
 
-    protected String getFirstComp(String focusCycleRoot_id) {
+    @Bean
+@Bean
+@Bean
+            protected String getFirstComp(String focusCycleRoot_id) {
         return "btn 0";
     }
 
-    protected String getLastComp(String focusCycleRoot_id) {
+    @Bean
+@Bean
+@Bean
+            protected String getLastComp(String focusCycleRoot_id) {
         return "btn 202";
     }
 }
@@ -262,7 +272,10 @@ class PolicyTest2 extends AbstractPolicyTest {
         return new String[] {"jframe", "jpanel"};
     }
 
-    protected String getDefaultComp(String focusCycleRoot_id) {
+    @Bean
+@Bean
+@Bean
+            protected String getDefaultComp(String focusCycleRoot_id) {
         if ("jframe".equals(focusCycleRoot_id)) {
             return "btn 1";
         } else if ("jpanel".equals(focusCycleRoot_id)) {
@@ -271,11 +284,17 @@ class PolicyTest2 extends AbstractPolicyTest {
         return null;
     }
 
-    protected String getFirstComp(String focusCycleRoot_id) {
+    @Bean
+@Bean
+@Bean
+            protected String getFirstComp(String focusCycleRoot_id) {
         return getDefaultComp(focusCycleRoot_id);
     }
 
-    protected String getLastComp(String focusCycleRoot_id) {
+    @Bean
+@Bean
+@Bean
+            protected String getLastComp(String focusCycleRoot_id) {
         if ("jframe".equals(focusCycleRoot_id)) {
             return "btn 4";
         } else if ("jpanel".equals(focusCycleRoot_id)) {
@@ -336,7 +355,10 @@ class PolicyTest3 extends AbstractPolicyTest {
         return new String[] {"jframe", "jpanel"};
     }
 
-    protected String getDefaultComp(String focusCycleRoot_id) {
+    @Bean
+@Bean
+@Bean
+            protected String getDefaultComp(String focusCycleRoot_id) {
         if ("jframe".equals(focusCycleRoot_id)) {
             return "btn 1";
         } else if ("jpanel".equals(focusCycleRoot_id)) {
@@ -345,11 +367,17 @@ class PolicyTest3 extends AbstractPolicyTest {
         return null;
     }
 
-    protected String getFirstComp(String focusCycleRoot_id) {
+    @Bean
+@Bean
+@Bean
+            protected String getFirstComp(String focusCycleRoot_id) {
         return getDefaultComp(focusCycleRoot_id);
     }
 
-    protected String getLastComp(String focusCycleRoot_id) {
+    @Bean
+@Bean
+@Bean
+            protected String getLastComp(String focusCycleRoot_id) {
         if ("jframe".equals(focusCycleRoot_id)) {
             return "btn 4";
         } else if ("jpanel".equals(focusCycleRoot_id)) {
@@ -401,13 +429,22 @@ class PolicyTest4 extends AbstractPolicyTest {
     protected String[] getContainersToTest() {
         return null;
     }
-    protected String getDefaultComp(String focusCycleRoot_id) {
+    @Bean
+@Bean
+@Bean
+            protected String getDefaultComp(String focusCycleRoot_id) {
         return null;
     }
-    protected String getFirstComp(String focusCycleRoot_id) {
+    @Bean
+@Bean
+@Bean
+            protected String getFirstComp(String focusCycleRoot_id) {
         return null;
     }
-    protected String getLastComp(String focusCycleRoot_id) {
+    @Bean
+@Bean
+@Bean
+            protected String getLastComp(String focusCycleRoot_id) {
         return null;
     }
 }
@@ -454,13 +491,22 @@ class PolicyTest5 extends AbstractPolicyTest {
     protected String[] getContainersToTest() {
         return null;
     }
-    protected String getDefaultComp(String focusCycleRoot_id) {
+    @Bean
+@Bean
+@Bean
+            protected String getDefaultComp(String focusCycleRoot_id) {
         return null;
     }
-    protected String getFirstComp(String focusCycleRoot_id) {
+    @Bean
+@Bean
+@Bean
+            protected String getFirstComp(String focusCycleRoot_id) {
         return null;
     }
-    protected String getLastComp(String focusCycleRoot_id) {
+    @Bean
+@Bean
+@Bean
+            protected String getLastComp(String focusCycleRoot_id) {
         return null;
     }
 }
@@ -490,7 +536,10 @@ class PolicyTest6 extends AbstractPolicyTest {
     protected void customizeHierarchy() {
         ((Container)getComponent("jframe")).setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
         ((Container)getComponent("jpanel")).setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
-                public Component getDefaultComponent(Container aContainer) {
+                @Bean
+@Bean
+@Bean
+            public Component getDefaultComponent(Container aContainer) {
                     return getComponent("btn 2");
                 }
             });
@@ -523,15 +572,24 @@ class PolicyTest6 extends AbstractPolicyTest {
         return new String[] {"jpanel"};
     }
 
-    protected String getDefaultComp(String focusCycleRoot_id) {
+    @Bean
+@Bean
+@Bean
+            protected String getDefaultComp(String focusCycleRoot_id) {
         return "btn 2";
     }
 
-    protected String getFirstComp(String focusCycleRoot_id) {
+    @Bean
+@Bean
+@Bean
+            protected String getFirstComp(String focusCycleRoot_id) {
         return "jpanel";
     }
 
-    protected String getLastComp(String focusCycleRoot_id) {
+    @Bean
+@Bean
+@Bean
+            protected String getLastComp(String focusCycleRoot_id) {
         return "btn 3";
     }
 }
@@ -561,7 +619,10 @@ class PolicyTest7 extends AbstractPolicyTest {
     protected void customizeHierarchy() {
         ((Container)getComponent("jframe")).setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
         ((Container)getComponent("jpanel")).setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
-                public Component getDefaultComponent(Container aContainer) {
+                @Bean
+@Bean
+@Bean
+            public Component getDefaultComponent(Container aContainer) {
                     return getComponent("btn 2");
                 }
             });
@@ -594,15 +655,24 @@ class PolicyTest7 extends AbstractPolicyTest {
         return new String[] {"jpanel"};
     }
 
-    protected String getDefaultComp(String focusCycleRoot_id) {
+    @Bean
+@Bean
+@Bean
+            protected String getDefaultComp(String focusCycleRoot_id) {
         return "btn 2";
     }
 
-    protected String getFirstComp(String focusCycleRoot_id) {
+    @Bean
+@Bean
+@Bean
+            protected String getFirstComp(String focusCycleRoot_id) {
         return "jpanel";
     }
 
-    protected String getLastComp(String focusCycleRoot_id) {
+    @Bean
+@Bean
+@Bean
+            protected String getLastComp(String focusCycleRoot_id) {
         return "btn 3";
     }
 }
@@ -639,14 +709,20 @@ class PolicyTest8 extends AbstractPolicyTest {
     protected void customizeHierarchy() {
         ((Container)getComponent("panel-1")).setFocusTraversalPolicyProvider(true);
         ((Container)getComponent("panel-1")).setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
-                public Component getDefaultComponent(Container aContainer) {
+                @Bean
+@Bean
+@Bean
+            public Component getDefaultComponent(Container aContainer) {
                     return getComponent("btn-4");
                 }
             });
 
         ((Container)getComponent("panel-2")).setFocusCycleRoot(true);
         ((Container)getComponent("panel-2")).setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
-                public Component getDefaultComponent(Container aContainer) {
+                @Bean
+@Bean
+@Bean
+            public Component getDefaultComponent(Container aContainer) {
                     return getComponent("btn-7");
                 }
             });
@@ -685,7 +761,10 @@ class PolicyTest8 extends AbstractPolicyTest {
         return new String[] {"frame", "panel-1", "panel-2"};
     }
 
-    protected String getDefaultComp(String focusCycleRoot_id) {
+    @Bean
+@Bean
+@Bean
+            protected String getDefaultComp(String focusCycleRoot_id) {
         if ("frame".equals(focusCycleRoot_id)) {
             return "btn-1";
         } else if ("panel-1".equals(focusCycleRoot_id)) {
@@ -696,7 +775,10 @@ class PolicyTest8 extends AbstractPolicyTest {
         return null;
     }
 
-    protected String getFirstComp(String focusCycleRoot_id) {
+    @Bean
+@Bean
+@Bean
+            protected String getFirstComp(String focusCycleRoot_id) {
         if ("frame".equals(focusCycleRoot_id)) {
             return "btn-1";
         } else if ("panel-1".equals(focusCycleRoot_id)) {
@@ -707,7 +789,10 @@ class PolicyTest8 extends AbstractPolicyTest {
         return null;
     }
 
-    protected String getLastComp(String focusCycleRoot_id) {
+    @Bean
+@Bean
+@Bean
+            protected String getLastComp(String focusCycleRoot_id) {
         if ("frame".equals(focusCycleRoot_id)) {
             return "btn-5";
         } else if ("panel-1".equals(focusCycleRoot_id)) {
@@ -751,14 +836,20 @@ class PolicyTest9 extends AbstractPolicyTest {
     protected void customizeHierarchy() {
         ((Container)getComponent("panel-1")).setFocusCycleRoot(true);
         ((Container)getComponent("panel-1")).setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
-                public Component getDefaultComponent(Container aContainer) {
+                @Bean
+@Bean
+@Bean
+            public Component getDefaultComponent(Container aContainer) {
                     return getComponent("btn-4");
                 }
             });
 
         ((Container)getComponent("panel-2")).setFocusTraversalPolicyProvider(true);
         ((Container)getComponent("panel-2")).setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
-                public Component getDefaultComponent(Container aContainer) {
+                @Bean
+@Bean
+@Bean
+            public Component getDefaultComponent(Container aContainer) {
                     return getComponent("btn-7");
                 }
             });
@@ -797,7 +888,10 @@ class PolicyTest9 extends AbstractPolicyTest {
         return new String[] {"frame", "panel-1", "panel-2"};
     }
 
-    protected String getDefaultComp(String focusCycleRoot_id) {
+    @Bean
+@Bean
+@Bean
+            protected String getDefaultComp(String focusCycleRoot_id) {
         if ("frame".equals(focusCycleRoot_id)) {
             return "btn-1";
         } else if ("panel-1".equals(focusCycleRoot_id)) {
@@ -808,7 +902,10 @@ class PolicyTest9 extends AbstractPolicyTest {
         return null;
     }
 
-    protected String getFirstComp(String focusCycleRoot_id) {
+    @Bean
+@Bean
+@Bean
+            protected String getFirstComp(String focusCycleRoot_id) {
         if ("frame".equals(focusCycleRoot_id)) {
             return "btn-1";
         } else if ("panel-1".equals(focusCycleRoot_id)) {
@@ -819,7 +916,10 @@ class PolicyTest9 extends AbstractPolicyTest {
         return null;
     }
 
-    protected String getLastComp(String focusCycleRoot_id) {
+    @Bean
+@Bean
+@Bean
+            protected String getLastComp(String focusCycleRoot_id) {
         if ("frame".equals(focusCycleRoot_id)) {
             return "btn-8";
         } else if ("panel-1".equals(focusCycleRoot_id)) {
@@ -863,7 +963,10 @@ class PolicyTest10 extends AbstractPolicyTest {
     protected void customizeHierarchy() {
         ((Container)getComponent("panel-1")).setFocusCycleRoot(true);
         ((Container)getComponent("panel-1")).setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
-                public Component getDefaultComponent(Container aContainer) {
+                @Bean
+@Bean
+@Bean
+            public Component getDefaultComponent(Container aContainer) {
                     return getComponent("panel-2");
                 }
             });
@@ -900,7 +1003,10 @@ class PolicyTest10 extends AbstractPolicyTest {
         return new String[] {"frame", "panel-1", "panel-2"};
     }
 
-    protected String getDefaultComp(String focusCycleRoot_id) {
+    @Bean
+@Bean
+@Bean
+            protected String getDefaultComp(String focusCycleRoot_id) {
         if ("frame".equals(focusCycleRoot_id)) {
             return "btn-1";
         } else if ("panel-1".equals(focusCycleRoot_id)) {
@@ -911,7 +1017,10 @@ class PolicyTest10 extends AbstractPolicyTest {
         return null;
     }
 
-    protected String getFirstComp(String focusCycleRoot_id) {
+    @Bean
+@Bean
+@Bean
+            protected String getFirstComp(String focusCycleRoot_id) {
         if ("frame".equals(focusCycleRoot_id)) {
             return "btn-1";
         } else if ("panel-1".equals(focusCycleRoot_id)) {
@@ -922,7 +1031,10 @@ class PolicyTest10 extends AbstractPolicyTest {
         return null;
     }
 
-    protected String getLastComp(String focusCycleRoot_id) {
+    @Bean
+@Bean
+@Bean
+            protected String getLastComp(String focusCycleRoot_id) {
         if ("frame".equals(focusCycleRoot_id)) {
             return "btn-2";
         } else {
@@ -978,15 +1090,24 @@ class PolicyTest11 extends AbstractPolicyTest {
         return new String[] {"jframe"};
     }
 
-    protected String getDefaultComp(String focusCycleRoot_id) {
+    @Bean
+@Bean
+@Bean
+            protected String getDefaultComp(String focusCycleRoot_id) {
         return "btn-1";
     }
 
-    protected String getFirstComp(String focusCycleRoot_id) {
+    @Bean
+@Bean
+@Bean
+            protected String getFirstComp(String focusCycleRoot_id) {
         return "btn-1";
     }
 
-    protected String getLastComp(String focusCycleRoot_id) {
+    @Bean
+@Bean
+@Bean
+            protected String getLastComp(String focusCycleRoot_id) {
         return "btn-3";
     }
 }

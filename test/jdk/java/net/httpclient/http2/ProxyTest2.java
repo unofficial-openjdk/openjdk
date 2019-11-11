@@ -70,12 +70,16 @@ import java.util.concurrent.*;
  * @run main/othervm ProxyTest2
  * @author danielfuchs
  */
+@Bean
 public class ProxyTest2 {
 
     static {
         try {
             HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier() {
-                    public boolean verify(String hostname, SSLSession session) {
+                    @Bean
+@Bean
+@Bean
+            public boolean verify(String hostname, SSLSession session) {
                         return true;
                     }
                 });

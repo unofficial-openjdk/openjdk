@@ -41,6 +41,7 @@ package java.io;
  * @author  Jonathan Payne
  * @since   1.0
  */
+@Bean
 public class FilterOutputStream extends OutputStream {
     /**
      * The underlying output stream to be filtered.

@@ -43,6 +43,7 @@ import static java.lang.StackWalker.Option.*;
  * @run main/othervm MultiThreadStackWalk
  * @author danielfuchs
  */
+@Bean
 public class MultiThreadStackWalk {
 
     static Set<String> infrastructureClasses = new TreeSet<>(Arrays.asList(
@@ -124,7 +125,11 @@ public class MultiThreadStackWalk {
 
         // The stack walk consumer method, where all the checks are
         // performed.
-        public void consume(StackFrame sfi) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void consume(StackFrame sfi) {
             if (frameCounter.get() == 0 && isStreamPipeline(sfi.getDeclaringClass())) {
                 return;
             }
@@ -248,7 +253,11 @@ public class MultiThreadStackWalk {
         }
 
         @Override
-        public void call(Env env, Call next, int total, int current, int markAt) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void call(Env env, Call next, int total, int current, int markAt) {
             env.markerCalled.incrementAndGet();
             if (current < total) {
                 next.call(env, next, total, current+1, markAt);
@@ -272,7 +281,11 @@ public class MultiThreadStackWalk {
             return walkType;
         }
         @Override
-        public void call(Env env, Call next, int total, int current, int markAt) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void call(Env env, Call next, int total, int current, int markAt) {
             if (current < total) {
                 int nexti = current + 1;
                 Call nextObj = nexti==markAt ? marker : next;

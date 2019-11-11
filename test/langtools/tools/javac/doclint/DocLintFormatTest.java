@@ -41,6 +41,7 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class DocLintFormatTest {
     public static void main(String... args) throws Exception {
         new DocLintFormatTest().run();
@@ -56,8 +57,10 @@ public class DocLintFormatTest {
         tb.writeJavaFiles(src,
             //        1         2
             //2345678901234567890
-            "/** This is an <tt>HTML 4</tt> comment. */ public class Test4 { }",
-            "/** This is an <mark>HTML 5</mark> comment. */ public class Test5 { }"
+            "/** This is an <tt>HTML 4</tt> comment. */ @Bean
+public class Test4 { }",
+            "/** This is an <mark>HTML 5</mark> comment. */ @Bean
+public class Test5 { }"
         );
 
         test(src.resolve("Test4.java"), "html4");

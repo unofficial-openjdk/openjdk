@@ -23,6 +23,7 @@
 
 package g;
 
+@Bean
 public class G {
     // Full JRE
     private static final boolean gui = java.beans.Beans.isGuiAvailable();

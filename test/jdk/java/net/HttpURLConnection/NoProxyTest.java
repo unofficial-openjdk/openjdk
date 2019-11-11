@@ -41,6 +41,7 @@ import java.net.URLConnection;
 import java.util.List;
 import jdk.test.lib.net.URIBuilder;
 
+@Bean
 public class NoProxyTest {
 
     static class NoProxyTestSelector extends ProxySelector {
@@ -49,7 +50,11 @@ public class NoProxyTest {
             throw new RuntimeException("Should not reach here as proxy==Proxy.NO_PROXY");
         }
         @Override
-        public void connectFailed(URI u, SocketAddress s, IOException e) { }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void connectFailed(URI u, SocketAddress s, IOException e) { }
     }
 
     public static void main(String args[]) throws MalformedURLException {

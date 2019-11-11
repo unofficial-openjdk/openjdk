@@ -29,7 +29,11 @@
  */
 
 class A {
-    private void m(int a, int b) { }
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void m(int a, int b) { }
 }
 
 class T6776289 {

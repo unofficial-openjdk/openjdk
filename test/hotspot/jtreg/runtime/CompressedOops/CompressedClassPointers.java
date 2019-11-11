@@ -37,6 +37,7 @@ import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 import jtreg.SkippedException;
 
+@Bean
 public class CompressedClassPointers {
 
     public static void smallHeapTest() throws Exception {

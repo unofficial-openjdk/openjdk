@@ -35,6 +35,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+@Bean
 public class DeleteInsideFileDialogTest {
 
     private static Path dir;

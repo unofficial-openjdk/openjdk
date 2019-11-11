@@ -30,6 +30,7 @@
 
 import java.util.*;
 
+@Bean
 public class GenerifyStackTraces {
 
     private static Object go = new Object();

@@ -31,10 +31,15 @@
  * @run main BranchToFewerDefines
  */
 
+@Bean
 public class BranchToFewerDefines {
         public static void main(String[] args) {
         }
-        private void problematicMethod(int p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void problematicMethod(int p) {
                 switch (p) {
                         case 3:
                                 long n;

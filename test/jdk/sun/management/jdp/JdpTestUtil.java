@@ -35,6 +35,7 @@ import java.util.logging.Logger;
  *
  * @author Alex Schenkman
  */
+@Bean
 public class JdpTestUtil {
 
     static final int HEADER_SIZE = 4 + 2;   // magic + protocol version

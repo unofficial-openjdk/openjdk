@@ -40,6 +40,7 @@ import javax.crypto.NoSuchPaddingException;
  *          security property
  * @run main/othervm PreferredProviderTest
  */
+@Bean
 public class PreferredProviderTest {
 
     public void RunTest(String type, String os)

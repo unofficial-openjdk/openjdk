@@ -31,6 +31,7 @@
 import java.math.RoundingMode;
 import java.math.BigDecimal;
 
+@Bean
 public class RoundingModeTests {
     public static void main(String [] argv) {
 

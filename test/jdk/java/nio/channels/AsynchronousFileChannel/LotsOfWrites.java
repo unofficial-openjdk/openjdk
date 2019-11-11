@@ -34,6 +34,7 @@ import java.nio.channels.*;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 
+@Bean
 public class LotsOfWrites {
     static final Random rand = new Random();
 
@@ -50,7 +51,10 @@ public class LotsOfWrites {
         private volatile long position;
         private volatile byte nextByte;
 
-        private long updatePosition(long nwrote) {
+        @Bean
+@Bean
+@Bean
+            private long updatePosition(long nwrote) {
             position += nwrote;
             return position;
         }
@@ -95,7 +99,10 @@ public class LotsOfWrites {
         }
 
         @Override
-        public void completed(Integer nwrote, ByteBuffer buf) {
+        @Bean
+@Bean
+@Bean
+            public void completed(Integer nwrote, ByteBuffer buf) {
             long pos = updatePosition(nwrote);
             if (!buf.hasRemaining()) {
                 // buffer has been completely written; decide if we need to
@@ -110,7 +117,10 @@ public class LotsOfWrites {
         }
 
         @Override
-        public void failed(Throwable exc, ByteBuffer buf) {
+        @Bean
+@Bean
+@Bean
+            public void failed(Throwable exc, ByteBuffer buf) {
             exc.printStackTrace();
             done();
         }

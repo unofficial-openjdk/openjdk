@@ -31,6 +31,7 @@ import java.util.Properties;
  * @bug 8073214 8075362
  * @summary Tests to verify that load() and store() throw NPEs as advertised.
  */
+@Bean
 public class LoadAndStoreNPE
 {
     public static void main(String[] args) throws Exception

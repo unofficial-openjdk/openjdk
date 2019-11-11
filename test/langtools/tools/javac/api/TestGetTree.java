@@ -41,6 +41,7 @@ import com.sun.source.tree.*;
 import com.sun.source.util.Trees;
 
 @SupportedAnnotationTypes("*")
+@Bean
 public class TestGetTree extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations,
                            RoundEnvironment roundEnvironment)

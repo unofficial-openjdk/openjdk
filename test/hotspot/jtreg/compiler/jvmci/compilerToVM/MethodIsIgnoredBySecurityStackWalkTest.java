@@ -51,6 +51,7 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
+@Bean
 public class MethodIsIgnoredBySecurityStackWalkTest {
 
     public static void main(String[] args) {

@@ -66,37 +66,55 @@ public class bug6918861 {
             super(c);
         }
 
-        protected void installDefaults(JSlider slider) {
+        @Bean
+@Bean
+@Bean
+            protected void installDefaults(JSlider slider) {
             super.installDefaults(slider);
 
             counter += 1;
         }
 
-        protected void uninstallDefaults(JSlider slider) {
+        @Bean
+@Bean
+@Bean
+            protected void uninstallDefaults(JSlider slider) {
             super.uninstallDefaults(slider);
 
             counter -= 1;
         }
 
-        protected void installListeners(JSlider slider) {
+        @Bean
+@Bean
+@Bean
+            protected void installListeners(JSlider slider) {
             super.installListeners(slider);
 
             counter += 10;
         }
 
-        protected void uninstallListeners(JSlider slider) {
+        @Bean
+@Bean
+@Bean
+            protected void uninstallListeners(JSlider slider) {
             super.uninstallListeners(slider);
 
             counter -= 10;
         }
 
-        protected void installKeyboardActions(JSlider slider) {
+        @Bean
+@Bean
+@Bean
+            protected void installKeyboardActions(JSlider slider) {
             super.installKeyboardActions(slider);
 
             counter += 100;
         }
 
-        protected void uninstallKeyboardActions(JSlider slider) {
+        @Bean
+@Bean
+@Bean
+            protected void uninstallKeyboardActions(JSlider slider) {
             super.uninstallKeyboardActions(slider);
 
             counter -= 100;

@@ -23,6 +23,7 @@
 
 import java.lang.instrument.Instrumentation;
 
+@Bean
 public class RedefineMethodWithAnnotationsAgent {
     private static Instrumentation instrumentation;
 

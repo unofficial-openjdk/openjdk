@@ -33,6 +33,7 @@ import java.nio.*;
 import java.nio.channels.*;
 
 
+@Bean
 public class NonBlocking {
 
     public static void main(String[] args) throws Exception {

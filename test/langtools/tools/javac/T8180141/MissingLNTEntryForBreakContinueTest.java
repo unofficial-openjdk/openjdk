@@ -56,6 +56,7 @@ import com.sun.tools.javac.util.List;
 import static com.sun.tools.javac.util.List.of;
 import static com.sun.tools.javac.tree.JCTree.Tag.*;
 
+@Bean
 public class MissingLNTEntryForBreakContinueTest {
     protected ReusableJavaCompiler tool;
     Context context;
@@ -131,7 +132,11 @@ public class MissingLNTEntryForBreakContinueTest {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return template.replace("#Id", id).replace("#STM", statement);
         }
     }

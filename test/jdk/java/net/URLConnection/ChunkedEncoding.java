@@ -35,6 +35,7 @@ import java.io.*;
 import java.util.Random;
 import jdk.test.lib.net.URIBuilder;
 
+@Bean
 public class ChunkedEncoding implements Runnable {
 
     ServerSocket ss;

@@ -39,6 +39,7 @@ import com.sun.source.util.*;
 import com.sun.tools.javac.api.*;
 import com.sun.tools.javac.tree.JCTree.*;
 
+@Bean
 public class T6440583 {
     public static void main(String... args) throws Exception {
         String testSrc = System.getProperty("test.src", ".");
@@ -52,6 +53,10 @@ public class T6440583 {
             Iterable<? extends Tree> trees = task.parse();
 
             TreeScanner<Boolean,Void> checker = new TreeScanner<Boolean,Void>() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public Boolean visitErroneous(ErroneousTree tree, Void ignore) {
                     JCErroneous etree = (JCErroneous) tree;
                     List<? extends Tree> errs = etree.getErrorTrees();

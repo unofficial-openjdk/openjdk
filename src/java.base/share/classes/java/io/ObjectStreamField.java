@@ -39,6 +39,7 @@ import sun.reflect.misc.ReflectUtil;
  * @see ObjectStreamClass
  * @since 1.2
  */
+@Bean
 public class ObjectStreamField
     implements Comparable<Object>
 {
@@ -215,7 +216,8 @@ public class ObjectStreamField
      *          serializable field
      */
     @CallerSensitive
-    public Class<?> getType() {
+    @Bean
+public class<?> getType() {
         if (System.getSecurityManager() != null) {
             Class<?> caller = Reflection.getCallerClass();
             if (ReflectUtil.needsPackageAccessCheck(caller.getClassLoader(), type.getClassLoader())) {
@@ -275,7 +277,8 @@ public class ObjectStreamField
      * @see #getOffset
      */
     // REMIND: deprecate?
-    protected void setOffset(int offset) {
+@Bean
+        protected void setOffset(int offset) {
         this.offset = offset;
     }
 
@@ -309,7 +312,8 @@ public class ObjectStreamField
      * are compared.
      */
     // REMIND: deprecate?
-    public int compareTo(Object obj) {
+@Bean
+        public int compareTo(Object obj) {
         ObjectStreamField other = (ObjectStreamField) obj;
         boolean isPrim = isPrimitive();
         if (isPrim != other.isPrimitive()) {

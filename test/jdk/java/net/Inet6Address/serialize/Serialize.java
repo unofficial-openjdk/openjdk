@@ -33,6 +33,7 @@ import java.net.*;
 import java.io.*;
 import java.util.*;
 
+@Bean
 public class Serialize {
 
      public static void main(String[] args)

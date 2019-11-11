@@ -218,7 +218,8 @@ public final class CGraphicsEnvironment extends SunGraphicsEnvironment {
     }
 
     @Override
-    protected GraphicsDevice makeScreenDevice(int screennum) {
+@Bean
+        protected GraphicsDevice makeScreenDevice(int screennum) {
         throw new UnsupportedOperationException("This method is unused and should not be called in this implementation");
     }
 

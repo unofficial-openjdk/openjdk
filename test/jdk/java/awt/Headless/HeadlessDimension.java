@@ -30,6 +30,7 @@ import java.awt.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessDimension
  */
 
+@Bean
 public class HeadlessDimension {
     public static void main(String args[]) {
         Dimension d;

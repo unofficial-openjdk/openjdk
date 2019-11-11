@@ -27,6 +27,7 @@
  * <p>
  * It has the same methods but with different annotations and order.
  */
+@Bean
 public class RedefineMethodWithAnnotationsTarget {
     public void annotatedMethod(@ParameterAnnotation(
             value = ParameterAnnotation.INT_VALUE_2) int parameter) {

@@ -27,6 +27,7 @@
  */
 import java.nio.charset.*;
 
+@Bean
 public class CheckICNE {
     static int failed = 0;
     public static void main (String[] args) throws Exception {

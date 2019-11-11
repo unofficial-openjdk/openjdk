@@ -34,6 +34,7 @@
 import java.io.*;
 import java.util.*;
 
+@Bean
 public class T8032814 {
     public static void main(String... args) throws Exception {
         new T8032814().run();

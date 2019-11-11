@@ -41,6 +41,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Bean
 public class UnicodeCasingTest {
 
     private static boolean err = false;
@@ -122,7 +123,11 @@ public class UnicodeCasingTest {
         }
     }
 
-    private void updateExcludeList(String line) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void updateExcludeList(String line) {
         int index = line.indexOf('#');
         if (index != -1) {
             line = line.substring(0, index);
@@ -145,7 +150,11 @@ public class UnicodeCasingTest {
         }
     }
 
-    private void test(String line) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void test(String line) {
         String[] fields = line.split(";", 15);
         String orig = convert(fields[0]);
 
@@ -165,7 +174,11 @@ public class UnicodeCasingTest {
         }
     }
 
-    private void testUpperCase(String orig, String expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testUpperCase(String orig, String expected) {
         String got = orig.toUpperCase();
 
         // Ugly workaround for special mappings for az and tr locales....
@@ -183,7 +196,11 @@ public class UnicodeCasingTest {
         }
     }
 
-    private void testLowerCase(String orig, String expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testLowerCase(String orig, String expected) {
         String got = orig.toLowerCase();
         // Ugly workaround for special mappings for az and tr locales....
         if (orig.equals("\u0049") &&
@@ -202,7 +219,11 @@ public class UnicodeCasingTest {
 
     StringBuilder sb = new StringBuilder();
 
-    private String convert(String str) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String convert(String str) {
         sb.setLength(0);
 
         String[] tokens = str.split(" ");
@@ -218,7 +239,11 @@ public class UnicodeCasingTest {
         return sb.toString();
     }
 
-    private String toString(String str) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String toString(String str) {
         sb.setLength(0);
 
         int len = str.length();

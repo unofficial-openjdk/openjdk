@@ -42,6 +42,7 @@ package compiler.compilercontrol;
 
 import jdk.test.lib.dcmd.CommandExecutor;
 
+@Bean
 public class TestCompilerDirectivesCompatibilityFlag extends TestCompilerDirectivesCompatibilityBase {
 
     public void testCompatibility(CommandExecutor executor, int comp_level) throws Exception {

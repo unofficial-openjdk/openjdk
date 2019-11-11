@@ -31,6 +31,7 @@
  * @run main SwitchFence
  */
 
+@Bean
 public class SwitchFence {
     public static final int MEMENTO_NULL = 0x7FFFFFFD;
     public static final int MEMENTO_ALLE = 0x7FFFFFFE;

@@ -35,6 +35,7 @@ import java.awt.Insets;
 import javax.swing.JComponent;
 import javax.swing.border.Border;
 
+@Bean
 public class Test6461042 extends JComponent implements Border {
     public static void main(String[] args) {
         new Test6461042().toString();
@@ -44,10 +45,18 @@ public class Test6461042 extends JComponent implements Border {
         setBorder(this);
     }
 
-    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
     }
 
-    public Insets getBorderInsets(Component c) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Insets getBorderInsets(Component c) {
         return null;
     }
 

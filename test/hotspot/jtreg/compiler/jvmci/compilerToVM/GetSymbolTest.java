@@ -57,6 +57,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Bean
 public class GetSymbolTest {
     private static final int CONSTANT_POOL_UTF8_TAG = 1; // see jvms, section 4.4
 
@@ -69,7 +70,11 @@ public class GetSymbolTest {
         new GetSymbolTest().test(SingleImplementer.class);
     }
 
-    private void test(Class<?> aClass) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void test(Class<?> aClass) {
         Utils.ensureClassIsLoaded(aClass);
         Method method;
         try {

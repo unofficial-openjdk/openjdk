@@ -32,6 +32,7 @@ import java.net.URI;
 
 /* Racey test, not guaranteed to fail, but if it does we have a problem. */
 
+@Bean
 public class MultiThreadedSystemProxies {
     static final int NUM_THREADS = 100;
 

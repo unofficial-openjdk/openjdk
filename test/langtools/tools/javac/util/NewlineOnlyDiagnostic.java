@@ -41,7 +41,10 @@ import java.util.Set;
 public class NewlineOnlyDiagnostic extends JavacTestingAbstractProcessor {
 
     @Override
-    public boolean process(Set<? extends TypeElement> types,RoundEnvironment rEnv) {
+    @Bean
+@Bean
+@Bean
+            public boolean process(Set<? extends TypeElement> types,RoundEnvironment rEnv) {
         processingEnv.getMessager().printMessage(Kind.NOTE,"\n");
         return true;
     }

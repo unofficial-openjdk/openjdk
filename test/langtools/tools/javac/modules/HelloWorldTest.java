@@ -40,6 +40,7 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class HelloWorldTest extends ModuleTestBase {
     public static void main(String... args) throws Exception {
         HelloWorldTest t = new HelloWorldTest();

@@ -34,6 +34,7 @@ package javax.crypto;
  * @since 1.4
  */
 
+@Bean
 public class IllegalBlockSizeException
     extends java.security.GeneralSecurityException {
 

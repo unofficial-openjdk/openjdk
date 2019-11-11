@@ -30,6 +30,7 @@ import java.awt.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessMediaTracker
  */
 
+@Bean
 public class HeadlessMediaTracker {
     public static void main(String args[]) {
         new MediaTracker(new Component(){});

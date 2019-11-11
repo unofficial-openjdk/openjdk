@@ -42,6 +42,7 @@ import sun.hotspot.WhiteBox;
  * @run main/othervm/native -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI HandshakeTransitionTest
  */
 
+@Bean
 public class HandshakeTransitionTest {
 
     public static native void someTime(int ms);

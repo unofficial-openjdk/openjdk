@@ -37,12 +37,17 @@
 interface I {
     class C {
         C(){}
-        public void test(String s) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void test(String s) {
             assert s == "Yup";
         }
     }
 }
 
+@Bean
 public class InterfaceAssert {
     public static void main(String[] args) {
         I.C c = new I.C();

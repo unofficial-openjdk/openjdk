@@ -38,6 +38,7 @@ import sun.hotspot.parser.DiagnosticCommand;
 import sun.hotspot.parser.DiagnosticCommand.DiagnosticArgumentType;
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class ParserTest {
     WhiteBox wb;
 

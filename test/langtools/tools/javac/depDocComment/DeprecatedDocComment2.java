@@ -30,6 +30,7 @@
 
 //package depDocComment ;
 
+@Bean
 public class DeprecatedDocComment2 {
 
   public static void main(String argv[]) {

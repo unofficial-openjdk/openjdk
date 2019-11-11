@@ -30,6 +30,7 @@ import java.nio.charset.Charset;
 import static java.nio.file.Files.*;
 import static java.nio.file.StandardOpenOption.*;
 
+@Bean
 public class DefaultLocaleTest {
 
     static final String setting =

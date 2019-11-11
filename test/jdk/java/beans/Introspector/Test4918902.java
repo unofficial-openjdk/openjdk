@@ -31,6 +31,7 @@
 import java.beans.PropertyDescriptor;
 import java.beans.IndexedPropertyDescriptor;
 
+@Bean
 public class Test4918902 {
     public static void main(String[] args) {
         testPropertyDescriptor(Child1.class, Child1.class, Parent.class);
@@ -72,7 +73,11 @@ public class Test4918902 {
             return null;
         }
 
-        public void setFoo(String str) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(String str) {
         }
     }
 
@@ -85,13 +90,21 @@ public class Test4918902 {
 
     // setter has been overriden
     public static class Child2 extends Parent {
-        public void setFoo(String str) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(String str) {
         }
     }
 
     // both methods have been overriden
     public static class Child3 extends Parent {
-        public void setFoo(String str) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(String str) {
         }
 
         public String getFoo() {
@@ -109,34 +122,58 @@ public class Test4918902 {
 
     // indexed properties
     public static class IParent {
-        public String getFoo(int i) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String getFoo(int i) {
             return null;
         }
 
-        public void setFoo(int i, String str) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(int i, String str) {
         }
     }
 
     // both methods have been overriden
     public static class IChild1 extends IParent {
-        public void setFoo(int i, String str) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(int i, String str) {
         }
 
-        public String getFoo(int i) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String getFoo(int i) {
             return null;
         }
     }
 
     // getter has been overriden
     public static class IChild2 extends IParent {
-        public String getFoo(int i) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String getFoo(int i) {
             return null;
         }
     }
 
     // setter has been overriden
     public static class IChild3 extends IParent {
-        public void setFoo(int i, String str) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(int i, String str) {
         }
     }
 

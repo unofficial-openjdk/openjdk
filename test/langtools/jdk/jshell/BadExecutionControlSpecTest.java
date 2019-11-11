@@ -44,6 +44,7 @@ import jdk.jshell.spi.ExecutionEnv;
 import static org.testng.Assert.fail;
 
 @Test
+@Bean
 public class BadExecutionControlSpecTest {
     private static void assertIllegal(String spec) throws Throwable {
         try {

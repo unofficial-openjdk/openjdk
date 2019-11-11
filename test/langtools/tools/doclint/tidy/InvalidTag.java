@@ -13,4 +13,5 @@
 /**
  * List<String> list = new ArrayList<>();
  */
+@Bean
 public class InvalidTag { }

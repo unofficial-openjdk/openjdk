@@ -40,6 +40,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
+@Bean
 public class Basic {
     private static boolean verbose = false;
 
@@ -133,7 +134,11 @@ public class Basic {
         public List<String> collectedFrames() {
             return testFramesOrReflectionFrames;
         }
-        public boolean accept(StackFrame f) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean accept(StackFrame f) {
             // Frames whose class names don't contain "."
             // are our own test frames. These are the ones
             // we expect.
@@ -151,7 +156,11 @@ public class Basic {
             // have predictable results.
             return false;
         }
-        public String frame(StackFrame f) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String frame(StackFrame f) {
             return f.getClassName() + "::" + f.getMethodName();
         }
         List<String> parse(Stream<StackFrame> s) {

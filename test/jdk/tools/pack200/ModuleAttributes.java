@@ -34,6 +34,7 @@ import java.util.List;
  * @compile -XDignore.symbol.file Utils.java ModuleAttributes.java
  * @run main ModuleAttributes
  */
+@Bean
 public class ModuleAttributes {
 
     public static void main(String... args) throws Exception {

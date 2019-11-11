@@ -38,6 +38,7 @@ import javax.imageio.spi.IIORegistry;
 import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.spi.ImageWriterSpi;
 
+@Bean
 public class NullInputOutput {
 
     public static void main(String[] args) throws Exception {

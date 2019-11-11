@@ -39,6 +39,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Bean
 public class GetMacAddress implements Callable<Exception> {
     static final int NUM_THREADS = 5;
     static final int NUM_ITERS = 100;

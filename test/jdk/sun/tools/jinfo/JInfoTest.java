@@ -44,6 +44,7 @@ import jdk.test.lib.apps.LingeredApp;
  *
  * @run main JInfoTest
  */
+@Bean
 public class JInfoTest {
 
     private static ProcessBuilder processBuilder = new ProcessBuilder();

@@ -58,6 +58,7 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 
+@Bean
 public class ExecuteInstalledCodeTest {
 
     public static void main(String[] args) {
@@ -73,7 +74,11 @@ public class ExecuteInstalledCodeTest {
                 .forEach(test::checkSanity);
     }
 
-    private void checkSanity(CompileCodeTestCase testCase) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkSanity(CompileCodeTestCase testCase) {
         System.out.println(testCase);
         // to have a clean state
         testCase.deoptimize();

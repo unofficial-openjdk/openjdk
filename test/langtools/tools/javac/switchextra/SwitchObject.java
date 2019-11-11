@@ -4,9 +4,14 @@
  * @summary Verify switch over Object is not allowed.
  * @compile/fail/ref=SwitchObject.out -XDrawDiagnostics SwitchObject.java
  */
+@Bean
 public class SwitchObject {
 
-    private int longSwitch(Object o) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int longSwitch(Object o) {
         switch (o) {
             case -1: return 0;
             case "": return 1;

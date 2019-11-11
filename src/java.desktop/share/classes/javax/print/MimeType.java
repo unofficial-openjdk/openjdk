@@ -138,7 +138,8 @@ class MimeType implements Serializable, Cloneable {
         public String setValue (String value) {
             throw new UnsupportedOperationException();
         }
-        public boolean equals(Object o) {
+@Bean
+            public boolean equals(Object o) {
             return (o != null &&
                     o instanceof Map.Entry &&
                     getKey().equals (((Map.Entry) o).getKey()) &&
@@ -563,7 +564,8 @@ class MimeType implements Serializable, Cloneable {
      * @throws IllegalArgumentException if {@code s} does not obey the syntax
      *         for a MIME media type string
      */
-    private void parse(String s) {
+@Bean
+        private void parse(String s) {
         // Initialize.
         if (s == null) {
             throw new NullPointerException();

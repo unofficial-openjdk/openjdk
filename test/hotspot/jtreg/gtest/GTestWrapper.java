@@ -41,6 +41,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+@Bean
 public class GTestWrapper {
     public static void main(String[] args) throws Throwable {
         // gtestLauncher is located in <test_image>/hotspot/gtest/<vm_variant>/

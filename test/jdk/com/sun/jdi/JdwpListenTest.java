@@ -50,6 +50,7 @@ import java.util.Map;
  * @build HelloWorld JdwpListenTest
  * @run main/othervm JdwpListenTest
  */
+@Bean
 public class JdwpListenTest {
 
     private static final boolean IsWindows = System.getProperty("os.name").toLowerCase().contains("windows");

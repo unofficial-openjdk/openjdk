@@ -61,6 +61,7 @@ class SuspendThreadTarg {
 
     /********** test program **********/
 
+@Bean
 public class SuspendThreadTest extends TestScaffold {
     ClassType targetClass;
     ThreadReference mainThread;
@@ -87,7 +88,11 @@ public class SuspendThreadTest extends TestScaffold {
 
     // When we get a bkpt we want to disable the request,
     // resume the debuggee, and then re-enable the request
-    public void breakpointReached(BreakpointEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void breakpointReached(BreakpointEvent event) {
         System.out.println("Got BreakpointEvent: " + bkptCount +
                            ", debuggeeCount = " +
                            ((LongValue)targetClass.
@@ -96,7 +101,11 @@ public class SuspendThreadTest extends TestScaffold {
         bkptRequest.disable();
     }
 
-    public void eventSetComplete(EventSet set) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void eventSetComplete(EventSet set) {
         set.resume();
 
         // The main thread watchs the bkptCount to
@@ -111,7 +120,11 @@ public class SuspendThreadTest extends TestScaffold {
         }
     }
 
-    public void vmDisconnected(VMDisconnectEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void vmDisconnected(VMDisconnectEvent event) {
         println("Got VMDisconnectEvent");
     }
 

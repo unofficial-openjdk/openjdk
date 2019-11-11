@@ -53,6 +53,7 @@ import java.util.Arrays;
 import java.util.Random;
 import java.lang.reflect.Method;
 
+@Bean
 public class TestFpMinMaxIntrinsics {
 
     private static final float fPos     =  15280.0f;
@@ -245,7 +246,11 @@ public class TestFpMinMaxIntrinsics {
 
         public Node(double d) { value = d; }
 
-        public Node reset(double d) { value = d; min = max = null; return this; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Node reset(double d) { value = d; min = max = null; return this; }
 
         @Override
         public String toString() {

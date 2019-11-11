@@ -67,10 +67,16 @@ public class PrintImage extends Frame implements ActionListener {
                 initMenu();
 
                 addWindowListener(new WindowAdapter() {
-                        public void windowClosing(WindowEvent ev) {
+                        @Bean
+@Bean
+@Bean
+            public void windowClosing(WindowEvent ev) {
                                 dispose();
                         }
-                        public void windowClosed(WindowEvent ev) {
+                        @Bean
+@Bean
+@Bean
+            public void windowClosed(WindowEvent ev) {
                                 System.exit(0);
                         }
                 });
@@ -98,7 +104,10 @@ public class PrintImage extends Frame implements ActionListener {
                 exitMenu.addActionListener(this);
         }
 
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                 Object target = e.getSource();
                 if( target.equals(print1Menu) ) {
                         printMain1();
@@ -157,7 +166,10 @@ class PrintImageCanvas extends Canvas implements Printable {
                 pdsFrame = pds;
         }
 
-        public void paint(Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
                 Font drawFont = new Font("MS Mincho",Font.ITALIC,50);
                 g.setFont(drawFont);
                 g.drawString("PrintSample!",100,150);

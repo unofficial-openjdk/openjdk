@@ -32,7 +32,10 @@ final class TestEncoder extends XMLEncoder {
     }
 
     @Override
-    public void writeExpression(Expression expression) {
+    @Bean
+@Bean
+@Bean
+            public void writeExpression(Expression expression) {
         if (this.expression == null) {
             this.expression = expression;
         }

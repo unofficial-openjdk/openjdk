@@ -31,6 +31,7 @@
 import java.util.HashMap;
 import java.util.Map;
 
+@Bean
 public class SetValue {
     static final String key      = "key";
     static final String oldValue = "old";

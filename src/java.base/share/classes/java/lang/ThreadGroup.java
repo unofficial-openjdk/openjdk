@@ -376,7 +376,8 @@ class ThreadGroup implements Thread.UncaughtExceptionHandler {
      *
      * @since   1.0
      */
-    public int enumerate(Thread list[]) {
+@Bean
+        public int enumerate(Thread list[]) {
         checkAccess();
         return enumerate(list, 0, true);
     }
@@ -414,12 +415,14 @@ class ThreadGroup implements Thread.UncaughtExceptionHandler {
      *
      * @since   1.0
      */
-    public int enumerate(Thread list[], boolean recurse) {
+@Bean
+        public int enumerate(Thread list[], boolean recurse) {
         checkAccess();
         return enumerate(list, 0, recurse);
     }
 
-    private int enumerate(Thread list[], int n, boolean recurse) {
+@Bean
+        private int enumerate(Thread list[], int n, boolean recurse) {
         int ngroupsSnapshot = 0;
         ThreadGroup[] groupsSnapshot = null;
         synchronized (this) {
@@ -510,7 +513,8 @@ class ThreadGroup implements Thread.UncaughtExceptionHandler {
      *
      * @since   1.0
      */
-    public int enumerate(ThreadGroup list[]) {
+@Bean
+        public int enumerate(ThreadGroup list[]) {
         checkAccess();
         return enumerate(list, 0, true);
     }
@@ -548,12 +552,14 @@ class ThreadGroup implements Thread.UncaughtExceptionHandler {
      *
      * @since   1.0
      */
-    public int enumerate(ThreadGroup list[], boolean recurse) {
+@Bean
+        public int enumerate(ThreadGroup list[], boolean recurse) {
         checkAccess();
         return enumerate(list, 0, recurse);
     }
 
-    private int enumerate(ThreadGroup list[], int n, boolean recurse) {
+@Bean
+        private int enumerate(ThreadGroup list[], int n, boolean recurse) {
         int ngroupsSnapshot = 0;
         ThreadGroup[] groupsSnapshot = null;
         synchronized (this) {
@@ -681,7 +687,8 @@ class ThreadGroup implements Thread.UncaughtExceptionHandler {
      * group or one of its subgroups.
      */
     @SuppressWarnings({"deprecation", "removal"})
-    private boolean stopOrSuspend(boolean suspend) {
+@Bean
+        private boolean stopOrSuspend(boolean suspend) {
         boolean suicide = false;
         Thread us = Thread.currentThread();
         int ngroupsSnapshot;
@@ -824,7 +831,8 @@ class ThreadGroup implements Thread.UncaughtExceptionHandler {
      * @param g the Thread group to be removed
      * @return if this Thread has already been destroyed.
      */
-    private void remove(ThreadGroup g) {
+@Bean
+        private void remove(ThreadGroup g) {
         synchronized (this) {
             if (destroyed) {
                 return;
@@ -956,7 +964,8 @@ class ThreadGroup implements Thread.UncaughtExceptionHandler {
      * @param  t
      *         the Thread to be removed
      */
-    private void remove(Thread t) {
+@Bean
+        private void remove(Thread t) {
         synchronized (this) {
             if (destroyed) {
                 return;
@@ -1044,7 +1053,8 @@ class ThreadGroup implements Thread.UncaughtExceptionHandler {
      * @param   e   the uncaught exception.
      * @since   1.0
      */
-    public void uncaughtException(Thread t, Throwable e) {
+@Bean
+        public void uncaughtException(Thread t, Throwable e) {
         if (parent != null) {
             parent.uncaughtException(t, e);
         } else {
@@ -1071,7 +1081,8 @@ class ThreadGroup implements Thread.UncaughtExceptionHandler {
      *             was never specified.
      */
     @Deprecated(since="1.2", forRemoval=true)
-    public boolean allowThreadSuspension(boolean b) {
+@Bean
+        public boolean allowThreadSuspension(boolean b) {
         return true;
     }
 

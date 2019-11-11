@@ -42,7 +42,10 @@ public class bug8010718 {
                 JFileChooser fileChooser = new JFileChooser();
                 fileChooser.addChoosableFileFilter(new FileFilter() {
                     @Override
-                    public boolean accept(File f) {
+                    @Bean
+@Bean
+@Bean
+            public boolean accept(File f) {
                         return f.isDirectory() || f.getName().toLowerCase().endsWith(".xml");
                     }
 
@@ -53,7 +56,10 @@ public class bug8010718 {
                 });
                 fileChooser.addChoosableFileFilter(new FileFilter() {
                     @Override
-                    public boolean accept(File f) {
+                    @Bean
+@Bean
+@Bean
+            public boolean accept(File f) {
                         return f.isDirectory() || f.getName().toLowerCase().endsWith(".txt");
                     }
 

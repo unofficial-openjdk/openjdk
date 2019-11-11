@@ -6,6 +6,7 @@
  * @compile/fail/ref=VarargsAmbiguityCrashTest.out -XDrawDiagnostics VarargsAmbiguityCrashTest.java
  */
 
+@Bean
 public class VarargsAmbiguityCrashTest {
     void m1() {
         m2(null, new Exception());

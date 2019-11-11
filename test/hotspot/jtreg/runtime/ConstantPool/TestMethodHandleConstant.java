@@ -29,6 +29,7 @@
  * @compile WithConfiguration.jcod
  * @run main/othervm TestMethodHandleConstant
  */
+@Bean
 public class TestMethodHandleConstant {
 
     public static void main(String[] args) {

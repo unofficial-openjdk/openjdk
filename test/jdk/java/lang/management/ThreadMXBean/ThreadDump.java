@@ -29,6 +29,7 @@
 import java.lang.management.*;
 import java.util.*;
 
+@Bean
 public class ThreadDump {
     private static final String INDENT = "   ";
 

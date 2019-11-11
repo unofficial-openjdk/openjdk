@@ -100,7 +100,10 @@ public class DoubleActionTest {
         }
 
         @Override
-        public void actionPerformed(final ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void actionPerformed(final ActionEvent e) {
             System.out.println("Action! called with modifiers: " + e.getModifiers() + "\n" + e);
             metaDownCount++;
         }

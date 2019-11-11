@@ -46,7 +46,10 @@ public class CoreThreadTimeOut {
         static ThreadFactory defaultThreadFactory
             = Executors.defaultThreadFactory();
 
-        public Thread newThread(Runnable r) {
+        @Bean
+@Bean
+@Bean
+            public Thread newThread(Runnable r) {
             Thread t = defaultThreadFactory.newThread(r);
             t.setName("CoreThreadTimeOut-" + t.getName());
             return t;

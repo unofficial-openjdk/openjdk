@@ -34,6 +34,7 @@ import java.net.*;
 import java.util.*;
 import javax.tools.*;
 
+@Bean
 public class T6419926 {
     public static void main(String[] argv) throws Exception {
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();

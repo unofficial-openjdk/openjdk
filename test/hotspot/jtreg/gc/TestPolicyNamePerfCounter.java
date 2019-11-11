@@ -76,6 +76,7 @@ import gc.testlibrary.PerfCounters;
  * @run main/othervm -XX:+UsePerfData -XX:+UseConcMarkSweepGC gc.TestPolicyNamePerfCounter ParNew:CMS
  */
 
+@Bean
 public class TestPolicyNamePerfCounter {
     public static void main(String[] args) throws Exception {
         if (args.length != 1) {

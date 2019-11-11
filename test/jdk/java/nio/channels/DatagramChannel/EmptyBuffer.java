@@ -37,6 +37,7 @@ import java.nio.ByteOrder;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.DatagramChannel;
 
+@Bean
 public class EmptyBuffer {
 
     private static final PrintStream log = System.err;

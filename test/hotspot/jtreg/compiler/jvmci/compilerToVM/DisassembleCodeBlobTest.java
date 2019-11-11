@@ -55,6 +55,7 @@ import sun.hotspot.code.NMethod;
 
 import java.util.List;
 
+@Bean
 public class DisassembleCodeBlobTest {
 
     public static void main(String[] args) {
@@ -73,7 +74,11 @@ public class DisassembleCodeBlobTest {
                 NullPointerException.class);
     }
 
-    private void checkZero(CompileCodeTestCase testCase) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkZero(CompileCodeTestCase testCase) {
         System.out.println("checkZero for " + testCase);
         testCase.deoptimize();
         InstalledCode installedCode = testCase.toInstalledCode();
@@ -82,7 +87,11 @@ public class DisassembleCodeBlobTest {
                 + " : non-null return value for invalid installCode");
     }
 
-    private void check(CompileCodeTestCase testCase) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void check(CompileCodeTestCase testCase) {
         System.out.println(testCase);
         // to have a clean state
         NMethod nMethod = testCase.deoptimizeAndCompile();

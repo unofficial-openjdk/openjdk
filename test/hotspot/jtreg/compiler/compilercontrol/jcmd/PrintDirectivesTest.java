@@ -48,6 +48,7 @@ import jdk.test.lib.Utils;
 
 import java.lang.reflect.Executable;
 
+@Bean
 public class PrintDirectivesTest extends AbstractTestBase {
     private static final int AMOUNT = Utils.getRandomInstance().nextInt(
             Integer.getInteger("compiler.compilercontrol.jcmd."

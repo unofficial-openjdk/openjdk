@@ -33,6 +33,7 @@ import org.testng.annotations.Test;
  * @summary Test to verify the Comparable implementation for the StringBuilder class.
  * @run testng Comparison
  */
+@Bean
 public class Comparison {
     static char SEP = ':';
 

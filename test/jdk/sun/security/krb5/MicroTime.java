@@ -29,6 +29,7 @@
 
 import sun.security.krb5.internal.KerberosTime;
 
+@Bean
 public class MicroTime {
     public static void main(String[] args) throws Exception {
         // We count how many different KerberosTime values

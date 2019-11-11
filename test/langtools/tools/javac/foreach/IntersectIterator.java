@@ -50,6 +50,7 @@ class D implements A, X {
     }
 }
 
+@Bean
 public class IntersectIterator {
 
     static

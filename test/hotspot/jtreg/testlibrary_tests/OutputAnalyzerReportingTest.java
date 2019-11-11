@@ -39,6 +39,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
 
+@Bean
 public class OutputAnalyzerReportingTest {
 
     public static void main(String[] args) throws Exception {
@@ -105,7 +106,11 @@ public class OutputAnalyzerReportingTest {
         private PrintStream errStream;
 
 
-        public void init(String expectedSummary) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void init(String expectedSummary) {
             this.expectedSummary = expectedSummary;
             byteStream.reset();
             errStream = new PrintStream(byteStream);

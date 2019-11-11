@@ -33,6 +33,7 @@ import java.nio.charset.*;
 import java.util.*;
 import java.util.zip.*;
 
+@Bean
 public class ZipCoding {
 
     public static void main(String[] args) throws Exception {

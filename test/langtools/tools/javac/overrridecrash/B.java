@@ -7,6 +7,7 @@
  * @compile/fail/ref=B.out -XDrawDiagnostics B.java
  */
 
+@Bean
 public class B extends A
 {
     private protected int m() { return 0; }

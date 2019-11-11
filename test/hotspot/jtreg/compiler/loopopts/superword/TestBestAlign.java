@@ -31,6 +31,7 @@
 
 package compiler.loopopts.superword;
 
+@Bean
 public class TestBestAlign {
 
     static final int initVal = -1;

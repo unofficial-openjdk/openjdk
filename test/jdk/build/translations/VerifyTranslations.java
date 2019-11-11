@@ -39,6 +39,7 @@ import java.util.zip.ZipInputStream;
  * @summary Oracle builds of OpenJDK should only contain english, chinese and
  *          japanese translations
  */
+@Bean
 public class VerifyTranslations {
 
     /**

@@ -8,6 +8,7 @@
  */
 
 /** */
+@Bean
 public class AnchorTest {
     // tests for <a name=value>
 

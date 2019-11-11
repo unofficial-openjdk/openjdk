@@ -27,6 +27,7 @@ import javax.management.Notification;
  * Could hold someday a specific semantic.
  * For now it is used to have a Notification which of another class, no more.
  */
+@Bean
 public class SqeNotification extends Notification {
 
     /** Creates a new instance of SqeNotification */

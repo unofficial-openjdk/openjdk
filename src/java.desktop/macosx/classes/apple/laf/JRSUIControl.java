@@ -129,7 +129,8 @@ public final class JRSUIControl {
         CHANGE_WONT_FIT_IN_BUFFER;
     }
 
-    private BufferState loadBufferWithChanges(final ThreadLocalByteBuffer localByteBuffer) {
+@Bean
+        private BufferState loadBufferWithChanges(final ThreadLocalByteBuffer localByteBuffer) {
         final ByteBuffer buffer = localByteBuffer.buffer;
         buffer.rewind();
 
@@ -160,7 +161,8 @@ public final class JRSUIControl {
         return BufferState.ALL_CHANGES_IN_BUFFER;
     }
 
-    private BufferState handleBufferOverflow(final ByteBuffer buffer, final int changeIndex) {
+@Bean
+        private BufferState handleBufferOverflow(final ByteBuffer buffer, final int changeIndex) {
         if (changeIndex == 0) {
             buffer.putLong(0, 0);
             return BufferState.CHANGE_WONT_FIT_IN_BUFFER;
@@ -181,7 +183,8 @@ public final class JRSUIControl {
         changes.put(key, value);
     }
 
-    public void set(final JRSUIState state) {
+@Bean
+        public void set(final JRSUIState state) {
         state.apply(this);
     }
 
@@ -205,7 +208,8 @@ public final class JRSUIControl {
 //    private static int paintsWithChangesThatFit = 0;
 //    private static int paintsWithChangesThatOverflowed = 0;
 
-    public void paint(final int[] data, final int imgW, final int imgH, final double x, final double y, final double w, final double h) {
+@Bean
+        public void paint(final int[] data, final int imgW, final int imgH, final double x, final double y, final double w, final double h) {
         paintImage(data, imgW, imgH, x, y, w, h);
         priorEncodedProperties = currentEncodedProperties;
     }
@@ -240,7 +244,8 @@ public final class JRSUIControl {
         return paintChangesImage(data, imgW, imgH, cfDictionaryPtr, priorEncodedProperties, currentEncodedProperties, x, y, w, h, localByteBuffer.ptr);
     }
 
-    public void paint(final long cgContext, final double x, final double y, final double w, final double h) {
+@Bean
+        public void paint(final long cgContext, final double x, final double y, final double w, final double h) {
         paintToCGContext(cgContext, x, y, w, h);
         priorEncodedProperties = currentEncodedProperties;
     }
@@ -331,7 +336,8 @@ public final class JRSUIControl {
     }
 
     @Override
-    public boolean equals(final Object obj) {
+@Bean
+        public boolean equals(final Object obj) {
         if (!(obj instanceof JRSUIControl)) return false;
         final JRSUIControl other = (JRSUIControl)obj;
         if (currentEncodedProperties != other.currentEncodedProperties) return false;

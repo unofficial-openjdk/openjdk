@@ -34,6 +34,7 @@
 
 // The test fails if the code fails to compile.
 
+@Bean
 public class BadBreak {
     public static void main(String [] args) {
     label:

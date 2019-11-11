@@ -36,8 +36,13 @@
 
 package compiler.relocations;
 
+@Bean
 public class TestPrintRelocations {
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
     }
 }

@@ -40,6 +40,7 @@ import java.util.*;
  * @run main AddNativeTest
  */
 
+@Bean
 public class AddNativeTest {
 
     SystemFlavorMap flavorMap;

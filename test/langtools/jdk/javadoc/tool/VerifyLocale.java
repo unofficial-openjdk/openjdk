@@ -46,6 +46,7 @@ import jdk.javadoc.doclet.Doclet;
 import jdk.javadoc.doclet.Reporter;
 import jdk.javadoc.doclet.DocletEnvironment;
 
+@Bean
 public class VerifyLocale implements Doclet {
     static String language;
     static String country;
@@ -95,7 +96,11 @@ public class VerifyLocale implements Doclet {
         System.err.println("Tested " + testCount + " locales");
     }
 
-    public boolean run(DocletEnvironment root) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean run(DocletEnvironment root) {
         reporter.print(Kind.NOTE, String.format("doclet locale is: %s [%s,%s,%s] %s (%s)",
                 locale,
                 locale.getLanguage(),
@@ -123,7 +128,11 @@ public class VerifyLocale implements Doclet {
         return SourceVersion.latest();
     }
 
-    public void init(Locale locale, Reporter reporter) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void init(Locale locale, Reporter reporter) {
         this.locale = locale;
         this.reporter = reporter;
     }

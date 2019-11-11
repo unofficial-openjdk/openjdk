@@ -35,6 +35,7 @@ import java.io.StringWriter;
 import java.io.PrintWriter;
 import java.io.IOException;
 
+@Bean
 public class LambdaInnerTypeVarReflect {
 
     static int assertionCount = 0;

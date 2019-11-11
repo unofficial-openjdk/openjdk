@@ -29,6 +29,7 @@
  * @ignore This test has huge memory requirements
  */
 
+@Bean
 public class Bug8148174 {
     public static void main(String[] args) {
         int size = Integer.MAX_VALUE - 2;

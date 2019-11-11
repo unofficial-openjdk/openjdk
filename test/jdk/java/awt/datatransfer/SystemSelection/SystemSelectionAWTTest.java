@@ -43,6 +43,7 @@ import java.util.Properties;
  * @run main SystemSelectionAWTTest
  */
 
+@Bean
 public class SystemSelectionAWTTest {
 
     Frame frame;
@@ -60,6 +61,9 @@ public class SystemSelectionAWTTest {
 
         tf1 = new TextField();
         tf1.addFocusListener( new FocusAdapter() {
+            @Bean
+@Bean
+@Bean
             public void focusGained(FocusEvent fe) {
                 fe.getSource();
             }

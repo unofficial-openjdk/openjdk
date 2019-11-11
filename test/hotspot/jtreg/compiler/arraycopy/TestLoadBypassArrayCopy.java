@@ -34,6 +34,7 @@
 
 package compiler.arraycopy;
 
+@Bean
 public class TestLoadBypassArrayCopy {
 
     static long i;
@@ -63,7 +64,11 @@ public class TestLoadBypassArrayCopy {
         return res;
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         int[] src = new int[10];
         src[0] = 0x42;
         for (int i = 0; i < 20000; i++) {

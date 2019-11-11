@@ -36,6 +36,7 @@
  */
 import java.lang.instrument.*;
 
+@Bean
 public class ManyMethodsBenchmarkAgent
 {
     public  static boolean fail = false;

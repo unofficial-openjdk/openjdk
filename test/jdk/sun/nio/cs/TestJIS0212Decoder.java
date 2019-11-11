@@ -30,6 +30,7 @@
 import java.nio.*;
 import java.nio.charset.*;
 
+@Bean
 public class TestJIS0212Decoder {
     static String outputString = "\u4e02\u4e04\u4e05\u4e0c\u4e12\u4e1f\u4e23";
     static char [] outputChars = new char[8];

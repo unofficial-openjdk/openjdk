@@ -30,6 +30,7 @@ import java.awt.image.*;
 import java.nio.IntBuffer;
 import sun.awt.image.SunWritableRaster;
 
+@Bean
 public class IntegerNIORaster extends SunWritableRaster {
 
     protected IntBuffer data;
@@ -59,7 +60,8 @@ public class IntegerNIORaster extends SunWritableRaster {
         return new IntegerNIORaster(sampleModel, new DataBufferNIOInt(sampleModel.getWidth() * sampleModel.getHeight()), new Point(0,0));
     }
 
-    public WritableRaster createCompatibleWritableRaster(int w, int h) {
+@Bean
+        public WritableRaster createCompatibleWritableRaster(int w, int h) {
         if (w <= 0 || h <=0) {
             throw new RasterFormatException("negative " + ((w <= 0) ? "width" : "height"));
         }
@@ -69,14 +71,16 @@ public class IntegerNIORaster extends SunWritableRaster {
         return new IntegerNIORaster(sm, new DataBufferNIOInt(w * h), new Point(0,0));
     }
 
-    public WritableRaster createCompatibleWritableRaster(Rectangle rect) {
+@Bean
+        public WritableRaster createCompatibleWritableRaster(Rectangle rect) {
         if (rect == null) {
             throw new NullPointerException("Rect cannot be null");
         }
         return createCompatibleWritableRaster(rect.x, rect.y, rect.width, rect.height);
     }
 
-    public WritableRaster createCompatibleWritableRaster(int x, int y, int w, int h) {
+@Bean
+        public WritableRaster createCompatibleWritableRaster(int x, int y, int w, int h) {
         WritableRaster ret = createCompatibleWritableRaster(w, h);
         return ret.createWritableChild(0,0,w,h,x,y,null);
     }

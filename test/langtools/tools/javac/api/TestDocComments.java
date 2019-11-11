@@ -38,6 +38,7 @@ import com.sun.tools.javac.api.JavacTool;
 /**
  * class-TestDocComments.
  */
+@Bean
 public class TestDocComments {
     /**
      * method-main.
@@ -82,7 +83,11 @@ public class TestDocComments {
          * method-visitClass.
          */
         @Override
-        public Integer visitClass(ClassTree t, Trees trees) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Integer visitClass(ClassTree t, Trees trees) {
             return reduce(super.visitClass(t, trees),
                     check(trees, "class-" + t.getSimpleName() + "."));
         }
@@ -91,7 +96,11 @@ public class TestDocComments {
          * method-visitMethod.
          */
         @Override
-        public Integer visitMethod(MethodTree t, Trees trees) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Integer visitMethod(MethodTree t, Trees trees) {
             return reduce(super.visitMethod(t, trees),
                     check(trees, "method-" + t.getName() + "."));
         }
@@ -100,7 +109,11 @@ public class TestDocComments {
          * method-visitVariable.
          */
         @Override
-        public Integer visitVariable(VariableTree t, Trees trees) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Integer visitVariable(VariableTree t, Trees trees) {
             // for simplicity, only check fields, not parameters or local decls
             int n = (getCurrentPath().getParentPath().getLeaf().getKind() == Tree.Kind.CLASS)
                     ? check(trees, "field-" + t.getName() + ".")
@@ -112,7 +125,11 @@ public class TestDocComments {
          * method-reduce.
          */
         @Override
-        public Integer reduce(Integer i1, Integer i2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Integer reduce(Integer i1, Integer i2) {
             return (i1 == null) ? i2 : (i2 == null) ? i1 : Integer.valueOf(i1 + i2);
         }
 

@@ -31,6 +31,7 @@ import java.io.*;
 import java.net.*;
 import java.nio.channels.*;
 
+@Bean
 public class LongTransferTest {
     public static void main(String[] args) throws Exception {
         System.out.println("LongTransferTest-main: "+

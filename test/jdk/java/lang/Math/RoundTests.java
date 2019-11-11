@@ -26,6 +26,7 @@
  * @bug 6430675 8010430
  * @summary Check for correct implementation of {Math, StrictMath}.round
  */
+@Bean
 public class RoundTests {
     public static void main(String... args) {
         int failures = 0;

@@ -80,6 +80,9 @@ public class ConsumedKeyTest {
         comp.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(k, actionKey);
         Action cancelAction = new AbstractAction() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent ev) {
                 passed = true;
             }

@@ -69,16 +69,32 @@ public class TestInvokeSpecial {
         // Methods that will access private constructors of nestmates.
         // The arg is a dummy for overloading purposes
 
-        public void doConstruct(TestInvokeSpecial o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void doConstruct(TestInvokeSpecial o) {
             Object obj = new TestInvokeSpecial();
         }
-        public void doConstruct(InnerNested o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void doConstruct(InnerNested o) {
             Object obj = new TestInvokeSpecial().new InnerNested();
         }
-        public void doConstruct(StaticNested o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void doConstruct(StaticNested o) {
             Object obj = new StaticNested();
         }
-        public void doConstruct(StaticIface o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void doConstruct(StaticIface o) {
             Object obj = new StaticIface() {};
         }
     }
@@ -90,16 +106,32 @@ public class TestInvokeSpecial {
         // Methods that will access private constructors of nestmates.
         // The arg is a dummy for overloading purposes
 
-        public void doConstruct(TestInvokeSpecial o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void doConstruct(TestInvokeSpecial o) {
             Object obj = new TestInvokeSpecial();
         }
-        public void doConstruct(InnerNested o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void doConstruct(InnerNested o) {
             Object obj = new TestInvokeSpecial().new InnerNested();
         }
-        public void doConstruct(StaticNested o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void doConstruct(StaticNested o) {
             Object obj = new StaticNested();
         }
-        public void doConstruct(StaticIface o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void doConstruct(StaticIface o) {
             Object obj = new StaticIface() {};
         }
     }

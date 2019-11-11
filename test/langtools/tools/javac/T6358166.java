@@ -46,6 +46,7 @@ import com.sun.tools.javac.util.Context;
 
 
 @SupportedAnnotationTypes("*")
+@Bean
 public class T6358166 extends AbstractProcessor {
     public static void main(String... args) throws Throwable {
         String self = T6358166.class.getName();
@@ -86,7 +87,11 @@ public class T6358166 extends AbstractProcessor {
             throw new AssertionError("elapsed time is suspect: " + msec);
     }
 
-    public boolean process(Set<? extends TypeElement> tes, RoundEnvironment renv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> tes, RoundEnvironment renv) {
         return true;
     }
 }

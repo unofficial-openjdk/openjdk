@@ -96,7 +96,11 @@ public class TestConstantDynamic extends ComboInstance<TestConstantDynamic> {
         }
 
         @Override
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             return sourceTypeStr;
         }
     }
@@ -118,7 +122,11 @@ public class TestConstantDynamic extends ComboInstance<TestConstantDynamic> {
         }
 
         @Override
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             return value;
         }
     }
@@ -293,19 +301,31 @@ public class TestConstantDynamic extends ComboInstance<TestConstantDynamic> {
         }
 
         @Override
-        public void started(TaskEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void started(TaskEvent e) {
             //do nothing
         }
 
         @Override
-        public void finished(TaskEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void finished(TaskEvent e) {
             if (e.getKind() == TaskEvent.Kind.ANALYZE) {
                 scan(e.getCompilationUnit(), null);
             }
         }
 
         @Override
-        public Void visitVariable(VariableTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitVariable(VariableTree node, Void p) {
             super.visitVariable(node, p);
             JCVariableDecl tree = (JCVariableDecl)node;
             VarSymbol v = tree.sym;
@@ -326,7 +346,11 @@ public class TestConstantDynamic extends ComboInstance<TestConstantDynamic> {
         }
 
         @Override
-        public Void visitMethod(MethodTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitMethod(MethodTree node, Void p) {
             super.visitMethod(node, p);
             if (node.getName().toString().equals("bsm")) {
                 bsm = ((JCMethodDecl)node).sym.asHandle();

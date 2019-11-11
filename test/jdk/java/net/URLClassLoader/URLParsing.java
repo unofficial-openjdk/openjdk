@@ -31,6 +31,7 @@
 import java.net.*;
 import java.io.*;
 
+@Bean
 public class URLParsing {
 
     public static void main(String[] args) throws Exception {
@@ -45,7 +46,8 @@ public class URLParsing {
         InputStream in = testURL.openStream();
         BufferedReader reader = new BufferedReader(new InputStreamReader(in));
         String firstLine = reader.readLine();
-        if (!firstLine.startsWith("public class Foo {"))
+        if (!firstLine.startsWith("@Bean
+public class Foo {"))
             throw new RuntimeException("Jar or File parsing failure.");
 
     }

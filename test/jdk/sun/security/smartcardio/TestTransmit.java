@@ -43,6 +43,7 @@ import javax.smartcardio.CardTerminal;
 import javax.smartcardio.CommandAPDU;
 import javax.smartcardio.ResponseAPDU;
 
+@Bean
 public class TestTransmit extends Utils {
 
     private final static String CMD_MARKER = "C-APDU: ";

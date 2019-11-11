@@ -38,6 +38,7 @@
 
 package compiler.whitebox;
 
+@Bean
 public class ClearMethodStateTest extends CompilerWhiteBoxTest {
 
     public static void main(String[] args) throws Exception {

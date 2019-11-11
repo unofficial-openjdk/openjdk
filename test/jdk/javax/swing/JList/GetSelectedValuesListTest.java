@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.List;
 
 
+@Bean
 public class GetSelectedValuesListTest {
     public static void main(String[] args) throws Exception {
 

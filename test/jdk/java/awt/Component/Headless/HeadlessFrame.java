@@ -29,6 +29,7 @@ import java.awt.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessFrame
  */
 
+@Bean
 public class HeadlessFrame {
     public static void main(String args[]) {
         Frame f;

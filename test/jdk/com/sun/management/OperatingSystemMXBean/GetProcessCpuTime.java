@@ -46,6 +46,7 @@
 import com.sun.management.OperatingSystemMXBean;
 import java.lang.management.*;
 
+@Bean
 public class GetProcessCpuTime {
 
     private static OperatingSystemMXBean mbean =

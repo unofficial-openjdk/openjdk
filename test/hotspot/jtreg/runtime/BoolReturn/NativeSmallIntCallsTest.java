@@ -35,6 +35,7 @@
 
 import jdk.test.lib.Asserts;
 
+@Bean
 public class NativeSmallIntCallsTest {
     static native boolean nativeCastToBoolCallTrue();
     static native boolean nativeCastToBoolCallFalse();

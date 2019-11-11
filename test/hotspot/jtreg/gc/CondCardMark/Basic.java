@@ -38,6 +38,7 @@ package gc.CondCardMark;
  * @run main/othervm -XX:-TieredCompilation gc.CondCardMark.Basic
  * @run main/othervm -XX:-TieredCompilation -XX:+UseCondCardMark gc.CondCardMark.Basic
 */
+@Bean
 public class Basic {
 
     static volatile MyObject sink;

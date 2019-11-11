@@ -47,6 +47,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+@Bean
 public class ToolSimpleTest extends ReplToolTesting {
 
     @Test
@@ -510,7 +511,11 @@ public class ToolSimpleTest extends ReplToolTesting {
         );
     }
 
-    private void assertHelp(boolean a, String command, String... find) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertHelp(boolean a, String command, String... find) {
         assertCommandCheckOutput(a, command, s -> {
             for (String f : find) {
                 assertTrue(s.contains(f),
@@ -521,7 +526,11 @@ public class ToolSimpleTest extends ReplToolTesting {
     }
 
     // Check that each line of output contains the corresponding string from the list
-    private void checkLineToList(String in, List<String> match) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkLineToList(String in, List<String> match) {
         String trimmed = in.trim();
         String[] res = trimmed.isEmpty()
                 ? new String[0]

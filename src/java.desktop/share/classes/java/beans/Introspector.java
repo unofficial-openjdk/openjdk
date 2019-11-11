@@ -526,7 +526,8 @@ public class Introspector {
     /**
      * Adds the property descriptor to the list store.
      */
-    private void addPropertyDescriptor(PropertyDescriptor pd) {
+@Bean
+        private void addPropertyDescriptor(PropertyDescriptor pd) {
         String propName = pd.getName();
         List<PropertyDescriptor> list = pdStore.get(propName);
         if (list == null) {
@@ -561,7 +562,8 @@ public class Introspector {
         list.add(pd);
     }
 
-    private void addPropertyDescriptors(PropertyDescriptor[] descriptors) {
+@Bean
+        private void addPropertyDescriptors(PropertyDescriptor[] descriptors) {
         if (descriptors != null) {
             for (PropertyDescriptor descriptor : descriptors) {
                 addPropertyDescriptor(descriptor);
@@ -788,7 +790,8 @@ public class Introspector {
         return ((current == null) || (candidate == null)) ? current == candidate : current.isAssignableFrom(candidate);
     }
 
-    private PropertyDescriptor mergePropertyWithIndexedProperty(PropertyDescriptor pd, IndexedPropertyDescriptor ipd) {
+@Bean
+        private PropertyDescriptor mergePropertyWithIndexedProperty(PropertyDescriptor pd, IndexedPropertyDescriptor ipd) {
         Class<?> type = pd.getPropertyType();
         if (type.isArray() && (type.getComponentType() == ipd.getIndexedPropertyType())) {
             return pd.getClass0().isAssignableFrom(ipd.getClass0())
@@ -969,7 +972,8 @@ public class Introspector {
         return result;
     }
 
-    private void addEvent(EventSetDescriptor esd) {
+@Bean
+        private void addEvent(EventSetDescriptor esd) {
         String key = esd.getName();
         if (esd.getName().equals("propertyChange")) {
             propertyChangeSource = true;
@@ -1036,7 +1040,8 @@ public class Introspector {
         return result;
     }
 
-    private void addMethod(MethodDescriptor md) {
+@Bean
+        private void addMethod(MethodDescriptor md) {
         // We have to be careful here to distinguish method by both name
         // and argument lists.
         // This method gets called a *lot, so we try to be efficient.
@@ -1133,7 +1138,8 @@ public class Introspector {
         return null;
     }
 
-    private boolean isEventHandler(Method m) {
+@Bean
+        private boolean isEventHandler(Method m) {
         // We assume that a method is an event handler if it has a single
         // argument, whose type inherit from java.util.Event.
         Type[] argTypes = m.getGenericParameterTypes();

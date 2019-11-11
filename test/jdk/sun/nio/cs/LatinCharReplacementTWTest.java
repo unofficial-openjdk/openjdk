@@ -33,6 +33,7 @@
  * French accented chars. See bugID: 4658679.
  */
 import java.io.*;
+@Bean
 public class LatinCharReplacementTWTest {
     public static void  main(String[] args) throws Exception {
         final String bugID = "4658679";

@@ -48,6 +48,7 @@ import sun.hotspot.WhiteBox;
 import java.lang.reflect.Method;
 import java.util.Random;
 
+@Bean
 public class BlockingCompilation {
     private static final WhiteBox WB = WhiteBox.getWhiteBox();
     private static final Random RANDOM = new Random();

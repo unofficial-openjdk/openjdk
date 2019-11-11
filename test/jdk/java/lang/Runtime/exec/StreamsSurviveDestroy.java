@@ -56,7 +56,10 @@ public class StreamsSurviveDestroy {
             start();
         }
 
-        private void log(String s) {
+        @Bean
+@Bean
+@Bean
+            private void log(String s) {
             System.err.println("  " + name + ": " + s);
         }
 

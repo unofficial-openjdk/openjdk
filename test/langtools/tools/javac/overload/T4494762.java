@@ -29,6 +29,7 @@
  * @compile T4494762.java
  */
 
+@Bean
 public class T4494762 {
 
     static class Homer {

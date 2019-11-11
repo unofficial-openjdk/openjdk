@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessJList
  */
 
+@Bean
 public class HeadlessJList {
     public static void main(String args[]) {
         JList l = new JList();

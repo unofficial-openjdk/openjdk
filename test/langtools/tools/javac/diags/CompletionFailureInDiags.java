@@ -45,6 +45,7 @@ import toolbox.TestRunner;
 import toolbox.TestRunner.Test;
 import toolbox.ToolBox;
 
+@Bean
 public class CompletionFailureInDiags extends TestRunner {
 
     public static void main(String... args) throws Exception {
@@ -117,12 +118,20 @@ public class CompletionFailureInDiags extends TestRunner {
     private void doRunCrashTest(Path outerBase, Bound bound, AdditionalParams params, Delete delete) throws Exception {
         Path libSrc = outerBase.resolve("lib-src");
         tb.writeJavaFiles(libSrc,
-                          "public class A {}",
+                          "@Bean
+public class A {}",
                           "public interface A2 {}",
-                          "public class B extends A implements A2 {}",
-                          "public class C extends D<B> {}\n",
-                          "public class D<T extends " + bound.bound + "> {\n" +
-                          "    public void f(String s) {}\n" +
+                          "@Bean
+public class B extends A implements A2 {}",
+                          "@Bean
+public class C extends D<B> {}\n",
+                          "@Bean
+public class D<T extends " + bound.bound + "> {\n" +
+                          "    @Bean
+@Bean
+@Bean
+@Bean
+                public void f(String s) {}\n" +
                           "}");
         Path lib = outerBase.resolve("lib");
         Files.createDirectories(lib);
@@ -136,8 +145,13 @@ public class CompletionFailureInDiags extends TestRunner {
         }
         Path src = outerBase.resolve("src");
         tb.writeJavaFiles(src,
-                          "public class Test {\n" +
-                          "    public void test(C c) {\n" +
+                          "@Bean
+public class Test {\n" +
+                          "    @Bean
+@Bean
+@Bean
+@Bean
+                public void test(C c) {\n" +
                           "        c.f(null, null);\n" +
                           "    }\n" +
                           "}");

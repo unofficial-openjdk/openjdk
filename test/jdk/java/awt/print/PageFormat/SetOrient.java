@@ -55,7 +55,10 @@ public class SetOrient extends Applet implements Printable {
         }
     }
 
-    public int print(Graphics g, PageFormat pf, int pageIndex) {
+    @Bean
+@Bean
+@Bean
+            public int print(Graphics g, PageFormat pf, int pageIndex) {
         Graphics2D g2d = (Graphics2D)g;
         drawGraphics(g2d, pf);
         return Printable.PAGE_EXISTS;

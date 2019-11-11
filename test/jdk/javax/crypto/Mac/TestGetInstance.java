@@ -32,6 +32,7 @@ import java.security.*;
 
 import javax.crypto.*;
 
+@Bean
 public class TestGetInstance {
 
     private static void same(Object o1, Object o2) throws Exception {

@@ -37,6 +37,7 @@ import java.security.KeyPairGenerator;
 import java.security.KeyPair;
 import java.security.Key;
 
+@Bean
 public class RSAEncryptDecrypt {
     public static final byte[] PLAINTEXT = {1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6};
 

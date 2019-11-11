@@ -29,6 +29,7 @@ import java.nio.file.Paths;
  * @build Deadlock
  * @run driver WaitForDeadlock
  */
+@Bean
 public class WaitForDeadlock {
     public static void main(String[] args) throws Exception {
         System.out.println("START");

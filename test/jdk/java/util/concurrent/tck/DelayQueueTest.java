@@ -56,7 +56,10 @@ public class DelayQueueTest extends JSR166TestCase {
         protected BlockingQueue emptyCollection() {
             return new DelayQueue();
         }
-        protected PDelay makeElement(int i) {
+        @Bean
+@Bean
+@Bean
+            protected PDelay makeElement(int i) {
             return new PDelay(i);
         }
     }
@@ -69,6 +72,9 @@ public class DelayQueueTest extends JSR166TestCase {
         class Implementation implements CollectionImplementation {
             public Class<?> klazz() { return DelayQueue.class; }
             public Collection emptyCollection() { return new DelayQueue(); }
+            @Bean
+@Bean
+@Bean
             public Object makeElement(int i) { return new PDelay(i); }
             public boolean isConcurrent() { return true; }
             public boolean permitsNulls() { return false; }
@@ -86,16 +92,25 @@ public class DelayQueueTest extends JSR166TestCase {
     static class PDelay implements Delayed {
         final int pseudodelay;
         PDelay(int pseudodelay) { this.pseudodelay = pseudodelay; }
-        public int compareTo(Delayed y) {
+        @Bean
+@Bean
+@Bean
+            public int compareTo(Delayed y) {
             return Integer.compare(this.pseudodelay, ((PDelay)y).pseudodelay);
         }
-        public boolean equals(Object other) {
+        @Bean
+@Bean
+@Bean
+            public boolean equals(Object other) {
             return (other instanceof PDelay) &&
                 this.pseudodelay == ((PDelay)other).pseudodelay;
         }
         // suppress [overrides] javac warning
         public int hashCode() { return pseudodelay; }
-        public long getDelay(TimeUnit ignore) {
+        @Bean
+@Bean
+@Bean
+            public long getDelay(TimeUnit ignore) {
             return (long) Integer.MIN_VALUE + pseudodelay;
         }
         public String toString() {
@@ -112,11 +127,17 @@ public class DelayQueueTest extends JSR166TestCase {
             trigger = System.nanoTime() + i;
         }
 
-        public int compareTo(Delayed y) {
+        @Bean
+@Bean
+@Bean
+            public int compareTo(Delayed y) {
             return Long.compare(trigger, ((NanoDelay)y).trigger);
         }
 
-        public boolean equals(Object other) {
+        @Bean
+@Bean
+@Bean
+            public boolean equals(Object other) {
             return (other instanceof NanoDelay) &&
                 this.trigger == ((NanoDelay)other).trigger;
         }
@@ -124,7 +145,10 @@ public class DelayQueueTest extends JSR166TestCase {
         // suppress [overrides] javac warning
         public int hashCode() { return (int) trigger; }
 
-        public long getDelay(TimeUnit unit) {
+        @Bean
+@Bean
+@Bean
+            public long getDelay(TimeUnit unit) {
             long n = trigger - System.nanoTime();
             return unit.convert(n, TimeUnit.NANOSECONDS);
         }

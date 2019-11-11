@@ -28,6 +28,7 @@
  * @author gafter
  */
 
+@Bean
 public class Attach {
     public static void main(String[] args) {
         Attach.class.getClassLoader().

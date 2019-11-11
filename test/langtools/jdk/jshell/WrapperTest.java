@@ -43,6 +43,7 @@ import static jdk.jshell.Snippet.Status.RECOVERABLE_DEFINED;
 import static jdk.jshell.Snippet.Status.VALID;
 
 @Test
+@Bean
 public class WrapperTest extends KullaTesting {
 
     public void testMethod() {
@@ -110,7 +111,8 @@ public class WrapperTest extends KullaTesting {
 
     // test 8159740
     public void testClassWithConstructorCorralled() {
-        String src = "public class AAA { AAA(String b) {} int xxx = x0 + 4; float mmm(float ffff) { return f0 * ffff; } }";
+        String src = "@Bean
+public class AAA { AAA(String b) {} int xxx = x0 + 4; float mmm(float ffff) { return f0 * ffff; } }";
         //            _123456789_123456789_123456789_123456789_123456789_123456789_123456789_123456789
         Snippet a = classKey(assertEval(src, added(RECOVERABLE_DEFINED)));
         SnippetWrapper swa = getState().sourceCodeAnalysis().wrapper(a);
@@ -290,7 +292,11 @@ public class WrapperTest extends KullaTesting {
         assertTrue(dep.contains(b));
     }
 
-    private void assertWrapperHas(SnippetWrapper sw, String source, Kind kind, String... has) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertWrapperHas(SnippetWrapper sw, String source, Kind kind, String... has) {
         assertEquals(sw.source(), source);
         assertEquals(sw.kind(), kind);
         String s = sw.wrapped();
@@ -307,11 +313,19 @@ public class WrapperTest extends KullaTesting {
         }
     }
 
-    private void assertHas(String s, String has) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertHas(String s, String has) {
         assertTrue(s.contains(has), "Expected to find '" + has + "' in: '" + s + "'");
     }
 
-    private void assertPosition(SnippetWrapper sw, String source, int start, int length) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertPosition(SnippetWrapper sw, String source, int start, int length) {
         //System.err.printf("\n#assertPosition:\n#  debug-source: %s\n#  SnippetWrapper --\n#    source: %s\n#    wrapped: %s\n",
         //        source, sw.source(), sw.wrapped());
         //System.err.printf("#  start: %d    length: %d\n", start, length);

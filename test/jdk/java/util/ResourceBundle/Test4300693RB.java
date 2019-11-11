@@ -27,6 +27,7 @@
 import java.util.ResourceBundle;
 import java.util.ListResourceBundle;
 
+@Bean
 public class Test4300693RB extends ListResourceBundle {
 
     public static ResourceBundle rb = ResourceBundle.getBundle("Test4300693RB");

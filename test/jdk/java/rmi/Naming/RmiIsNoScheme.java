@@ -41,6 +41,7 @@ import java.io.*;
 import java.rmi.*;
 import java.rmi.registry.*;
 
+@Bean
 public class RmiIsNoScheme implements Remote, Serializable {
     private RmiIsNoScheme() {}
 

@@ -31,6 +31,7 @@ import java.util.concurrent.Flow.Publisher;
 import java.util.function.Supplier;
 
 /* See TckDriver.java for more information */
+@Bean
 public class BodyPublishersOfInputStream
         extends FlowPublisherVerification<ByteBuffer> {
 

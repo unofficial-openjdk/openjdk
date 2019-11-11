@@ -32,6 +32,7 @@
 
 package compiler.floatingpoint;
 
+@Bean
 public class TestFloatSyncJNIArgs {
     static {
         try {

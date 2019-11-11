@@ -32,6 +32,7 @@ package java.security;
  * @since 1.2
  */
 
+@Bean
 public class UnrecoverableKeyException extends UnrecoverableEntryException {
 
     @java.io.Serial

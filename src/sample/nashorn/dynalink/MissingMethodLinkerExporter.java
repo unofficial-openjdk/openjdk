@@ -107,7 +107,9 @@ public final class MissingMethodLinkerExporter extends GuardingDynamicLinkerExpo
         linkers.add(new TypeBasedGuardingDynamicLinker() {
             // only handles MissingMethodHandler and MissingMethod objects
             @Override
-            public boolean canLinkType(final Class<?> type) {
+@Bean
+@Bean
+                    public boolean canLinkType(final Class<?> type) {
                 return
                     MissingMethodHandler.class.isAssignableFrom(type) ||
                     type == MissingMethod.class;

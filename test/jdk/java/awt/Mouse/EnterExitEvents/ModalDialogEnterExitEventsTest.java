@@ -93,11 +93,17 @@ public class ModalDialogEnterExitEventsTest {
         frame.setLayout(new FlowLayout());
         frame.addMouseListener(new MouseAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseExited(MouseEvent e) {
                 mouseExitCount.getAndIncrement();
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseEntered(MouseEvent e) {
                 mouseEnterCount.getAndIncrement();
             }
@@ -105,13 +111,19 @@ public class ModalDialogEnterExitEventsTest {
         openButton = new JButton("Open Dialog");
         openButton.addActionListener(new ActionListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 JDialog dialog = new JDialog(frame, "Modal Dialog", true);
                 dialog.setLayout(new FlowLayout());
                 closeButton = new JButton("Close");
                 closeButton.addActionListener(new ActionListener() {
                     @Override
-                    public void actionPerformed(ActionEvent e) {
+                    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                         dialog.dispose();
                     }
                 });

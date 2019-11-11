@@ -39,6 +39,7 @@ import jtreg.SkippedException;
  * @run main/othervm TestIntConstant
  */
 
+@Bean
 public class TestIntConstant {
 
     public static void main (String... args) throws Exception {

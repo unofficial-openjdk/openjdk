@@ -33,6 +33,7 @@
 
 package compiler.escapeAnalysis;
 
+@Bean
 public class Test6726999 {
     static class Point {
         int x;

@@ -31,6 +31,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test6885584 {
    static private int i1;
    static private int i2;

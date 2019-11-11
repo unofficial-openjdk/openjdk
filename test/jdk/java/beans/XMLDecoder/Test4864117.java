@@ -85,7 +85,11 @@ public final class Test4864117 extends DefaultHandler implements ExceptionListen
         return this.message;
     }
 
-    public void setMessage(String message) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setMessage(String message) {
         this.message = message;
         print(':', this.message);
     }
@@ -133,11 +137,19 @@ public final class Test4864117 extends DefaultHandler implements ExceptionListen
         this.handler.characters(ch, start, length);
     }
 
-    public void exceptionThrown(Exception exception) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void exceptionThrown(Exception exception) {
         throw new Error("unexpected exception", exception);
     }
 
-    private void print(char ch, String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void print(char ch, String name) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < this.depth; i++) sb.append(' ');
         sb.append(ch).append(' ').append(name);

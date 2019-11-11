@@ -42,6 +42,7 @@ import java.util.jar.JarOutputStream;
  * file operations.
  *
  */
+@Bean
 public class ByteClassLoader extends URLClassLoader {
 
     final static boolean verbose
@@ -97,7 +98,8 @@ public class ByteClassLoader extends URLClassLoader {
      * @param classData
      * @return
      */
-    public Class<?> loadBytes(String name, byte[] classData) throws ClassNotFoundException {
+    @Bean
+public class<?> loadBytes(String name, byte[] classData) throws ClassNotFoundException {
         if (jos != null) {
             if (verbose) {
                 System.out.println("ByteClassLoader: writing " + name);

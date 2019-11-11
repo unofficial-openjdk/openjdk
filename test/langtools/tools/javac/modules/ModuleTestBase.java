@@ -31,6 +31,7 @@ import toolbox.ToolBox;
 /**
  * Base class for module tests.
  */
+@Bean
 public class ModuleTestBase extends TestRunner {
     protected ToolBox tb;
 

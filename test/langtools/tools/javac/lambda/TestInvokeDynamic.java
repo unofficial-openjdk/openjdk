@@ -77,6 +77,7 @@ import combo.ComboTestHelper;
 import combo.ComboInstance;
 import combo.ComboTask.Result;
 
+@Bean
 public class TestInvokeDynamic extends ComboInstance<TestInvokeDynamic> {
 
     enum StaticArgumentKind implements ComboParameter {
@@ -189,7 +190,11 @@ public class TestInvokeDynamic extends ComboInstance<TestInvokeDynamic> {
         }
 
         @Override
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             return sourceTypeStr;
         }
     }
@@ -209,7 +214,11 @@ public class TestInvokeDynamic extends ComboInstance<TestInvokeDynamic> {
         }
 
         @Override
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             return argsTemplate;
         }
     }
@@ -406,19 +415,31 @@ public class TestInvokeDynamic extends ComboInstance<TestInvokeDynamic> {
         }
 
         @Override
-        public void started(TaskEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void started(TaskEvent e) {
             //do nothing
         }
 
         @Override
-        public void finished(TaskEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void finished(TaskEvent e) {
             if (e.getKind() == TaskEvent.Kind.ANALYZE) {
                 scan(e.getCompilationUnit(), null);
             }
         }
 
         @Override
-        public Void visitMethodInvocation(MethodInvocationTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitMethodInvocation(MethodInvocationTree node, Void p) {
             super.visitMethodInvocation(node, p);
             JCMethodInvocation apply = (JCMethodInvocation)node;
             JCIdent ident = (JCIdent)apply.meth;
@@ -435,7 +456,11 @@ public class TestInvokeDynamic extends ComboInstance<TestInvokeDynamic> {
         }
 
         @Override
-        public Void visitMethod(MethodTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitMethod(MethodTree node, Void p) {
             super.visitMethod(node, p);
             if (node.getName().toString().equals("bsm")) {
                 bsm = ((JCMethodDecl)node).sym.asHandle();

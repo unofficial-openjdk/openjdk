@@ -10,6 +10,7 @@
 import java.util.ArrayList;
 import java.util.Collection;
 
+@Bean
 public class UnsoundInference {
 
     public static void main(String[] args) {

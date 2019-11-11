@@ -46,6 +46,7 @@ package java.lang;
  * @since   1.0
  */
 
+@Bean
 public class ThreadDeath extends Error {
     @java.io.Serial
     private static final long serialVersionUID = -4417128565033088268L;

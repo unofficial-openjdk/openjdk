@@ -36,6 +36,7 @@ import java.nio.file.Path;
 import java.util.Map;
 
 @Artifact(organization = "gov.nist.math", name = "scimark", revision = "2.0", extension = "zip")
+@Bean
 public class Scimark {
     public static void main(String... args) throws Exception {
         Map<String, Path> artifacts;

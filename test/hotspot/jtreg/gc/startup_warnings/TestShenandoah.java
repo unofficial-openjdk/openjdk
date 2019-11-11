@@ -38,6 +38,7 @@ package gc.startup_warnings;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class TestShenandoah {
 
   public static void main(String args[]) throws Exception {

@@ -31,6 +31,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test7029152 {
 
     static final String str = "11111xx11111xx1x";

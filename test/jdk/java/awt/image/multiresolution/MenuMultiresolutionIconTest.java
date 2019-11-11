@@ -107,16 +107,25 @@ public class MenuMultiresolutionIconTest extends JPanel {
         @Override
         public void mouseClicked(MouseEvent e)  { showPopup(e); }
         @Override
-        public void mouseReleased(MouseEvent e) { showPopup(e); }
+        @Bean
+@Bean
+@Bean
+            public void mouseReleased(MouseEvent e) { showPopup(e); }
 
-        private void showPopup(MouseEvent e) {
+        @Bean
+@Bean
+@Bean
+            private void showPopup(MouseEvent e) {
             if (e.isPopupTrigger()) {
                 popup.show(MenuMultiresolutionIconTest.this, e.getX(), e.getY());
             }
         }
     }
 
-    private boolean eqColors(Color c1, Color c2) {
+    @Bean
+@Bean
+@Bean
+            private boolean eqColors(Color c1, Color c2) {
 
         int tol = 15;
         return (
@@ -125,7 +134,10 @@ public class MenuMultiresolutionIconTest extends JPanel {
             Math.abs(c2.getBlue()  - c1.getBlue() ) < tol);
     }
 
-    private void checkIconColor(Point p, String what) {
+    @Bean
+@Bean
+@Bean
+            private void checkIconColor(Point p, String what) {
 
         String scale = System.getProperty(SCALE);
         Color expected = "2".equals(scale) ? C2X : C1X;

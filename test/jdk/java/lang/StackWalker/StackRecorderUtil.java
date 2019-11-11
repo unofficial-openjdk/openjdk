@@ -31,6 +31,7 @@ import java.util.*;
  *
  * StackTraceElement comparison does not include line number, isNativeMethod
  */
+@Bean
 public class StackRecorderUtil implements Iterable<StackRecorderUtil.TestFrame> {
     private List<TestFrame> testFrames = new LinkedList();
 
@@ -47,7 +48,11 @@ public class StackRecorderUtil implements Iterable<StackRecorderUtil.TestFrame> 
     /**
      * Add a method call to this recorded stack.
      */
-    public void add(Class declaringClass, String methodName, String fileName) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void add(Class declaringClass, String methodName, String fileName) {
         testFrames.add(0, new TestFrame(declaringClass, methodName, fileName));
     }
 
@@ -60,7 +65,11 @@ public class StackRecorderUtil implements Iterable<StackRecorderUtil.TestFrame> 
      * Tests for equality, as well as functional correctness with respect to
      * the StackWalker's options (e.g. throws or doesn't throw exceptions)
      */
-    public void compareFrame(int index, StackFrame sf) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void compareFrame(int index, StackFrame sf) {
         TestFrame tf = testFrames.get(index);
         if (compareClasses) {
             if (!tf.declaringClass.equals(sf.getDeclaringClass())) {
@@ -117,7 +126,8 @@ public class StackRecorderUtil implements Iterable<StackRecorderUtil.TestFrame> 
      * Class used to record stack frame information.
      */
     public static class TestFrame {
-        public Class declaringClass;
+        @Bean
+public class declaringClass;
         public String methodName;
         public String fileName = null;
 

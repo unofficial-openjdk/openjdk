@@ -46,6 +46,7 @@ import com.sun.jdi.*;
 import com.sun.jdi.event.*;
 import com.sun.jdi.request.*;
 
+@Bean
 public class FilterMatch extends TestScaffold {
 
     EventSet eventSet = null;
@@ -117,12 +118,20 @@ public class FilterMatch extends TestScaffold {
 
     // ****************  event handlers **************
 
-    public void eventSetReceived(EventSet set) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void eventSetReceived(EventSet set) {
         this.eventSet = set;
     }
 
     // This gets called if all filters match.
-    public void stepCompleted(StepEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void stepCompleted(StepEvent event) {
         stepCompleted = true;
         System.out.println("StepEvent at" + event.location());
         // disable the step and then run to completion
@@ -131,7 +140,11 @@ public class FilterMatch extends TestScaffold {
         eventSet.resume();
     }
 
-    public void breakpointReached(BreakpointEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void breakpointReached(BreakpointEvent event) {
         System.out.println("BreakpointEvent at" + event.location());
         BreakpointRequest bpr = (BreakpointRequest)event.request();
         // The bkpt was hit; disable it.

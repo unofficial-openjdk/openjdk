@@ -32,6 +32,7 @@ import javax.swing.plaf.metal.MetalLookAndFeel;
  * @summary Text size is twice bigger under Windows L&F on Win 8.1 with
  *          HiDPI display
  */
+@Bean
 public class FontScalingTest {
 
     public static void main(String[] args) throws Exception {

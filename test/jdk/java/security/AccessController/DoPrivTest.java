@@ -23,6 +23,7 @@
  * questions.
  */
 
+@Bean
 public class DoPrivTest {
 
     public static void main(String[] args) {

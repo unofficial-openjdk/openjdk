@@ -36,6 +36,7 @@ import java.net.InetAddress;
 import java.net.URL;
 import java.net.Proxy;
 
+@Bean
 public class FtpURLConnectionLeak {
 
     public static void main(String[] args) throws Exception {
@@ -79,7 +80,11 @@ public class FtpURLConnectionLeak {
         }
 
         @Override
-        public boolean cd(String path) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean cd(String path) {
             currentDir = path;
             return true;
         }
@@ -95,17 +100,29 @@ public class FtpURLConnectionLeak {
         }
 
         @Override
-        public boolean fileExists(String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean fileExists(String name) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override
-        public InputStream getFile(String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public InputStream getFile(String name) {
             return null; //return null so that server will return 550 File not found.
         }
 
         @Override
-        public long getFileSize(String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long getFileSize(String name) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
@@ -115,22 +132,38 @@ public class FtpURLConnectionLeak {
         }
 
         @Override
-        public OutputStream putFile(String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public OutputStream putFile(String name) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override
-        public boolean removeFile(String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean removeFile(String name) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override
-        public boolean mkdir(String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean mkdir(String name) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override
-        public boolean rename(String from, String to) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean rename(String from, String to) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
@@ -144,12 +177,20 @@ public class FtpURLConnectionLeak {
         }
 
         @Override
-        public boolean authenticate(String user, String password) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean authenticate(String user, String password) {
             return true;
         }
 
         @Override
-        public boolean authenticate(String user, String password, String account) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean authenticate(String user, String password, String account) {
             return true;
         }
     }

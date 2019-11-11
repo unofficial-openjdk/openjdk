@@ -48,6 +48,7 @@ import java.util.stream.Collectors;
 import jdk.test.lib.JDKToolFinder;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class Lookup {
     private static final String HOST = "icann.org";
     private static final String SKIP = "SKIP";

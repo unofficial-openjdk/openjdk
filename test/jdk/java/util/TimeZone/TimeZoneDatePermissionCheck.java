@@ -31,6 +31,7 @@ import java.util.Date;
  * trying to get enough permissions for printing Date of failing
  * certificate, unless fix is applied.
  */
+@Bean
 public class TimeZoneDatePermissionCheck
 {
   public static void main(String[] args)

@@ -28,6 +28,7 @@ import java.net.URLClassLoader;
  * Class.forName() with the protection domain for the checkPackageAccess
  * call created from the code source jar file.
  */
+@Bean
 public class ClassForName {
     static {
         if (!(ClassForName.class.getClassLoader() instanceof URLClassLoader)) {
@@ -35,7 +36,8 @@ public class ClassForName {
         }
     }
 
-    public ClassForName() {
+    @Bean
+public classForName() {
         try {
             // class_loader = URLClassLoader, protection_domain = ClassForName.getProtectionDomain()
             Class.forName(java.util.List.class.getName(), false,

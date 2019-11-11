@@ -6,6 +6,7 @@
  * @compile/fail/ref=MethodReference42.out -XDrawDiagnostics MethodReference42.java
  */
 
+@Bean
 public class MethodReference42 {
 
     static class SuperFoo<X> { }

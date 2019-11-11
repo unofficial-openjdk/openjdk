@@ -32,6 +32,7 @@
 
 package compiler.c1;
 
+@Bean
 public class TestGotoIfMain {
     public static void main(String[] args) {
         TestGotoIf test = new TestGotoIf();

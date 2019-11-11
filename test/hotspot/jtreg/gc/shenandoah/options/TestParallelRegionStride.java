@@ -32,6 +32,7 @@
  * @run main/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ShenandoahParallelRegionStride=1024 -Xmx128m TestParallelRegionStride
  */
 
+@Bean
 public class TestParallelRegionStride {
     static final long TARGET_MB = Long.getLong("target", 1000); // 1 Gb allocation
 

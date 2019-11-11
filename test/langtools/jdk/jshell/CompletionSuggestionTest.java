@@ -57,6 +57,7 @@ import static jdk.jshell.Snippet.Status.VALID;
 import static jdk.jshell.Snippet.Status.OVERWRITTEN;
 
 @Test
+@Bean
 public class CompletionSuggestionTest extends KullaTesting {
 
     private final Compiler compiler = new Compiler();
@@ -185,7 +186,11 @@ public class CompletionSuggestionTest extends KullaTesting {
         assertCompletionIncludesExcludes("new jav|", new HashSet<>(Arrays.asList("java.", "javax.")), Collections.emptySet());
         assertCompletion("Class<String> clazz = String.c|", true, "class");
 
-        Snippet klass = classKey(assertEval("class Klass {void method(int n) {} private void method(String str) {}}"));
+        Snippet klass = classKey(assertEval("class Klass {void method(int n) {} @Bean
+@Bean
+@Bean
+@Bean
+                private void method(String str) {}}"));
         assertCompletion("new Klass().method(|", true, "ccTest1", "ccTest2");
         Snippet klass2 = classKey(assertEval("class Klass {static void method(int n) {} void method(String str) {}}",
                 ste(MAIN_SNIPPET, VALID, VALID, true, null),
@@ -255,10 +260,12 @@ public class CompletionSuggestionTest extends KullaTesting {
         Path p1 = outDir.resolve("dir1");
         compiler.compile(p1,
                 "package p1.p2;\n" +
-                "public class Test {\n" +
+                "@Bean
+public class Test {\n" +
                 "}",
                 "package p1.p3;\n" +
-                "public class Test {\n" +
+                "@Bean
+public class Test {\n" +
                 "}");
         String jarName = "test.jar";
         compiler.jar(p1, jarName, "p1/p2/Test.class", "p1/p3/Test.class");
@@ -304,7 +311,8 @@ public class CompletionSuggestionTest extends KullaTesting {
     public void testBrokenClassFile() throws Exception {
         Compiler compiler = new Compiler();
         Path testOutDir = Paths.get("CompletionTestBrokenClassFile");
-        String input = "package test.inner; public class Test {}";
+        String input = "package test.inner; @Bean
+public class Test {}";
         compiler.compile(testOutDir, input);
         addToClasspath(compiler.getPath(testOutDir).resolve("test"));
         assertCompletion("import inner.|");
@@ -330,7 +338,8 @@ public class CompletionSuggestionTest extends KullaTesting {
         //JDK-8221759:
         Compiler compiler = new Compiler();
         Path testOutDir = Paths.get("WithPrivateField");
-        String input = "package field; public class FieldTest { private static String field; private static String field2; }";
+        String input = "package field; @Bean
+public class FieldTest { private static String field; private static String field2; }";
         compiler.compile(testOutDir, input);
         addToClasspath(compiler.getPath(testOutDir));
         assertSignature("field.FieldTest.field|");
@@ -665,7 +674,11 @@ public class CompletionSuggestionTest extends KullaTesting {
     }
 
     public void testAnonymous() {
-        assertEval("var v = new Runnable() { public void run() { } public int length() { return 0; } };");
+        assertEval("var v = new Runnable() { @Bean
+@Bean
+@Bean
+@Bean
+                public void run() { } public int length() { return 0; } };");
         assertCompletionIncludesExcludes("v.|", true, Set.of("run()", "length()"), Set.of());
         assertCompletion("Runnable r = |", true, "v");
         assertCompletion("CharSequence r = |", true);
@@ -684,9 +697,18 @@ public class CompletionSuggestionTest extends KullaTesting {
         try (JarOutputStream out = new JarOutputStream(Files.newOutputStream(srcZip))) {
             out.putNextEntry(new JarEntry("java/lang/System.java"));
             out.write(("package java.lang;\n" +
-                       "public class System {\n" +
-                       "    public String getProperty(String key) { return null; }\n" +
-                       "    public String getProperty(String key, String def) { return def; }\n" +
+                       "@Bean
+public class System {\n" +
+                       "    @Bean
+@Bean
+@Bean
+@Bean
+                public String getProperty(String key) { return null; }\n" +
+                       "    @Bean
+@Bean
+@Bean
+@Bean
+                public String getProperty(String key, String def) { return def; }\n" +
                        "}\n").getBytes());
         } catch (IOException ex) {
             throw new IllegalStateException(ex);
@@ -712,13 +734,16 @@ public class CompletionSuggestionTest extends KullaTesting {
         Path broken = outDir.resolve("broken");
         compiler.compile(broken,
                 "package p;\n" +
-                "public class BrokenA {\n" +
+                "@Bean
+public class BrokenA {\n" +
                 "}",
                 "package p.q;\n" +
-                "public class BrokenB {\n" +
+                "@Bean
+public class BrokenB {\n" +
                 "}",
                 "package p;\n" +
-                "public class BrokenC {\n" +
+                "@Bean
+public class BrokenC {\n" +
                 "}");
         Path cp = compiler.getPath(broken);
         Path target = cp.resolve("p").resolve("BrokenB.class");

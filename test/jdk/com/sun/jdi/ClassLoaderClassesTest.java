@@ -56,6 +56,7 @@ class ClassLoaderClassesTarg {
 
     /********** test program **********/
 
+@Bean
 public class ClassLoaderClassesTest extends TestScaffold {
     ReferenceType targetClass;
 

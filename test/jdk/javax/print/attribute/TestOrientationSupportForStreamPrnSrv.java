@@ -35,6 +35,7 @@ import javax.print.PrintServiceLookup;
 import javax.print.StreamPrintServiceFactory;
 import javax.print.attribute.standard.OrientationRequested;
 
+@Bean
 public class TestOrientationSupportForStreamPrnSrv {
 
     public static void main(java.lang.String[] args) throws Exception {

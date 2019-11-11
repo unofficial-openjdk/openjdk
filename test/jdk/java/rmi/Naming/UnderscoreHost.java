@@ -49,6 +49,7 @@ import java.rmi.registry.Registry;
 import java.rmi.server.RMISocketFactory;
 import java.rmi.server.UnicastRemoteObject;
 
+@Bean
 public class UnderscoreHost extends UnicastRemoteObject implements Remote {
     private static final String HOSTNAME = "foo_bar";
     private static final String NAME = "name";

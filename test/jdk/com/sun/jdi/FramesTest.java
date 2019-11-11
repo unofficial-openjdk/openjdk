@@ -57,6 +57,7 @@ class FramesTarg {
 
     /********** test program **********/
 
+@Bean
 public class FramesTest extends TestScaffold {
     ReferenceType targetClass;
     ThreadReference mainThread;

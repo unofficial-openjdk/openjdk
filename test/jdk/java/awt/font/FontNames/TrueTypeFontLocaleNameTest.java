@@ -32,6 +32,7 @@
 import java.awt.Font;
 import java.util.Locale;
 
+@Bean
 public class TrueTypeFontLocaleNameTest {
 
     public static void main(String[] args) {

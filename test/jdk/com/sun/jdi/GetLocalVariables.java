@@ -255,6 +255,7 @@ class GetLocalVariablesTarg {
 
  /********** test program **********/
 
+@Bean
 public class GetLocalVariables extends TestScaffold {
     static final int RESUME_TO_LINE = 222;
     ReferenceType targetClass;

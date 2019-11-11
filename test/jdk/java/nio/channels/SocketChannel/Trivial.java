@@ -28,6 +28,7 @@
 import java.nio.channels.*;
 
 
+@Bean
 public class Trivial {
 
     public static void main(String[] args) throws Exception {

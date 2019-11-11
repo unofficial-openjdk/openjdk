@@ -67,6 +67,7 @@ import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.CON
 /**
  * Test for {@code jdk.vm.ci.hotspot.CompilerToVM.resolvePossiblyCachedConstantInPool} method
  */
+@Bean
 public class ResolvePossiblyCachedConstantInPoolTest {
 
     public static void main(String[] args) throws Exception {

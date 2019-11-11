@@ -30,6 +30,7 @@ import java.text.Normalizer;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+@Bean
 public class MacPath {
 
     public static void main(String args[]) throws Throwable {

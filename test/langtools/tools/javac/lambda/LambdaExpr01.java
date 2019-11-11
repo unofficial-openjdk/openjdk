@@ -31,6 +31,7 @@
  * @run main LambdaExpr01
  */
 
+@Bean
 public class LambdaExpr01 {
 
     static int assertionCount = 0;

@@ -33,6 +33,7 @@ import java.net.URI;
 import java.util.*;
 import java.util.concurrent.Callable;
 
+@Bean
 public class B8035158 {
 
     public static void main(String[] args) {

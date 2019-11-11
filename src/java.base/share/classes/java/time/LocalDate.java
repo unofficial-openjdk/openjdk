@@ -537,7 +537,9 @@ public final class LocalDate
      * @return true if the field is supported on this date, false if not
      */
     @Override  // override for Javadoc
-    public boolean isSupported(TemporalField field) {
+    @Bean
+@Bean
+        public boolean isSupported(TemporalField field) {
         return ChronoLocalDate.super.isSupported(field);
     }
 
@@ -571,7 +573,9 @@ public final class LocalDate
      * @return true if the unit can be added/subtracted, false if not
      */
     @Override  // override for Javadoc
-    public boolean isSupported(TemporalUnit unit) {
+    @Bean
+@Bean
+        public boolean isSupported(TemporalUnit unit) {
         return ChronoLocalDate.super.isSupported(unit);
     }
 
@@ -600,7 +604,9 @@ public final class LocalDate
      * @throws UnsupportedTemporalTypeException if the field is not supported
      */
     @Override
-    public ValueRange range(TemporalField field) {
+    @Bean
+@Bean
+        public ValueRange range(TemporalField field) {
         if (field instanceof ChronoField) {
             ChronoField f = (ChronoField) field;
             if (f.isDateBased()) {
@@ -646,7 +652,9 @@ public final class LocalDate
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override  // override for Javadoc and performance
-    public int get(TemporalField field) {
+    @Bean
+@Bean
+        public int get(TemporalField field) {
         if (field instanceof ChronoField) {
             return get0(field);
         }
@@ -677,7 +685,9 @@ public final class LocalDate
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public long getLong(TemporalField field) {
+    @Bean
+@Bean
+        public long getLong(TemporalField field) {
         if (field instanceof ChronoField) {
             if (field == EPOCH_DAY) {
                 return toEpochDay();
@@ -930,7 +940,9 @@ public final class LocalDate
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public LocalDate with(TemporalAdjuster adjuster) {
+    @Bean
+@Bean
+        public LocalDate with(TemporalAdjuster adjuster) {
         // optimizations
         if (adjuster instanceof LocalDate) {
             return (LocalDate) adjuster;
@@ -1043,7 +1055,9 @@ public final class LocalDate
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public LocalDate with(TemporalField field, long newValue) {
+    @Bean
+@Bean
+        public LocalDate with(TemporalField field, long newValue) {
         if (field instanceof ChronoField) {
             ChronoField f = (ChronoField) field;
             f.checkValidValue(newValue);
@@ -1079,7 +1093,9 @@ public final class LocalDate
      * @return a {@code LocalDate} based on this date with the requested year, not null
      * @throws DateTimeException if the year value is invalid
      */
-    public LocalDate withYear(int year) {
+    @Bean
+@Bean
+        public LocalDate withYear(int year) {
         if (this.year == year) {
             return this;
         }
@@ -1098,7 +1114,9 @@ public final class LocalDate
      * @return a {@code LocalDate} based on this date with the requested month, not null
      * @throws DateTimeException if the month-of-year value is invalid
      */
-    public LocalDate withMonth(int month) {
+    @Bean
+@Bean
+        public LocalDate withMonth(int month) {
         if (this.month == month) {
             return this;
         }
@@ -1118,7 +1136,9 @@ public final class LocalDate
      * @throws DateTimeException if the day-of-month value is invalid,
      *  or if the day-of-month is invalid for the month-year
      */
-    public LocalDate withDayOfMonth(int dayOfMonth) {
+    @Bean
+@Bean
+        public LocalDate withDayOfMonth(int dayOfMonth) {
         if (this.day == dayOfMonth) {
             return this;
         }
@@ -1137,7 +1157,9 @@ public final class LocalDate
      * @throws DateTimeException if the day-of-year value is invalid,
      *  or if the day-of-year is invalid for the year
      */
-    public LocalDate withDayOfYear(int dayOfYear) {
+    @Bean
+@Bean
+        public LocalDate withDayOfYear(int dayOfYear) {
         if (this.getDayOfYear() == dayOfYear) {
             return this;
         }
@@ -1166,7 +1188,9 @@ public final class LocalDate
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public LocalDate plus(TemporalAmount amountToAdd) {
+    @Bean
+@Bean
+        public LocalDate plus(TemporalAmount amountToAdd) {
         if (amountToAdd instanceof Period) {
             Period periodToAdd = (Period) amountToAdd;
             return plusMonths(periodToAdd.toTotalMonths()).plusDays(periodToAdd.getDays());
@@ -1257,7 +1281,9 @@ public final class LocalDate
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public LocalDate plus(long amountToAdd, TemporalUnit unit) {
+    @Bean
+@Bean
+        public LocalDate plus(long amountToAdd, TemporalUnit unit) {
         if (unit instanceof ChronoUnit) {
             ChronoUnit f = (ChronoUnit) unit;
             switch (f) {
@@ -1296,7 +1322,9 @@ public final class LocalDate
      * @return a {@code LocalDate} based on this date with the years added, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public LocalDate plusYears(long yearsToAdd) {
+    @Bean
+@Bean
+        public LocalDate plusYears(long yearsToAdd) {
         if (yearsToAdd == 0) {
             return this;
         }
@@ -1324,7 +1352,9 @@ public final class LocalDate
      * @return a {@code LocalDate} based on this date with the months added, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public LocalDate plusMonths(long monthsToAdd) {
+    @Bean
+@Bean
+        public LocalDate plusMonths(long monthsToAdd) {
         if (monthsToAdd == 0) {
             return this;
         }
@@ -1350,7 +1380,9 @@ public final class LocalDate
      * @return a {@code LocalDate} based on this date with the weeks added, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public LocalDate plusWeeks(long weeksToAdd) {
+    @Bean
+@Bean
+        public LocalDate plusWeeks(long weeksToAdd) {
         return plusDays(Math.multiplyExact(weeksToAdd, 7));
     }
 
@@ -1369,7 +1401,9 @@ public final class LocalDate
      * @return a {@code LocalDate} based on this date with the days added, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public LocalDate plusDays(long daysToAdd) {
+    @Bean
+@Bean
+        public LocalDate plusDays(long daysToAdd) {
         if (daysToAdd == 0) {
             return this;
         }
@@ -1416,7 +1450,9 @@ public final class LocalDate
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public LocalDate minus(TemporalAmount amountToSubtract) {
+    @Bean
+@Bean
+        public LocalDate minus(TemporalAmount amountToSubtract) {
         if (amountToSubtract instanceof Period) {
             Period periodToSubtract = (Period) amountToSubtract;
             return minusMonths(periodToSubtract.toTotalMonths()).minusDays(periodToSubtract.getDays());
@@ -1445,7 +1481,9 @@ public final class LocalDate
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public LocalDate minus(long amountToSubtract, TemporalUnit unit) {
+    @Bean
+@Bean
+        public LocalDate minus(long amountToSubtract, TemporalUnit unit) {
         return (amountToSubtract == Long.MIN_VALUE ? plus(Long.MAX_VALUE, unit).plus(1, unit) : plus(-amountToSubtract, unit));
     }
 
@@ -1470,7 +1508,9 @@ public final class LocalDate
      * @return a {@code LocalDate} based on this date with the years subtracted, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public LocalDate minusYears(long yearsToSubtract) {
+    @Bean
+@Bean
+        public LocalDate minusYears(long yearsToSubtract) {
         return (yearsToSubtract == Long.MIN_VALUE ? plusYears(Long.MAX_VALUE).plusYears(1) : plusYears(-yearsToSubtract));
     }
 
@@ -1494,7 +1534,9 @@ public final class LocalDate
      * @return a {@code LocalDate} based on this date with the months subtracted, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public LocalDate minusMonths(long monthsToSubtract) {
+    @Bean
+@Bean
+        public LocalDate minusMonths(long monthsToSubtract) {
         return (monthsToSubtract == Long.MIN_VALUE ? plusMonths(Long.MAX_VALUE).plusMonths(1) : plusMonths(-monthsToSubtract));
     }
 
@@ -1513,7 +1555,9 @@ public final class LocalDate
      * @return a {@code LocalDate} based on this date with the weeks subtracted, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public LocalDate minusWeeks(long weeksToSubtract) {
+    @Bean
+@Bean
+        public LocalDate minusWeeks(long weeksToSubtract) {
         return (weeksToSubtract == Long.MIN_VALUE ? plusWeeks(Long.MAX_VALUE).plusWeeks(1) : plusWeeks(-weeksToSubtract));
     }
 
@@ -1532,7 +1576,9 @@ public final class LocalDate
      * @return a {@code LocalDate} based on this date with the days subtracted, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public LocalDate minusDays(long daysToSubtract) {
+    @Bean
+@Bean
+        public LocalDate minusDays(long daysToSubtract) {
         return (daysToSubtract == Long.MIN_VALUE ? plusDays(Long.MAX_VALUE).plusDays(1) : plusDays(-daysToSubtract));
     }
 
@@ -1589,7 +1635,9 @@ public final class LocalDate
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override  // override for Javadoc
-    public Temporal adjustInto(Temporal temporal) {
+    @Bean
+@Bean
+        public Temporal adjustInto(Temporal temporal) {
         return ChronoLocalDate.super.adjustInto(temporal);
     }
 
@@ -1641,7 +1689,9 @@ public final class LocalDate
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public long until(Temporal endExclusive, TemporalUnit unit) {
+    @Bean
+@Bean
+        public long until(Temporal endExclusive, TemporalUnit unit) {
         LocalDate end = LocalDate.from(endExclusive);
         if (unit instanceof ChronoUnit) {
             switch ((ChronoUnit) unit) {
@@ -1663,7 +1713,9 @@ public final class LocalDate
         return end.toEpochDay() - toEpochDay();  // no overflow
     }
 
-    private long monthsUntil(LocalDate end) {
+    @Bean
+@Bean
+        private long monthsUntil(LocalDate end) {
         long packed1 = getProlepticMonth() * 32L + getDayOfMonth();  // no overflow
         long packed2 = end.getProlepticMonth() * 32L + end.getDayOfMonth();  // no overflow
         return (packed2 - packed1) / 32;
@@ -1702,7 +1754,9 @@ public final class LocalDate
      * @return the period between this date and the end date, not null
      */
     @Override
-    public Period until(ChronoLocalDate endDateExclusive) {
+    @Bean
+@Bean
+        public Period until(ChronoLocalDate endDateExclusive) {
         LocalDate end = LocalDate.from(endDateExclusive);
         long totalMonths = end.getProlepticMonth() - this.getProlepticMonth();  // safe
         int days = end.day - this.day;
@@ -1812,7 +1866,9 @@ public final class LocalDate
      * @throws DateTimeException if an error occurs during printing
      */
     @Override  // override for Javadoc and performance
-    public String format(DateTimeFormatter formatter) {
+    @Bean
+@Bean
+        public String format(DateTimeFormatter formatter) {
         Objects.requireNonNull(formatter, "formatter");
         return formatter.format(this);
     }
@@ -1828,7 +1884,9 @@ public final class LocalDate
      * @return the local date-time formed from this date and the specified time, not null
      */
     @Override
-    public LocalDateTime atTime(LocalTime time) {
+    @Bean
+@Bean
+        public LocalDateTime atTime(LocalTime time) {
         return LocalDateTime.of(this, time);
     }
 
@@ -1846,7 +1904,9 @@ public final class LocalDate
      * @return the local date-time formed from this date and the specified time, not null
      * @throws DateTimeException if the value of any field is out of range
      */
-    public LocalDateTime atTime(int hour, int minute) {
+    @Bean
+@Bean
+        public LocalDateTime atTime(int hour, int minute) {
         return atTime(LocalTime.of(hour, minute));
     }
 
@@ -1865,7 +1925,9 @@ public final class LocalDate
      * @return the local date-time formed from this date and the specified time, not null
      * @throws DateTimeException if the value of any field is out of range
      */
-    public LocalDateTime atTime(int hour, int minute, int second) {
+    @Bean
+@Bean
+        public LocalDateTime atTime(int hour, int minute, int second) {
         return atTime(LocalTime.of(hour, minute, second));
     }
 
@@ -1884,7 +1946,9 @@ public final class LocalDate
      * @return the local date-time formed from this date and the specified time, not null
      * @throws DateTimeException if the value of any field is out of range
      */
-    public LocalDateTime atTime(int hour, int minute, int second, int nanoOfSecond) {
+    @Bean
+@Bean
+        public LocalDateTime atTime(int hour, int minute, int second, int nanoOfSecond) {
         return atTime(LocalTime.of(hour, minute, second, nanoOfSecond));
     }
 
@@ -1897,7 +1961,9 @@ public final class LocalDate
      * @param time  the time to combine with, not null
      * @return the offset date-time formed from this date and the specified time, not null
      */
-    public OffsetDateTime atTime(OffsetTime time) {
+    @Bean
+@Bean
+        public OffsetDateTime atTime(OffsetTime time) {
         return OffsetDateTime.of(LocalDateTime.of(this, time.toLocalTime()), time.getOffset());
     }
 
@@ -1934,7 +2000,9 @@ public final class LocalDate
      * @param zone  the zone ID to use, not null
      * @return the zoned date-time formed from this date and the earliest valid time for the zone, not null
      */
-    public ZonedDateTime atStartOfDay(ZoneId zone) {
+    @Bean
+@Bean
+        public ZonedDateTime atStartOfDay(ZoneId zone) {
         Objects.requireNonNull(zone, "zone");
         // need to handle case where there is a gap from 11:30 to 00:30
         // standard ZDT factory would result in 01:00 rather than 00:30
@@ -1987,7 +2055,9 @@ public final class LocalDate
      * @return the number of seconds since the epoch of 1970-01-01T00:00:00Z, may be negative
      * @since 9
      */
-    public long toEpochSecond(LocalTime time, ZoneOffset offset) {
+    @Bean
+@Bean
+        public long toEpochSecond(LocalTime time, ZoneOffset offset) {
         Objects.requireNonNull(time, "time");
         Objects.requireNonNull(offset, "offset");
         long secs = toEpochDay() * SECONDS_PER_DAY + time.toSecondOfDay();
@@ -2011,7 +2081,9 @@ public final class LocalDate
      * @return the comparator value, negative if less, positive if greater
      */
     @Override  // override for Javadoc and performance
-    public int compareTo(ChronoLocalDate other) {
+    @Bean
+@Bean
+        public int compareTo(ChronoLocalDate other) {
         if (other instanceof LocalDate) {
             return compareTo0((LocalDate) other);
         }
@@ -2051,7 +2123,9 @@ public final class LocalDate
      * @return true if this date is after the specified date
      */
     @Override  // override for Javadoc and performance
-    public boolean isAfter(ChronoLocalDate other) {
+    @Bean
+@Bean
+        public boolean isAfter(ChronoLocalDate other) {
         if (other instanceof LocalDate) {
             return compareTo0((LocalDate) other) > 0;
         }
@@ -2080,7 +2154,9 @@ public final class LocalDate
      * @return true if this date is before the specified date
      */
     @Override  // override for Javadoc and performance
-    public boolean isBefore(ChronoLocalDate other) {
+    @Bean
+@Bean
+        public boolean isBefore(ChronoLocalDate other) {
         if (other instanceof LocalDate) {
             return compareTo0((LocalDate) other) < 0;
         }
@@ -2109,7 +2185,9 @@ public final class LocalDate
      * @return true if this date is equal to the specified date
      */
     @Override  // override for Javadoc and performance
-    public boolean isEqual(ChronoLocalDate other) {
+    @Bean
+@Bean
+        public boolean isEqual(ChronoLocalDate other) {
         if (other instanceof LocalDate) {
             return compareTo0((LocalDate) other) == 0;
         }
@@ -2130,7 +2208,9 @@ public final class LocalDate
      * @return true if this is equal to the other date
      */
     @Override
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+        public boolean equals(Object obj) {
         if (this == obj) {
             return true;
         }

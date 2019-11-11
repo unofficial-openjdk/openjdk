@@ -57,6 +57,7 @@ import jdk.test.lib.Platform;
 import sun.hotspot.WhiteBox;
 import sun.hotspot.code.NMethod;
 
+@Bean
 public class TestJFRIntrinsic {
 
     private static final WhiteBox WHITE_BOX = WhiteBox.getWhiteBox();
@@ -74,7 +75,11 @@ public class TestJFRIntrinsic {
     }
 
     /*
-    public void getClassIdIntrinsic(Class<?> cls) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void getClassIdIntrinsic(Class<?> cls) {
         long exp = JVM.getClassId(cls);
         if (exp == 0) {
             throw new RuntimeException("Class id is zero");
@@ -82,7 +87,11 @@ public class TestJFRIntrinsic {
     }
     */
 
-    public void getEventWriterIntrinsic(Class<?> cls) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void getEventWriterIntrinsic(Class<?> cls) {
         Object o = JVM.getEventWriter();
         if (o != null) {
             eventWriter = o;

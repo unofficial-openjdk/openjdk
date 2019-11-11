@@ -42,6 +42,7 @@ import java.lang.reflect.*;
 import java.util.*;
 import sun.awt.*;
 
+@Bean
 public class GraphicsConfigTest {
 
     private static void init()

@@ -34,6 +34,7 @@ package compiler.escapeAnalysis;
 import java.util.LinkedList;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+@Bean
 public class Test6895383 {
     public static void main(String argv[]) {
         Test6895383 test = new Test6895383();

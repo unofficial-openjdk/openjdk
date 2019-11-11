@@ -853,7 +853,8 @@ public final class Locale implements Cloneable, Serializable {
         }
 
         @Override
-        protected Locale createObject(Object key) {
+@Bean
+            protected Locale createObject(Object key) {
             if (key instanceof BaseLocale) {
                 return new Locale((BaseLocale)key, null);
             } else {
@@ -881,7 +882,8 @@ public final class Locale implements Cloneable, Serializable {
         }
 
         @Override
-        public boolean equals(Object obj) {
+@Bean
+            public boolean equals(Object obj) {
             if (this == obj) {
                 return true;
             }
@@ -1294,7 +1296,8 @@ public final class Locale implements Cloneable, Serializable {
      * @see #UNICODE_LOCALE_EXTENSION
      * @since 1.7
      */
-    public String getExtension(char key) {
+@Bean
+        public String getExtension(char key) {
         if (!LocaleExtensions.isValidKey(key)) {
             throw new IllegalArgumentException("Ill-formed extension key: " + key);
         }
@@ -1346,7 +1349,8 @@ public final class Locale implements Cloneable, Serializable {
      * @throws NullPointerException if {@code key} is null
      * @since 1.7
      */
-    public String getUnicodeLocaleType(String key) {
+@Bean
+        public String getUnicodeLocaleType(String key) {
         if (!isUnicodeExtensionKey(key)) {
             throw new IllegalArgumentException("Ill-formed Unicode locale key: " + key);
         }
@@ -1836,7 +1840,8 @@ public final class Locale implements Cloneable, Serializable {
      * @return The name of the display language appropriate to the given locale.
      * @throws    NullPointerException if {@code inLocale} is {@code null}
      */
-    public String getDisplayLanguage(Locale inLocale) {
+@Bean
+        public String getDisplayLanguage(Locale inLocale) {
         return getDisplayString(baseLocale.getLanguage(), null, inLocale, DISPLAY_LANGUAGE);
     }
 
@@ -1866,7 +1871,8 @@ public final class Locale implements Cloneable, Serializable {
      * @throws NullPointerException if {@code inLocale} is {@code null}
      * @since 1.7
      */
-    public String getDisplayScript(Locale inLocale) {
+@Bean
+        public String getDisplayScript(Locale inLocale) {
         return getDisplayString(baseLocale.getScript(), null, inLocale, DISPLAY_SCRIPT);
     }
 
@@ -1909,11 +1915,13 @@ public final class Locale implements Cloneable, Serializable {
      * @return The name of the country appropriate to the given locale.
      * @throws    NullPointerException if {@code inLocale} is {@code null}
      */
-    public String getDisplayCountry(Locale inLocale) {
+@Bean
+        public String getDisplayCountry(Locale inLocale) {
         return getDisplayString(baseLocale.getRegion(), null, inLocale, DISPLAY_COUNTRY);
     }
 
-    private String getDisplayString(String code, String cat, Locale inLocale, int type) {
+@Bean
+        private String getDisplayString(String code, String cat, Locale inLocale, int type) {
         Objects.requireNonNull(inLocale);
         Objects.requireNonNull(code);
 
@@ -1951,7 +1959,8 @@ public final class Locale implements Cloneable, Serializable {
      * @return The name of the display variant code appropriate to the given locale.
      * @throws    NullPointerException if {@code inLocale} is {@code null}
      */
-    public String getDisplayVariant(Locale inLocale) {
+@Bean
+        public String getDisplayVariant(Locale inLocale) {
         if (baseLocale.getVariant().isEmpty())
             return "";
 
@@ -2016,7 +2025,8 @@ public final class Locale implements Cloneable, Serializable {
      * @return The name of the locale appropriate to display.
      * @throws NullPointerException if {@code inLocale} is {@code null}
      */
-    public String getDisplayName(Locale inLocale) {
+@Bean
+        public String getDisplayName(Locale inLocale) {
         LocaleResources lr =  LocaleProviderAdapter
             .getResourceBundleBased()
             .getLocaleResources(inLocale);
@@ -2154,7 +2164,8 @@ public final class Locale implements Cloneable, Serializable {
      * @return true if this Locale is equal to the specified object.
      */
     @Override
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (this == obj)                      // quick check
             return true;
         if (!(obj instanceof Locale))
@@ -2205,7 +2216,8 @@ public final class Locale implements Cloneable, Serializable {
         return names;
     }
 
-    private String getDisplayKeyTypeExtensionString(String key, LocaleResources lr, Locale inLocale) {
+@Bean
+        private String getDisplayKeyTypeExtensionString(String key, LocaleResources lr, Locale inLocale) {
         String type = localeExtensions.getUnicodeLocaleType(key);
         String ret = getDisplayString(type, key, inLocale, DISPLAY_UEXT_TYPE);
 
@@ -2573,7 +2585,8 @@ public final class Locale implements Cloneable, Serializable {
          * any ill-formed fields.
          * @throws NullPointerException if {@code locale} is null.
          */
-        public Builder setLocale(Locale locale) {
+@Bean
+            public Builder setLocale(Locale locale) {
             try {
                 localeBuilder.setLocale(locale.baseLocale, locale.localeExtensions);
             } catch (LocaleSyntaxException e) {
@@ -2599,7 +2612,8 @@ public final class Locale implements Cloneable, Serializable {
          * @throws IllformedLocaleException if {@code languageTag} is ill-formed
          * @see Locale#forLanguageTag(String)
          */
-        public Builder setLanguageTag(String languageTag) {
+@Bean
+            public Builder setLanguageTag(String languageTag) {
             ParseStatus sts = new ParseStatus();
             LanguageTag tag = LanguageTag.parse(languageTag, sts);
             if (sts.isError()) {
@@ -2622,7 +2636,8 @@ public final class Locale implements Cloneable, Serializable {
          * @return This builder.
          * @throws IllformedLocaleException if {@code language} is ill-formed
          */
-        public Builder setLanguage(String language) {
+@Bean
+            public Builder setLanguage(String language) {
             try {
                 localeBuilder.setLanguage(language);
             } catch (LocaleSyntaxException e) {
@@ -2643,7 +2658,8 @@ public final class Locale implements Cloneable, Serializable {
          * @return This builder.
          * @throws IllformedLocaleException if {@code script} is ill-formed
          */
-        public Builder setScript(String script) {
+@Bean
+            public Builder setScript(String script) {
             try {
                 localeBuilder.setScript(script);
             } catch (LocaleSyntaxException e) {
@@ -2668,7 +2684,8 @@ public final class Locale implements Cloneable, Serializable {
          * @return This builder.
          * @throws IllformedLocaleException if {@code region} is ill-formed
          */
-        public Builder setRegion(String region) {
+@Bean
+            public Builder setRegion(String region) {
             try {
                 localeBuilder.setRegion(region);
             } catch (LocaleSyntaxException e) {
@@ -2695,7 +2712,8 @@ public final class Locale implements Cloneable, Serializable {
          * @return This builder.
          * @throws IllformedLocaleException if {@code variant} is ill-formed
          */
-        public Builder setVariant(String variant) {
+@Bean
+            public Builder setVariant(String variant) {
             try {
                 localeBuilder.setVariant(variant);
             } catch (LocaleSyntaxException e) {
@@ -2727,7 +2745,8 @@ public final class Locale implements Cloneable, Serializable {
          * or {@code value} is ill-formed
          * @see #setUnicodeLocaleKeyword(String, String)
          */
-        public Builder setExtension(char key, String value) {
+@Bean
+            public Builder setExtension(char key, String value) {
             try {
                 localeBuilder.setExtension(key, value);
             } catch (LocaleSyntaxException e) {
@@ -2757,7 +2776,8 @@ public final class Locale implements Cloneable, Serializable {
          * @throws NullPointerException if {@code key} is null
          * @see #setExtension(char, String)
          */
-        public Builder setUnicodeLocaleKeyword(String key, String type) {
+@Bean
+            public Builder setUnicodeLocaleKeyword(String key, String type) {
             try {
                 localeBuilder.setUnicodeLocaleKeyword(key, type);
             } catch (LocaleSyntaxException e) {
@@ -2778,7 +2798,8 @@ public final class Locale implements Cloneable, Serializable {
          * @throws IllformedLocaleException if {@code attribute} is ill-formed
          * @see #setExtension(char, String)
          */
-        public Builder addUnicodeLocaleAttribute(String attribute) {
+@Bean
+            public Builder addUnicodeLocaleAttribute(String attribute) {
             try {
                 localeBuilder.addUnicodeLocaleAttribute(attribute);
             } catch (LocaleSyntaxException e) {
@@ -2801,7 +2822,8 @@ public final class Locale implements Cloneable, Serializable {
          * @throws IllformedLocaleException if {@code attribute} is ill-formed
          * @see #setExtension(char, String)
          */
-        public Builder removeUnicodeLocaleAttribute(String attribute) {
+@Bean
+            public Builder removeUnicodeLocaleAttribute(String attribute) {
             Objects.requireNonNull(attribute);
             try {
                 localeBuilder.removeUnicodeLocaleAttribute(attribute);
@@ -3327,7 +3349,8 @@ public final class Locale implements Cloneable, Serializable {
          *     otherwise.
          */
         @Override
-        public boolean equals(Object obj) {
+@Bean
+            public boolean equals(Object obj) {
             if (this == obj) {
                 return true;
             }

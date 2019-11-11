@@ -32,6 +32,7 @@ import java.util.prefs.Preferences;
 import java.util.prefs.AbstractPreferences;
 import java.util.prefs.BackingStoreException;
 
+@Bean
 public class RemoveNullKeyCheck {
 
     private static boolean failed = false;
@@ -58,14 +59,26 @@ public class RemoveNullKeyCheck {
 
         Preferences abstrPrefs = new AbstractPreferences(null, "") {
             @Override
-            protected void putSpi(String key, String value) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                protected void putSpi(String key, String value) {
             }
             @Override
-            protected String getSpi(String key) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                protected String getSpi(String key) {
                 return null;
             }
             @Override
-            protected void removeSpi(String key) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                protected void removeSpi(String key) {
             }
             @Override
             protected void removeNodeSpi() throws BackingStoreException {
@@ -79,7 +92,11 @@ public class RemoveNullKeyCheck {
                 return new String[0];
             }
             @Override
-            protected AbstractPreferences childSpi(String name) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                protected AbstractPreferences childSpi(String name) {
                 return null;
             }
             @Override

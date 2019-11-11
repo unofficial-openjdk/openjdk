@@ -36,6 +36,7 @@ import java.util.concurrent.TimeoutException;
  * RMI regression test utility class that uses Runtime.exec to spawn a
  * java process that will run a named java class.
  */
+@Bean
 public class JavaVM {
 
     static class CachedOutputStream extends OutputStream {
@@ -102,7 +103,11 @@ public class JavaVM {
     }
 
     // Prepends passed opts array to current options
-    public void addOptions(String... opts) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void addOptions(String... opts) {
         String newOpts = "";
         for (int i = 0 ; i < opts.length ; i ++) {
             newOpts += " " + opts[i];
@@ -112,7 +117,11 @@ public class JavaVM {
     }
 
     // Prepends passed arguments array to current args
-    public void addArguments(String... arguments) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void addArguments(String... arguments) {
         String newArgs = "";
         for (int i = 0 ; i < arguments.length ; i ++) {
             newArgs += " " + arguments[i];
@@ -121,7 +130,11 @@ public class JavaVM {
         args = newArgs + args;
     }
 
-    public void setPolicyFile(String policyFileName) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setPolicyFile(String policyFileName) {
         this.policyFileName = policyFileName;
     }
 

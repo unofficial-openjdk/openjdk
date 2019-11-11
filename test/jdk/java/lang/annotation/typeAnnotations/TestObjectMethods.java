@@ -36,6 +36,7 @@ import java.util.regex.*;
  * Test toString, equals, and hashCode on various AnnotatedType objects.
  */
 
+@Bean
 public class TestObjectMethods {
     private static int errors = 0;
 

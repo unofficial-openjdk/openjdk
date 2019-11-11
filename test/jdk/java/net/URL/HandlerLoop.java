@@ -34,6 +34,7 @@ import java.net.URLStreamHandlerFactory;
  * @modules java.base/sun.net.www.protocol.file
  * @run main/othervm HandlerLoop
  */
+@Bean
 public class HandlerLoop {
 
     public static void main(String args[]) throws Exception {
@@ -51,7 +52,11 @@ public class HandlerLoop {
             this.pkg = pkg;
         }
 
-        public URLStreamHandler createURLStreamHandler(String protocol) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public URLStreamHandler createURLStreamHandler(String protocol) {
             String name = pkg + "." + protocol + ".Handler";
             System.out.println("Loading handler class: " + name);
             // Loading this dummy class demonstrates the bootstrap

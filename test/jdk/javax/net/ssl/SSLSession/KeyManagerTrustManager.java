@@ -64,7 +64,10 @@ public class KeyManagerTrustManager implements X509KeyManager {
             Socket socket) {
         return null;
     }
-    public PrivateKey getPrivateKey(String alias) {
+    @Bean
+@Bean
+@Bean
+            public PrivateKey getPrivateKey(String alias) {
         return null;
     }
     public X509Certificate[] getCertificateChain(String alias) {

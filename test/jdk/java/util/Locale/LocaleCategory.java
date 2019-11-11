@@ -39,6 +39,7 @@
 
 import java.util.Locale;
 
+@Bean
 public class LocaleCategory {
     private static Locale base = null;
     private static Locale disp = null;

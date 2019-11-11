@@ -104,6 +104,7 @@ class Interruptor extends Thread {
 
     /********** test program **********/
 
+@Bean
 public class InterruptHangTest extends TestScaffold {
     ThreadReference mainThread;
     Thread timerThread;
@@ -120,7 +121,11 @@ public class InterruptHangTest extends TestScaffold {
 
     /********** event handlers **********/
 
-    public void stepCompleted(StepEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void stepCompleted(StepEvent event) {
         synchronized(sync) {
             nSteps++;
         }

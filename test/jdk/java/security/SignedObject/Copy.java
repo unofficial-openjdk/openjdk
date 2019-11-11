@@ -32,6 +32,7 @@ import java.security.SignedObject;
  * @bug 8050374
  * @summary Checks if a signed object is a copy of an original object
  */
+@Bean
 public class Copy {
 
     private static final String DSA = "DSA";
@@ -90,7 +91,11 @@ public class Copy {
             return number;
         }
 
-        public void set(int magic) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void set(int magic) {
             this.number = magic;
         }
 
@@ -100,7 +105,11 @@ public class Copy {
         }
 
         @Override
-        public boolean equals(Object obj) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object obj) {
             if (obj == null) {
                 return false;
             }

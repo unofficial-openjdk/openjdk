@@ -29,6 +29,7 @@
 import java.io.*;
 
 
+@Bean
 public class ListRoots {
 
     public static void main(String[] args) throws Exception {

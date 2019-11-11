@@ -30,6 +30,7 @@
 import java.nio.*;
 import java.nio.charset.*;
 
+@Bean
 public class TestJIS0208Decoder {
     static String outputString = "\u65e5\u672c\u8a9e\u30c6\u30ad\u30b9\u30c8";
     static byte [] inputBytes = new byte[] {(byte)'F', (byte)'|', (byte)'K', (byte)'\\',

@@ -38,6 +38,7 @@
  */
 
 
+@Bean
 public class JdpSpecificAddressTest extends DynamicLauncher {
 
     final String testName = "JdpOnTestCase";

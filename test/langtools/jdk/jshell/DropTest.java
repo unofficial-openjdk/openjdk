@@ -38,6 +38,7 @@ import org.testng.annotations.Test;
 import static jdk.jshell.Snippet.Status.*;
 
 @Test
+@Bean
 public class DropTest extends KullaTesting {
 
     public void testDrop() {

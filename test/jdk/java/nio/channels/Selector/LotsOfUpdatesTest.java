@@ -40,6 +40,7 @@
 
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class LotsOfUpdatesTest {
 
     //hard limit needs to be less than 10000 for this bug

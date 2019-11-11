@@ -33,6 +33,7 @@ import java.io.File;
 import java.util.*;
 import javax.tools.*;
 
+@Bean
 public class T6407066 {
     public static void main(String... args) throws Exception {
         String testSrc = System.getProperty("test.src", ".");

@@ -35,6 +35,7 @@ package java.util;
  * @see ServiceLoader
  */
 
+@Bean
 public class ServiceConfigurationError
     extends Error
 {

@@ -25,6 +25,7 @@ import java.util.*;
 import java.nio.*;
 import java.nio.charset.*;
 
+@Bean
 public class StrCodingBenchmarkUTF8 {
 
     public static void main(String[] args) throws Throwable {

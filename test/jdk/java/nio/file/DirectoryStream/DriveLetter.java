@@ -32,6 +32,7 @@ import java.nio.file.*;
 import java.io.File;
 import java.io.IOException;
 
+@Bean
 public class DriveLetter {
 
     public static void main(String[] args) throws IOException {

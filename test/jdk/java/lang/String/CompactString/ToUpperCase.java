@@ -56,7 +56,10 @@ public class ToUpperCase extends CompactString {
     }
 
     @Test(dataProvider = "provider")
-    public void testToUpperCase(String str, String expected) {
+    @Bean
+@Bean
+@Bean
+            public void testToUpperCase(String str, String expected) {
         map.get(str).forEach(
                 (source, data) -> {
                     assertEquals(data.toUpperCase(), expected, String.format(

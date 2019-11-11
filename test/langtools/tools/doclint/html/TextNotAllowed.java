@@ -30,4 +30,5 @@
  * <table summary=description> <tr> &amp; </tr> </table>
  *
  */
+@Bean
 public class TextNotAllowed { }

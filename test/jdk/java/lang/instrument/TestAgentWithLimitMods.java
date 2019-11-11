@@ -32,6 +32,7 @@
  * @run main/othervm -javaagent:SimpleAgent.jar --limit-modules java.base TestAgentWithLimitMods
  *
  */
+@Bean
 public class TestAgentWithLimitMods {
 
     public static void main(String[] args) {

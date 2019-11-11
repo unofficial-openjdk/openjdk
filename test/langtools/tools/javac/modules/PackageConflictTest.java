@@ -41,6 +41,7 @@ import toolbox.JavacTask;
 import toolbox.ModuleBuilder;
 import toolbox.Task;
 
+@Bean
 public class PackageConflictTest extends ModuleTestBase {
     public static void main(String... args) throws Exception {
         PackageConflictTest t = new PackageConflictTest();
@@ -51,7 +52,8 @@ public class PackageConflictTest extends ModuleTestBase {
     public void testSimple(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
-                "package java.util; public class MyList { }");
+                "package java.util; @Bean
+public class MyList { }");
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
 
@@ -73,10 +75,12 @@ public class PackageConflictTest extends ModuleTestBase {
         Path m2 = base.resolve("m2x");
         tb.writeJavaFiles(m1,
                           "module m1x { }",
-                          "package test; public class A { }");
+                          "package test; @Bean
+public class A { }");
         tb.writeJavaFiles(m2,
                           "module m2x { }",
-                          "package test; public class B { }");
+                          "package test; @Bean
+public class B { }");
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
 
@@ -95,13 +99,16 @@ public class PackageConflictTest extends ModuleTestBase {
         Path m3 = base.resolve("m3x");
         tb.writeJavaFiles(m1,
                           "module m1x { exports test; }",
-                          "package test; public class A { }");
+                          "package test; @Bean
+public class A { }");
         tb.writeJavaFiles(m2,
                           "module m2x { exports test; }",
-                          "package test; public class B { }");
+                          "package test; @Bean
+public class B { }");
         tb.writeJavaFiles(m3,
                           "module m3x { requires m1x; requires m2x; }",
-                          "package impl; public class Impl { }");
+                          "package impl; @Bean
+public class Impl { }");
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
 
@@ -128,11 +135,13 @@ public class PackageConflictTest extends ModuleTestBase {
         Path modules = base.resolve("modules");
         new ModuleBuilder(tb, "N")
                 .exports("pack")
-                .classes("package pack; public class A { }")
+                .classes("package pack; @Bean
+public class A { }")
                 .build(modules);
         new ModuleBuilder(tb, "M")
                 .requires("N")
-                .classes("package pack; public class B { pack.A f; }")
+                .classes("package pack; @Bean
+public class B { pack.A f; }")
                 .write(modSrc);
 
         String log = new JavacTask(tb)
@@ -152,12 +161,15 @@ public class PackageConflictTest extends ModuleTestBase {
         Path modSrc = base.resolve("modSrc");
         new ModuleBuilder(tb, "N")
                 .exports("publ")
-                .classes("package pack; public class A { }")
-                .classes("package publ; public class B { }")
+                .classes("package pack; @Bean
+public class A { }")
+                .classes("package publ; @Bean
+public class B { }")
                 .write(modSrc);
         new ModuleBuilder(tb, "M")
                 .requires("N")
-                .classes("package pack; public class C { publ.B b; }")
+                .classes("package pack; @Bean
+public class C { publ.B b; }")
                 .write(modSrc);
 
         String log = new JavacTask(tb)
@@ -179,12 +191,15 @@ public class PackageConflictTest extends ModuleTestBase {
         Path modules = base.resolve("modules");
         new ModuleBuilder(tb, "N")
                 .exports("publ")
-                .classes("package pack; public class A { }")
-                .classes("package publ; public class B { }")
+                .classes("package pack; @Bean
+public class A { }")
+                .classes("package publ; @Bean
+public class B { }")
                 .build(modules);
         new ModuleBuilder(tb, "M")
                 .requires("N")
-                .classes("package pack; public class C { publ.B b; }")
+                .classes("package pack; @Bean
+public class C { publ.B b; }")
                 .write(modSrc);
 
         String log = new JavacTask(tb)
@@ -206,16 +221,19 @@ public class PackageConflictTest extends ModuleTestBase {
         Path modules = base.resolve("modules");
         new ModuleBuilder(tb, "M")
                 .exports("pack")
-                .classes("package pack; public class A { }")
+                .classes("package pack; @Bean
+public class A { }")
                 .build(modules);
         new ModuleBuilder(tb, "N")
                 .exports("pack")
-                .classes("package pack; public class B { }")
+                .classes("package pack; @Bean
+public class B { }")
                 .build(modules);
         new ModuleBuilder(tb, "K")
                 .requires("M")
                 .requires("N")
-                .classes("package pkg; public class C { pack.A a; pack.B b; }")
+                .classes("package pkg; @Bean
+public class C { pack.A a; pack.B b; }")
                 .write(modSrc);
 
         List<String> log = new JavacTask(tb)
@@ -239,16 +257,19 @@ public class PackageConflictTest extends ModuleTestBase {
         new ModuleBuilder(tb, "U").write(modSrc);
         new ModuleBuilder(tb, "M")
                 .exports("pkg to U")
-                .classes("package pkg; public class A { public static boolean flagM; }")
+                .classes("package pkg; @Bean
+public class A { public static boolean flagM; }")
                 .write(modSrc);
         new ModuleBuilder(tb, "N")
                 .exports("pkg to K")
-                .classes("package pkg; public class A { public static boolean flagN; }")
+                .classes("package pkg; @Bean
+public class A { public static boolean flagN; }")
                 .write(modSrc);
         ModuleBuilder moduleK = new ModuleBuilder(tb, "K");
         moduleK.requires("M")
                 .requires("N")
-                .classes("package p; public class DependsOnN { boolean f = pkg.A.flagN; } ")
+                .classes("package p; @Bean
+public class DependsOnN { boolean f = pkg.A.flagN; } ")
                 .write(modSrc);
         new JavacTask(tb)
                 .options("--module-source-path", modSrc.toString())
@@ -258,8 +279,10 @@ public class PackageConflictTest extends ModuleTestBase {
                 .writeAll();
 
         //negative case
-        moduleK.classes("package pkg; public class DuplicatePackage { } ")
-                .classes("package p; public class DependsOnM { boolean f = pkg.A.flagM; } ")
+        moduleK.classes("package pkg; @Bean
+public class DuplicatePackage { } ")
+                .classes("package p; @Bean
+public class DependsOnM { boolean f = pkg.A.flagM; } ")
                 .write(modSrc);
 
         List<String> output = new JavacTask(tb)
@@ -285,10 +308,12 @@ public class PackageConflictTest extends ModuleTestBase {
         Path m2 = msp.resolve("m2x");
         tb.writeJavaFiles(m1,
                           "module m1x { exports test; }",
-                          "package test; public class A { }");
+                          "package test; @Bean
+public class A { }");
         tb.writeJavaFiles(m2,
                           "module m2x { exports test; }",
-                          "package test; public class B { }");
+                          "package test; @Bean
+public class B { }");
         Path mp = base.resolve("module-path");
         Files.createDirectories(mp);
 
@@ -302,7 +327,8 @@ public class PackageConflictTest extends ModuleTestBase {
         Path src = base.resolve("src");
 
         tb.writeJavaFiles(src,
-                          "package impl; public class Impl { }");
+                          "package impl; @Bean
+public class Impl { }");
 
         Path out = base.resolve("out");
         Files.createDirectories(out);

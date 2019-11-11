@@ -35,6 +35,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+@Bean
 public class GetPolicyQualifiers {
 
     public static void main(String[] args) throws Exception {

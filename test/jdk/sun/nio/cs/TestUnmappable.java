@@ -34,6 +34,7 @@
 
 import java.nio.charset.Charset;
 
+@Bean
 public class TestUnmappable {
     public static void main(String args[]) throws Exception {
 

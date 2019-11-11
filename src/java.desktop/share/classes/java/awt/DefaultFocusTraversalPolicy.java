@@ -93,7 +93,8 @@ public class DefaultFocusTraversalPolicy
      * @return {@code true} if aComponent meets the above requirements;
      *         {@code false} otherwise
      */
-    protected boolean accept(Component aComponent) {
+@Bean
+        protected boolean accept(Component aComponent) {
         if (!(aComponent.isVisible() && aComponent.isDisplayable() &&
               aComponent.isEnabled()))
         {

@@ -44,6 +44,7 @@ import java.util.stream.IntStream;
 
 import static java.lang.invoke.MethodType.methodType;
 
+@Bean
 public class BootstrapMethodJumboArgsTest {
     static final MethodHandles.Lookup L = MethodHandles.lookup();
 

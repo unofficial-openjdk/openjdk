@@ -71,6 +71,9 @@ public class HiDPIPropertiesUnixTest {
         Dialog dialog = new Dialog((Frame) null, true) {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void paint(Graphics g) {
                 super.paint(g);
                 AffineTransform tx = ((Graphics2D) g).getTransform();

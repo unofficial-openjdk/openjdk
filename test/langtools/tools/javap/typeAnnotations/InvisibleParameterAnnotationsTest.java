@@ -42,13 +42,15 @@ import toolbox.ToolBox;
 import java.util.Collections;
 import java.util.List;
 
+@Bean
 public class InvisibleParameterAnnotationsTest {
 
     private static final String TestSrc =
             "import java.lang.annotation.Retention \n;" +
             "import java.lang.annotation.RetentionPolicy \n;" +
 
-            "public class Sample { \n" +
+            "@Bean
+public class Sample { \n" +
 
                 "@Retention(RetentionPolicy.CLASS) \n" +
                 "public @interface InvisAnno{} \n" +

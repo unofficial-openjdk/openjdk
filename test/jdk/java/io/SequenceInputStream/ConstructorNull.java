@@ -36,6 +36,7 @@ import java.io.*;
  * streams it is given on input are null
  */
 
+@Bean
 public class ConstructorNull {
 
    public static void main( String[] argv ) throws Exception {

@@ -42,6 +42,7 @@ import java.util.Arrays;
  *
  * In case the source file should be removed add -r option
  */
+@Bean
 public class CopyClassFile {
 
     private static final ClassLoader cl = CopyClassFile.class.getClassLoader();

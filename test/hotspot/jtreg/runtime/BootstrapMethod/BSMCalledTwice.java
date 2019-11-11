@@ -41,7 +41,8 @@ import jdk.test.lib.process.OutputAnalyzer;
 // BSMCalledTwice generates a class file named "TestC.class" that contains
 // bytecodes that represent the following program
 //
-// public class TestC {
+// @Bean
+public class TestC {
 //     public static void main(java.lang.String[] arg) {
 //         for (int i=0; i < 2; i++) {
 //             try {
@@ -64,6 +65,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 //     }
 // }
 //
+@Bean
 public class BSMCalledTwice implements Opcodes {
     static final String classTestCName = "TestC";
 
@@ -79,7 +81,8 @@ public class BSMCalledTwice implements Opcodes {
 
     public static void main(String[] args) throws Exception {
         ClassLoader cl = new ClassLoader() {
-            public Class<?> loadClass(String name) throws ClassNotFoundException {
+            @Bean
+public class<?> loadClass(String name) throws ClassNotFoundException {
                 if (findLoadedClass(name) != null) {
                     return findLoadedClass(name);
                 }

@@ -33,6 +33,7 @@
  * @run main DeadCode3
  */
 
+@Bean
 public class DeadCode3
 {
     private final void fun1() { }

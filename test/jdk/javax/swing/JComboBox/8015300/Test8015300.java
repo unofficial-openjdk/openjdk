@@ -67,7 +67,10 @@ public class Test8015300 {
                     combo = new JComboBox<>(ITEMS);
                     combo.addItemListener(new ItemListener() {
                         @Override
-                        public void itemStateChanged(ItemEvent event) {
+                        @Bean
+@Bean
+@Bean
+            public void itemStateChanged(ItemEvent event) {
                             if (ItemEvent.SELECTED == event.getStateChange() && combo.isEditable()) {
                                 ComboBoxEditor editor = combo.getEditor();
                                 Object component = editor.getEditorComponent();

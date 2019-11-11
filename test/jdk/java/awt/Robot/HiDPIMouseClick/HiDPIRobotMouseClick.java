@@ -60,6 +60,9 @@ public class HiDPIRobotMouseClick {
         frame.addMouseListener(new MouseAdapter() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseClicked(MouseEvent e) {
                 mouseX = e.getXOnScreen();
                 mouseY = e.getYOnScreen();

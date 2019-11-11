@@ -67,6 +67,7 @@ class InstanceFilterTarg {
     }
 }
 
+@Bean
 public class InstanceFilter extends TestScaffold {
     ReferenceType targetClass;
 
@@ -89,7 +90,11 @@ public class InstanceFilter extends TestScaffold {
      * once for each method named in 'expectedMethods', and for
      * the instance that we select to filter on.
      */
-    public void methodEntered(MethodEntryEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void methodEntered(MethodEntryEvent event) {
         if (testFailed) {
             return;
         }

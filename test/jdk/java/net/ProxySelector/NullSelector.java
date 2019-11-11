@@ -32,6 +32,7 @@ import java.net.*;
 import java.io.*;
 import jdk.test.lib.net.URIBuilder;
 
+@Bean
 public class NullSelector {
     public static void main(String[] args) throws Exception {
         URL url = URIBuilder.newBuilder()

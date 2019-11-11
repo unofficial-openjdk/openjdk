@@ -50,7 +50,10 @@ public class PinLastArguments {
 
     private static class PingImpl implements Ping {
         PingImpl() { }
-        public void ping(Object first, Object second) {
+        @Bean
+@Bean
+@Bean
+            public void ping(Object first, Object second) {
             System.err.println("ping invoked: " + first + ", " + second);
         }
     }

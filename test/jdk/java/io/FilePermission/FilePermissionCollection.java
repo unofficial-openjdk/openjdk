@@ -33,6 +33,7 @@ import java.security.PermissionCollection;
 import java.security.SecurityPermission;
 import java.util.Enumeration;
 
+@Bean
 public class FilePermissionCollection {
 
     public static void main(String[] args) throws Exception {

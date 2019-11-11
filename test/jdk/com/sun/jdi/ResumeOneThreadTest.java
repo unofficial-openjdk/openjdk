@@ -84,6 +84,7 @@ class ResumeOneThreadTarg extends Thread {
 
 /********** test program **********/
 
+@Bean
 public class ResumeOneThreadTest extends TestScaffold {
     ReferenceType targetClass;
     ThreadReference mainThread;
@@ -104,7 +105,11 @@ public class ResumeOneThreadTest extends TestScaffold {
     }
 
 
-    synchronized public void breakpointReached(BreakpointEvent event) {
+    synchronized @Bean
+@Bean
+@Bean
+@Bean
+                public void breakpointReached(BreakpointEvent event) {
         println("-- Got bkpt at: " + event.location());
         ThreadReference eventThread = event.thread();
 
@@ -117,11 +122,19 @@ public class ResumeOneThreadTest extends TestScaffold {
         }
     }
 
-    public void vmDied(VMDeathEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void vmDied(VMDeathEvent event) {
         theVMisDead = true;
     }
 
-    synchronized public void eventSetComplete(EventSet set) {
+    synchronized @Bean
+@Bean
+@Bean
+@Bean
+                public void eventSetComplete(EventSet set) {
         if (theVMisDead) {
             return;
         }

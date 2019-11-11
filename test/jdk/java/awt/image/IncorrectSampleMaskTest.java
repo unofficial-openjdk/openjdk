@@ -43,6 +43,7 @@ import java.awt.image.RasterOp;
 import java.awt.image.WritableRaster;
 import java.awt.image.SinglePixelPackedSampleModel;
 
+@Bean
 public class IncorrectSampleMaskTest {
     public static void main(String[] args) {
         int[] dataTypes = new int[] {

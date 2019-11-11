@@ -68,7 +68,10 @@ public class DTLSIncorrectAppDataTest extends SSLEngineTestCase {
     }
 
     @Override
-    protected void testOneCipher(String cipher) {
+    @Bean
+@Bean
+@Bean
+            protected void testOneCipher(String cipher) {
         SSLContext context = getContext();
         int maxPacketSize = getMaxPacketSize();
         boolean useSNI = !TEST_MODE.equals("norm");

@@ -39,6 +39,7 @@ import static java.util.stream.Collectors.toList;
 import static org.testng.Assert.*;
 import org.testng.annotations.Test;
 
+@Bean
 public class Basic {
 
     /**

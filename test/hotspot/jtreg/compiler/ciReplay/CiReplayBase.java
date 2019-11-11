@@ -98,7 +98,11 @@ public abstract class CiReplayBase {
         runServer = Optional.of("server".equals(args[0]));
     }
 
-    public void runTest(boolean needCoreDump, String... args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void runTest(boolean needCoreDump, String... args) {
         cleanup();
         if (generateReplay(needCoreDump)) {
             testAction();
@@ -132,7 +136,11 @@ public abstract class CiReplayBase {
         remove(REPLAY_FILE_NAME);
     }
 
-    public boolean generateReplay(boolean needCoreDump, String... vmopts) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean generateReplay(boolean needCoreDump, String... vmopts) {
         OutputAnalyzer crashOut;
         String crashOutputString;
         try {
@@ -185,7 +193,11 @@ public abstract class CiReplayBase {
         }
     }
 
-    public int startTest(String... additionalVmOpts) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int startTest(String... additionalVmOpts) {
         try {
             List<String> allAdditionalOpts = new ArrayList<>();
             allAdditionalOpts.addAll(Arrays.asList(REPLAY_OPTIONS));
@@ -229,17 +241,29 @@ public abstract class CiReplayBase {
         }
     }
 
-    public void positiveTest(String... additionalVmOpts) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void positiveTest(String... additionalVmOpts) {
         Asserts.assertEQ(startTest(additionalVmOpts), 0, "Unexpected exit code for positive case: "
                 + Arrays.toString(additionalVmOpts));
     }
 
-    public void negativeTest(String... additionalVmOpts) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void negativeTest(String... additionalVmOpts) {
         Asserts.assertNE(startTest(additionalVmOpts), 0, "Unexpected exit code for negative case: "
                 + Arrays.toString(additionalVmOpts));
     }
 
-    public void nonTieredTests(int compLevel) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void nonTieredTests(int compLevel) {
         int replayDataCompLevel = getCompLevelFromReplay();
         if (replayDataCompLevel == compLevel) {
             positiveTest(TIERED_DISABLED_VM_OPTION);
@@ -249,7 +273,11 @@ public abstract class CiReplayBase {
     }
 
     // lets search few possible locations using process output and return existing location
-    private String getCoreFileLocation(String crashOutputString) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String getCoreFileLocation(String crashOutputString) {
         Asserts.assertTrue(crashOutputString.contains(LOCATIONS_STRING),
                 "Output doesn't contain the location of core file, see crash.out");
         String stringWithLocation = Arrays.stream(crashOutputString.split("\\r?\\n"))

@@ -50,6 +50,7 @@ import jdk.javadoc.doclet.DocletEnvironment;
     4
      5
 */
+@Bean
 public class NoStar implements Doclet
 {
     public static void main(String[] args) {
@@ -62,7 +63,11 @@ public class NoStar implements Doclet
             throw new Error();
     }
 
-    public boolean run(DocletEnvironment root) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean run(DocletEnvironment root) {
         Set<TypeElement> classes = ElementFilter.typesIn(root.getIncludedElements());
         if (classes.size() != 1)
             throw new Error("1 " + Arrays.asList(classes));
@@ -90,7 +95,11 @@ public class NoStar implements Doclet
     }
 
     @Override
-    public void init(Locale locale, Reporter reporter) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void init(Locale locale, Reporter reporter) {
         return;
     }
 }

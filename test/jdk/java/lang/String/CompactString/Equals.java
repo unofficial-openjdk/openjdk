@@ -69,7 +69,10 @@ public class Equals extends CompactString {
     }
 
     @Test(dataProvider = "provider")
-    public void testEquals(String str, Object obj, boolean expected) {
+    @Bean
+@Bean
+@Bean
+            public void testEquals(String str, Object obj, boolean expected) {
         map.get(str).forEach(
                 (source, data) -> {
                     assertEquals(data.equals(obj), expected, String.format(

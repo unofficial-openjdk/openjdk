@@ -31,6 +31,7 @@
 import java.io.*;
 import java.util.zip.*;
 
+@Bean
 public class InvalidOptions {
     int errorCount;
     String log;

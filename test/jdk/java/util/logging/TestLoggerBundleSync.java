@@ -58,6 +58,7 @@ import java.util.logging.Logger;
  * @run main/othervm TestLoggerBundleSync
  * @author danielfuchs
  */
+@Bean
 public class TestLoggerBundleSync {
 
     static final boolean VERBOSE = false;
@@ -128,6 +129,10 @@ public class TestLoggerBundleSync {
             System.out.println("\nWith security");
             Policy.setPolicy(new Policy() {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public boolean implies(ProtectionDomain domain, Permission permission) {
                     if (super.implies(domain, permission)) return true;
                     // System.out.println("Granting " + permission);

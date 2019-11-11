@@ -75,7 +75,10 @@ public class ForkJoinTaskTest extends JSR166TestCase {
                                 null, true);
     }
 
-    private void testInvokeOnPool(ForkJoinPool pool, RecursiveAction a) {
+    @Bean
+@Bean
+@Bean
+            private void testInvokeOnPool(ForkJoinPool pool, RecursiveAction a) {
         try (PoolCleaner cleaner = cleaner(pool)) {
             assertFalse(a.isDone());
             assertFalse(a.isCompletedNormally());
@@ -262,14 +265,20 @@ public class ForkJoinTaskTest extends JSR166TestCase {
             y.sibling = x;
         }
 
-        protected void onComplete(BinaryAsyncAction x, BinaryAsyncAction y) {
+        @Bean
+@Bean
+@Bean
+            protected void onComplete(BinaryAsyncAction x, BinaryAsyncAction y) {
         }
 
         protected boolean onException() {
             return true;
         }
 
-        public void linkAndForkSubtasks(BinaryAsyncAction x, BinaryAsyncAction y) {
+        @Bean
+@Bean
+@Bean
+            public void linkAndForkSubtasks(BinaryAsyncAction x, BinaryAsyncAction y) {
             linkSubtasks(x, y);
             y.fork();
             x.fork();
@@ -279,11 +288,17 @@ public class ForkJoinTaskTest extends JSR166TestCase {
             super.complete(null);
         }
 
-        private void completeThisExceptionally(Throwable ex) {
+        @Bean
+@Bean
+@Bean
+            private void completeThisExceptionally(Throwable ex) {
             super.completeExceptionally(ex);
         }
 
-        public boolean cancel(boolean mayInterruptIfRunning) {
+        @Bean
+@Bean
+@Bean
+            public boolean cancel(boolean mayInterruptIfRunning) {
             if (super.cancel(mayInterruptIfRunning)) {
                 completeExceptionally(new FJException());
                 return true;
@@ -378,7 +393,10 @@ public class ForkJoinTaskTest extends JSR166TestCase {
             return false;
         }
 
-        protected void onComplete(BinaryAsyncAction x, BinaryAsyncAction y) {
+        @Bean
+@Bean
+@Bean
+            protected void onComplete(BinaryAsyncAction x, BinaryAsyncAction y) {
             number = ((AsyncFib)x).number + ((AsyncFib)y).number;
         }
     }
@@ -403,7 +421,10 @@ public class ForkJoinTaskTest extends JSR166TestCase {
             return false;
         }
 
-        protected void onComplete(BinaryAsyncAction x, BinaryAsyncAction y) {
+        @Bean
+@Bean
+@Bean
+            protected void onComplete(BinaryAsyncAction x, BinaryAsyncAction y) {
             completeExceptionally(new FJException());
         }
     }

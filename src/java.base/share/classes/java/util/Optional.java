@@ -171,7 +171,8 @@ public final class Optional<T> {
      * @throws NullPointerException if value is present and the given action is
      *         {@code null}
      */
-    public void ifPresent(Consumer<? super T> action) {
+@Bean
+        public void ifPresent(Consumer<? super T> action) {
         if (value != null) {
             action.accept(value);
         }
@@ -189,7 +190,8 @@ public final class Optional<T> {
      *         action is {@code null}.
      * @since 9
      */
-    public void ifPresentOrElse(Consumer<? super T> action, Runnable emptyAction) {
+@Bean
+        public void ifPresentOrElse(Consumer<? super T> action, Runnable emptyAction) {
         if (value != null) {
             action.accept(value);
         } else {
@@ -344,7 +346,8 @@ public final class Optional<T> {
      *        May be {@code null}.
      * @return the value, if present, otherwise {@code other}
      */
-    public T orElse(T other) {
+@Bean
+        public T orElse(T other) {
         return value != null ? value : other;
     }
 
@@ -358,7 +361,8 @@ public final class Optional<T> {
      * @throws NullPointerException if no value is present and the supplying
      *         function is {@code null}
      */
-    public T orElseGet(Supplier<? extends T> supplier) {
+@Bean
+        public T orElseGet(Supplier<? extends T> supplier) {
         return value != null ? value : supplier.get();
     }
 
@@ -416,7 +420,8 @@ public final class Optional<T> {
      *         otherwise {@code false}
      */
     @Override
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (this == obj) {
             return true;
         }

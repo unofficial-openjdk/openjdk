@@ -34,6 +34,7 @@ import org.testng.annotations.Test;
 import static java.lang.System.out;
 import static org.testng.Assert.*;
 
+@Bean
 public class Ctor {
 
     static final Class<NullPointerException> NPE = NullPointerException.class;

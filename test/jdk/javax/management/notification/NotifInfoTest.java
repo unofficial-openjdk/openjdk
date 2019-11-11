@@ -35,6 +35,7 @@
 import java.util.Arrays;
 import javax.management.*;
 
+@Bean
 public class NotifInfoTest {
     public static void main(String[] args) throws Exception {
         final MBeanNotificationInfo info1 =

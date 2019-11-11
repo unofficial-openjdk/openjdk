@@ -78,6 +78,7 @@ class LambdaStepTestTarg implements DefaultTest {
 
  /********** test program **********/
 
+@Bean
 public class LambdaStepTest extends TestScaffold {
     LambdaStepTest (String args[]) {
         super(args);

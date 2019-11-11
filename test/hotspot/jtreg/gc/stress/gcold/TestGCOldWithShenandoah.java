@@ -120,6 +120,7 @@ package gc.stress.gcold;
  *      gc.stress.gcold.TestGCOld 50 1 20 10 10000
  */
 
+@Bean
 public class TestGCOldWithShenandoah {
 
     public static void main(String[] args) {

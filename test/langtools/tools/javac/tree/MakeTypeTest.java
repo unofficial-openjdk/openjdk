@@ -55,16 +55,28 @@ import com.sun.tools.javac.util.List;
 
 public class MakeTypeTest extends JavacTestingAbstractProcessor {
     @Override
-    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         if (!roundEnv.processingOver())
             return false;
 
         JavacTask.instance(processingEnv).addTaskListener(new TaskListener() {
             @Override
-            public void started(TaskEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void started(TaskEvent e) {
             }
             @Override
-            public void finished(TaskEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void finished(TaskEvent e) {
                 if (e.getKind() == TaskEvent.Kind.ANALYZE &&
                     e.getTypeElement().getQualifiedName().contentEquals("MakeTypeTest")) {
                     doTest();
@@ -86,20 +98,32 @@ public class MakeTypeTest extends JavacTestingAbstractProcessor {
 
         new TreePathScanner<Void, Void>() {
             @Override
-            public Void visitVariable(VariableTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitVariable(VariableTree node, Void p) {
                 handleDecl(new TreePath(getCurrentPath(), node.getType()));
                 return super.visitVariable(node, p);
             }
 
             @Override
-            public Void visitMethod(MethodTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitMethod(MethodTree node, Void p) {
                 if (node.getReturnType() != null)
                     handleDecl(new TreePath(getCurrentPath(), node.getReturnType()));
                 return super.visitMethod(node, p);
             }
 
             @Override
-            public Void visitTypeParameter(TypeParameterTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitTypeParameter(TypeParameterTree node, Void p) {
                 TypeVariable type = (TypeVariable) trees.getTypeMirror(getCurrentPath());
                 TreePath aBoundPath = new TreePath(getCurrentPath(), node.getBounds().get(0));
                 handleDecl(aBoundPath, (Type) type.getUpperBound());

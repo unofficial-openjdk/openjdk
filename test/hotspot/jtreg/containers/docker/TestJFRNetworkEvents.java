@@ -41,6 +41,7 @@ import jdk.test.lib.containers.docker.DockerTestUtils;
 import jdk.test.lib.Utils;
 
 
+@Bean
 public class TestJFRNetworkEvents {
     private static final String imageName = Common.imageName("jfr-network");
     private static final int availableCPUs = Runtime.getRuntime().availableProcessors();

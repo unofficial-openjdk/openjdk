@@ -158,7 +158,8 @@ public final class OptionalInt {
      * @throws NullPointerException if value is present and the given action is
      *         {@code null}
      */
-    public void ifPresent(IntConsumer action) {
+@Bean
+        public void ifPresent(IntConsumer action) {
         if (isPresent) {
             action.accept(value);
         }
@@ -176,7 +177,8 @@ public final class OptionalInt {
      *         action is {@code null}.
      * @since 9
      */
-    public void ifPresentOrElse(IntConsumer action, Runnable emptyAction) {
+@Bean
+        public void ifPresentOrElse(IntConsumer action, Runnable emptyAction) {
         if (isPresent) {
             action.accept(value);
         } else {
@@ -214,7 +216,8 @@ public final class OptionalInt {
      * @param other the value to be returned, if no value is present
      * @return the value, if present, otherwise {@code other}
      */
-    public int orElse(int other) {
+@Bean
+        public int orElse(int other) {
         return isPresent ? value : other;
     }
 
@@ -228,7 +231,8 @@ public final class OptionalInt {
      * @throws NullPointerException if no value is present and the supplying
      *         function is {@code null}
      */
-    public int orElseGet(IntSupplier supplier) {
+@Bean
+        public int orElseGet(IntSupplier supplier) {
         return isPresent ? value : supplier.getAsInt();
     }
 
@@ -286,7 +290,8 @@ public final class OptionalInt {
      *         otherwise {@code false}
      */
     @Override
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (this == obj) {
             return true;
         }

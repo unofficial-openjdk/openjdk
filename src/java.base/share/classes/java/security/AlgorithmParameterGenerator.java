@@ -95,6 +95,7 @@ import java.util.Objects;
  * @since 1.2
  */
 
+@Bean
 public class AlgorithmParameterGenerator {
 
     // The provider

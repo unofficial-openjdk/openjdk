@@ -31,6 +31,7 @@
 
 import java.util.Locale;
 
+@Bean
 public class Formatted {
     public static void main(String[] args) {
         test1();

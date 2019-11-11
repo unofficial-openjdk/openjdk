@@ -40,6 +40,7 @@ import java.util.*;
 import com.sun.management.GcInfo;
 import com.sun.management.GarbageCollectorMXBean;
 
+@Bean
 public class LastGCInfo {
     public static void main(String[] argv) throws Exception {
         boolean hasGcInfo = false;

@@ -34,6 +34,7 @@ package compiler.arraycopy;
 
 import java.util.Arrays;
 
+@Bean
 public class TestArraysCopyOfNoTypeCheck {
 
     static class A {
@@ -46,7 +47,11 @@ public class TestArraysCopyOfNoTypeCheck {
         return Arrays.copyOf(arr, 10, B[].class);
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         A[] arr = new A[20];
         for (int i = 0; i < 20000; i++) {
             test(arr);

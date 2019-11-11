@@ -33,6 +33,7 @@ import java.nio.charset.CoderResult;
 import sun.nio.cs.HistoricallyNamedCharset;
 import sun.nio.cs.Surrogate;
 
+@Bean
 public class EUC_TW_OLD extends Charset
     implements HistoricallyNamedCharset
 {
@@ -62,7 +63,11 @@ public class EUC_TW_OLD extends Charset
         return "EUC_TW_OLD";
     }
 
-    public boolean contains(Charset cs) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean contains(Charset cs) {
         return ((cs.name().equals("US-ASCII"))
                 || (cs instanceof EUC_TW_OLD));
     }
@@ -10546,7 +10551,11 @@ public class EUC_TW_OLD extends Charset
             super(cs, 2.0f, 2.0f);
         }
 
-        protected boolean isLegalDB(byte b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected boolean isLegalDB(byte b) {
             return b > (byte)0xa0 && b <= (byte)0xfe;
         }
 
@@ -10762,7 +10771,11 @@ public class EUC_TW_OLD extends Charset
             super(cs, 4.0f, 4.0f);
         }
 
-        public boolean canEncode(char c) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean canEncode(char c) {
             return (c <= '\u007f' ||
                     getNative(c) != -1);
         }
@@ -32393,7 +32406,11 @@ public class EUC_TW_OLD extends Charset
         private static char [] CNSTab3S4 = cnsTab3S4.toCharArray();
         private static char [] CNSTab3 = cnsTab3.toCharArray();
 
-        protected int getNative(char unicode) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected int getNative(char unicode) {
             int  i,
                  cns;   // 2 chars in CNS table make 1 CNS code
 
@@ -32415,7 +32432,11 @@ public class EUC_TW_OLD extends Charset
             }
         }
 
-        protected int getSurrogateEnc(char c1, char c2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected int getSurrogateEnc(char c1, char c2) {
             int  i = -1;
 
             if ((i = searchTabSurr(c1, c2, UniTabS3)) != -1) {
@@ -32433,7 +32454,11 @@ public class EUC_TW_OLD extends Charset
             return -1;
         }
 
-        protected int searchTab(char code, char [] table) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected int searchTab(char code, char [] table) {
             int     i = 0, l, h;
 
             for (l = 0, h = table.length - 1; l < h; ) {
@@ -32459,7 +32484,11 @@ public class EUC_TW_OLD extends Charset
             }
         }
 
-        protected int searchTabSurr(char code1, char code2, char [] table) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected int searchTabSurr(char code1, char code2, char [] table) {
             int     i = 0, l, h;
 
             for (l = 0, h = table.length - 2; l < h; ) {
@@ -32497,7 +32526,11 @@ public class EUC_TW_OLD extends Charset
         }
 
 
-        private int unicodeToEUC(char unicode, char lowSurr, byte ebyte[]) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private int unicodeToEUC(char unicode, char lowSurr, byte ebyte[]) {
             int cns = -1;
 
             if (lowSurr == '\uFFFD')

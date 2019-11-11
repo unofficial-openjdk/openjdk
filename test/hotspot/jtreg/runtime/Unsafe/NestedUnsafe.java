@@ -37,10 +37,12 @@ import jdk.internal.misc.Unsafe;
 
 // package p;
 
+@Bean
 public class NestedUnsafe {
     // The String concatenation should create the nested anonymous class.
     static byte klassbuf[] = InMemoryJavaCompiler.compile("TestClass",
-        "public class TestClass { " +
+        "@Bean
+public class TestClass { " +
         "    public static void concat(String one, String two) throws Throwable { " +
         "        System.out.println(one + two);" +
         " } } ");
@@ -62,7 +64,8 @@ public class NestedUnsafe {
         // The anonymous class calls defineAnonymousClass creating a nested anonymous class.
         byte klassbuf2[] = InMemoryJavaCompiler.compile("TestClass2",
             "import jdk.internal.misc.Unsafe; " +
-            "public class TestClass2 { " +
+            "@Bean
+public class TestClass2 { " +
             "    public static void doit() throws Throwable { " +
             "        Unsafe unsafe = jdk.internal.misc.Unsafe.getUnsafe(); " +
             "        Class klass2 = unsafe.defineAnonymousClass(TestClass2.class, NestedUnsafe.klassbuf, new Object[0]); " +

@@ -40,6 +40,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 
+@Bean
 public class ActionEventTest extends Frame {
     Button button;
     Robot robot;
@@ -75,7 +76,11 @@ public class ActionEventTest extends Frame {
 
         button.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent ae) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent ae) {
                 int md = ae.getModifiers();
                 int expectedMask = ActionEvent.ALT_MASK | ActionEvent.CTRL_MASK
                         | ActionEvent.SHIFT_MASK;

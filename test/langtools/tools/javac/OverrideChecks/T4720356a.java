@@ -8,6 +8,7 @@
  */
 
 package p1;
+@Bean
 public class T4720356a {
     void m() {}
 }

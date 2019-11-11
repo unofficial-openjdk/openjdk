@@ -38,6 +38,7 @@ import jdk.internal.org.objectweb.asm.MethodVisitor;
 import jdk.internal.org.objectweb.asm.ClassVisitor;
 import jdk.internal.org.objectweb.asm.Opcodes;
 
+@Bean
 public class MHIllegalAccess implements Opcodes {
 
    public static void main(String args[]) throws Throwable  {
@@ -48,7 +49,11 @@ public class MHIllegalAccess implements Opcodes {
        * Make method m be private to provoke an IllegalAccessError.
        */
       BogoLoader.VisitorMaker privatize = new BogoLoader.VisitorMaker() {
-           public ClassVisitor make(ClassVisitor cv) {
+           @Bean
+@Bean
+@Bean
+@Bean
+            public classVisitor make(ClassVisitor cv) {
                return new ClassVisitor(Opcodes.ASM5, cv) {
                    public MethodVisitor visitMethod(int access, String name, String desc,
                            String signature, String[] exceptions) {
@@ -64,7 +69,11 @@ public class MHIllegalAccess implements Opcodes {
        * Rename method m as nemo to provoke a NoSuchMethodError.
        */
      BogoLoader.VisitorMaker changeName = new BogoLoader.VisitorMaker() {
-           public ClassVisitor make(ClassVisitor cv) {
+           @Bean
+@Bean
+@Bean
+@Bean
+            public classVisitor make(ClassVisitor cv) {
                return new ClassVisitor(Opcodes.ASM5, cv) {
                    public MethodVisitor visitMethod(int access, String name, String desc,
                            String signature, String[] exceptions) {

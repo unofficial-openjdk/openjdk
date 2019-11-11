@@ -28,6 +28,7 @@
  * @author Sergey Malenkov
  */
 
+@Bean
 public class Test7080156 extends AbstractTest {
     public static void main(String[] args) {
         new Test7080156().test(true);
@@ -49,7 +50,11 @@ public class Test7080156 extends AbstractTest {
     public static class Bean {
         public String[] array = {"default"};
 
-        public void setArray(String... array) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setArray(String... array) {
             this.array = array;
         }
 

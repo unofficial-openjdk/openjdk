@@ -37,6 +37,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 
+@Bean
 public class InternalNameServiceWithNoHostsFileTest {
     public static void main(String args[]) throws Exception {
 

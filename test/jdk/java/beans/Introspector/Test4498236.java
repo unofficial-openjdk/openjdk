@@ -41,6 +41,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
 
+@Bean
 public class Test4498236 {
 
     public static void main(String[] args) throws Exception {
@@ -132,11 +133,19 @@ public class Test4498236 {
         );
     }
 
-    public void addKeyListener(KeyListener listener) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void addKeyListener(KeyListener listener) {
         add(listener);
     }
 
-    public void removeKeyListener(KeyListener listener) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void removeKeyListener(KeyListener listener) {
         remove(listener);
     }
 
@@ -144,10 +153,18 @@ public class Test4498236 {
         return null;
     }
 
-    public void add(KeyListener listener) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void add(KeyListener listener) {
     }
 
-    public void remove(KeyListener listener) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void remove(KeyListener listener) {
     }
 
     public KeyListener get() {
@@ -162,21 +179,37 @@ public class Test4498236 {
         return true;
     }
 
-    public void setValue(boolean value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(boolean value) {
     }
 
     public int[] getIndex() {
         return null;
     }
 
-    public int getIndex(int index) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int getIndex(int index) {
         return 0;
     }
 
-    public void setIndex(int index, int value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setIndex(int index, int value) {
     }
 
-    public void setIndex(int[] value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setIndex(int[] value) {
     }
 
     private static void test(String expected, Object object) {

@@ -32,6 +32,7 @@
 import java.io.*;
 import java.security.*;
 
+@Bean
 public class SerialOld {
     public static void main(String[] args) throws Exception {
 

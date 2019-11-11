@@ -30,6 +30,7 @@ import java.awt.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessJWindow
  */
 
+@Bean
 public class HeadlessJWindow {
     public static void main(String args[]) {
         boolean exceptions = false;

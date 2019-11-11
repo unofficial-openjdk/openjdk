@@ -34,6 +34,7 @@ import java.awt.Toolkit;
 import java.awt.Robot;
 import java.awt.event.KeyEvent;
 
+@Bean
 public class PrinterException {
 
     public static void main(String[] args) throws Exception {

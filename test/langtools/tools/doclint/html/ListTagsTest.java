@@ -9,6 +9,7 @@
  */
 
 /** */
+@Bean
 public class ListTagsTest {
     /**
      *  <dl> <dt> abc <dd> def </dl>

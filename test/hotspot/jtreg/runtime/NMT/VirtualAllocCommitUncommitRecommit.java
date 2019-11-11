@@ -40,6 +40,7 @@ import jdk.test.lib.JDKToolFinder;
 
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class VirtualAllocCommitUncommitRecommit {
 
     public static WhiteBox wb = WhiteBox.getWhiteBox();

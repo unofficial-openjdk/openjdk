@@ -31,6 +31,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test6796786 {
     static volatile float d1;
     static volatile float d2;

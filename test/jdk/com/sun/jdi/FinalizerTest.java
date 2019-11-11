@@ -114,6 +114,7 @@ class FinalizerTarg {
 ///// End of debuggee
 
 
+@Bean
 public class FinalizerTest extends TestScaffold {
 
     public static void main(String args[])

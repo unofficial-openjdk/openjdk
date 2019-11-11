@@ -153,11 +153,19 @@ public abstract class IntlTest {
     /**
      * Adds the given message to the log if we are in verbose mode.
      */
-    protected void log(String message) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void log(String message) {
         logImpl(message, false);
     }
 
-    protected void logln(String message) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void logln(String message) {
         logImpl(message, true);
     }
 
@@ -165,7 +173,11 @@ public abstract class IntlTest {
         logImpl(null, true);
     }
 
-    private void logImpl(String message, boolean newline) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void logImpl(String message, boolean newline) {
         if (verbose) {
             if (message != null) {
                 indent(indentLevel + 1);
@@ -177,15 +189,27 @@ public abstract class IntlTest {
         }
     }
 
-    protected void err(String message) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void err(String message) {
         errImpl(message, false);
     }
 
-    protected void errln(String message) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void errln(String message) {
         errImpl(message, true);
     }
 
-    private void errImpl(String message, boolean newline) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void errImpl(String message, boolean newline) {
         errorCount++;
         indent(indentLevel + 1);
         log.print(message);
@@ -203,14 +227,22 @@ public abstract class IntlTest {
         return errorCount;
     }
 
-    protected void writeTestName(String testName) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void writeTestName(String testName) {
         indent(indentLevel);
         log.print(testName);
         log.flush();
         needLineFeed = true;
     }
 
-    protected void writeTestResult(int count) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void writeTestResult(int count) {
         if (!needLineFeed) {
             indent(indentLevel);
             log.print("}");
@@ -238,7 +270,11 @@ public abstract class IntlTest {
         return sb.toString();
     }
 
-    private void indent(int distance) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void indent(int distance) {
         if (needLineFeed) {
             log.println(" {");
             needLineFeed = false;

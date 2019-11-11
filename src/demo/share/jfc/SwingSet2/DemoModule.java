@@ -51,6 +51,7 @@ import java.net.*;
  *
  * @author Jeff Dinkins
  */
+@Bean
 public class DemoModule extends JApplet {
 
     // The preferred size of the demo
@@ -117,7 +118,11 @@ public class DemoModule extends JApplet {
     }
 
 
-    public String getString(String key) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String getString(String key) {
 
         if (getSwingSet2() != null) {
             return getSwingSet2().getString(key);
@@ -126,11 +131,19 @@ public class DemoModule extends JApplet {
         }
     }
 
-    public char getMnemonic(String key) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public char getMnemonic(String key) {
         return (getString(key)).charAt(0);
     }
 
-    public ImageIcon createImageIcon(String filename, String description) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public ImageIcon createImageIcon(String filename, String description) {
         if(getSwingSet2() != null) {
             return getSwingSet2().createImageIcon(filename, description);
         } else {
@@ -193,7 +206,11 @@ public class DemoModule extends JApplet {
         frame.show();
     }
 
-    public JPanel createHorizontalPanel(boolean threeD) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JPanel createHorizontalPanel(boolean threeD) {
         JPanel p = new JPanel();
         p.setLayout(new BoxLayout(p, BoxLayout.X_AXIS));
         p.setAlignmentY(TOP_ALIGNMENT);
@@ -204,7 +221,11 @@ public class DemoModule extends JApplet {
         return p;
     }
 
-    public JPanel createVerticalPanel(boolean threeD) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JPanel createVerticalPanel(boolean threeD) {
         JPanel p = new JPanel();
         p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
         p.setAlignmentY(TOP_ALIGNMENT);

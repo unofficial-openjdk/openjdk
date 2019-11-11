@@ -65,7 +65,10 @@ public class ScaledTransform {
             Panel panel = new Panel() {
 
                 @Override
-                public void paint(Graphics g) {
+                @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
                     if (g instanceof Graphics2D) {
                         AffineTransform gcTx = gc.getDefaultTransform();
                         AffineTransform gTx

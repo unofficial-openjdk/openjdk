@@ -49,6 +49,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+@Bean
 public class ListModuleDeps {
     private static final String TEST_SRC = System.getProperty("test.src");
 
@@ -103,7 +104,11 @@ public class ListModuleDeps {
     }
 
     @Test(dataProvider = "jdkModules")
-    public void testJDKModule(String moduleName, String[] expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testJDKModule(String moduleName, String[] expected) {
         JdepsRunner jdeps = JdepsRunner.run(
             "--list-deps", "-m", moduleName
         );
@@ -114,7 +119,11 @@ public class ListModuleDeps {
     }
 
     @Test(dataProvider = "listdeps")
-    public void testListDeps(Path classes, String[] expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testListDeps(Path classes, String[] expected) {
         JdepsRunner jdeps = JdepsRunner.run(
             "--class-path", LIB_DIR.toString() + File.pathSeparator + LIB2_DIR.toString(),
             "--list-deps", classes.toString()
@@ -126,7 +135,11 @@ public class ListModuleDeps {
     }
 
     @Test(dataProvider = "reduceddeps")
-    public void testListReducedDeps(Path classes, String[]  expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testListReducedDeps(Path classes, String[]  expected) {
         JdepsRunner jdeps = JdepsRunner.run(
             "--class-path", LIB_DIR.toString() + File.pathSeparator + LIB2_DIR.toString(),
             "--list-reduced-deps", classes.toString()
@@ -222,7 +235,11 @@ public class ListModuleDeps {
     }
 
     @Test(dataProvider = "moduledeps")
-    public void testPrintModuleDeps(Path classes, String expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testPrintModuleDeps(Path classes, String expected) {
         JdepsRunner jdeps = JdepsRunner.run(
             "--class-path", LIB_DIR.toString() + File.pathSeparator + LIB2_DIR.toString(),
             "--print-module-deps", classes.toString()
@@ -249,7 +266,11 @@ public class ListModuleDeps {
     }
 
     @Test(dataProvider = "noRecursiveModuledeps")
-    public void testNoRecursiveModuleDeps(Path classes, String expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testNoRecursiveModuleDeps(Path classes, String expected) {
         JdepsRunner jdeps = JdepsRunner.run(
             "--class-path", LIB_DIR.toString() + File.pathSeparator + LIB2_DIR.toString(),
             "--print-module-deps", "--no-recursive", classes.toString()
@@ -309,7 +330,11 @@ public class ListModuleDeps {
     }
 
     @Test(dataProvider = "recursiveDeps")
-    public void testRecursiveDeps(List<String> options, String[] expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testRecursiveDeps(List<String> options, String[] expected) {
         JdepsRunner jdeps = JdepsRunner.run(options.toArray(new String[0]));
         String[] output = Arrays.stream(jdeps.output())
                                 .map(s -> s.trim())

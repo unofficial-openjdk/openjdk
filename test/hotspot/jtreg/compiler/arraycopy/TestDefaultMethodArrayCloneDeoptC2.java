@@ -57,6 +57,7 @@ interface TestDefaultMethodArrayCloneDeoptC2Interface {
     }
 }
 
+@Bean
 public class TestDefaultMethodArrayCloneDeoptC2 implements TestDefaultMethodArrayCloneDeoptC2Interface {
     private static final WhiteBox WB = WhiteBox.getWhiteBox();
     public static TestDefaultMethodArrayCloneDeoptC2 a = new TestDefaultMethodArrayCloneDeoptC2();

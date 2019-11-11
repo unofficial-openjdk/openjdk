@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Bean
 public class FontPathEnvTest {
 
     public static void main(String args[]) {

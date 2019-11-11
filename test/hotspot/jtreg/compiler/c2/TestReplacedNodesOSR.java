@@ -29,6 +29,7 @@
  *
  */
 
+@Bean
 public class TestReplacedNodesOSR {
 
     static Object dummy;
@@ -78,7 +79,11 @@ public class TestReplacedNodesOSR {
     }
 
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         for (int i = 0; i < 1000; i++) {
             test(1100, new MyException());
         }

@@ -45,6 +45,7 @@ import toolbox.Task;
 import toolbox.TestRunner;
 import toolbox.ToolBox;
 
+@Bean
 public class EncodingTest extends TestRunner {
     public static void main(String... args) throws Exception {
         EncodingTest t = new EncodingTest();
@@ -63,7 +64,8 @@ public class EncodingTest extends TestRunner {
     void init() throws IOException {
         Files.createDirectories(src);
         Files.write(src.resolve("C.java"),
-                "/** \u03b1\u03b2\u03b3 */ public class C { }".getBytes(StandardCharsets.UTF_8));
+                "/** \u03b1\u03b2\u03b3 */ @Bean
+public class C { }".getBytes(StandardCharsets.UTF_8));
     }
 
     @Test

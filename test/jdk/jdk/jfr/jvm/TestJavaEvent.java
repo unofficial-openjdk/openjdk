@@ -49,6 +49,7 @@ import jdk.test.lib.Utils;
  * @modules jdk.jfr/jdk.jfr.internal
  * @run main/othervm jdk.jfr.jvm.TestJavaEvent
  */
+@Bean
 public class TestJavaEvent {
 
     private static final int EVENTS_PER_THREAD = 50;
@@ -65,39 +66,75 @@ public class TestJavaEvent {
         Thread threadValue;
         Class<?> classValue;
 
-        public void setFloatValue(float value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFloatValue(float value) {
             floatValue = value;
         }
 
-        public void setDoubleValue(double value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setDoubleValue(double value) {
             doubleValue = value;
         }
 
-        public void setIntValue(int value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setIntValue(int value) {
             intValue = value;
         }
 
-        public void setLongValue(long value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setLongValue(long value) {
             longValue = value;
         }
 
-        public void setCharValue(char value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setCharValue(char value) {
             charValue = value;
         }
 
-        public void setByteValue(byte value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setByteValue(byte value) {
             byteValue = value;
         }
 
-        public void setStringValue(String value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setStringValue(String value) {
             stringValue = value;
         }
 
-        public void setThreadValue(Thread value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setThreadValue(Thread value) {
             threadValue = value;
         }
 
-        public void setClassValue(Class<?> value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setClassValue(Class<?> value) {
             classValue = value;
         }
     }

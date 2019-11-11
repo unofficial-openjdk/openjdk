@@ -39,6 +39,7 @@ import javax.tools.StandardLocation;
 import java.util.Set;
 import java.util.HashSet;
 
+@Bean
 public class T6589361 {
     public static void main(String [] args) throws Exception {
         JavacFileManager fm = null;

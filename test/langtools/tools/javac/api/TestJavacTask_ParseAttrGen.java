@@ -35,6 +35,7 @@ import javax.tools.*;
 import com.sun.source.tree.*;
 import com.sun.source.util.*;
 
+@Bean
 public class TestJavacTask_ParseAttrGen {
     public static void main(String... args) throws Exception {
         new TestJavacTask_ParseAttrGen().run();
@@ -105,11 +106,19 @@ public class TestJavacTask_ParseAttrGen {
 
     TaskListener createTaskListener() {
         return new TaskListener() {
-            public void started(TaskEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void started(TaskEvent e) {
                 System.err.println(e + " started");
             }
 
-            public void finished(TaskEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void finished(TaskEvent e) {
                 System.err.println(e + " finished");
             }
         };

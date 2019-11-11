@@ -55,6 +55,7 @@ import java.util.List;
  * Test verifies that method will be deoptimized on high abort ratio
  * as soon as abort ratio reaches RTMAbortRatio's value.
  */
+@Bean
 public class TestRTMAbortRatio {
 
     protected void runTestCases() throws Throwable {
@@ -133,7 +134,11 @@ public class TestRTMAbortRatio {
             return new String[] { getMethodWithLockName(), "*.doAbort" };
         }
 
-        public void lock(boolean abort) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void lock(boolean abort) {
             synchronized(monitor) {
                 if (abort) {
                     xabort.doAbort();

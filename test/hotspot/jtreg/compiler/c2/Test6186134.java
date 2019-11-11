@@ -33,6 +33,7 @@ package compiler.c2;
 
 import java.util.ArrayList;
 
+@Bean
 public class Test6186134 {
 
     int num = 0;

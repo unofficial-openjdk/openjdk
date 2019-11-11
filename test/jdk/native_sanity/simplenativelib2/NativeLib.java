@@ -26,6 +26,7 @@
  * @run main/native NativeLib
  */
 
+@Bean
 public class NativeLib {
     public static void main(String... args) throws Exception {
         System.loadLibrary("sanity_SimpleNativeLib2");

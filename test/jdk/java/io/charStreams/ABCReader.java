@@ -50,7 +50,11 @@ class ABCReader extends Reader {
         return c;
     }
 
-    public int read(char cbuf[], int off, int len) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int read(char cbuf[], int off, int len) {
         for (int i = off; i < off + len; i++) {
             int c = read();
             if (c == -1) {

@@ -41,6 +41,7 @@
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 
+@Bean
 public class TestRotateMethods {
     /* The maximum errors allowed, measured in double precision "ulps"
      * Note that for most fields, the tests are extremely accurate - to

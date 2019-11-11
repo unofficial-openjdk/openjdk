@@ -86,6 +86,7 @@ import sun.security.x509.KeyIdentifier;
  * calls to the build method.  Settings may be cleared using the
  * {@link #reset()} method.
  */
+@Bean
 public class CertificateBuilder {
     private final CertificateFactory factory;
 
@@ -114,7 +115,11 @@ public class CertificateBuilder {
      * @param name An {@link X500Principal} to be used as the subject name
      * on this certificate.
      */
-    public void setSubjectName(X500Principal name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setSubjectName(X500Principal name) {
         subjectName = name;
     }
 
@@ -123,7 +128,11 @@ public class CertificateBuilder {
      *
      * @param name The subject name in RFC 2253 format
      */
-    public void setSubjectName(String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setSubjectName(String name) {
         subjectName = new X500Principal(name);
     }
 
@@ -132,7 +141,11 @@ public class CertificateBuilder {
      *
      * @param pubKey The {@link PublicKey} to be used on this certificate.
      */
-    public void setPublicKey(PublicKey pubKey) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setPublicKey(PublicKey pubKey) {
         publicKey = Objects.requireNonNull(pubKey, "Caught null public key");
     }
 
@@ -142,7 +155,11 @@ public class CertificateBuilder {
      * @param nbDate A {@link Date} object specifying the start of the
      * certificate validity period.
      */
-    public void setNotBefore(Date nbDate) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setNotBefore(Date nbDate) {
         Objects.requireNonNull(nbDate, "Caught null notBefore date");
         notBefore = (Date)nbDate.clone();
     }
@@ -153,7 +170,11 @@ public class CertificateBuilder {
      * @param naDate A {@link Date} object specifying the end of the
      * certificate validity period.
      */
-    public void setNotAfter(Date naDate) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setNotAfter(Date naDate) {
         Objects.requireNonNull(naDate, "Caught null notAfter date");
         notAfter = (Date)naDate.clone();
     }
@@ -166,7 +187,11 @@ public class CertificateBuilder {
      * @param naDate A {@link Date} object specifying the end of the
      * certificate validity period.
      */
-    public void setValidity(Date nbDate, Date naDate) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setValidity(Date nbDate, Date naDate) {
         setNotBefore(nbDate);
         setNotAfter(naDate);
     }
@@ -176,7 +201,11 @@ public class CertificateBuilder {
      *
      * @param serial A serial number in {@link BigInteger} form.
      */
-    public void setSerialNumber(BigInteger serial) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setSerialNumber(BigInteger serial) {
         Objects.requireNonNull(serial, "Caught null serial number");
         serialNumber = serial;
     }
@@ -187,7 +216,11 @@ public class CertificateBuilder {
      *
      * @param ext The extension to be added.
      */
-    public void addExtension(Extension ext) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void addExtension(Extension ext) {
         Objects.requireNonNull(ext, "Caught null extension");
         extensions.put(ext.getId(), ext);
     }
@@ -198,7 +231,11 @@ public class CertificateBuilder {
      * @param extList The {@link List} of extensions to be added to
      * the certificate.
      */
-    public void addExtensions(List<Extension> extList) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void addExtensions(List<Extension> extList) {
         Objects.requireNonNull(extList, "Caught null extension list");
         for (Extension ext : extList) {
             extensions.put(ext.getId(), ext);

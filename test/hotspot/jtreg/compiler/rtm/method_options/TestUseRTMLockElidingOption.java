@@ -63,6 +63,7 @@ import java.util.List;
  * to avoid issue with retriable aborts described in
  * {@link TestUseRTMAfterLockInflation}.
  */
+@Bean
 public class TestUseRTMLockElidingOption {
 
     public void runTestCases() throws Throwable {

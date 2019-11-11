@@ -489,7 +489,8 @@ public class DocFlavor implements Serializable, Cloneable {
      *         parameter is not in the mime type string
      * @throws NullPointerException if paramName is {@code null}
      */
-    public String getParameter(String paramName) {
+@Bean
+        public String getParameter(String paramName) {
         return myMimeType.getParameterMap().get(paramName.toLowerCase());
     }
 
@@ -537,7 +538,8 @@ public class DocFlavor implements Serializable, Cloneable {
      * @return {@code true} if this doc flavor object equals {@code obj},
      *         {@code false} otherwise
      */
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         return
             obj != null &&
             obj instanceof DocFlavor &&

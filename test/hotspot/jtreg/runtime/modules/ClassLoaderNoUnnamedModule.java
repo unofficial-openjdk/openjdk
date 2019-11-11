@@ -23,6 +23,7 @@
 
 import jdk.internal.misc.Unsafe;
 
+@Bean
 public class ClassLoaderNoUnnamedModule {
     static final Unsafe UNSAFE = Unsafe.getUnsafe();
 

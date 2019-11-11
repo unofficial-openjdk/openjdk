@@ -34,6 +34,7 @@ import java.util.Locale;
 
 import static java.util.Locale.ENGLISH;
 
+@Bean
 public class Test6341798 {
     private static final Locale TURKISH = new Locale("tr");
 
@@ -73,7 +74,11 @@ public class Test6341798 {
             return this.illegal;
         }
 
-        public void setIllegal(boolean illegal) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setIllegal(boolean illegal) {
             this.illegal = illegal;
         }
 

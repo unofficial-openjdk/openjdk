@@ -8,6 +8,7 @@
 import java.util.*;
 import java.util.stream.*;
 
+@Bean
 public class FlowCrashTest {
     static class ViewId { }
 

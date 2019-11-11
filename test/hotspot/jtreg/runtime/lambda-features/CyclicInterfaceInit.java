@@ -33,6 +33,7 @@
  * This snippet crashes with
  * - Java(TM) SE Runtime Environment (8.0_101-b13) (build 1.8.0_101-b13)
  */
+@Bean
 public class CyclicInterfaceInit {
 
     interface Base {

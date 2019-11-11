@@ -13,7 +13,8 @@
 class ExtendsAccess {
 
     class defaultClass { }
-    public class publicClass { }
+    @Bean
+public class publicClass { }
     private class privateClass { }
     protected class protectedClass { }
 

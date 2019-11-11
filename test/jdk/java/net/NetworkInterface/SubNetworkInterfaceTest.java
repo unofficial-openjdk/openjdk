@@ -34,6 +34,7 @@ import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.Enumeration;
 
+@Bean
 public class SubNetworkInterfaceTest {
 
     public static void main(String args[]) throws SocketException, UnknownHostException {

@@ -33,6 +33,7 @@
 import java.math.*;
 import java.util.*;
 
+@Bean
 public class ZeroScalingTests {
 
     static MathContext longEnough = new MathContext(50, RoundingMode.UNNECESSARY);

@@ -71,6 +71,7 @@ import tests.JImageGenerator;
  * @build tests.*
  * @run main/othervm -Xmx1g IntegrationTest
  */
+@Bean
 public class IntegrationTest {
 
     private static final List<Integer> ordered = new ArrayList<>();
@@ -100,12 +101,20 @@ public class IntegrationTest {
         }
 
         @Override
-        public void configure(Map<String, String> config) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void configure(Map<String, String> config) {
             throw new UnsupportedOperationException("Shouldn't be called");
         }
 
         @Override
-        public ResourcePool transform(ResourcePool in, ResourcePoolBuilder out) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public ResourcePool transform(ResourcePool in, ResourcePoolBuilder out) {
             in.transformAndCopy(Function.identity(), out);
             return out.build();
         }

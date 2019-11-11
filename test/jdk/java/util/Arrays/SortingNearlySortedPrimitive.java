@@ -44,6 +44,7 @@ import java.util.function.IntFunction;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+@Bean
 public class SortingNearlySortedPrimitive {
 
     static final int BASE = 3;
@@ -142,7 +143,11 @@ public class SortingNearlySortedPrimitive {
     }
 
     @Test(dataProvider = "shapes")
-    public void testShapes(String testName, IntFunction<int[]> dataMethod, int size) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testShapes(String testName, IntFunction<int[]> dataMethod, int size) {
         int[] intSourceArray = dataMethod.apply(size);
 
         // Clone source array to ensure it is not modified
@@ -194,7 +199,11 @@ public class SortingNearlySortedPrimitive {
         return result;
     }
 
-    private void sortAndAssert(int[] array) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void sortAndAssert(int[] array) {
         Arrays.sort(array);
         for (int i = 1; i < array.length; i++) {
             if (array[i] < array[i - 1]) {
@@ -203,7 +212,11 @@ public class SortingNearlySortedPrimitive {
         }
     }
 
-    private void sortAndAssert(char[] array) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void sortAndAssert(char[] array) {
         Arrays.sort(array);
         for (int i = 1; i < array.length; i++) {
             if (array[i] < array[i - 1]) {
@@ -212,7 +225,11 @@ public class SortingNearlySortedPrimitive {
         }
     }
 
-    private void sortAndAssert(short[] array) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void sortAndAssert(short[] array) {
         Arrays.sort(array);
         for (int i = 1; i < array.length; i++) {
             if (array[i] < array[i - 1]) {
@@ -221,7 +238,11 @@ public class SortingNearlySortedPrimitive {
         }
     }
 
-    private void sortAndAssert(double[] array) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void sortAndAssert(double[] array) {
         Arrays.sort(array);
         for (int i = 1; i < array.length; i++) {
             if (array[i] < array[i - 1]) {
@@ -230,7 +251,11 @@ public class SortingNearlySortedPrimitive {
         }
     }
 
-    private void sortAndAssert(float[] array) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void sortAndAssert(float[] array) {
         Arrays.sort(array);
         for (int i = 1; i < array.length; i++) {
             if (array[i] < array[i - 1]) {
@@ -239,7 +264,11 @@ public class SortingNearlySortedPrimitive {
         }
     }
 
-    private void sortAndAssert(long[] array) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void sortAndAssert(long[] array) {
         Arrays.sort(array);
         for (int i = 1; i < array.length; i++) {
             if (array[i] < array[i - 1]) {

@@ -8,7 +8,11 @@
 
 class T4743490 {
     static class A {
-        public void m(Object o, String s) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void m(Object o, String s) {}
     }
     interface B {
         void m(String s, Object o);

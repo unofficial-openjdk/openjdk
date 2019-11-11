@@ -40,6 +40,7 @@ import jdk.test.lib.process.OutputAnalyzer;
  * @library /test/lib /test/jdk
  * @run main/othervm -XX:+FlightRecorder -XX:FlightRecorderOptions=maxchunksize=2097152 jdk.jfr.jcmd.TestJcmdStartWithOptions
  */
+@Bean
 public class TestJcmdStartWithOptions {
 
     private static final String DIR = System.getProperty("test.src", ".");

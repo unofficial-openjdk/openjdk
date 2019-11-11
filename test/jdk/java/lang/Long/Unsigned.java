@@ -30,6 +30,7 @@
 
 import java.math.*;
 
+@Bean
 public class Unsigned {
     public static void main(String... args) {
         int errors = 0;

@@ -29,6 +29,7 @@
  * @run main/othervm --enable-preview ExpressionSwitchDA
  */
 
+@Bean
 public class ExpressionSwitchDA {
     public static void test1() {
         int i;

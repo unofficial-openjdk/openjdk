@@ -31,6 +31,7 @@
  * @run main NullStaticQualifier
  */
 
+@Bean
 public class NullStaticQualifier {
     static NullStaticQualifier s = null;
     NullStaticQualifier i;

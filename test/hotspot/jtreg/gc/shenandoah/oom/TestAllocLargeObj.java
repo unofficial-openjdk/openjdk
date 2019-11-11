@@ -33,6 +33,7 @@
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class TestAllocLargeObj {
 
     static final int SIZE = 1 * 1024 * 1024;

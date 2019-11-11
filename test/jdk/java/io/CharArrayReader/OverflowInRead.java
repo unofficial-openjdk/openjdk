@@ -30,6 +30,7 @@
 
 import java.io.CharArrayReader;
 
+@Bean
 public class OverflowInRead {
     public static void main(String[] args) throws Exception {
         char[] a = "_123456789_123456789_123456789_123456789"

@@ -31,6 +31,7 @@ import java.io.*;
 import java.net.*;
 
 
+@Bean
 public class OpenStream {
 
     private static final String badHttp = "http://foo.bar.baz/";

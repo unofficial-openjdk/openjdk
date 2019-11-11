@@ -40,6 +40,7 @@ import javax.management.StandardMBean;
  *
  * That MBean might not be used for testing purpose itself.
  */
+@Bean
 public class ServerDelegate implements ServerDelegateMBean, MBeanRegistration {
 
     private MBeanServer mbeanServer = null;
@@ -62,14 +63,22 @@ public class ServerDelegate implements ServerDelegateMBean, MBeanRegistration {
         mbeanServer = server;
         return name;
     }
-    public void postRegister(Boolean registrationDone) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void postRegister(Boolean registrationDone) {
     }
     public void preDeregister() throws Exception {
     }
     public void postDeregister() {
     }
 
-    public void addAddress(JMXServiceURL url) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void addAddress(JMXServiceURL url) {
         addresses.add(url) ;
     }
 
@@ -77,7 +86,11 @@ public class ServerDelegate implements ServerDelegateMBean, MBeanRegistration {
         return addresses ;
     }
 
-    public void setPort(String p) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setPort(String p) {
         port = p ;
     }
 
@@ -97,7 +110,11 @@ public class ServerDelegate implements ServerDelegateMBean, MBeanRegistration {
         return sqeJmxwsCredentialsProviderCallCount;
     }
 
-    public void setJmxwsCredentialsProviderUrl(String url) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setJmxwsCredentialsProviderUrl(String url) {
         jmxwsCredentialsProviderUrl = url;
     }
 
@@ -113,7 +130,11 @@ public class ServerDelegate implements ServerDelegateMBean, MBeanRegistration {
         return testJMXAuthenticatorCallCount;
     }
 
-    public void setTestJMXAuthenticatorPrincipal(Principal principal) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setTestJMXAuthenticatorPrincipal(Principal principal) {
         testJMXAuthenticatorPrincipal = principal;
     }
 

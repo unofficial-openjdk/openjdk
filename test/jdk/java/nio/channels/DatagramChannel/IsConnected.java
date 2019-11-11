@@ -33,6 +33,7 @@ import java.net.*;
 import java.nio.channels.*;
 
 
+@Bean
 public class IsConnected {
     public static void main(String argv[]) throws Exception {
         try (TestServers.UdpDayTimeServer daytimeServer

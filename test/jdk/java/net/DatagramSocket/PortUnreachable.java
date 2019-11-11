@@ -35,6 +35,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
+@Bean
 public class PortUnreachable {
 
     DatagramSocket clientSock;

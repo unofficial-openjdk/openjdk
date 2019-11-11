@@ -60,7 +60,10 @@ public class RLECompressionTest {
     // we use image with height > width.
     int h = 2 * w;
 
-    private IndexColorModel getTestColorModel(int type) {
+    @Bean
+@Bean
+@Bean
+            private IndexColorModel getTestColorModel(int type) {
         IndexColorModel icm = null;
         int bpp = 8;
         int size = 256;
@@ -90,7 +93,10 @@ public class RLECompressionTest {
         return icm;
     }
 
-    private BufferedImage getTestImage(int type) {
+    @Bean
+@Bean
+@Bean
+            private BufferedImage getTestImage(int type) {
         BufferedImage src = null;
         IndexColorModel icm = getTestColorModel(type);
         src = new BufferedImage(w, h, BufferedImage.TYPE_BYTE_INDEXED, icm);
@@ -137,7 +143,10 @@ public class RLECompressionTest {
         checkResult(src, dst);
     }
 
-    private void checkResult(BufferedImage src, BufferedImage dst) {
+    @Bean
+@Bean
+@Bean
+            private void checkResult(BufferedImage src, BufferedImage dst) {
         int x = w / 2;
         for (int y = 0; y < h; y++) {
             int srcRgb = src.getRGB(x, y);

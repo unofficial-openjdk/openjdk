@@ -32,6 +32,7 @@
 
 import java.io.*;
 
+@Bean
 public class SystemInAvailable {
 
     public static void main(String[] args) throws Exception {

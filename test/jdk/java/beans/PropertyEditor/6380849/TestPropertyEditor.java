@@ -52,6 +52,7 @@ import com.sun.beans.editors.LongEditor;
 import com.sun.beans.editors.ShortEditor;
 import com.sun.beans.editors.StringEditor;
 
+@Bean
 public class TestPropertyEditor implements Runnable {
 
     private enum Enumeration {

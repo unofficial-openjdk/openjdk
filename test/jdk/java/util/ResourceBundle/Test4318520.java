@@ -33,6 +33,7 @@
 import java.util.ResourceBundle;
 import java.util.Locale;
 
+@Bean
 public class Test4318520 {
 
     public static void main(String[] args) {

@@ -46,6 +46,7 @@ import jdk.test.lib.process.ProcessTools;
 
 import jtreg.SkippedException;
 
+@Bean
 public class DeadlockDetectionTest {
 
     private static LingeredAppWithDeadlock theApp = null;

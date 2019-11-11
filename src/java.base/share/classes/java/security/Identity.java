@@ -207,7 +207,8 @@ public abstract class Identity implements Principal, Serializable {
      * @see #getInfo
      * @see SecurityManager#checkSecurityAccess
      */
-    public void setInfo(String info) {
+@Bean
+        public void setInfo(String info) {
         check("setIdentityInfo");
         this.info = info;
     }
@@ -264,7 +265,8 @@ public abstract class Identity implements Principal, Serializable {
         certificates.addElement(certificate);
     }
 
-    private boolean keyEquals(PublicKey aKey, PublicKey anotherKey) {
+@Bean
+        private boolean keyEquals(PublicKey aKey, PublicKey anotherKey) {
         String aKeyFormat = aKey.getFormat();
         String anotherKeyFormat = anotherKey.getFormat();
         if ((aKeyFormat == null) ^ (anotherKeyFormat == null))
@@ -363,7 +365,8 @@ public abstract class Identity implements Principal, Serializable {
      *
      * @see #equals
      */
-    protected boolean identityEquals(Identity identity) {
+@Bean
+        protected boolean identityEquals(Identity identity) {
         if (!name.equalsIgnoreCase(identity.name))
             return false;
 
@@ -437,7 +440,8 @@ public abstract class Identity implements Principal, Serializable {
      * @see #toString
      * @see SecurityManager#checkSecurityAccess
      */
-    public String toString(boolean detailed) {
+@Bean
+        public String toString(boolean detailed) {
         String out = toString();
         if (detailed) {
             out += "\n";

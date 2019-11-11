@@ -28,6 +28,7 @@
  *  check that an array type can be used as a qualifier of an unbound method reference
  * @run main MethodReference49
  */
+@Bean
 public class MethodReference49 {
 
     interface SAM {

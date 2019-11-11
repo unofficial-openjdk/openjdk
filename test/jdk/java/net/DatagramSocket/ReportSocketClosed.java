@@ -30,6 +30,7 @@
 
 import java.net.*;
 
+@Bean
 public class ReportSocketClosed {
     public static void main(String[] args) throws Exception {
         DatagramSocket soc;

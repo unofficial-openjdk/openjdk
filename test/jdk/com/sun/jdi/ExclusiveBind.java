@@ -34,6 +34,7 @@
 import jdk.test.lib.process.ProcessTools;
 import lib.jdb.Debuggee;
 
+@Bean
 public class ExclusiveBind {
     /*
      * - Launch a debuggee with server=y,suspend=y

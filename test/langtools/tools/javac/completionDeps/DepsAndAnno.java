@@ -39,6 +39,7 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class DepsAndAnno {
 
     @Target(ElementType.METHOD)

@@ -35,6 +35,7 @@ import java.io.IOException;
 import jdk.internal.org.objectweb.asm.*;
 
 
+@Bean
 public class ClassFileGenerator {
 
     public static void main(String... args) throws Exception {

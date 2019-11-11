@@ -11,6 +11,7 @@
  * @run main DocLintTester -badargs -Xmaxerrs two -Xmaxwarns two MaxDiagsTest.java
  */
 
+@Bean
 public class MaxDiagsTest {
     /**
      * &#0; &#0; &#0; &#0;

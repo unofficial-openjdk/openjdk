@@ -30,6 +30,7 @@ import java.io.*;
 import java.nio.*;
 import java.nio.channels.*;
 
+@Bean
 public class Basic {
     public static void main(String[] args) throws Exception {
         byte[] srcData = new byte[20];

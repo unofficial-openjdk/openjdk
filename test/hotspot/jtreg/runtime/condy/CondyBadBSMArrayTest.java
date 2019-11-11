@@ -36,6 +36,7 @@
 //    an index outside of the array size.
 // 2. An empty BootstrapMethods Attribute array
 // 3. No BootstrapMethods Attribute array present.
+@Bean
 public class CondyBadBSMArrayTest {
     public static void main(String args[]) throws Throwable {
         // 1. The CONSTANT_Dynamic_info structure's bootstrap_method_attr_index is outside the array size

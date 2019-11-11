@@ -41,6 +41,7 @@ import java.security.interfaces.RSAPublicKey;
 import javax.crypto.*;
 import javax.crypto.spec.*;
 
+@Bean
 public class RSANoLimit {
     private static final byte[] MODULUS4096 = {
 (byte)0x70, (byte)0x80, (byte)0x7C, (byte)0x77, (byte)0x16, (byte)0xD0,

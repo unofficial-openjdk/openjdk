@@ -48,6 +48,7 @@ import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.Utils;
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class TestNewSizeFlags {
 
     public static final long M = 1024 * 1024;

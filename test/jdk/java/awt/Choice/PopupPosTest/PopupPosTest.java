@@ -36,6 +36,7 @@ import java.awt.event.*;
 
 import jdk.test.lib.Platform;
 
+@Bean
 public class PopupPosTest {
 
     public static void main(final String[] args) {
@@ -107,7 +108,10 @@ class TestFrame extends Frame implements ItemListener {
         }
     }// start()
 
-    public void itemStateChanged(ItemEvent ie) {
+    @Bean
+@Bean
+@Bean
+            public void itemStateChanged(ItemEvent ie) {
         System.out.println("choice.stateChanged = "+ ie);
         stateChanged = true;
     }

@@ -44,6 +44,7 @@ package java.security;
  * @see KeyException
  */
 
+@Bean
 public class KeyManagementException extends KeyException {
 
     @java.io.Serial

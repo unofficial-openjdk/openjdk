@@ -32,6 +32,7 @@ import java.util.*;
 import java.nio.*;
 import java.nio.charset.*;
 
+@Bean
 public class TestStringCodingUTF8 {
     public static void main(String[] args) throws Throwable {
         test("UTF-8");
@@ -176,6 +177,10 @@ public class TestStringCodingUTF8 {
     }
 
     static class PermissiveSecurityManger extends SecurityManager {
-        @Override public void checkPermission(java.security.Permission p) {}
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void checkPermission(java.security.Permission p) {}
     }
 }

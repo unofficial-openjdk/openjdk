@@ -195,13 +195,21 @@ public class GetOwnedMonitorStackDepthInfoWithEATest {
             } while(targetIsInLoop);
         }
 
-        public void msg(String m) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void msg(String m) {
             System.out.println();
             System.out.println("### " + m);
             System.out.println();
         }
 
-        public void msgHL(String m) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void msgHL(String m) {
             System.out.println();
             System.out.println("#####################################################");
             System.out.println("### " + m);
@@ -253,7 +261,11 @@ public class GetOwnedMonitorStackDepthInfoWithEATest {
             }
         }
 
-        public void inlinedTestMethodWithNestedLocking(LockCls l1) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void inlinedTestMethodWithNestedLocking(LockCls l1) {
             synchronized (l1) {              // nested
                 dontinline_endlessLoop();
             }
@@ -306,7 +318,11 @@ public class GetOwnedMonitorStackDepthInfoWithEATest {
             }
         }
 
-        public void inlinedTestMethodWithNestedLocking(LockCls l1) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void inlinedTestMethodWithNestedLocking(LockCls l1) {
             synchronized (l1) {
                 dontinline_testMethod2();
             }

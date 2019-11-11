@@ -49,6 +49,7 @@ import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.InputEvent;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@Bean
 public class ExtraDragEnterTest {
 
     private static final int FRAME_SIZE = 100;
@@ -75,9 +76,15 @@ public class ExtraDragEnterTest {
         Panel dropTarget = new Panel();
         dropTarget.setBackground(Color.red);
         DropTarget dt = new DropTarget(dropTarget, new DropTargetAdapter() {
-            @Override public void drop(DropTargetDropEvent dtde) { }
+            @Override @Bean
+@Bean
+@Bean
+            public void drop(DropTargetDropEvent dtde) { }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void dragEnter(DropTargetDragEvent dtde) {
                 dragEnterCalled.incrementAndGet();
             }
@@ -127,7 +134,10 @@ public class ExtraDragEnterTest {
         }
 
         @Override
-        public void dragGestureRecognized(DragGestureEvent dge) {
+        @Bean
+@Bean
+@Bean
+            public void dragGestureRecognized(DragGestureEvent dge) {
             dge.startDrag(Cursor.getDefaultCursor(), new StringSelection("test"));
         }
     }

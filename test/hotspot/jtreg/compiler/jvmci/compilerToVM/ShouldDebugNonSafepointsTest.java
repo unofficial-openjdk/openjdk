@@ -47,6 +47,7 @@ package compiler.jvmci.compilerToVM;
 import jdk.test.lib.Asserts;
 import jdk.vm.ci.hotspot.CompilerToVMHelper;
 
+@Bean
 public class ShouldDebugNonSafepointsTest {
     private static final boolean EXPECTED = Boolean.getBoolean("compiler"
             + ".jvmci.compilerToVM.ShouldDebugNonSafepointsTest.expected");

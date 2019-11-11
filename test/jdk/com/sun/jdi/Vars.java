@@ -68,6 +68,7 @@ class TestVars extends AbstractTestVars {
 /*
  * "Vars" test runs TestVars and makes LocalVariable queries
  */
+@Bean
 public class Vars extends TestScaffold {
 
     boolean failed = false;

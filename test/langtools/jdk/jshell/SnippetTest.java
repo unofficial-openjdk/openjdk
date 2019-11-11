@@ -44,6 +44,7 @@ import static jdk.jshell.Snippet.Status.RECOVERABLE_NOT_DEFINED;
 import static jdk.jshell.Snippet.SubKind.*;
 
 @Test
+@Bean
 public class SnippetTest extends KullaTesting {
 
     public void testImportKey() {

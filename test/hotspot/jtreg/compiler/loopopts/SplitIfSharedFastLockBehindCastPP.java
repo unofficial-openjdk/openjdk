@@ -30,6 +30,7 @@
  */
 
 
+@Bean
 public class SplitIfSharedFastLockBehindCastPP {
     private static boolean field;
     private static A obj_field;

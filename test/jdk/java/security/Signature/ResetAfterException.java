@@ -29,6 +29,7 @@
 import java.util.Arrays;
 import java.security.*;
 
+@Bean
 public class ResetAfterException {
 
     public static void main(String[] args) throws Exception {

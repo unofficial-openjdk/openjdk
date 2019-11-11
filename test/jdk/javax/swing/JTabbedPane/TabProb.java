@@ -45,30 +45,51 @@ import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
+@Bean
 public class TabProb extends JFrame {
     static TabProb tb1;
     static TabProb tb2;
     class FixLayout implements LayoutManager {
         @Override
-        public void layoutContainer(Container C) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void layoutContainer(Container C) {
             Insets in = C.getInsets();
             int w = 200 - in.left - in.right;
             int h = 100 - in.top - in.bottom;
             C.getComponents()[0].setBounds(in.top, in.left, w, h);
         }
         @Override
-        public Dimension minimumLayoutSize(Container C) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Dimension minimumLayoutSize(Container C) {
             return new Dimension(200, 100);
         }
         @Override
-        public Dimension preferredLayoutSize(Container C) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Dimension preferredLayoutSize(Container C) {
             return new Dimension(200, 100);
         }
         @Override
-        public void removeLayoutComponent(Component c) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removeLayoutComponent(Component c) {
         }
         @Override
-        public void addLayoutComponent(String s, Component c) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addLayoutComponent(String s, Component c) {
         }
     }
 

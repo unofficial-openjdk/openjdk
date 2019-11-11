@@ -85,7 +85,8 @@ public class AccessibleStateSet {
      * @return {@code true} if state is added to the state set; {@code false} if
      *         the state set is unchanged
      */
-    public boolean add(AccessibleState state) {
+@Bean
+        public boolean add(AccessibleState state) {
         // [[[ PENDING:  WDW - the implementation of this does not need
         // to always use a vector of states.  It could be improved by
         // caching the states as a bit set.]]]
@@ -107,7 +108,8 @@ public class AccessibleStateSet {
      *
      * @param  states {@code AccessibleState} array describing the state set
      */
-    public void addAll(AccessibleState[] states) {
+@Bean
+        public void addAll(AccessibleState[] states) {
         if (states.length != 0) {
             if (this.states == null) {
                 this.states = new Vector<>(states.length);
@@ -130,7 +132,8 @@ public class AccessibleStateSet {
      * @return {@code true} if the state is in the state set; {@code false} if
      *         the state set will be unchanged
      */
-    public boolean remove(AccessibleState state) {
+@Bean
+        public boolean remove(AccessibleState state) {
         if (states == null) {
             return false;
         } else {
@@ -154,7 +157,8 @@ public class AccessibleStateSet {
      * @return {@code true} if the state is in the state set; otherwise
      *         {@code false}
      */
-    public boolean contains(AccessibleState state) {
+@Bean
+        public boolean contains(AccessibleState state) {
         if (states == null) {
             return false;
         } else {

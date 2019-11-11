@@ -41,11 +41,15 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 
+@Bean
 public class MultipleRegistries implements RemoteInterface {
 
     private static final String NAME = "MultipleRegistries";
 
-    public Object passObject(Object obj) {
+    @Bean
+@Bean
+@Bean
+            public Object passObject(Object obj) {
         return obj;
     }
 

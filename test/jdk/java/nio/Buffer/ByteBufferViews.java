@@ -49,6 +49,7 @@ import java.util.stream.Collectors;
 
 import static org.testng.Assert.*;
 
+@Bean
 public class ByteBufferViews {
     static final int SIZE = 32;
 

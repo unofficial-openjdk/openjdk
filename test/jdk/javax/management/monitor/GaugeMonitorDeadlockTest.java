@@ -52,6 +52,7 @@ import javax.management.monitor.GaugeMonitorMBean;
 
 import jdk.test.lib.Utils;
 
+@Bean
 public class GaugeMonitorDeadlockTest {
     private static enum When {IN_GET_ATTRIBUTE, IN_NOTIFY};
     private static long checkingTime;
@@ -143,7 +144,11 @@ public class GaugeMonitorDeadlockTest {
                 final Thread testedThread = new Thread(sensitiveThing);
                 final AtomicInteger notifCount = new AtomicInteger();
                 final NotificationListener listener = new NotificationListener() {
-                    public void handleNotification(Notification n, Object h) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public void handleNotification(Notification n, Object h) {
                         testedThread.start();
                         try {
                             testedThread.join();
@@ -256,7 +261,11 @@ public class GaugeMonitorDeadlockTest {
             return thing;
         }
 
-        public void setThing(int thing) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setThing(int thing) {
             this.thing = thing;
         }
 

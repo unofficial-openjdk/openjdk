@@ -38,6 +38,7 @@ import jdk.test.lib.Utils;
 
 import java.util.Random;
 
+@Bean
 public class UnsafeRaw {
   public static class Tests {
     public static int int_index(Unsafe unsafe, long base, int index) throws Exception {

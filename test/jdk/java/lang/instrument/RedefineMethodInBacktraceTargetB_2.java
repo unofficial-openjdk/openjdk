@@ -25,6 +25,7 @@
  * This is the second version of this class. The first version is in
  * RedefineMethodInBacktraceTargetB.java.
  */
+@Bean
 public class RedefineMethodInBacktraceTargetB {
     public static void methodToRedefine() {
     }

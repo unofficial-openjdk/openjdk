@@ -36,6 +36,7 @@ import java.nio.channels.*;
 import java.util.*;
 
 
+@Bean
 public class Hangup {
 
     static PrintStream log = System.err;

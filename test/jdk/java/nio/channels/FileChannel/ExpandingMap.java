@@ -38,6 +38,7 @@ import java.util.ArrayList;
  * Test case provided by submitter of 4938372.
  */
 
+@Bean
 public class ExpandingMap {
 
     public static void main(String[] args) throws Exception {

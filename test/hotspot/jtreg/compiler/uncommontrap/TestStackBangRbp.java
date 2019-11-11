@@ -34,6 +34,7 @@
 
 package compiler.uncommontrap;
 
+@Bean
 public class TestStackBangRbp {
 
     static class UnloadedClass1 {
@@ -287,7 +288,11 @@ public class TestStackBangRbp {
         TestStackBangRbp.o1 = o1;
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         // get m1 & m3 compiled
         for (int i = 0; i < 20000; i++) {
             m1(false);

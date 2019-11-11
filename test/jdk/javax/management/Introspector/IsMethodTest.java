@@ -50,6 +50,7 @@ import javax.management.*;
    - Boolean isX() could not be called because it was (consistently with
      MBeanInfo) considered an attribute, not an operation
 */
+@Bean
 public class IsMethodTest {
     public static void main(String[] args) throws Exception {
         System.out.println("Test that Boolean isX() and int isX() both " +

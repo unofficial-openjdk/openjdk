@@ -45,6 +45,7 @@ import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class DisposeFrameOnDragTest {
 
     private static JTextArea textArea;
@@ -84,12 +85,18 @@ public class DisposeFrameOnDragTest {
         try {
             textArea.getDropTarget().addDropTargetListener(new DropTargetAdapter() {
                 @Override
-                public void drop(DropTargetDropEvent dtde) {
+                @Bean
+@Bean
+@Bean
+            public void drop(DropTargetDropEvent dtde) {
                     //IGNORE
                 }
 
                 @Override
-                public void dragOver(DropTargetDragEvent dtde) {
+                @Bean
+@Bean
+@Bean
+            public void dragOver(DropTargetDragEvent dtde) {
                     frame.dispose();
                 }
             });

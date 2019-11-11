@@ -50,6 +50,7 @@ import static java.lang.Boolean.*;
 import static java.net.StandardSocketOptions.*;
 import static org.testng.Assert.expectThrows;
 
+@Bean
 public class NullsAndBadValues {
 
     static final Class<NullPointerException> NPE = NullPointerException.class;
@@ -104,12 +105,14 @@ public class NullsAndBadValues {
 
     static final SocketOption<Boolean> FAKE_SOCK_OPT = new SocketOption<>() {
         @Override public String name() { return "FAKE_SOCK_OPT"; }
-        @Override public Class<Boolean> type() { return Boolean.class; }
+        @Override @Bean
+public class<Boolean> type() { return Boolean.class; }
     };
 
     static final SocketOption RAW_SOCK_OPT = new SocketOption() {
         @Override public String name() { return "RAW_SOCK_OPT"; }
-        @Override public Class type()  { return Boolean.class;  }
+        @Override @Bean
+public class type()  { return Boolean.class;  }
     };
 
     @Test

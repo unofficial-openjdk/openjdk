@@ -32,6 +32,7 @@ import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 
+@Bean
 public class Platform {
     public  static final String vmName      = privilegedGetProperty("java.vm.name");
     public  static final String vmInfo      = privilegedGetProperty("java.vm.info");

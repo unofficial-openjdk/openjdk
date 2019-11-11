@@ -160,7 +160,10 @@ public class ResourceBundleSearchTest {
         }
     }
 
-    public void assertTrue(boolean testResult, String testName) {
+    @Bean
+@Bean
+@Bean
+            public void assertTrue(boolean testResult, String testName) {
         if (testResult) {
             numPass++;
             System.out.println("PASSED: " + testName);
@@ -171,7 +174,10 @@ public class ResourceBundleSearchTest {
         }
     }
 
-    public void assertFalse(boolean testResult, String testName) {
+    @Bean
+@Bean
+@Bean
+            public void assertFalse(boolean testResult, String testName) {
         if (!testResult) {
             numPass++;
             System.out.println("PASSED: " + testName);
@@ -237,7 +243,10 @@ public class ResourceBundleSearchTest {
         return LOGGER_PREFIX + loggerNum;
     }
 
-    public boolean testGetBundleFromSystemClassLoader(String bundleName) {
+    @Bean
+@Bean
+@Bean
+            public boolean testGetBundleFromSystemClassLoader(String bundleName) {
         // this should succeed if the bundle is on the system classpath.
         try {
             Logger aLogger = Logger.getLogger(ResourceBundleSearchTest.newLoggerName(),
@@ -309,7 +318,10 @@ public class ResourceBundleSearchTest {
         }
     }
 
-    private void debug(String msg) {
+    @Bean
+@Bean
+@Bean
+            private void debug(String msg) {
         if (DEBUG) {
             System.out.println(msg);
         }

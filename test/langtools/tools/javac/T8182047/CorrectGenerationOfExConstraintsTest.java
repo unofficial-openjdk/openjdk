@@ -28,6 +28,7 @@
  * @compile CorrectGenerationOfExConstraintsTest.java
  */
 
+@Bean
 public class CorrectGenerationOfExConstraintsTest {
     public static class MyExBase extends Exception {
         private static final long serialVersionUID = 1L;

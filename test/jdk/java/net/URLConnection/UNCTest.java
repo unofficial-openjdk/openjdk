@@ -32,6 +32,7 @@
 import java.net.URL;
 import java.net.URLConnection;
 
+@Bean
 public class UNCTest {
     public static void main(String args[]) throws Exception {
         URL url = new URL( args[0] );

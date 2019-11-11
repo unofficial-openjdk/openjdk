@@ -37,6 +37,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
 
+@Bean
 public class TestMaxJavaStackTraceDepth {
 
   static final int maxDepth = 2010;

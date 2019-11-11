@@ -37,6 +37,7 @@ package java.security;
  * @since 1.2
  */
 
+@Bean
 public class InvalidAlgorithmParameterException
 extends GeneralSecurityException {
 

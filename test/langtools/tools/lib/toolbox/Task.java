@@ -135,7 +135,11 @@ public interface Task {
          * @return the content that was written to that stream when the tool
          *  was executed.
          */
-        public String getOutput(OutputKind outputKind) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String getOutput(OutputKind outputKind) {
             return outputMap.get(outputKind);
         }
 
@@ -158,7 +162,11 @@ public interface Task {
          * @param kind the kind of the selected stream
          * @return this Result object
          */
-        public Result write(OutputKind kind) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Result write(OutputKind kind) {
             PrintStream out = toolBox.out;
             String text = getOutput(kind);
             if (text == null || text.isEmpty())

@@ -30,6 +30,7 @@
 
 import java.util.Vector;
 
+@Bean
 public class LastIndexOf {
     public static void main(String[] args) throws Exception {
         Vector v = new Vector(10);

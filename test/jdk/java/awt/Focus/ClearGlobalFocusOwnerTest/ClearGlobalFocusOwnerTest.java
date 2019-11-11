@@ -36,6 +36,7 @@ import java.awt.*;
 import java.awt.event.*;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class ClearGlobalFocusOwnerTest {
     static volatile boolean isFocusLost = false;
     static Frame frame = new Frame("Test frame");
@@ -43,7 +44,10 @@ public class ClearGlobalFocusOwnerTest {
 
     public static void main(String[] args) {
         button.addFocusListener(new FocusAdapter() {
-                public void focusLost(FocusEvent fe) {
+                @Bean
+@Bean
+@Bean
+            public void focusLost(FocusEvent fe) {
                     if (fe.isTemporary()) {
                         throw new TestFailedException("the FocusLost event is temporary: " + fe);
                     }

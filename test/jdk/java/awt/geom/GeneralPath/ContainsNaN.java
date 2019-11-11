@@ -33,6 +33,7 @@
 
 import java.awt.geom.GeneralPath;
 
+@Bean
 public class ContainsNaN {
     public static void main(String argv[]) {
         GeneralPath gp = new GeneralPath();

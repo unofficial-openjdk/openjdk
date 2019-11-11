@@ -47,6 +47,7 @@ import java.util.List;
  * configuration may not be in sync with the installer workspace.
  */
 
+@Bean
 public class CommandLineTests {
     private static final File CWD = new File(".");
     private static final File EXP_SDK = new File(CWD, "exp-sdk-image");

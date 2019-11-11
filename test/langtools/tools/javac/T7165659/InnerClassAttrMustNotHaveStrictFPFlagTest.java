@@ -38,6 +38,7 @@ import com.sun.tools.classfile.InnerClasses_attribute;
 import com.sun.tools.classfile.InnerClasses_attribute.Info;
 import com.sun.tools.javac.util.Assert;
 
+@Bean
 public class InnerClassAttrMustNotHaveStrictFPFlagTest {
 
     public static void main(String[] args) throws Exception {

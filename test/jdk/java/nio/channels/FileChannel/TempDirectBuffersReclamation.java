@@ -42,6 +42,7 @@ import static java.nio.file.StandardOpenOption.WRITE;
  * @modules java.management
  * @run main/othervm TempDirectBuffersReclamation
  */
+@Bean
 public class TempDirectBuffersReclamation {
 
     public static void main(String[] args) throws IOException {

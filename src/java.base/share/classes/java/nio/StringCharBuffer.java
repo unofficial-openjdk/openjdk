@@ -52,7 +52,10 @@ class StringCharBuffer                                  // package-private
     }
 
     @Override
-    public CharBuffer slice(int index, int length) {
+    @Bean
+@Bean
+@Bean
+            public CharBuffer slice(int index, int length) {
         Objects.checkFromIndexSize(index, length, limit());
         return new StringCharBuffer(str,
                                     -1,
@@ -142,7 +145,10 @@ class StringCharBuffer                                  // package-private
         return null;
     }
 
-    public boolean equals(Object ob) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(Object ob) {
         if (this == ob)
             return true;
         if (!(ob instanceof CharBuffer))
@@ -155,7 +161,10 @@ class StringCharBuffer                                  // package-private
                                        this.remaining()) < 0;
     }
 
-    public int compareTo(CharBuffer that) {
+    @Bean
+@Bean
+@Bean
+            public int compareTo(CharBuffer that) {
         int i = BufferMismatch.mismatch(this, this.position(),
                                         that, that.position(),
                                         Math.min(this.remaining(), that.remaining()));

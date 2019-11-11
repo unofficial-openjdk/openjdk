@@ -91,6 +91,7 @@ import javax.tools.ToolProvider;
  * @author Vicente Romero (original)
  * @author Jonathan Gibbons (revised)
  */
+@Bean
 public class ToolBox {
     /** The platform line separator. */
     public static final String lineSeparator = System.getProperty("line.separator");
@@ -348,7 +349,11 @@ public class ToolBox {
      * @return the earlier exception or an exception that occurred while
      *  trying to delete the file
      */
-    private IOException deleteFile(Path path, IOException ioe) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private IOException deleteFile(Path path, IOException ioe) {
         try {
             Files.delete(path);
         } catch (IOException e) {
@@ -476,7 +481,11 @@ public class ToolBox {
         return Files.readAllLines(path, getCharset(encoding));
     }
 
-    private Charset getCharset(String encoding) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Charset getCharset(String encoding) {
         return (encoding == null) ? Charset.defaultCharset() : Charset.forName(encoding);
     }
 
@@ -571,7 +580,11 @@ public class ToolBox {
      * @param tool the name of the tool
      * @return the path of the tool
      */
-    public Path getJDKTool(String tool) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Path getJDKTool(String tool) {
         return Paths.get(testJDK, "bin", tool);
     }
 
@@ -639,7 +652,11 @@ public class ToolBox {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return source;
         }
 
@@ -780,17 +797,29 @@ public class ToolBox {
          * @param name the name of the file
          * @return the content as a string
          */
-        public String getFileString(Location location, String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String getFileString(Location location, String name) {
             Content content = getFile(location, name);
             return (content == null) ? null : content.getString();
         }
 
-        private Content getFile(Location location, String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private Content getFile(Location location, String name) {
             Map<String, Content> filesForLocation = files.get(location);
             return (filesForLocation == null) ? null : filesForLocation.get(name);
         }
 
-        private void save(Location location, String name, Content content) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void save(Location location, String name, Content content) {
             Map<String, Content> filesForLocation = files.get(location);
             if (filesForLocation == null)
                 files.put(location, filesForLocation = new HashMap<>());

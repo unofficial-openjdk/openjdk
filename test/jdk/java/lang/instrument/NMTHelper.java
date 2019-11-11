@@ -31,6 +31,7 @@ import java.lang.management.ManagementFactory;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
+@Bean
 public class NMTHelper
 {
     public static void baseline() {

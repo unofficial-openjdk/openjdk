@@ -84,6 +84,9 @@ public class bug4670486 {
         menuItem.addActionListener(new ActionListener() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent evt) {
                 actionRecieved = true;
             }

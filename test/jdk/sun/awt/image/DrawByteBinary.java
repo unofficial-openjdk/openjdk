@@ -38,6 +38,7 @@ import java.awt.image.*;
 import static java.awt.image.BufferedImage.*;
 
 
+@Bean
 public class DrawByteBinary {
 
     public static void main(String args[]) {

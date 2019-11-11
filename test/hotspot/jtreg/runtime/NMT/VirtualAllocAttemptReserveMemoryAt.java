@@ -42,6 +42,7 @@ import sun.hotspot.WhiteBox;
 
 import static jdk.test.lib.Asserts.*;
 
+@Bean
 public class VirtualAllocAttemptReserveMemoryAt {
 
     public static WhiteBox wb = WhiteBox.getWhiteBox();

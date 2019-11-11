@@ -63,7 +63,11 @@ public class HeapDumpTest {
         dump.delete();
     }
 
-    private void verifyHeapDump(File dump) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void verifyHeapDump(File dump) {
         Assert.assertTrue(dump.exists() && dump.isFile(), "Could not create dump file " + dump.getAbsolutePath());
         try {
             File out = HprofParser.parse(dump);

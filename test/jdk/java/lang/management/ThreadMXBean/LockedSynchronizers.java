@@ -39,6 +39,7 @@
 import java.lang.management.*;
 import java.util.*;
 
+@Bean
 public class LockedSynchronizers {
     public static void main(String[] argv) throws Exception {
         ThreadMXBean mbean = ManagementFactory.getThreadMXBean();

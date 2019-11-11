@@ -32,6 +32,7 @@ import java.util.logging.*;
  * @run main/othervm LocalizedLevelName
  */
 
+@Bean
 public class LocalizedLevelName {
     private static Object[] namesMap = {
         "SEVERE",  Locale.ENGLISH,                 "Severe",       Level.SEVERE,

@@ -45,6 +45,7 @@ import javax.management.openmbean.CompositeType;
 import javax.management.openmbean.OpenType;
 import javax.management.openmbean.SimpleType;
 
+@Bean
 public class PropertyNamesTest {
     public static void main(String[] args) throws Exception {
         MBeanServer mbs = MBeanServerFactory.newMBeanServer();
@@ -116,7 +117,11 @@ public class PropertyNamesTest {
     }
 
     public static class PointImpl implements PointMXBean {
-        public Point identity(Point x) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Point identity(Point x) {
             return x;
         }
     }
@@ -161,7 +166,11 @@ public class PropertyNamesTest {
     }
 
     public static class EvolveImpl implements EvolveMXBean {
-        public Evolve identity(Evolve x) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Evolve identity(Evolve x) {
             return x;
         }
     }

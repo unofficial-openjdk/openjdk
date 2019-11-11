@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.HashSet;
 
 
+@Bean
 public class ConnectState {
 
     static PrintStream log = System.err;

@@ -35,6 +35,7 @@
 import javax.management.*;
 import javax.management.openmbean.*;
 
+@Bean
 public class OperationImpactTest {
     public static interface ThingMXBean {
         void thing();

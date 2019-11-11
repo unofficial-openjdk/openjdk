@@ -64,6 +64,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 @Test
+@Bean
 public class ModuleReaderTest {
 
     private static final String TEST_SRC = System.getProperty("test.src");

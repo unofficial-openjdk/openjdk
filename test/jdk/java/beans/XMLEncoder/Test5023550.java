@@ -34,6 +34,7 @@ import java.beans.Expression;
 import java.beans.XMLDecoder;
 import java.beans.XMLEncoder;
 
+@Bean
 public class Test5023550 extends AbstractTest {
     public static void main(String[] args) {
         new Test5023550().test(true);
@@ -42,7 +43,11 @@ public class Test5023550 extends AbstractTest {
     private final Owner owner = new Owner();
 
     @Override
-    protected void initialize(XMLEncoder encoder) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void initialize(XMLEncoder encoder) {
         encoder.setOwner(this.owner);
         encoder.setPersistenceDelegate(A.class, new ADelegate());
         encoder.setPersistenceDelegate(B.class, new BDelegate());
@@ -50,7 +55,11 @@ public class Test5023550 extends AbstractTest {
     }
 
     @Override
-    protected void initialize(XMLDecoder decoder) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void initialize(XMLDecoder decoder) {
         decoder.setOwner(this.owner);
     }
 
@@ -59,7 +68,11 @@ public class Test5023550 extends AbstractTest {
     }
 
     public static class Owner {
-        public A newA(C c) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public A newA(C c) {
             return new A(c);
         }
 
@@ -99,7 +112,11 @@ public class Test5023550 extends AbstractTest {
     }
 
     public static class ADelegate extends DefaultPersistenceDelegate {
-        protected Expression instantiate(Object old, Encoder out) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected Expression instantiate(Object old, Encoder out) {
             XMLEncoder encoder = (XMLEncoder) out;
             A a = (A) old;
             return new Expression(old, encoder.getOwner(), "newA", new Object[] { a.getC() });
@@ -107,14 +124,22 @@ public class Test5023550 extends AbstractTest {
     }
 
     public static class BDelegate extends DefaultPersistenceDelegate {
-        protected Expression instantiate(Object old, Encoder out) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected Expression instantiate(Object old, Encoder out) {
             XMLEncoder encoder = (XMLEncoder) out;
             return new Expression(old, encoder.getOwner(), "newB", new Object[0]);
         }
     }
 
     public static class CDelegate extends DefaultPersistenceDelegate {
-        protected Expression instantiate(Object old, Encoder out) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected Expression instantiate(Object old, Encoder out) {
             C c = (C) old;
             return new Expression(c, c.getB(), "newC", new Object[0]);
         }

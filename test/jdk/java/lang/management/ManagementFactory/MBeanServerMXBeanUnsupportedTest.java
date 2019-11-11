@@ -46,6 +46,7 @@ import javax.management.ObjectName;
 import javax.management.StandardMBean;
 import javax.management.remote.MBeanServerForwarder;
 
+@Bean
 public class MBeanServerMXBeanUnsupportedTest {
 
     /**

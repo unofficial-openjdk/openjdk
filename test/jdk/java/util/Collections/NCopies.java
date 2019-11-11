@@ -34,6 +34,7 @@ import java.util.AbstractList;
 import java.util.List;
 import java.util.Objects;
 
+@Bean
 public class NCopies {
     static volatile int passed = 0, failed = 0;
 
@@ -90,7 +91,11 @@ public class NCopies {
         return new AbstractList<>() {
             public int size() { return n; }
 
-            public T get(int index) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public T get(int index) {
                 Objects.checkIndex(index, n);
                 return o;
             }

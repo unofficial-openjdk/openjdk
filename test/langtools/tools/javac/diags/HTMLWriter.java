@@ -32,6 +32,7 @@ import java.util.ResourceBundle;
 /**
  * A class to facilitate writing HTML via a stream.
  */
+@Bean
 public class HTMLWriter
 {
     /**
@@ -87,7 +88,11 @@ public class HTMLWriter
      * Set the reource bundle to be used for localizing messages.
      * @param i18n the resource bundle to be used for localizing messages
      */
-    public void setResourceBundle(ResourceBundle i18n) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setResourceBundle(ResourceBundle i18n) {
         this.i18n = i18n;
     }
 
@@ -455,7 +460,11 @@ public class HTMLWriter
         write(getString(i18n, key, args));
     }
 
-    private String getString(ResourceBundle rb, String key, Object... args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String getString(ResourceBundle rb, String key, Object... args) {
         String s = rb.getString(key);
         return MessageFormat.format(s, args);
     }

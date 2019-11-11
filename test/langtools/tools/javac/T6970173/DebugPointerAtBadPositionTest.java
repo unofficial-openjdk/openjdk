@@ -47,10 +47,12 @@ import com.sun.tools.javac.util.Assert;
 import toolbox.JavacTask;
 import toolbox.ToolBox;
 
+@Bean
 public class DebugPointerAtBadPositionTest {
 
     static final String testSource =
-            "public class AssertionTest {\n" +
+            "@Bean
+public class AssertionTest {\n" +
             "    void lookForThisMethod() {\n" +
             "        int i;\n" +
             "        i = 33;\n" +

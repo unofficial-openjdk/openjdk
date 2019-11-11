@@ -29,6 +29,7 @@
 
 import java.beans.PropertyDescriptor;
 
+@Bean
 public class Test8221244 {
 
     public static void main(String[] args) {

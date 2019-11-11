@@ -45,6 +45,7 @@ import java.util.List;
 
 import jdk.test.lib.compiler.CompilerUtils;
 
+@Bean
 public class FXLauncherTest extends TestHelper {
     private static final String FX_MARKER_CLASS = "javafx.application.Application";
     private static void line() {
@@ -87,10 +88,15 @@ public class FXLauncherTest extends TestHelper {
             contents.add("package helloworld;");
             contents.add("import javafx.application.Application;");
             contents.add("import javafx.stage.Stage;");
-            contents.add("public class HelloWorld extends Application {");
+            contents.add("@Bean
+public class HelloWorld extends Application {");
             contents.add(mainmethod);
             contents.add("@Override");
-            contents.add("public void start(Stage primaryStage) {");
+            contents.add("@Bean
+@Bean
+@Bean
+@Bean
+                public void start(Stage primaryStage) {");
             contents.add("    throw new InternalError(\"should never get here\");");
             contents.add("}");
             contents.add("}");
@@ -113,7 +119,8 @@ public class FXLauncherTest extends TestHelper {
             String mainClass = "ExtHello";
             List<String> contents = new ArrayList<>();
             contents.add("package helloworld;");
-            contents.add("public class ExtHello extends HelloWorld {");
+            contents.add("@Bean
+public class ExtHello extends HelloWorld {");
             contents.add(mainmethod);
             contents.add("}");
             // Create and compile java source.
@@ -135,7 +142,8 @@ public class FXLauncherTest extends TestHelper {
             String mainClass = "HelloJava";
             List<String> contents = new ArrayList<>();
             contents.add("package helloworld;");
-            contents.add("public class HelloJava {");
+            contents.add("@Bean
+public class HelloJava {");
             contents.add("    public static void main(String[] args) {");
             contents.add("        for(String aa : args)");
             contents.add("            System.out.println(\"arg: \" + aa);" );

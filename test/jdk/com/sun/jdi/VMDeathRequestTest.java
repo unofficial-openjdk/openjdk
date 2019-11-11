@@ -46,6 +46,7 @@ import java.util.*;
 
     /********** test program **********/
 
+@Bean
 public class VMDeathRequestTest extends TestScaffold {
     boolean requestedVMDeathOccurred = false;
     boolean defaultVMDeathOccurred = false;
@@ -64,11 +65,19 @@ public class VMDeathRequestTest extends TestScaffold {
 
     /********** event handlers **********/
 
-    public void eventSetReceived(EventSet set) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void eventSetReceived(EventSet set) {
         currentEventSet = set;
     }
 
-    public void vmDied(VMDeathEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void vmDied(VMDeathEvent event) {
         if (event.request() == deathRequest) {
             requestedVMDeathOccurred = true;
             println("Got requested VMDeathEvent");
@@ -84,7 +93,11 @@ public class VMDeathRequestTest extends TestScaffold {
         }
     }
 
-    public void vmDisconnected(VMDisconnectEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void vmDisconnected(VMDisconnectEvent event) {
         println("Got VMDisconnectEvent");
         disconnected = true;
         synchronized (syncer) {

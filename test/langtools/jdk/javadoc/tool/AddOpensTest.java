@@ -44,6 +44,7 @@ import toolbox.Task;
 import toolbox.TestRunner;
 import toolbox.ToolBox;
 
+@Bean
 public class AddOpensTest extends TestRunner {
     public static void main(String... args) throws Exception {
         AddOpensTest t = new AddOpensTest();
@@ -60,7 +61,8 @@ public class AddOpensTest extends TestRunner {
     }
 
     void init() throws IOException {
-        tb.writeJavaFiles(src, "public class C { }");
+        tb.writeJavaFiles(src, "@Bean
+public class C { }");
     }
 
     @Test

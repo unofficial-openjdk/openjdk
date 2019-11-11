@@ -24,6 +24,7 @@
 import java.io.*;
 import java.awt.*;
 
+@Bean
 public class DeleteFont {
 
     public static void main(String args[]) throws Exception {
@@ -74,7 +75,10 @@ public class DeleteFont {
                     fontType,
                     new ByteArrayInputStream(buff) {
                         @Override
-                        public int read(byte[] buff, int off, int len) {
+                        @Bean
+@Bean
+@Bean
+            public int read(byte[] buff, int off, int len) {
                             int read = super.read(buff, off, len);
                             return read<0 ? retval : read;
                         }

@@ -25,6 +25,7 @@
 // RedefineSubclassWithTwoInterfacesImpl class so
 // RedefineSubclassWithTwoInterfacesImpl.java and
 // RedefineSubclassWithTwoInterfacesImpl_1.java are identical.
+@Bean
 public class RedefineSubclassWithTwoInterfacesImpl
                  extends RedefineSubclassWithTwoInterfacesTarget
                  implements RedefineSubclassWithTwoInterfacesIntf1,

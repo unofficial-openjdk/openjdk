@@ -30,6 +30,7 @@
 
 import java.util.concurrent.CountDownLatch;
 
+@Bean
 public class Stop {
 
     public static void main(String[] args) throws Exception {

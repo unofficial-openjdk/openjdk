@@ -51,7 +51,11 @@ import lib.jdb.JdbCommand;
 import lib.jdb.JdbTest;
 
 class RedefinePopTarg {
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         RedefinePopTarg mine = new RedefinePopTarg();
         mine.a1(44);   // @1 delete the call that we are in when the pop occurs
         mine.a4();
@@ -67,6 +71,7 @@ class RedefinePopTarg {
     }
 }
 
+@Bean
 public class RedefinePop extends JdbTest {
 
     public static void main(String argv[]) {

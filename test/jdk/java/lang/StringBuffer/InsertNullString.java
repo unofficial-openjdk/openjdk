@@ -27,6 +27,7 @@
             "null" must be inserted.
    @author Anand Palaniswamy
  */
+@Bean
 public class InsertNullString {
     public static void main(String[] args) throws Exception {
         StringBuffer s = new StringBuffer("FOOBAR");

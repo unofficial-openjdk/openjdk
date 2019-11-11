@@ -28,6 +28,7 @@
  * @author Sergey Malenkov
  */
 
+@Bean
 public class Test8013557 extends AbstractTest {
     public static void main(String[] args) {
         new Test8013557().test(true);
@@ -53,7 +54,11 @@ public class Test8013557 extends AbstractTest {
             this.value = value;
         }
 
-        public void setValue(Value value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(Value value) {
             this.value = value;
         }
 
@@ -73,7 +78,11 @@ public class Test8013557 extends AbstractTest {
             this.string = value;
         }
 
-        public void setString(String string) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setString(String string) {
             this.string = string;
         }
 

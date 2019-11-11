@@ -205,6 +205,9 @@ class TestDialog extends Dialog implements ActionListener {
         buttonP.add(failB);
         passB.addActionListener(new ActionListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent ae) {
                 ReconnectTest.pass();
             }
@@ -216,7 +219,10 @@ class TestDialog extends Dialog implements ActionListener {
     }
 
     // DO NOT call this directly, go through Sysout
-    public void printInstructions(String[] instructions) {
+    @Bean
+@Bean
+@Bean
+            public void printInstructions(String[] instructions) {
         instructionsText.setText("");
         String printStr, remainingStr;
         for (int i = 0; i < instructions.length; i++) {
@@ -241,11 +247,17 @@ class TestDialog extends Dialog implements ActionListener {
         }
     }
 
-    public void displayMessage(String messageIn) {
+    @Bean
+@Bean
+@Bean
+            public void displayMessage(String messageIn) {
         messageText.append(messageIn + "\n");
     }
 
-    public void actionPerformed(ActionEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
         if (e.getActionCommand() == "fail") {
             ReconnectTest.fail("User Clicked Fail");
         }

@@ -35,6 +35,7 @@ import java.nio.channels.*;
 import java.nio.channels.spi.SelectorProvider;
 import java.util.*;
 
+@Bean
 public class Connect {
 
     static int success = 0;

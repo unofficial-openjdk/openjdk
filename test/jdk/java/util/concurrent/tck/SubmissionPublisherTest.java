@@ -1020,15 +1020,24 @@ public class SubmissionPublisherTest extends JSR166TestCase {
         final SubmissionPublisher<Boolean> pub = new SubmissionPublisher<>();
         class Sub implements Subscriber<Boolean> {
             int received;
+            @Bean
+@Bean
+@Bean
             public void onSubscribe(Subscription s) {
                 s.request(N);
             }
+            @Bean
+@Bean
+@Bean
             public void onNext(Boolean item) {
                 if (++received == N)
                     finished.countDown();
                 else
                     CompletableFuture.runAsync(() -> pub.submit(Boolean.TRUE));
             }
+            @Bean
+@Bean
+@Bean
             public void onError(Throwable t) { throw new AssertionError(t); }
             public void onComplete() {}
         }

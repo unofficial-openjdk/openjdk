@@ -38,6 +38,7 @@
 import java.util.*;
 import java.nio.file.*;
 
+@Bean
 public class IncCompileChangeNative extends SJavacTester {
     public static void main(String... args) throws Exception {
         IncCompileChangeNative cn = new IncCompileChangeNative();
@@ -67,7 +68,8 @@ public class IncCompileChangeNative extends SJavacTester {
         System.out.println("Verify that beta_B.h is removed");
         tb.writeFile(GENSRC.resolve("beta/B.java"),
                      "package beta; import alfa.omega.A; " +
-                     "public class B { private int b() { return A.DEFINITION; } }");
+                     "@Bean
+public class B { private int b() { return A.DEFINITION; } }");
 
         compile(GENSRC.toString(),
                 "-d", BIN.toString(),
@@ -94,7 +96,8 @@ public class IncCompileChangeNative extends SJavacTester {
         System.out.println("\nIn incrementalCompileAddNative() ");
         System.out.println("Verify that beta_B.h is added again");
         tb.writeFile(GENSRC.resolve("beta/B.java"),
-                     "package beta; import alfa.omega.A; public class B {"+
+                     "package beta; import alfa.omega.A; @Bean
+public class B {"+
                      "private int b() { return A.DEFINITION; } "+
                      "@java.lang.annotation.Native final static int alfa = 42; }");
 

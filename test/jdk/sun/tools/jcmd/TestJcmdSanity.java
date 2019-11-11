@@ -44,6 +44,7 @@ import jdk.test.lib.Utils;
  *
  * @run main/othervm -XX:+UsePerfData TestJcmdSanity
  */
+@Bean
 public class TestJcmdSanity {
 
     private static final String TEST_SRC = System.getProperty("test.src").trim();

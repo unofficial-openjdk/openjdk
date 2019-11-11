@@ -62,6 +62,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+@Bean
 public class SegmentedCodeCacheDtraceTest {
 
     private static final String WORKER_CLASS_NAME
@@ -80,7 +81,11 @@ public class SegmentedCodeCacheDtraceTest {
             SegmentedCodeCacheDtraceTestWorker.TESTED_METHODS_LIST;
     private static final int WORKER_METHODS_COUNT = MLIST.size();
 
-    private void runTest(TestCombination tc) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void runTest(TestCombination tc) {
         String params = MLIST.stream()
                 .map(Executable::getName)
                 .map(x -> tc.data.get(x).compileLevel + " " + tc.data.get(x).isInlined)
@@ -156,7 +161,11 @@ public class SegmentedCodeCacheDtraceTest {
         }
 
         @Override
-        public boolean equals(Object o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) {
             if (o == null || !(o instanceof MethodData)) {
                 return false;
             }
@@ -191,7 +200,11 @@ public class SegmentedCodeCacheDtraceTest {
         }
 
         @Override
-        public boolean equals(Object o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) {
             if (o == null || !(o instanceof TestCombination)) {
                 return false;
             }
@@ -208,7 +221,11 @@ public class SegmentedCodeCacheDtraceTest {
             return sum;
         }
 
-        private String getMethodDescString(MethodData md) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private String getMethodDescString(MethodData md) {
             return (md == null)
                     ? null
                     : String.format("Method %s compilation level %d and %s",
@@ -282,7 +299,11 @@ public class SegmentedCodeCacheDtraceTest {
         }
 
         @Override
-        public void analyze(OutputAnalyzer oa, String dtraceOutFilePath) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void analyze(OutputAnalyzer oa, String dtraceOutFilePath) {
             oa.shouldHaveExitValue(0);
             List<String> dOut;
             try {
@@ -300,7 +321,11 @@ public class SegmentedCodeCacheDtraceTest {
                     + EXPECTED_MATCH_COUNT + " but found " + matchCount);
         }
 
-        protected int getMatchCount(String source) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected int getMatchCount(String source) {
             Matcher m = checkPattern.matcher(source);
             int matchCount = 0;
             while (m.find()) {

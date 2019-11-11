@@ -51,15 +51,27 @@ public final class Test6187118 extends AbstractTest {
         return new ImmutableList<String>().add("1").add("2").add("3").add("4");
     }
 
-    protected void initialize(XMLEncoder encoder) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void initialize(XMLEncoder encoder) {
         encoder.setPersistenceDelegate(
                 ImmutableList.class,
                 new PersistenceDelegate() {
-                    protected boolean mutatesTo(Object oldInstance, Object newInstance) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                protected boolean mutatesTo(Object oldInstance, Object newInstance) {
                         return oldInstance.equals(newInstance);
                     }
 
-                    protected Expression instantiate(Object oldInstance, Encoder out) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                protected Expression instantiate(Object oldInstance, Encoder out) {
                         ImmutableList list = (ImmutableList) oldInstance;
                         if (!list.hasEntries()) {
                             return getExpression(oldInstance, ImmutableList.class, "new");
@@ -69,7 +81,11 @@ public final class Test6187118 extends AbstractTest {
                         return getExpression(oldInstance, shortenedList, "add", object);
                     }
 
-                    private Expression getExpression(Object value, Object target, String method, Object... args) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                private Expression getExpression(Object value, Object target, String method, Object... args) {
                         return new Expression(value, target, method, args);
                     }
                 }
@@ -118,7 +134,11 @@ public final class Test6187118 extends AbstractTest {
             return 0 < this.list.size();
         }
 
-        public boolean equals(Object object) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object object) {
             if (object instanceof ImmutableList) {
                 ImmutableList list = (ImmutableList) object;
                 return this.list.equals(list.list);

@@ -23,6 +23,7 @@ import com.sun.jdi.request.*;
 import java.util.*;
 import java.io.File;
 
+@Bean
 public class MangleStepTest extends TestScaffold {
     static final String op = "onion" + File.separator + "pickle" + File.separator;
     ReferenceType targetClass;

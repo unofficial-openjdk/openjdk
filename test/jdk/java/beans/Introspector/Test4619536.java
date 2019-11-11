@@ -32,6 +32,7 @@ import java.beans.IndexedPropertyDescriptor;
 import java.beans.PropertyDescriptor;
 import java.util.Date;
 
+@Bean
 public class Test4619536 {
     public static void main(String[] args) throws Exception {
         IndexedPropertyDescriptor ipd = BeanUtils.getIndexedPropertyDescriptor(A.class, "foo");
@@ -120,7 +121,11 @@ public class Test4619536 {
     // Test case from 4619536
     public static class A {
         // prop foo on A should be indexed of type String
-        public String getFoo(int x) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String getFoo(int x) {
             return null;
         }
     }
@@ -134,10 +139,18 @@ public class Test4619536 {
 
     // Test case from 4812428 (this works in 1.5.0)
     public static class Parent {
-        public void setFoo(String foo) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(String foo) {
         }
 
-        public Child getFoo(int index) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Child getFoo(int index) {
             return null;
         }
     }
@@ -154,17 +167,29 @@ public class Test4619536 {
             return null;
         }
 
-        public void setFoo(String[] foo) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(String[] foo) {
         }
     }
 
     // This class has a complete set of ipd
     public static class Index {
-        public String getFoo(int i) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String getFoo(int i) {
             return null;
         }
 
-        public void setFoo(int i, String f) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(int i, String f) {
         }
     }
 
@@ -174,7 +199,11 @@ public class Test4619536 {
             return null;
         }
 
-        public void setFoo(String[] foo) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(String[] foo) {
         }
     }
 
@@ -194,13 +223,21 @@ public class Test4619536 {
 
     // This class adds a classic setter
     public static class Setter extends Index {
-        public void setFoo(String[] f) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(String[] f) {
         }
     }
 
     // This class has an alternate setter and should be merged
     public static class BadSetter extends Index {
-        public void setFoo(String f) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(String f) {
         }
     }
 }

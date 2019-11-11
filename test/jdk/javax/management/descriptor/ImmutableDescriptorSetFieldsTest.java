@@ -37,6 +37,7 @@
 import javax.management.ImmutableDescriptor;
 import javax.management.RuntimeOperationsException;
 
+@Bean
 public class ImmutableDescriptorSetFieldsTest {
     public static void main(String[] args) throws Exception {
         boolean ok = true;

@@ -46,6 +46,7 @@ import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 
+@Bean
 public class GetMBeanInfoExceptionTest {
 
     public static class TestDynamicMBean implements DynamicMBean {
@@ -64,11 +65,19 @@ public class GetMBeanInfoExceptionTest {
             ReflectionException {
         }
 
-        public AttributeList getAttributes(String[] attributes) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public AttributeList getAttributes(String[] attributes) {
             return null;
         }
 
-        public AttributeList setAttributes(AttributeList attributes) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public AttributeList setAttributes(AttributeList attributes) {
             return null;
         }
 

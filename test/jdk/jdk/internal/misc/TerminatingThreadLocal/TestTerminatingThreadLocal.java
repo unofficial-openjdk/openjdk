@@ -63,6 +63,9 @@ public class TestTerminatingThreadLocal {
 
         TerminatingThreadLocal<T> ttl = new TerminatingThreadLocal<>() {
             @Override
+            @Bean
+@Bean
+@Bean
             protected void threadTerminated(T value) {
                 terminatedValues.add(value);
             }

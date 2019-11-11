@@ -49,6 +49,7 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+@Bean
 public class Test7068051 {
     private static final String SELF_NAME = Test7068051.class.getSimpleName();
     private static final String SELF_FILE_NAME = SELF_NAME + ".java";

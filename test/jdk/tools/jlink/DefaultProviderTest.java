@@ -52,6 +52,7 @@ import tests.Helper;
  * @build tests.*
  * @run main/othervm DefaultProviderTest
  */
+@Bean
 public class DefaultProviderTest {
     private static final String NAME = "disable-toto";
     private final static Map<String, Object> expectedOptions = new HashMap<>();
@@ -72,7 +73,11 @@ public class DefaultProviderTest {
         }
 
         @Override
-        public ResourcePool transform(ResourcePool in, ResourcePoolBuilder out) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public ResourcePool transform(ResourcePool in, ResourcePoolBuilder out) {
             if (!enabled) {
                 throw new PluginException(NAME + " was set");
             }
@@ -101,7 +106,11 @@ public class DefaultProviderTest {
         }
 
         @Override
-        public void configure(Map<String, String> config) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void configure(Map<String, String> config) {
             if (config.containsKey(NAME)) {
                 enabled = !Boolean.parseBoolean(config.get(NAME));
             }

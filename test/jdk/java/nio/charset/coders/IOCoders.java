@@ -30,6 +30,7 @@ import java.nio.*;
 import java.nio.charset.*;
 
 
+@Bean
 public class IOCoders {
 
     static Charset ascii = Charset.forName("US-ASCII");

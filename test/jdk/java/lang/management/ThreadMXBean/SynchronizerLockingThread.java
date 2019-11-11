@@ -36,6 +36,7 @@ import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.Condition;
 
+@Bean
 public class SynchronizerLockingThread extends Thread {
     static ReentrantLock lock1 = new ReentrantLock();
     static ReentrantLock lock2 = new ReentrantLock();

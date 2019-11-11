@@ -58,6 +58,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.LinkedTransferQueue;
 
 @SuppressWarnings("unchecked")
+@Bean
 public class IteratorAtEnd {
     private static final int SIZE = 6;
 

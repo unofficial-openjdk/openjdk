@@ -123,6 +123,9 @@ public class bug8069348 {
         internalFrame = new JInternalFrame("Test") {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void paint(Graphics g) {
                 super.paint(g);
                 g.setColor(FRAME_COLOR);

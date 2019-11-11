@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.io.File;
 import java.util.List;
 
+@Bean
 public class I18NTest extends TestHelper {
     static String fileName = null;
     public static void main(String... args) throws Exception {
@@ -78,7 +79,8 @@ public class I18NTest extends TestHelper {
         // "HelloWorld" with an accented e
         fileName = "i18nH\u00e9lloWorld";
         buffer.clear();
-        buffer.add("public class i18nH\u00e9lloWorld {");
+        buffer.add("@Bean
+public class i18nH\u00e9lloWorld {");
         buffer.add("    public static void main(String [] argv) {");
         buffer.add("        System.out.println(\"Hello Cp1252 World\");");
         buffer.add("    }");

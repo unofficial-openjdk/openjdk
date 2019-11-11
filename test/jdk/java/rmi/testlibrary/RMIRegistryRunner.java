@@ -32,6 +32,7 @@ import java.rmi.server.*;
  * Difference between this class and RegistryRunner is that this class
  * simulate rmiregistry closer than RegistryRunner.
  */
+@Bean
 public class RMIRegistryRunner extends RegistryRunner
 {
     public RMIRegistryRunner() throws RemoteException {

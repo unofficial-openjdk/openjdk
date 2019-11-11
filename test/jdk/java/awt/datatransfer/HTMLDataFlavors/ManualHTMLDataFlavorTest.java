@@ -37,6 +37,7 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.dnd.*;
 import java.io.IOException;
 
+@Bean
 public class ManualHTMLDataFlavorTest extends Applet {
 
     class DropPane extends Panel implements DropTargetListener {
@@ -53,25 +54,40 @@ public class ManualHTMLDataFlavorTest extends Applet {
         }
 
         @Override
-        public void dragEnter(DropTargetDragEvent dtde) {
+        @Bean
+@Bean
+@Bean
+            public void dragEnter(DropTargetDragEvent dtde) {
             dtde.acceptDrag(DnDConstants.ACTION_COPY);
         }
 
         @Override
-        public void dragOver(DropTargetDragEvent dtde) {
+        @Bean
+@Bean
+@Bean
+            public void dragOver(DropTargetDragEvent dtde) {
             dtde.acceptDrag(DnDConstants.ACTION_COPY);
         }
 
         @Override
-        public void dropActionChanged(DropTargetDragEvent dtde) {
+        @Bean
+@Bean
+@Bean
+            public void dropActionChanged(DropTargetDragEvent dtde) {
             dtde.acceptDrag(DnDConstants.ACTION_COPY);
         }
 
         @Override
-        public void dragExit(DropTargetEvent dte) {}
+        @Bean
+@Bean
+@Bean
+            public void dragExit(DropTargetEvent dte) {}
 
         @Override
-        public void drop(DropTargetDropEvent dtde) {
+        @Bean
+@Bean
+@Bean
+            public void drop(DropTargetDropEvent dtde) {
             if (!dtde.isDataFlavorSupported(DataFlavor.allHtmlFlavor)) {
                 Sysout.println("DataFlavor.allHtmlFlavor is not present in the system clipboard");
                 dtde.rejectDrop();

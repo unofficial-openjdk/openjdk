@@ -42,6 +42,7 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class WrongErrorMessageForNestedServiceProviderTest extends ModuleTestBase {
     public static void main(String... args) throws Exception {
         WrongErrorMessageForNestedServiceProviderTest t = new WrongErrorMessageForNestedServiceProviderTest();
@@ -75,7 +76,8 @@ public class WrongErrorMessageForNestedServiceProviderTest extends ModuleTestBas
                 someServiceInt,
                 someServiceIntOuter,
                 "package example;\n" +
-                "public class ServiceImpl implements example.SomeService {\n" +
+                "@Bean
+public class ServiceImpl implements example.SomeService {\n" +
                 "    public ServiceImpl() {}\n" +
                 "    public void foo() {}\n" +
                 "}",

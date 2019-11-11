@@ -58,6 +58,7 @@ import java.lang.reflect.Executable;
 /**
  * Tests for jdk.vm.ci.hotspot.CompilerToVM::getConstantPool method
  */
+@Bean
 public class GetConstantPoolTest {
 
     public static void testMethod(Executable executable) {

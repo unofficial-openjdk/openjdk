@@ -76,7 +76,11 @@ class TestImageReaderSpi extends ImageReaderSpi {
     }
 
     @Override
-    public String getDescription(Locale locale) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String getDescription(Locale locale) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
@@ -131,6 +135,7 @@ class TestImageReader extends ImageReader {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 }
+@Bean
 public class GetReaderWriterInfoNullTest {
     static final String[] FORMATNAMES = {"readTest"};
     static final String[] SUFFIXES = {"readTest"};

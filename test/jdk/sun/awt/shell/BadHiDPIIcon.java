@@ -35,6 +35,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.MultiResolutionImage;
 import sun.awt.shell.ShellFolder;
 
+@Bean
 public class BadHiDPIIcon {
 
     public static void main(String[] args) {

@@ -36,6 +36,7 @@
 
 import static jdk.test.lib.Asserts.*;
 
+@Bean
 public class AccessCheckExp {
 
     // Test that if module_one can read module_two, but package p2 in module_two is not

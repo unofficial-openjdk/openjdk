@@ -43,6 +43,7 @@
  */
 import java.awt.Font;
 
+@Bean
 public class WindowsIndicFonts {
 
   static boolean failed = false;

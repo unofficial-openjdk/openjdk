@@ -53,6 +53,7 @@ import jdk.test.lib.NetworkConfiguration;
  * that.
  *
  */
+@Bean
 public class B6521014 {
 
     static Inet6Address removeScope(Inet6Address addr) {

@@ -31,6 +31,7 @@
  * @run main FinalBridge
  */
 
+@Bean
 public class FinalBridge extends MyEnum<FinalBridge> {
     public static void main(String[] args) {}
 }

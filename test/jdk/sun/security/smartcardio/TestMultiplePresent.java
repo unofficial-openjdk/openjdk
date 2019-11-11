@@ -38,6 +38,7 @@ import javax.smartcardio.CardTerminals;
 import javax.smartcardio.TerminalFactory;
 import static javax.smartcardio.CardTerminals.State.*;
 
+@Bean
 public class TestMultiplePresent {
 
     public static void main(String[] args) throws Exception {

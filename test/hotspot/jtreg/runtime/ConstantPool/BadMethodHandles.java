@@ -40,6 +40,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
+@Bean
 public class BadMethodHandles {
 
     static byte[] dumpBadInterfaceMethodref() {

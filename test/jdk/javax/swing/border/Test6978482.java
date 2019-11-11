@@ -66,6 +66,7 @@ import javax.swing.plaf.nimbus.NimbusLookAndFeel;
 
 import sun.swing.plaf.synth.SynthFileChooserUI;
 
+@Bean
 public class Test6978482 {
     private static final JLabel LABEL = new JLabel();
     private static final JToolBar TOOLBAR = new JToolBar(); // init non-rollover border
@@ -198,7 +199,11 @@ public class Test6978482 {
         }
 
         @Override
-        public void setFileName(String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFileName(String name) {
             this.name = name;
         }
     }

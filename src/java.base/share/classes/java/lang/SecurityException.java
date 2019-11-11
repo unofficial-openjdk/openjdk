@@ -31,6 +31,7 @@ package java.lang;
  * @see     java.lang.SecurityManager
  * @since   1.0
  */
+@Bean
 public class SecurityException extends RuntimeException {
 
     @java.io.Serial

@@ -35,7 +35,11 @@ public class C {
     /**
      * Method in C.
      */
-    public UsedInC methodInC(UsedInC p) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public UsedInC methodInC(UsedInC p) {
         return p;
     }
 }

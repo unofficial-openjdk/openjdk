@@ -42,6 +42,7 @@ import java.lang.invoke.MethodType;
 
 import static org.junit.Assert.*;
 
+@Bean
 public class MethodHandlesCastFailureTest extends MethodHandlesTest {
 
     @Test  // SLOW

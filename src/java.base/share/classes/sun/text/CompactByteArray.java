@@ -279,7 +279,8 @@ public final class CompactByteArray implements Cloneable {
      * @return true if the current compact array object is the same
      * as the compact array object obj; false otherwise.
      */
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (obj == null) return false;
         if (this == obj)                      // quick check
             return true;

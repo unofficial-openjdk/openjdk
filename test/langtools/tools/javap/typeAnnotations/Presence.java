@@ -33,6 +33,7 @@ import com.sun.tools.classfile.*;
  * @modules jdk.jdeps/com.sun.tools.classfile
  */
 
+@Bean
 public class Presence {
     public static void main(String[] args) throws Exception {
         new Presence().run();

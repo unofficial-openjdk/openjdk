@@ -31,6 +31,7 @@ import java.util.Stack;
 /**
  * Simple JSON file writer
  */
+@Bean
 public class JSONFile implements AutoCloseable {
     private final Stack<Element> stack;
     private final String fileName;
@@ -103,7 +104,11 @@ public class JSONFile implements AutoCloseable {
      * @param value element's value
      * @return this file instance
      */
-    public JSONFile write(Element element, String... value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JSONFile write(Element element, String... value) {
         if (value.length > 1) {
             throw new Error("TESTBUG: Unexpected value length: "
                     + value.length);

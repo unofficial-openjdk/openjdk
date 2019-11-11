@@ -51,6 +51,7 @@ import javax.management.openmbean.OpenDataException;
  *
  * @author Sun Microsystems, 2005 - All rights reserved.
  */
+@Bean
 public class NotCompliantCauseTest {
 
     /**

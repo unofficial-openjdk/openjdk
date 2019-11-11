@@ -28,6 +28,7 @@
  * author anthony.petrov@oracle.com: area=launcher
  */
 
+@Bean
 public class EnvironmentVariables {
     public static void main(String[] args) {
         if (args.length != 2) {

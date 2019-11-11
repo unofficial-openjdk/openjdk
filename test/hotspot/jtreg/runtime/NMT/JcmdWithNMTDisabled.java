@@ -35,6 +35,7 @@ import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.JDKToolFinder;
 
+@Bean
 public class JcmdWithNMTDisabled {
   static ProcessBuilder pb = new ProcessBuilder();
   static String pid;

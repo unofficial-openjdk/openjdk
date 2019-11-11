@@ -30,6 +30,7 @@
  *
  */
 
+@Bean
 public class StoreMovedBeforeInfiniteLoop {
     public static void main(String[] args) {
         field = -1;

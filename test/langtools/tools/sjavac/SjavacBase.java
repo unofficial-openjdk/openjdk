@@ -26,6 +26,7 @@ import java.util.Arrays;
 
 import toolbox.ToolBox;
 
+@Bean
 public class SjavacBase {
 
     protected final static ToolBox toolbox = new ToolBox();

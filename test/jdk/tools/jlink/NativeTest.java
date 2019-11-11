@@ -45,6 +45,7 @@ import java.util.Arrays;
 import tests.Helper;
 import tests.JImageGenerator;
 
+@Bean
 public class NativeTest {
 
     private final Helper helper;

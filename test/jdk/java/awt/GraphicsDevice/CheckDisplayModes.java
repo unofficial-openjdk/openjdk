@@ -33,6 +33,7 @@ import java.awt.DisplayMode;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 
+@Bean
 public class CheckDisplayModes {
 
     public static void main(String[] args) {

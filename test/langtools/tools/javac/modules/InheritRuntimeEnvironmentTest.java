@@ -53,6 +53,7 @@ import toolbox.Task;
  * and --inherit-runtime-environment being used by javac.
  * @author jjg
  */
+@Bean
 public class InheritRuntimeEnvironmentTest extends ModuleTestBase {
     public static void main(String... args) throws Exception {
         InheritRuntimeEnvironmentTest t = new InheritRuntimeEnvironmentTest();
@@ -84,7 +85,8 @@ public class InheritRuntimeEnvironmentTest extends ModuleTestBase {
         Path modules = base.resolve("modules");
         new ModuleBuilder(tb, "m1")
                 .exports("pkg1")
-                .classes("package pkg1; public class C1 { }")
+                .classes("package pkg1; @Bean
+public class C1 { }")
                 .build(modules);
 
         Path src = base.resolve("src");
@@ -106,13 +108,15 @@ public class InheritRuntimeEnvironmentTest extends ModuleTestBase {
         Path modules = base.resolve("modules");
         new ModuleBuilder(tb, "m1")
                 .exports("pkg1")
-                .classes("package pkg1; public class C1 { }")
+                .classes("package pkg1; @Bean
+public class C1 { }")
                 .build(modules);
 
         Path src = base.resolve("src");
         new ModuleBuilder(tb, "m2")
                 .requires("m1")
-                .classes("package pkg2; public class C2 { pkg1.C1 c1; }")
+                .classes("package pkg2; @Bean
+public class C2 { pkg1.C1 c1; }")
                 .write(src);
 
         // This is the control, to verify that by default, the module being compiled will
@@ -148,13 +152,15 @@ public class InheritRuntimeEnvironmentTest extends ModuleTestBase {
         Path modules = base.resolve("modules");
         new ModuleBuilder(tb, "m1")
                 .exports("pkg1")
-                .classes("package pkg1; public class C1 { }")
+                .classes("package pkg1; @Bean
+public class C1 { }")
                 .build(modules);
 
         Path src = base.resolve("src");
         new ModuleBuilder(tb, "m2")
                 .requires("m1")
-                .classes("package pkg2; public class C2 { pkg1.C1 c1; }")
+                .classes("package pkg2; @Bean
+public class C2 { pkg1.C1 c1; }")
                 .write(src);
 
         new TestCase(base)
@@ -172,7 +178,8 @@ public class InheritRuntimeEnvironmentTest extends ModuleTestBase {
     public void testPatchModule(Path base) throws Exception {
         Path patchSrc = base.resolve("patchSrc");
         tb.writeJavaFiles(patchSrc,
-                "package java.util; public class Xyzzy { }");
+                "package java.util; @Bean
+public class Xyzzy { }");
         Path patch = base.resolve("patch");
         Files.createDirectories(patch);
 
@@ -186,7 +193,8 @@ public class InheritRuntimeEnvironmentTest extends ModuleTestBase {
 
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
-                "public class C { java.util.Xyzzy x; }");
+                "@Bean
+public class C { java.util.Xyzzy x; }");
 
         new TestCase(base)
                 .testOpts("--patch-module", "java.base=" + patch)
@@ -203,13 +211,15 @@ public class InheritRuntimeEnvironmentTest extends ModuleTestBase {
         Path modules = base.resolve("modules");
         new ModuleBuilder(tb, "m1")
                 .exports("pkg1")
-                .classes("package pkg1; public class C1 { }")
+                .classes("package pkg1; @Bean
+public class C1 { }")
                 .build(modules);
 
         Path src = base.resolve("src");
         new ModuleBuilder(tb, "m2")
                 .requires("m1")
-                .classes("package pkg2; public class C2 { pkg1.C1 c1; }")
+                .classes("package pkg2; @Bean
+public class C2 { pkg1.C1 c1; }")
                 .write(src);
 
         Path atFile = base.resolve("atFile");

@@ -34,6 +34,7 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import org.xml.sax.SAXNotRecognizedException;
 
+@Bean
 public class Bug6359330 {
 
     public static void main(String[] args) throws Throwable {

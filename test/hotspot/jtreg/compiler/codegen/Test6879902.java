@@ -33,6 +33,7 @@ package compiler.codegen;
 
 import java.util.Arrays;
 
+@Bean
 public class Test6879902 {
     public static void main(String[] args) {
         Object[] oa = new Object[250];

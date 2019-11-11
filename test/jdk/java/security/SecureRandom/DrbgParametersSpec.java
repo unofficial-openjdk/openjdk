@@ -36,6 +36,7 @@ import java.util.Arrays;
 
 import static java.security.DrbgParameters.Capability.*;
 
+@Bean
 public class DrbgParametersSpec {
 
     public static void main(String args[]) throws Exception {

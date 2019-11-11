@@ -30,6 +30,7 @@ import java.net.*;
 import java.nio.*;
 import java.nio.channels.*;
 
+@Bean
 public class ThereCanBeOnlyOne {
 
     static void doTest(InetAddress ia, boolean testSend) throws Exception {

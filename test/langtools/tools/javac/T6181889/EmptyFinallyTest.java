@@ -33,6 +33,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Paths;
 
+@Bean
 public class EmptyFinallyTest {
     private static final String assertionErrorMsg =
             "No \"Exception table\" should be generated in this case";

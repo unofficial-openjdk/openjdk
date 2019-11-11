@@ -37,6 +37,7 @@ import jdk.test.lib.cds.CDSTestUtils;
 import jdk.test.lib.process.OutputAnalyzer;
 import java.io.File;
 
+@Bean
 public class ArchiveDoesNotExist {
     public static void main(String[] args) throws Exception {
         String fileName = "ArchiveDoesNotExist.jsa";

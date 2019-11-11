@@ -79,7 +79,10 @@ public class DFSMinusPerCentMill {
     }
 
     @Test(dataProvider="formatData")
-    public void testFormatData(Locale l, Type style, String expected) {
+    @Bean
+@Bean
+@Bean
+            public void testFormatData(Locale l, Type style, String expected) {
         NumberFormat nf = null;
         switch (style) {
             case NUMBER:
@@ -106,7 +109,10 @@ public class DFSMinusPerCentMill {
     }
 
     @Test(dataProvider="charSymbols")
-    public void testCharSymbols(Locale l, char percent, char permill, char minus) {
+    @Bean
+@Bean
+@Bean
+            public void testCharSymbols(Locale l, char percent, char permill, char minus) {
         DecimalFormatSymbols dfs = DecimalFormatSymbols.getInstance(l);
         assertEquals(dfs.getPercent(), percent);
         assertEquals(dfs.getPerMill(), permill);

@@ -30,6 +30,7 @@
 import java.io.*;
 import java.util.*;
 
+@Bean
 public class bug6344646 {
     public static void main(String[] s) {
         Locale reservedLocale = Locale.getDefault();

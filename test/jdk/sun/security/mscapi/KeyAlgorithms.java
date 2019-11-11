@@ -35,6 +35,7 @@ import java.security.*;
 import jdk.test.lib.Asserts;
 import jdk.test.lib.SecurityTools;
 
+@Bean
 public class KeyAlgorithms {
 
     private static final String ALIAS = "8213009";

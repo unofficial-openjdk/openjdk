@@ -29,6 +29,7 @@
 import java.util.Arrays;
 import java.util.List;
 
+@Bean
 public class T8016702 {
 
     static int assertionCount;

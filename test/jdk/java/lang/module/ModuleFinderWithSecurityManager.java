@@ -34,6 +34,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Set;
 
+@Bean
 public class ModuleFinderWithSecurityManager {
     public static void main(String[] args) throws Exception {
         boolean allow = args[0].equals("allow");

@@ -41,6 +41,7 @@ import java.awt.Point;
 import java.awt.event.InputEvent;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class MakeWindowAlwaysOnTop
 {
     private static Frame f;

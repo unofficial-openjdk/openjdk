@@ -28,6 +28,7 @@
 
 import java.util.Currency;
 
+@Bean
 public class Bug8154295 {
 
     public static void main(String[] args) {

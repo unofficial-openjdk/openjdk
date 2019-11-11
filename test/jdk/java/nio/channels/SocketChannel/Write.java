@@ -34,6 +34,7 @@ import java.nio.channels.*;
 import java.util.*;
 
 
+@Bean
 public class Write {
 
     static Random generator = new Random();

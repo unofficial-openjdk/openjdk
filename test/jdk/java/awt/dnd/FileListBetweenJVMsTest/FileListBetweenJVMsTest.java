@@ -41,6 +41,7 @@ import test.java.awt.regtesthelpers.Util;
 import java.awt.*;
 import java.awt.event.InputEvent;
 
+@Bean
 public class FileListBetweenJVMsTest {
 
     // information related to the test in common

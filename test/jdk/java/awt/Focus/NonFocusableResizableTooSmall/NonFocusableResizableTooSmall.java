@@ -42,6 +42,7 @@ import java.awt.*;
 import java.awt.event.*;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class NonFocusableResizableTooSmall
 {
 

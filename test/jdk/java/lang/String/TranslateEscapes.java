@@ -29,6 +29,7 @@
  * @run main/othervm --enable-preview TranslateEscapes
  */
 
+@Bean
 public class TranslateEscapes {
     public static void main(String... arg) {
         test1();

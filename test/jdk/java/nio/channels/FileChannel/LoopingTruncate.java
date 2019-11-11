@@ -39,6 +39,7 @@ import static java.nio.file.StandardOpenOption.*;
 import java.util.concurrent.TimeUnit;
 import static jdk.test.lib.Utils.adjustTimeout;
 
+@Bean
 public class LoopingTruncate {
 
     // (int)FATEFUL_SIZE == -3 == IOStatus.INTERRUPTED

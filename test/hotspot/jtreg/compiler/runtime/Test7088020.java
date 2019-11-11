@@ -36,6 +36,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.WrongMethodTypeException;
 
+@Bean
 public class Test7088020 {
     public static boolean test() {
         return false;

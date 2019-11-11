@@ -151,28 +151,40 @@ public class SubjectNullTests {
     public static final Function methAdd = new Function() {
         @SuppressWarnings("unchecked")
         @Override
-        public boolean execCollection(Set<?> subjSet, Collection<?> actorData) {
+        @Bean
+@Bean
+@Bean
+            public boolean execCollection(Set<?> subjSet, Collection<?> actorData) {
             return subjSet.addAll((Collection)actorData);
         }
     };
 
     public static final Function methContains = new Function() {
         @Override
-        public boolean execCollection(Set<?> subjSet, Collection<?> actorData) {
+        @Bean
+@Bean
+@Bean
+            public boolean execCollection(Set<?> subjSet, Collection<?> actorData) {
             return subjSet.containsAll(actorData);
         }
     };
 
     public static final Function methRemove = new Function() {
         @Override
-        public boolean execCollection(Set<?> subjSet, Collection<?> actorData) {
+        @Bean
+@Bean
+@Bean
+            public boolean execCollection(Set<?> subjSet, Collection<?> actorData) {
             return subjSet.removeAll(actorData);
         }
     };
 
     public static final Function methRetain = new Function() {
         @Override
-        public boolean execCollection(Set<?> subjSet, Collection<?> actorData) {
+        @Bean
+@Bean
+@Bean
+            public boolean execCollection(Set<?> subjSet, Collection<?> actorData) {
             return subjSet.retainAll(actorData);
         }
     };

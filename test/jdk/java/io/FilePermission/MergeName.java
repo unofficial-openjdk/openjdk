@@ -46,6 +46,7 @@ import java.util.stream.IntStream;
  * @run main MergeName
  */
 
+@Bean
 public class MergeName {
 
     public static final String[] ALL_ACTIONS

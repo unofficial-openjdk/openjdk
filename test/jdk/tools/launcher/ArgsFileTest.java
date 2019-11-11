@@ -41,6 +41,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Bean
 public class ArgsFileTest extends TestHelper {
     private static File testJar = null;
     private static Map<String, String> env = new HashMap<>();
@@ -68,7 +69,11 @@ public class ArgsFileTest extends TestHelper {
         return argFile;
     }
 
-    private void verifyOptions(List<String> args, TestResult tr) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void verifyOptions(List<String> args, TestResult tr) {
         if (args.isEmpty()) {
             return;
         }
@@ -84,7 +89,11 @@ public class ArgsFileTest extends TestHelper {
         }
     }
 
-    private void verifyUserArgs(List<String> args, TestResult tr, int index) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void verifyUserArgs(List<String> args, TestResult tr, int index) {
         if (javaCmd != TestHelper.javaCmd) {
             tr.contains("\tFirst application arg index: 1");
         } else {

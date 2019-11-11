@@ -46,6 +46,7 @@ import java.util.*;
 import test.java.awt.regtesthelpers.Util;
 
 
+@Bean
 public class DynamicLayout
 {
 

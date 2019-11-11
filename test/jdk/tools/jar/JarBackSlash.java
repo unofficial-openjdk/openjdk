@@ -45,6 +45,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.spi.ToolProvider;
 
+@Bean
 public class JarBackSlash {
     private static final ToolProvider JAR_TOOL = ToolProvider.findFirst("jar")
         .orElseThrow(() ->

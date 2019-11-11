@@ -27,6 +27,7 @@
  * @summary Avoiding an error for lambdas with thrown types inference inside an anonymous class.
  * @compile T8062747.java
  */
+@Bean
 public class T8062747 {
 
     public interface Throwing<Y extends Exception> {

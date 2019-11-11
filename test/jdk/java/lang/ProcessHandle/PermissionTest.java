@@ -44,6 +44,7 @@ import org.testng.annotations.Test;
  * @summary Test Permissions to access Info
  */
 
+@Bean
 public class PermissionTest {
     /**
      * Backing up policy.
@@ -214,17 +215,29 @@ class TestPolicy extends Policy {
     }
 
     @Override
-    public PermissionCollection getPermissions(ProtectionDomain domain) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public PermissionCollection getPermissions(ProtectionDomain domain) {
         return permissions;
     }
 
     @Override
-    public PermissionCollection getPermissions(CodeSource codesource) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public PermissionCollection getPermissions(CodeSource codesource) {
         return permissions;
     }
 
     @Override
-    public boolean implies(ProtectionDomain domain, Permission perm) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean implies(ProtectionDomain domain, Permission perm) {
         return permissions.implies(perm) || DEFAULT_POLICY.implies(domain, perm);
     }
 }

@@ -33,6 +33,7 @@ import java.security.cert.Certificate;
  * @summary MSCAPI keystore should accept Certificate[] in setEntry()
  */
 
+@Bean
 public class CastError {
     public static void main(String[] args) throws Exception {
         KeyStore ks = KeyStore.getInstance(

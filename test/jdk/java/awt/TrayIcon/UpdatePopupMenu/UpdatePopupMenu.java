@@ -101,7 +101,10 @@ public class UpdatePopupMenu implements ActionListener {
 
             popupMenuItem.addActionListener(new ActionListener() {
                 @Override
-                public void actionPerformed(final ActionEvent ae) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(final ActionEvent ae) {
                     trayIcon.setPopupMenu(createPopupMenu(trayIcon,
                             menuCount + 1));
                 }
@@ -180,7 +183,10 @@ public class UpdatePopupMenu implements ActionListener {
     }
 
     @Override
-    public void actionPerformed(ActionEvent ae) {
+    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent ae) {
         if (ae.getSource() instanceof Button) {
             Button btn = (Button) ae.getSource();
             switch (btn.getName()) {

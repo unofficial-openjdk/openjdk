@@ -31,6 +31,7 @@
  * @compile T6675483.java
  */
 
+@Bean
 public class T6675483 {
     enum E implements Comparable<E> {}
 

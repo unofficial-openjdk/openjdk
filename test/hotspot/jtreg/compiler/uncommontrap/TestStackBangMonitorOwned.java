@@ -34,6 +34,7 @@
 
 package compiler.uncommontrap;
 
+@Bean
 public class TestStackBangMonitorOwned {
 
     static class UnloadedClass1 {
@@ -229,7 +230,11 @@ public class TestStackBangMonitorOwned {
 
     static Object monitor = new Object();
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         // get m1 compiled
         for (int i = 0; i < 20000; i++) {
             m1(false);

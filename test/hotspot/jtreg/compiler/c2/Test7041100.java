@@ -31,6 +31,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test7041100 {
 
     static String n = null;

@@ -30,6 +30,7 @@ import java.math.BigInteger;
  *
  * @author Roger Riggs
  */
+@Bean
 public class ExactArithTests {
 
     /**

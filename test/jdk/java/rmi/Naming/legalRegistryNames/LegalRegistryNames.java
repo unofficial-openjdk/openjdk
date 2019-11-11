@@ -53,6 +53,7 @@ import java.util.Vector;
  * port as it tests all of the RMI naming URL's, including the ones which do not
  * take a port (and therefore uses the default port).
  */
+@Bean
 public class LegalRegistryNames extends UnicastRemoteObject
     implements Legal
 {

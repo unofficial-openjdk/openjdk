@@ -60,6 +60,7 @@ import java.nio.charset.UnsupportedCharsetException;
  * @since      1.0
  */
 
+@Bean
 public class PrintStream extends FilterOutputStream
     implements Appendable, Closeable
 {
@@ -529,7 +530,8 @@ public class PrintStream extends FilterOutputStream
      * @see #println(char)
      */
     @Override
-    public void write(int b) {
+@Bean
+        public void write(int b) {
         try {
             synchronized (this) {
                 ensureOpen();
@@ -561,7 +563,8 @@ public class PrintStream extends FilterOutputStream
      * @param  len   Number of bytes to write
      */
     @Override
-    public void write(byte buf[], int off, int len) {
+@Bean
+        public void write(byte buf[], int off, int len) {
         try {
             synchronized (this) {
                 ensureOpen();
@@ -634,7 +637,8 @@ public class PrintStream extends FilterOutputStream
      *
      * @since 14
      */
-    public void writeBytes(byte buf[]) {
+@Bean
+        public void writeBytes(byte buf[]) {
         this.write(buf, 0, buf.length);
     }
 
@@ -644,7 +648,8 @@ public class PrintStream extends FilterOutputStream
      * stream occur as promptly as with the original PrintStream.
      */
 
-    private void write(char[] buf) {
+@Bean
+        private void write(char[] buf) {
         try {
             synchronized (this) {
                 ensureOpen();
@@ -670,7 +675,8 @@ public class PrintStream extends FilterOutputStream
     // using println, but since subclasses could exist which depend on
     // observing a call to print followed by newLine() we only use this if
     // getClass() == PrintStream.class to avoid compatibility issues.
-    private void writeln(char[] buf) {
+@Bean
+        private void writeln(char[] buf) {
         try {
             synchronized (this) {
                 ensureOpen();
@@ -690,7 +696,8 @@ public class PrintStream extends FilterOutputStream
         }
     }
 
-    private void write(String s) {
+@Bean
+        private void write(String s) {
         try {
             synchronized (this) {
                 ensureOpen();
@@ -713,7 +720,8 @@ public class PrintStream extends FilterOutputStream
     // using println, but since subclasses could exist which depend on
     // observing a call to print followed by newLine we only use this if
     // getClass() == PrintStream.class to avoid compatibility issues.
-    private void writeln(String s) {
+@Bean
+        private void writeln(String s) {
         try {
             synchronized (this) {
                 ensureOpen();
@@ -763,7 +771,8 @@ public class PrintStream extends FilterOutputStream
      *
      * @param      b   The {@code boolean} to be printed
      */
-    public void print(boolean b) {
+@Bean
+        public void print(boolean b) {
         write(String.valueOf(b));
     }
 
@@ -775,7 +784,8 @@ public class PrintStream extends FilterOutputStream
      *
      * @param      c   The {@code char} to be printed
      */
-    public void print(char c) {
+@Bean
+        public void print(char c) {
         write(String.valueOf(c));
     }
 
@@ -789,7 +799,8 @@ public class PrintStream extends FilterOutputStream
      * @param      i   The {@code int} to be printed
      * @see        java.lang.Integer#toString(int)
      */
-    public void print(int i) {
+@Bean
+        public void print(int i) {
         write(String.valueOf(i));
     }
 
@@ -803,7 +814,8 @@ public class PrintStream extends FilterOutputStream
      * @param      l   The {@code long} to be printed
      * @see        java.lang.Long#toString(long)
      */
-    public void print(long l) {
+@Bean
+        public void print(long l) {
         write(String.valueOf(l));
     }
 
@@ -817,7 +829,8 @@ public class PrintStream extends FilterOutputStream
      * @param      f   The {@code float} to be printed
      * @see        java.lang.Float#toString(float)
      */
-    public void print(float f) {
+@Bean
+        public void print(float f) {
         write(String.valueOf(f));
     }
 
@@ -831,7 +844,8 @@ public class PrintStream extends FilterOutputStream
      * @param      d   The {@code double} to be printed
      * @see        java.lang.Double#toString(double)
      */
-    public void print(double d) {
+@Bean
+        public void print(double d) {
         write(String.valueOf(d));
     }
 
@@ -845,7 +859,8 @@ public class PrintStream extends FilterOutputStream
      *
      * @throws  NullPointerException  If {@code s} is {@code null}
      */
-    public void print(char s[]) {
+@Bean
+        public void print(char s[]) {
         write(s);
     }
 
@@ -859,7 +874,8 @@ public class PrintStream extends FilterOutputStream
      *
      * @param      s   The {@code String} to be printed
      */
-    public void print(String s) {
+@Bean
+        public void print(String s) {
         write(String.valueOf(s));
     }
 
@@ -873,7 +889,8 @@ public class PrintStream extends FilterOutputStream
      * @param      obj   The {@code Object} to be printed
      * @see        java.lang.Object#toString()
      */
-    public void print(Object obj) {
+@Bean
+        public void print(Object obj) {
         write(String.valueOf(obj));
     }
 
@@ -897,7 +914,8 @@ public class PrintStream extends FilterOutputStream
      *
      * @param x  The {@code boolean} to be printed
      */
-    public void println(boolean x) {
+@Bean
+        public void println(boolean x) {
         if (getClass() == PrintStream.class) {
             writeln(String.valueOf(x));
         } else {
@@ -915,7 +933,8 @@ public class PrintStream extends FilterOutputStream
      *
      * @param x  The {@code char} to be printed.
      */
-    public void println(char x) {
+@Bean
+        public void println(char x) {
         if (getClass() == PrintStream.class) {
             writeln(String.valueOf(x));
         } else {
@@ -933,7 +952,8 @@ public class PrintStream extends FilterOutputStream
      *
      * @param x  The {@code int} to be printed.
      */
-    public void println(int x) {
+@Bean
+        public void println(int x) {
         if (getClass() == PrintStream.class) {
             writeln(String.valueOf(x));
         } else {
@@ -951,7 +971,8 @@ public class PrintStream extends FilterOutputStream
      *
      * @param x  a The {@code long} to be printed.
      */
-    public void println(long x) {
+@Bean
+        public void println(long x) {
         if (getClass() == PrintStream.class) {
             writeln(String.valueOf(x));
         } else {
@@ -969,7 +990,8 @@ public class PrintStream extends FilterOutputStream
      *
      * @param x  The {@code float} to be printed.
      */
-    public void println(float x) {
+@Bean
+        public void println(float x) {
         if (getClass() == PrintStream.class) {
             writeln(String.valueOf(x));
         } else {
@@ -987,7 +1009,8 @@ public class PrintStream extends FilterOutputStream
      *
      * @param x  The {@code double} to be printed.
      */
-    public void println(double x) {
+@Bean
+        public void println(double x) {
         if (getClass() == PrintStream.class) {
             writeln(String.valueOf(x));
         } else {
@@ -1005,7 +1028,8 @@ public class PrintStream extends FilterOutputStream
      *
      * @param x  an array of chars to print.
      */
-    public void println(char[] x) {
+@Bean
+        public void println(char[] x) {
         if (getClass() == PrintStream.class) {
             writeln(x);
         } else {
@@ -1023,7 +1047,8 @@ public class PrintStream extends FilterOutputStream
      *
      * @param x  The {@code String} to be printed.
      */
-    public void println(String x) {
+@Bean
+        public void println(String x) {
         if (getClass() == PrintStream.class) {
             writeln(String.valueOf(x));
         } else {
@@ -1043,7 +1068,8 @@ public class PrintStream extends FilterOutputStream
      *
      * @param x  The {@code Object} to be printed.
      */
-    public void println(Object x) {
+@Bean
+        public void println(Object x) {
         String s = String.valueOf(x);
         if (getClass() == PrintStream.class) {
             // need to apply String.valueOf again since first invocation
@@ -1101,7 +1127,8 @@ public class PrintStream extends FilterOutputStream
      *
      * @since  1.5
      */
-    public PrintStream printf(String format, Object ... args) {
+@Bean
+        public PrintStream printf(String format, Object ... args) {
         return format(format, args);
     }
 
@@ -1153,7 +1180,8 @@ public class PrintStream extends FilterOutputStream
      *
      * @since  1.5
      */
-    public PrintStream printf(Locale l, String format, Object ... args) {
+@Bean
+        public PrintStream printf(Locale l, String format, Object ... args) {
         return format(l, format, args);
     }
 
@@ -1198,7 +1226,8 @@ public class PrintStream extends FilterOutputStream
      *
      * @since  1.5
      */
-    public PrintStream format(String format, Object ... args) {
+@Bean
+        public PrintStream format(String format, Object ... args) {
         try {
             synchronized (this) {
                 ensureOpen();
@@ -1257,7 +1286,8 @@ public class PrintStream extends FilterOutputStream
      *
      * @since  1.5
      */
-    public PrintStream format(Locale l, String format, Object ... args) {
+@Bean
+        public PrintStream format(Locale l, String format, Object ... args) {
         try {
             synchronized (this) {
                 ensureOpen();
@@ -1299,7 +1329,8 @@ public class PrintStream extends FilterOutputStream
      *
      * @since  1.5
      */
-    public PrintStream append(CharSequence csq) {
+@Bean
+        public PrintStream append(CharSequence csq) {
         print(String.valueOf(csq));
         return this;
     }
@@ -1339,7 +1370,8 @@ public class PrintStream extends FilterOutputStream
      *
      * @since  1.5
      */
-    public PrintStream append(CharSequence csq, int start, int end) {
+@Bean
+        public PrintStream append(CharSequence csq, int start, int end) {
         if (csq == null) csq = "null";
         return append(csq.subSequence(start, end));
     }
@@ -1361,7 +1393,8 @@ public class PrintStream extends FilterOutputStream
      *
      * @since  1.5
      */
-    public PrintStream append(char c) {
+@Bean
+        public PrintStream append(char c) {
         print(c);
         return this;
     }

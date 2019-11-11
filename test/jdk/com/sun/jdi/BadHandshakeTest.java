@@ -48,6 +48,7 @@ import lib.jdb.Debuggee;
  * @build BadHandshakeTest Exit0
  * @run driver BadHandshakeTest
  */
+@Bean
 public class BadHandshakeTest {
 
     /*

@@ -47,6 +47,7 @@ import javax.swing.JToggleButton;
  * <p/>
  * This has never worked from the earliest days of merlin.
  */
+@Bean
 public class Test4619792 {
     public static void main(String[] args) throws IntrospectionException {
         Class[] types = {

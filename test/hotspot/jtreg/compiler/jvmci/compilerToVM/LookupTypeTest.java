@@ -48,6 +48,7 @@ import jdk.vm.ci.hotspot.HotSpotResolvedObjectType;
 import java.util.HashSet;
 import java.util.Set;
 
+@Bean
 public class LookupTypeTest {
     public static void main(String args[]) {
         LookupTypeTest test = new LookupTypeTest();
@@ -86,7 +87,11 @@ public class LookupTypeTest {
         return result;
     }
 
-    private void runTest(TestCase tcase) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void runTest(TestCase tcase) {
         System.out.println(tcase);
         HotSpotResolvedObjectType metaspaceKlass;
         try {

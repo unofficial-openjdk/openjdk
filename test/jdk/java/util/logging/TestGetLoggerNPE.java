@@ -41,6 +41,7 @@ import jdk.internal.access.SharedSecrets;
  * @run main/othervm TestGetLoggerNPE getLogger
  * @run main/othervm TestGetLoggerNPE getLogManager
  */
+@Bean
 public class TestGetLoggerNPE {
     static volatile Throwable thrown = null;
     public static void main(String[] args) throws Exception {
@@ -95,7 +96,11 @@ public class TestGetLoggerNPE {
         private static final InheritableThreadLocal<Context> context = new InheritableThreadLocal<>();
 
 
-        public void setContext(Context context) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setContext(Context context) {
             JavaAWTAccessStub.context.set(context);
         }
 

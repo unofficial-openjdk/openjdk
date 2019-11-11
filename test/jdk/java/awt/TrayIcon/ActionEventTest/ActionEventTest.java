@@ -88,6 +88,9 @@ public class ActionEventTest {
             new BufferedImage(20, 20, BufferedImage.TYPE_INT_RGB), "ti");
         icon.addActionListener(new ActionListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent ae) {
                 actionPerformed = true;
                 int md = ae.getModifiers();

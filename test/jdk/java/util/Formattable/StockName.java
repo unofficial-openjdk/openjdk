@@ -32,6 +32,7 @@ import java.util.Formattable;
 import java.util.Locale;
 import static java.util.FormattableFlags.*;
 
+@Bean
 public class StockName implements Formattable {
     private String symbol, companyName, frenchCompanyName;
 
@@ -43,7 +44,11 @@ public class StockName implements Formattable {
         this.frenchCompanyName = frenchCompanyName;
     }
 
-    public void formatTo(Formatter fmt, int f, int width, int precision) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void formatTo(Formatter fmt, int f, int width, int precision) {
         StringBuilder sb = new StringBuilder();
 
         // decide form of name

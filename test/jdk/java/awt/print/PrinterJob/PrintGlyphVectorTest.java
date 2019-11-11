@@ -37,7 +37,10 @@ import java.awt.print.*;
 
 public class PrintGlyphVectorTest extends Component implements Printable {
 
-    public void drawGVs(Graphics g) {
+    @Bean
+@Bean
+@Bean
+            public void drawGVs(Graphics g) {
 
         String testString = "0123456789abcdefghijklm";
         Graphics2D g2d = (Graphics2D)g;
@@ -74,7 +77,10 @@ public class PrintGlyphVectorTest extends Component implements Printable {
 
     }
 
-     public void paint(Graphics g) {
+     @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
        g.setColor(Color.white);
        g.fillRect(0,0,getSize().width, getSize().height);
        drawGVs(g);
@@ -84,7 +90,10 @@ public class PrintGlyphVectorTest extends Component implements Printable {
         return new Dimension(600,200);
     }
 
-    public int print(Graphics g, PageFormat pf, int pageIndex) {
+    @Bean
+@Bean
+@Bean
+            public int print(Graphics g, PageFormat pf, int pageIndex) {
 
         if (pageIndex > 0) {
             return Printable.NO_SUCH_PAGE;
@@ -131,7 +140,10 @@ class PrintInstructions extends Panel implements ActionListener {
      add(b);
   }
 
-  public void actionPerformed(ActionEvent e) {
+  @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
        PrinterJob pj = PrinterJob.getPrinterJob();
        if (pj == null ||
            pj.getPrintService() == null ||

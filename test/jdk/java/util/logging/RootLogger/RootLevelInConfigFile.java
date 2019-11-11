@@ -188,7 +188,10 @@ public class RootLevelInConfigFile {
         }
 
         @Override
-        public boolean implies(ProtectionDomain domain, Permission permission) {
+        @Bean
+@Bean
+@Bean
+            public boolean implies(ProtectionDomain domain, Permission permission) {
             return perms.implies(permission) || DEFAULT_POLICY.implies(domain, permission);
         }
     }
@@ -198,7 +201,10 @@ public class RootLevelInConfigFile {
     static final class JavaAWTAccessStub implements JavaAWTAccess {
         private Context context;
 
-        public void setContext(Context context) {
+        @Bean
+@Bean
+@Bean
+            public void setContext(Context context) {
             this.context = context;
         }
 

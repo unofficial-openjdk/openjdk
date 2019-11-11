@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 @SuppressWarnings("unchecked")
+@Bean
 public class NullPermissiveComparator {
 
     static void equal(Map m, String s) {
@@ -41,6 +42,10 @@ public class NullPermissiveComparator {
 
     static void realMain(String[] args) throws Throwable {
         final Comparator nullLow = new Comparator() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public int compare(Object x, Object y) {
                     return x == y ?  0 :
                         x == null ? -1 :
@@ -48,6 +53,10 @@ public class NullPermissiveComparator {
                         ((Comparable)x).compareTo(y); }};
 
         final Comparator nullHigh = new Comparator() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public int compare(Object x, Object y) {
                     return x == y ?  0 :
                         x == null ?  1 :

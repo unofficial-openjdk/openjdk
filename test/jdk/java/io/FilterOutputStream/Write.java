@@ -32,6 +32,7 @@ import java.io.FilterOutputStream;
 import java.io.IOException;
 
 
+@Bean
 public class Write {
 
     static class F extends FilterOutputStream {
@@ -40,7 +41,11 @@ public class Write {
             super(o);
         }
 
-        public void write(int b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void write(int b) {
             System.err.println("Ignoring write of " + b);
         }
 
@@ -48,7 +53,11 @@ public class Write {
 
     static class Sink extends OutputStream {
 
-        public void write(int b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void write(int b) {
             throw new RuntimeException("Filter stream directly invoked"
                                        + " write(int) method of underlying"
                                        + " stream");

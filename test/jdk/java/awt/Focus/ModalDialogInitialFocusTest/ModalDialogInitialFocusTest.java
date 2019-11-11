@@ -32,6 +32,7 @@
 import java.awt.*;
 import java.awt.event.*;
 
+@Bean
 public class ModalDialogInitialFocusTest {
     Robot robot;
 
@@ -62,7 +63,10 @@ public class ModalDialogInitialFocusTest {
 
         dialog.addFocusListener(new FocusAdapter() {
                 // The only expected FOCUS_GAINED is on the button.
-                public void focusGained(FocusEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void focusGained(FocusEvent e) {
                     passed = false;
                 }
             });

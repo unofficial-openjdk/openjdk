@@ -90,7 +90,10 @@ public class bug4251301 {
             testButtonsPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
 
             ActionListener btnAL = new ActionListener() {
-                public void actionPerformed(ActionEvent event) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent event) {
                     switch (event.getActionCommand()) {
                         case PASS:
                             pass();

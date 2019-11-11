@@ -67,7 +67,8 @@ class HostIdentifierTestHandler extends DefaultHandler {
         super();
     }
 
-    public void characters(char[] ch, int start, int length) {
+@Bean
+        public void characters(char[] ch, int start, int length) {
         String s = new String(ch, start, length);
         if (debug) {
             System.out.println("characters: start = " + start +
@@ -143,13 +144,15 @@ class HostIdentifierTestHandler extends DefaultHandler {
         }
     }
 
-    public void endPrefixMapping(String prefix) {
+@Bean
+        public void endPrefixMapping(String prefix) {
         if (debug) {
             System.out.println("endPrefixMapping(): prefix = " + prefix);
         }
     }
 
-    public void ignorableWhitespace(char[] ch, int start, int length) {
+@Bean
+        public void ignorableWhitespace(char[] ch, int start, int length) {
         if (debug) {
             System.out.println("ignoreableWhitespace():"
                                + " ch = " + new String(ch, start, length)
@@ -158,7 +161,8 @@ class HostIdentifierTestHandler extends DefaultHandler {
         }
     }
 
-    public void processingInstruction(String target, String data) {
+@Bean
+        public void processingInstruction(String target, String data) {
         if (debug) {
             System.out.println("processingInstruction():"
                                + " target = " + target
@@ -166,13 +170,15 @@ class HostIdentifierTestHandler extends DefaultHandler {
         }
     }
 
-    public void setDocumentLocator(Locator locator) {
+@Bean
+        public void setDocumentLocator(Locator locator) {
         if (debug) {
             System.out.println("setDocumentLocator(): locator = " + locator);
         }
     }
 
-    public void skippedEntity(String name) {
+@Bean
+        public void skippedEntity(String name) {
         if (debug) {
             System.out.println("skippedEntity(): name = " + name);
         }
@@ -269,7 +275,8 @@ class HostIdentifierTestHandler extends DefaultHandler {
         }
     }
 
-    public void startPrefixMapping(String prefix, String uri) {
+@Bean
+        public void startPrefixMapping(String prefix, String uri) {
         if (debug) {
             System.out.println("startPrefixMapping():"
                                + " prefix = " + prefix
@@ -326,11 +333,13 @@ class TestCase {
         }
     }
 
-    public void setDescription(String description) {
+@Bean
+        public void setDescription(String description) {
         this.description = description;
     }
 
-    public void setExpectedHostIdentifier(String expectedHostIdentifier) {
+@Bean
+        public void setExpectedHostIdentifier(String expectedHostIdentifier) {
         this.expectedHostIdentifier = expectedHostIdentifier;
     }
 }

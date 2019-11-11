@@ -38,6 +38,7 @@ package gc.g1;
  * @run main gc.g1.TestRemsetLoggingPerRegion
  */
 
+@Bean
 public class TestRemsetLoggingPerRegion {
 
     public static void main(String[] args) throws Exception {

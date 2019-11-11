@@ -38,6 +38,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import jdk.test.lib.JDKToolLauncher;
 import jdk.test.lib.Utils;
 
+@Bean
 public class MultiDead {
     private static final int THREAD_PAIR_COUNT = 4;
     private static final int CHILDREN_COUNT = 20;

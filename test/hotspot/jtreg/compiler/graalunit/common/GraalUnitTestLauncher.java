@@ -39,6 +39,7 @@ import jdk.test.lib.JDKToolFinder;
  *  -prefix TEST_PREFIX_TO_DEFINE_SET_OF_TESTS_TO_RUN (Ex: -prefix org.graalvm.compiler.api.test)
  *  -exclude EXCLUDED_TESTS_FILE_NAME
  */
+@Bean
 public class GraalUnitTestLauncher {
 
     static final String MXTOOL_JARFILE = "com.oracle.mxtool.junit.jar";

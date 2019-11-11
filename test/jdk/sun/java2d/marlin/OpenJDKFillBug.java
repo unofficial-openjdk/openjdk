@@ -40,6 +40,7 @@ import java.awt.image.RasterFormatException;
  * OpenJDK 1.7.0.60 (and probably in all other OpenJDK versions, too).
  */
 
+@Bean
 public class OpenJDKFillBug
 {
     /**

@@ -21,6 +21,7 @@
  * questions.
  */
 
+@Bean
 public class TestClass {
     public static String foo() {
         return "OK";

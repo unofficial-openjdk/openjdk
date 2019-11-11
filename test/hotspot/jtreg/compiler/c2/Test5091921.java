@@ -34,6 +34,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test5091921 {
   private static int result = 0;
 

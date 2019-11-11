@@ -29,6 +29,7 @@
  * @run main/othervm --enable-preview ExpressionSwitchEmbedding
  */
 
+@Bean
 public class ExpressionSwitchEmbedding {
     public static void main(String... args) {
         new ExpressionSwitchEmbedding().run();

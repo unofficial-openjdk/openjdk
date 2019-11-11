@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.ListIterator;
 
+@Bean
 public class AddAll {
     public static void main(String[] args) throws Exception {
         List t = new FooList();
@@ -50,7 +51,11 @@ class FooList extends AbstractSequentialList {
         return a.size();
     }
 
-    public ListIterator listIterator(int index) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public ListIterator listIterator(int index) {
         return a.listIterator(index);
     }
 }

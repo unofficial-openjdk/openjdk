@@ -31,6 +31,7 @@ import java.util.ArrayList;
  * @modules java.base/jdk.internal.misc
  * @run main/othervm -XX:MetaspaceSize=0 gc.metaspace.TestMetaspaceInitialization
  */
+@Bean
 public class TestMetaspaceInitialization {
     private class Internal {
         @SuppressWarnings("unused")

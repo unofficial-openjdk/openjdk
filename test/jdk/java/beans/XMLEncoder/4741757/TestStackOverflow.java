@@ -48,7 +48,10 @@ public final class TestStackOverflow extends AbstractTest {
         return this.property;
     }
 
-    public boolean equals(Object object) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(Object object) {
         if (object instanceof TestStackOverflow) {
             TestStackOverflow test = (TestStackOverflow) object;
             return test.property == this.property;

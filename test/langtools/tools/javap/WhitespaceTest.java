@@ -31,6 +31,7 @@
 import java.io.*;
 import java.util.*;
 
+@Bean
 public class WhitespaceTest {
     public static void main(String... args) throws Exception {
         new WhitespaceTest().run();

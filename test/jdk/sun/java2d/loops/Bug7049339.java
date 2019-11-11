@@ -42,6 +42,7 @@ import java.awt.image.ColorModel;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 
+@Bean
 public class Bug7049339 {
     public static void main(String[] argv) {
         int x = 100, y = 100;

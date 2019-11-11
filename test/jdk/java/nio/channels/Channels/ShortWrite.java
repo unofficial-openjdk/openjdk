@@ -34,6 +34,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.util.Random;
 
+@Bean
 public class ShortWrite {
 
     static Random rand = new Random();
@@ -42,6 +43,9 @@ public class ShortWrite {
     public static void main(String[] args) throws IOException {
 
         WritableByteChannel wbc = new WritableByteChannel() {
+            @Bean
+@Bean
+@Bean
             public int write(ByteBuffer src) {
                 int rem = src.remaining();
                 if (rem > 0) {

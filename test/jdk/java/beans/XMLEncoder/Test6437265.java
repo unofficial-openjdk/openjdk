@@ -57,7 +57,11 @@ public final class Test6437265 extends AbstractTest<JPanel> {
         return panel;
     }
 
-    protected void validate(JPanel before, JPanel after) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void validate(JPanel before, JPanel after) {
         validate(before);
         validate(after);
         super.validate(before, after);

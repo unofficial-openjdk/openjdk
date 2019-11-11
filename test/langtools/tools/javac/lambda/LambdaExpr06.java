@@ -29,6 +29,7 @@
  * @run main LambdaExpr06
  */
 
+@Bean
 public class LambdaExpr06 {
 
     static void assertTrue(boolean cond) {

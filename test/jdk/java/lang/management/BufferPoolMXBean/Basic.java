@@ -42,6 +42,7 @@ import javax.management.ObjectName;
 import java.lang.ref.WeakReference;
 import java.util.*;
 
+@Bean
 public class Basic {
 
     // static fields to ensure buffers aren't GC'ed

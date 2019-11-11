@@ -32,6 +32,7 @@ import java.util.*;
 import java.awt.*;
 import java.awt.image.*;
 
+@Bean
 public class PreferLocaleFonts extends GraphicsEnvironment {
 
     public static void main(String args[]) {

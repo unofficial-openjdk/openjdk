@@ -42,10 +42,15 @@ import jdk.jshell.TypeDeclSnippet;
 import static jdk.jshell.Snippet.Status.OVERWRITTEN;
 import static jdk.jshell.Snippet.Status.VALID;
 
+@Bean
 public class ClassMembersTest extends KullaTesting {
 
     @Test(dataProvider = "memberTestCase")
-    public void memberTest(AccessModifier accessModifier, CodeChunk codeChunk, Static isStaticMember, Static isStaticReference) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void memberTest(AccessModifier accessModifier, CodeChunk codeChunk, Static isStaticMember, Static isStaticReference) {
         MemberTestCase testCase = new MemberTestCase(accessModifier, codeChunk, isStaticMember, isStaticReference);
         assertEval(testCase.generateSource());
         String expectedMessage = testCase.expectedMessage;
@@ -72,7 +77,11 @@ public class ClassMembersTest extends KullaTesting {
     }
 
     @Test(dataProvider = "memberTestCase")
-    public void extendsMemberTest(AccessModifier accessModifier, CodeChunk codeChunk, Static isStaticMember, Static isStaticReference) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void extendsMemberTest(AccessModifier accessModifier, CodeChunk codeChunk, Static isStaticMember, Static isStaticReference) {
         MemberTestCase testCase = new ExtendsMemberTestCase(accessModifier, codeChunk, isStaticMember, isStaticReference);
         String input = testCase.generateSource();
         List<String> ss = parseCode(input);
@@ -145,7 +154,11 @@ public class ClassMembersTest extends KullaTesting {
     }
 
     @Test(dataProvider = "retentionPolicyTestCase")
-    public void annotationTest(RetentionPolicy policy) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void annotationTest(RetentionPolicy policy) {
         assertEval("import java.lang.annotation.*;");
         String annotationSource =
                 "@Retention(RetentionPolicy." + policy.toString() + ")\n" +
@@ -280,7 +293,11 @@ public class ClassMembersTest extends KullaTesting {
             return getSourceTemplate().replace("#MEMBER#", codeChunk.generateSource(accessModifier, isStaticMember));
         }
 
-        protected String useCodeChunk(String className) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected String useCodeChunk(String className) {
             String name = className.toLowerCase();
             switch (codeChunk) {
                 case CONSTRUCTOR:
@@ -359,7 +376,11 @@ public class ClassMembersTest extends KullaTesting {
             this.code = code;
         }
 
-        public String generateSource(AccessModifier accessModifier, Static isStatic) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String generateSource(AccessModifier accessModifier, Static isStatic) {
             return code.replace("#MODIFIER#", accessModifier.getModifier() + " " + isStatic.getModifier());
         }
     }

@@ -39,6 +39,7 @@
 import java.applet.Applet;
 import java.awt.*;
 
+@Bean
 public class ShownOnPack extends Applet
 {
     //Declare things used in the test, like buttons and labels here

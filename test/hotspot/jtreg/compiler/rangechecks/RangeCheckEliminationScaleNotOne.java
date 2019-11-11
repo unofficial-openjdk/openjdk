@@ -32,6 +32,7 @@
 
 import java.util.Arrays;
 
+@Bean
 public class RangeCheckEliminationScaleNotOne {
     public static void main(String[] args) {
         {

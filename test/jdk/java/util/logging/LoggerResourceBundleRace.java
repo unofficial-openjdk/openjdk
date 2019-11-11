@@ -37,6 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 
+@Bean
 public class LoggerResourceBundleRace extends RacingThreadsTest {
     private static final int N_LOOPS   = 500000;   // # of race loops
     private static final int N_SECS    = 15;       // # of secs to run test
@@ -75,12 +76,20 @@ public class LoggerResourceBundleRace extends RacingThreadsTest {
         test.runTest(driver, workers);
     }
 
-    public void oneTimeDriverInit(DriverThread dt) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void oneTimeDriverInit(DriverThread dt) {
         super.oneTimeDriverInit(dt);
         dummy = null;
     }
 
-    public void perRaceDriverInit(DriverThread dt) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void perRaceDriverInit(DriverThread dt) {
         super.perRaceDriverInit(dt);
 
         // - allocate a new dummy Logger without a ResourceBundle;
@@ -91,7 +100,11 @@ public class LoggerResourceBundleRace extends RacingThreadsTest {
         worksCnt.set(0);
     }
 
-    public void executeRace(WorkerThread wt) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void executeRace(WorkerThread wt) {
         super.executeRace(wt);
 
         Logger myLogger = null;
@@ -130,7 +143,11 @@ public class LoggerResourceBundleRace extends RacingThreadsTest {
         }
     }
 
-    public void checkRaceResults(DriverThread dt) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void checkRaceResults(DriverThread dt) {
         super.checkRaceResults(dt);
 
         if (worksCnt.get() != 1) {
@@ -145,7 +162,11 @@ public class LoggerResourceBundleRace extends RacingThreadsTest {
         }
     }
 
-    public void oneTimeDriverEpilog(DriverThread dt) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void oneTimeDriverEpilog(DriverThread dt) {
         super.oneTimeDriverEpilog(dt);
 
         // Use the dummy Logger after the testing loop to make sure that

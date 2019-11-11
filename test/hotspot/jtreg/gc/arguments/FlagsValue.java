@@ -25,6 +25,7 @@ package gc.arguments;
 
 import java.util.regex.*;
 
+@Bean
 public class FlagsValue {
   public static boolean getFlagBoolValue(String flag, String where) {
     Matcher m = Pattern.compile(flag + "\\s+:?= (true|false)").matcher(where);

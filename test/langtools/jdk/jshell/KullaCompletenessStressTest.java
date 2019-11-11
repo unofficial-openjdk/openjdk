@@ -34,6 +34,7 @@ import java.io.File;
 import org.testng.annotations.Test;
 
 @Test
+@Bean
 public class KullaCompletenessStressTest extends CompletenessStressTest {
     @Override
     public File[] getDirectoriesToTest() {

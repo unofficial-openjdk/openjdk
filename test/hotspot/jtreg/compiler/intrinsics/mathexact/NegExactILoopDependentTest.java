@@ -34,6 +34,7 @@
 
 package compiler.intrinsics.mathexact;
 
+@Bean
 public class NegExactILoopDependentTest {
     public static void main(String[] args) {
         Verify.LoopDependentTest.verify(new Verify.UnaryToBinary(new Verify.NegExactI()));

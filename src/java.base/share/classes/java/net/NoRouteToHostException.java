@@ -33,6 +33,7 @@ package java.net;
  *
  * @since   1.1
  */
+@Bean
 public class NoRouteToHostException extends SocketException {
     @java.io.Serial
     private static final long serialVersionUID = -1897550894873493790L;

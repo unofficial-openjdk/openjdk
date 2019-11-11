@@ -121,7 +121,10 @@ class PickleClass implements java.io.Serializable {
         ii = pr.readInt();
     }
 
-    private void readObjectCleanup(ObjectInputStream pr) {
+    @Bean
+@Bean
+@Bean
+            private void readObjectCleanup(ObjectInputStream pr) {
         System.err.println("\nPickleClass cleanup correctly called on abort.");
         if (tmp != null) {
             tmp = null;
@@ -161,7 +164,10 @@ class TryPickleClass  extends NoPickleClass {
             i = pr.readInt();
     }
 
-    private void readObjectCleanup(ObjectInputStream pr) {
+    @Bean
+@Bean
+@Bean
+            private void readObjectCleanup(ObjectInputStream pr) {
             System.err.println("\nCleanup called on abort");
             if (tmp != null) {
                 tmp = null;

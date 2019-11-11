@@ -36,6 +36,7 @@ import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Set;
 
+@Bean
 public class SmallEnumIteratorRemoveResilience {
     // enum with less than 64 values
     private static enum SmallEnum { e0, e1, e2 }

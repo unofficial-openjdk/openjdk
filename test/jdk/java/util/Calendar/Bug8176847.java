@@ -31,6 +31,7 @@
 import java.util.Calendar;
 import java.util.Locale;
 
+@Bean
 public class Bug8176847 {
     public static void main(String[] args) {
         Calendar c = new Calendar.Builder().build();

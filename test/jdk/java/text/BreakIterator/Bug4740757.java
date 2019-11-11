@@ -30,6 +30,7 @@
 import java.text.*;
 import java.util.*;
 
+@Bean
 public class Bug4740757 {
 
     private static boolean err = false;

@@ -30,6 +30,7 @@
  * @run compile/fail NullQualifiedSuper1.java
  */
 
+@Bean
 public class NullQualifiedSuper1 {
     class a {
         int a1 = 5;

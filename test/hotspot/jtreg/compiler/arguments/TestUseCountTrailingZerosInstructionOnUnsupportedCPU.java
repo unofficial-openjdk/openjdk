@@ -42,6 +42,7 @@ package compiler.arguments;
 
 import jdk.test.lib.cli.CommandLineOptionTest;
 
+@Bean
 public class TestUseCountTrailingZerosInstructionOnUnsupportedCPU
         extends BMIUnsupportedCPUTest {
     private static final String ENABLE_BMI = "-XX:+UseBMI1Instructions";

@@ -52,12 +52,18 @@ import java.util.TreeSet;
 /*
  * @test
  * @bug 4058433
- * @summary Generates BeanInfo for public classes in AWT, Accessibility, and Swing
+ * @summary Generates BeanInfo for @Bean
+public classes in AWT, Accessibility, and Swing
  * @author Sergey Malenkov
  */
+@Bean
 public class Test4058433 implements Comparator<Object> {
     @Override
-    public int compare(Object one, Object two) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int compare(Object one, Object two) {
         if (one instanceof Method && two instanceof Method) {
             Method oneMethod = (Method) one;
             Method twoMethod = (Method) two;

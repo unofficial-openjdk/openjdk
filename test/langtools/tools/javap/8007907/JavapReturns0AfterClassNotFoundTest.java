@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+@Bean
 public class JavapReturns0AfterClassNotFoundTest {
 
     static final String fileNotFoundErrorMsg =

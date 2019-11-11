@@ -30,6 +30,7 @@ import java.awt.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessGradientPaint
  */
 
+@Bean
 public class HeadlessGradientPaint {
     public static void main(String args[]) {
         GradientPaint gp;

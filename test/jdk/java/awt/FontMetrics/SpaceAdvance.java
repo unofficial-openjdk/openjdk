@@ -31,6 +31,7 @@ import java.awt.FontMetrics ;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
+@Bean
 public class SpaceAdvance {
     public static void main(String[] args) throws Exception {
 

@@ -32,6 +32,7 @@
 import java.lang.management.ThreadMXBean;
 import java.lang.management.ManagementFactory;
 
+@Bean
 public class DisableTest {
     private static ThreadMXBean tm = ManagementFactory.getThreadMXBean();
 

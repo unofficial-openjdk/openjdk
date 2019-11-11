@@ -42,6 +42,7 @@ import static java.nio.file.StandardCopyOption.*;
  * @author Xueming Shen
  */
 
+@Bean
 public class Demo {
 
     static enum Action {
@@ -292,7 +293,11 @@ public class Demo {
                 try (DirectoryStream<Path> ds = Files.newDirectoryStream(path,
                     new DirectoryStream.Filter<Path>() {
                         @Override
-                        public boolean accept(Path path) {
+                        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean accept(Path path) {
                             return path.toString().contains(fStr);
                         }
                     }))

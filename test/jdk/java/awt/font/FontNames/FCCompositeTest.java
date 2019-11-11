@@ -40,6 +40,7 @@ import sun.font.Font2D;
 import sun.font.CompositeFont;
 import sun.font.PhysicalFont;
 
+@Bean
 public class FCCompositeTest {
 
     final static String[] names =

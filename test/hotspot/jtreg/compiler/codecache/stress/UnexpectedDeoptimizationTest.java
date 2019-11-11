@@ -48,6 +48,7 @@
 
 package compiler.codecache.stress;
 
+@Bean
 public class UnexpectedDeoptimizationTest implements Runnable {
 
     public static void main(String[] args) {

@@ -31,6 +31,7 @@
  * @run main LambdaConv03
  */
 
+@Bean
 public class LambdaConv03 {
 
     static int assertionCount = 0;

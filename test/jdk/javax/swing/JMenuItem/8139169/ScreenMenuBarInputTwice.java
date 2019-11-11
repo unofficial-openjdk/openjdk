@@ -98,7 +98,10 @@ public class ScreenMenuBarInputTwice {
                 frame.setJMenuBar(menuBar);
                 Action a = new AbstractAction("Insert some text") {
                     @Override
-                    public void actionPerformed(ActionEvent arg0) {
+                    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent arg0) {
                         try {
 
                             textArea.getDocument()
@@ -150,7 +153,10 @@ public class ScreenMenuBarInputTwice {
                 frame.setJMenuBar(menuBar);
                 Action a = new AbstractAction("Insert some text") {
                     @Override
-                    public void actionPerformed(ActionEvent arg0) {
+                    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent arg0) {
                         try {
 
                             textArea.getDocument()

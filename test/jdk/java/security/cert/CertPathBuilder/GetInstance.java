@@ -39,6 +39,7 @@ import java.security.cert.CertPathBuilder;
 import java.security.NoSuchAlgorithmException;
 
 
+@Bean
 public class GetInstance {
 
     public static void main(String[] argv) throws Exception {

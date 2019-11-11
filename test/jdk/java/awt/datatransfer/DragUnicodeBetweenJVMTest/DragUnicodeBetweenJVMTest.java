@@ -41,6 +41,7 @@ import test.java.awt.regtesthelpers.process.ProcessResults;
 import test.java.awt.regtesthelpers.Util;
 import static java.lang.Thread.sleep;
 
+@Bean
 public class DragUnicodeBetweenJVMTest {
 
     public void start() {
@@ -60,6 +61,9 @@ public class DragUnicodeBetweenJVMTest {
         sourceFrame.pack();
         sourceFrame.addWindowListener( new WindowAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent e) {
                 sourceFrame.dispose();
             }
@@ -115,6 +119,9 @@ public class DragUnicodeBetweenJVMTest {
         targetFrame.add(targetPanel);
         targetFrame.addWindowListener( new WindowAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent e) {
                 targetFrame.dispose();
             }
@@ -126,7 +133,10 @@ public class DragUnicodeBetweenJVMTest {
         doTest(dragSourcePoint, targetPanel);
     }
 
-    private void doTest(Point dragSourcePoint, TargetPanel targetPanel) {
+    @Bean
+@Bean
+@Bean
+            private void doTest(Point dragSourcePoint, TargetPanel targetPanel) {
         Util.waitForIdle(null);
 
         final Robot robot = Util.createRobot();

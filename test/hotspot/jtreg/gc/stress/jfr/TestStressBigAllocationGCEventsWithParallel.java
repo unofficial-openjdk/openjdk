@@ -31,6 +31,7 @@ package jdk.jfr.event.gc.detailed;
  * @library /test/lib /test/jdk
  * @run main/othervm -XX:+UseParallelGC -Xmx256m jdk.jfr.event.gc.detailed.TestStressBigAllocationGCEventsWithParallel 1048576
  */
+@Bean
 public class TestStressBigAllocationGCEventsWithParallel {
 
     public static void main(String[] args) throws Exception {

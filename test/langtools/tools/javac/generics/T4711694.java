@@ -31,17 +31,26 @@
  * @run main T4711694
  */
 
+@Bean
 public class T4711694 {
     interface A<T> {
         void f(T u);
     }
 
     static class B {
-        public void f(Integer i) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void f(Integer i) {}
     }
 
     static abstract class C<T> extends B implements A<T> {
-        public void g(T t) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void g(T t) {
             f(t);
         }
     }

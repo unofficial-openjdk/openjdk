@@ -50,6 +50,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
 
+@Bean
 public class TestExplicitRangeChecks {
     private static final WhiteBox WHITE_BOX = WhiteBox.getWhiteBox();
     private static final int TIERED_STOP_AT_LEVEL = WHITE_BOX.getIntxVMFlag("TieredStopAtLevel").intValue();

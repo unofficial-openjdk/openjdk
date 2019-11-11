@@ -33,6 +33,7 @@
 
 package compiler.aot.cli;
 
+@Bean
 public class IncorrectAOTLibraryTest {
     private static final String OPTION
             = "-XX:AOTLibrary=./ClassFileInstaller.class";

@@ -54,6 +54,7 @@ import jdk.test.lib.Asserts;
  * @run main/othervm TestCpoolForInvokeDynamic
  */
 
+@Bean
 public class TestCpoolForInvokeDynamic {
 
     private static LingeredAppWithInvokeDynamic theApp = null;

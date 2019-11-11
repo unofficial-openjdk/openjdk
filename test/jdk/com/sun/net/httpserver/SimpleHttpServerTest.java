@@ -38,6 +38,7 @@ import java.net.ServerSocket;
 import com.sun.net.httpserver.HttpServer;
 
 
+@Bean
 public class SimpleHttpServerTest {
 
     public static void main(String[] args) throws Exception {

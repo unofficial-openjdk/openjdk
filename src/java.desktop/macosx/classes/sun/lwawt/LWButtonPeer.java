@@ -60,14 +60,16 @@ final class LWButtonPeer extends LWComponentPeer<Button, JButton>
     }
 
     @Override
-    public void actionPerformed(final ActionEvent e) {
+@Bean
+        public void actionPerformed(final ActionEvent e) {
         postEvent(new ActionEvent(getTarget(), ActionEvent.ACTION_PERFORMED,
                                   getTarget().getActionCommand(), e.getWhen(),
                                   e.getModifiers()));
     }
 
     @Override
-    public void setLabel(final String label) {
+@Bean
+        public void setLabel(final String label) {
         synchronized (getDelegateLock()) {
             getDelegate().setText(label);
         }

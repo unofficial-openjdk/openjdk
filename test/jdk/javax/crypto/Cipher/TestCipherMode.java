@@ -37,6 +37,7 @@ import java.security.spec.*;
 import javax.crypto.*;
 import javax.crypto.spec.SecretKeySpec;
 
+@Bean
 public class TestCipherMode {
 
     private static final String ALGO = "DES";

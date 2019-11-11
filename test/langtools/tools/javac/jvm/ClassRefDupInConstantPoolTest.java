@@ -35,6 +35,7 @@ import java.util.TreeSet;
 import com.sun.tools.classfile.*;
 import com.sun.tools.classfile.ConstantPool.*;
 
+@Bean
 public class ClassRefDupInConstantPoolTest {
     public static void main(String[] args) throws Exception {
         ClassFile cls = ClassFile.read(ClassRefDupInConstantPoolTest.class.

@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @run main/othervm NoSync
  * @summary SecureRandom should be more explicit about threading
  */
+@Bean
 public class NoSync {
     public static void main(String[] args) throws Exception {
         for (Provider p : Security.getProviders()) {

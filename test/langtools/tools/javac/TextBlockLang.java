@@ -29,6 +29,7 @@
  * @run main/othervm --enable-preview TextBlockLang
  */
 
+@Bean
 public class TextBlockLang {
     public static void main(String... args) {
         test1();

@@ -35,6 +35,7 @@ package compiler.c2;
 import java.util.ArrayList;
 import java.util.List;
 
+@Bean
 public class Test6851282 {
   void foo(A a, A[] as) {
     for (A a1 : as) {
@@ -68,7 +69,11 @@ public class Test6851282 {
 
     final B[] c(final A a) {
       return new BoxedArray<B>(bs).filter(new Function<B, Boolean>() {
-        public Boolean apply(B arg) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Boolean apply(B arg) {
           for (B b : a.bs) {
             if (b.d == arg.d)
               return true;

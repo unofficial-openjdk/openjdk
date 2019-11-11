@@ -33,6 +33,7 @@ import java.util.Properties;
  * @summary Add IMPLEMENTOR property to the release file
  * @run main ReleaseImplementorTest
  */
+@Bean
 public class ReleaseImplementorTest {
     public static void main(String[] args) throws Exception {
         Properties props = new Properties();

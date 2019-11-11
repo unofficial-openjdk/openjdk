@@ -45,6 +45,7 @@ import toolbox.JarTask;
 import toolbox.JavacTask;
 import toolbox.ToolBox;
 
+@Bean
 public class T6558476 {
 
     private static final String classFoo = "class Foo {}";

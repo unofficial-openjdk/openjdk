@@ -28,6 +28,7 @@
             they should be returning the same instance.
    @author James Bond/007
 */
+@Bean
 public class CaseConvertSameInstance {
     public static void main(String[] args) throws Exception {
         /* these two are the real tests for this bug. */

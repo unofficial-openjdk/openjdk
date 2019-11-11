@@ -34,6 +34,7 @@ import java.util.Locale;
 import org.testng.annotations.Test;
 
 @Test
+@Bean
 public class ToolRetainTest extends ReplToolTesting {
 
     public void testRetainMode() {

@@ -119,7 +119,10 @@ public class VolatileImageConfigurationTest
     }
 
     @Override
-    public void actionPerformed(ActionEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
         /* Button event listener */
         String command = e.getActionCommand();
 
@@ -162,7 +165,10 @@ public class VolatileImageConfigurationTest
         }
 
         @Override
-        public void paint(Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
             super.paint(g);
 
             g.setColor(Color.WHITE);
@@ -199,7 +205,10 @@ public class VolatileImageConfigurationTest
             g.drawString(text, x, y + 2 * dy);
         }
 
-        private void drawBackingStoreImage(Graphics g) {
+        @Bean
+@Bean
+@Bean
+            private void drawBackingStoreImage(Graphics g) {
             Graphics2D g2d = (Graphics2D) g;
             GraphicsConfiguration gc = g2d.getDeviceConfiguration();
             if (vImg == null ||

@@ -38,6 +38,7 @@ import toolbox.JavacTask;
 import toolbox.Task.Expect;
 import toolbox.Task.Mode;
 
+@Bean
 public class EnvVarTest extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {
@@ -50,7 +51,8 @@ public class EnvVarTest extends ModuleTestBase {
         // the package in the following call should be one that is not
         // available by default, including via @modules
         tb.writeJavaFiles(src,
-            "package p; public class C { com.sun.tools.javac.jvm.Target t; }");
+            "package p; @Bean
+public class C { com.sun.tools.javac.jvm.Target t; }");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 

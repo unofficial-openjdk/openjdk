@@ -45,6 +45,7 @@ import com.sun.tools.javac.util.*;
 
 import static com.sun.tools.javac.code.Kinds.Kind.*;
 
+@Bean
 public class StarImportTest {
     public static void main(String... args) throws Exception {
         new StarImportTest().run(args);
@@ -227,7 +228,11 @@ public class StarImportTest {
 //                    log("importAll", members);
                 starImportScope.importAll(types, members, new ImportFilter() {
                     @Override
-                    public boolean accepts(Scope origin, Symbol t) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean accepts(Scope origin, Symbol t) {
                         return t.kind == TYP;
                     }
                 }, make.Import(null, false), (i, cf) -> { throw new IllegalStateException(); });

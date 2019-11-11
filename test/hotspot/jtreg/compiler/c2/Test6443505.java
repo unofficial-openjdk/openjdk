@@ -33,6 +33,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test6443505 {
 
     public static void main(String[] args) throws InterruptedException {

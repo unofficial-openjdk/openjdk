@@ -31,6 +31,7 @@
 import java.io.IOException;
 import java.util.function.Function;
 
+@Bean
 public class LambdaMultiCatchTest {
     public static void main(String[] args) {
         Function<String,String> fi = x -> {

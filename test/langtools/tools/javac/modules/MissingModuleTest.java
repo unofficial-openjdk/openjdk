@@ -44,6 +44,7 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.Task.Expect;
 
+@Bean
 public class MissingModuleTest extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {

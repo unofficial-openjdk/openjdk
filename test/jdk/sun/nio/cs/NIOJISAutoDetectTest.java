@@ -37,6 +37,7 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
 import static java.lang.System.*;
 
+@Bean
 public class NIOJISAutoDetectTest {
     private static int failures = 0;
 

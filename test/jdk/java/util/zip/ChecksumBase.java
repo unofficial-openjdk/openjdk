@@ -29,6 +29,7 @@ import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.zip.Checksum;
 
+@Bean
 public class ChecksumBase {
 
     private static final byte[] BYTES_123456789 = "123456789".getBytes(StandardCharsets.US_ASCII);

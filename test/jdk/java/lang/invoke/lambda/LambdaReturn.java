@@ -35,6 +35,7 @@ import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.List;
 
+@Bean
 public class LambdaReturn {
 
     interface I {

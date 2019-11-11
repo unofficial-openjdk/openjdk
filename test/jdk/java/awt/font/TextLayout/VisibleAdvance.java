@@ -40,6 +40,7 @@ Left-to-right (Multiple styles): Advance = 127.30078, Visible advance = 118.3007
 Right-to-left (Multiple styles): Advance = 127.30078, Visible advance = 118.30078
 */
 
+@Bean
 public class VisibleAdvance
 {
     public static void main (String [] args)

@@ -53,6 +53,7 @@ import com.sun.tools.javac.util.Options;
 import com.sun.tools.javac.resources.CompilerProperties.Errors;
 import com.sun.tools.javac.resources.CompilerProperties.Warnings;
 
+@Bean
 public class TestLog
 {
     public static void main(String... args) throws Exception {
@@ -82,7 +83,8 @@ public class TestLog
         ParserFactory pfac = ParserFactory.instance(context);
 
         final String text =
-              "public class Foo {\n"
+              "@Bean
+public class Foo {\n"
             + "  public static void main(String[] args) {\n"
             + "    if (args.length == 0)\n"
             + "      System.out.println(\"no args\");\n"
@@ -122,7 +124,11 @@ public class TestLog
             this.endPosTable = endPosTable;
         }
 
-        public void visitIf(JCTree.JCIf tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitIf(JCTree.JCIf tree) {
             JCDiagnostic.DiagnosticPosition nil = null;
             // generate dummy messages to exercise the log API
             log.error(Errors.NotStmt);
@@ -145,7 +151,11 @@ public class TestLog
             super(URI.create(name), JavaFileObject.Kind.SOURCE);
             this.text = text;
         }
-        public CharSequence getCharContent(boolean b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean b) {
             return text;
         }
         public InputStream openInputStream() {

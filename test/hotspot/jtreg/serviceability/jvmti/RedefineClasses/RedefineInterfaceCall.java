@@ -42,7 +42,11 @@ interface I2 extends I1 {}
 // package access top-level class to avoid problem with RedefineClassHelper
 // and nested types.
 class RedefineInterfaceCall_C implements I2 {
-    public int test(I2 i) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int test(I2 i) {
         return i.m(); // invokeinterface cpCacheEntry
     }
 }
@@ -54,7 +58,11 @@ public class RedefineInterfaceCall {
 
     static String newC =
         "class RedefineInterfaceCall_C implements I2 { " +
-        "  public int test(I2 i) { " +
+        "  @Bean
+@Bean
+@Bean
+@Bean
+                public int test(I2 i) { " +
         "    return i.m(); " +
         "  } " +
         "} ";

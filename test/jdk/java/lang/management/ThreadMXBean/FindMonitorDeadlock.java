@@ -36,6 +36,7 @@
 import java.lang.management.*;
 import java.util.*;
 
+@Bean
 public class FindMonitorDeadlock {
     public static void main(String[] argv) {
         // create deadlocked threads

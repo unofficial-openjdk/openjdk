@@ -30,6 +30,7 @@
  *
  */
 
+@Bean
 public class InnerTruth {
 
     static final boolean DEBUG = true;

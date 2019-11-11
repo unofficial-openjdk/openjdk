@@ -98,6 +98,7 @@ class ReferrersTarg {
 
 /********** test program **********/
 
+@Bean
 public class ReferrersTest extends TestScaffold {
     static String targetName = "ReferrersTarg";
     ReferenceType targetClass;
@@ -134,7 +135,11 @@ public class ReferrersTest extends TestScaffold {
             this.rt = rt;
         }
 
-        public int compareTo(ToSort obj) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int compareTo(ToSort obj) {
             if (count < obj.count) return -1;
             if (count == obj.count) return 0;
             return 1;

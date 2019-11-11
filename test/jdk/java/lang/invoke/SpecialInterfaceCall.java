@@ -35,6 +35,7 @@
 
 import java.lang.invoke.*;
 
+@Bean
 public class SpecialInterfaceCall {
     interface I1 {
         default void pub_m() {};

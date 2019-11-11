@@ -72,6 +72,7 @@ import sun.security.jca.GetInstance.Instance;
  * @since 1.4
  */
 
+@Bean
 public class Mac implements Cloneable {
 
     private static final Debug debug =

@@ -94,7 +94,10 @@ public class DrawStrSuper extends Component {
     }
 
     @Override
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
         paintImage();
         g.drawImage(bi, 0,0, null);
     }
@@ -136,6 +139,9 @@ public class DrawStrSuper extends Component {
         Frame f = new Frame("Text bounds test");
         f.addWindowListener(new WindowAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent e) {
                 System.exit(0);
             }

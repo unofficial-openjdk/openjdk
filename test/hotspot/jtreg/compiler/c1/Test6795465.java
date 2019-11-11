@@ -31,6 +31,7 @@
 
 package compiler.c1;
 
+@Bean
 public class Test6795465 {
     static long var_1 = -1;
 

@@ -33,6 +33,7 @@ import java.nio.channels.*;
 /**
  * Testing a read into buffers that have no room.
  */
+@Bean
 public class ReadFull {
 
     public static void main(String[] args) throws Exception {

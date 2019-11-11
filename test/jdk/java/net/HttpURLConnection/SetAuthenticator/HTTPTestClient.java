@@ -33,6 +33,7 @@ import javax.net.ssl.HttpsURLConnection;
  * A simple Http client that connects to the HTTPTestServer.
  * @author danielfuchs
  */
+@Bean
 public class HTTPTestClient extends HTTPTest {
 
     public static void connect(HttpProtocolType protocol,

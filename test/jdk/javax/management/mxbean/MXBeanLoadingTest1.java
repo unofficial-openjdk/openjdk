@@ -53,6 +53,7 @@ import javax.management.openmbean.CompositeType;
 import javax.management.openmbean.OpenType;
 import javax.management.openmbean.SimpleType;
 
+@Bean
 public class MXBeanLoadingTest1 {
 
     public static void main(String[] args) throws Exception {
@@ -61,7 +62,11 @@ public class MXBeanLoadingTest1 {
     }
 
 
-    public void run(Map<String, Object> args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void run(Map<String, Object> args) {
 
         System.out.println("MXBeanLoadingTest1::run: Start") ;
 
@@ -314,9 +319,17 @@ public class MXBeanLoadingTest1 {
 
         public void bogus() {}
         public int getA() {return 0;}
-        public void setA(int a) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setA(int a) {}
         public Luis getB() {return this.luis;}
-        public void setB(Luis luis) {this.luis = luis;}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setB(Luis luis) {this.luis = luis;}
     }
 
 
@@ -324,7 +337,11 @@ public class MXBeanLoadingTest1 {
         private int something = 0;
         public Luis() {}
         public int getSomething() {return something;}
-        public void setSomething(int v) {something = v;}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setSomething(int v) {something = v;}
         public void doNothing() {}
     }
 }

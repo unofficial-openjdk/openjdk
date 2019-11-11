@@ -32,6 +32,7 @@
 
 import java.util.Vector; // example superclass with protected method
 
+@Bean
 public class AnonInnerClass extends Vector {
 
     public static void main(String[] args) {

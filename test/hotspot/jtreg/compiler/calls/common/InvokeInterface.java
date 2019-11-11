@@ -28,6 +28,7 @@ import jdk.test.lib.Asserts;
 /**
  * A test class checking InvokeInterface instruction
  */
+@Bean
 public class InvokeInterface extends CallsBase implements CallInterface {
     private static final Object LOCK = new Object();
 

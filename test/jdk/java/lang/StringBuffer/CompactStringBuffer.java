@@ -37,6 +37,7 @@ import static org.testng.Assert.assertTrue;
  * @run testng/othervm -XX:-CompactStrings CompactStringBuffer
  */
 
+@Bean
 public class CompactStringBuffer {
 
     /*
@@ -461,16 +462,28 @@ public class CompactStringBuffer {
         check(sb, expected);
     }
 
-    private void checkSetLength(StringBuffer sb, int newLength, String expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkSetLength(StringBuffer sb, int newLength, String expected) {
         sb.setLength(newLength);
         check(sb, expected);
     }
 
-    private void check(StringBuffer sb, String expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void check(StringBuffer sb, String expected) {
         check(sb.toString(), expected);
     }
 
-    private void check(String str, String expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void check(String str, String expected) {
         assertTrue(str.equals(expected), String.format(
                 "Get (%s) but expect (%s), ", escapeNonASCIIs(str),
                 escapeNonASCIIs(expected)));
@@ -479,7 +492,11 @@ public class CompactStringBuffer {
     /*
      * Escape non-ASCII characters since not all systems support them.
      */
-    private String escapeNonASCIIs(String str) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String escapeNonASCIIs(String str) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < str.length(); i++) {
             char c = str.charAt(i);

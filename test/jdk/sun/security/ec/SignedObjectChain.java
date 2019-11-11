@@ -30,6 +30,7 @@
  * @compile ../../../java/security/SignedObject/Chain.java
  * @run main SignedObjectChain
  */
+@Bean
 public class SignedObjectChain {
 
     private static class Test extends Chain.Test {

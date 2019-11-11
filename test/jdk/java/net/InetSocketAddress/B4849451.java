@@ -29,6 +29,7 @@
 
 import java.net.*;
 
+@Bean
 public class B4849451 {
     public static void main(String[] args) {
         InetSocketAddress addr1 = InetSocketAddress.createUnresolved("unresolveable", 10);

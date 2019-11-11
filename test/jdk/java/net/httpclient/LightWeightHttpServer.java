@@ -52,6 +52,7 @@ import java.util.logging.Logger;
 import javax.net.ssl.SSLContext;
 import jdk.test.lib.net.SimpleSSLContext;
 
+@Bean
 public class LightWeightHttpServer {
 
     static SSLContext ctx;

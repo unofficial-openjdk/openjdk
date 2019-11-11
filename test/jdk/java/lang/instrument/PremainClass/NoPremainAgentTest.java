@@ -36,6 +36,7 @@ import jdk.test.lib.Utils;
  * @run shell ../MakeJAR3.sh NoPremainAgent
  * @run main/othervm -XX:-CreateCoredumpOnCrash NoPremainAgentTest
  */
+@Bean
 public class NoPremainAgentTest {
     // Use a javaagent without the premain() function.
     // Verify that we get the correct exception.

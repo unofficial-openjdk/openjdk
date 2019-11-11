@@ -45,6 +45,7 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class TestFocusFreeze {
     private static JFrame frame;
     private static JDialog dialog;
@@ -87,6 +88,9 @@ public class TestFocusFreeze {
         frame.pack();
 
         dlgButton.addActionListener(new ActionListener() {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 dialog.dispose();
                 frame.dispose();
@@ -98,7 +102,10 @@ public class TestFocusFreeze {
         });
 
         frameButton.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                     // Right before the dialog will be shown, there will be called
                     // enqueuKeyEvents() method. We are to catch it.
                     KeyboardFocusManager.setCurrentKeyboardFocusManager(testKFM);

@@ -39,6 +39,7 @@
 import com.sun.management.UnixOperatingSystemMXBean;
 import java.lang.management.*;
 
+@Bean
 public class GetMaxFileDescriptorCount {
 
     private static UnixOperatingSystemMXBean mbean =

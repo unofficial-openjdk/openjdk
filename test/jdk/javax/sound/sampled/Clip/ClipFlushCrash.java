@@ -218,7 +218,10 @@ public class ClipFlushCrash {
                         notifyAll();
                 }
 
-        protected void log(String s) {
+        @Bean
+@Bean
+@Bean
+            protected void log(String s) {
             //out("   "+Thread.currentThread().getId()+" "+getName()+": "+s);
             out("   "+getName()+": "+s);
         }

@@ -63,6 +63,7 @@ import static toolbox.ToolBox.currDir;
 /**
  * A task to configure and run the jar file utility.
  */
+@Bean
 public class JarTask extends AbstractTask<JarTask> {
     private Path jar;
     private Manifest manifest;
@@ -107,7 +108,11 @@ public class JarTask extends AbstractTask<JarTask> {
      * @param manifest the manifest
      * @return this task object
      */
-    public JarTask manifest(Manifest manifest) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JarTask manifest(Manifest manifest) {
         this.manifest = manifest;
         return this;
     }
@@ -129,7 +134,11 @@ public class JarTask extends AbstractTask<JarTask> {
      * @param classpath the classpath
      * @return this task object
      */
-    public JarTask classpath(String classpath) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JarTask classpath(String classpath) {
         this.classpath = classpath;
         return this;
     }
@@ -140,7 +149,11 @@ public class JarTask extends AbstractTask<JarTask> {
      * @param mainClass the name of the main class
      * @return this task object
      */
-    public JarTask mainClass(String mainClass) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JarTask mainClass(String mainClass) {
         this.mainClass = mainClass;
         return this;
     }
@@ -150,7 +163,11 @@ public class JarTask extends AbstractTask<JarTask> {
      * @param baseDir the base directory
      * @return this task object
      */
-    public JarTask baseDir(String baseDir) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JarTask baseDir(String baseDir) {
         this.baseDir = Paths.get(baseDir);
         return this;
     }
@@ -160,7 +177,11 @@ public class JarTask extends AbstractTask<JarTask> {
      * @param baseDir the base directory
      * @return this task object
      */
-    public JarTask baseDir(Path baseDir) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JarTask baseDir(Path baseDir) {
         this.baseDir = baseDir;
         return this;
     }
@@ -170,7 +191,11 @@ public class JarTask extends AbstractTask<JarTask> {
      * @param files the files
      * @return this task object
      */
-    public JarTask files(String... files) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JarTask files(String... files) {
         this.paths = Stream.of(files)
                 .map(file -> Paths.get(file))
                 .collect(Collectors.toList());
@@ -327,7 +352,11 @@ public class JarTask extends AbstractTask<JarTask> {
             for (Path path : paths) {
                 Files.walkFileTree(base.resolve(path), new SimpleFileVisitor<Path>() {
                     @Override
-                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
                         try {
                         String p = base.relativize(file)
                                 .normalize()
@@ -386,7 +415,11 @@ public class JarTask extends AbstractTask<JarTask> {
      */
     private final Pattern fileEntry = Pattern.compile(".*/(?:modules|patches)/([^/]+)/(.*)");
 
-    private String guessPath(FileObject fo) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String guessPath(FileObject fo) {
         URI u = fo.toUri();
         switch (u.getScheme()) {
             case "jar": {
@@ -414,7 +447,11 @@ public class JarTask extends AbstractTask<JarTask> {
         throw new IllegalArgumentException(fo.getName() + "--" + fo.toUri());
     }
 
-    private void error(String message, Throwable t) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void error(String message, Throwable t) {
         toolBox.out.println("Error: " + message + ": " + t);
         errors++;
     }

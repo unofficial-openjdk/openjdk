@@ -33,6 +33,7 @@ import java.io.FileOutputStream;
 
 import javax.imageio.ImageIO;
 
+@Bean
 public class ImageIOWriteFile {
 
     public static void main(String[] args) {

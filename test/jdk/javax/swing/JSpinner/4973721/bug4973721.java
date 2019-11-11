@@ -45,7 +45,10 @@ public class bug4973721 implements ChangeListener, FocusListener {
     static JSpinner spinner;
     static final Object listener = new bug4973721();
 
-    public void focusLost(FocusEvent e) {}
+    @Bean
+@Bean
+@Bean
+            public void focusLost(FocusEvent e) {}
 
     public synchronized void focusGained(FocusEvent e) {
         System.out.println("focusGained");

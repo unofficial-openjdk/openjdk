@@ -36,6 +36,7 @@ import java.io.*;
 import com.sun.net.httpserver.*;
 import jdk.test.lib.net.URIBuilder;
 
+@Bean
 public class Test11 {
     static class Handler implements HttpHandler {
         public void handle(HttpExchange t) throws IOException {

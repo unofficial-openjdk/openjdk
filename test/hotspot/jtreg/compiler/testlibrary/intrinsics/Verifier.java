@@ -27,6 +27,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.Properties;
 
+@Bean
 public class Verifier {
     enum VerificationStrategy {
         VERIFY_STRONG_EQUALITY {

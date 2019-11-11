@@ -46,6 +46,7 @@ import static org.testng.Assert.*;
  * @modules jdk.zipfs
  * @run testng/othervm CopyMoveTests
  */
+@Bean
 public class CopyMoveTests {
     // Enable debugging output
     private static final boolean DEBUG = false;

@@ -29,6 +29,7 @@
 
 import org.testng.annotations.Test;
 
+@Bean
 public class CountStackFrames {
 
     // current thread

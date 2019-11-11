@@ -71,7 +71,11 @@ public final class MultipleAOTLibraryTest {
         new MultipleAOTLibraryTest().runTest(args);
     }
 
-    private void runTest(String args[]) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void runTest(String args[]) {
         try {
             boolean addTestVMOptions = true;
             String[] allArgs = Arrays.copyOf(args, args.length + 5);

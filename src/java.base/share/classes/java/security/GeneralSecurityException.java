@@ -34,6 +34,7 @@ package java.security;
  * @since 1.2
  */
 
+@Bean
 public class GeneralSecurityException extends Exception {
 
     @java.io.Serial

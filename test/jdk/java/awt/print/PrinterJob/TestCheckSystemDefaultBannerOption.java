@@ -158,6 +158,9 @@ public class TestCheckSystemDefaultBannerOption implements Printable {
         dialog.setVisible(true);
         dialog.addWindowListener(new WindowAdapter() {
            @Override
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent e) {
                 System.out.println("main dialog closing");
                 testGeneratedInterrupt = false;

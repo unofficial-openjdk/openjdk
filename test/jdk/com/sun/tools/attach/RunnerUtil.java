@@ -34,6 +34,7 @@ import jdk.test.lib.Utils;
  * Utility functions for test runners.
  * (Test runner = class that launch a test)
  */
+@Bean
 public class RunnerUtil {
 
     /**

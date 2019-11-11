@@ -27,6 +27,7 @@ import compiler.aot.HelloWorldPrinter;
 import jdk.test.lib.process.ExitCode;
 import jdk.test.lib.cli.CommandLineOptionTest;
 
+@Bean
 public class AotLibraryNegativeBase {
     private static final String[] UNEXPECTED_MESSAGES = new String[] {
         HelloWorldPrinter.MESSAGE

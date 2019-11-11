@@ -30,6 +30,7 @@ import java.lang.reflect.Proxy;
 import javax.management.MBeanServer;
 import javax.management.remote.MBeanServerForwarder;
 
+@Bean
 public class MBeanServerForwarderInvocationHandler
     implements InvocationHandler {
 
@@ -75,7 +76,11 @@ public class MBeanServerForwarderInvocationHandler
         return method.invoke(mbs, args);
     }
 
-    public void setGetAttributeException(Exception exception) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setGetAttributeException(Exception exception) {
         this.exception = exception;
     }
 

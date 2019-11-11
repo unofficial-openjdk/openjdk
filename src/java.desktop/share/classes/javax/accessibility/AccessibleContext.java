@@ -88,22 +88,26 @@ public abstract class AccessibleContext {
     static {
         AWTAccessor.setAccessibleContextAccessor(new AWTAccessor.AccessibleContextAccessor() {
             @Override
-            public void setAppContext(AccessibleContext accessibleContext, AppContext appContext) {
+@Bean
+                public void setAppContext(AccessibleContext accessibleContext, AppContext appContext) {
                 accessibleContext.targetAppContext = appContext;
             }
 
             @Override
-            public AppContext getAppContext(AccessibleContext accessibleContext) {
+@Bean
+                public AppContext getAppContext(AccessibleContext accessibleContext) {
                 return accessibleContext.targetAppContext;
             }
 
             @Override
-            public Object getNativeAXResource(AccessibleContext accessibleContext) {
+@Bean
+                public Object getNativeAXResource(AccessibleContext accessibleContext) {
                 return accessibleContext.nativeAXResource;
             }
 
             @Override
-            public void setNativeAXResource(AccessibleContext accessibleContext, Object value) {
+@Bean
+                public void setNativeAXResource(AccessibleContext accessibleContext, Object value) {
                 accessibleContext.nativeAXResource = value;
             }
         });
@@ -467,7 +471,8 @@ public abstract class AccessibleContext {
      */
     @BeanProperty(preferred = true, description
             = "Sets the accessible name for the component.")
-    public void setAccessibleName(String s) {
+@Bean
+        public void setAccessibleName(String s) {
         String oldName = accessibleName;
         accessibleName = s;
         firePropertyChange(ACCESSIBLE_NAME_PROPERTY,oldName,accessibleName);
@@ -499,7 +504,8 @@ public abstract class AccessibleContext {
      */
     @BeanProperty(preferred = true, description
             = "Sets the accessible description for the component.")
-    public void setAccessibleDescription(String s) {
+@Bean
+        public void setAccessibleDescription(String s) {
         String oldDescription = accessibleDescription;
         accessibleDescription = s;
         firePropertyChange(ACCESSIBLE_DESCRIPTION_PROPERTY,
@@ -561,7 +567,8 @@ public abstract class AccessibleContext {
      *
      * @param  a - {@code Accessible} to be set as the parent
      */
-    public void setAccessibleParent(Accessible a) {
+@Bean
+        public void setAccessibleParent(Accessible a) {
         accessibleParent = a;
     }
 
@@ -622,7 +629,8 @@ public abstract class AccessibleContext {
      * @see #ACCESSIBLE_TEXT_PROPERTY
      * @see #ACCESSIBLE_VISIBLE_DATA_PROPERTY
      */
-    public void addPropertyChangeListener(PropertyChangeListener listener) {
+@Bean
+        public void addPropertyChangeListener(PropertyChangeListener listener) {
         if (accessibleChangeSupport == null) {
             accessibleChangeSupport = new PropertyChangeSupport(this);
         }
@@ -636,7 +644,8 @@ public abstract class AccessibleContext {
      *
      * @param  listener The PropertyChangeListener to be removed
      */
-    public void removePropertyChangeListener(PropertyChangeListener listener) {
+@Bean
+        public void removePropertyChangeListener(PropertyChangeListener listener) {
         if (accessibleChangeSupport != null) {
             accessibleChangeSupport.removePropertyChangeListener(listener);
         }

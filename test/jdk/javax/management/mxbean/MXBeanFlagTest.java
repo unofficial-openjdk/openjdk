@@ -34,6 +34,7 @@
 
 import javax.management.*;
 
+@Bean
 public class MXBeanFlagTest {
 
     public interface Compliant1MXBean {}

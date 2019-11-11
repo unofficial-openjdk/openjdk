@@ -150,7 +150,11 @@ public class ClassGenerator {
      * Main entry-point: generate a Java enum-like set of nested factory classes into given output
      * folder. The factories are populated as mandated by the comments in the input resource file.
      */
-    public void generateFactory(MessageFile messageFile, File outDir) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void generateFactory(MessageFile messageFile, File outDir) {
         Map<FactoryKind, List<Map.Entry<String, Message>>> groupedEntries =
                 messageFile.messages.entrySet().stream()
                         .collect(
@@ -309,24 +313,40 @@ public class ClassGenerator {
     //where
         Visitor<String, Void> stringVisitor = new Visitor<String, Void>() {
             @Override
-            public String visitCustomType(CustomType t, Void aVoid) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public String visitCustomType(CustomType t, Void aVoid) {
                 String customType = t.typeString;
                 return customType.substring(customType.lastIndexOf('.') + 1);
             }
 
             @Override
-            public String visitSimpleType(SimpleType t, Void aVoid) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public String visitSimpleType(SimpleType t, Void aVoid) {
                 return t.clazz;
             }
 
             @Override
-            public String visitCompoundType(CompoundType t, Void aVoid) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public String visitCompoundType(CompoundType t, Void aVoid) {
                 return StubKind.WILDCARDS_EXTENDS.format(t.kind.clazz.clazz,
                         t.elemtype.accept(this, null));
             }
 
             @Override
-            public String visitUnionType(UnionType t, Void aVoid) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public String visitUnionType(UnionType t, Void aVoid) {
                 throw new AssertionError("Union types should have been denormalized!");
             }
         };
@@ -340,12 +360,20 @@ public class ClassGenerator {
     //where
     Visitor<Boolean, Void> suppressWarningsVisitor = new Visitor<Boolean, Void>() {
         @Override
-        public Boolean visitCustomType(CustomType t, Void aVoid) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Boolean visitCustomType(CustomType t, Void aVoid) {
             //play safe
             return true;
         }
         @Override
-        public Boolean visitSimpleType(SimpleType t, Void aVoid) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Boolean visitSimpleType(SimpleType t, Void aVoid) {
             switch (t) {
                 case LIST:
                 case SET:
@@ -356,12 +384,20 @@ public class ClassGenerator {
         }
 
         @Override
-        public Boolean visitCompoundType(CompoundType t, Void aVoid) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Boolean visitCompoundType(CompoundType t, Void aVoid) {
             return t.elemtype.accept(this, null);
         }
 
         @Override
-        public Boolean visitUnionType(UnionType t, Void aVoid) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Boolean visitUnionType(UnionType t, Void aVoid) {
             return needsSuppressWarnings(Arrays.asList(t.choices));
         }
     };
@@ -378,13 +414,21 @@ public class ClassGenerator {
     //where
     Visitor<Void, Set<String>> importVisitor = new Visitor<Void, Set<String>>() {
         @Override
-        public Void visitCustomType(CustomType t, Set<String> imports) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitCustomType(CustomType t, Set<String> imports) {
             imports.add(t.typeString);
             return null;
         }
 
         @Override
-        public Void visitSimpleType(SimpleType t, Set<String> imports) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitSimpleType(SimpleType t, Set<String> imports) {
             if (t.qualifier != null) {
                 imports.add(t.qualifier + "." + t.clazz);
             }
@@ -392,14 +436,22 @@ public class ClassGenerator {
         }
 
         @Override
-        public Void visitCompoundType(CompoundType t, Set<String> imports) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitCompoundType(CompoundType t, Set<String> imports) {
             visitSimpleType(t.kind.clazz, imports);
             t.elemtype.accept(this, imports);
             return null;
         }
 
         @Override
-        public Void visitUnionType(UnionType t, Set<String> imports) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitUnionType(UnionType t, Set<String> imports) {
             Stream.of(t.choices).forEach(c -> c.accept(this, imports));
             return null;
         }

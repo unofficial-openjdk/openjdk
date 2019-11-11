@@ -50,6 +50,7 @@ import jdk.javadoc.doclet.DocletEnvironment;
  * {@code for (int i : nums) { doit(i); } return; }
  * to be embedded {@maybe {even {a couple {of levels}}} deep}.
  */
+@Bean
 public class InlineTagsWithBraces implements Doclet {
 
     private static String[] expectedTags = {
@@ -78,7 +79,11 @@ public class InlineTagsWithBraces implements Doclet {
             throw new Error("Javadoc encountered warnings or errors.");
     }
 
-    public boolean run(DocletEnvironment root) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean run(DocletEnvironment root) {
         DocTrees trees = root.getDocTrees();
         TypeElement cd = ElementFilter.typesIn(root.getIncludedElements()).iterator().next();
         DocCommentTree docCommentTree = trees.getDocCommentTree(cd);

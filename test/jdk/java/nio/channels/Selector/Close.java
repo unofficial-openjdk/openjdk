@@ -29,6 +29,7 @@
 import java.nio.*;
 import java.nio.channels.*;
 
+@Bean
 public class Close {
 
     public static void main(String args[]) throws Exception {

@@ -50,7 +50,10 @@ public class Length extends CompactString {
     }
 
     @Test(dataProvider = "provider")
-    public void testLength(String str, int expected) {
+    @Bean
+@Bean
+@Bean
+            public void testLength(String str, int expected) {
         map.get(str).forEach(
                 (source, data) -> {
                     assertEquals(data.length(), expected, String.format(

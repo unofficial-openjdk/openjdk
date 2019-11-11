@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessJScrollBar
  */
 
+@Bean
 public class HeadlessJScrollBar {
     public static void main(String args[]) {
         JScrollBar sb = new JScrollBar();

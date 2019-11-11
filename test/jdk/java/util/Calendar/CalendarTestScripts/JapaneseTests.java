@@ -88,6 +88,9 @@ public class JapaneseTests {
         List<String> fileList = new ArrayList<>();
         File dir = new File(srcPath + "/"+ type);
         File[] testFiles = dir.listFiles(new FilenameFilter() {
+            @Bean
+@Bean
+@Bean
             public boolean accept(File dir, String name) {
                 return name.toLowerCase().endsWith(".cts");
             }

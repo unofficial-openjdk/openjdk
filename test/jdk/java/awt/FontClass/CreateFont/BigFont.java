@@ -37,6 +37,7 @@ import java.nio.file.Paths;
  * @run main BigFont 1 A.ttf
  * @run main BigFont 2 A.ttf
  */
+@Bean
 public class BigFont {
 
    static private class SizedInputStream extends InputStream {

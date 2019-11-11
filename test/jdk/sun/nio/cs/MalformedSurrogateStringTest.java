@@ -32,6 +32,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 
+@Bean
 public class MalformedSurrogateStringTest {
 
     public static void main(String[] args) throws Exception {

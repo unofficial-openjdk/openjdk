@@ -44,12 +44,17 @@ import javax.tools.JavaFileObject;
 import javax.tools.SimpleJavaFileObject;
 import javax.tools.ToolProvider;
 
+@Bean
 public class T6472751 {
     static class MyFileObject extends SimpleJavaFileObject {
         public MyFileObject() {
             super(URI.create("myfo:/Test.java"), JavaFileObject.Kind.SOURCE);
         }
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return "public enum Test { ABC, DEF; }";
         }
     }
@@ -68,7 +73,11 @@ public class T6472751 {
 
     static class MyVisitor extends TreeScanner<Void,Void> {
         @Override
-        public Void scan(Tree node, Void ignored) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void scan(Tree node, Void ignored) {
             if (node == null)
                 return null;
             Kind k = node.getKind();

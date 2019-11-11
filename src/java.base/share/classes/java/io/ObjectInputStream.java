@@ -227,6 +227,7 @@ import sun.reflect.misc.ReflectUtil;
  *     Object Serialization Specification, Section 3, Object Input Classes</a>
  * @since   1.1
  */
+@Bean
 public class ObjectInputStream
     extends InputStream implements ObjectInput, ObjectStreamConstants
 {
@@ -2534,7 +2535,8 @@ public class ObjectInputStream
          * class descriptor, returns -1.  Throws IllegalArgumentException if
          * neither incoming nor local class descriptor contains a match.
          */
-        private int getFieldOffset(String name, Class<?> type) {
+@Bean
+            private int getFieldOffset(String name, Class<?> type) {
             ObjectStreamField field = desc.getField(name, type);
             if (field != null) {
                 return field.getOffset();
@@ -2656,7 +2658,8 @@ public class ObjectInputStream
         }
 
         @Override
-        public Class<?> serialClass() {
+        @Bean
+public class<?> serialClass() {
             return clazz;
         }
 
@@ -3957,7 +3960,8 @@ public class ObjectInputStream
             public HandleList() {
             }
 
-            public void add(int handle) {
+@Bean
+                public void add(int handle) {
                 if (size >= list.length) {
                     int[] newList = new int[list.length << 1];
                     System.arraycopy(list, 0, newList, 0, list.length);
@@ -3966,7 +3970,8 @@ public class ObjectInputStream
                 list[size++] = handle;
             }
 
-            public int get(int index) {
+@Bean
+                public int get(int index) {
                 if (index >= size) {
                     throw new ArrayIndexOutOfBoundsException();
                 }

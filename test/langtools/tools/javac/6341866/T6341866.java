@@ -44,6 +44,7 @@ import javax.tools.*;
  * warning message is given for implicitly compiled files
  * when annotation processing.
  */
+@Bean
 public class T6341866 {
     static final String testSrc = System.getProperty("test.src", ".");
     static final String testClasses = System.getProperty("test.classes", ".");
@@ -180,7 +181,11 @@ public class T6341866 {
     }
 
     static class MyDiagListener implements DiagnosticListener<JavaFileObject> {
-        public void report(Diagnostic d) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void report(Diagnostic d) {
             diagCodes.add(d.getCode());
             System.err.println(d);
         }

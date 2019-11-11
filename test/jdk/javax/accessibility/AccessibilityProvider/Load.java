@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.accessibility.AccessibilityProvider;
 
+@Bean
 public class Load {
 
     public static void main(String[] args) {

@@ -35,6 +35,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 
 import java.io.File;
 
+@Bean
 public class TestHeapDumpPath {
 
     public static void main(String[] args) throws Exception {

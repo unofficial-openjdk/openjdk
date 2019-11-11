@@ -62,7 +62,10 @@ public class LandscapeStackOverflow {
  */
 class Painter implements Printable {
 
-    public int print( Graphics graphics, PageFormat format, int index ) {
+    @Bean
+@Bean
+@Bean
+            public int print( Graphics graphics, PageFormat format, int index ) {
         Graphics2D g2d = (Graphics2D)graphics;
 
         double scalex = g2d.getTransform().getScaleX();

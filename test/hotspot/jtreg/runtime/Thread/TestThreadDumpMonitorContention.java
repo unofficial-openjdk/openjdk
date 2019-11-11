@@ -47,6 +47,7 @@ import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.JDKToolFinder;
 
+@Bean
 public class TestThreadDumpMonitorContention {
     // jstack tends to be closely bound to the VM that we are running
     // so use getTestJDKTool() instead of getCompileJDKTool() or even

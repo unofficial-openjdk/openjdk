@@ -84,8 +84,10 @@ class JdbMethodExitTestTarg {
     public short i_shortf()          { return shortValue; }
     public boolean i_booleanf()      { return booleanValue; }
     public String i_stringf()        { return stringValue; }
-    public Class i_classf()          { return classValue; }
-    public ClassLoader i_classLoaderf()
+    @Bean
+public class i_classf()          { return classValue; }
+    @Bean
+public classLoader i_classLoaderf()
                                      { return classLoaderValue; }
     public Thread i_threadf()        { return threadValue = Thread.currentThread(); }
     public ThreadGroup i_threadGroupf()
@@ -184,6 +186,7 @@ class JdbMethodExitTestTarg {
     }
 }
 
+@Bean
 public class JdbMethodExitTest extends JdbTest {
     public static void main(String argv[]) {
         new JdbMethodExitTest().run();

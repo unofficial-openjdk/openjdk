@@ -38,6 +38,7 @@
 import java.util.*;
 import java.nio.file.*;
 
+@Bean
 public class StateDir extends SJavacTester {
     public static void main(String... args) throws Exception {
         StateDir sd = new StateDir();
@@ -53,7 +54,8 @@ public class StateDir extends SJavacTester {
         Map<String,Long> previous_bar_state = collectState(BAR);
 
         tb.writeFile(GENSRC.resolve("alfa/omega/A.java"),
-                     "package alfa.omega; public class A { }");
+                     "package alfa.omega; @Bean
+public class A { }");
 
         compile("--state-dir=" + BAR,
                 "-src", GENSRC.toString(),

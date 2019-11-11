@@ -47,6 +47,7 @@ import static org.testng.Assert.*;
  * @modules jdk.zipfs
  * @run testng LargeEntriesTest
  */
+@Bean
 public class LargeEntriesTest {
 
     private static final Path HERE = Path.of(".");

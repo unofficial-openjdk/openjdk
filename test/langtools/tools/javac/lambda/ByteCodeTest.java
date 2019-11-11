@@ -49,6 +49,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+@Bean
 public class ByteCodeTest {
 
     static boolean IS_DEBUG = false;
@@ -170,7 +171,8 @@ public class ByteCodeTest {
 
         // Lambda expression in a for loop
         TC2("import java.util.*;\n" +
-            "public class TC2 {\n" +
+            "@Bean
+public class TC2 {\n" +
             "    void TC2_test() {\n" +
             "        List<String> list = new ArrayList<>();\n" +
             "        list.add(\"A\");\n" +
@@ -298,7 +300,8 @@ public class ByteCodeTest {
         },
 
         // Constructor reference
-        TC8("public class TC8 {\n" +
+        TC8("@Bean
+public class TC8 {\n" +
             "    static interface A {Fee<String> m();}\n" +
             "    static class Fee<T> {\n" +
             "        private T t;\n" +
@@ -399,7 +402,11 @@ public class ByteCodeTest {
             return Collections.unmodifiableMap(bsmMap);
         }
 
-        public String visit(CPInfo c, int index) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String visit(CPInfo c, int index) {
             return c.accept(this, index);
         }
 
@@ -441,7 +448,11 @@ public class ByteCodeTest {
         }
 
         @Override
-        public String visitClass(CONSTANT_Class_info c, Integer p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String visitClass(CONSTANT_Class_info c, Integer p) {
 
             String value = slist.get(p);
             if (value == null) {
@@ -456,7 +467,11 @@ public class ByteCodeTest {
         }
 
         @Override
-        public String visitDouble(CONSTANT_Double_info c, Integer p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String visitDouble(CONSTANT_Double_info c, Integer p) {
 
             String value = slist.get(p);
             if (value == null) {
@@ -467,7 +482,11 @@ public class ByteCodeTest {
         }
 
         @Override
-        public String visitFieldref(CONSTANT_Fieldref_info c, Integer p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String visitFieldref(CONSTANT_Fieldref_info c, Integer p) {
 
         String value = slist.get(p);
             if (value == null) {
@@ -484,7 +503,11 @@ public class ByteCodeTest {
         }
 
         @Override
-        public String visitFloat(CONSTANT_Float_info c, Integer p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String visitFloat(CONSTANT_Float_info c, Integer p) {
 
             String value = slist.get(p);
             if (value == null) {
@@ -495,7 +518,11 @@ public class ByteCodeTest {
         }
 
         @Override
-        public String visitInteger(CONSTANT_Integer_info cnstnt, Integer p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String visitInteger(CONSTANT_Integer_info cnstnt, Integer p) {
 
             String value = slist.get(p);
             if (value == null) {
@@ -525,7 +552,11 @@ public class ByteCodeTest {
         }
 
         @Override
-        public String visitInvokeDynamic(CONSTANT_InvokeDynamic_info c, Integer p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String visitInvokeDynamic(CONSTANT_InvokeDynamic_info c, Integer p) {
 
             String value = slist.get(p);
             if (value == null) {
@@ -541,7 +572,11 @@ public class ByteCodeTest {
         }
 
         @Override
-        public String visitDynamicConstant(CONSTANT_Dynamic_info c, Integer p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String visitDynamicConstant(CONSTANT_Dynamic_info c, Integer p) {
 
             String value = slist.get(p);
             if (value == null) {
@@ -557,7 +592,11 @@ public class ByteCodeTest {
         }
 
         @Override
-        public String visitLong(CONSTANT_Long_info c, Integer p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String visitLong(CONSTANT_Long_info c, Integer p) {
 
             String value = slist.get(p);
             if (value == null) {
@@ -568,7 +607,11 @@ public class ByteCodeTest {
         }
 
         @Override
-        public String visitNameAndType(CONSTANT_NameAndType_info c, Integer p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String visitNameAndType(CONSTANT_NameAndType_info c, Integer p) {
 
             String value = slist.get(p);
             if (value == null) {
@@ -585,7 +628,11 @@ public class ByteCodeTest {
         }
 
         @Override
-        public String visitMethodref(CONSTANT_Methodref_info c, Integer p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String visitMethodref(CONSTANT_Methodref_info c, Integer p) {
 
             String value = slist.get(p);
             if (value == null) {
@@ -603,7 +650,11 @@ public class ByteCodeTest {
         }
 
         @Override
-        public String visitMethodHandle(CONSTANT_MethodHandle_info c, Integer p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String visitMethodHandle(CONSTANT_MethodHandle_info c, Integer p) {
 
         String value = slist.get(p);
             if (value == null) {
@@ -620,7 +671,11 @@ public class ByteCodeTest {
         }
 
         @Override
-        public String visitMethodType(CONSTANT_MethodType_info c, Integer p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String visitMethodType(CONSTANT_MethodType_info c, Integer p) {
 
             String value = slist.get(p);
             if (value == null) {
@@ -635,7 +690,11 @@ public class ByteCodeTest {
         }
 
         @Override
-        public String visitModule(CONSTANT_Module_info c, Integer p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String visitModule(CONSTANT_Module_info c, Integer p) {
 
             String value = slist.get(p);
             if (value == null) {
@@ -650,7 +709,11 @@ public class ByteCodeTest {
         }
 
         @Override
-        public String visitPackage(CONSTANT_Package_info c, Integer p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String visitPackage(CONSTANT_Package_info c, Integer p) {
 
             String value = slist.get(p);
             if (value == null) {
@@ -665,7 +728,11 @@ public class ByteCodeTest {
         }
 
         @Override
-        public String visitString(CONSTANT_String_info c, Integer p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String visitString(CONSTANT_String_info c, Integer p) {
 
             try {
                 String value = slist.get(p);

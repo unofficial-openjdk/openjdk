@@ -27,6 +27,7 @@
 
 package compiler.classUnloading.methodUnloading;
 
+@Bean
 public class WorkerClass {
     /**
      * We override hashCode here to be able to access this implementation

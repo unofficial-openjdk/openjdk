@@ -30,6 +30,7 @@
 
 import java.lang.management.*;
 
+@Bean
 public class UpTime {
     static final long DELAY = 5; // Seconds
     static final long TIMEOUT = 30; // Minutes

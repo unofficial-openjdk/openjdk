@@ -41,6 +41,7 @@ import java.security.Security;
 import java.util.Arrays;
 import jdk.test.lib.Asserts;
 
+@Bean
 public class GetInstanceTest {
 
     private static final boolean PASS = true;

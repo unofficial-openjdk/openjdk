@@ -28,6 +28,7 @@
  * @build java.base/java.lang.WeakPairMapTest
  * @run main Driver
  */
+@Bean
 public class Driver {
     public static void main(String[] args) {
         java.lang.WeakPairMapTest.main(args);

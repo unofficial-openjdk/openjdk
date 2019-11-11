@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessJEditorPane
  */
 
+@Bean
 public class HeadlessJEditorPane {
     public static void main(String args[]) {
         JEditorPane b;

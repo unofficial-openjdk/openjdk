@@ -56,6 +56,7 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 @Test
+@Bean
 public class StartOptionTest {
 
     protected ByteArrayOutputStream cmdout;
@@ -78,7 +79,11 @@ public class StartOptionTest {
                 .locale(Locale.ROOT);
     }
 
-    protected int runShell(String... args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected int runShell(String... args) {
         try {
             return builder()
                     .start(args);
@@ -88,7 +93,11 @@ public class StartOptionTest {
         return -1; // for compiler
     }
 
-    protected void check(ByteArrayOutputStream str, Consumer<String> checkOut, String label) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void check(ByteArrayOutputStream str, Consumer<String> checkOut, String label) {
         byte[] bytes = str.toByteArray();
         str.reset();
         String out = new String(bytes, StandardCharsets.UTF_8);
@@ -101,7 +110,11 @@ public class StartOptionTest {
         }
     }
 
-    protected void checkExit(int ec, Consumer<Integer> checkCode) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void checkExit(int ec, Consumer<Integer> checkCode) {
         if (checkCode != null) {
             checkCode.accept(ec);
         } else {
@@ -127,7 +140,11 @@ public class StartOptionTest {
     }
 
     // Start with an exit code and command error check
-    protected void startExCe(int eec, Consumer<String> checkError, String... args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void startExCe(int eec, Consumer<String> checkError, String... args) {
         StartOptionTest.this.startExCoUoCeCn(
                 (Integer ec) -> assertEquals((int) ec, eec,
                         "Expected error exit code (" + eec + "), but found: " + ec),
@@ -135,7 +152,11 @@ public class StartOptionTest {
     }
 
     // Start with a command output check
-    protected void startCo(Consumer<String> checkCmdOutput, String... args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void startCo(Consumer<String> checkCmdOutput, String... args) {
         StartOptionTest.this.startExCoUoCeCn(null, checkCmdOutput, null, null, null, args);
     }
 
@@ -166,17 +187,29 @@ public class StartOptionTest {
     }
 
     // Start with an expected exit code and command error
-    protected void startExCe(int ec, String expectedError, String... args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void startExCe(int ec, String expectedError, String... args) {
         startExCoUoCeCn(ec, null, null, expectedError, null, args);
     }
 
     // Start with an expected command output
-    protected void startCo(String expectedCmdOutput, String... args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void startCo(String expectedCmdOutput, String... args) {
         startExCoUoCeCn(0, expectedCmdOutput, null, null, null, args);
     }
 
     // Start with an expected user output
-    protected void startUo(String expectedUserOutput, String... args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void startUo(String expectedUserOutput, String... args) {
         startExCoUoCeCn(0, null, expectedUserOutput, null, null, args);
     }
 
@@ -190,7 +223,11 @@ public class StartOptionTest {
         setIn("/exit\n");
     }
 
-    protected String writeToFile(String stuff) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected String writeToFile(String stuff) {
         Compiler compiler = new Compiler();
         Path p = compiler.getPath("doit.repl");
         compiler.writeToFile(p, stuff);
@@ -198,7 +235,11 @@ public class StartOptionTest {
     }
 
     // Set the input from a String
-    protected void setIn(String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void setIn(String s) {
         cmdInStream = new ByteArrayInputStream(s.getBytes());
     }
 

@@ -35,6 +35,7 @@ import javax.swing.JApplet;
 import javax.swing.JPanel;
 import javax.swing.border.TitledBorder;
 
+@Bean
 public class Test4243289 extends JApplet {
     public void init() {
         Font font = new Font("Dialog", Font.PLAIN, 12); // NON-NLS: the font name

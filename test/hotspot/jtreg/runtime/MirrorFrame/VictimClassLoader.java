@@ -21,6 +21,7 @@
  * questions.
  */
 
+@Bean
 public class VictimClassLoader extends ClassLoader {
     public static long counter = 0;
 

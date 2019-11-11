@@ -29,7 +29,8 @@
  * @author John O'Conner
  */
 
- public class Bug4404588 {
+ @Bean
+public class Bug4404588 {
 
     public Bug4404588() {
         // do nothing

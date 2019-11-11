@@ -32,6 +32,7 @@ import java.io.*;
 import java.security.*;
 import sun.security.action.*;
 
+@Bean
 public class Generify {
 
     public static void main(String[] args) throws Exception {

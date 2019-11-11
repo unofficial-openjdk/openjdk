@@ -56,6 +56,7 @@ import static java.net.Proxy.NO_PROXY;
  * @run main/othervm PlainProxyConnectionTest
  * @author danielfuchs
  */
+@Bean
 public class PlainProxyConnectionTest {
 
     static final String RESPONSE = "<html><body><p>Hello World!</body></html>";
@@ -128,7 +129,11 @@ public class PlainProxyConnectionTest {
         }
 
         @Override
-        public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
             proxySelector.connectFailed(uri, sa, ioe);
         }
     }

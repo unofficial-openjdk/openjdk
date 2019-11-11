@@ -6,6 +6,7 @@
  * @run main T8020689
  */
 
+@Bean
 public class T8020689 {
 
     public static void main(String... args) {

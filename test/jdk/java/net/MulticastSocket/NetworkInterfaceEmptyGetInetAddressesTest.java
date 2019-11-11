@@ -33,6 +33,7 @@ import java.net.MulticastSocket;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 
+@Bean
 public class NetworkInterfaceEmptyGetInetAddressesTest {
 
     static int exceptionCount = 0;

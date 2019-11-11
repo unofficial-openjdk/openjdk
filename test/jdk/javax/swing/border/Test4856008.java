@@ -67,6 +67,7 @@ import javax.swing.plaf.nimbus.NimbusLookAndFeel;
 
 import sun.swing.plaf.synth.SynthFileChooserUI;
 
+@Bean
 public class Test4856008 {
     private static final JLabel LABEL = new JLabel();
     private static final JPopupMenu POPUP = new JPopupMenu();
@@ -229,7 +230,11 @@ public class Test4856008 {
         }
 
         @Override
-        public void setFileName(String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFileName(String name) {
             this.name = name;
         }
     }

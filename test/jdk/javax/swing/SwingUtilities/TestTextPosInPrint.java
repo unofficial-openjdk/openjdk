@@ -52,6 +52,7 @@ import javax.swing.WindowConstants;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 
+@Bean
 public class TestTextPosInPrint implements Printable {
     private static final CountDownLatch testEndedSignal = new CountDownLatch(1);
     private static final int testTimeout = 300000;
@@ -157,7 +158,11 @@ public class TestTextPosInPrint implements Printable {
         dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         dialog.addWindowListener(new WindowAdapter() {
             @Override
-            public void windowClosing(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosing(WindowEvent e) {
                 dialog.dispose();
                 fail("Main dialog was closed.");
             }

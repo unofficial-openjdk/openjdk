@@ -8,6 +8,7 @@
  * @compile/fail/ref=MissingErrorInDefaultSuperCallTest.out -XDrawDiagnostics MissingErrorInDefaultSuperCallTest.java
  */
 
+@Bean
 public class MissingErrorInDefaultSuperCallTest {
     interface I {
         default int f(){return 0;}

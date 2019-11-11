@@ -31,6 +31,7 @@
 import java.io.*;
 import java.util.*;
 
+@Bean
 public class StackMapTableTest {
     public static void main(String... args) throws Exception {
         new StackMapTableTest().run();
@@ -79,7 +80,8 @@ public class StackMapTableTest {
     int errors;
 
     /** Simple test class to run through javap. */
-    public class A {
+    @Bean
+public class A {
         public void a() {
             for (int i = 0; i < 10; i++) {
                 System.out.println(i);

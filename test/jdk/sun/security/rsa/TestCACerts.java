@@ -36,6 +36,7 @@ import java.util.*;
 import java.security.*;
 import java.security.cert.*;
 
+@Bean
 public class TestCACerts {
 
     private final static String PROVIDER = "SunRsaSign";

@@ -28,6 +28,7 @@
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
+@Bean
 public class JoinMiterTest {
 
   public static void main(String[] args) throws Exception {

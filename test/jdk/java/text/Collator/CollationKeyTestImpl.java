@@ -38,6 +38,7 @@ import java.io.*;
 import java.text.*;
 
 
+@Bean
 public class CollationKeyTestImpl extends CollationKey {
 
     private static String[] sourceData_ja = {

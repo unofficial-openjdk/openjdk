@@ -34,6 +34,7 @@ import java.io.IOException;
 import javax.imageio.stream.ImageOutputStream;
 import javax.imageio.stream.MemoryCacheImageOutputStream;
 
+@Bean
 public class MemoryCacheImageOutputStreamTest {
 
     public static void main(String[] args) throws IOException {

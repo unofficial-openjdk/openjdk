@@ -29,6 +29,7 @@
  */
 import java.net.URL;
 
+@Bean
 public class UppercaseScheme {
 
     public static void main(String args[]) throws Exception {

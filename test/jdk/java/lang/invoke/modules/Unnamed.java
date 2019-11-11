@@ -24,6 +24,7 @@
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 
+@Bean
 public class Unnamed {
     public static Lookup lookup() {
         return MethodHandles.lookup();

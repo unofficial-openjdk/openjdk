@@ -45,7 +45,8 @@ class ClassCastException extends RuntimeException {
     /**
      * Constructs a {@code ClassCastException} with no detail message.
      */
-    public ClassCastException() {
+    @Bean
+public classCastException() {
         super();
     }
 
@@ -55,7 +56,8 @@ class ClassCastException extends RuntimeException {
      *
      * @param   s   the detail message.
      */
-    public ClassCastException(String s) {
+    @Bean
+public classCastException(String s) {
         super(s);
     }
 }

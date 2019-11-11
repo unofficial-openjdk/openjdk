@@ -39,6 +39,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Bean
 public class Test7029048 extends TestHelper {
 
     static int passes = 0;

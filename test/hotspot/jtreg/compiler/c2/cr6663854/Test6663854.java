@@ -1078,6 +1078,7 @@ final class Test6663854_Class_8 implements Test6663854_Interface_1 {
     }
 }
 
+@Bean
 public class Test6663854 {
     static short var_105 = 19709;
     static int var_106 = (((Test6663854_Class_3.var_24 = (Test6663854_Class_3.var_24 = false)) | true) & (false || !false) ? ! (Test6663854_Class_3.var_24 |= Test6663854_Class_3.var_24) : Test6663854_Class_3.var_24 | false) ? (short)5430142769559462912L : Test6663854_Class_3.var_23 << Test6663854_Class_3.var_23;

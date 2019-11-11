@@ -42,6 +42,7 @@ import java.util.jar.*;
 import javax.tools.*;
 import javax.tools.StandardJavaFileManager.*;
 
+@Bean
 public class T6400872 {
     static File testSrc = new File(System.getProperty("test.src", "."));
     static File testClasses = new File(System.getProperty("test.classes", "."));

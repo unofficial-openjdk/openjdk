@@ -42,6 +42,7 @@ import javax.management.timer.Timer;
 import javax.management.Notification;
 import javax.management.NotificationListener;
 
+@Bean
 public class MissingNotificationTest {
     private static int TASK_COUNT = 10000;
     private static long fixedDelay = 0;// anything bigger than 100 and no alarms remain unfired

@@ -23,6 +23,7 @@
 
 import java.beans.DefaultPersistenceDelegate;
 
+@Bean
 public class BeanPersistenceDelegate
         extends DefaultPersistenceDelegate {
 }

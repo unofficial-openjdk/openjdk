@@ -29,6 +29,7 @@
             make any sense.
    @author Anand Palaniswamy
  */
+@Bean
 public class StripACC_SUPER {
     public static void main(String[] args) throws Exception {
         int access = StripACC_SUPER.class.getModifiers();

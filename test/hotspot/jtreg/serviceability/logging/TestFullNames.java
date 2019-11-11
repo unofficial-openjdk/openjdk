@@ -37,6 +37,7 @@ import jdk.test.lib.Asserts;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class TestFullNames {
 
     public static void main(String[] args) throws Exception {

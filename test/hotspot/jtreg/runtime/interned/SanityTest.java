@@ -36,6 +36,7 @@ import java.util.*;
 import sun.hotspot.WhiteBox;
 
 
+@Bean
 public class SanityTest {
     public static Object tmp;
     public static void main(String... args) {

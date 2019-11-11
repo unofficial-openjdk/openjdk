@@ -35,6 +35,7 @@ import jdk.test.lib.Platform;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class CompressedClassSpaceSize {
 
     public static void main(String[] args) throws Exception {

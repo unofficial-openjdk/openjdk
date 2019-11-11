@@ -33,6 +33,7 @@
 
 package compiler.runtime;
 
+@Bean
 public class StackOverflowBug {
 
     public static int run() {

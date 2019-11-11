@@ -41,6 +41,7 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class CompletionFailureDuringImport {
     public static void main(String... args) throws Exception {
         new CompletionFailureDuringImport().run();
@@ -51,8 +52,10 @@ public class CompletionFailureDuringImport {
     void run() throws Exception {
         new JavacTask(tb)
           .outdir(".")
-          .sources("package p; public class Super { public static final int I = 0; }",
-                   "package p; public class Sub extends Super { }")
+          .sources("package p; @Bean
+public class Super { public static final int I = 0; }",
+                   "package p; @Bean
+public class Sub extends Super { }")
           .run()
           .writeAll();
 
@@ -81,7 +84,8 @@ public class CompletionFailureDuringImport {
     void doTest(String importText, String useText, String... expectedOutput) {
         List<String> log = new JavacTask(tb)
                 .classpath(".")
-                .sources(importText + " public class Test { " + useText + " }")
+                .sources(importText + " @Bean
+public class Test { " + useText + " }")
                 .options("-XDrawDiagnostics")
                 .run(Task.Expect.FAIL)
                 .writeAll()

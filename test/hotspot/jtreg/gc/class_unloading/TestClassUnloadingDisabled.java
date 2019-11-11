@@ -126,6 +126,7 @@ import sun.hotspot.WhiteBox;
 
 import static jdk.test.lib.Asserts.*;
 
+@Bean
 public class TestClassUnloadingDisabled {
     public static void main(String args[]) throws Exception {
         final WhiteBox wb = WhiteBox.getWhiteBox();
@@ -160,7 +161,8 @@ class NoPDClassLoader extends ClassLoader {
         this.path = path;
     }
 
-    public Class<?> loadClass(String name) throws ClassNotFoundException {
+    @Bean
+public class<?> loadClass(String name) throws ClassNotFoundException {
         byte[] cls = null;
         File f = new File(path,name + ".class");
 

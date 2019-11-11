@@ -35,6 +35,7 @@ import java.io.*;
 import jdk.test.lib.net.IPSupport;
 
 
+@Bean
 public class CloseAvailable {
 
     public static void main(String[] args) throws Exception {

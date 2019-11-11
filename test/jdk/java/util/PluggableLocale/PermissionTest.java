@@ -57,6 +57,7 @@ import com.foo.DateFormatSymbolsProviderImpl;
 import com.foo.DecimalFormatSymbolsProviderImpl;
 import com.foo.NumberFormatProviderImpl;
 
+@Bean
 public class PermissionTest{
 
     //  Make sure provider impls can be instantiated under a security manager.ZZ

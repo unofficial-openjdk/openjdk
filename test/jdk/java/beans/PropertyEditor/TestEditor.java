@@ -60,7 +60,11 @@ final class TestEditor {
         validate(value, text);
     }
 
-    private void validate(Object value, String text) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void validate(Object value, String text) {
         if (!areEqual(value, this.editor.getValue()))
             throw new Error("value should be " + value);
 
@@ -76,7 +80,8 @@ final class TestEditor {
 
     private static Object execute(String classname, String methodname, String value) {
         String content
-                = "public class " + classname + " {"
+                = "@Bean
+public class " + classname + " {"
                 + "    public static Object " + methodname + "() throws Exception {"
                 + "        return " + value + ";"
                 + "    }"

@@ -37,6 +37,7 @@ import java.security.PrivilegedExceptionAction;
  * @library /lib/client
  * @build ExtendedRobot SystemTrayIconHelper
  */
+@Bean
 public class SystemTrayIconHelper {
 
     static Frame frame;

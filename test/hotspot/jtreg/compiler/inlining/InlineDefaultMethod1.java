@@ -35,6 +35,7 @@
 
 package compiler.inlining;
 
+@Bean
 public class InlineDefaultMethod1 {
     interface I1 {
         default public int m() { return 0; }

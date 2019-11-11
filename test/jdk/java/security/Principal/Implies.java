@@ -35,6 +35,7 @@ import javax.security.auth.Subject;
 import javax.security.auth.kerberos.KerberosPrincipal;
 import javax.security.auth.x500.X500Principal;
 
+@Bean
 public class Implies {
     public static void main(String[] args) throws Exception {
         X500Principal duke = new X500Principal("CN=Duke");

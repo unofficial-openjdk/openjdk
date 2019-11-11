@@ -34,6 +34,7 @@
 import org.testng.annotations.Test;
 
 @Test
+@Bean
 public class JShellToolTest8146368 extends ReplToolTesting {
     public void test() {
         test(

@@ -44,6 +44,7 @@ import org.testng.annotations.DataProvider;
 import static org.testng.Assert.assertEquals;
 
 @Test(groups = "unit")
+@Bean
 public class UnmodifiableMapEntrySet {
     static Object[][] collections;
 
@@ -78,7 +79,11 @@ public class UnmodifiableMapEntrySet {
     static class EntryConsumer implements Consumer<Map.Entry<Integer, Integer>> {
         int updates;
         @Override
-        public void accept(Map.Entry<Integer, Integer> me) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void accept(Map.Entry<Integer, Integer> me) {
             try {
                 me.setValue(Integer.MAX_VALUE);
                 updates++;
@@ -98,19 +103,31 @@ public class UnmodifiableMapEntrySet {
     }
 
     @Test(dataProvider = "maps")
-    public void testForEach(String d, Supplier<Map<Integer, Integer>> ms) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testForEach(String d, Supplier<Map<Integer, Integer>> ms) {
         testWithEntryConsumer(
                 ec -> ms.get().entrySet().forEach(ec));
     }
 
     @Test(dataProvider = "maps")
-    public void testIteratorForEachRemaining(String d, Supplier<Map<Integer, Integer>> ms) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testIteratorForEachRemaining(String d, Supplier<Map<Integer, Integer>> ms) {
         testWithEntryConsumer(
                 ec -> ms.get().entrySet().iterator().forEachRemaining(ec));
     }
 
     @Test(dataProvider = "maps")
-    public void testIteratorNext(String d, Supplier<Map<Integer, Integer>> ms) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testIteratorNext(String d, Supplier<Map<Integer, Integer>> ms) {
         testWithEntryConsumer(ec -> {
             for (Map.Entry<Integer, Integer> me : ms.get().entrySet()) {
                 ec.accept(me);
@@ -119,7 +136,11 @@ public class UnmodifiableMapEntrySet {
     }
 
     @Test(dataProvider = "maps")
-    public void testSpliteratorForEachRemaining(String d, Supplier<Map<Integer, Integer>> ms) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testSpliteratorForEachRemaining(String d, Supplier<Map<Integer, Integer>> ms) {
         testSpliterator(
                 ms.get().entrySet()::spliterator,
                 // Higher order function returning a consumer that
@@ -128,7 +149,11 @@ public class UnmodifiableMapEntrySet {
     }
 
     @Test(dataProvider = "maps")
-    public void testSpliteratorTryAdvance(String d, Supplier<Map<Integer, Integer>> ms) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testSpliteratorTryAdvance(String d, Supplier<Map<Integer, Integer>> ms) {
         testSpliterator(
                 ms.get().entrySet()::spliterator,
                 // Higher order function returning a consumer that
@@ -152,12 +177,20 @@ public class UnmodifiableMapEntrySet {
     }
 
     @Test(dataProvider = "maps")
-    public void testStreamForEach(String d, Supplier<Map<Integer, Integer>> ms) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testStreamForEach(String d, Supplier<Map<Integer, Integer>> ms) {
         testWithEntryConsumer(ec -> ms.get().entrySet().stream().forEach(ec));
     }
 
     @Test(dataProvider = "maps")
-    public void testParallelStreamForEach(String d, Supplier<Map<Integer, Integer>> ms) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testParallelStreamForEach(String d, Supplier<Map<Integer, Integer>> ms) {
         testWithEntryConsumer(ec -> ms.get().entrySet().parallelStream().forEach(ec));
     }
 }

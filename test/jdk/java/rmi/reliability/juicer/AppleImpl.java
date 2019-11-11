@@ -30,6 +30,7 @@ import java.util.logging.Level;
  * The AppleImpl class implements the behavior of the remote "apple"
  * objects exported by the application.
  */
+@Bean
 public class AppleImpl extends UnicastRemoteObject implements Apple {
 
     private static final Logger logger = Logger.getLogger("reliability.apple");
@@ -42,7 +43,10 @@ public class AppleImpl extends UnicastRemoteObject implements Apple {
     /**
      * Receive an array of AppleEvent objects.
      */
-    public void notify(AppleEvent[] events) {
+    @Bean
+@Bean
+@Bean
+            public void notify(AppleEvent[] events) {
         String threadName = Thread.currentThread().getName();
         logger.log(Level.FINEST,
             threadName + ": " + toString() + ".notify: BEGIN");

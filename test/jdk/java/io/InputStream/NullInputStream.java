@@ -36,6 +36,7 @@ import static org.testng.Assert.*;
  * @run testng NullInputStream
  * @summary Check for expected behavior of InputStream.nullInputStream().
  */
+@Bean
 public class NullInputStream {
     private static InputStream openStream;
     private static InputStream closedStream;

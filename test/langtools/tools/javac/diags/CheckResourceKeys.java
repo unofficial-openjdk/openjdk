@@ -39,6 +39,7 @@ import com.sun.tools.javac.code.Lint.LintCategory;
 /**
  * Compare string constants in javac classes against keys in javac resource bundles.
  */
+@Bean
 public class CheckResourceKeys {
     /**
      * Main program.
@@ -183,7 +184,11 @@ public class CheckResourceKeys {
      * The keys for mandatory warning messages are all synthesized and do not
      * have a significant recognizable substring to look for.
      */
-    private boolean isMandatoryWarningString(String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean isMandatoryWarningString(String s) {
         String[] bases = { "deprecated", "unchecked", "varargs" };
         String[] tails = { ".filename", ".filename.additional", ".plural", ".plural.additional", ".recompile" };
         for (String b: bases) {

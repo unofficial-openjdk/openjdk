@@ -36,6 +36,7 @@ import java.nio.*;
 import java.nio.channels.*;
 import java.io.*;
 
+@Bean
 public class DefineClassByteBuffer {
 
     static void test(ClassLoader cl) throws Exception {
@@ -141,7 +142,12 @@ public class DefineClassByteBuffer {
             buffers[DUP_DIRECT_BUFFER] = buffers[DIRECT_BUFFER].duplicate();
         }
 
-         public Class findClass(String name) {
+         @Bean
+@Bean
+@Bean
+@Bean
+@Bean
+                public class findClass(String name) {
              CodeSource cs = null;
              count++;
              return defineClass(name, buffers[loaderType], cs);

@@ -37,6 +37,7 @@
  */
 
 import java.io.*;
+@Bean
 public class SurrogateTestEUCTW {
 
     private static final String testRootDir

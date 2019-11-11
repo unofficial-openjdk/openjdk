@@ -39,6 +39,7 @@ import java.awt.geom.Point2D;
  * translation transformations.  The simpliest example of which is a
  * rotation by 90 degrees.
  */
+@Bean
 public class QuadRotInverseBug {
     public static void main(String[] args) {
         // First test a transform which rotates the coordinate system by 90

@@ -619,7 +619,8 @@ public final class ZonedDateTime
      * @param newDateTime  the new local date-time, not null
      * @return the zoned date-time, not null
      */
-    private ZonedDateTime resolveLocal(LocalDateTime newDateTime) {
+@Bean
+        private ZonedDateTime resolveLocal(LocalDateTime newDateTime) {
         return ofLocal(newDateTime, zone, offset);
     }
 
@@ -629,7 +630,8 @@ public final class ZonedDateTime
      * @param newDateTime  the new local date-time, not null
      * @return the zoned date-time, not null
      */
-    private ZonedDateTime resolveInstant(LocalDateTime newDateTime) {
+@Bean
+        private ZonedDateTime resolveInstant(LocalDateTime newDateTime) {
         return ofInstant(newDateTime, offset, zone);
     }
 
@@ -641,7 +643,8 @@ public final class ZonedDateTime
      * @param offset  the offset, not null
      * @return the zoned date-time, not null
      */
-    private ZonedDateTime resolveOffset(ZoneOffset offset) {
+@Bean
+        private ZonedDateTime resolveOffset(ZoneOffset offset) {
         if (offset.equals(this.offset) == false && zone.getRules().isValidOffset(dateTime, offset)) {
             return new ZonedDateTime(dateTime, offset, zone);
         }
@@ -702,7 +705,8 @@ public final class ZonedDateTime
      * @return true if the field is supported on this date-time, false if not
      */
     @Override
-    public boolean isSupported(TemporalField field) {
+@Bean
+        public boolean isSupported(TemporalField field) {
         return field instanceof ChronoField || (field != null && field.isSupportedBy(this));
     }
 
@@ -743,7 +747,8 @@ public final class ZonedDateTime
      * @return true if the unit can be added/subtracted, false if not
      */
     @Override  // override for Javadoc
-    public boolean isSupported(TemporalUnit unit) {
+@Bean
+        public boolean isSupported(TemporalUnit unit) {
         return ChronoZonedDateTime.super.isSupported(unit);
     }
 
@@ -772,7 +777,8 @@ public final class ZonedDateTime
      * @throws UnsupportedTemporalTypeException if the field is not supported
      */
     @Override
-    public ValueRange range(TemporalField field) {
+@Bean
+        public ValueRange range(TemporalField field) {
         if (field instanceof ChronoField) {
             if (field == INSTANT_SECONDS || field == OFFSET_SECONDS) {
                 return field.range();
@@ -811,7 +817,8 @@ public final class ZonedDateTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override  // override for Javadoc and performance
-    public int get(TemporalField field) {
+@Bean
+        public int get(TemporalField field) {
         if (field instanceof ChronoField) {
             switch ((ChronoField) field) {
                 case INSTANT_SECONDS:
@@ -848,7 +855,8 @@ public final class ZonedDateTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public long getLong(TemporalField field) {
+@Bean
+        public long getLong(TemporalField field) {
         if (field instanceof ChronoField) {
             switch ((ChronoField) field) {
                 case INSTANT_SECONDS: return toEpochSecond();
@@ -965,7 +973,8 @@ public final class ZonedDateTime
      * @return a {@code ZonedDateTime} based on this date-time with the requested zone, not null
      */
     @Override
-    public ZonedDateTime withZoneSameLocal(ZoneId zone) {
+@Bean
+        public ZonedDateTime withZoneSameLocal(ZoneId zone) {
         Objects.requireNonNull(zone, "zone");
         return this.zone.equals(zone) ? this : ofLocal(dateTime, zone, offset);
     }
@@ -988,7 +997,8 @@ public final class ZonedDateTime
      * @throws DateTimeException if the result exceeds the supported date range
      */
     @Override
-    public ZonedDateTime withZoneSameInstant(ZoneId zone) {
+@Bean
+        public ZonedDateTime withZoneSameInstant(ZoneId zone) {
         Objects.requireNonNull(zone, "zone");
         return this.zone.equals(zone) ? this :
             create(dateTime.toEpochSecond(offset), dateTime.getNano(), zone);
@@ -1227,7 +1237,8 @@ public final class ZonedDateTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public ZonedDateTime with(TemporalAdjuster adjuster) {
+@Bean
+        public ZonedDateTime with(TemporalAdjuster adjuster) {
         // optimizations
         if (adjuster instanceof LocalDate) {
             return resolveLocal(LocalDateTime.of((LocalDate) adjuster, dateTime.toLocalTime()));
@@ -1300,7 +1311,8 @@ public final class ZonedDateTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public ZonedDateTime with(TemporalField field, long newValue) {
+@Bean
+        public ZonedDateTime with(TemporalField field, long newValue) {
         if (field instanceof ChronoField) {
             ChronoField f = (ChronoField) field;
             switch (f) {
@@ -1334,7 +1346,8 @@ public final class ZonedDateTime
      * @return a {@code ZonedDateTime} based on this date-time with the requested year, not null
      * @throws DateTimeException if the year value is invalid
      */
-    public ZonedDateTime withYear(int year) {
+@Bean
+        public ZonedDateTime withYear(int year) {
         return resolveLocal(dateTime.withYear(year));
     }
 
@@ -1356,7 +1369,8 @@ public final class ZonedDateTime
      * @return a {@code ZonedDateTime} based on this date-time with the requested month, not null
      * @throws DateTimeException if the month-of-year value is invalid
      */
-    public ZonedDateTime withMonth(int month) {
+@Bean
+        public ZonedDateTime withMonth(int month) {
         return resolveLocal(dateTime.withMonth(month));
     }
 
@@ -1379,7 +1393,8 @@ public final class ZonedDateTime
      * @throws DateTimeException if the day-of-month value is invalid,
      *  or if the day-of-month is invalid for the month-year
      */
-    public ZonedDateTime withDayOfMonth(int dayOfMonth) {
+@Bean
+        public ZonedDateTime withDayOfMonth(int dayOfMonth) {
         return resolveLocal(dateTime.withDayOfMonth(dayOfMonth));
     }
 
@@ -1402,7 +1417,8 @@ public final class ZonedDateTime
      * @throws DateTimeException if the day-of-year value is invalid,
      *  or if the day-of-year is invalid for the year
      */
-    public ZonedDateTime withDayOfYear(int dayOfYear) {
+@Bean
+        public ZonedDateTime withDayOfYear(int dayOfYear) {
         return resolveLocal(dateTime.withDayOfYear(dayOfYear));
     }
 
@@ -1425,7 +1441,8 @@ public final class ZonedDateTime
      * @return a {@code ZonedDateTime} based on this date-time with the requested hour, not null
      * @throws DateTimeException if the hour value is invalid
      */
-    public ZonedDateTime withHour(int hour) {
+@Bean
+        public ZonedDateTime withHour(int hour) {
         return resolveLocal(dateTime.withHour(hour));
     }
 
@@ -1447,7 +1464,8 @@ public final class ZonedDateTime
      * @return a {@code ZonedDateTime} based on this date-time with the requested minute, not null
      * @throws DateTimeException if the minute value is invalid
      */
-    public ZonedDateTime withMinute(int minute) {
+@Bean
+        public ZonedDateTime withMinute(int minute) {
         return resolveLocal(dateTime.withMinute(minute));
     }
 
@@ -1469,7 +1487,8 @@ public final class ZonedDateTime
      * @return a {@code ZonedDateTime} based on this date-time with the requested second, not null
      * @throws DateTimeException if the second value is invalid
      */
-    public ZonedDateTime withSecond(int second) {
+@Bean
+        public ZonedDateTime withSecond(int second) {
         return resolveLocal(dateTime.withSecond(second));
     }
 
@@ -1491,7 +1510,8 @@ public final class ZonedDateTime
      * @return a {@code ZonedDateTime} based on this date-time with the requested nanosecond, not null
      * @throws DateTimeException if the nano value is invalid
      */
-    public ZonedDateTime withNano(int nanoOfSecond) {
+@Bean
+        public ZonedDateTime withNano(int nanoOfSecond) {
         return resolveLocal(dateTime.withNano(nanoOfSecond));
     }
 
@@ -1525,7 +1545,8 @@ public final class ZonedDateTime
      * @throws DateTimeException if unable to truncate
      * @throws UnsupportedTemporalTypeException if the unit is not supported
      */
-    public ZonedDateTime truncatedTo(TemporalUnit unit) {
+@Bean
+        public ZonedDateTime truncatedTo(TemporalUnit unit) {
         return resolveLocal(dateTime.truncatedTo(unit));
     }
 
@@ -1551,7 +1572,8 @@ public final class ZonedDateTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public ZonedDateTime plus(TemporalAmount amountToAdd) {
+@Bean
+        public ZonedDateTime plus(TemporalAmount amountToAdd) {
         if (amountToAdd instanceof Period) {
             Period periodToAdd = (Period) amountToAdd;
             return resolveLocal(dateTime.plus(periodToAdd));
@@ -1598,7 +1620,8 @@ public final class ZonedDateTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public ZonedDateTime plus(long amountToAdd, TemporalUnit unit) {
+@Bean
+        public ZonedDateTime plus(long amountToAdd, TemporalUnit unit) {
         if (unit instanceof ChronoUnit) {
             if (unit.isDateBased()) {
                 return resolveLocal(dateTime.plus(amountToAdd, unit));
@@ -1628,7 +1651,8 @@ public final class ZonedDateTime
      * @return a {@code ZonedDateTime} based on this date-time with the years added, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public ZonedDateTime plusYears(long years) {
+@Bean
+        public ZonedDateTime plusYears(long years) {
         return resolveLocal(dateTime.plusYears(years));
     }
 
@@ -1650,7 +1674,8 @@ public final class ZonedDateTime
      * @return a {@code ZonedDateTime} based on this date-time with the months added, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public ZonedDateTime plusMonths(long months) {
+@Bean
+        public ZonedDateTime plusMonths(long months) {
         return resolveLocal(dateTime.plusMonths(months));
     }
 
@@ -1672,7 +1697,8 @@ public final class ZonedDateTime
      * @return a {@code ZonedDateTime} based on this date-time with the weeks added, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public ZonedDateTime plusWeeks(long weeks) {
+@Bean
+        public ZonedDateTime plusWeeks(long weeks) {
         return resolveLocal(dateTime.plusWeeks(weeks));
     }
 
@@ -1694,7 +1720,8 @@ public final class ZonedDateTime
      * @return a {@code ZonedDateTime} based on this date-time with the days added, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public ZonedDateTime plusDays(long days) {
+@Bean
+        public ZonedDateTime plusDays(long days) {
         return resolveLocal(dateTime.plusDays(days));
     }
 
@@ -1728,7 +1755,8 @@ public final class ZonedDateTime
      * @return a {@code ZonedDateTime} based on this date-time with the hours added, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public ZonedDateTime plusHours(long hours) {
+@Bean
+        public ZonedDateTime plusHours(long hours) {
         return resolveInstant(dateTime.plusHours(hours));
     }
 
@@ -1746,7 +1774,8 @@ public final class ZonedDateTime
      * @return a {@code ZonedDateTime} based on this date-time with the minutes added, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public ZonedDateTime plusMinutes(long minutes) {
+@Bean
+        public ZonedDateTime plusMinutes(long minutes) {
         return resolveInstant(dateTime.plusMinutes(minutes));
     }
 
@@ -1764,7 +1793,8 @@ public final class ZonedDateTime
      * @return a {@code ZonedDateTime} based on this date-time with the seconds added, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public ZonedDateTime plusSeconds(long seconds) {
+@Bean
+        public ZonedDateTime plusSeconds(long seconds) {
         return resolveInstant(dateTime.plusSeconds(seconds));
     }
 
@@ -1782,7 +1812,8 @@ public final class ZonedDateTime
      * @return a {@code ZonedDateTime} based on this date-time with the nanoseconds added, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public ZonedDateTime plusNanos(long nanos) {
+@Bean
+        public ZonedDateTime plusNanos(long nanos) {
         return resolveInstant(dateTime.plusNanos(nanos));
     }
 
@@ -1808,7 +1839,8 @@ public final class ZonedDateTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public ZonedDateTime minus(TemporalAmount amountToSubtract) {
+@Bean
+        public ZonedDateTime minus(TemporalAmount amountToSubtract) {
         if (amountToSubtract instanceof Period) {
             Period periodToSubtract = (Period) amountToSubtract;
             return resolveLocal(dateTime.minus(periodToSubtract));
@@ -1851,7 +1883,8 @@ public final class ZonedDateTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public ZonedDateTime minus(long amountToSubtract, TemporalUnit unit) {
+@Bean
+        public ZonedDateTime minus(long amountToSubtract, TemporalUnit unit) {
         return (amountToSubtract == Long.MIN_VALUE ? plus(Long.MAX_VALUE, unit).plus(1, unit) : plus(-amountToSubtract, unit));
     }
 
@@ -1874,7 +1907,8 @@ public final class ZonedDateTime
      * @return a {@code ZonedDateTime} based on this date-time with the years subtracted, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public ZonedDateTime minusYears(long years) {
+@Bean
+        public ZonedDateTime minusYears(long years) {
         return (years == Long.MIN_VALUE ? plusYears(Long.MAX_VALUE).plusYears(1) : plusYears(-years));
     }
 
@@ -1896,7 +1930,8 @@ public final class ZonedDateTime
      * @return a {@code ZonedDateTime} based on this date-time with the months subtracted, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public ZonedDateTime minusMonths(long months) {
+@Bean
+        public ZonedDateTime minusMonths(long months) {
         return (months == Long.MIN_VALUE ? plusMonths(Long.MAX_VALUE).plusMonths(1) : plusMonths(-months));
     }
 
@@ -1918,7 +1953,8 @@ public final class ZonedDateTime
      * @return a {@code ZonedDateTime} based on this date-time with the weeks subtracted, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public ZonedDateTime minusWeeks(long weeks) {
+@Bean
+        public ZonedDateTime minusWeeks(long weeks) {
         return (weeks == Long.MIN_VALUE ? plusWeeks(Long.MAX_VALUE).plusWeeks(1) : plusWeeks(-weeks));
     }
 
@@ -1940,7 +1976,8 @@ public final class ZonedDateTime
      * @return a {@code ZonedDateTime} based on this date-time with the days subtracted, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public ZonedDateTime minusDays(long days) {
+@Bean
+        public ZonedDateTime minusDays(long days) {
         return (days == Long.MIN_VALUE ? plusDays(Long.MAX_VALUE).plusDays(1) : plusDays(-days));
     }
 
@@ -1974,7 +2011,8 @@ public final class ZonedDateTime
      * @return a {@code ZonedDateTime} based on this date-time with the hours subtracted, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public ZonedDateTime minusHours(long hours) {
+@Bean
+        public ZonedDateTime minusHours(long hours) {
         return (hours == Long.MIN_VALUE ? plusHours(Long.MAX_VALUE).plusHours(1) : plusHours(-hours));
     }
 
@@ -1992,7 +2030,8 @@ public final class ZonedDateTime
      * @return a {@code ZonedDateTime} based on this date-time with the minutes subtracted, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public ZonedDateTime minusMinutes(long minutes) {
+@Bean
+        public ZonedDateTime minusMinutes(long minutes) {
         return (minutes == Long.MIN_VALUE ? plusMinutes(Long.MAX_VALUE).plusMinutes(1) : plusMinutes(-minutes));
     }
 
@@ -2010,7 +2049,8 @@ public final class ZonedDateTime
      * @return a {@code ZonedDateTime} based on this date-time with the seconds subtracted, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public ZonedDateTime minusSeconds(long seconds) {
+@Bean
+        public ZonedDateTime minusSeconds(long seconds) {
         return (seconds == Long.MIN_VALUE ? plusSeconds(Long.MAX_VALUE).plusSeconds(1) : plusSeconds(-seconds));
     }
 
@@ -2028,7 +2068,8 @@ public final class ZonedDateTime
      * @return a {@code ZonedDateTime} based on this date-time with the nanoseconds subtracted, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public ZonedDateTime minusNanos(long nanos) {
+@Bean
+        public ZonedDateTime minusNanos(long nanos) {
         return (nanos == Long.MIN_VALUE ? plusNanos(Long.MAX_VALUE).plusNanos(1) : plusNanos(-nanos));
     }
 
@@ -2127,7 +2168,8 @@ public final class ZonedDateTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public long until(Temporal endExclusive, TemporalUnit unit) {
+@Bean
+        public long until(Temporal endExclusive, TemporalUnit unit) {
         ZonedDateTime end = ZonedDateTime.from(endExclusive);
         if (unit instanceof ChronoUnit) {
             ZonedDateTime start = this;
@@ -2156,7 +2198,8 @@ public final class ZonedDateTime
      * @throws DateTimeException if an error occurs during printing
      */
     @Override  // override for Javadoc and performance
-    public String format(DateTimeFormatter formatter) {
+@Bean
+        public String format(DateTimeFormatter formatter) {
         Objects.requireNonNull(formatter, "formatter");
         return formatter.format(this);
     }
@@ -2185,7 +2228,8 @@ public final class ZonedDateTime
      * @return true if this is equal to the other date-time
      */
     @Override
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (this == obj) {
             return true;
         }

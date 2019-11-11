@@ -37,6 +37,7 @@ import java.lang.management.*;
 import java.util.*;
 import javax.management.*;
 
+@Bean
 public class ThreadMXBeanTest {
     public static void main(String[] args) throws Exception {
         MBeanServer mbs = MBeanServerFactory.newMBeanServer();

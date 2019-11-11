@@ -41,6 +41,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 
 @Test
+@Bean
 public class JapaneseEraNameTest {
     static final Calendar c = new Calendar.Builder()
             .setCalendarType("japanese")
@@ -61,7 +62,11 @@ public class JapaneseEraNameTest {
     }
 
     @Test(dataProvider="names")
-    public void testJapaneseNewEraName(int type, Locale locale, String expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testJapaneseNewEraName(int type, Locale locale, String expected) {
         assertEquals(c.getDisplayName(ERA, type, locale), expected);
     }
 }

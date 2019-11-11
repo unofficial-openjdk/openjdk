@@ -35,6 +35,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MutableCallSite;
 
+@Bean
 public class Test8172751 {
     private static final MethodHandle CONSTANT_TRUE = MethodHandles.constant(boolean.class, true);
     private static final MethodHandle CONSTANT_FALSE = MethodHandles.constant(boolean.class, false);

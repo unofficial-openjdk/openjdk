@@ -33,18 +33,27 @@ import java.beans.PropertyVetoException;
 import java.beans.VetoableChangeListener;
 import java.beans.VetoableChangeSupport;
 
+@Bean
 public class TestSynchronization {
     private static boolean isCalled;
 
     public static void main(String[] args) throws PropertyVetoException {
         final VetoableChangeSupport vcs = new VetoableChangeSupport(TestSynchronization.class);
         vcs.addVetoableChangeListener("name", new VetoableChangeListener() {
-            public void vetoableChange(PropertyChangeEvent event) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void vetoableChange(PropertyChangeEvent event) {
                 isCalled = true;
             }
         });
         vcs.addVetoableChangeListener(new VetoableChangeListener() {
-            public void vetoableChange(PropertyChangeEvent event) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void vetoableChange(PropertyChangeEvent event) {
                 for (VetoableChangeListener listener : vcs.getVetoableChangeListeners())
                     vcs.removeVetoableChangeListener(listener);
             }

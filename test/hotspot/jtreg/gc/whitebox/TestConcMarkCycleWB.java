@@ -41,6 +41,7 @@ package gc.whitebox;
 import static jdk.test.lib.Asserts.assertTrue;
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class TestConcMarkCycleWB {
 
     public static void main(String[] args) throws Exception {

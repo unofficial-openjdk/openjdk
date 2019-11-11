@@ -44,7 +44,11 @@ import java.util.SortedSet;
 final class BeanValidator {
     private final Map<Object, Object> cache = new IdentityHashMap<Object, Object>();
 
-    public void validate(Object object1, Object object2) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void validate(Object object1, Object object2) {
         // compare references
         if (object1 == object2) {
             return;
@@ -153,7 +157,11 @@ final class BeanValidator {
         }
     }
 
-    private void validate(Object object1, Object object2, Field field) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void validate(Object object1, Object object2, Field field) {
         try {
             object1 = field.get(object1);
             object2 = field.get(object2);
@@ -165,7 +173,11 @@ final class BeanValidator {
         }
     }
 
-    private void validate(Object object1, Object object2, Method method) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void validate(Object object1, Object object2, Method method) {
         try {
             object1 = method.invoke(object1);
             object2 = method.invoke(object2);
@@ -180,7 +192,11 @@ final class BeanValidator {
         }
     }
 
-    private void validate(Collection c1, Collection c2, boolean sorted) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void validate(Collection c1, Collection c2, boolean sorted) {
         if (c1.size() != c2.size()) {
             throw new IllegalStateException("could not compare collections with different sizes");
         }
@@ -217,11 +233,19 @@ final class BeanValidator {
         }
     }
 
-    private void validate(Map map1, Map map2, boolean sorted) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void validate(Map map1, Map map2, boolean sorted) {
         validate(map1.entrySet(), map2.entrySet(), sorted);
     }
 
-    private boolean isCyclic(Object object1, Object object2) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean isCyclic(Object object1, Object object2) {
         Object object = this.cache.get(object1);
         if (object == null) {
             return false;
@@ -232,7 +256,11 @@ final class BeanValidator {
         throw new IllegalStateException("could not resolve cyclic reference");
     }
 
-    private boolean isDefined(Class type, String name, Class... params) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean isDefined(Class type, String name, Class... params) {
         try {
             return type.equals(type.getMethod(name, params).getDeclaringClass());
         }
@@ -271,7 +299,11 @@ final class BeanValidator {
 
     private final StringBuilder sb = new StringBuilder(1024);
 
-    private void log(String message, Object value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void log(String message, Object value) {
         this.sb.setLength(0);
         int size = this.cache.size();
         while (0 < size--) {
@@ -286,7 +318,11 @@ final class BeanValidator {
         System.out.println(this.sb.toString());
     }
 
-    private void log(Throwable throwable) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void log(Throwable throwable) {
         this.sb.setLength(0);
         int size = this.cache.size();
         while (0 < size--) {

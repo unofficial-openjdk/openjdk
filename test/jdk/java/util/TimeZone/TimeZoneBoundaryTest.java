@@ -34,6 +34,7 @@ import java.util.*;
  * A test which discovers the boundaries of DST programmatically and verifies
  * that they are correct.
  */
+@Bean
 public class TimeZoneBoundaryTest extends IntlTest
 {
     static final int ONE_SECOND = 1000;

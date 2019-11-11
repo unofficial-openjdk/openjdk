@@ -32,6 +32,7 @@ import java.awt.font.*;
 import java.awt.geom.*;
 import java.awt.image.*;
 
+@Bean
 public class NaNTransform {
 
     private static void testShape(String msg, Shape s) {

@@ -39,6 +39,7 @@
 
 package compiler.arguments;
 
+@Bean
 public class TestUseBMI1InstructionsOnUnsupportedCPU
       extends BMIUnsupportedCPUTest {
 

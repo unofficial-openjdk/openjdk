@@ -33,6 +33,7 @@ import java.io.*;
 import java.text.*;
 import jdk.test.lib.net.URIBuilder;
 
+@Bean
 public class ExpiredCookieTest {
     // lifted from HttpCookie.java
     private final static String[] COOKIE_DATE_FORMATS = {

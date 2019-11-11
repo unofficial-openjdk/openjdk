@@ -108,7 +108,8 @@ public abstract class PersistenceDelegate {
      *
      * @throws NullPointerException if {@code out} is {@code null}
      */
-    public void writeObject(Object oldInstance, Encoder out) {
+@Bean
+        public void writeObject(Object oldInstance, Encoder out) {
         Object newInstance = out.get(oldInstance);
         if (!mutatesTo(oldInstance, newInstance)) {
             out.remove(oldInstance);
@@ -138,7 +139,8 @@ public abstract class PersistenceDelegate {
      * @return True if an equivalent copy of {@code newInstance} may be
      *         created by applying a series of mutations to {@code oldInstance}.
      */
-    protected boolean mutatesTo(Object oldInstance, Object newInstance) {
+@Bean
+        protected boolean mutatesTo(Object oldInstance, Object newInstance) {
         return (newInstance != null && oldInstance != null &&
                 oldInstance.getClass() == newInstance.getClass());
     }

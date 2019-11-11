@@ -33,6 +33,7 @@ package gc;
  * @run main/othervm -XX:+UseConcMarkSweepGC -XX:+CheckMemoryInitialization gc.TestMemoryInitializationWithCMS
  */
 
+@Bean
 public class TestMemoryInitializationWithCMS {
 
     public static void main(String args[]) {

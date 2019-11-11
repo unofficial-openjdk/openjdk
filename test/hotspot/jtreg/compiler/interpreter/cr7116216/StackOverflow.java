@@ -31,6 +31,7 @@
 
 package compiler.interpreter.cr7116216;
 
+@Bean
 public class StackOverflow {
     static String stackOverflow_largeFrame_liveOopForGC;
 

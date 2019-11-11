@@ -229,6 +229,7 @@
 import java.nio.charset.Charset;
 import java.util.Locale;
 
+@Bean
 public class PrintDefaultLocale {
     public static void main(String[] args) {
         System.out.printf("default locale: ID: %s, Name: %s\n",

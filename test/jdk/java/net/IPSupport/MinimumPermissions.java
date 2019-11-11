@@ -32,6 +32,7 @@
 
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class MinimumPermissions {
     public static void main(String[] args) {
         IPSupport.throwSkippedExceptionIfNonOperational();

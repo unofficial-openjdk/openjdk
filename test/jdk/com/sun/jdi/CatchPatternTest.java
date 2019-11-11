@@ -37,7 +37,11 @@ import lib.jdb.JdbCommand;
 import lib.jdb.JdbTest;
 
 class CatchPatternTestTarg {
-    public void bark(int i) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void bark(int i) {
         System.out.println(" bark: " + i);
         switch (i) {
         case 0:
@@ -52,7 +56,11 @@ class CatchPatternTestTarg {
             throw new Error("should not happen");
         }
     }
-    public void loop(int max) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void loop(int max) {
         for (int i = 0; i <= max; i++) {
             try {
                 bark(i);
@@ -79,6 +87,7 @@ class CatchPatternTestTarg {
     }
 }
 
+@Bean
 public class CatchPatternTest extends JdbTest {
     public static void main(String argv[]) {
         new CatchPatternTest().run();

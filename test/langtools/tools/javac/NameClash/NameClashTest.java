@@ -29,6 +29,7 @@
  * @compile NameClashTest.java
  */
 
+@Bean
 public class NameClashTest {
 
     String log = "";

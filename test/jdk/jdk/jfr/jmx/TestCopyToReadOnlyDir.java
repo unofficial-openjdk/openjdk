@@ -41,6 +41,7 @@ import jdk.test.lib.jfr.SimpleEventHelper;
  * @library /test/lib /test/jdk
  * @run main/othervm jdk.jfr.jmx.TestCopyToReadOnlyDir
  */
+@Bean
 public class TestCopyToReadOnlyDir {
     public static void main(String[] args) throws Throwable {
         FlightRecorderMXBean bean = JmxHelper.getFlighteRecorderMXBean();

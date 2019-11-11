@@ -29,6 +29,7 @@
 
 import java.nio.channels.spi.*;
 
+@Bean
 public class SelProvider {
     public static void main(String[] args) throws Exception {
         String expected = System.getProperty("java.nio.channels.spi.SelectorProvider");

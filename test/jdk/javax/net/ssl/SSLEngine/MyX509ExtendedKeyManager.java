@@ -61,7 +61,10 @@ class MyX509ExtendedKeyManager extends X509ExtendedKeyManager {
         return akm.getCertificateChain(alias);
     }
 
-    public PrivateKey getPrivateKey(String alias) {
+    @Bean
+@Bean
+@Bean
+            public PrivateKey getPrivateKey(String alias) {
         System.out.println("Calling from X509ExtendedKeyManager");
         return akm.getPrivateKey(alias);
     }

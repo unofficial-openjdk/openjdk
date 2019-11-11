@@ -196,7 +196,10 @@ public class DragWindowOutOfFrameTest {
         }
 
         @Override
-        public void mousePressed(MouseEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void mousePressed(MouseEvent e) {
             if (dragWindow == null) {
                 dragWindow = new MyDragWindow(parent, getAbsoluteLocation(e));
             } else {
@@ -206,14 +209,20 @@ public class DragWindowOutOfFrameTest {
         }
 
         @Override
-        public void mouseReleased(MouseEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void mouseReleased(MouseEvent e) {
             labelMouseReleasedCount++;
             if (dragWindow != null) {
                 dragWindow.setVisible(false);
             }
         }
 
-        public void mouseDragged(MouseEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void mouseDragged(MouseEvent e) {
             if (dragWindow != null) {
                 dragWindow.dragTo(getAbsoluteLocation(e));
             }
@@ -223,17 +232,26 @@ public class DragWindowOutOfFrameTest {
     static class DragWindowMouseListener extends MouseAdapter {
 
         @Override
-        public void mouseEntered(MouseEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void mouseEntered(MouseEvent e) {
             dragWindowMouseEnteredCount++;
         }
 
         @Override
-        public void mouseExited(MouseEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void mouseExited(MouseEvent e) {
             dragWindowMouseExitedCount++;
         }
 
         @Override
-        public void mouseReleased(MouseEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void mouseReleased(MouseEvent e) {
             dragWindowMouseReleasedCount++;
         }
     }
@@ -241,12 +259,18 @@ public class DragWindowOutOfFrameTest {
     static class LabelMouseListener extends MouseAdapter {
 
         @Override
-        public void mouseEntered(MouseEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void mouseEntered(MouseEvent e) {
             labelMouseEnteredCount++;
         }
 
         @Override
-        public void mouseExited(MouseEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void mouseExited(MouseEvent e) {
             labelMouseExitedCount++;
         }
     }
@@ -254,12 +278,18 @@ public class DragWindowOutOfFrameTest {
     static class ButtonMouseListener extends MouseAdapter {
 
         @Override
-        public void mouseEntered(MouseEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void mouseEntered(MouseEvent e) {
             buttonMouseEnteredCount++;
         }
 
         @Override
-        public void mouseExited(MouseEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void mouseExited(MouseEvent e) {
             buttonMouseExitedCount++;
         }
     }

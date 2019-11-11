@@ -50,6 +50,7 @@ import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Bean
 public class MethodMatcherTest {
     private static final WhiteBox WB = WhiteBox.getWhiteBox();
     private static final PoolHelper POOL = new PoolHelper();

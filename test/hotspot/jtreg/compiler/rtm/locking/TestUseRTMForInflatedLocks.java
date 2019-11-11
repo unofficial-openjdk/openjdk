@@ -58,6 +58,7 @@ import java.util.List;
  * is used. For more information abort that issue see
  * {@link TestUseRTMAfterLockInflation}.
  */
+@Bean
 public class TestUseRTMForInflatedLocks {
 
     protected void runTestCases() throws Throwable {

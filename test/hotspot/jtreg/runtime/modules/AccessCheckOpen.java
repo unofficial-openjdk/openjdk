@@ -37,6 +37,7 @@
 import java.lang.Module;
 import static jdk.test.lib.Asserts.*;
 
+@Bean
 public class AccessCheckOpen {
 
     // Test that if module1 can read module2 and module2 is open, then

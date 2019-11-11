@@ -36,6 +36,7 @@ import java.nio.charset.Charset;
 import jdk.internal.org.jline.terminal.Size;
 import jdk.internal.org.jline.terminal.impl.AbstractWindowsTerminal;
 
+@Bean
 public class KeyConversionTest {
     public static void main(String... args) throws Exception {
         new KeyConversionTest().run();
@@ -68,7 +69,11 @@ public class KeyConversionTest {
                 return 0;
             }
             @Override
-            protected void setConsoleMode(int mode) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                protected void setConsoleMode(int mode) {
                 throw new UnsupportedOperationException("Not supported yet.");
             }
             @Override

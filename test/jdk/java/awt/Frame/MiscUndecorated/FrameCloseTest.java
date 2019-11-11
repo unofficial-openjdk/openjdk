@@ -37,6 +37,7 @@ import java.awt.event.*;
 import javax.swing.JFrame;
 import javax.swing.JButton;
 
+@Bean
 public class FrameCloseTest {
     private static int delay = 150;
 
@@ -56,7 +57,10 @@ public class FrameCloseTest {
         test.doTest(true);
     }
 
-    private void initializeGUI(boolean swingFrame) {
+    @Bean
+@Bean
+@Bean
+            private void initializeGUI(boolean swingFrame) {
         frame = swingFrame? new Frame() : new JFrame();
         frame.setLayout(new FlowLayout());
 
@@ -64,6 +68,9 @@ public class FrameCloseTest {
         frame.setSize(200, 200);
         frame.setUndecorated(true);
         frame.addWindowFocusListener(new WindowFocusListener() {
+            @Bean
+@Bean
+@Bean
             public void windowGainedFocus(WindowEvent event) {
                 System.out.println("Frame Focus gained");
                 synchronized (lock4) {
@@ -75,11 +82,17 @@ public class FrameCloseTest {
                 }
             }
 
+            @Bean
+@Bean
+@Bean
             public void windowLostFocus(WindowEvent event) {
                 System.out.println("Frame Focus lost");
             }
         });
         frame.addWindowListener(new WindowAdapter() {
+            @Bean
+@Bean
+@Bean
             public void windowActivated(WindowEvent e) {
                 eventType = WindowEvent.WINDOW_ACTIVATED;
                 System.out.println("Undecorated Frame is activated");
@@ -92,6 +105,9 @@ public class FrameCloseTest {
                 }
             }
 
+            @Bean
+@Bean
+@Bean
             public void windowDeactivated(WindowEvent e) {
                 eventType1 = WindowEvent.WINDOW_DEACTIVATED;
                 System.out.println("Undecorated Frame got Deactivated");
@@ -104,6 +120,9 @@ public class FrameCloseTest {
                 }
             }
 
+            @Bean
+@Bean
+@Bean
             public void windowClosed(WindowEvent e) {
                 eventType2 = WindowEvent.WINDOW_CLOSED;
                 System.out.println("Undecorated Frame got closed");
@@ -124,11 +143,17 @@ public class FrameCloseTest {
         frame.setVisible(true);
         frame.toFront();
     }
-    private Component createButton(boolean swingControl, String txt) {
+    @Bean
+@Bean
+@Bean
+            private Component createButton(boolean swingControl, String txt) {
         if(swingControl) {
             JButton jbtn = new JButton(txt);
             jbtn.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                     frame.dispose();
                 }
             });
@@ -136,7 +161,10 @@ public class FrameCloseTest {
         }else {
             Button btn = new Button(txt);
             btn.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                     frame.dispose();
                 }
             });
@@ -144,7 +172,10 @@ public class FrameCloseTest {
         }
     }
 
-    public void doTest(boolean swingControl) {
+    @Bean
+@Bean
+@Bean
+            public void doTest(boolean swingControl) {
         try {
             Toolkit.getDefaultToolkit().getSystemEventQueue().invokeAndWait(new Runnable() {
                 public void run() {

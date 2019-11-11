@@ -37,6 +37,7 @@ package gc.g1;
  * @run main gc.g1.TestStringDeduplicationTableResize
  */
 
+@Bean
 public class TestStringDeduplicationTableResize {
     public static void main(String[] args) throws Exception {
         TestStringDeduplicationTools.testTableResize();

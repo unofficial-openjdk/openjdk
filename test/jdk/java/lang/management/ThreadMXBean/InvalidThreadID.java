@@ -34,6 +34,7 @@
 import java.lang.management.ThreadMXBean;
 import java.lang.management.ManagementFactory;
 
+@Bean
 public class InvalidThreadID {
 
     public static void main(String argv[]) {

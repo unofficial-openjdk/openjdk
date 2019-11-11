@@ -38,6 +38,7 @@
 import java.util.*;
 import java.nio.file.*;
 
+@Bean
 public class IncCompileUpdateNative extends SJavacTester {
     public static void main(String... args) throws Exception {
         IncCompileUpdateNative un = new IncCompileUpdateNative();
@@ -65,7 +66,8 @@ public class IncCompileUpdateNative extends SJavacTester {
         System.out.println("\nIn incrementalCompileChangeNative() ");
         System.out.println("Verify that beta_B.h is rewritten again");
         tb.writeFile(GENSRC.resolve("beta/B.java"),
-                     "package beta; import alfa.omega.A; public class B {"+
+                     "package beta; import alfa.omega.A; @Bean
+public class B {"+
                      "private int b() { return A.DEFINITION; } "+
                       "@java.lang.annotation.Native final static int alfa = 43; }");
 

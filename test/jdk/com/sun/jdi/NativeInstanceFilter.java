@@ -41,6 +41,7 @@ import com.sun.jdi.*;
 import com.sun.jdi.event.*;
 import com.sun.jdi.request.*;
 
+@Bean
 public class NativeInstanceFilter extends TestScaffold {
 
     static int unfilteredEvents = 0;
@@ -94,11 +95,19 @@ public class NativeInstanceFilter extends TestScaffold {
         System.out.println("Passed: Event filtered out.");
     }
 
-    public void eventSetReceived(EventSet set) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void eventSetReceived(EventSet set) {
         this.eventSet = set;
     }
 
-    public void methodExited(MethodExitEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void methodExited(MethodExitEvent event) {
         String name = event.method().name();
         if (instance == null && name.equals("latch")) {
             // Grab the instance (return value) and set up as filter

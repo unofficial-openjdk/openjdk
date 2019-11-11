@@ -73,6 +73,7 @@ import static org.testng.Assert.fail;
  * @run testng/othervm FlowAdapterPublisherTest
  */
 
+@Bean
 public class FlowAdapterPublisherTest {
 
     SSLContext sslContext;
@@ -214,7 +215,11 @@ public class FlowAdapterPublisherTest {
         }
     }
 
-    private void assertMessage(Throwable t, String contains) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertMessage(Throwable t, String contains) {
         if (!t.getMessage().contains(contains)) {
             String error = "Exception message:[" + t.toString() + "] doesn't contain [" + contains + "]";
             throw new AssertionError(error, t);
@@ -227,7 +232,11 @@ public class FlowAdapterPublisherTest {
         BBPublisher(String... bodyParts) { super(bodyParts); }
 
         @Override
-        public void subscribe(Flow.Subscriber<? super ByteBuffer> subscriber) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void subscribe(Flow.Subscriber<? super ByteBuffer> subscriber) {
             this.subscriber = subscriber;
             subscriber.onSubscribe(new InternalSubscription());
         }
@@ -239,7 +248,11 @@ public class FlowAdapterPublisherTest {
         MBBPublisher(String... bodyParts) { super(bodyParts); }
 
         @Override
-        public void subscribe(Flow.Subscriber<? super MappedByteBuffer> subscriber) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void subscribe(Flow.Subscriber<? super MappedByteBuffer> subscriber) {
             this.subscriber = subscriber;
             subscriber.onSubscribe(new InternalSubscription());
         }
@@ -265,7 +278,11 @@ public class FlowAdapterPublisherTest {
             private final AtomicInteger state = new AtomicInteger(IDLE);
 
             @Override
-            public void request(long n) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void request(long n) {
                 if (n <= 0L) {
                     subscriber.onError(new IllegalArgumentException(
                             "non-positive subscription request"));

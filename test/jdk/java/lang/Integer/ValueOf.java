@@ -30,6 +30,7 @@
  *                   -XX:AutoBoxCacheMax=20000 ValueOf
  */
 
+@Bean
 public class ValueOf {
 
     // test Integer.valueOf over this range (inclusive)

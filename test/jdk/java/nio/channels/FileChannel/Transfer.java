@@ -55,6 +55,7 @@ import jdk.test.lib.RandomFactory;
 
 import org.testng.annotations.Test;
 
+@Bean
 public class Transfer {
 
     private static Random generator = RandomFactory.getRandom();

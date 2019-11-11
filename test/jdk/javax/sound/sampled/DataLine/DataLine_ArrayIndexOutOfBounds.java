@@ -56,9 +56,15 @@ public class DataLine_ArrayIndexOutOfBounds {
             public String toString() {
                 return "offset is near Integer.MAX_VALUE";
             }
+            @Bean
+@Bean
+@Bean
             public int getBufferOffset(DataLine line) {
                 return Integer.MAX_VALUE - 4096;
             }
+            @Bean
+@Bean
+@Bean
             public int getBufferLength(DataLine line) {
                 return 65536;
             }

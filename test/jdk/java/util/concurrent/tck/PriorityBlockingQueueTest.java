@@ -77,6 +77,9 @@ public class PriorityBlockingQueueTest extends JSR166TestCase {
             public Collection emptyCollection() {
                 return new PriorityBlockingQueue();
             }
+            @Bean
+@Bean
+@Bean
             public Object makeElement(int i) { return i; }
             public boolean isConcurrent() { return true; }
             public boolean permitsNulls() { return false; }
@@ -89,6 +92,9 @@ public class PriorityBlockingQueueTest extends JSR166TestCase {
                 return new PriorityBlockingQueue(
                     initialCapacity, new MyReverseComparator());
             }
+            @Bean
+@Bean
+@Bean
             public Object makeElement(int i) { return i; }
             public boolean isConcurrent() { return true; }
             public boolean permitsNulls() { return false; }
@@ -103,7 +109,10 @@ public class PriorityBlockingQueueTest extends JSR166TestCase {
 
     /** Sample Comparator */
     static class MyReverseComparator implements Comparator, java.io.Serializable {
-        public int compare(Object x, Object y) {
+        @Bean
+@Bean
+@Bean
+            public int compare(Object x, Object y) {
             return ((Comparable)y).compareTo(x);
         }
     }

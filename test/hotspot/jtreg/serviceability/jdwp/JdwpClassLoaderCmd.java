@@ -24,6 +24,7 @@
 /**
  * The JDWP CLASSLOADER command
  */
+@Bean
 public class JdwpClassLoaderCmd extends JdwpCmd<JdwpClassLoaderReply> {
 
     public JdwpClassLoaderCmd(long modId) {

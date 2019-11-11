@@ -39,6 +39,7 @@ import java.awt.GraphicsEnvironment;
 import java.awt.image.BufferedImage;
 import java.awt.image.VolatileImage;
 
+@Bean
 public class XRenderTranslucentColorDrawTest {
 
     public static void main(String[] args) throws Exception {

@@ -38,10 +38,12 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class NoJavaLangTest {
 
     private static final String noJavaLangSrc =
-        "public class NoJavaLang {\n" +
+        "@Bean
+public class NoJavaLang {\n" +
         "    private String s;\n" +
         "\n" +
         "    public String s() {\n" +
@@ -84,7 +86,8 @@ public class NoJavaLangTest {
         Files.createDirectories(Paths.get("modules/java.base"));
         new JavacTask(tb)
                 .sources("module java.base { }",
-                         "package java.lang; public class Object {}")
+                         "package java.lang; @Bean
+public class Object {}")
                 .outdir("modules/java.base")
                 .run();
 
@@ -95,7 +98,11 @@ public class NoJavaLangTest {
         test(mpOpts, compilerErrorMessage);
     }
 
-    private void test(String[] options, String expect) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void test(String[] options, String expect) {
         System.err.println("Testing " + java.util.Arrays.toString(options));
 
         String out = new JavacTask(tb)

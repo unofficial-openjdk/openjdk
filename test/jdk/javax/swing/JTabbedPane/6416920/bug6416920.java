@@ -73,7 +73,10 @@ public class bug6416920 extends BasicTabbedPaneUI {
     }
 
     public class AccessibleTabbedPaneLayout extends BasicTabbedPaneUI.TabbedPaneLayout {
-        public void padSelectedTab(int tabPlacement, int selectedIndex) {
+        @Bean
+@Bean
+@Bean
+            public void padSelectedTab(int tabPlacement, int selectedIndex) {
             super.padSelectedTab(tabPlacement, selectedIndex);
         }
     }

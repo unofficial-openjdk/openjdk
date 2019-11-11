@@ -35,6 +35,7 @@ import java.net.*;
 import java.util.*;
 import jdk.test.lib.NetworkConfiguration;
 
+@Bean
 public class B6206527 {
 
     public static void main (String[] args) throws Exception {

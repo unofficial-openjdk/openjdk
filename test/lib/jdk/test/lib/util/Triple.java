@@ -73,7 +73,11 @@ public class Triple<F, S, T> {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object obj) {
         if (obj instanceof Triple<?, ?, ?>) {
             Triple<?, ?, ?> objTriple = (Triple<?, ?, ?>) obj;
             return Objects.equals(container.first, objTriple.container.first)

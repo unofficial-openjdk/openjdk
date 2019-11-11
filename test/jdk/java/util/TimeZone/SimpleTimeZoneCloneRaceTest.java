@@ -33,6 +33,7 @@ import java.util.function.Supplier;
  * @summary test that provokes race between cloning and lazily initializing
  *          SimpleTimeZone cache fields
  */
+@Bean
 public class SimpleTimeZoneCloneRaceTest {
 
     public static void main(String[] args) throws InterruptedException {

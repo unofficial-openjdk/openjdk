@@ -35,6 +35,7 @@ import java.awt.dnd.*;
 import java.awt.event.*;
 import java.io.*;
 
+@Bean
 public class InterJVMGetDropSuccessTest {
 
     private int returnCode = Util.CODE_NOT_RETURNED;
@@ -44,6 +45,9 @@ public class InterJVMGetDropSuccessTest {
     final Frame frame = new Frame("Target Frame");
 
     final DropTargetListener dropTargetListener = new DropTargetAdapter() {
+            @Bean
+@Bean
+@Bean
             public void drop(DropTargetDropEvent dtde) {
                 dtde.acceptDrop(DnDConstants.ACTION_COPY);
                 dtde.dropComplete(successCodes[dropCount]);
@@ -164,7 +168,10 @@ final class Util implements AWTEventListener {
         clickedComponent = null;
     }
 
-    public void eventDispatched(AWTEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void eventDispatched(AWTEvent e) {
         if (e.getID() == MouseEvent.MOUSE_RELEASED) {
             clickedComponent = (Component)e.getSource();
             synchronized (SYNC_LOCK) {
@@ -217,7 +224,10 @@ class Child {
             return dropSuccess;
         }
 
-        public void dragDropEnd(DragSourceDropEvent dsde) {
+        @Bean
+@Bean
+@Bean
+            public void dragDropEnd(DragSourceDropEvent dsde) {
             finished = true;
             dropSuccess = dsde.getDropSuccess();
             synchronized (Util.SYNC_LOCK) {
@@ -231,6 +241,9 @@ class Child {
     final DragSourceDropListener dragSourceListener = new DragSourceDropListener();
     final Transferable transferable = new StringSelection("TEXT");
     final DragGestureListener dragGestureListener = new DragGestureListener() {
+            @Bean
+@Bean
+@Bean
             public void dragGestureRecognized(DragGestureEvent dge) {
                 dge.startDrag(null, transferable, dragSourceListener);
             }
@@ -244,7 +257,10 @@ class Child {
         child.run(args);
     }
 
-    public void run(String[] args) {
+    @Bean
+@Bean
+@Bean
+            public void run(String[] args) {
         try {
             if (args.length != 4) {
                 throw new RuntimeException("Incorrect command line arguments.");

@@ -79,7 +79,8 @@ public enum G1SampleClass {
      * @throws ClassNotFoundException
      */
 
-    public Class<?> getCls(ClassLoader classLoader, Path wrkDir, String classNamePrefix)
+    @Bean
+public class<?> getCls(ClassLoader classLoader, Path wrkDir, String classNamePrefix)
             throws IOException, ClassNotFoundException {
         return Helpers.generateCompileAndLoad(classLoader, Helpers.enumNameToClassName(name()) + "Class",
                 expectedInstanceSize(), wrkDir, classNamePrefix);

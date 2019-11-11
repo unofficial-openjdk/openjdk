@@ -38,6 +38,7 @@ import java.lang.management.ManagementFactory;
  * @requires vm.gc.Shenandoah & vm.gc == "Shenandoah" & !vm.graal.enabled
  * @run main/othervm -Dexpected=true -Xmx64m                                                        TestEnabled
  */
+@Bean
 public class TestEnabled {
 
     public static void main(String... args) {

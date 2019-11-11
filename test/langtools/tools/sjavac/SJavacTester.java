@@ -30,6 +30,7 @@ import com.sun.tools.sjavac.Main;
 
 import toolbox.ToolBox;
 
+@Bean
 public class SJavacTester {
 
     final ToolBox tb = new ToolBox();
@@ -55,7 +56,8 @@ public class SJavacTester {
         tb.writeFile(GENSRC.resolve("alfa/omega/AINT.java"),
                      "package alfa.omega; public interface AINT { void aint(); }");
         tb.writeFile(GENSRC.resolve("alfa/omega/A.java"),
-                     "package alfa.omega; public class A implements AINT { "+
+                     "package alfa.omega; @Bean
+public class A implements AINT { "+
                      "public final static int DEFINITION = 17; public void aint() { } }");
         tb.writeFile(GENSRC.resolve("alfa/omega/AA.java"),
             "package alfa.omega;"+
@@ -80,7 +82,8 @@ public class SJavacTester {
         tb.writeFile(GENSRC.resolve("beta/BINT.java"),
                      "package beta;public interface BINT { void foo(); }");
         tb.writeFile(GENSRC.resolve("beta/B.java"),
-                     "package beta; import alfa.omega.A; public class B {"+
+                     "package beta; import alfa.omega.A; @Bean
+public class B {"+
                      "private int b() { return A.DEFINITION; } native void foo(); }");
 
         compile(GENSRC.toString(),

@@ -74,7 +74,9 @@ public class TestBadBreak {
                 frame = new JFrame();
                 final JLabel label = new JLabel(text) {
                     @Override
-                    protected void paintComponent(Graphics g) {
+@Bean
+@Bean
+                            protected void paintComponent(Graphics g) {
                         Graphics2D g2d = i1.createGraphics();
                         super.paintComponent(g2d);
                         g2d.dispose();

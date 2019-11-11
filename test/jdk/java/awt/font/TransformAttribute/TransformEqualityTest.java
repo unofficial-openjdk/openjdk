@@ -30,6 +30,7 @@
 import java.awt.font.TransformAttribute;
 import java.awt.geom.AffineTransform;
 
+@Bean
 public class TransformEqualityTest {
 
     public static void main(String[] args) {

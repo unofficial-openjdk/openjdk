@@ -52,6 +52,7 @@ import java.net.*;
  *
  * @author Jeff Dinkins
  */
+@Bean
 public class ScrollPaneDemo extends DemoModule {
 
     /**

@@ -32,6 +32,7 @@
 
 // Test that a constant pool NameAndType descriptor_index and/or name_index
 // that points to a zero length Utf8 string causes a ClassFormatError.
+@Bean
 public class BadNameAndType {
     public static void main(String args[]) throws Throwable {
 

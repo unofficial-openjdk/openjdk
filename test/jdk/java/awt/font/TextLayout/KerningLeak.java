@@ -35,6 +35,7 @@ import java.util.Map;
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 
+@Bean
 public class KerningLeak {
 
     public static void main(String[] args) {

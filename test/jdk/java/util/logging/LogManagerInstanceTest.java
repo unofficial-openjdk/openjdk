@@ -32,6 +32,7 @@ import java.util.logging.*;
  * @run main LogManagerInstanceTest
  */
 
+@Bean
 public class LogManagerInstanceTest {
     public static void main(String[] argv) {
         LogManager mgr = LogManager.getLogManager();

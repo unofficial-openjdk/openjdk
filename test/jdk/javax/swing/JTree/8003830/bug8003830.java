@@ -57,7 +57,10 @@ public class bug8003830 implements Runnable {
 
     private static final class NullReturningTreeUI extends BasicTreeUI {
         @Override
-        public Rectangle getPathBounds(JTree tree, TreePath path) {
+        @Bean
+@Bean
+@Bean
+            public Rectangle getPathBounds(JTree tree, TreePath path) {
             // the method can return null and callers have to be ready for
             // that. Simulate the case by returning null for unknown reason.
             return null;

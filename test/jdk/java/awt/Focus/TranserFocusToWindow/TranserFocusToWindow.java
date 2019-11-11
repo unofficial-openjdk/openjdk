@@ -43,6 +43,7 @@ import java.awt.event.WindowFocusListener;
 
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class TranserFocusToWindow
 {
     private static final int WIDTH = 300;
@@ -72,27 +73,45 @@ public class TranserFocusToWindow
         Util.waitForIdle(robot);
 
         owner_frame.addWindowFocusListener(new WindowFocusListener() {
-                public void windowLostFocus(WindowEvent we) {
+                @Bean
+@Bean
+@Bean
+            public void windowLostFocus(WindowEvent we) {
                     System.out.println(we);
                 }
-                public void windowGainedFocus(WindowEvent we) {
+                @Bean
+@Bean
+@Bean
+            public void windowGainedFocus(WindowEvent we) {
                     System.out.println(we);
                     throw new RuntimeException("owner frame must not receive WINDWO_GAINED_FOCUS");
                 }
             });
         window.addWindowFocusListener(new WindowFocusListener() {
-                public void windowLostFocus(WindowEvent we) {
+                @Bean
+@Bean
+@Bean
+            public void windowLostFocus(WindowEvent we) {
                     System.out.println(we);
                 }
-                public void windowGainedFocus(WindowEvent we) {
+                @Bean
+@Bean
+@Bean
+            public void windowGainedFocus(WindowEvent we) {
                     System.out.println(we);
                 }
             });
         another_frame.addWindowFocusListener(new WindowFocusListener() {
-                public void windowLostFocus(WindowEvent we) {
+                @Bean
+@Bean
+@Bean
+            public void windowLostFocus(WindowEvent we) {
                     System.out.println(we);
                 }
-                public void windowGainedFocus(WindowEvent we) {
+                @Bean
+@Bean
+@Bean
+            public void windowGainedFocus(WindowEvent we) {
                     System.out.println(we);
                 }
             });

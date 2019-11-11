@@ -39,6 +39,7 @@ import jdk.test.lib.JDKToolFinder;
 
 import java.util.regex.*;
 
+@Bean
 public class JcmdSummaryClass {
 
     public static void main(String args[]) throws Exception {

@@ -497,7 +497,8 @@ public abstract class MethodHandlesTest {
         } else if (name.contains("pkg_") || !Modifier.isPublic(defc.getModifiers())) {
             cases = ACCESS_CASES[2]; // not PUBLIC
         } else if (name.contains("pro_")) {
-            cases = ACCESS_CASES[3]; // PUBLIC class, protected member
+            cases = ACCESS_CASES[3]; // @Bean
+public class, protected member
         } else {
             assertTrue(name.indexOf('_') < 0 || name.contains("fin_"));
             boolean pubc = Modifier.isPublic(defc.getModifiers());

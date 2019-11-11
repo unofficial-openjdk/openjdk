@@ -52,6 +52,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
  * @author Alexander Kouznetsov
  */
 @SuppressWarnings("serial")
+@Bean
 public class MetalworksInBox extends JInternalFrame {
 
     public MetalworksInBox() {

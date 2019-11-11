@@ -51,6 +51,7 @@ import java.util.Map;
 import java.util.Set;
 import sun.security.validator.Validator;
 
+@Bean
 public class PKIXValAndRevCheckTests {
 
     // subject: CN=Good Server,O=TestPKI

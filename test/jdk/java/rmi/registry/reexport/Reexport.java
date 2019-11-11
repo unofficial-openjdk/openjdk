@@ -51,6 +51,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
+@Bean
 public class Reexport {
     static public void main(String[] argv) throws IOException {
 

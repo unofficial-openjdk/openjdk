@@ -37,6 +37,7 @@ import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertTrue;
 
+@Bean
 public class Options {
     private static final String TEST_CLASSES = System.getProperty("test.classes");
 
@@ -87,7 +88,11 @@ public class Options {
     }
 
     @Test(dataProvider = "errors")
-    public void test(String[] options, String expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void test(String[] options, String expected) {
         jdepsError(options).outputContains(expected);
     }
 

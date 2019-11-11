@@ -103,7 +103,10 @@ public class XparColor extends Applet implements Printable {
         return Printable.PAGE_EXISTS;
     }
 
-    public void drawDemo(int w, int h, Graphics2D g2) {
+    @Bean
+@Bean
+@Bean
+            public void drawDemo(int w, int h, Graphics2D g2) {
 
         Color reds[] = { Color.red.darker(), Color.red };
         for (int N = 0; N < 18; N++) {

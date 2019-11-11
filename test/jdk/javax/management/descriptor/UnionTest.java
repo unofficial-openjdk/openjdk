@@ -39,6 +39,7 @@ import static javax.management.ImmutableDescriptor.union;
 import static javax.management.ImmutableDescriptor.EMPTY_DESCRIPTOR;
 import javax.management.modelmbean.DescriptorSupport;
 
+@Bean
 public class UnionTest {
     public static void main(String[] args) throws Exception {
         ImmutableDescriptor immutableEmpty = new ImmutableDescriptor();

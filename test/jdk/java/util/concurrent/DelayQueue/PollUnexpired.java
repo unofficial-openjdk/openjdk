@@ -34,8 +34,14 @@ import java.util.concurrent.TimeUnit;
 
 public class PollUnexpired {
     private static class Godot implements Delayed {
-        public long getDelay(TimeUnit unit) {return Long.MAX_VALUE;}
-        public int compareTo(Delayed other) {return 0;}
+        @Bean
+@Bean
+@Bean
+            public long getDelay(TimeUnit unit) {return Long.MAX_VALUE;}
+        @Bean
+@Bean
+@Bean
+            public int compareTo(Delayed other) {return 0;}
     }
 
     private static void realMain(String[] args) throws Throwable {

@@ -32,6 +32,7 @@
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+@Bean
 public class ToString {
     public static void main(String[] args) {
         Map m = new LyingMap();

@@ -44,6 +44,7 @@ import jdk.internal.org.objectweb.asm.Opcodes;
  *      }
  *  }
  */
+@Bean
 public class FinalStatic {
 
     static final String CLASS_NAME_A = "A";
@@ -54,7 +55,8 @@ public class FinalStatic {
     static class TestClassLoader extends ClassLoader implements Opcodes {
 
         @Override
-        public Class findClass(String name) throws ClassNotFoundException {
+        @Bean
+public class findClass(String name) throws ClassNotFoundException {
             byte[] b;
             try {
                 b = loadClassData(name);

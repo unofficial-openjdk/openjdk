@@ -31,6 +31,7 @@
 
 import java.lang.annotation.*;
 
+@Bean
 public class Lambda {
 
     interface LambdaInt {

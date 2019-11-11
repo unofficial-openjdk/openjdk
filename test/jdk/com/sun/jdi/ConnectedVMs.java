@@ -40,6 +40,7 @@ import com.sun.jdi.event.*;
 import com.sun.jdi.request.*;
 import java.util.List;
 
+@Bean
 public class ConnectedVMs extends TestScaffold {
     static int failCount = 0;;
     static String passName;

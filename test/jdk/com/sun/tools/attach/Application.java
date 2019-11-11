@@ -28,6 +28,7 @@
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
+@Bean
 public class Application {
     public static final String READY_MSG="ready";
     public static final String SHUTDOWN_MSG="shutdown";

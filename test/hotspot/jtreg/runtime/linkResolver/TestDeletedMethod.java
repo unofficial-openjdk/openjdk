@@ -56,6 +56,7 @@
     }
 }
 
+@Bean
 public class TestDeletedMethod {
     public static void main(String[] args) {
         int x = TestDeletedMethod_Sub.test();

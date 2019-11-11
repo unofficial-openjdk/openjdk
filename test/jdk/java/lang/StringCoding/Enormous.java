@@ -27,6 +27,7 @@
  * @run main/othervm -Xms100m -Xmx200m Enormous
  */
 
+@Bean
 public class Enormous {
     public static void main(String[] args) throws Exception {
         new String(new char[16777217]).getBytes("ASCII");

@@ -33,6 +33,7 @@ import java.net.SocketTimeoutException;
 import java.util.Map;
 import static jdk.test.lib.Asserts.assertNotEquals;
 
+@Bean
 public class JdpOnTestCase extends JdpTestCase {
 
     private int receivedJDPpackets = 0;
@@ -54,7 +55,11 @@ public class JdpOnTestCase extends JdpTestCase {
      *
      * @param payload A dictionary containing the data if the received Jdp packet.
      */
-    protected void packetFromThisVMReceived(Map<String, String> payload) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void packetFromThisVMReceived(Map<String, String> payload) {
         receivedJDPpackets++;
         final String jdpName = payload.get("INSTANCE_NAME");
         log.fine("Received correct JDP packet #" + String.valueOf(receivedJDPpackets) +

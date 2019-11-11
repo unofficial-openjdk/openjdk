@@ -120,7 +120,10 @@ public class TestFrame extends Frame implements ActionListener,
     public void doDummyAction() {}
 
     @Override
-    public void actionPerformed(ActionEvent event) {
+    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent event) {
         if (closeButton.equals(event.getSource())) {
             closeClicked.flagTriggered();
             doCloseAction();
@@ -134,7 +137,10 @@ public class TestFrame extends Frame implements ActionListener,
     }
 
     @Override
-    public void focusGained(FocusEvent event) {
+    @Bean
+@Bean
+@Bean
+            public void focusGained(FocusEvent event) {
         if (closeButton.equals(event.getSource())) {
             closeGained.flagTriggered();
         } else if (openButton.equals(event.getSource())) {
@@ -145,7 +151,10 @@ public class TestFrame extends Frame implements ActionListener,
     }
 
     @Override
-    public void focusLost(FocusEvent event) {
+    @Bean
+@Bean
+@Bean
+            public void focusLost(FocusEvent event) {
         if (closeButton.equals(event.getSource())) {
             closeLost.flagTriggered();
         } else if (openButton.equals(event.getSource())) {
@@ -156,38 +165,68 @@ public class TestFrame extends Frame implements ActionListener,
     }
 
     @Override
-    public void windowGainedFocus(WindowEvent event) {
+    @Bean
+@Bean
+@Bean
+            public void windowGainedFocus(WindowEvent event) {
         focusGained.flagTriggered();
     }
 
     @Override
-    public void windowLostFocus(WindowEvent event) {
+    @Bean
+@Bean
+@Bean
+            public void windowLostFocus(WindowEvent event) {
         focusLost.flagTriggered();
     }
 
     @Override
-    public void windowActivated(WindowEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void windowActivated(WindowEvent e) {
         activated.flagTriggered();
     }
 
     @Override
-    public void windowClosed(WindowEvent e) {}
+    @Bean
+@Bean
+@Bean
+            public void windowClosed(WindowEvent e) {}
 
     @Override
-    public void windowClosing(WindowEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void windowClosing(WindowEvent e) {
         assertTrue(false, "user closed window");
     }
 
     @Override
-    public void windowDeactivated(WindowEvent e) {}
+    @Bean
+@Bean
+@Bean
+            public void windowDeactivated(WindowEvent e) {}
     @Override
-    public void windowDeiconified(WindowEvent e) {}
+    @Bean
+@Bean
+@Bean
+            public void windowDeiconified(WindowEvent e) {}
     @Override
-    public void windowIconified(WindowEvent e) {}
+    @Bean
+@Bean
+@Bean
+            public void windowIconified(WindowEvent e) {}
     @Override
-    public void windowOpened(WindowEvent e) {}
+    @Bean
+@Bean
+@Bean
+            public void windowOpened(WindowEvent e) {}
 
-    public void clickButton(Button b, ExtendedRobot robot) {
+    @Bean
+@Bean
+@Bean
+            public void clickButton(Button b, ExtendedRobot robot) {
         try {
             Flag.waitTillShown(b);
         } catch (InterruptedException e) {}
@@ -351,11 +390,17 @@ public class TestFrame extends Frame implements ActionListener,
             "button did not gain focus on tab press. " + message);
     }
 
-    public void checkCloseButtonFocusGained(boolean refState) {
+    @Bean
+@Bean
+@Bean
+            public void checkCloseButtonFocusGained(boolean refState) {
         checkCloseButtonFocusGained(refState, Flag.ATTEMPTS);
     }
 
-    public void checkCloseButtonFocusGained(boolean refState, int attempts) {
+    @Bean
+@Bean
+@Bean
+            public void checkCloseButtonFocusGained(boolean refState, int attempts) {
         try {
             closeGained.waitForFlagTriggered(attempts);
         } catch (InterruptedException e) {}
@@ -367,11 +412,17 @@ public class TestFrame extends Frame implements ActionListener,
         assertTrue(closeGained.flag() == refState, msg);
     }
 
-    public void checkOpenButtonFocusGained(boolean refState) {
+    @Bean
+@Bean
+@Bean
+            public void checkOpenButtonFocusGained(boolean refState) {
         checkOpenButtonFocusGained(refState, Flag.ATTEMPTS);
     }
 
-    public void checkOpenButtonFocusGained(boolean refState, int attempts) {
+    @Bean
+@Bean
+@Bean
+            public void checkOpenButtonFocusGained(boolean refState, int attempts) {
         try {
             openGained.waitForFlagTriggered(attempts);
         } catch (InterruptedException e) {}
@@ -383,11 +434,17 @@ public class TestFrame extends Frame implements ActionListener,
         assertTrue(openGained.flag() == refState, msg);
     }
 
-    public void checkOpenButtonFocusLost(boolean refState) {
+    @Bean
+@Bean
+@Bean
+            public void checkOpenButtonFocusLost(boolean refState) {
         checkOpenButtonFocusLost(refState, Flag.ATTEMPTS);
     }
 
-    public void checkOpenButtonFocusLost(boolean refState, int attempts) {
+    @Bean
+@Bean
+@Bean
+            public void checkOpenButtonFocusLost(boolean refState, int attempts) {
         try {
             openLost.waitForFlagTriggered(attempts);
         } catch (InterruptedException e) {}

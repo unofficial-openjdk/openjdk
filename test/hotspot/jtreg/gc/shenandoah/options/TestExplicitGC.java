@@ -35,6 +35,7 @@
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class TestExplicitGC {
 
     enum Mode {

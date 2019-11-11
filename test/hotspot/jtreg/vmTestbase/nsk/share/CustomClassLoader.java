@@ -72,7 +72,11 @@ public class CustomClassLoader extends ClassLoader {
      *
      * @param classUnloader an instance of <code>ClassUnloader</code>
      */
-    public void setClassUnloader(ClassUnloader classUnloader) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setClassUnloader(ClassUnloader classUnloader) {
         this.classUnloader = classUnloader;
     }
 
@@ -81,7 +85,11 @@ public class CustomClassLoader extends ClassLoader {
      *
      * @param classPath a path to .class file location
      */
-    public void setClassPath(String classPath) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setClassPath(String classPath) {
         this.classPath = classPath;
     }
 

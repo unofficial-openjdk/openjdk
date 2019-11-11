@@ -35,6 +35,7 @@ import jdk.test.lib.process.OutputAnalyzer;
  * @library /test/lib /test/jdk
  * @run main/othervm jdk.jfr.jcmd.TestJcmdStartInvaldFile
  */
+@Bean
 public class TestJcmdStartInvaldFile {
 
     private final static String ILLEGAL_FILE_NAME = ":;/\\?";

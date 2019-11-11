@@ -46,6 +46,7 @@ import sun.text.normalizer.NormalizerImpl;
 /*
  * Conformance test for java.text.Normalizer and sun.text.Normalizer.
  */
+@Bean
 public class ConformanceTest {
 
     //

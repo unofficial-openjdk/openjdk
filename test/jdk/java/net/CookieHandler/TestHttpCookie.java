@@ -31,6 +31,7 @@
 import java.net.HttpCookie;
 import java.util.List;
 
+@Bean
 public class TestHttpCookie {
     private static int testCount = 0;
 

@@ -30,6 +30,7 @@ import java.awt.event.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessAWTEventMulticaster
  */
 
+@Bean
 public class HeadlessAWTEventMulticaster {
     class ComponentListenerImpl implements ComponentListener {
         public boolean hidden = false;
@@ -37,19 +38,35 @@ public class HeadlessAWTEventMulticaster {
         public boolean resized = false;
         public boolean shown = false;
 
-        public void componentHidden(ComponentEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void componentHidden(ComponentEvent e) {
             hidden = true;
         }
 
-        public void componentMoved(ComponentEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void componentMoved(ComponentEvent e) {
             moved = true;
         }
 
-        public void componentResized(ComponentEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void componentResized(ComponentEvent e) {
             resized = true;
         }
 
-        public void componentShown(ComponentEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void componentShown(ComponentEvent e) {
             shown = true;
         }
     }
@@ -58,11 +75,19 @@ public class HeadlessAWTEventMulticaster {
         public boolean removed = false;
         public boolean added = false;
 
-        public void componentAdded(ContainerEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void componentAdded(ContainerEvent e) {
             added = true;
         }
 
-        public void componentRemoved(ContainerEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void componentRemoved(ContainerEvent e) {
             removed = true;
         }
     }
@@ -71,11 +96,19 @@ public class HeadlessAWTEventMulticaster {
         public boolean gained = false;
         public boolean lost = false;
 
-        public void focusGained(FocusEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void focusGained(FocusEvent e) {
             gained = true;
         }
 
-        public void focusLost(FocusEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void focusLost(FocusEvent e) {
             lost = true;
         }
     }
@@ -85,15 +118,27 @@ public class HeadlessAWTEventMulticaster {
         public boolean released = false;
         public boolean typed = false;
 
-        public void keyPressed(KeyEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void keyPressed(KeyEvent e) {
             pressed = true;
         }
 
-        public void keyReleased(KeyEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void keyReleased(KeyEvent e) {
             released = true;
         }
 
-        public void keyTyped(KeyEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void keyTyped(KeyEvent e) {
             typed = true;
         }
     }

@@ -34,6 +34,7 @@ import java.util.function.*;
 
 // example demonstrating that arbitrary Lambda can be called as function from script
 
+@Bean
 public class LambdaAsFunc {
     public static void main(String[] args) throws Exception {
         ScriptEngineManager m = new ScriptEngineManager();

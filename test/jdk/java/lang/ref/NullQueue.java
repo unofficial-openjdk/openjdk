@@ -31,6 +31,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 
 
+@Bean
 public class NullQueue {
 
     private static Reference r = null;

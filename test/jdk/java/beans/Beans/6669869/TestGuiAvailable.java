@@ -31,6 +31,7 @@
 import java.awt.GraphicsEnvironment;
 import java.beans.Beans;
 
+@Bean
 public class TestGuiAvailable implements Runnable {
     public static void main(String[] args) throws InterruptedException {
         if (Beans.isGuiAvailable() == GraphicsEnvironment.isHeadless()) {

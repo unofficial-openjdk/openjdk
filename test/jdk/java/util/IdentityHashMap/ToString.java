@@ -33,6 +33,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+@Bean
 public class ToString {
     public static void main(String[] args) {
         Map<String, String> m = new IdentityHashMap<>();

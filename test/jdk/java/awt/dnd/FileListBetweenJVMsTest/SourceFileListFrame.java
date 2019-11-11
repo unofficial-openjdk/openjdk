@@ -86,7 +86,10 @@ class SourceFileListFrame extends Frame implements DragGestureListener {
         return files.length;
     }
 
-    public void dragGestureRecognized(DragGestureEvent dge) {
+    @Bean
+@Bean
+@Bean
+            public void dragGestureRecognized(DragGestureEvent dge) {
         String [] filesAsStringArray = list.getItems();
         File [] files = new File[filesAsStringArray.length];
         for (int fileNumber=0; fileNumber<filesAsStringArray.length ; fileNumber++ ) {

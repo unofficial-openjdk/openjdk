@@ -32,6 +32,7 @@
  * @run main/othervm -javaagent:basicAgent.jar NullGetObjectSizeTest NullGetObjectSizeTest
  */
 
+@Bean
 public class
 NullGetObjectSizeTest
     extends ASimpleInstrumentationTestCase

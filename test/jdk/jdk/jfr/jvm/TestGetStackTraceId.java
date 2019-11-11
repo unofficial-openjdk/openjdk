@@ -37,6 +37,7 @@ import jdk.test.lib.Asserts;
  * @modules jdk.jfr/jdk.jfr.internal
  * @run main/othervm jdk.jfr.jvm.TestGetStackTraceId
  */
+@Bean
 public class TestGetStackTraceId {
 
     public static void main(String... args) {

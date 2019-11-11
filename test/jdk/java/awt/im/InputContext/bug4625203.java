@@ -61,11 +61,17 @@ public class bug4625203 extends JFrame {
         jTextField1.setText("jTextField1");
         jButton1.setText("jButton1");
         jButton1.addActionListener(new java.awt.event.ActionListener() {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 jButton1_actionPerformed(e);
             }
         });
         this.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent e) {
                 this_windowClosing(e);
             }

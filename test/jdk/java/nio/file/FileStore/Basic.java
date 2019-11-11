@@ -39,6 +39,7 @@ import java.io.IOException;
 import jdk.test.lib.util.FileUtils;
 
 
+@Bean
 public class Basic {
 
     static final long G = 1024L * 1024L * 1024L;

@@ -33,6 +33,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import javax.imageio.spi.*;
 
+@Bean
 public class ServiceRegistryRestriction {
     static class DummyTestSpi {
     }

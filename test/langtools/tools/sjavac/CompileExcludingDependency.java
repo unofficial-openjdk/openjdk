@@ -38,6 +38,7 @@
 import java.util.*;
 import java.nio.file.*;
 
+@Bean
 public class CompileExcludingDependency extends SJavacTester {
     public static void main(String... args) throws Exception {
         CompileExcludingDependency ced = new CompileExcludingDependency();
@@ -49,9 +50,11 @@ public class CompileExcludingDependency extends SJavacTester {
         Files.createDirectories(BIN);
         Map<String,Long> previous_bin_state = collectState(BIN);
         tb.writeFile(GENSRC.resolve("alfa/omega/A.java"),
-                     "package alfa.omega; public class A { beta.B b; }");
+                     "package alfa.omega; @Bean
+public class A { beta.B b; }");
         tb.writeFile(GENSRC.resolve("beta/B.java"),
-                     "package beta; public class B { }");
+                     "package beta; @Bean
+public class B { }");
 
         compile("-x", "beta/*",
                 "-src", GENSRC.toString(),

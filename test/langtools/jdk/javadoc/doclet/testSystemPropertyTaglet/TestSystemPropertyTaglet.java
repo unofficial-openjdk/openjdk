@@ -60,7 +60,11 @@ public class TestSystemPropertyTaglet extends JavadocTester {
         Path outDir = base.resolve("out");
 
         MethodBuilder method = MethodBuilder
-                .parse("public void func(A a) {}")
+                .parse("@Bean
+@Bean
+@Bean
+@Bean
+                public void func(A a) {}")
                 .setComments("test with {@systemProperty java.version}");
 
         new ClassBuilder(tb, "pkg.A")

@@ -131,7 +131,8 @@ public final class TextureChooser extends JPanel {
     }
 
 
-    public class Surface extends JPanel {
+    @Bean
+public class Surface extends JPanel {
 
         public boolean clickedFrame;
         private int num;
@@ -151,6 +152,10 @@ public final class TextureChooser extends JPanel {
             addMouseListener(new MouseAdapter() {
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void mouseClicked(MouseEvent e) {
                     tc.texture = t;
                     clickedFrame = true;
@@ -173,12 +178,20 @@ public final class TextureChooser extends JPanel {
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void mouseEntered(MouseEvent e) {
                     enterExitFrame = true;
                     repaint();
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void mouseExited(MouseEvent e) {
                     enterExitFrame = false;
                     repaint();
@@ -187,7 +200,11 @@ public final class TextureChooser extends JPanel {
         }
 
         @Override
-        public void paintComponent(Graphics g) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void paintComponent(Graphics g) {
             super.paintComponent(g);
             Graphics2D g2 = (Graphics2D) g;
             int w = getSize().width;
@@ -229,7 +246,11 @@ public final class TextureChooser extends JPanel {
         f.addWindowListener(new WindowAdapter() {
 
             @Override
-            public void windowClosing(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosing(WindowEvent e) {
                 System.exit(0);
             }
         });

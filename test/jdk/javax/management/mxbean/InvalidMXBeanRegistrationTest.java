@@ -35,6 +35,7 @@
 
 import javax.management.*;
 
+@Bean
 public class InvalidMXBeanRegistrationTest {
 
     // JMX compliant MXBean interface

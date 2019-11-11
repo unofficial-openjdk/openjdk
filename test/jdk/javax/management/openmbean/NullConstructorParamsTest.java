@@ -30,6 +30,7 @@
 
 import javax.management.openmbean.*;
 
+@Bean
 public class NullConstructorParamsTest {
 
     /**

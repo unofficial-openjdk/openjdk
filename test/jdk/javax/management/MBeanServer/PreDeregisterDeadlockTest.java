@@ -35,6 +35,7 @@
 import java.util.concurrent.*;
 import javax.management.*;
 
+@Bean
 public class PreDeregisterDeadlockTest {
     public static interface BlibbyMBean {}
 
@@ -44,11 +45,19 @@ public class PreDeregisterDeadlockTest {
             this.otherName = otherName;
         }
 
-        public ObjectName preRegister(MBeanServer mbs, ObjectName on) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public ObjectName preRegister(MBeanServer mbs, ObjectName on) {
             return on;
         }
 
-        public void postRegister(Boolean done) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void postRegister(Boolean done) {}
 
         public void preDeregister() {
             if (otherName == null)
@@ -88,12 +97,20 @@ public class PreDeregisterDeadlockTest {
             this.semaphore = semaphore;
         }
 
-        public ObjectName preRegister(MBeanServer mbs, ObjectName on) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public ObjectName preRegister(MBeanServer mbs, ObjectName on) {
             this.objectName = on;
             return on;
         }
 
-        public void postRegister(Boolean done) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void postRegister(Boolean done) {}
 
         public void preDeregister() throws Exception {
             Thread t = new Thread() {

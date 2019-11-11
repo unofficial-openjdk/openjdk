@@ -38,6 +38,7 @@ import java.util.List;
 
 import static org.testng.Assert.*;
 
+@Bean
 public class VarHandleTestMethodHandleAccessShort extends VarHandleBaseTest {
     static final short static_final_v = (short)0x0123;
 

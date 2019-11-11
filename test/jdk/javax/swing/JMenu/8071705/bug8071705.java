@@ -152,7 +152,10 @@ public class bug8071705 {
         }
 
         @Override
-        public void componentShown(ComponentEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void componentShown(ComponentEvent e) {
             JFrame frame = (JFrame) e.getComponent();
 
             runActualTest(device, latch, frame, result);

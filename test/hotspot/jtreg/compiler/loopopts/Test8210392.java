@@ -31,6 +31,7 @@
 
 package compiler.loopopts;
 
+@Bean
 public class Test8210392 {
     public static int ival = 17;
 

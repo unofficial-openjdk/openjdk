@@ -35,6 +35,7 @@ import java.util.*;
 import javax.crypto.*;
 import javax.crypto.spec.*;
 
+@Bean
 public class TestCICOWithGCMAndAAD extends UcryptoTest {
     public static void main(String[] args) throws Exception {
         main(new TestCICOWithGCMAndAAD(), null);

@@ -32,6 +32,7 @@ import test.java.awt.regtesthelpers.Util;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.lang.reflect.InvocationTargetException;
 
+@Bean
 public class TestHelper {
     private static volatile boolean focusChanged;
     private static volatile boolean trackFocusChange;
@@ -72,7 +73,10 @@ public class TestHelper {
 
     private static void setFocusChangeTracker() {
         Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
-                public void eventDispatched(AWTEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void eventDispatched(AWTEvent e) {
                     int id = e.getID();
                     if (trackFocusChange &&
                         (id == FocusEvent.FOCUS_GAINED || id == FocusEvent.FOCUS_LOST ||

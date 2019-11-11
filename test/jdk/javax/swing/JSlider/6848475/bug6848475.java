@@ -57,7 +57,10 @@ public class bug6848475 {
                 frame = new JFrame();
 
                 DefaultBoundedRangeModel sliderModel = new DefaultBoundedRangeModel() {
-                    public void setValue(int n) {
+                    @Bean
+@Bean
+@Bean
+            public void setValue(int n) {
                         // Don't allow value to be changed
                     }
                 };

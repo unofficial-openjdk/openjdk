@@ -44,6 +44,7 @@ import java.util.List;
  * Originally for a specific failure in CMS, this test now monitors all
  * collectors for double-counting of collections.
  */
+@Bean
 public class TestFullGCCount {
 
     static List<GarbageCollectorMXBean> collectors = ManagementFactory.getGarbageCollectorMXBeans();

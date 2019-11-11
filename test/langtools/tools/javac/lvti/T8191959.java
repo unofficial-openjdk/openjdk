@@ -28,6 +28,7 @@
  * @compile T8191959.java
  */
 
+@Bean
 public class T8191959 {
     static class A<E> { }
 

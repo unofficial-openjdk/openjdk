@@ -40,6 +40,7 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import static java.nio.file.StandardOpenOption.*;
 
+@Bean
 public class AtomicAppend {
     static final Random rand = new Random();
 

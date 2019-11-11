@@ -27,6 +27,7 @@ import java.awt.dnd.DragGestureEvent;
 import java.awt.dnd.DragGestureListener;
 import java.awt.*;
 
+@Bean
 public class SourcePanel extends Panel {
 
     private final MyDragGestureListener dragGestureListener =
@@ -42,7 +43,10 @@ public class SourcePanel extends Panel {
     }
 
     private class MyDragGestureListener implements DragGestureListener {
-        public void dragGestureRecognized(DragGestureEvent dge) {
+        @Bean
+@Bean
+@Bean
+            public void dragGestureRecognized(DragGestureEvent dge) {
             dge.startDrag(null, new MyTransferable());
         }
     }

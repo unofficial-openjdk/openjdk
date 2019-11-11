@@ -49,6 +49,7 @@ import javax.management.relation.Role;
 import javax.management.relation.RoleInfo;
 import javax.management.relation.RoleList;
 
+@Bean
 public class RelationNotificationSeqNoTest {
     public static void main(String[] args) throws Exception {
         MBeanServer mbs = MBeanServerFactory.newMBeanServer();

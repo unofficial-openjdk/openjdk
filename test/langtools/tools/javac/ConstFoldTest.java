@@ -42,6 +42,7 @@ import toolbox.JavapTask;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class ConstFoldTest {
     public static void main(String... args) throws Exception {
         new ConstFoldTest().run();

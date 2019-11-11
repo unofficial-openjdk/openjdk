@@ -30,6 +30,7 @@
 
 import java.util.*;
 
+@Bean
 public class ComplementOf {
     public static void main(String[] args) throws Exception {
         test(Test0.class);

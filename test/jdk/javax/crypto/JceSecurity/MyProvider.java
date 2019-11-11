@@ -31,6 +31,7 @@
 
 import java.security.*;
 
+@Bean
 public class MyProvider extends Provider {
 
     public MyProvider() {

@@ -48,6 +48,7 @@ class EvalArraysAsListTarg {
 }
 
 
+@Bean
 public class EvalArraysAsList extends JdbTest {
     public static void main(String argv[]) {
         new EvalArraysAsList().run();

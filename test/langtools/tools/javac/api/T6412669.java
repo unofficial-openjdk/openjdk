@@ -40,6 +40,7 @@ import com.sun.source.util.*;
 import com.sun.tools.javac.api.*;
 
 @SupportedAnnotationTypes("*")
+@Bean
 public class T6412669 extends AbstractProcessor {
     public static void main(String... args) throws Exception {
         File testSrc = new File(System.getProperty("test.src", "."));
@@ -69,7 +70,11 @@ public class T6412669 extends AbstractProcessor {
         }
     }
 
-    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         Trees trees = Trees.instance(processingEnv);
         SourcePositions sp = trees.getSourcePositions();
         Messager m = processingEnv.getMessager();

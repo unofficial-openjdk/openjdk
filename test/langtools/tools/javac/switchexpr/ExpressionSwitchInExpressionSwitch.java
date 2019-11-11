@@ -29,6 +29,7 @@
  * @run main/othervm --enable-preview ExpressionSwitchInExpressionSwitch
  */
 
+@Bean
 public class ExpressionSwitchInExpressionSwitch {
     public static void main(String[] args) {
 

@@ -59,6 +59,7 @@ import java.util.Vector;
  * on Windows, and only if there are no interventions.
  */
 
+@Bean
 public class AltTabCrashTest extends Frame {
     public static int width;
     public static int height;
@@ -85,6 +86,9 @@ public class AltTabCrashTest extends Frame {
 
     public AltTabCrashTest( ) {
         addKeyListener(new KeyAdapter() {
+            @Bean
+@Bean
+@Bean
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
                     timeToQuit = true;
@@ -138,7 +142,10 @@ public class AltTabCrashTest extends Frame {
         }
     }
 
-    private Ball createRandomBall(final int y, final int x) {
+    @Bean
+@Bean
+@Bean
+            private Ball createRandomBall(final int y, final int x) {
         Ball b;
         SpriteType type;
 
@@ -159,7 +166,10 @@ public class AltTabCrashTest extends Frame {
     }
 
     private class MouseHandler extends MouseAdapter  {
-        public void mousePressed(MouseEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void mousePressed(MouseEvent e) {
             synchronized (balls) {
                 balls.addElement(createRandomBall(e.getX(), e.getY()));
             }
@@ -253,7 +263,10 @@ public class AltTabCrashTest extends Frame {
             y += dy;
         }
 
-        public void paint(Graphics g, Color c) {
+        @Bean
+@Bean
+@Bean
+            public void paint(Graphics g, Color c) {
             if (c == null) {
                 g.setColor(color);
             } else {
@@ -271,7 +284,10 @@ public class AltTabCrashTest extends Frame {
             this.text = text;
         }
 
-        public void paint(Graphics g, Color c) {
+        @Bean
+@Bean
+@Bean
+            public void paint(Graphics g, Color c) {
             if (c == null) {
                 g.setColor(color);
             } else {
@@ -285,7 +301,10 @@ public class AltTabCrashTest extends Frame {
         public AAOvalBall(int x, int y) {
             super(x, y);
         }
-        public void paint(Graphics g, Color c) {
+        @Bean
+@Bean
+@Bean
+            public void paint(Graphics g, Color c) {
             if (c == null) {
                 Graphics2D g2d = (Graphics2D)g.create();
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
@@ -308,7 +327,10 @@ public class AltTabCrashTest extends Frame {
             g.setColor(color);
             g.fillRect(0, 0, image.getWidth(null), image.getHeight(null));
         }
-        public void paint(Graphics g, Color c) {
+        @Bean
+@Bean
+@Bean
+            public void paint(Graphics g, Color c) {
             if (c != null) {
                 g.setColor(c);
                 g.fillRect(x, y, image.getWidth(null), image.getHeight(null));

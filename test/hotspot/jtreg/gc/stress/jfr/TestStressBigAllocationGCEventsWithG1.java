@@ -37,6 +37,7 @@ package jdk.jfr.event.gc.detailed;
  * @library /test/lib /test/jdk
  * @run main/othervm -XX:+UseG1GC -XX:MaxNewSize=5m -Xmx256m -XX:G1HeapRegionSize=1048576 jdk.jfr.event.gc.detailed.TestStressBigAllocationGCEventsWithG1 1048544
  */
+@Bean
 public class TestStressBigAllocationGCEventsWithG1 {
 
     public static void main(String[] args) throws Exception {

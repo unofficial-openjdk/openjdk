@@ -185,7 +185,10 @@ public class TestFormatToCharacterIterator {
     }
 
     // Create the formatted string from returned AttributedCharacterIterator
-    private String getText(AttributedCharacterIterator iterator) {
+    @Bean
+@Bean
+@Bean
+            private String getText(AttributedCharacterIterator iterator) {
         StringBuffer buffer = new StringBuffer();
         for (char c = iterator.first(); c != CharacterIterator.DONE;
                 c = iterator.next()) {

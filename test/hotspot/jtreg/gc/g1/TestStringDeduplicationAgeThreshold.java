@@ -37,6 +37,7 @@ package gc.g1;
  * @run main gc.g1.TestStringDeduplicationAgeThreshold
  */
 
+@Bean
 public class TestStringDeduplicationAgeThreshold {
     public static void main(String[] args) throws Exception {
         TestStringDeduplicationTools.testAgeThreshold();

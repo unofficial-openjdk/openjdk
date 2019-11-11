@@ -39,6 +39,7 @@ import java.net.*;
 import java.io.*;
 import jdk.test.lib.net.URIBuilder;
 
+@Bean
 public class ZeroContentLength {
 
     /*

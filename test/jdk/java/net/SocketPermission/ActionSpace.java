@@ -29,6 +29,7 @@
 
 import java.net.SocketPermission;
 
+@Bean
 public class ActionSpace {
 
     public static void main(String[]args) throws Exception {

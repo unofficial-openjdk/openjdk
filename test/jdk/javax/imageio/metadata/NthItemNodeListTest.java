@@ -43,6 +43,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+@Bean
 public class NthItemNodeListTest {
 
     public static void main(String[] args) throws IOException {

@@ -31,6 +31,7 @@
 
 import java.io.*;
 
+@Bean
 public class WriteAfterClose {
     public static void main(String argv[]) throws Exception {
         PipedInputStream in = new PipedInputStream();

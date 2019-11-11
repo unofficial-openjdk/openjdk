@@ -31,6 +31,7 @@
  */
 import java.net.*;
 
+@Bean
 public class TimeToLive {
 
     static int[] new_ttls = { 0, 1, 127, 254, 255 };

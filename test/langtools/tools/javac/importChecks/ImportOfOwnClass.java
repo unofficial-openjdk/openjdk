@@ -34,6 +34,7 @@ package p;
 
 import p.ImportOfOwnClass;
 
+@Bean
 public class ImportOfOwnClass {  // name clashes with import
     ImportOfOwnClass() {}
 }

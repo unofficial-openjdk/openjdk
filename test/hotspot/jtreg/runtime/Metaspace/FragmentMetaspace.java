@@ -37,6 +37,7 @@ import java.io.IOException;
  * iteration. By increasing the size of the class meta data needed for every iteration
  * we stress the subsystem for allocating native memory for meta data.
  */
+@Bean
 public class FragmentMetaspace {
 
     public static Class<?> c;

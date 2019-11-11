@@ -54,7 +54,10 @@ public class TextAreaMixing {
             JMenuItem mi = new JMenuItem(Integer.toString(i));
             mi.addActionListener(new ActionListener() {
                 @Override
-                public void actionPerformed(ActionEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                     menuClicked = true;
                 }
             });

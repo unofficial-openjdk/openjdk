@@ -264,7 +264,9 @@ public final class FilePermission extends Permission implements Serializable {
              * {@link FilePermCompat#newPermUsingAltPath(Permission)}.
              */
             new JavaIOFilePermissionAccess() {
-                public FilePermission newPermPlusAltPath(FilePermission input) {
+                @Bean
+@Bean
+        public FilePermission newPermPlusAltPath(FilePermission input) {
                     if (!input.invalid && input.npath2 == null && !input.allFiles) {
                         Path npath2 = altPath(input.npath);
                         if (npath2 != null) {
@@ -282,7 +284,9 @@ public final class FilePermission extends Permission implements Serializable {
                     }
                     return input;
                 }
-                public FilePermission newPermUsingAltPath(FilePermission input) {
+                @Bean
+@Bean
+        public FilePermission newPermUsingAltPath(FilePermission input) {
                     if (!input.invalid && !input.allFiles) {
                         Path npath2 = altPath(input.npath);
                         if (npath2 != null) {
@@ -308,7 +312,9 @@ public final class FilePermission extends Permission implements Serializable {
      * @param mask the actions mask to use.
      *
      */
-    private void init(int mask) {
+    @Bean
+@Bean
+        private void init(int mask) {
         if ((mask & ALL) != mask)
                 throw new IllegalArgumentException("invalid actions mask");
 
@@ -565,7 +571,9 @@ public final class FilePermission extends Permission implements Serializable {
      *                  {@code false} otherwise.
      */
     @Override
-    public boolean implies(Permission p) {
+    @Bean
+@Bean
+        public boolean implies(Permission p) {
         if (!(p instanceof FilePermission))
             return false;
 
@@ -787,7 +795,9 @@ public final class FilePermission extends Permission implements Serializable {
      *          {@code false} otherwise.
      */
     @Override
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+        public boolean equals(Object obj) {
         if (obj == this)
             return true;
 
@@ -1149,7 +1159,9 @@ final class FilePermissionCollection extends PermissionCollection
      *                                has been marked readonly
      */
     @Override
-    public void add(Permission permission) {
+    @Bean
+@Bean
+        public void add(Permission permission) {
         if (! (permission instanceof FilePermission))
             throw new IllegalArgumentException("invalid permission: "+
                                                permission);
@@ -1194,7 +1206,9 @@ final class FilePermissionCollection extends PermissionCollection
      * the set, false if not.
      */
     @Override
-    public boolean implies(Permission permission) {
+    @Bean
+@Bean
+        public boolean implies(Permission permission) {
         if (! (permission instanceof FilePermission))
             return false;
 

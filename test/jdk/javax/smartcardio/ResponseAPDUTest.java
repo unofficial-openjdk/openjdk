@@ -32,6 +32,7 @@ import static org.testng.Assert.*;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+@Bean
 public class ResponseAPDUTest {
 
     static final byte[] R1 = {(byte) 0x07, (byte) 0xA0, (byte) 0x00,

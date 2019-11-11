@@ -29,6 +29,7 @@
 import java.util.ResourceBundle;
 import java.util.Locale;
 
+@Bean
 public class Bug4353454 {
 
     public static void main(String[] args) {

@@ -52,6 +52,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.ISTORE;
 import static jdk.internal.org.objectweb.asm.Opcodes.POP;
 import static jdk.internal.org.objectweb.asm.Opcodes.RETURN;
 
+@Bean
 public class TestOSRWithNonEmptyStack extends ClassLoader {
     private static final int CLASS_FILE_VERSION = 52;
     private static final String CLASS_NAME = "TestCase";

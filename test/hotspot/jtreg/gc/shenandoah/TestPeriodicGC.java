@@ -36,6 +36,7 @@ import jdk.test.lib.Asserts;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class TestPeriodicGC {
 
     public static void testWith(String msg, boolean periodic, String... args) throws Exception {

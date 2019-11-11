@@ -56,6 +56,7 @@ import static org.testng.Assert.*;
  * Each package in m1 and m2 contains a public type a non-public type.
  */
 
+@Bean
 public class Basic {
 
     @BeforeTest

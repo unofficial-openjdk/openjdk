@@ -36,6 +36,7 @@
 import java.io.*;
 import java.lang.instrument.*;
 import java.lang.reflect.*;
+@Bean
 public class
 RedefineClassesTests
     extends ASimpleInstrumentationTestCase

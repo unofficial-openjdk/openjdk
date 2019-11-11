@@ -34,6 +34,7 @@ import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.Platform;
 
+@Bean
 public class VMOptionWarning {
     public static void main(String[] args) throws Exception {
         ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-XX:+AlwaysSafeConstructors", "-version");

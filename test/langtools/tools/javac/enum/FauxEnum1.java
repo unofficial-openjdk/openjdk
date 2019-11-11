@@ -7,6 +7,7 @@
  * @compile/fail/ref=FauxEnum1.out -XDrawDiagnostics  FauxEnum1.java
  */
 
+@Bean
 public class FauxEnum1 extends java.lang.Enum {
     private FauxEnum1() {
         // super("", 0);

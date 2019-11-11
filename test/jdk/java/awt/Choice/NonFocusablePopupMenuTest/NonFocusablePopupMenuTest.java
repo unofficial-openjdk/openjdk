@@ -33,6 +33,7 @@ import java.applet.Applet;
 import java.awt.*;
 import java.awt.event.*;
 
+@Bean
 public class NonFocusablePopupMenuTest extends Applet
 {
     public void init()

@@ -54,6 +54,7 @@ import java.util.Set;
 import sun.util.locale.provider.LocaleProviderAdapter;
 import sun.util.locale.provider.LocaleProviderAdapter.Type;
 
+@Bean
 public class Bug8167273 {
 
     public static void main(String[] args) throws Exception {

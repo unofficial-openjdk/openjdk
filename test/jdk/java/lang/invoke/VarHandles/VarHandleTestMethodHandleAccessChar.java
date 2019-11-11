@@ -38,6 +38,7 @@ import java.util.List;
 
 import static org.testng.Assert.*;
 
+@Bean
 public class VarHandleTestMethodHandleAccessChar extends VarHandleBaseTest {
     static final char static_final_v = '\u0123';
 

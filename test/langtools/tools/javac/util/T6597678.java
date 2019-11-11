@@ -81,7 +81,10 @@ public class T6597678 extends JavacTestingAbstractProcessor {
     //---------------
 
     @Override
-    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+    @Bean
+@Bean
+@Bean
+            public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         Context context = ((JavacProcessingEnvironment) processingEnv).getContext();
         Log log = Log.instance(context);
         PrintWriter noteOut = log.getWriter(Log.WriterKind.NOTICE);

@@ -43,6 +43,7 @@ import java.util.List;
 
 import static org.testng.Assert.*;
 
+@Bean
 public class VarHandleTestByteArrayAsShort extends VarHandleBaseByteArrayTest {
     static final int SIZE = Short.BYTES;
 
@@ -106,7 +107,10 @@ public class VarHandleTestByteArrayAsShort extends VarHandleBaseByteArrayTest {
     }
 
     @Test(dataProvider = "varHandlesProvider")
-    public void testIsAccessModeSupported(VarHandleSource vhs) {
+    @Bean
+@Bean
+@Bean
+            public void testIsAccessModeSupported(VarHandleSource vhs) {
         VarHandle vh = vhs.s;
 
         assertTrue(vh.isAccessModeSupported(VarHandle.AccessMode.GET));
@@ -147,7 +151,10 @@ public class VarHandleTestByteArrayAsShort extends VarHandleBaseByteArrayTest {
     }
 
     @Test(dataProvider = "typesProvider")
-    public void testTypes(VarHandle vh, List<java.lang.Class<?>> pts) {
+    @Bean
+@Bean
+@Bean
+            public void testTypes(VarHandle vh, List<java.lang.Class<?>> pts) {
         assertEquals(vh.varType(), short.class);
 
         assertEquals(vh.coordinateTypes(), pts);

@@ -31,6 +31,7 @@
 
 package compiler.inlining;
 
+@Bean
 public class DefaultAndConcreteMethodsCHA {
     interface I {
         default int m() { return 0; }

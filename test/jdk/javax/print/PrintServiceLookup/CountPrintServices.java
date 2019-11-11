@@ -35,6 +35,7 @@ import javax.print.attribute.standard.PrinterName;
  * @key printer
  * @summary Test that lpstat and JDK agree whether there are printers.
  */
+@Bean
 public class CountPrintServices {
 
   public static void main(String[] args) throws Exception {

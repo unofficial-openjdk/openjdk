@@ -53,6 +53,7 @@ import java.net.*;
  * @author Jeff Dinkins
  # @author Peter Korn (accessibility support)
  */
+@Bean
 public class ProgressBarDemo extends DemoModule {
 
     /**
@@ -115,7 +116,11 @@ public class ProgressBarDemo extends DemoModule {
 
     public JButton createLoadButton() {
         loadAction = new AbstractAction(getString("ProgressBarDemo.start_button")) {
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 loadAction.setEnabled(false);
                 stopAction.setEnabled(true);
                 if (progressBar.getValue() == progressBar.getMaximum()) {
@@ -131,7 +136,11 @@ public class ProgressBarDemo extends DemoModule {
 
     public JButton createStopButton() {
         stopAction = new AbstractAction(getString("ProgressBarDemo.stop_button")) {
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 timer.stop();
                 loadAction.setEnabled(true);
                 stopAction.setEnabled(false);
@@ -140,7 +149,11 @@ public class ProgressBarDemo extends DemoModule {
         return createButton(stopAction);
     }
 
-    public JButton createButton(Action a) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JButton createButton(Action a) {
         JButton b = new JButton();
         // setting the following client property informs the button to show
         // the action text as it's name. The default is to not show the

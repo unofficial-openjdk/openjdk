@@ -53,7 +53,8 @@ public class T6733837 extends ToolTester {
 
     public void exec() {
         JavaFileObject sfo = new SimpleJavaFileObject(URI.create("myfo:/Test.java"),Kind.SOURCE) {
-            public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
                 return "\tclass ErroneousWithTab";
             }
         };

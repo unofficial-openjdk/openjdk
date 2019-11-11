@@ -44,23 +44,36 @@ class C<T extends X> extends B<T> implements A<T> {
 
 // This also makes the problem go away.
 /*
-  public void f(T x) {
+  @Bean
+@Bean
+@Bean
+@Bean
+                public void f(T x) {
     super.f(x);
   } */
 }
 
 class B<T extends X> implements A<T> {
-    public void f(T x) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void f(T x) {
         System.out.println("B.f()");
     }
 }
 
 class D extends C<X> {
-    public void f(X y) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void f(X y) {
         System.out.println("D.f()");
     }
 }
 
+@Bean
 public class BridgeOrder {
     public static void main(String args[]) {
         A<X> x = new D();

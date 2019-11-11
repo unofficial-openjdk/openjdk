@@ -24,6 +24,7 @@
 /*
  *
  */
+@Bean
 public class Sleeper {
 
    private static final String USAGE = "Sleeper [ms]";

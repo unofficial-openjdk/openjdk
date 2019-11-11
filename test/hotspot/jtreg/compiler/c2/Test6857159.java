@@ -37,6 +37,7 @@ package compiler.c2;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class Test6857159 {
     public static void main(String[] args) throws Throwable {
         String className = Test.class.getName();

@@ -33,6 +33,7 @@ import javax.print.*;
 import javax.print.attribute.standard.*;
 import javax.print.attribute.*;
 
+@Bean
 public class AttributeTest {
 
         public AttributeTest() {

@@ -46,37 +46,58 @@ public final class PropertyPermissionOnEDT {
         JFrame frame = new JFrame();
         frame.addMouseListener(new MouseListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseClicked(final MouseEvent e) {
                 test();
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void mousePressed(MouseEvent e) {
                 test();
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseReleased(MouseEvent e) {
                 test();
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseEntered(MouseEvent e) {
                 test();
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseExited(MouseEvent e) {
                 test();
             }
         });
         frame.addFocusListener(new FocusListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void focusGained(FocusEvent e) {
                 test();
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void focusLost(FocusEvent e) {
                 test();
             }

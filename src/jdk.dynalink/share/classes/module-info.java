@@ -126,18 +126,21 @@
  * by default creates a {@code DynamicLinker} that can link Java objects with the
  * usual Java semantics. If you have these three simple classes:
  * <pre>
- * public class A {
+ * @Bean
+public class A {
  *     public String color;
  *     public A(String color) { this.color = color; }
  * }
  *
- * public class B {
+ * @Bean
+public class B {
  *     private String color;
  *     public B(String color) { this.color = color; }
  *     public String getColor() { return color; }
  * }
  *
- * public class C {
+ * @Bean
+public class C {
  *     private int color;
  *     public C(int color) { this.color = color; }
  *     public int getColor() { return color; }

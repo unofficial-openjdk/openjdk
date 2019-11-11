@@ -31,6 +31,7 @@
 
 import java.util.regex.Pattern;
 
+@Bean
 public class NegativeArraySize {
     public static void main(String[] args) {
         try {

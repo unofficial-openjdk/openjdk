@@ -44,6 +44,7 @@ import java.awt.event.ActionListener;
 
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class FocusTransitionTest {
     private static Frame frame;
     private static TextField textField1;
@@ -84,6 +85,9 @@ public class FocusTransitionTest {
         button = new Button("Go");
         button.addActionListener(new ActionListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 textField1.requestFocusInWindow();
                 startUpdate();

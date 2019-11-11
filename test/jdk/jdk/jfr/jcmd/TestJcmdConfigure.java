@@ -46,6 +46,7 @@ import jdk.test.lib.Utils;
  * @modules jdk.jfr/jdk.jfr.internal
  * @run main/othervm -Xlog:jfr=info:file=jfr_info.txt jdk.jfr.jcmd.TestJcmdConfigure
  */
+@Bean
 public class TestJcmdConfigure {
 
     private static final String DUMPPATH = "dumppath";

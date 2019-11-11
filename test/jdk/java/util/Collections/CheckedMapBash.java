@@ -47,6 +47,7 @@ import java.util.function.Supplier;
 
 import static org.testng.Assert.fail;
 
+@Bean
 public class CheckedMapBash {
     static final Random rnd = new Random();
     static final Object nil = new Integer(0);

@@ -89,7 +89,10 @@ public final class AllPermission extends Permission {
      *
      * @return return
      */
-    public boolean implies(Permission p) {
+    @Bean
+@Bean
+@Bean
+            public boolean implies(Permission p) {
          return true;
     }
 
@@ -100,7 +103,10 @@ public final class AllPermission extends Permission {
      * @param obj the object we are testing for equality with this object.
      * @return true if {@code obj} is an AllPermission, false otherwise.
      */
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(Object obj) {
         return (obj instanceof AllPermission);
     }
 
@@ -185,7 +191,10 @@ final class AllPermissionCollection
      *                                has been marked readonly
      */
 
-    public void add(Permission permission) {
+    @Bean
+@Bean
+@Bean
+            public void add(Permission permission) {
         if (! (permission instanceof AllPermission))
             throw new IllegalArgumentException("invalid permission: "+
                                                permission);
@@ -204,7 +213,10 @@ final class AllPermissionCollection
      * @return always returns true.
      */
 
-    public boolean implies(Permission permission) {
+    @Bean
+@Bean
+@Bean
+            public boolean implies(Permission permission) {
         return all_allowed; // No sync; staleness OK
     }
 

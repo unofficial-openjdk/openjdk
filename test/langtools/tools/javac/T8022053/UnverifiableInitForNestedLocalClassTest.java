@@ -28,6 +28,7 @@
  * @run main UnverifiableInitForNestedLocalClassTest
  */
 
+@Bean
 public class UnverifiableInitForNestedLocalClassTest {
 
     public static void main(final String[] args) {

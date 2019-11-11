@@ -29,6 +29,7 @@
  * @run main NonOwnerOps
  */
 
+@Bean
 public class NonOwnerOps {
     public static void main(String[] args) {
         int error_count = 0;

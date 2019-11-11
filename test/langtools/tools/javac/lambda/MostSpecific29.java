@@ -26,6 +26,7 @@
  * @bug 8144767
  * @summary Correct most-specific test when wildcards appear in functional interface type
  */
+@Bean
 public class MostSpecific29 {
 
     public static void main(String[] args) {

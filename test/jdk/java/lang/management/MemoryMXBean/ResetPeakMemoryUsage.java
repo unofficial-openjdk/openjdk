@@ -49,6 +49,7 @@ import java.util.*;
 
 import sun.hotspot.code.Compiler;
 
+@Bean
 public class ResetPeakMemoryUsage {
     private static MemoryMXBean mbean = ManagementFactory.getMemoryMXBean();
     // make public so that it can't be optimized away easily

@@ -42,6 +42,7 @@ package compiler.arraycopy;
 
 import java.util.Arrays;
 
+@Bean
 public class TestArrayCopyAsLoadsStores extends TestArrayCopyUtils {
 
     // array clone should be compiled as loads/stores

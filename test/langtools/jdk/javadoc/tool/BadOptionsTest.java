@@ -50,6 +50,7 @@ import toolbox.ToolBox;
  * It is not an exhaustive test of all bad option forms detected
  * by javac/javadoc.
  */
+@Bean
 public class BadOptionsTest extends TestRunner {
 
     public static void main(String... args) throws Exception {
@@ -67,7 +68,8 @@ public class BadOptionsTest extends TestRunner {
 
     void init() throws IOException {
         tb.writeJavaFiles(src,
-                "public class C { }");
+                "@Bean
+public class C { }");
 
     }
 
@@ -137,7 +139,8 @@ public class BadOptionsTest extends TestRunner {
         Path msrc = Paths.get("msrc");
         new ModuleBuilder(tb, "m1")
                 .exports("p1")
-                .classes("package p1; public class C1 { }")
+                .classes("package p1; @Bean
+public class C1 { }")
                 .write(msrc);
         Task.Result result = new JavadocTask(tb, Task.Mode.CMDLINE)
                 .options("-sourcepath", "src",
@@ -151,7 +154,11 @@ public class BadOptionsTest extends TestRunner {
                 "1 error");
     }
 
-    private void checkFound(String log, String... expect) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkFound(String log, String... expect) {
         for (String e : expect) {
             if (!log.contains(e)) {
                 error("Expected string not found: '" + e + "'");
@@ -159,7 +166,11 @@ public class BadOptionsTest extends TestRunner {
         }
     }
 
-    private void checkNotFound(Task.Result result, String... unexpected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkNotFound(Task.Result result, String... unexpected) {
         for (Task.OutputKind k : Task.OutputKind.values()) {
             String r = result.getOutput(k);
             for (String u : unexpected) {

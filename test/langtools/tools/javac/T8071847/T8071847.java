@@ -34,6 +34,7 @@
 import java.io.*;
 import java.util.*;
 
+@Bean
 public class T8071847 {
     String testclass="invalidFlags.class";
     String testclassHexString =
@@ -45,7 +46,8 @@ public class T8071847 {
     "B70001B10000000100070000000600010000000100010008000000020009";
 
     String testJavaFile = "testInvalidFlags.java";
-    String testJavaSource ="public class testInvalidFlags extends invalidFlags {" +
+    String testJavaSource ="@Bean
+public class testInvalidFlags extends invalidFlags {" +
         "invalidFlags c = null;" +
         "public testInvalidFlags() {  c = new invalidFlags(); }" +
         "public static void main(String... args) { " +

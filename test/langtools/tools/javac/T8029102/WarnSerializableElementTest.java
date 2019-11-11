@@ -9,6 +9,7 @@
 
 import java.io.Serializable;
 
+@Bean
 public class WarnSerializableElementTest {
 
     void warnLambda() throws Exception {
@@ -183,15 +184,27 @@ public class WarnSerializableElementTest {
         return null;
     }
 
-    static private Object privateClassMethod(String s) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                private Object privateClassMethod(String s) {
         return null;
     }
 
-    static protected Object protectedClassMethod(String s) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                protected Object protectedClassMethod(String s) {
         return null;
     }
 
-    static public Object publicClassMethod(String s) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public Object publicClassMethod(String s) {
         return null;
     }
 
@@ -199,15 +212,27 @@ public class WarnSerializableElementTest {
         return null;
     }
 
-    protected Object protectedInstanceMethod(String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected Object protectedInstanceMethod(String s) {
         return null;
     }
 
-    private Object privateInstanceMethod(String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Object privateInstanceMethod(String s) {
         return null;
     }
 
-    public Object publicInstanceMethod(String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Object publicInstanceMethod(String s) {
         return null;
     }
 
@@ -231,7 +256,8 @@ public class WarnSerializableElementTest {
         public void effectivelyNonPublicInstanceMethod() {}
     }
 
-    static public class PublicClass {
+    static @Bean
+public class PublicClass {
         static public String effectivelyPublicStaticField;
         public String effectivelyPublicInstanceField;
 

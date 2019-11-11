@@ -43,6 +43,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 
+@Bean
 public class DistinctSeeds {
     public static void main(String[] args) throws Exception {
         // Strictly speaking, it is possible for these to randomly fail,

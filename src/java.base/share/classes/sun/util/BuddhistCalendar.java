@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.TimeZone;
 import sun.util.locale.provider.CalendarDataUtility;
 
+@Bean
 public class BuddhistCalendar extends GregorianCalendar {
 
 //////////////////
@@ -102,7 +103,8 @@ public class BuddhistCalendar extends GregorianCalendar {
      * @return true if this object is equal to <code>obj</code>; false otherwise
      */
     @Override
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         return obj instanceof BuddhistCalendar
             && super.equals(obj);
     }
@@ -186,7 +188,8 @@ public class BuddhistCalendar extends GregorianCalendar {
     }
 
     @Override
-    public String getDisplayName(int field, int style, Locale locale) {
+@Bean
+        public String getDisplayName(int field, int style, Locale locale) {
         if (field != ERA) {
             return super.getDisplayName(field, style, locale);
         }
@@ -212,7 +215,8 @@ public class BuddhistCalendar extends GregorianCalendar {
      * @return the maximum of the given field for the current date of this Calendar
      */
     @Override
-    public int getActualMaximum(int field) {
+@Bean
+        public int getActualMaximum(int field) {
         int savedYearOffset = yearOffset;
         // To let the superclass calculate date-time values correctly,
         // temporarily make this GregorianCalendar.

@@ -33,6 +33,7 @@
 
 import java.awt.datatransfer.DataFlavor;
 
+@Bean
 public class DefaultMatchTest {
 
     static DataFlavor df1, df2, df3;

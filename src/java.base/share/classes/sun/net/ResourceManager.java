@@ -37,6 +37,7 @@ import sun.security.action.GetPropertyAction;
  * This functionality could be put in NetHooks some time in future.
  */
 
+@Bean
 public class ResourceManager {
 
     /* default maximum number of udp sockets per VM

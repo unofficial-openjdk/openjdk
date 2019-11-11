@@ -105,6 +105,7 @@
  *      TestLotsOfCycles
  */
 
+@Bean
 public class TestLotsOfCycles {
 
     static final long TARGET_MB = Long.getLong("target", 10_000); // 10 Gb allocation, around 1K cycles to handle

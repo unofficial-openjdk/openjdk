@@ -40,6 +40,7 @@ import java.text.Normalizer;
 import test.java.awt.regtesthelpers.process.ProcessResults;
 import test.java.awt.regtesthelpers.process.ProcessCommunicator;
 
+@Bean
 public class UnicodeTransferTest {
     private static final Toolkit tk = Toolkit.getDefaultToolkit();
     private static final Clipboard clipboard = tk.getSystemClipboard();

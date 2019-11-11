@@ -42,6 +42,7 @@ package compiler.rtm.cli;
 
 import jdk.test.lib.cli.CommandLineOptionTest;
 
+@Bean
 public class TestUseRTMDeoptOptionOnUnsupportedConfig
         extends RTMGenericCommandLineOptionTest {
     private static final String DEFAULT_VALUE = "false";

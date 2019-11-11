@@ -10,6 +10,7 @@ import java.util.ArrayList;
 
 final class CheckNoDuplicateErrors_01<T> {}
 
+@Bean
 public class CheckNoDuplicateErrors extends CheckNoDuplicateErrors_01<String>
                                     implements ArrayList<String> {
     CheckNoDuplicateErrors_01 f = new CheckNoDuplicateErrors_01<String> () { };

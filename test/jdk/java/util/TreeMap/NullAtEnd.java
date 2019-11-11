@@ -32,6 +32,7 @@ import java.util.Comparator;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+@Bean
 public class NullAtEnd {
     static volatile int passed = 0, failed = 0;
 
@@ -69,7 +70,11 @@ public class NullAtEnd {
             /**
              * Allows for nulls.  Null is greater than anything non-null.
              */
-            public int compare(String x, String y) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public int compare(String x, String y) {
                 if (x == null && y == null) return 0;
                 if (x == null && y != null) return 1;
                 if (x != null && y == null) return -1;

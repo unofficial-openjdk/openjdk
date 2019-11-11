@@ -67,6 +67,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
+@Bean
 public class ResponseBodyBeforeError {
 
     ReplyingServer variableLengthServer;
@@ -252,21 +253,33 @@ public class ResponseBodyBeforeError {
         }
 
         @Override
-        public void onSubscribe(Flow.Subscription subscription) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onSubscribe(Flow.Subscription subscription) {
             out.println("CustomBodySubscriber got onSubscribe: ");
             this.subscription = subscription;
             subscription.request(1);
         }
 
         @Override
-        public void onNext(List<ByteBuffer> items) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(List<ByteBuffer> items) {
             out.println("CustomBodySubscriber got onNext: " + items);
             received.addAll(items);
             subscription.request(1);
         }
 
         @Override
-        public void onError(Throwable expected) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onError(Throwable expected) {
             out.println("CustomBodySubscriber got expected: " + expected);
             cf.completeExceptionally(expected);
         }

@@ -32,6 +32,7 @@ import java.io.LineNumberReader;
 import java.io.StringReader;
 import java.util.function.Consumer;
 
+@Bean
 public class Read {
 
     public static void main(String[] args) throws Exception {

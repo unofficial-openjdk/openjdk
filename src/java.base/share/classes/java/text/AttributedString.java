@@ -47,6 +47,7 @@ import java.text.AttributedCharacterIterator.Attribute;
  * @since 1.2
  */
 
+@Bean
 public class AttributedString {
     // field holding the text
     String text;
@@ -311,7 +312,10 @@ public class AttributedString {
      * @throws    IllegalArgumentException if the AttributedString has length 0
      * (attributes cannot be applied to a 0-length range).
      */
-    public void addAttribute(Attribute attribute, Object value) {
+    @Bean
+@Bean
+@Bean
+            public void addAttribute(Attribute attribute, Object value) {
 
         if (attribute == null) {
             throw new NullPointerException();
@@ -564,7 +568,10 @@ public class AttributedString {
      * @param attributes a list of attributes that the client is interested in
      * @return an iterator providing access to the entire text and its selected attributes
      */
-    public AttributedCharacterIterator getIterator(Attribute[] attributes) {
+    @Bean
+@Bean
+@Bean
+            public AttributedCharacterIterator getIterator(Attribute[] attributes) {
         return getIterator(attributes, 0, length());
     }
 
@@ -584,7 +591,10 @@ public class AttributedString {
      * endIndex is greater than the length of the string, or beginIndex is
      * greater than endIndex.
      */
-    public AttributedCharacterIterator getIterator(Attribute[] attributes, int beginIndex, int endIndex) {
+    @Bean
+@Bean
+@Bean
+            public AttributedCharacterIterator getIterator(Attribute[] attributes, int beginIndex, int endIndex) {
         return new AttributedStringIterator(attributes, beginIndex, endIndex);
     }
 
@@ -597,7 +607,10 @@ public class AttributedString {
         return text.length();
     }
 
-    private char charAt(int index) {
+    @Bean
+@Bean
+@Bean
+            private char charAt(int index) {
         return text.charAt(index);
     }
 
@@ -617,7 +630,10 @@ public class AttributedString {
     }
 
     // gets an attribute value, but returns an annotation only if it's range does not extend outside the range beginIndex..endIndex
-    private Object getAttributeCheckRange(Attribute attribute, int runIndex, int beginIndex, int endIndex) {
+    @Bean
+@Bean
+@Bean
+            private Object getAttributeCheckRange(Attribute attribute, int runIndex, int beginIndex, int endIndex) {
         Object value = getAttribute(attribute, runIndex);
         if (value instanceof Annotation) {
             // need to check whether the annotation's range extends outside the iterator's range
@@ -655,7 +671,10 @@ public class AttributedString {
     }
 
     // returns whether all specified attributes have equal values in the runs with the given indices
-    private boolean attributeValuesMatch(Set<? extends Attribute> attributes, int runIndex1, int runIndex2) {
+    @Bean
+@Bean
+@Bean
+            private boolean attributeValuesMatch(Set<? extends Attribute> attributes, int runIndex1, int runIndex2) {
         Iterator<? extends Attribute> iterator = attributes.iterator();
         while (iterator.hasNext()) {
             Attribute key = iterator.next();
@@ -695,7 +714,10 @@ public class AttributedString {
      * (typically the end of the text) to the ones specified in attrs.
      * This is only meant to be called from the constructor!
      */
-    private void setAttributes(Map<Attribute, Object> attrs, int offset) {
+    @Bean
+@Bean
+@Bean
+            private void setAttributes(Map<Attribute, Object> attrs, int offset) {
         if (runCount == 0) {
             createRunAttributeDataVectors();
         }
@@ -772,7 +794,10 @@ public class AttributedString {
 
         // Object methods. See documentation in that class.
 
-        public boolean equals(Object obj) {
+        @Bean
+@Bean
+@Bean
+            public boolean equals(Object obj) {
             if (this == obj) {
                 return true;
             }
@@ -843,7 +868,10 @@ public class AttributedString {
             }
         }
 
-        public char setIndex(int position) {
+        @Bean
+@Bean
+@Bean
+            public char setIndex(int position) {
             if (position < beginIndex || position > endIndex)
                 throw new IllegalArgumentException("Invalid index");
             return internalSetIndex(position);
@@ -867,7 +895,10 @@ public class AttributedString {
             return currentRunStart;
         }
 
-        public int getRunStart(Attribute attribute) {
+        @Bean
+@Bean
+@Bean
+            public int getRunStart(Attribute attribute) {
             if (currentRunStart == beginIndex || currentRunIndex == -1) {
                 return currentRunStart;
             } else {
@@ -886,7 +917,10 @@ public class AttributedString {
             }
         }
 
-        public int getRunStart(Set<? extends Attribute> attributes) {
+        @Bean
+@Bean
+@Bean
+            public int getRunStart(Set<? extends Attribute> attributes) {
             if (currentRunStart == beginIndex || currentRunIndex == -1) {
                 return currentRunStart;
             } else {
@@ -908,7 +942,10 @@ public class AttributedString {
             return currentRunLimit;
         }
 
-        public int getRunLimit(Attribute attribute) {
+        @Bean
+@Bean
+@Bean
+            public int getRunLimit(Attribute attribute) {
             if (currentRunLimit == endIndex || currentRunIndex == -1) {
                 return currentRunLimit;
             } else {
@@ -927,7 +964,10 @@ public class AttributedString {
             }
         }
 
-        public int getRunLimit(Set<? extends Attribute> attributes) {
+        @Bean
+@Bean
+@Bean
+            public int getRunLimit(Set<? extends Attribute> attributes) {
             if (currentRunLimit == endIndex || currentRunIndex == -1) {
                 return currentRunLimit;
             } else {
@@ -982,7 +1022,10 @@ public class AttributedString {
             }
         }
 
-        public Object getAttribute(Attribute attribute) {
+        @Bean
+@Bean
+@Bean
+            public Object getAttribute(Attribute attribute) {
             int runIndex = currentRunIndex;
             if (runIndex < 0) {
                 return null;
@@ -998,7 +1041,10 @@ public class AttributedString {
 
         // set the current index, update information about the current run if necessary,
         // return the character at the current index
-        private char internalSetIndex(int position) {
+        @Bean
+@Bean
+@Bean
+            private char internalSetIndex(int position) {
             currentIndex = position;
             if (position < currentRunStart || position >= currentRunLimit) {
                 updateRunInfo();
@@ -1079,7 +1125,10 @@ public class AttributedString {
             return set;
         }
 
-        public Object get(Object key) {
+        @Bean
+@Bean
+@Bean
+            public Object get(Object key) {
             return AttributedString.this.getAttributeCheckRange((Attribute) key, runIndex, beginIndex, endIndex);
         }
     }
@@ -1095,7 +1144,10 @@ class AttributeEntry implements Map.Entry<Attribute,Object> {
         this.value = value;
     }
 
-    public boolean equals(Object o) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(Object o) {
         if (!(o instanceof AttributeEntry)) {
             return false;
         }
@@ -1111,7 +1163,10 @@ class AttributeEntry implements Map.Entry<Attribute,Object> {
         return value;
     }
 
-    public Object setValue(Object newValue) {
+    @Bean
+@Bean
+@Bean
+            public Object setValue(Object newValue) {
         throw new UnsupportedOperationException();
     }
 

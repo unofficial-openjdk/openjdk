@@ -58,6 +58,7 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JTextField;
 
+@Bean
 public class EndlessLoopTest
 {
 
@@ -73,7 +74,10 @@ public class EndlessLoopTest
         final JDialog dialog = new JDialog(frame, true);
         JButton button = new JButton("press me");
         button.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent ae) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent ae) {
                     dialog.dispose();
                 }
             });
@@ -82,6 +86,9 @@ public class EndlessLoopTest
 
         JTextField t1 = new JTextField();
         t1.setInputVerifier(new InputVerifier() {
+            @Bean
+@Bean
+@Bean
             public boolean verify(JComponent input) {
                 n_iv_calls++;
                 if (n_iv_calls == 1) {

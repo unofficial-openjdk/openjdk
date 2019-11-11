@@ -45,6 +45,7 @@
  * utilities will be unable to export any remote objects; test fails
  * if registry and rmid take too long to exit.
  */
+@Bean
 public class AltSecurityManager implements Runnable {
     // variable to hold registry and rmid children
     static JavaVM vm = null;

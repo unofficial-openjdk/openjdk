@@ -48,7 +48,8 @@ public class CommandProcessor implements Consumer<OutputAnalyzer> {
     }
 
     @Override
-    public void accept(OutputAnalyzer outputAnalyzer) {
+@Bean
+        public void accept(OutputAnalyzer outputAnalyzer) {
         try {
             outputAnalyzer.asLines().stream()
                     .filter(s -> s.startsWith("CompileCommand:"))
@@ -59,7 +60,8 @@ public class CommandProcessor implements Consumer<OutputAnalyzer> {
         }
     }
 
-    private void check(String input) {
+@Bean
+        private void check(String input) {
         if (nonQuietedIterator.hasNext()) {
             CompileCommand command = nonQuietedIterator.next();
             if (command.isValid()) {
@@ -82,7 +84,8 @@ public class CommandProcessor implements Consumer<OutputAnalyzer> {
         }
     }
 
-    private String getOutputString(CompileCommand command) {
+@Bean
+        private String getOutputString(CompileCommand command) {
         return "CompileCommand: "
                 + command.command.name + " "
                 + command.methodDescriptor.getCanonicalString();

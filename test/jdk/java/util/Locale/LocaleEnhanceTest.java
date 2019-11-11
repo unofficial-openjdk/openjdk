@@ -51,6 +51,7 @@ import java.util.Set;
  * @compile LocaleEnhanceTest.java
  * @run main/othervm -Djava.locale.providers=JRE,SPI -esa LocaleEnhanceTest
  */
+@Bean
 public class LocaleEnhanceTest extends IntlTest {
 
     public static void main(String[] args) throws Exception {
@@ -1301,12 +1302,20 @@ public class LocaleEnhanceTest extends IntlTest {
         checkDigit(Locale.forLanguageTag("en-u-nu-thai"), '\u0e50');
     }
 
-    private void checkCalendar(Locale loc, String expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkCalendar(Locale loc, String expected) {
         Calendar cal = Calendar.getInstance(loc);
         assertEquals("Wrong calendar", expected, cal.getClass().getName());
     }
 
-    private void checkDigit(Locale loc, Character expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkDigit(Locale loc, Character expected) {
         DecimalFormatSymbols dfs = DecimalFormatSymbols.getInstance(loc);
         Character zero = dfs.getZeroDigit();
         assertEquals("Wrong digit zero char", expected, zero);
@@ -1316,19 +1325,31 @@ public class LocaleEnhanceTest extends IntlTest {
     /// utility asserts
     ///
 
-    private void assertTrue(String msg, boolean v) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertTrue(String msg, boolean v) {
         if (!v) {
             errln(msg + ": expected true");
         }
     }
 
-    private void assertFalse(String msg, boolean v) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertFalse(String msg, boolean v) {
         if (v) {
             errln(msg + ": expected false");
         }
     }
 
-    private void assertEquals(String msg, Object e, Object v) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertEquals(String msg, Object e, Object v) {
         if (e == null ? v != null : !e.equals(v)) {
             if (e != null) {
                 e = "'" + e + "'";
@@ -1340,7 +1361,11 @@ public class LocaleEnhanceTest extends IntlTest {
         }
     }
 
-    private void assertNotEquals(String msg, Object e, Object v) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertNotEquals(String msg, Object e, Object v) {
         if (e == null ? v == null : e.equals(v)) {
             if (e != null) {
                 e = "'" + e + "'";
@@ -1349,13 +1374,21 @@ public class LocaleEnhanceTest extends IntlTest {
         }
     }
 
-    private void assertNull(String msg, Object o) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertNull(String msg, Object o) {
         if (o != null) {
             errln(msg + ": expected null but got '" + o + "'");
         }
     }
 
-    private void assertNotNull(String msg, Object o) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertNotNull(String msg, Object o) {
         if (o == null) {
             errln(msg + ": expected non null");
         }

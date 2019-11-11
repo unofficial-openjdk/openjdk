@@ -128,7 +128,8 @@ public final class ImageIO {
             return useCache;
         }
 
-        public void setUseCache(boolean useCache) {
+@Bean
+            public void setUseCache(boolean useCache) {
             this.useCache = useCache;
         }
 
@@ -136,7 +137,8 @@ public final class ImageIO {
             return cacheDirectory;
         }
 
-        public void setCacheDirectory(File cacheDirectory) {
+@Bean
+            public void setCacheDirectory(File cacheDirectory) {
             this.cacheDirectory = cacheDirectory;
         }
 
@@ -144,7 +146,8 @@ public final class ImageIO {
             return hasPermission;
         }
 
-        public void setHasPermission(Boolean hasPermission) {
+@Bean
+            public void setHasPermission(Boolean hasPermission) {
             this.hasPermission = hasPermission;
         }
     }
@@ -552,7 +555,8 @@ public final class ImageIO {
             this.input = input;
         }
 
-        public boolean filter(Object elt) {
+@Bean
+            public boolean filter(Object elt) {
             try {
                 ImageReaderSpi spi = (ImageReaderSpi)elt;
                 ImageInputStream stream = null;
@@ -594,7 +598,8 @@ public final class ImageIO {
             this.formatName = formatName;
         }
 
-        public boolean filter(Object elt) {
+@Bean
+            public boolean filter(Object elt) {
             ImageWriterSpi spi = (ImageWriterSpi)elt;
             return Arrays.asList(spi.getFormatNames()).contains(formatName) &&
                 spi.canEncodeImage(type);
@@ -614,7 +619,8 @@ public final class ImageIO {
             this.name = name;
         }
 
-        public boolean filter(Object elt) {
+@Bean
+            public boolean filter(Object elt) {
             try {
                 return contains((String[])method.invoke(elt), name);
             } catch (Exception e) {
@@ -1217,7 +1223,8 @@ public final class ImageIO {
             this.writerSpiName = writerSpi.getClass().getName();
         }
 
-        public boolean filter(Object elt) {
+@Bean
+            public boolean filter(Object elt) {
             ImageTranscoderSpi spi = (ImageTranscoderSpi)elt;
             String readerName = spi.getReaderServiceProviderName();
             String writerName = spi.getWriterServiceProviderName();

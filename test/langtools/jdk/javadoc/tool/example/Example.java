@@ -51,7 +51,11 @@ public class Example implements Doclet {
     Reporter reporter;
 
     @Override
-    public void init(Locale locale, Reporter reporter) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void init(Locale locale, Reporter reporter) {
         reporter.print(Kind.NOTE, "Doclet using locale: " + locale);
         this.reporter = reporter;
     }
@@ -62,7 +66,11 @@ public class Example implements Doclet {
      * @param trees the utility class
      * @param e the element to be printed
      */
-    public void printElement(DocTrees trees, Element e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void printElement(DocTrees trees, Element e) {
         DocCommentTree docCommentTree = trees.getDocCommentTree(e);
         if (docCommentTree != null) {
             System.out.println("Element (" + e.getKind() + ": "
@@ -73,7 +81,11 @@ public class Example implements Doclet {
     }
 
     @Override
-    public boolean run(DocletEnvironment docEnv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean run(DocletEnvironment docEnv) {
         reporter.print(Kind.NOTE, "overviewfile: " + overviewfile);
         // get the DocTrees utility class to access DocComments
         DocTrees docTrees = docEnv.getDocTrees();
@@ -142,6 +154,10 @@ public class Example implements Doclet {
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public boolean process(String opt, List<String> arguments) {
                     overviewfile = arguments.get(0);
                     return true;

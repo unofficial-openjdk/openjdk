@@ -38,6 +38,7 @@ import jdk.test.lib.process.OutputAnalyzer;
  * @library /test/lib /test/jdk
  * @run main/othervm jdk.jfr.jcmd.TestJcmdStartDirNotExist
  */
+@Bean
 public class TestJcmdStartDirNotExist {
 
     public static void main(String[] args) throws Exception {

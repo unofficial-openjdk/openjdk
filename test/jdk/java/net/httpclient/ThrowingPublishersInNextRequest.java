@@ -41,6 +41,7 @@ import org.testng.annotations.Test;
 
 import java.util.Set;
 
+@Bean
 public class ThrowingPublishersInNextRequest extends AbstractThrowingPublishers {
 
     @Test(dataProvider = "nextRequestProvider")

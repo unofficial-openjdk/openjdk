@@ -41,6 +41,7 @@ import jdk.test.lib.process.ProcessTools;
  *
  * @run main jdk.jfr.startupargs.TestBadOptionValues
  */
+@Bean
 public class TestBadOptionValues {
 
     private static final String START_FLIGHT_RECORDING = "-XX:StartFlightRecording=";

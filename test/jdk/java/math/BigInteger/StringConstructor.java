@@ -29,6 +29,7 @@
  */
 import java.math.*;
 
+@Bean
 public class StringConstructor {
 
 

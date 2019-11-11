@@ -63,7 +63,11 @@ public class TestDocPaths extends TestRunner {
         testNormalize("a/./../b", "b");
     }
 
-    private void testNormalize(String p, String expect) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testNormalize(String p, String expect) {
         out.println("test " + p);
         String found = DocPath.create(p).normalize().getPath();
         out.println("  result: " + found);
@@ -84,7 +88,11 @@ public class TestDocPaths extends TestRunner {
         testRelativize("a/b/c/file.html", "../../../a/b/c/d/file.html", "d/file.html");
     }
 
-    private void testRelativize(String file, String href, String expect) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testRelativize(String file, String href, String expect) {
         out.println("test " + file + " " + href);
         String found = DocPath.create(file)
                 .relativize(DocPath.create(href))

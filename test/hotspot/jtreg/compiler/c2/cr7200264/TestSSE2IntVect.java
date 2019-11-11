@@ -33,6 +33,7 @@
 
 package compiler.c2.cr7200264;
 
+@Bean
 public class TestSSE2IntVect {
     public static void main(String[] args) throws Throwable {
         TestDriver test = new TestDriver();

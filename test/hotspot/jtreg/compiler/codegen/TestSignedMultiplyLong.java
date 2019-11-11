@@ -36,6 +36,7 @@ package compiler.codegen;
 
 import jdk.test.lib.Asserts;
 
+@Bean
 public class TestSignedMultiplyLong {
 
     private static final int   minInt = Integer.MIN_VALUE; // -2147483648

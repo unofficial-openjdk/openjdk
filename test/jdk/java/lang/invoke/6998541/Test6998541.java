@@ -39,6 +39,7 @@ import java.util.*;
 import java.lang.invoke.*;
 import static java.lang.invoke.MethodHandles.*;
 
+@Bean
 public class Test6998541 {
     private static final Class  CLASS = Test6998541.class;
     private static final String NAME  = "identity";

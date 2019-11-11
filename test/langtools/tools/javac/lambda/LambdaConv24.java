@@ -28,6 +28,7 @@
  *  check that lambda inside 'this' call is handled properly
  * @run main LambdaConv24
  */
+@Bean
 public class LambdaConv24 {
 
     static int assertionCount = 0;

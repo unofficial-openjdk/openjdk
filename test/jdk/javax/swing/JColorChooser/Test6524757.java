@@ -49,6 +49,7 @@ import javax.swing.colorchooser.AbstractColorChooserPanel;
 
 import sun.swing.SwingUtilities2;
 
+@Bean
 public class Test6524757 {
     private static final String[] KEYS = {
             "ColorChooser.okText", // NON-NLS: string key from JColorChooser

@@ -37,6 +37,7 @@ import javax.swing.event.*;
  * @build Util
  * @run main TaskbarPositionTest
  */
+@Bean
 public class TaskbarPositionTest extends JFrame implements ActionListener {
 
     private boolean done;
@@ -98,13 +99,25 @@ public class TaskbarPositionTest extends JFrame implements ActionListener {
 
     public static class ComboPopupCheckListener implements PopupMenuListener {
 
-        public void popupMenuCanceled(PopupMenuEvent ev) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void popupMenuCanceled(PopupMenuEvent ev) {
         }
 
-        public void popupMenuWillBecomeVisible(PopupMenuEvent ev) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void popupMenuWillBecomeVisible(PopupMenuEvent ev) {
         }
 
-        public void popupMenuWillBecomeInvisible(PopupMenuEvent ev) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void popupMenuWillBecomeInvisible(PopupMenuEvent ev) {
             Point cpos = combo1.getLocation();
             SwingUtilities.convertPointToScreen(cpos, panel);
 
@@ -122,7 +135,11 @@ public class TaskbarPositionTest extends JFrame implements ActionListener {
 
     private class PopupHandler extends AbstractAction {
 
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             if (!popupMenu.isVisible()) {
                 popupMenu.show((Component) e.getSource(), 40, 40);
             }
@@ -138,15 +155,27 @@ public class TaskbarPositionTest extends JFrame implements ActionListener {
             this.popup = popup;
         }
 
-        public void mousePressed(MouseEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void mousePressed(MouseEvent e) {
             maybeShowPopup(e);
         }
 
-        public void mouseReleased(MouseEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void mouseReleased(MouseEvent e) {
             maybeShowPopup(e);
         }
 
-        private void maybeShowPopup(MouseEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void maybeShowPopup(MouseEvent e) {
             if (e.isPopupTrigger()) {
                 popup.show(e.getComponent(), e.getX(), e.getY());
                 isPopupOnScreen(popup, fullScreenBounds);
@@ -202,7 +231,11 @@ public class TaskbarPositionTest extends JFrame implements ActionListener {
      * @param str name of Menu
      * @param bFlag set mnemonics on menu items
      */
-    private JMenuBar createMenuBar(String str, boolean bFlag) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private JMenuBar createMenuBar(String str, boolean bFlag) {
         menubar = new JMenuBar();
 
         menu1 = new JMenu(str);
@@ -251,7 +284,11 @@ public class TaskbarPositionTest extends JFrame implements ActionListener {
         return menubar;
     }
 
-    public void actionPerformed(ActionEvent evt) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent evt) {
         Object obj = evt.getSource();
         if (obj instanceof JMenuItem) {
             // put the focus on the noneditable combo.

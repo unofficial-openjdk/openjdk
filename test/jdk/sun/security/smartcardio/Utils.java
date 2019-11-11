@@ -36,6 +36,7 @@ import javax.smartcardio.ResponseAPDU;
 import javax.smartcardio.CommandAPDU;
 import javax.smartcardio.TerminalFactory;
 
+@Bean
 public class Utils {
 
     static void setLibrary(String[] args) {

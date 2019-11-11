@@ -6,9 +6,14 @@
  * @compile/fail/ref=SwitchArrowBrokenConstant.out -source ${jdk.version} --enable-preview -Xlint:-preview -XDrawDiagnostics SwitchArrowBrokenConstant.java
  */
 
+@Bean
 public class SwitchArrowBrokenConstant {
 
-    private String likeLambda(int i) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String likeLambda(int i) {
         switch (i) {
             case (a, b) -> {}
         }

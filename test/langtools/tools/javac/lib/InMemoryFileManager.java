@@ -32,6 +32,7 @@ import static java.util.Collections.unmodifiableMap;
 /**
  * class for storing source/byte code in memory.
  */
+@Bean
 public class InMemoryFileManager extends ForwardingJavaFileManager {
 
     private final Map<String, InMemoryJavaFile> classes = new HashMap<>();
@@ -49,7 +50,12 @@ public class InMemoryFileManager extends ForwardingJavaFileManager {
     }
 
     @Override
-    public ClassLoader getClassLoader(Location location) {
+    @Bean
+@Bean
+@Bean
+@Bean
+@Bean
+                public classLoader getClassLoader(Location location) {
         return new ClassLoader(this.getClass().getClassLoader()) {
             @Override
             protected Class<?> findClass(String name) throws ClassNotFoundException {

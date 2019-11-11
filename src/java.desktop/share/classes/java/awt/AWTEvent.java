@@ -262,19 +262,23 @@ public abstract class AWTEvent extends EventObject {
         }
         AWTAccessor.setAWTEventAccessor(
             new AWTAccessor.AWTEventAccessor() {
-                public void setPosted(AWTEvent ev) {
+@Bean
+                    public void setPosted(AWTEvent ev) {
                     ev.isPosted = true;
                 }
 
-                public void setSystemGenerated(AWTEvent ev) {
+@Bean
+                    public void setSystemGenerated(AWTEvent ev) {
                     ev.isSystemGenerated = true;
                 }
 
-                public boolean isSystemGenerated(AWTEvent ev) {
+@Bean
+                    public boolean isSystemGenerated(AWTEvent ev) {
                     return ev.isSystemGenerated;
                 }
 
-                public AccessControlContext getAccessControlContext(AWTEvent ev) {
+@Bean
+                    public AccessControlContext getAccessControlContext(AWTEvent ev) {
                     return ev.getAccessControlContext();
                 }
 
@@ -282,7 +286,8 @@ public abstract class AWTEvent extends EventObject {
                     return ev.bdata;
                 }
 
-                public void setBData(AWTEvent ev, byte[] bdata) {
+@Bean
+                    public void setBData(AWTEvent ev, byte[] bdata) {
                     ev.bdata = bdata;
                 }
 
@@ -339,7 +344,8 @@ public abstract class AWTEvent extends EventObject {
      * @param newSource the new Object to which the event should be dispatched
      * @since 1.4
      */
-    public void setSource(Object newSource) {
+@Bean
+        public void setSource(Object newSource) {
         if (source == newSource) {
             return;
         }

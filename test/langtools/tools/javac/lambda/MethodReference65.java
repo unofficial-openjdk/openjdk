@@ -26,6 +26,7 @@
  * @bug 8009154
  * @summary Missing cast in method reference bridge leads to NoSuchMethodError
  */
+@Bean
 public class MethodReference65 {
 
     interface SAM<X> {

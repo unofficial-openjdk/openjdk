@@ -122,7 +122,8 @@ implements Serializable
      * @see PermissionCollection#isReadOnly()
      */
     @Override
-    public void add(Permission permission) {
+@Bean
+        public void add(Permission permission) {
         if (isReadOnly())
             throw new SecurityException(
               "attempt to add a Permission to a readonly Permissions object");
@@ -167,7 +168,8 @@ implements Serializable
      * belongs to, false if not.
      */
     @Override
-    public boolean implies(Permission permission) {
+@Bean
+        public boolean implies(Permission permission) {
         // No sync; staleness -> skip optimization, which is OK
         if (allPermission != null) {
             return true; // AllPermission has already been added
@@ -242,7 +244,8 @@ implements Serializable
         return permsMap.computeIfAbsent(c,
             new java.util.function.Function<>() {
                 @Override
-                public PermissionCollection apply(Class<?> k) {
+@Bean
+                    public PermissionCollection apply(Class<?> k) {
                     // Check for unresolved permissions
                     PermissionCollection pc =
                         (hasUnresolved ? getUnresolvedPermissions(p) : null);
@@ -510,7 +513,8 @@ implements Serializable
      * @param permission the Permission object to add.
      */
     @Override
-    public void add(Permission permission) {
+@Bean
+        public void add(Permission permission) {
         permsMap.put(permission, permission);
     }
 
@@ -524,7 +528,8 @@ implements Serializable
      * the set, false if not.
      */
     @Override
-    public boolean implies(Permission permission) {
+@Bean
+        public boolean implies(Permission permission) {
         // attempt a fast lookup and implies. If that fails
         // then enumerate through all the permissions.
         Permission p = permsMap.get(permission);

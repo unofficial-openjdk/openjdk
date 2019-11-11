@@ -32,6 +32,7 @@
 
 package compiler.arraycopy;
 
+@Bean
 public class TestArrayCopyNoInit {
 
     static int[] m1(int[] src) {
@@ -135,7 +136,11 @@ public class TestArrayCopyNoInit {
         return dest;
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         boolean success = true;
         int[] src = new int[10];
         TestArrayCopyNoInit[] src2 = new TestArrayCopyNoInit[10];

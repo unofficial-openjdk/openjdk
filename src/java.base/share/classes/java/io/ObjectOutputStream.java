@@ -160,6 +160,7 @@ import sun.reflect.misc.ReflectUtil;
  *     Object Serialization Specification, Section 2, Object Output Classes</a>
  * @since       1.1
  */
+@Bean
 public class ObjectOutputStream
     extends OutputStream implements ObjectOutput, ObjectStreamConstants
 {
@@ -1613,39 +1614,48 @@ public class ObjectOutputStream
             objVals = new Object[desc.getNumObjFields()];
         }
 
-        public void put(String name, boolean val) {
+@Bean
+            public void put(String name, boolean val) {
             Bits.putBoolean(primVals, getFieldOffset(name, Boolean.TYPE), val);
         }
 
-        public void put(String name, byte val) {
+@Bean
+            public void put(String name, byte val) {
             primVals[getFieldOffset(name, Byte.TYPE)] = val;
         }
 
-        public void put(String name, char val) {
+@Bean
+            public void put(String name, char val) {
             Bits.putChar(primVals, getFieldOffset(name, Character.TYPE), val);
         }
 
-        public void put(String name, short val) {
+@Bean
+            public void put(String name, short val) {
             Bits.putShort(primVals, getFieldOffset(name, Short.TYPE), val);
         }
 
-        public void put(String name, int val) {
+@Bean
+            public void put(String name, int val) {
             Bits.putInt(primVals, getFieldOffset(name, Integer.TYPE), val);
         }
 
-        public void put(String name, float val) {
+@Bean
+            public void put(String name, float val) {
             Bits.putFloat(primVals, getFieldOffset(name, Float.TYPE), val);
         }
 
-        public void put(String name, long val) {
+@Bean
+            public void put(String name, long val) {
             Bits.putLong(primVals, getFieldOffset(name, Long.TYPE), val);
         }
 
-        public void put(String name, double val) {
+@Bean
+            public void put(String name, double val) {
             Bits.putDouble(primVals, getFieldOffset(name, Double.TYPE), val);
         }
 
-        public void put(String name, Object val) {
+@Bean
+            public void put(String name, Object val) {
             objVals[getFieldOffset(name, Object.class)] = val;
         }
 
@@ -1714,7 +1724,8 @@ public class ObjectOutputStream
          * types, and any other non-null type matches assignable types only.
          * Throws IllegalArgumentException if no matching field found.
          */
-        private int getFieldOffset(String name, Class<?> type) {
+@Bean
+            private int getFieldOffset(String name, Class<?> type) {
             ObjectStreamField field = desc.getField(name, type);
             if (field == null) {
                 throw new IllegalArgumentException("no such field " + name +
@@ -2315,7 +2326,8 @@ public class ObjectOutputStream
          * Inserts mapping object -> handle mapping into table.  Assumes table
          * is large enough to accommodate new mapping.
          */
-        private void insert(Object obj, int handle) {
+@Bean
+            private void insert(Object obj, int handle) {
             int index = hash(obj) % spine.length;
             objs[handle] = obj;
             next[handle] = spine[index];
@@ -2352,7 +2364,8 @@ public class ObjectOutputStream
         /**
          * Returns hash value for given object.
          */
-        private int hash(Object obj) {
+@Bean
+            private int hash(Object obj) {
             return System.identityHashCode(obj) & 0x7FFFFFFF;
         }
     }

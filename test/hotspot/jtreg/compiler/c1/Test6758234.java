@@ -33,6 +33,7 @@
 
 package compiler.c1;
 
+@Bean
 public class Test6758234 {
     static int x = 0;
     static int y = 1;

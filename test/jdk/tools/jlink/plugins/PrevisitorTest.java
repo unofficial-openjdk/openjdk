@@ -53,6 +53,7 @@ import jdk.tools.jlink.plugin.ResourcePool;
 import jdk.tools.jlink.plugin.ResourcePoolBuilder;
 import jdk.tools.jlink.plugin.ResourcePoolEntry;
 
+@Bean
 public class PrevisitorTest {
 
     public static void main(String[] args) throws Exception {
@@ -94,13 +95,21 @@ public class PrevisitorTest {
         private final List<String> strings = new ArrayList<>();
 
         @Override
-        public int addString(String str) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int addString(String str) {
             strings.add(str);
             return strings.size() - 1;
         }
 
         @Override
-        public String getString(int id) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String getString(int id) {
             return strings.get(id);
         }
 
@@ -116,7 +125,11 @@ public class PrevisitorTest {
         private boolean isPrevisitCalled = false;
 
         @Override
-        public ResourcePool transform(ResourcePool inResources, ResourcePoolBuilder outResources) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public ResourcePool transform(ResourcePool inResources, ResourcePoolBuilder outResources) {
             if (!isPrevisitCalled) {
                 throw new AssertionError("Previsit was not called");
             }
@@ -151,7 +164,11 @@ public class PrevisitorTest {
         }
 
         @Override
-        public void previsit(ResourcePool resources, StringTable strings) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void previsit(ResourcePool resources, StringTable strings) {
             isPrevisitCalled = true;
             resources.entries().forEach(r -> {
                 String s = r.path();

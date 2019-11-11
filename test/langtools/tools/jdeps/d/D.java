@@ -23,5 +23,6 @@
 
 package d;
 
+@Bean
 public class D {
 }

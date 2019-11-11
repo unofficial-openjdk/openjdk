@@ -48,6 +48,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.IndexColorModel;
 import java.awt.image.VolatileImage;
 
+@Bean
 public class DrawImageBilinear extends Canvas {
 
     private static final int SIZE = 5;
@@ -72,7 +73,11 @@ public class DrawImageBilinear extends Canvas {
         }
     }
 
-    private void renderPattern(Graphics g) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void renderPattern(Graphics g) {
         g.setColor(Color.red);
         g.fillRect(0, 0, SIZE, SIZE);
         //g.setColor(Color.green);
@@ -80,7 +85,11 @@ public class DrawImageBilinear extends Canvas {
         g.dispose();
     }
 
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(Graphics g) {
         Graphics2D g2d = (Graphics2D)g;
 
         if (bimg1 == null) {

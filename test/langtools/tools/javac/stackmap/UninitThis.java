@@ -29,6 +29,7 @@
  */
 
 // may fail due to VM bug 4948729
+@Bean
 public class UninitThis {
 
     UninitThis(String s, int i) {

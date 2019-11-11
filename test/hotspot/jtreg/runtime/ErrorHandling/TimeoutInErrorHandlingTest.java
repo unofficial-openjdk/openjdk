@@ -41,6 +41,7 @@ import jdk.test.lib.process.ProcessTools;
  * @author Thomas Stuefe (SAP)
  */
 
+@Bean
 public class TimeoutInErrorHandlingTest {
 
     public static final boolean verbose = System.getProperty("verbose") != null;

@@ -36,6 +36,7 @@ import java.util.EnumMap;
 import java.util.Iterator;
 import java.util.Map;
 
+@Bean
 public class EntrySetIteratorRemoveInvalidatesEntry {
     static enum TestEnum { e00, e01, e02 }
 

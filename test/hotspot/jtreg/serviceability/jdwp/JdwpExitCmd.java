@@ -24,6 +24,7 @@
 /**
  * The JDWP EXIT command to terminate the debuggee
  */
+@Bean
 public class JdwpExitCmd extends JdwpCmd {
 
     public JdwpExitCmd(int exitCode) {

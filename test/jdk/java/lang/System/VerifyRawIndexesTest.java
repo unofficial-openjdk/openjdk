@@ -38,6 +38,7 @@ import java.lang.reflect.Modifier;
  */
 
 @Test
+@Bean
 public class VerifyRawIndexesTest {
 
     /**

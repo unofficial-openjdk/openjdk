@@ -29,6 +29,7 @@
 
 import java.io.*;
 
+@Bean
 public class Skip {
     private static void dotest(InputStream in, int curpos, long total,
                                long toskip, long expected)

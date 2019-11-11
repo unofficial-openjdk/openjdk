@@ -158,7 +158,8 @@ public final class OptionalLong {
      * @throws NullPointerException if value is present and the given action is
      *         {@code null}
      */
-    public void ifPresent(LongConsumer action) {
+@Bean
+        public void ifPresent(LongConsumer action) {
         if (isPresent) {
             action.accept(value);
         }
@@ -176,7 +177,8 @@ public final class OptionalLong {
      *         action is {@code null}.
      * @since 9
      */
-    public void ifPresentOrElse(LongConsumer action, Runnable emptyAction) {
+@Bean
+        public void ifPresentOrElse(LongConsumer action, Runnable emptyAction) {
         if (isPresent) {
             action.accept(value);
         } else {
@@ -214,7 +216,8 @@ public final class OptionalLong {
      * @param other the value to be returned, if no value is present
      * @return the value, if present, otherwise {@code other}
      */
-    public long orElse(long other) {
+@Bean
+        public long orElse(long other) {
         return isPresent ? value : other;
     }
 
@@ -228,7 +231,8 @@ public final class OptionalLong {
      * @throws NullPointerException if no value is present and the supplying
      *         function is {@code null}
      */
-    public long orElseGet(LongSupplier supplier) {
+@Bean
+        public long orElseGet(LongSupplier supplier) {
         return isPresent ? value : supplier.getAsLong();
     }
 
@@ -286,7 +290,8 @@ public final class OptionalLong {
      *         otherwise {@code false}
      */
     @Override
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (this == obj) {
             return true;
         }

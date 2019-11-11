@@ -52,6 +52,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Bean
 public class IncludePackagesTest {
     public static void main(String... args) throws Exception {
         new IncludePackagesTest().run();
@@ -65,26 +66,31 @@ public class IncludePackagesTest {
         "p1/p1T.java",
         "package p1;\n" +
         "/** Syntax < error. */\n" +
-        "public class p1T {\n" +
+        "@Bean
+public class p1T {\n" +
         "}\n",
         "p1/sp1/p1sp1T.java",
         "package p1.sp1;\n" +
         "/** Syntax < error. */\n" +
-        "public class p1sp1T {\n" +
+        "@Bean
+public class p1sp1T {\n" +
         "}\n",
         "p1/sp1/sp2/p1sp1sp2T.java",
         "package p1.sp1.sp2;\n" +
         "/** Syntax < error. */\n" +
-        "public class p1sp1sp2T {\n" +
+        "@Bean
+public class p1sp1sp2T {\n" +
         "}\n",
         "p2/p2T.java",
         "package p2;\n" +
         "/** Syntax < error. */\n" +
-        "public class p2T {\n" +
+        "@Bean
+public class p2T {\n" +
         "}\n",
         "Default.java",
         "/** Syntax < error. */\n" +
-        "public class Default {\n" +
+        "@Bean
+public class Default {\n" +
         "}\n",
     };
 
@@ -192,7 +198,11 @@ public class IncludePackagesTest {
         }
     }
 
-    private void check(String out, Set<Message> expect) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void check(String out, Set<Message> expect) {
         Pattern stats = Pattern.compile("^([1-9]+) (error|warning)(s?)");
         Set<Message> found = EnumSet.noneOf(Message.class);
         int e = 0, w = 0;
@@ -242,7 +252,11 @@ public class IncludePackagesTest {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncoding) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncoding) {
             return code;
         }
     }

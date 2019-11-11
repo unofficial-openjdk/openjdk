@@ -41,6 +41,7 @@ import javax.management.openmbean.ArrayType;
 import javax.management.openmbean.OpenDataException;
 import javax.management.openmbean.SimpleType;
 
+@Bean
 public class ArrayTypeTest {
 
     private static final String toStringResult[] = {

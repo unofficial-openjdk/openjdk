@@ -34,6 +34,7 @@
 import jdk.test.lib.Asserts;
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class HandshakeWalkStackTest {
 
     public static void main(String... args) throws Exception {

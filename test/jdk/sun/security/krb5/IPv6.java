@@ -41,6 +41,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.security.auth.Subject;
 
+@Bean
 public class IPv6 {
 
     public static void main(String[] args) throws Exception {

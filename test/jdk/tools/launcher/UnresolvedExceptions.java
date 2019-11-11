@@ -37,12 +37,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 
+@Bean
 public class UnresolvedExceptions extends TestHelper {
 
     public static void main(String... args) throws Exception {
         final String fname = "Foo";
         List<String> buffer = new ArrayList<>();
-        buffer.add("public class " + fname + " {");
+        buffer.add("@Bean
+public class " + fname + " {");
         buffer.add("    public static void main(String[] argv) throws "
                        + "Foo.SomeException {");
         buffer.add("        System.exit(0);");

@@ -32,6 +32,7 @@
 import javax.script.*;
 import java.io.*;
 
+@Bean
 public class VersionTest  {
         private static final String JS_LANG_VERSION = "ECMA - 262 Edition 5.1";
 

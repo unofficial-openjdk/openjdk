@@ -24,6 +24,7 @@
 
 import jdk.test.lib.apps.LingeredApp;
 
+@Bean
 public class LingeredAppWithNativeMethod extends LingeredApp {
 
     public static final String THREAD_NAME = "NoFramePointerJNIFib";
@@ -52,7 +53,11 @@ public class LingeredAppWithNativeMethod extends LingeredApp {
     }
 
     // Called from JNI library libNoFramePointer
-    private void callback(long val) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void callback(long val) {
         System.out.println(val);
         // Call native again so as to increase chances of
         // being currently in JNI code when jstack --mixed

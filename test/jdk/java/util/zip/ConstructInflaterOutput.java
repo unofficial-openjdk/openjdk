@@ -30,6 +30,7 @@
 import java.io.*;
 import java.util.zip.*;
 
+@Bean
 public class ConstructInflaterOutput {
 
     static class MyInflater extends Inflater {

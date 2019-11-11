@@ -29,6 +29,7 @@
  * @compile T6391995.java
  */
 
+@Bean
 public class T6391995 {
     <E> void iterate(Iterable<E> iterable) {
         Iterable<? extends Iterable<? extends Object>> x = null;

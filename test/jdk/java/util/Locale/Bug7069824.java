@@ -37,6 +37,7 @@ import static org.testng.Assert.*;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+@Bean
 public class Bug7069824 {
 
     @DataProvider(name = "LRConstructorData")
@@ -263,7 +264,11 @@ public class Bug7069824 {
     }
 
     @Test(dataProvider = "LRConstructorData")
-    public void testLRConstructors(String range, double weight) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testLRConstructors(String range, double weight) {
         LanguageRange lr;
         if (weight == MAX_WEIGHT) {
             lr = new LanguageRange(range);
@@ -279,7 +284,11 @@ public class Bug7069824 {
     }
 
     @Test(dataProvider = "LRConstructorNPEData", expectedExceptions = NullPointerException.class)
-    public void testLRConstructorNPE(String range, double weight) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testLRConstructorNPE(String range, double weight) {
         if (weight == MAX_WEIGHT) {
             new LanguageRange(range);
         } else {
@@ -288,7 +297,11 @@ public class Bug7069824 {
     }
 
     @Test(dataProvider = "LRConstructorIAEData", expectedExceptions = IllegalArgumentException.class)
-    public void testLRConstructorIAE(String range, double weight) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testLRConstructorIAE(String range, double weight) {
         if (weight == MAX_WEIGHT) {
             new LanguageRange(range);
         } else {
@@ -311,7 +324,11 @@ public class Bug7069824 {
     }
 
     @Test(dataProvider = "LRParseData")
-    public void testLRParse(String ranges, List<LanguageRange> expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testLRParse(String ranges, List<LanguageRange> expected) {
         assertEquals(LanguageRange.parse(ranges), expected,
                 "    LR.parse(" + ranges + ") test failed.");
     }
@@ -322,7 +339,11 @@ public class Bug7069824 {
     }
 
     @Test(dataProvider = "LRParseIAEData", expectedExceptions = IllegalArgumentException.class)
-    public void testLRParseIAE(String ranges) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testLRParseIAE(String ranges) {
         LanguageRange.parse(ranges);
     }
 
@@ -339,7 +360,11 @@ public class Bug7069824 {
     }
 
     @Test(dataProvider = "LFilterData")
-    public void testLFilter(String ranges, String tags, FilteringMode mode, String expectedLocales) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testLFilter(String ranges, String tags, FilteringMode mode, String expectedLocales) {
         List<LanguageRange> priorityList = LanguageRange.parse(ranges);
         List<Locale> tagList = generateLocales(tags);
         String actualLocales =
@@ -349,7 +374,11 @@ public class Bug7069824 {
     }
 
     @Test(dataProvider = "LFilterNPEData", expectedExceptions = NullPointerException.class)
-    public void testLFilterNPE(String ranges, String tags, FilteringMode mode) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testLFilterNPE(String ranges, String tags, FilteringMode mode) {
         List<LanguageRange> priorityList = LanguageRange.parse(ranges);
         List<Locale> tagList = generateLocales(tags);
         showLocales(Locale.filter(priorityList, tagList, mode));
@@ -365,7 +394,11 @@ public class Bug7069824 {
     }
 
     @Test(dataProvider = "LFilterTagsData")
-    public void testLFilterTags(String ranges, String tags, FilteringMode mode, String expectedTags) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testLFilterTags(String ranges, String tags, FilteringMode mode, String expectedTags) {
         List<LanguageRange> priorityList = LanguageRange.parse(ranges);
         List<String> tagList = generateLanguageTags(tags);
         String actualTags;
@@ -380,7 +413,11 @@ public class Bug7069824 {
     }
 
     @Test(dataProvider = "LLookupData")
-    public void testLLookup(String ranges, String tags, String expectedLocale) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testLLookup(String ranges, String tags, String expectedLocale) {
         List<LanguageRange> priorityList = LanguageRange.parse(ranges);
         List<Locale> localeList = generateLocales(tags);
         String actualLocale =
@@ -390,7 +427,11 @@ public class Bug7069824 {
     }
 
     @Test(dataProvider = "LLookupTagData")
-    public void testLLookupTag(String ranges, String tags, String expectedTag) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testLLookupTag(String ranges, String tags, String expectedTag) {
         List<LanguageRange> priorityList = LanguageRange.parse(ranges);
         List<String> tagList = generateLanguageTags(tags);
         String actualTag = Locale.lookupTag(priorityList, tagList);

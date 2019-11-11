@@ -40,6 +40,7 @@ import java.util.concurrent.*;
  * Test handling of empty Http headers
  */
 
+@Bean
 public class Test10 extends Test {
     public static void main (String[] args) throws Exception {
         System.out.print ("Test10: ");

@@ -28,6 +28,7 @@
  * @summary Undefined character code points do not have titlecase mappings. The
  *          toTitleCase method should return the argument code value.
  */
+@Bean
 public class TestUndefinedTitleCase {
     static int endCharValue = 0xFFFF;
 

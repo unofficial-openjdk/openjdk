@@ -35,6 +35,7 @@ import jdk.test.lib.Utils;
  * @run driver DoubleAgentTest
  */
 
+@Bean
 public class DoubleAgentTest {
 
     private static final String TEST_CLASSES = System.getProperty(

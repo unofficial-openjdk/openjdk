@@ -34,6 +34,7 @@ import com.sun.tools.doclint.HtmlTag;
 import com.sun.tools.doclint.Messages;
 import java.util.Objects;
 
+@Bean
 public class CoverageExtras {
     public static void main(String... args) {
         new CoverageExtras().run();

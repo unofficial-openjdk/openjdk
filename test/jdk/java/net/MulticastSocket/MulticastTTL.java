@@ -30,6 +30,7 @@
 import java.io.*;
 import java.net.*;
 
+@Bean
 public class MulticastTTL {
 
     public static void main(String args[]) throws Exception {

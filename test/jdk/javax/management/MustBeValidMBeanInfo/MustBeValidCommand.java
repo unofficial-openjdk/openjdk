@@ -41,6 +41,7 @@ import javax.management.MBeanParameterInfo;
 import javax.management.MBeanNotificationInfo;
 import javax.management.MBeanConstructorInfo;
 
+@Bean
 public class MustBeValidCommand {
 
     private static String[][] attributes = {

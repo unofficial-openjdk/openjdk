@@ -34,6 +34,7 @@
 
 import java.util.ResourceBundle;
 
+@Bean
 public class Test4300693 {
 
    private static ResourceBundle rb = ResourceBundle.getBundle("Test4300693RB");

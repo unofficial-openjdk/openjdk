@@ -26,6 +26,7 @@
  * @bug 6568872
  * @summary BasicPermission.newPermissionCollection() violates general contract specified in Permission class
  */
+@Bean
 public class MixedBasicPermissions {
     public static void main(String[] args) {
         try {

@@ -6,6 +6,7 @@
  * @compile/fail/ref=AnalyzersCheckSourceLevel.out -Werror -XDfind=lambda -XDrawDiagnostics AnalyzersCheckSourceLevel.java
  * @compile -Werror -source 7 -Xlint:-options -XDfind=lambda AnalyzersCheckSourceLevel.java
  */
+@Bean
 public class AnalyzersCheckSourceLevel {
     void t() {
         Runnable r = new Runnable() {

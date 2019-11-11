@@ -44,6 +44,7 @@ import toolbox.Task.Mode;
 import toolbox.Task.OutputKind;
 import toolbox.ToolBox;
 
+@Bean
 public class LimitedImage {
     public static void main(String... args) throws IOException {
         ToolBox tb = new ToolBox();

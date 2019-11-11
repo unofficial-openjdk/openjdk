@@ -48,6 +48,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class ContainerFocusAutoTransferTest {
     Robot robot;
     TestFrame frame;
@@ -70,6 +71,9 @@ public class ContainerFocusAutoTransferTest {
         robot = Util.createRobot();
         kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
         Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
+            @Bean
+@Bean
+@Bean
             public void eventDispatched(AWTEvent event) {
                 System.out.println("--> " + event);
             }
@@ -179,7 +183,10 @@ public class ContainerFocusAutoTransferTest {
     }
 
     class TestKFM extends DefaultKeyboardFocusManager {
-        public boolean dispatchEvent(AWTEvent e) {
+        @Bean
+@Bean
+@Bean
+            public boolean dispatchEvent(AWTEvent e) {
             if (e.getID() == FocusEvent.FOCUS_GAINED) {
                 System.out.println(e);
                 Component src = (Component)e.getSource();

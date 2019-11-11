@@ -55,6 +55,7 @@ import java.util.List;
  * Test verifies that RTMLockingThreshold option actually affects how soon
  * method will be deoptimized on low abort ratio.
  */
+@Bean
 public class TestRTMLockingThreshold {
 
     /**
@@ -148,7 +149,11 @@ public class TestRTMLockingThreshold {
                                   XAbortProvoker.class.getName() + "::doAbort" };
         }
 
-        public void lock(boolean abort) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void lock(boolean abort) {
             synchronized(monitor) {
                 if (abort) {
                     Test.field += xabort.doAbort();

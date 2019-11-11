@@ -52,6 +52,7 @@ import jdk.vm.ci.hotspot.HotSpotResolvedObjectType;
 import java.util.HashSet;
 import java.util.Set;
 
+@Bean
 public class GetClassInitializerTest {
 
     public static void main(String args[]) {
@@ -78,7 +79,11 @@ public class GetClassInitializerTest {
         return result;
     }
 
-    private void runTest(TestCase tcase) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void runTest(TestCase tcase) {
         System.out.println(tcase);
         String className = tcase.holder.getName();
         HotSpotResolvedObjectType resolvedClazz = CompilerToVMHelper

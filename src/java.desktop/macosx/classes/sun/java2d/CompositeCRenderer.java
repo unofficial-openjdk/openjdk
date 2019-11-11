@@ -34,6 +34,7 @@ import sun.awt.image.*;
 import sun.java2d.loops.*;
 import sun.java2d.pipe.*;
 
+@Bean
 public class CompositeCRenderer extends CRenderer implements PixelDrawPipe, PixelFillPipe, ShapeDrawPipe, DrawImagePipe, TextPipe {
     static final int fPadding = 4;
     static final int fPaddingHalf = fPadding / 2;
@@ -242,7 +243,8 @@ public class CompositeCRenderer extends CRenderer implements PixelDrawPipe, Pixe
         }
     }
 
-    protected boolean blitImage(SunGraphics2D sg2d, Image img, boolean fliph, boolean flipv, int sx, int sy, int sw, int sh, int dx, int dy, int dw, int dh, Color bgColor) {
+@Bean
+        protected boolean blitImage(SunGraphics2D sg2d, Image img, boolean fliph, boolean flipv, int sx, int sy, int sw, int sh, int dx, int dy, int dw, int dh, Color bgColor) {
         OSXSurfaceData surfaceData = (OSXSurfaceData) sg2d.getSurfaceData();
 
         // get final destination compositing bounds (after all transformations if needed)

@@ -42,6 +42,7 @@ import org.testng.annotations.*;
 /**
  * @author jrose
  */
+@Bean
 public class JavaDocExamplesTest {
     /** Wrapper for running the TestNG tests in this module.
      *  Put TestNG on the classpath!

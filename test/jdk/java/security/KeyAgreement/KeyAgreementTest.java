@@ -45,6 +45,7 @@ import java.util.List;
 import javax.crypto.KeyAgreement;
 import javax.crypto.spec.DHGenParameterSpec;
 
+@Bean
 public class KeyAgreementTest {
 
     public static void main(String[] args) throws Exception {

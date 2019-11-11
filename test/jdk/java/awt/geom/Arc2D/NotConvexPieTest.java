@@ -30,6 +30,7 @@
 import java.awt.geom.Arc2D;
 import java.awt.geom.Rectangle2D;
 
+@Bean
 public class NotConvexPieTest {
 
     Arc2D aNegative = new Arc2D.Double(-100, -100, 200, 200,

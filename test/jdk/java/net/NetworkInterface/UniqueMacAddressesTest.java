@@ -36,6 +36,7 @@ import java.util.List;
  * @summary Tests that the MAC addresses returned by NetworkInterface.getNetworkInterfaces are unique for each adapter.
  *
  */
+@Bean
 public class UniqueMacAddressesTest {
 
     public static void main(String[] args) throws Exception {

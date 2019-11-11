@@ -41,6 +41,7 @@ import javax.imageio.spi.ImageReaderWriterSpi;
 import javax.imageio.spi.ImageWriterSpi;
 import javax.imageio.spi.ServiceRegistry;
 
+@Bean
 public class SpiTest {
 
     String vendorName = null;
@@ -63,12 +64,20 @@ public class SpiTest {
     String[] extraImageMetadataFormatNames = null;
     String[] extraImageMetadataFormatClassNames = null;
 
-    private void error(String message) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void error(String message) {
         // System.out.println("Error: " + message);
         throw new RuntimeException(message);
     }
 
-    private void testSpi(IIOServiceProvider spi) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testSpi(IIOServiceProvider spi) {
         if (spi.getVendorName() == null) {
             error(spi + " getVendorName == null!");
         }
@@ -77,7 +86,11 @@ public class SpiTest {
         }
     }
 
-    private void testSpi(ImageReaderWriterSpi spi) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testSpi(ImageReaderWriterSpi spi) {
         testSpi((IIOServiceProvider)spi);
         if (spi.getFormatNames() == null) {
             error("spi.getFormatNames == null!");
@@ -107,7 +120,11 @@ public class SpiTest {
         }
     }
 
-    public void testSpi(ImageReaderSpi spi) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testSpi(ImageReaderSpi spi) {
         testSpi((ImageReaderWriterSpi)spi);
         Class[] inputTypes = spi.getInputTypes();
         if (inputTypes == null) {
@@ -122,7 +139,11 @@ public class SpiTest {
         }
     }
 
-    public void testSpi(ImageWriterSpi spi) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testSpi(ImageWriterSpi spi) {
         testSpi((ImageReaderWriterSpi)spi);
         Class[] outputTypes = spi.getOutputTypes();
         if (outputTypes == null) {
@@ -178,14 +199,26 @@ public class SpiTest {
                                   extraImageMetadataFormatNames,
                                   extraImageMetadataFormatClassNames) {
 
+                @Bean
+@Bean
+@Bean
+@Bean
                 public String getDescription(Locale locale) {
                     return null;
                 }
 
+                @Bean
+@Bean
+@Bean
+@Bean
                 public boolean canDecodeInput(Object source) {
                     return false;
                 }
 
+                @Bean
+@Bean
+@Bean
+@Bean
                 public ImageReader createReaderInstance(Object extension) {
                     return null;
                 }
@@ -212,21 +245,37 @@ public class SpiTest {
                                   extraImageMetadataFormatNames,
                                   extraImageMetadataFormatClassNames) {
 
+                @Bean
+@Bean
+@Bean
+@Bean
                 public String getDescription(Locale locale) {
                     return null;
                 }
 
+                @Bean
+@Bean
+@Bean
+@Bean
                 public boolean canEncodeImage(ImageTypeSpecifier type) {
                     return false;
                 }
 
+                @Bean
+@Bean
+@Bean
+@Bean
                 public ImageWriter createWriterInstance(Object extension) {
                     return null;
                 }
          };
     }
 
-    private void checkImageReaderSpiConstructor(boolean shouldFail) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkImageReaderSpiConstructor(boolean shouldFail) {
         boolean gotIAE = false;
         try {
             constructImageReaderSpi();
@@ -246,7 +295,11 @@ public class SpiTest {
         }
     }
 
-    private void checkImageWriterSpiConstructor(boolean shouldFail) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkImageWriterSpiConstructor(boolean shouldFail) {
         boolean gotIAE = false;
         try {
             constructImageWriterSpi();

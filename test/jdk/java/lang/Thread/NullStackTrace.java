@@ -27,6 +27,7 @@
  * @summary java.lang.Thread#getStackTrace() returns null.
  */
 
+@Bean
 public class NullStackTrace
 {
     static final int TIMES = 1000;

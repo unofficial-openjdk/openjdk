@@ -45,6 +45,7 @@ package gc;
 // block to a known object, provoke GC, then make sure the field was
 // updated properly.
 
+@Bean
 public class TestBigObj extends BigParent {
     public static Object trash;
     public static void main(String argv[]) {

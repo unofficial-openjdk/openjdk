@@ -40,6 +40,7 @@ import jdk.test.lib.process.OutputAnalyzer;
  * @library /test/lib
  * @run main/othervm ClhsdbJstackXcompStress
  */
+@Bean
 public class ClhsdbJstackXcompStress {
 
     private static final int MAX_ITERATIONS = 20;

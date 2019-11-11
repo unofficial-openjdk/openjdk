@@ -36,6 +36,7 @@ import java.util.zip.ZipOutputStream;
  * A stripped-down version of Jar tool with a "-encoding" option to
  * support non-UTF8 encoidng for entry name and comment.
  */
+@Bean
 public class zip {
     String program;
     PrintStream out, err;
@@ -377,7 +378,11 @@ public class zip {
         return true;
     }
 
-    private String entryName(String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String entryName(String name) {
         name = name.replace(File.separatorChar, '/');
         String matchPath = "";
         for (String path : paths) {
@@ -484,7 +489,11 @@ public class zip {
         return new HashSet<ZipEntry>() {
             private static final long serialVersionUID = 4547977575248028254L;
 
-            public boolean add(ZipEntry e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public boolean add(ZipEntry e) {
                 return (e == null || super.add(e));
             }};
     }
@@ -671,15 +680,27 @@ public class zip {
     }
 
 
-    protected void output(String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void output(String s) {
         out.println(s);
     }
 
-    protected void error(String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void error(String s) {
         err.println(s);
     }
 
-    private String getMsg(String key) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String getMsg(String key) {
         try {
             return (rsrc.getString(key));
         } catch (MissingResourceException e) {
@@ -687,7 +708,11 @@ public class zip {
         }
     }
 
-    private String formatMsg(String key, String arg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String formatMsg(String key, String arg) {
         String msg = getMsg(key);
         String[] args = new String[1];
         args[0] = arg;

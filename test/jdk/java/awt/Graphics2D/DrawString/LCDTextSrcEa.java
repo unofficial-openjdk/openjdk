@@ -42,6 +42,9 @@ public class LCDTextSrcEa extends Component {
         Frame f = new Frame("LCD Text SrcEa Test");
         f.addWindowListener(new WindowAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent e) {
                 System.exit(0);
             }
@@ -56,7 +59,10 @@ public class LCDTextSrcEa extends Component {
         return new Dimension(SZ,SZ);
     }
 
-    public void paint(Graphics gx) {
+    @Bean
+@Bean
+@Bean
+            public void paint(Graphics gx) {
 
         Graphics2D g2d = (Graphics2D) target.getGraphics();
         g2d.setColor(Color.white);

@@ -34,6 +34,7 @@
 // Make sure the closure is present when the superclass is constructed.
 // Specifically, N must have its T.this initialized when S calls hi().
 
+@Bean
 public class Closure1 {
     static class S {
         void hi() { throw new Error(); }

@@ -35,6 +35,7 @@
 import static jdk.test.lib.Asserts.*;
 import java.sql.Time;
 
+@Bean
 public class JVMDefineModule {
 
     public static void main(String args[]) throws Throwable {

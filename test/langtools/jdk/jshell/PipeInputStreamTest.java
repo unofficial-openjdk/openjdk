@@ -41,6 +41,7 @@ import com.sun.tools.javac.util.Pair;
 import static org.testng.Assert.*;
 
 @Test
+@Bean
 public class PipeInputStreamTest {
 
     public void testReadArrayNotBlocking() throws Exception {

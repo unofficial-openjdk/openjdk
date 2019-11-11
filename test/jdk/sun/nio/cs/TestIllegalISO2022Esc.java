@@ -30,6 +30,7 @@
 import java.io.*;
 import java.nio.charset.*;
 
+@Bean
 public class TestIllegalISO2022Esc {
 
     public static void main ( String[] args) throws Exception {

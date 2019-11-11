@@ -38,6 +38,7 @@
 import java.lang.management.*;
 import java.util.*;
 
+@Bean
 public class TestMemoryMXBeans {
 
     public static void main(String[] args) throws Exception {

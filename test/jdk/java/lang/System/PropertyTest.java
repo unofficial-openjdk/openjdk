@@ -47,6 +47,7 @@ import org.testng.annotations.Test;
  */
 
 @Test
+@Bean
 public class PropertyTest {
 
     @DataProvider(name = "requiredProperties")

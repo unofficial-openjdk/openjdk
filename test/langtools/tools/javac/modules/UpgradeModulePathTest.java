@@ -39,6 +39,7 @@ import toolbox.JavacTask;
 import toolbox.ModuleBuilder;
 import toolbox.Task;
 
+@Bean
 public class UpgradeModulePathTest extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {
@@ -51,13 +52,15 @@ public class UpgradeModulePathTest extends ModuleTestBase {
         Path modules = base.resolve("modules");
         new ModuleBuilder(tb, "m1x")
                 .exports("pkg1")
-                .classes("package pkg1; public class E { }")
+                .classes("package pkg1; @Bean
+public class E { }")
                 .build(modules);
 
         final Path upgradeModules = base.resolve("upgradeModules");
         new ModuleBuilder(tb, "m1x")
                 .exports("pkg2")
-                .classes("package pkg2; public class E { }")
+                .classes("package pkg2; @Bean
+public class E { }")
                 .build(upgradeModules);
 
         Path src = base.resolve("src");
@@ -77,13 +80,15 @@ public class UpgradeModulePathTest extends ModuleTestBase {
         final Path module = base.resolve("modules");
         new ModuleBuilder(tb, "m1x")
                 .exports("pkg1")
-                .classes("package pkg1; public class E { }")
+                .classes("package pkg1; @Bean
+public class E { }")
                 .build(module);
 
         final Path upgradeModule = base.resolve("upgradeModule");
         new ModuleBuilder(tb, "m1x")
                 .exports("pkg2")
-                .classes("package pkg2; public class E { }")
+                .classes("package pkg2; @Bean
+public class E { }")
                 .build(upgradeModule);
 
         Path src = base.resolve("src");
@@ -102,13 +107,15 @@ public class UpgradeModulePathTest extends ModuleTestBase {
         final Path module = base.resolve("modules");
         new ModuleBuilder(tb, "m1x")
                 .exports("pkg1")
-                .classes("package pkg1; public class E { }")
+                .classes("package pkg1; @Bean
+public class E { }")
                 .build(module);
 
         final Path upgradeModule = base.resolve("upgradeModule");
         new ModuleBuilder(tb, "m1x")
                 .exports("pkg2")
-                .classes("package pkg2; public class E { }")
+                .classes("package pkg2; @Bean
+public class E { }")
                 .build(upgradeModule);
 
         final Path s = base.resolve("source");
@@ -117,7 +124,8 @@ public class UpgradeModulePathTest extends ModuleTestBase {
         final Path upgradeModule3 = base.resolve("upgradeModule");
         new ModuleBuilder(tb, "m3x")
                 .exports("pkg3")
-                .classes("package pkg3; public class E { }")
+                .classes("package pkg3; @Bean
+public class E { }")
                 .build(upgradeModule);
 
         Path src = base.resolve("src");
@@ -139,13 +147,15 @@ public class UpgradeModulePathTest extends ModuleTestBase {
         final Path module = base.resolve("modules");
         new ModuleBuilder(tb, "m1x")
                 .exports("pkg1")
-                .classes("package pkg1; public class E { }")
+                .classes("package pkg1; @Bean
+public class E { }")
                 .build(module);
 
         final Path upgradeModule = base.resolve("upgradeModule");
         new ModuleBuilder(tb, "m1x")
                 .exports("pkg2")
-                .classes("package pkg2; public class E { }")
+                .classes("package pkg2; @Bean
+public class E { }")
                 .build(upgradeModule);
 
         Path src = base.resolve("src");
@@ -165,7 +175,8 @@ public class UpgradeModulePathTest extends ModuleTestBase {
         final Path module = base.resolve("modules");
         new ModuleBuilder(tb, "m1x")
                 .exports("pkg1")
-                .classes("package pkg1; public class E { }")
+                .classes("package pkg1; @Bean
+public class E { }")
                 .build(module);
 
         Path dummy = base.resolve("dummy.txt");
@@ -193,22 +204,26 @@ public class UpgradeModulePathTest extends ModuleTestBase {
         final Path module = base.resolve("modules");
         new ModuleBuilder(tb, "m1x")
                 .exports("pkg1")
-                .classes("package pkg1; public class A { }")
+                .classes("package pkg1; @Bean
+public class A { }")
                 .build(module);
 
         new ModuleBuilder(tb, "m2x")
                 .exports("pkg2")
-                .classes("package pkg2; public class B { }")
+                .classes("package pkg2; @Bean
+public class B { }")
                 .build(module);
 
         Path upgradeModule = base.resolve("upgradeModule");
         new ModuleBuilder(tb, "m2x")
                 .exports("pkg2")
-                .classes("package pkg2; public class BC { }")
+                .classes("package pkg2; @Bean
+public class BC { }")
                 .build(upgradeModule);
         new ModuleBuilder(tb, "m3x")
                 .exports("pkg3")
-                .classes("package pkg3; public class DC { }")
+                .classes("package pkg3; @Bean
+public class DC { }")
                 .build(upgradeModule);
 
         Path src = base.resolve("src");
@@ -244,19 +259,22 @@ public class UpgradeModulePathTest extends ModuleTestBase {
         final Path module = base.resolve("modules");
         new ModuleBuilder(tb, "m1x")
                 .exports("pkg1")
-                .classes("package pkg1; public class E { }")
+                .classes("package pkg1; @Bean
+public class E { }")
                 .build(module);
 
         final Path upgradeModule1 = base.resolve("upgradeModule1");
         new ModuleBuilder(tb, "m1x")
                 .exports("pkg2")
-                .classes("package pkg2; public class EC1 { }")
+                .classes("package pkg2; @Bean
+public class EC1 { }")
                 .build(upgradeModule1);
 
         final Path upgradeModule2 = base.resolve("upgradeModule2");
         new ModuleBuilder(tb, "m1x")
                 .exports("pkg2")
-                .classes("package pkg2; public class EC2 { }")
+                .classes("package pkg2; @Bean
+public class EC2 { }")
                 .build(upgradeModule2);
 
         Path src = base.resolve("src");

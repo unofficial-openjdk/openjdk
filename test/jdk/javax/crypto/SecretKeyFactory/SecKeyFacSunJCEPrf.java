@@ -40,6 +40,7 @@ import java.security.Security;
 import com.evilprovider.*;
 import jdk.test.lib.Convert;
 
+@Bean
 public class SecKeyFacSunJCEPrf {
 
     // One of the PBKDF2 HMAC-SHA1 test vectors from RFC 6070

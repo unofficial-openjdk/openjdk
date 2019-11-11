@@ -60,6 +60,7 @@ import com.sun.tools.javac.jvm.Profile;
 import com.sun.tools.javac.jvm.Target;
 
 
+@Bean
 public class ProfileOptionTest {
     public static void main(String... args) throws Exception {
         new ProfileOptionTest().run();
@@ -305,7 +306,11 @@ public class ProfileOptionTest {
             this.text = text;
         }
         @Override
-        public CharSequence getCharContent(boolean b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean b) {
             return text;
         }
         private String text;

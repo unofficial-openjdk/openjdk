@@ -70,6 +70,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 import static java.lang.module.ModuleDescriptor.Requires.Modifier.*;
 
+@Bean
 public class HashesTest {
     static final ToolProvider JMOD_TOOL = ToolProvider.findFirst("jmod")
         .orElseThrow(() ->
@@ -323,12 +324,20 @@ public class HashesTest {
         assertTrue(hashes.names().equals(Set.of(hashModules)));
     }
 
-    private ModuleHashes hashes(String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private ModuleHashes hashes(String name) {
         ModuleFinder finder = ModulePath.of(Runtime.version(), true, lib);
         return hashes(finder, name);
     }
 
-    private ModuleHashes hashes(ModuleFinder finder, String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private ModuleHashes hashes(ModuleFinder finder, String name) {
         ModuleReference mref = finder.find(name).orElseThrow(RuntimeException::new);
         try {
             ModuleReader reader = mref.open();
@@ -350,7 +359,11 @@ public class HashesTest {
         }
     }
 
-    private String toHex(byte[] ba) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String toHex(byte[] ba) {
         StringBuilder sb = new StringBuilder(ba.length);
         for (byte b: ba) {
             sb.append(String.format("%02x", b & 0xff));
@@ -410,12 +423,20 @@ public class HashesTest {
         builder.compile(mn, mods);
     }
 
-    private void jmodHashModules(String moduleName, String hashModulesPattern) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void jmodHashModules(String moduleName, String hashModulesPattern) {
         makeJmod(moduleName, "--module-path", lib.toString(),
                  "--hash-modules", hashModulesPattern);
     }
 
-    private void makeJmod(String moduleName, String... options) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void makeJmod(String moduleName, String... options) {
         Path mclasses = mods.resolve(moduleName);
         Path outfile = lib.resolve(moduleName + ".jmod");
         List<String> args = new ArrayList<>();
@@ -442,7 +463,11 @@ public class HashesTest {
         }
     }
 
-    private void makeJar(String moduleName, String... options) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void makeJar(String moduleName, String... options) {
         Path mclasses = mods.resolve(moduleName);
         Path outfile = lib.resolve(moduleName + ".jar");
         List<String> args = new ArrayList<>();

@@ -54,7 +54,10 @@ public class bug4634626 {
     static boolean popt = false;
 
     public static class MouseWatcher extends MouseAdapter {
-        public void mousePressed(MouseEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void mousePressed(MouseEvent e) {
             if(e.isPopupTrigger()) popt = true;
             if(e.getComponent() != null &&
                e.getComponent() instanceof JComponent &&
@@ -65,7 +68,10 @@ public class bug4634626 {
                   + e);
             }
         }
-        public void mouseReleased(MouseEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void mouseReleased(MouseEvent e) {
             if(e.isPopupTrigger()) popt = true;
             if(e.getComponent() != null &&
                e.getComponent() instanceof JComponent &&
@@ -135,7 +141,10 @@ public class bug4634626 {
     }
 
     public class TestStateListener extends WindowAdapter {
-        public void windowOpened(WindowEvent ev) {
+        @Bean
+@Bean
+@Bean
+            public void windowOpened(WindowEvent ev) {
             try {
                 ev.getWindow().toFront();
                 ev.getWindow().requestFocus();
@@ -203,7 +212,10 @@ public class bug4634626 {
             throw(toBeThrown);
         }
     }
-    private void clickMouseOn(ExtendedRobot robot, Component c, int button) {
+    @Bean
+@Bean
+@Bean
+            private void clickMouseOn(ExtendedRobot robot, Component c, int button) {
         java.awt.Point p = c.getLocationOnScreen();
         java.awt.Dimension size = c.getSize();
         p.x += size.width / 2;

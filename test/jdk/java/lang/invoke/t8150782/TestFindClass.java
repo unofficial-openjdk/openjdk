@@ -38,6 +38,7 @@ import static org.testng.AssertJUnit.*;
 
 import org.testng.annotations.*;
 
+@Bean
 public class TestFindClass {
 
     private static final String PACKAGE_PREFIX = "test.java.lang.invoke.t8150782.";

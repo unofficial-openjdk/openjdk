@@ -31,6 +31,7 @@
  * @run main ChainedAssignment
  */
 
+@Bean
 public class ChainedAssignment {
 
     private int a = 0;

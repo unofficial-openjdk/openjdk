@@ -46,6 +46,7 @@ import com.ibm.icu.impl.NormalizerImpl;
  * You can test datafiles using Normalizer in ICU4J 3.2. Download ICU4J 3.2 and
  * run this test program with -cp <ICU4J 3.2>.
  */
+@Bean
 public class DataValidationTest {
 
     //

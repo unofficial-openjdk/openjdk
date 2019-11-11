@@ -27,6 +27,7 @@ import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
 
+@Bean
 public class DummyAgent implements ClassFileTransformer {
     @Override
     public byte[] transform(ClassLoader loader, String className,

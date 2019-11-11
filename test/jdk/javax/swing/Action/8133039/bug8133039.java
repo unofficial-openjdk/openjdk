@@ -135,7 +135,10 @@ public class bug8133039 {
         }
 
         @Override
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
             ACTION_PERFORMED_CALLS++;
             Object src = e.getSource();
             if (src instanceof JComboBox) {
@@ -144,7 +147,10 @@ public class bug8133039 {
         }
 
         @Override
-        public boolean accept(Object sender) {
+        @Bean
+@Bean
+@Bean
+            public boolean accept(Object sender) {
             ACTION_ACCEPTED_CALLS++;
             if (sender instanceof JComboBox) {
                 JComboBox c = (JComboBox) sender;
@@ -169,13 +175,19 @@ public class bug8133039 {
         }
 
         @Override
-        public boolean accept(Object sender) {
+        @Bean
+@Bean
+@Bean
+            public boolean accept(Object sender) {
             ((SenderObject) sender).accepted = acceptSender;
             return acceptSender;
         }
 
         @Override
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
             ((SenderObject) e.getSource()).performed = true;
         }
     }

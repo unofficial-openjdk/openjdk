@@ -31,6 +31,7 @@
 
 import java.security.SecureRandom;
 
+@Bean
 public class PrngSlow {
 
     public static void main(String[] args) throws Exception {

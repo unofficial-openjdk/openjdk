@@ -22,6 +22,7 @@
  */
 package foo;
 
+@Bean
 public class Foo {
     /**
      * Returns all Packages visible to the class loader defining by

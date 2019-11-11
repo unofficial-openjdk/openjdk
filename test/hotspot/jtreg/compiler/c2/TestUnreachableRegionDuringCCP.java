@@ -35,6 +35,7 @@ package compiler.c2;
 
 import jdk.test.lib.Asserts;
 
+@Bean
 public class TestUnreachableRegionDuringCCP {
     static int iFld1 = -1;
     static int iFld2 = -1;

@@ -78,6 +78,7 @@ class GCBeanDescription {
     }
 }
 
+@Bean
 public class TestMemoryMXBeansAndPoolsPresence {
     public static void test(GCBeanDescription... expectedBeans) {
         List<MemoryPoolMXBean> memoryPools = ManagementFactory.getMemoryPoolMXBeans();

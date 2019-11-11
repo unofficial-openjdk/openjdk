@@ -41,6 +41,7 @@ import javax.tools.SimpleJavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 
+@Bean
 public class T7142086 {
 
     final static int N_METHODS = 1000;
@@ -63,7 +64,11 @@ public class T7142086 {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return source;
         }
     }
@@ -80,7 +85,11 @@ public class T7142086 {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return source;
         }
     }
@@ -108,7 +117,11 @@ public class T7142086 {
 
         boolean errorFound;
 
-        public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
             if (diagnostic.getKind() == Diagnostic.Kind.ERROR) {
                 throw new AssertionError("unexpected diagnostic: " + diagnostic.getMessage(Locale.getDefault()));
             }

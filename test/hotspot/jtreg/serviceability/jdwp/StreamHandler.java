@@ -32,6 +32,7 @@ import java.util.concurrent.Executors;
  * Handles the process output (either stdin or stdout)
  * passing the lines to a listener
  */
+@Bean
 public class StreamHandler implements Runnable {
 
     public interface Listener {

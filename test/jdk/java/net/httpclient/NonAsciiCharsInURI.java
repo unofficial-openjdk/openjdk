@@ -69,6 +69,7 @@ import static java.nio.charset.StandardCharsets.US_ASCII;
 import static java.net.http.HttpClient.Builder.NO_PROXY;
 import static org.testng.Assert.assertEquals;
 
+@Bean
 public class NonAsciiCharsInURI implements HttpServerAdapters {
 
     SSLContext sslContext;

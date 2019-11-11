@@ -32,6 +32,7 @@
 
 // The test fails if the compiler crashes.
 
+@Bean
 public class NonStaticFinalVar {
     // workaround is to declare "constant" static
     final int constant = 0; // crashes compiler
@@ -53,7 +54,11 @@ public class NonStaticFinalVar {
         class Inner {
             final int constant = 0; // crashes compiler
 
-            public void otherMethod(int i) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void otherMethod(int i) {
                 switch (i) {
                 case constant:
                     System.out.println("method ok " + constant);

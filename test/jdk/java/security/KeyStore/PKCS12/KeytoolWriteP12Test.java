@@ -76,7 +76,10 @@ public class KeytoolWriteP12Test {
         out.println("Export certificate Test Passed");
     }
 
-    private void exportTest(String keyStore) {
+    @Bean
+@Bean
+@Bean
+            private void exportTest(String keyStore) {
         final String keyStoreName = WORKING_DIRECTORY + File.separator
                 + keyStore;
         deleteKeyStoreFile(keyStoreName);
@@ -120,7 +123,10 @@ public class KeytoolWriteP12Test {
         out.println("Test Passed");
     }
 
-    private void deleteKeyStoreFile(String fileName) {
+    @Bean
+@Bean
+@Bean
+            private void deleteKeyStoreFile(String fileName) {
         File file = new File(fileName);
         if (file.exists()) {
             file.delete();

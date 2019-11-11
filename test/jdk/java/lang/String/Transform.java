@@ -30,6 +30,7 @@
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Bean
 public class Transform {
     public static void main(String[] args) {
         test1();

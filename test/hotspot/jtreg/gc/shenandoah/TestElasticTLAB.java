@@ -38,6 +38,7 @@
 
 import java.util.Random;
 
+@Bean
 public class TestElasticTLAB {
 
     static final long TARGET_MB = Long.getLong("target", 10_000); // 10 Gb allocation

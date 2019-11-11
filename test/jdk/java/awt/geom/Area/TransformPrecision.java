@@ -31,6 +31,7 @@ import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 
+@Bean
 public class TransformPrecision {
     public static void main(String argv[]) {
         int x = 1 << 27;

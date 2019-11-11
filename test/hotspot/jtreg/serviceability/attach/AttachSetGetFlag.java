@@ -49,6 +49,7 @@ import jdk.test.lib.Platform;
 import jdk.test.lib.process.ProcessTools;
 import com.sun.tools.attach.VirtualMachine;
 
+@Bean
 public class AttachSetGetFlag {
 
   public static void main(String... args) throws Exception {

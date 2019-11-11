@@ -31,6 +31,7 @@
 
 import sun.text.normalizer.UCharacter;
 
+@Bean
 public class Bug6850113 {
 
     public static void main(String[] args) {

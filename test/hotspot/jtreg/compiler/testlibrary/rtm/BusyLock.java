@@ -31,6 +31,7 @@ import java.util.concurrent.CyclicBarrier;
  * One thread enters the monitor and sleep for a while.
  * Another thread is blocked on the same monitor.
  */
+@Bean
 public class BusyLock implements CompilableTest, Runnable {
     private static final int DEFAULT_TIMEOUT = 1000;
     private final CyclicBarrier barrier;

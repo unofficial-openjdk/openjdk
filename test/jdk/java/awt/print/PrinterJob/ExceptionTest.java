@@ -65,18 +65,27 @@ class TextCanvas extends Panel implements Pageable, Printable {
         return MAXPAGE;
     }
 
-    public PageFormat getPageFormat(int pageIndex) {
+    @Bean
+@Bean
+@Bean
+            public PageFormat getPageFormat(int pageIndex) {
        if (pageIndex > MAXPAGE) throw new IndexOutOfBoundsException();
            PageFormat pf = new PageFormat();
        return pf;
     }
 
-    public Printable getPrintable(int pageIndex) {
+    @Bean
+@Bean
+@Bean
+            public Printable getPrintable(int pageIndex) {
        if (pageIndex == 1) throw new IndexOutOfBoundsException();
        return this;
     }
 
-    public int print(Graphics g, PageFormat pgFmt, int pgIndex) {
+    @Bean
+@Bean
+@Bean
+            public int print(Graphics g, PageFormat pgFmt, int pgIndex) {
         System.out.println("****"+pgIndex);
         return Printable.PAGE_EXISTS;
     }

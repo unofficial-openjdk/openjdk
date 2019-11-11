@@ -26,6 +26,7 @@
  * @summary The array returned by getDeclaredClasses doesn't have the
  *          array element type tag.
  */
+@Bean
 public class TypeTag {
 
     private static class Inner { }

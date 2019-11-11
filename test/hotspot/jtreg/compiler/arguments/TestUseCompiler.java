@@ -32,6 +32,7 @@
 
 package compiler.arguments;
 
+@Bean
 public class TestUseCompiler {
 
     public static void main(String args[]) {

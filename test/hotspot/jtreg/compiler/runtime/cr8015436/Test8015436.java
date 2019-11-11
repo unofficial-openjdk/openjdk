@@ -47,6 +47,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 
+@Bean
 public class Test8015436 implements InterfaceWithDefaultMethod {
     public static final String SOME_MTD_INVOKED = "someMethod() invoked";
     public static final String DEFAULT_MTD_INVOKED_DIRECTLY = "defaultMethod() invoked directly";

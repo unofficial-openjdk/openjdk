@@ -36,6 +36,7 @@ import jdk.test.lib.JDKToolFinder;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class SABase extends CiReplayBase {
     private static final String REPLAY_FILE_COPY = "replay_vm.txt";
 

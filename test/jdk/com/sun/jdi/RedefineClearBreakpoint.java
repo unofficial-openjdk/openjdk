@@ -66,6 +66,7 @@ class RedefineClearBreakpointTarg {
 }
 
 
+@Bean
 public class RedefineClearBreakpoint extends JdbTest {
 
     public static void main(String argv[]) {

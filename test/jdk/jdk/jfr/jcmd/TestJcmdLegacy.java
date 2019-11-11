@@ -46,6 +46,7 @@ import jdk.test.lib.process.OutputAnalyzer;
  * @modules jdk.jfr/jdk.jfr.internal
  * @run main/othervm jdk.jfr.jcmd.TestJcmdLegacy
  */
+@Bean
 public class TestJcmdLegacy {
 
     private static final String DIR = System.getProperty("test.src", ".");

@@ -48,12 +48,14 @@ interface Condition8184989_3<T> {
     boolean check(T t);
 }
 
+@Bean
 public class LambdaInSuperCallCapturingOuterThis3 extends A8184989_3 {
     public boolean test() {return false;}
     public void b() {}
 
     class C extends A8184989_3 {
-        public class BA extends AA {
+        @Bean
+public class BA extends AA {
             public BA() {
                 super(o -> {b(); return test();});
             }

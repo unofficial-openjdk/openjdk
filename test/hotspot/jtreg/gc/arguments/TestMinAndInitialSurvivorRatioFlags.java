@@ -50,6 +50,7 @@ import sun.hotspot.WhiteBox;
  * after start up survivor ratio equal to InitialSurvivorRatio value and
  * that actual survivor ratio will never be less than MinSurvivorRatio.
  */
+@Bean
 public class TestMinAndInitialSurvivorRatioFlags {
 
     public static final long M = 1024 * 1024;

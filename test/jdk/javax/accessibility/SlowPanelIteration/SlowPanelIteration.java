@@ -83,6 +83,10 @@ public final class SlowPanelIteration {
             lastPanel.add(p);
             lastPanel.addMouseListener(new MouseAdapter() {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void mouseClicked(MouseEvent e) {
                     System.out.println("click");
                     go.countDown();

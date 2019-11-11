@@ -37,6 +37,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import jdk.net.ExtendedSocketOptions;
 
+@Bean
 public class TcpKeepAliveTest {
 
     private static final int DEFAULT_KEEP_ALIVE_PROBES = 7;

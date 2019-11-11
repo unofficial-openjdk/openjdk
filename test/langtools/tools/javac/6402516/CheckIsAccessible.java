@@ -44,6 +44,7 @@ import javax.lang.model.util.*;
 /*
  * Check the accessibility of items of a scope against the contents of string literals.
  */
+@Bean
 public class CheckIsAccessible extends Checker {
     public static void main(String... args) throws Exception {
         Checker chk = new CheckIsAccessible();
@@ -51,7 +52,11 @@ public class CheckIsAccessible extends Checker {
     }
 
     @Override
-    protected boolean check(Scope s, String ref) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected boolean check(Scope s, String ref) {
         System.err.println("checkIsAccessible: " + s + " " + s.getEnclosingClass() + " " + ref);
         if (ref.length() == 0)
             return true;
@@ -83,18 +88,30 @@ public class CheckIsAccessible extends Checker {
         return (actual == expect);
     }
 
-    private TypeElement getTypeElement(String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private TypeElement getTypeElement(String name) {
         TypeElement te = getElements().getTypeElement(name);
         if (te == null)
             throw new IllegalArgumentException("can't find element " + name);
         return te;
     }
 
-    private DeclaredType getType(String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private DeclaredType getType(String name) {
         return (DeclaredType)(getTypeElement(name).asType());
     }
 
-    private Element getMember(String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Element getMember(String name) {
         int sep = name.indexOf("#");
         String tname = name.substring(0, sep);
         String mname = name.substring(sep+1);

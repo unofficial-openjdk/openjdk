@@ -138,7 +138,8 @@ import static sun.security.util.SecurityConstants.GET_CLASSLOADER_PERMISSION;
  * two key/value pairs:
  * <blockquote>
  * <pre>
- * public class MyResources extends ListResourceBundle {
+ * @Bean
+public class MyResources extends ListResourceBundle {
  *     protected Object[][] getContents() {
  *         return new Object[][] {
  *             // LOCALIZE THE SECOND STRING OF EACH ARRAY (e.g., "OK")
@@ -327,8 +328,10 @@ import static sun.security.util.SecurityConstants.GET_CLASSLOADER_PERMISSION;
  * <blockquote>
  * <pre>
  * // default (English language, United States)
- * public class MyResources extends ResourceBundle {
- *     public Object handleGetObject(String key) {
+ * @Bean
+public class MyResources extends ResourceBundle {
+ *@Bean
+         public Object handleGetObject(String key) {
  *         if (key.equals("okKey")) return "Ok";
  *         if (key.equals("cancelKey")) return "Cancel";
  *         return null;
@@ -346,8 +349,10 @@ import static sun.security.util.SecurityConstants.GET_CLASSLOADER_PERMISSION;
  * }
  *
  * // German language
- * public class MyResources_de extends MyResources {
- *     public Object handleGetObject(String key) {
+ * @Bean
+public class MyResources_de extends MyResources {
+ *@Bean
+         public Object handleGetObject(String key) {
  *         // don't need okKey, since parent level handles it.
  *         if (key.equals("cancelKey")) return "Abbrechen";
  *         return null;
@@ -389,22 +394,26 @@ public abstract class ResourceBundle {
                 }
 
                 @Override
-                public ResourceBundle getParent(ResourceBundle bundle) {
+@Bean
+                    public ResourceBundle getParent(ResourceBundle bundle) {
                     return bundle.parent;
                 }
 
                 @Override
-                public void setLocale(ResourceBundle bundle, Locale locale) {
+@Bean
+                    public void setLocale(ResourceBundle bundle, Locale locale) {
                     bundle.locale = locale;
                 }
 
                 @Override
-                public void setName(ResourceBundle bundle, String name) {
+@Bean
+                    public void setName(ResourceBundle bundle, String name) {
                     bundle.name = name;
                 }
 
                 @Override
-                public ResourceBundle getBundle(String baseName, Locale locale, Module module) {
+@Bean
+                    public ResourceBundle getBundle(String baseName, Locale locale, Module module) {
                     // use the given module as the caller to bypass the access check
                     return getBundleImpl(module, module,
                                          baseName, locale,
@@ -412,7 +421,8 @@ public abstract class ResourceBundle {
                 }
 
                 @Override
-                public ResourceBundle newResourceBundle(Class<? extends ResourceBundle> bundleClass) {
+@Bean
+                    public ResourceBundle newResourceBundle(Class<? extends ResourceBundle> bundleClass) {
                     return ResourceBundleProviderHelper.newResourceBundle(bundleClass);
                 }
             });
@@ -421,7 +431,8 @@ public abstract class ResourceBundle {
     /** constant indicating that no resource bundle exists */
     private static final ResourceBundle NONEXISTENT_BUNDLE = new ResourceBundle() {
             public Enumeration<String> getKeys() { return null; }
-            protected Object handleGetObject(String key) { return null; }
+@Bean
+                protected Object handleGetObject(String key) { return null; }
             public String toString() { return "NONEXISTENT_BUNDLE"; }
         };
 
@@ -601,7 +612,8 @@ public abstract class ResourceBundle {
      *
      * @param parent this bundle's parent bundle.
      */
-    protected void setParent(ResourceBundle parent) {
+@Bean
+        protected void setParent(ResourceBundle parent) {
         assert parent != NONEXISTENT_BUNDLE;
         this.parent = parent;
     }
@@ -711,7 +723,8 @@ public abstract class ResourceBundle {
         }
 
         @Override
-        public boolean equals(Object other) {
+@Bean
+            public boolean equals(Object other) {
             if (this == other) {
                 return true;
             }
@@ -752,7 +765,8 @@ public abstract class ResourceBundle {
             this.format = format;
         }
 
-        private void setCause(Throwable cause) {
+@Bean
+            private void setCause(Throwable cause) {
             if (this.cause == null) {
                 this.cause = cause;
             } else {
@@ -1913,7 +1927,8 @@ public abstract class ResourceBundle {
         return AccessController.doPrivileged(
             new PrivilegedAction<>() {
                 @Override
-                public Class<ResourceBundleProvider> run() {
+                @Bean
+public class<ResourceBundleProvider> run() {
                     try {
                         Class<?> c = Class.forName(providerName, false, loader);
                         if (ResourceBundleProvider.class.isAssignableFrom(c)) {
@@ -2297,7 +2312,8 @@ public abstract class ResourceBundle {
      *         if {@code key} is {@code null}
      * @since 1.6
      */
-    public boolean containsKey(String key) {
+@Bean
+        public boolean containsKey(String key) {
         if (key == null) {
             throw new NullPointerException();
         }
@@ -2507,7 +2523,8 @@ public abstract class ResourceBundle {
      *         props = new Properties();
      *         props.loadFromXML(stream);
      *     }
-     *     protected Object handleGetObject(String key) {
+     *@Bean
+         protected Object handleGetObject(String key) {
      *         return props.getProperty(key);
      *     }
      *     public Enumeration&lt;String&gt; getKeys() {
@@ -3038,7 +3055,8 @@ public abstract class ResourceBundle {
          *        if {@code baseName} or {@code locale}
          *        is {@code null}
          */
-        public Locale getFallbackLocale(String baseName, Locale locale) {
+@Bean
+            public Locale getFallbackLocale(String baseName, Locale locale) {
             if (baseName == null) {
                 throw new NullPointerException();
             }
@@ -3299,7 +3317,8 @@ public abstract class ResourceBundle {
          *        if {@code baseName} or {@code locale} is
          *        {@code null}
          */
-        public long getTimeToLive(String baseName, Locale locale) {
+@Bean
+            public long getTimeToLive(String baseName, Locale locale) {
             if (baseName == null || locale == null) {
                 throw new NullPointerException();
             }
@@ -3442,7 +3461,8 @@ public abstract class ResourceBundle {
          *        is {@code null}
          * @see java.util.spi.AbstractResourceBundleProvider#toBundleName(String, Locale)
          */
-        public String toBundleName(String baseName, Locale locale) {
+@Bean
+            public String toBundleName(String baseName, Locale locale) {
             if (locale == Locale.ROOT) {
                 return baseName;
             }
@@ -3558,7 +3578,8 @@ public abstract class ResourceBundle {
             super(formats);
         }
 
-        public Locale getFallbackLocale(String baseName, Locale locale) {
+@Bean
+            public Locale getFallbackLocale(String baseName, Locale locale) {
             if (baseName == null || locale == null) {
                 throw new NullPointerException();
             }

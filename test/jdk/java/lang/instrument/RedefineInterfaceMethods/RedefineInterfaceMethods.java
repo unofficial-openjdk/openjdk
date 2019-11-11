@@ -59,6 +59,7 @@ class Host {
     }
 }
 
+@Bean
 public class RedefineInterfaceMethods {
     private static byte[] bytesForHostClass(char replace) throws Throwable {
         return NamedBuffer.bytesForHostClass(replace, "Host$B");

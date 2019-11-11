@@ -47,6 +47,7 @@ import jdk.jfr.Recording;
 import jdk.jfr.RecordingState;
 
 
+@Bean
 public class TestLoadedAgent {
     public static void main(String... arg) throws Exception {
         long pid = ProcessHandle.current().pid();

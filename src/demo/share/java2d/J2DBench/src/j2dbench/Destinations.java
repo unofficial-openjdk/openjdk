@@ -114,15 +114,18 @@ public abstract class Destinations extends Option.Enable {
         super(parent, nodename, description, defenabled);
     }
 
-    public void modifyTest(TestEnvironment env) {
+@Bean
+        public void modifyTest(TestEnvironment env) {
         setDestination(env);
     }
 
-    public void restoreTest(TestEnvironment env) {
+@Bean
+        public void restoreTest(TestEnvironment env) {
         env.setTestImage(null);
     }
 
-    public String getAbbreviatedModifierDescription(Object val) {
+@Bean
+        public String getAbbreviatedModifierDescription(Object val) {
         return "to "+getModifierValueName(val);
     }
 
@@ -133,11 +136,13 @@ public abstract class Destinations extends Option.Enable {
             super(destroot, "screen", "Output to Screen", false);
         }
 
-        public String getModifierValueName(Object val) {
+@Bean
+            public String getModifierValueName(Object val) {
             return "Screen";
         }
 
-        public void setDestination(TestEnvironment env) {
+@Bean
+            public void setDestination(TestEnvironment env) {
             env.setTestImage(null);
         }
     }
@@ -147,11 +152,13 @@ public abstract class Destinations extends Option.Enable {
             super(destroot, "offscreen", "Output to OffScreen Image", false);
         }
 
-        public String getModifierValueName(Object val) {
+@Bean
+            public String getModifierValueName(Object val) {
             return "OffScreen";
         }
 
-        public void setDestination(TestEnvironment env) {
+@Bean
+            public void setDestination(TestEnvironment env) {
             Component c = env.getCanvas();
             env.setTestImage(c.createImage(env.getWidth(), env.getHeight()));
         }
@@ -200,11 +207,13 @@ public abstract class Destinations extends Option.Enable {
             this.transparency = transparency;
         }
 
-        public String getModifierValueName(Object val) {
+@Bean
+            public String getModifierValueName(Object val) {
             return ModifierNames[transparency];
         }
 
-        public void setDestination(TestEnvironment env) {
+@Bean
+            public void setDestination(TestEnvironment env) {
             Component c = env.getCanvas();
             GraphicsConfiguration gc = c.getGraphicsConfiguration();
             int w = env.getWidth();
@@ -260,11 +269,13 @@ public abstract class Destinations extends Option.Enable {
             this.transparency = transparency;
         }
 
-        public String getModifierValueName(final Object val) {
+@Bean
+            public String getModifierValueName(final Object val) {
             return ModifierNames[transparency];
         }
 
-        public void setDestination(final TestEnvironment env) {
+@Bean
+            public void setDestination(final TestEnvironment env) {
             Component c = env.getCanvas();
             GraphicsConfiguration gc = c.getGraphicsConfiguration();
             int w = env.getWidth();
@@ -321,11 +332,13 @@ public abstract class Destinations extends Option.Enable {
             this.type = type;
         }
 
-        public String getModifierValueName(Object val) {
+@Bean
+            public String getModifierValueName(Object val) {
             return "BufImg("+getNodeName()+")";
         }
 
-        public void setDestination(TestEnvironment env) {
+@Bean
+            public void setDestination(TestEnvironment env) {
             if (img == null) {
                 img = new BufferedImage(env.getWidth(), env.getHeight(), type);
             }
@@ -343,11 +356,13 @@ public abstract class Destinations extends Option.Enable {
                   false);
         }
 
-        public String getModifierValueName(Object val) {
+@Bean
+            public String getModifierValueName(Object val) {
             return "CustomImg";
         }
 
-        public void setDestination(TestEnvironment env) {
+@Bean
+            public void setDestination(TestEnvironment env) {
             if (img == null) {
                 ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
                 ComponentColorModel cm =

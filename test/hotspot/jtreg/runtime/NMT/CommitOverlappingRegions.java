@@ -39,6 +39,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.JDKToolFinder;
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class CommitOverlappingRegions {
     public static WhiteBox wb = WhiteBox.getWhiteBox();
     public static void main(String args[]) throws Exception {

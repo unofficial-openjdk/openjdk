@@ -58,6 +58,7 @@ import org.testng.annotations.Test;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.testng.Assert.assertEquals;
 
+@Bean
 public class ImplicitPushCancel {
 
     static Map<String,String> PUSH_PROMISES = Map.of(

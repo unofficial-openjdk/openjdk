@@ -30,6 +30,7 @@
 
 import java.io.*;
 
+@Bean
 public class T6405099
 {
     public static void main(String[] args) {

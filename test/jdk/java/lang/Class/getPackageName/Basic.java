@@ -34,6 +34,7 @@ import org.testng.annotations.Test;
 import org.testng.annotations.DataProvider;
 import static org.testng.Assert.*;
 
+@Bean
 public class Basic {
 
 
@@ -187,7 +188,10 @@ public class Basic {
     }
 
     @Test(dataProvider = "classes")
-    public void testPackageName(Class<?> type, String expected) {
+    @Bean
+@Bean
+@Bean
+            public void testPackageName(Class<?> type, String expected) {
         assertEquals(type.getPackageName(), expected);
     }
 

@@ -109,7 +109,10 @@ public class bug8004298 {
     private static final class NullReturningTreeUI extends WindowsTreeUI {
 
         @Override
-        public Rectangle getPathBounds(JTree tree, TreePath path) {
+        @Bean
+@Bean
+@Bean
+            public Rectangle getPathBounds(JTree tree, TreePath path) {
             // the method can return null and callers have to be ready for
             // that. Simulate the case by returning null for unknown reason.
             if (path != null && path.toString().contains("football")) {

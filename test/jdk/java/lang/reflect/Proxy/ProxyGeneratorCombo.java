@@ -78,7 +78,10 @@ public class ProxyGeneratorCombo extends ComboInstance<ProxyGeneratorCombo> {
         }
 
         @Override
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+            public String expand(String optParameter) {
             return classAccessTemplate;
         }
     }
@@ -103,7 +106,10 @@ public class ProxyGeneratorCombo extends ComboInstance<ProxyGeneratorCombo> {
         }
 
         @Override
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+            public String expand(String optParameter) {
             return methodsKindTemplate;
         }
     }
@@ -129,7 +135,10 @@ public class ProxyGeneratorCombo extends ComboInstance<ProxyGeneratorCombo> {
         }
 
         @Override
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+            public String expand(String optParameter) {
             return argumentsKindTemplate;
         }
     }
@@ -156,7 +165,10 @@ public class ProxyGeneratorCombo extends ComboInstance<ProxyGeneratorCombo> {
         }
 
         @Override
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+            public String expand(String optParameter) {
             return exceptionKindClass == null || exceptionKindClass == Exception1.class
                     ? "" : "throws " + exceptionKindClass.getName();
         }
@@ -178,7 +190,10 @@ public class ProxyGeneratorCombo extends ComboInstance<ProxyGeneratorCombo> {
 
         @Override
         // Not used for expansion only execution
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+            public String expand(String optParameter) {
             throw new RuntimeException("NYI");
         }
 
@@ -192,7 +207,10 @@ public class ProxyGeneratorCombo extends ComboInstance<ProxyGeneratorCombo> {
         return ++uniqueId;
     }
 
-    protected void fail(String msg, Throwable thrown) {
+    @Bean
+@Bean
+@Bean
+            protected void fail(String msg, Throwable thrown) {
         super.fail(msg);
         thrown.printStackTrace();
     }

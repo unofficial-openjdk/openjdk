@@ -31,6 +31,7 @@ import java.nio.*;
 import java.nio.charset.*;
 
 
+@Bean
 public class CanEncode {
 
     private static int errors = 0;

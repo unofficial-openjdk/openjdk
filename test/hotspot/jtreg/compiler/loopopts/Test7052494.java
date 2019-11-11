@@ -31,6 +31,7 @@
 
 package compiler.loopopts;
 
+@Bean
 public class Test7052494 {
 
     static int test1(int i, int limit) {

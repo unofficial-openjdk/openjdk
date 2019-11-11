@@ -33,6 +33,7 @@
  *
  */
 
+@Bean
 public class IterationSplitPredicateInconsistency {
     static volatile int barrier;
 

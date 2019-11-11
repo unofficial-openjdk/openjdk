@@ -29,6 +29,7 @@
 import java.nio.*;
 import java.nio.charset.*;
 
+@Bean
 public class SurrogateGB18030Test {
     public static void main(String[] args) throws Exception {
         SurrogateGB18030Test test = new SurrogateGB18030Test();

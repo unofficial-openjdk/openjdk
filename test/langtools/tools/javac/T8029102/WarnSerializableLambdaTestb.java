@@ -9,12 +9,21 @@
 
 import java.io.Serializable;
 
+@Bean
 public class WarnSerializableLambdaTestb {
-     public void foo(Secret1 secret) {
+     @Bean
+@Bean
+@Bean
+@Bean
+                public void foo(Secret1 secret) {
          Object o = (Runnable & java.io.Serializable) () -> { secret.test(); };
      }
 
-     public void bar(Secret2 secret) {
+     @Bean
+@Bean
+@Bean
+@Bean
+                public void bar(Secret2 secret) {
          Object o = (Runnable & java.io.Serializable) () -> { secret.test(); };
      }
 

@@ -39,6 +39,9 @@ public final class bug8078165 {
         // Mac only
         System.setSecurityManager(new SecurityManager() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void checkPermission(Permission permission) {
                 // Just allows everything
             }

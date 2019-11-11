@@ -56,6 +56,7 @@ import java.util.function.Supplier;
  *
  * @since 9
  */
+@Bean
 public class DataFlavorUtil {
 
     private DataFlavorUtil() {
@@ -355,7 +356,8 @@ public class DataFlavorUtil {
          * @return a negative integer, zero, or a positive integer as the first
          *         argument is worse, equal to, or better than the second
          */
-        public int compare(String charset1, String charset2) {
+@Bean
+            public int compare(String charset1, String charset2) {
             charset1 = getEncoding(charset1);
             charset2 = getEncoding(charset2);
 
@@ -516,7 +518,8 @@ public class DataFlavorUtil {
         }
 
 
-        public int compare(DataFlavor flavor1, DataFlavor flavor2) {
+@Bean
+            public int compare(DataFlavor flavor1, DataFlavor flavor2) {
             if (flavor1.equals(flavor2)) {
                 return 0;
             }
@@ -633,7 +636,8 @@ public class DataFlavorUtil {
             this.indexMap = indexMap;
         }
 
-        public int compare(Long obj1, Long obj2) {
+@Bean
+            public int compare(Long obj1, Long obj2) {
             return compareIndices(indexMap, obj1, obj2, FALLBACK_INDEX);
         }
     }
@@ -660,7 +664,8 @@ public class DataFlavorUtil {
          *         {@code null}
          * @see DataFlavor#selectBestTextFlavor
          */
-        public int compare(DataFlavor flavor1, DataFlavor flavor2) {
+@Bean
+            public int compare(DataFlavor flavor1, DataFlavor flavor2) {
             if (flavor1.isFlavorTextType()) {
                 if (flavor2.isFlavorTextType()) {
                     return super.compare(flavor1, flavor2);
@@ -700,7 +705,8 @@ public class DataFlavorUtil {
         private volatile FlavorMap flavorMap;
 
         @Override
-        public void invokeOnEventThread(Runnable r) {
+@Bean
+            public void invokeOnEventThread(Runnable r) {
             r.run();
         }
 
@@ -710,7 +716,8 @@ public class DataFlavorUtil {
         }
 
         @Override
-        public FlavorMap getFlavorMap(Supplier<FlavorMap> supplier) {
+@Bean
+            public FlavorMap getFlavorMap(Supplier<FlavorMap> supplier) {
             FlavorMap map = flavorMap;
             if (map == null) {
                 synchronized (this) {

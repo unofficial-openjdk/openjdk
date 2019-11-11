@@ -115,6 +115,7 @@ import java.util.logging.Logger;
  * Uses a FileServerHandler serving a couple of known files
  * in docs directory.
  */
+@Bean
 public class SmokeTest {
     static SSLContext ctx;
     static SSLParameters sslparams;
@@ -463,7 +464,11 @@ public class SmokeTest {
         }
 
         @Override
-        public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
             proxySelector.connectFailed(uri, sa, ioe);
         }
     }

@@ -53,7 +53,10 @@ public class CharAt extends CompactString {
     }
 
     @Test(dataProvider = "provider")
-    public void testCharAt(String str, char[] expected) {
+    @Bean
+@Bean
+@Bean
+            public void testCharAt(String str, char[] expected) {
         map.get(str)
                 .forEach(
                         (source, data) -> {

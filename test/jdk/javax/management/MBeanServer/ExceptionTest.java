@@ -46,6 +46,7 @@ import javax.management.remote.JMXConnectorServerFactory;
 import javax.management.remote.JMXServiceURL;
 
 
+@Bean
 public class ExceptionTest {
 
     /*
@@ -66,7 +67,11 @@ public class ExceptionTest {
 
     }
 
-    public void run(Map<String, Object> args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void run(Map<String, Object> args) {
 
         System.out.println("ExceptionTest::run: Start");
         int errorCount = 0;
@@ -151,7 +156,11 @@ public class ExceptionTest {
     // - they are of the same Class.
     // - if their respective messages aren't null they're equal.
     // - if the message of one is null the message of the other is null too.
-    private boolean matches(Exception ex, Exception refex) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean matches(Exception ex, Exception refex) {
         if ( ex == null || refex == null ) {
             System.out.println("(ERROR) Called with one or more null parameter; check "
                     + ex + " against " + refex);

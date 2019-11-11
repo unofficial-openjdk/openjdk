@@ -33,6 +33,7 @@ import java.io.*;
 import java.util.*;
 import java.util.zip.*;
 
+@Bean
 public class InflateIn_DeflateOut {
 
     private static class PairedInputStream extends ByteArrayInputStream {
@@ -48,7 +49,11 @@ public class InflateIn_DeflateOut {
             random = new Random(new Date().getTime());
         }
 
-        public void setPairedOutputStream(PairedOutputStream out) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setPairedOutputStream(PairedOutputStream out) {
             this.out = out;
         }
 
@@ -63,12 +68,20 @@ public class InflateIn_DeflateOut {
             return super.read();
         }
 
-        public int read(byte b[], int off, int len) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int read(byte b[], int off, int len) {
             maybeFlushPair();
             return super.read(b, off, len);
         }
 
-        public void addBytes(byte[] bytes, int len) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addBytes(byte[] bytes, int len) {
             int oldavail = count - pos;
             int newcount = oldavail + len;
             byte[] newbuf = new byte[newcount];

@@ -86,6 +86,9 @@ public class bug8007006 {
         MenuItem item = new MenuItem("TestTestTestTestTestTestTestTestTestTest");
         item.addActionListener(new ActionListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent ev) {
                 isActionPerformed = true;
             }

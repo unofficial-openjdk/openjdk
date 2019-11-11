@@ -41,6 +41,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.nio.file.Files;
 
+@Bean
 public class ReadAbortTest implements IIOReadProgressListener {
 
     ImageReader reader = null;
@@ -112,7 +113,11 @@ public class ReadAbortTest implements IIOReadProgressListener {
      * IIOReadProgressListener, and relevant for this test case.
      */
     @Override
-    public void imageStarted(ImageReader source, int imageIndex) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void imageStarted(ImageReader source, int imageIndex) {
         System.out.println("imageStarted called");
         if (startAbort) {
             source.abort();
@@ -120,7 +125,11 @@ public class ReadAbortTest implements IIOReadProgressListener {
     }
 
     @Override
-    public void imageProgress(ImageReader source, float percentageDone) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void imageProgress(ImageReader source, float percentageDone) {
         System.out.println("imageProgress called");
         if (progressAbort) {
             source.abort();
@@ -128,7 +137,11 @@ public class ReadAbortTest implements IIOReadProgressListener {
     }
 
     @Override
-    public void readAborted(ImageReader source) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void readAborted(ImageReader source) {
         System.out.println("readAborted called");
         // Verify IIOReadProgressListener.imageStarted() abort request.
         if (startAbort) {
@@ -155,27 +168,51 @@ public class ReadAbortTest implements IIOReadProgressListener {
      * IIOReadProgressListener, but not relevant for this test case.
      */
     @Override
-    public void imageComplete(ImageReader source) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void imageComplete(ImageReader source) {
     }
 
     @Override
-    public void sequenceStarted(ImageReader reader, int i) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void sequenceStarted(ImageReader reader, int i) {
     }
 
     @Override
-    public void sequenceComplete(ImageReader reader) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void sequenceComplete(ImageReader reader) {
     }
 
     @Override
-    public void thumbnailStarted(ImageReader reader, int i, int i1) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void thumbnailStarted(ImageReader reader, int i, int i1) {
     }
 
     @Override
-    public void thumbnailProgress(ImageReader reader, float f) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void thumbnailProgress(ImageReader reader, float f) {
     }
 
     @Override
-    public void thumbnailComplete(ImageReader reader) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void thumbnailComplete(ImageReader reader) {
     }
 }
 

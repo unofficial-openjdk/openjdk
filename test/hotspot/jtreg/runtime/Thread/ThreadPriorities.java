@@ -44,6 +44,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.JDKToolFinder;
 import static jdk.test.lib.Asserts.*;
 
+@Bean
 public class ThreadPriorities {
 
     public static void main(String[] args) throws Throwable {

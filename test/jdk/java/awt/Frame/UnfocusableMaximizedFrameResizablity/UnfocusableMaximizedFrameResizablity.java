@@ -37,6 +37,7 @@ import java.awt.AWTException;
 import java.awt.event.InputEvent;
 import java.awt.Robot;
 
+@Bean
 public class UnfocusableMaximizedFrameResizablity {
 
     private static Frame frame;

@@ -46,6 +46,7 @@ import jdk.test.lib.Utils;
 import jdk.test.lib.process.OutputAnalyzer;
 import jtreg.SkippedException;
 
+@Bean
 public class TestCPUSets {
     private static final String imageName = Common.imageName("cpusets");
 

@@ -41,6 +41,7 @@ import static jdk.test.lib.Asserts.fail;
  * This class is intended to be a base class for classes which are about to test
  * command line interface of jimage.
  */
+@Bean
 public class JImageCliTest {
 
     private String bootImagePath;
@@ -52,7 +53,11 @@ public class JImageCliTest {
         }
     }
 
-    public void assertMatches(String regex, String output) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertMatches(String regex, String output) {
         Pattern pattern = Pattern.compile(regex);
         if (!pattern.matcher(output).find()) {
             fail(String.format("Expected to find a string match for [%s] in output \n[\n%s\n]\n.",

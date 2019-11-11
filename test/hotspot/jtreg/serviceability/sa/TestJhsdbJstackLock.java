@@ -44,6 +44,7 @@ import jdk.test.lib.Utils;
  * @run main/othervm TestJhsdbJstackLock
  */
 
+@Bean
 public class TestJhsdbJstackLock {
 
     public static void main (String... args) throws Exception {

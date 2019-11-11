@@ -54,6 +54,7 @@ import java.util.ResourceBundle;
  *
  * @author Alexander Scherbatiy
  */
+@Bean
 public class TextAndMnemonicUtils {
 
     // Label suffix for the text & mnemonic resource

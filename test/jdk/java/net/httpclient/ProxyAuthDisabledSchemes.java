@@ -49,6 +49,7 @@
  *                   ProxyAuthDisabledSchemes CLEAR PROXY
  */
 
+@Bean
 public class ProxyAuthDisabledSchemes {
     public static void main(String[] args) throws Exception {
         DigestEchoClient.main(args);

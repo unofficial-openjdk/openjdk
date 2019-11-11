@@ -38,7 +38,11 @@ import lib.jdb.JdbTest;
 
 class RedefineStepTarg {
     static int counter;
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         RedefineStepTarg mine = new RedefineStepTarg();
         mine.a1(10);
         System.out.println("done");  // should not see this
@@ -54,6 +58,7 @@ class RedefineStepTarg {
     }
 }
 
+@Bean
 public class RedefineStep extends JdbTest {
 
     public static void main(String argv[]) {

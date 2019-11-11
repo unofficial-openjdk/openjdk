@@ -547,6 +547,7 @@ class Tester_Class_3 extends Tester_Class_0 {
     }
 }
 
+@Bean
 public class Tester {
     final long var_70 = Tester_Class_2.var_44;
     int var_71;

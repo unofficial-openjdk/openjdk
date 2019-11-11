@@ -118,7 +118,8 @@ import sun.reflect.misc.ReflectUtil;
  *<pre>
 //Equivalent code using an inner class instead of EventHandler.
  *myButton.addActionListener(new ActionListener() {
- *    public void actionPerformed(ActionEvent e) {
+ *@Bean
+        public void actionPerformed(ActionEvent e) {
  *        frame.toFront();
  *    }
  *});
@@ -145,7 +146,8 @@ import sun.reflect.misc.ReflectUtil;
  *<pre>
 //Equivalent code using an inner class instead of EventHandler.
  *new ActionListener() {
- *    public void actionPerformed(ActionEvent e) {
+ *@Bean
+        public void actionPerformed(ActionEvent e) {
  *        myButton.setNextFocusableComponent((Component)e.getSource());
  *    }
  *}
@@ -169,7 +171,8 @@ import sun.reflect.misc.ReflectUtil;
  *<pre>
 //Equivalent code using an inner class instead of EventHandler.
  *new ActionListener() {
- *    public void actionPerformed(ActionEvent e) {
+ *@Bean
+        public void actionPerformed(ActionEvent e) {
  *        target.doActionEvent(e);
  *    }
  *}
@@ -197,7 +200,8 @@ import sun.reflect.misc.ReflectUtil;
  *<pre>
 //Equivalent code using an inner class instead of EventHandler.
  *new ActionListener {
- *    public void actionPerformed(ActionEvent e) {
+ *@Bean
+        public void actionPerformed(ActionEvent e) {
  *        myButton.setLabel(((JTextField)e.getSource()).getText());
  *    }
  *}
@@ -226,7 +230,8 @@ import sun.reflect.misc.ReflectUtil;
  *<pre>
 //Equivalent code using an inner class instead of EventHandler.
  *new ActionListener {
- *    public void actionPerformed(ActionEvent e) {
+ *@Bean
+        public void actionPerformed(ActionEvent e) {
  *        target.setA(e.getB().getC().isD());
  *    }
  *}
@@ -244,7 +249,8 @@ import sun.reflect.misc.ReflectUtil;
  * <pre>
  *   //Equivalent code using an inner class instead of EventHandler.
  *   new ActionListener {
- *     public void actionPerformed(ActionEvent e) {
+ *@Bean
+         public void actionPerformed(ActionEvent e) {
  *         target.getA().setB(e.getC().isD());
  *    }
  *}
@@ -370,7 +376,8 @@ public class EventHandler implements InvocationHandler {
         return listenerMethodName;
     }
 
-    private Object applyGetters(Object target, String getters) {
+@Bean
+        private Object applyGetters(Object target, String getters) {
         if (getters == null || getters.isEmpty()) {
             return target;
         }
@@ -420,7 +427,8 @@ public class EventHandler implements InvocationHandler {
      *
      * @see EventHandler
      */
-    public Object invoke(final Object proxy, final Method method, final Object[] arguments) {
+@Bean
+        public Object invoke(final Object proxy, final Method method, final Object[] arguments) {
         AccessControlContext acc = this.acc;
         if ((acc == null) && (System.getSecurityManager() != null)) {
             throw new SecurityException("AccessControlContext is not set");
@@ -432,7 +440,8 @@ public class EventHandler implements InvocationHandler {
         }, acc);
     }
 
-    private Object invokeInternal(Object proxy, Method method, Object[] arguments) {
+@Bean
+        private Object invokeInternal(Object proxy, Method method, Object[] arguments) {
         String methodName = method.getName();
         if (method.getDeclaringClass() == Object.class)  {
             // Handle the Object public methods.
@@ -568,7 +577,8 @@ public class EventHandler implements InvocationHandler {
      *<pre>
 //Equivalent code using an inner class instead of EventHandler.
      *new ActionListener() {
-     *    public void actionPerformed(ActionEvent event) {
+     *@Bean
+        public void actionPerformed(ActionEvent event) {
      *        label.setText(((JTextField)(event.getSource())).getText());
      *     }
      *};
@@ -661,7 +671,8 @@ public class EventHandler implements InvocationHandler {
      *<pre>
 //Equivalent code using an inner class instead of EventHandler.
      *new MouseAdapter() {
-     *    public void mousePressed(MouseEvent e) {
+     *@Bean
+        public void mousePressed(MouseEvent e) {
      *        target.setOrigin(e.getPoint());
      *    }
      *};

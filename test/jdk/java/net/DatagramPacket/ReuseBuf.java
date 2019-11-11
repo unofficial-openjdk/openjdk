@@ -30,6 +30,7 @@
  */
 import java.net.*;
 
+@Bean
 public class ReuseBuf {
     static String msgs[] = {"Hello World", "Java", "Good Bye"};
     static int port;

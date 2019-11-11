@@ -66,6 +66,7 @@ import javax.tools.ToolProvider;
 
 import static javax.tools.StandardLocation.*;
 
+@Bean
 public class ResolveHarness implements javax.tools.DiagnosticListener<JavaFileObject> {
 
     static int nerrors = 0;
@@ -168,7 +169,11 @@ public class ResolveHarness implements javax.tools.DiagnosticListener<JavaFileOb
         }
     }
 
-    public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
         diags.add(diagnostic);
     }
 
@@ -193,7 +198,11 @@ public class ResolveHarness implements javax.tools.DiagnosticListener<JavaFileOb
         }
     }
 
-    protected void error(String msg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void error(String msg) {
         nerrors++;
         System.err.printf("Error occurred while checking file: %s\nreason: %s\n", jfo.getName(), msg);
     }
@@ -431,7 +440,11 @@ public class ResolveHarness implements javax.tools.DiagnosticListener<JavaFileOb
     class ResolveCandidateFinder extends JavacTestingAbstractProcessor {
 
         @Override
-        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             if (roundEnv.processingOver())
                 return true;
 
@@ -469,7 +482,11 @@ public class ResolveHarness implements javax.tools.DiagnosticListener<JavaFileOb
         }
 
         @Override
-        public boolean equals(Object obj) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object obj) {
             if (obj instanceof ElementKey) {
                 ElementKey other = (ElementKey)obj;
                 return other.key.equals(key);
@@ -503,7 +520,11 @@ public class ResolveHarness implements javax.tools.DiagnosticListener<JavaFileOb
             this.shouldRecordDiags = shouldRecordDiags;
         }
 
-        public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
             if (shouldRecordDiags)
                 diags.add(diagnostic);
         }

@@ -45,6 +45,7 @@ import java.util.Arrays;
  * environment variable to {@code true}. This is disabled by default as it considerably increases the time needed to run
  * the test.
  */
+@Bean
 public class LoopCombinatorLongSignatureTest {
 
     static final MethodHandle INIT = MethodHandles.constant(int.class, 0);

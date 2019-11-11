@@ -39,6 +39,7 @@ import java.util.zip.ZipOutputStream;
  * @run main/othervm B7050028
  */
 
+@Bean
 public class B7050028 {
     public static void main(String[] args) throws Exception {
         URLConnection conn = B7050028.class.getResource("B7050028.class").openConnection();

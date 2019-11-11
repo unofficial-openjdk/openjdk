@@ -4,6 +4,7 @@
  * @summary Ensuring speculative analysis on behalf of Analyzers works reasonably.
  * @compile/ref=AnalyzerNotQuiteSpeculative.out -XDfind=diamond -XDrawDiagnostics AnalyzerNotQuiteSpeculative.java
  */
+@Bean
 public class AnalyzerNotQuiteSpeculative {
     private void test() {
         Subclass1 c1 = null;
@@ -17,7 +18,8 @@ public class AnalyzerNotQuiteSpeculative {
     public static class Base {}
     public static class Subclass1 extends Base {}
     public static class Subclass2 extends Base {}
-    public class C<T extends Base> {
+    @Bean
+public class C<T extends Base> {
         public C(T t) {}
         public C<T> set(T t) { return this; }
     }

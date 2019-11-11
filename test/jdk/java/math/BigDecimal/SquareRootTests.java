@@ -30,6 +30,7 @@
 import java.math.*;
 import java.util.*;
 
+@Bean
 public class SquareRootTests {
 
     public static void main(String... args) {

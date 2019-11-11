@@ -31,6 +31,7 @@ import java.lang.annotation.*;
 import java.lang.reflect.*;
 
 @TestAnnotation
+@Bean
 public class EqualityTest {
     public static void main(String... args) throws Exception {
         TestAnnotation annotation =

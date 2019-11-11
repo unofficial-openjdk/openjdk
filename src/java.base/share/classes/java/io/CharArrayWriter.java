@@ -75,7 +75,11 @@ class CharArrayWriter extends Writer {
     /**
      * Writes a character to the buffer.
      */
-    public void write(int c) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void write(int c) {
         synchronized (lock) {
             int newcount = count + 1;
             if (newcount > buf.length) {
@@ -97,7 +101,11 @@ class CharArrayWriter extends Writer {
      *          or {@code off + len} is negative or greater than the length
      *          of the given array
      */
-    public void write(char c[], int off, int len) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void write(char c[], int off, int len) {
         if ((off < 0) || (off > c.length) || (len < 0) ||
             ((off + len) > c.length) || ((off + len) < 0)) {
             throw new IndexOutOfBoundsException();
@@ -125,7 +133,11 @@ class CharArrayWriter extends Writer {
      *          or {@code off + len} is negative or greater than the length
      *          of the given string
      */
-    public void write(String str, int off, int len) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void write(String str, int off, int len) {
         synchronized (lock) {
             int newcount = count + len;
             if (newcount > buf.length) {
@@ -172,7 +184,11 @@ class CharArrayWriter extends Writer {
      *
      * @since  1.5
      */
-    public CharArrayWriter append(CharSequence csq) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public CharArrayWriter append(CharSequence csq) {
         String s = String.valueOf(csq);
         write(s, 0, s.length());
         return this;
@@ -211,7 +227,11 @@ class CharArrayWriter extends Writer {
      *
      * @since  1.5
      */
-    public CharArrayWriter append(CharSequence csq, int start, int end) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public CharArrayWriter append(CharSequence csq, int start, int end) {
         if (csq == null) csq = "null";
         return append(csq.subSequence(start, end));
     }
@@ -232,7 +252,11 @@ class CharArrayWriter extends Writer {
      *
      * @since 1.5
      */
-    public CharArrayWriter append(char c) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public CharArrayWriter append(char c) {
         write(c);
         return this;
     }

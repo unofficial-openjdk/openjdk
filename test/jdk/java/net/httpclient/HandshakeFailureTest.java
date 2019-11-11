@@ -53,6 +53,7 @@ import static java.net.http.HttpResponse.BodyHandlers.discarding;
  */
 // To switch on debugging use:
 // @run main/othervm -Djdk.internal.httpclient.debug=true HandshakeFailureTest
+@Bean
 public class HandshakeFailureTest {
 
     // The number of iterations each testXXXClient performs. Can be increased

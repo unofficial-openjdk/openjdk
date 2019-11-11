@@ -41,6 +41,7 @@ import javax.management.openmbean.SimpleType;
  * @run build MBeanInfoEqualsNPETest
  * @run main MBeanInfoEqualsNPETest
  */
+@Bean
 public class MBeanInfoEqualsNPETest {
     private static int failed = 0;
 

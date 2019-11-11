@@ -48,6 +48,7 @@ import java.awt.geom.*;
 import java.awt.image.*;
 
 
+@Bean
 public class InsetClipping extends Frame {
     BufferedImage image;
     Area area;
@@ -63,7 +64,11 @@ public class InsetClipping extends Frame {
         g2.fillRect(0,0, 300,300);
     }
 
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(Graphics g) {
         Insets insets = getInsets();
         area = new Area( new Rectangle(0,0, getWidth(), getHeight()));
         area.subtract(new Area(new Rectangle(insets.left, insets.top,

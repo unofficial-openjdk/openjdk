@@ -46,6 +46,7 @@ import com.sun.tools.javac.util.Assert;
 import toolbox.JavacTask;
 import toolbox.ToolBox;
 
+@Bean
 public class WrongLNTForLambdaTest {
 
     static final String testSource =
@@ -53,7 +54,8 @@ public class WrongLNTForLambdaTest {
     /* 02 */        "import java.util.Arrays;\n" +
     /* 03 */        "import java.util.stream.Collectors;\n" +
     /* 04 */        "\n" +
-    /* 05 */        "public class Foo {\n" +
+    /* 05 */        "@Bean
+public class Foo {\n" +
     /* 06 */        "    void bar(int value) {\n" +
     /* 07 */        "        final List<Integer> numbers = Arrays.asList(1, 2, 3);\n" +
     /* 08 */        "        final List<Integer> numbersPlusOne = \n" +

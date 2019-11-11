@@ -32,6 +32,7 @@ package java.io;
  * @author      Herb Jellinek
  * @since       1.1
  */
+@Bean
 public class CharArrayReader extends Reader {
     /** The character buffer. */
     protected char buf[];

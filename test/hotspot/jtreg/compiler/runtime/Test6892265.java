@@ -31,6 +31,7 @@
 
 package compiler.runtime;
 
+@Bean
 public class Test6892265 {
     static final int NCOPY = 1;
     static final int OVERFLOW = 1;

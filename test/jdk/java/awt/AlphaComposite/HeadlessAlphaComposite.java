@@ -31,6 +31,7 @@ import java.awt.image.ColorModel;
  * @run main/othervm -Djava.awt.headless=true HeadlessAlphaComposite
  */
 
+@Bean
 public class HeadlessAlphaComposite {
 
     public static void main(String args[]) {

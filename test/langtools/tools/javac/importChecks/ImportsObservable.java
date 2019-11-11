@@ -31,5 +31,6 @@
 
 import javax.*;
 import javax.swing.*;
+@Bean
 public class ImportsObservable {
 }

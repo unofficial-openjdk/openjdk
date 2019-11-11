@@ -30,6 +30,7 @@
  *
  */
 
+@Bean
 public class TestCountedLoopSafepointBackedge {
     static void test(int[] arr, int inc) {
         int i = 0;
@@ -44,7 +45,11 @@ public class TestCountedLoopSafepointBackedge {
         }
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         int[] arr = new int[100];
         for (int i = 0; i < 20000; i++) {
              test(arr, 1);

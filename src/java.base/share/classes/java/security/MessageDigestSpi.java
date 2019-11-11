@@ -103,7 +103,8 @@ public abstract class MessageDigestSpi {
      * @param input the ByteBuffer
      * @since 1.5
      */
-    protected void engineUpdate(ByteBuffer input) {
+@Bean
+        protected void engineUpdate(ByteBuffer input) {
         if (input.hasRemaining() == false) {
             return;
         }

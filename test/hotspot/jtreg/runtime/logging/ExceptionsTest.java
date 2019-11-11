@@ -36,6 +36,7 @@ import java.util.Map;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class ExceptionsTest {
     static void updateEnvironment(ProcessBuilder pb, String environmentVariable, String value) {
         Map<String, String> env = pb.environment();

@@ -98,7 +98,10 @@ public abstract class SimpleOverlappingTestBase extends OverlappingTestBase {
             testedComponent.addMouseListener(new MouseAdapter() {
 
                 @Override
-                public void mouseClicked(MouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void mouseClicked(MouseEvent e) {
                     wasLWClicked = true;
                     f.setVisible(false);
                 }

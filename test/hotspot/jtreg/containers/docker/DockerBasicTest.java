@@ -40,6 +40,7 @@ import jdk.test.lib.Platform;
 import jdk.test.lib.Utils;
 
 
+@Bean
 public class DockerBasicTest {
     private static final String imageNameAndTag = Common.imageName("basic");
 

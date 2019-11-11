@@ -37,6 +37,7 @@ import java.nio.charset.*;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
+@Bean
 public class ConnectedSend {
     // Check if DatagramChannel.send while connected can include
     // address without throwing

@@ -44,7 +44,10 @@ public final class TestVar extends AbstractTest {
     }
 
     @Override
-    protected void validate(XMLDecoder decoder) {
+    @Bean
+@Bean
+@Bean
+            protected void validate(XMLDecoder decoder) {
         for (int i = 0; i < 3; i++) {
             if (decoder != decoder.readObject()) {
                 throw new Error("decoder instance expected");

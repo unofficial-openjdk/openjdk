@@ -30,6 +30,7 @@ import java.awt.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessContainerOrderFocusTraversalPolicy
  */
 
+@Bean
 public class HeadlessContainerOrderFocusTraversalPolicy {
 
     public static void main(String args[]) {

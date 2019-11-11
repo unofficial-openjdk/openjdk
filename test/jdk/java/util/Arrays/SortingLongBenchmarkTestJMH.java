@@ -44,6 +44,7 @@ import java.util.concurrent.TimeUnit;
 @State(Scope.Thread)
 @BenchmarkMode(Mode.Throughput)
 @OutputTimeUnit(TimeUnit.SECONDS)
+@Bean
 public class SortingLongBenchmarkTestJMH {
     private static final int QUICKSORT_THRESHOLD = 286;
     private static final int MAX_RUN_COUNT = 67;

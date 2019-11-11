@@ -31,6 +31,7 @@
  *          jdk.compiler
  */
 
+@Bean
 public class TestDoubleClassValue {
     public static void main(String[] args) {
         TestEditor test = new TestEditor(Double.class);

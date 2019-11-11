@@ -527,7 +527,8 @@ public final class ZoneOffset
      * @return true if the field is supported on this offset, false if not
      */
     @Override
-    public boolean isSupported(TemporalField field) {
+@Bean
+        public boolean isSupported(TemporalField field) {
         if (field instanceof ChronoField) {
             return field == OFFSET_SECONDS;
         }
@@ -558,7 +559,8 @@ public final class ZoneOffset
      * @throws UnsupportedTemporalTypeException if the field is not supported
      */
     @Override  // override for Javadoc
-    public ValueRange range(TemporalField field) {
+@Bean
+        public ValueRange range(TemporalField field) {
         return TemporalAccessor.super.range(field);
     }
 
@@ -588,7 +590,8 @@ public final class ZoneOffset
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override  // override for Javadoc and performance
-    public int get(TemporalField field) {
+@Bean
+        public int get(TemporalField field) {
         if (field == OFFSET_SECONDS) {
             return totalSeconds;
         } else if (field instanceof ChronoField) {
@@ -620,7 +623,8 @@ public final class ZoneOffset
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public long getLong(TemporalField field) {
+@Bean
+        public long getLong(TemporalField field) {
         if (field == OFFSET_SECONDS) {
             return totalSeconds;
         } else if (field instanceof ChronoField) {
@@ -682,7 +686,8 @@ public final class ZoneOffset
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public Temporal adjustInto(Temporal temporal) {
+@Bean
+        public Temporal adjustInto(Temporal temporal) {
         return temporal.with(OFFSET_SECONDS, totalSeconds);
     }
 
@@ -701,7 +706,8 @@ public final class ZoneOffset
      * @throws NullPointerException if {@code other} is null
      */
     @Override
-    public int compareTo(ZoneOffset other) {
+@Bean
+        public int compareTo(ZoneOffset other) {
         // abs(totalSeconds) <= MAX_SECONDS, so no overflow can happen here
         return other.totalSeconds - totalSeconds;
     }
@@ -717,7 +723,8 @@ public final class ZoneOffset
      * @return true if this is equal to the other offset
      */
     @Override
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (this == obj) {
            return true;
         }

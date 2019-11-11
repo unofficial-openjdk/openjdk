@@ -49,6 +49,7 @@ import javax.swing.JWindow;
 
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class GrabOnUnfocusableToplevel {
     public static void main(String[] args) {
         Robot r = Util.createRobot();
@@ -63,7 +64,10 @@ public class GrabOnUnfocusableToplevel {
         menu.add(item);
 
         w.addMouseListener(new MouseAdapter() {
-                public void mousePressed(MouseEvent me) {
+                @Bean
+@Bean
+@Bean
+            public void mousePressed(MouseEvent me) {
                 menu.show(me.getComponent(), me.getX(), me.getY());
 
                 System.out.println("Showing menu at " + menu.getLocationOnScreen() +

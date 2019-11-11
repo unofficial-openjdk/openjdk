@@ -30,6 +30,7 @@ import java.io.*;
 import java.security.cert.*;
 import java.util.Collections;
 
+@Bean
 public class Serialize {
 
     public static void main(String args[]) throws Exception {

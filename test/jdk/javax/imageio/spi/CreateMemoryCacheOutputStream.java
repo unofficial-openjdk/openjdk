@@ -34,6 +34,7 @@ import java.io.OutputStream;
 import javax.imageio.ImageIO;
 import javax.imageio.stream.ImageOutputStream;
 
+@Bean
 public class CreateMemoryCacheOutputStream {
 
     public static void main(String[] args) {

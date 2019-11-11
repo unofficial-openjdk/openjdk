@@ -38,6 +38,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JViewport;
 
+@Bean
 public class Test6526631 {
 
     private static final int COLS = 90;
@@ -58,7 +59,11 @@ public class Test6526631 {
         this.frame.add(this.pane);
     }
 
-    private void update(int offset) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void update(int offset) {
         Dimension size = this.frame.getSize();
         size.width += offset;
         this.frame.setSize(size);

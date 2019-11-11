@@ -41,6 +41,7 @@ package compiler.escapeAnalysis;
 import java.util.ArrayList;
 import java.util.List;
 
+@Bean
 public class TestAllocatedEscapesPtrComparison {
 
   static TestAllocatedEscapesPtrComparison dummy;

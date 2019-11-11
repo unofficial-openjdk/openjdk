@@ -42,6 +42,7 @@ import toolbox.Task;
 import toolbox.ToolBox;
 
 // Original test: test/tools/javac/stackmap/T4955930.sh
+@Bean
 public class StackMapTest {
 
     class Test {

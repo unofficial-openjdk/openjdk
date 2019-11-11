@@ -48,6 +48,7 @@ import static javax.tools.JavaFileObject.Kind.SOURCE;
 import javax.tools.ToolProvider;
 
 @SupportedAnnotationTypes("*")
+@Bean
 public class EndPositions extends AbstractProcessor {
     public static void main(String... args) throws IOException {
         class MyFileObject extends SimpleJavaFileObject {
@@ -55,7 +56,11 @@ public class EndPositions extends AbstractProcessor {
                 super(URI.create("myfo:///Test.java"), SOURCE);
             }
             @Override
-            public String getCharContent(boolean ignoreEncodingErrors) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public String getCharContent(boolean ignoreEncodingErrors) {
                 //      0         1         2         3
                 //      012345678901234567890123456789012345
                 return "class Test { String s = 1234; }";
@@ -85,7 +90,11 @@ public class EndPositions extends AbstractProcessor {
     }
 
     @Override
-    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         return true;
     }
 

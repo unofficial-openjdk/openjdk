@@ -33,6 +33,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test6863155 {
     private static long test(byte b) {
         return b << 24 & 0xff000000L;

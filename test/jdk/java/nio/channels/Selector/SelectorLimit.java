@@ -38,6 +38,7 @@ import java.nio.channels.*;
 import java.util.*;
 
 
+@Bean
 public class SelectorLimit {
 
     static PrintStream log = System.err;

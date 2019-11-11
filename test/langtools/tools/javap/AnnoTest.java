@@ -32,6 +32,7 @@ import java.io.*;
 import java.lang.annotation.*;
 import javax.lang.model.element.ElementKind;
 
+@Bean
 public class AnnoTest {
     public static void main(String... args) throws Exception {
         new AnnoTest().run();

@@ -31,6 +31,7 @@
 import java.beans.Beans;
 import java.io.IOException;
 
+@Bean
 public class Test4343723 {
     public static void main(String[] args) {
         try {

@@ -33,6 +33,7 @@ import java.io.*;
 import java.nio.*;
 import java.nio.channels.*;
 
+@Bean
 public class Finalize {
 
     static byte data[] = new byte[] {48, 49, 50, 51, 52, 53, 54, 55, 56, 57,};

@@ -733,7 +733,8 @@ public final class Float extends Number
      *          {@code false} otherwise.
      * @see java.lang.Float#floatToIntBits(float)
      */
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         return (obj instanceof Float)
                && (floatToIntBits(((Float)obj).value) == floatToIntBits(value));
     }
@@ -909,7 +910,8 @@ public final class Float extends Number
      * @since   1.2
      * @see Comparable#compareTo(Object)
      */
-    public int compareTo(Float anotherFloat) {
+@Bean
+        public int compareTo(Float anotherFloat) {
         return Float.compare(value, anotherFloat.value);
     }
 
@@ -1009,7 +1011,8 @@ public final class Float extends Number
      * @since 12
      */
     @Override
-    public Float resolveConstantDesc(MethodHandles.Lookup lookup) {
+@Bean
+        public Float resolveConstantDesc(MethodHandles.Lookup lookup) {
         return this;
     }
 

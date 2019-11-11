@@ -38,6 +38,7 @@ import static java.lang.System.out;
  * @summary Test key generation of DES and DESEDE
  * @key randomness
  */
+@Bean
 public class TestKGParity {
 
     private static final String[] ALGORITHM_ARR = {
@@ -102,7 +103,11 @@ public class TestKGParity {
         }
     }
 
-    private boolean checkParity(byte keyByte) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean checkParity(byte keyByte) {
         boolean even = false;
         byte[] PARITY_BIT_MASK = {
                 (byte) 0x40, (byte) 0x20, (byte) 0x10, (byte) 0x08,

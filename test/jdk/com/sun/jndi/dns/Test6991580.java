@@ -42,6 +42,7 @@ import java.awt.event.ActionListener;
  */
 
 
+@Bean
 public class Test6991580 {
 
    private static void init() throws Exception {

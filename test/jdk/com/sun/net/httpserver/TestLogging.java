@@ -42,6 +42,7 @@ import java.security.cert.*;
 import javax.net.ssl.*;
 import jdk.test.lib.net.URIBuilder;
 
+@Bean
 public class TestLogging extends Test {
 
     public static void main (String[] args) throws Exception {

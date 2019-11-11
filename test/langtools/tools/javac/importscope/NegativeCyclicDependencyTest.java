@@ -66,6 +66,7 @@ import toolbox.ToolBox;
  * The test checks class, enum and interface as parent class, and checks all
  * possible import statements.
  */
+@Bean
 public class NegativeCyclicDependencyTest {
     private final static String expectedErrorMessage =
             "\\w+:\\d+:\\d+: compiler.err.cyclic.inheritance: [\\w.]+\n1 error\n";
@@ -134,7 +135,11 @@ public class NegativeCyclicDependencyTest {
         echo(message);
     }
 
-    private void reportFailure(TestCase testCase) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void reportFailure(TestCase testCase) {
         echo("Test case failed.");
         for (ToolBox.JavaSource source : testCase.sources) {
             echo(source.getCharContent(true));
@@ -242,7 +247,11 @@ public class NegativeCyclicDependencyTest {
      * @param sources sources
      * @return the result of compilation
      */
-    private String compile(ToolBox.JavaSource...sources) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String compile(ToolBox.JavaSource...sources) {
         JavaCompiler jc = ToolProvider.getSystemJavaCompiler();
         StringWriter writer = new StringWriter();
         JavaCompiler.CompilationTask ct = jc.getTask(writer, null, null,
@@ -258,15 +267,27 @@ public class NegativeCyclicDependencyTest {
         echo("");
     }
 
-    public void echo(CharSequence message) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void echo(CharSequence message) {
         echo(message.toString());
     }
 
-    public void echo(String message) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void echo(String message) {
         printf(message + "\n");
     }
 
-    public void printf(String template, Object...args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void printf(String template, Object...args) {
         System.err.print(String.format(template, args).replace("\n", ToolBox.lineSeparator));
     }
 
@@ -298,7 +319,11 @@ public class NegativeCyclicDependencyTest {
             this.type = type;
         }
 
-        public String getImport(String className) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String getImport(String className) {
             if (this == ImportType.IMPORT_ON_DEMAND || this == ImportType.STATIC_IMPORT_ON_DEMAND) {
                 int lastDot = className.lastIndexOf('.');
                 className = className.substring(0, lastDot);
@@ -314,12 +339,20 @@ public class NegativeCyclicDependencyTest {
     public enum ClassType {
         CLASS("class"), INTERFACE("interface"), ENUM("enum");
 
-        public boolean canInherit(ClassType innerClass) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean canInherit(ClassType innerClass) {
             return innerClass != ENUM && !(this == ENUM && innerClass == ClassType.CLASS
                     || this == INTERFACE && innerClass == ClassType.CLASS);
         }
 
-        public String inheritedString(ClassType innerClass) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String inheritedString(ClassType innerClass) {
             if (!canInherit(innerClass)) {
                 throw new IllegalArgumentException(String.format("%s cannot inherit %s", this, innerClass));
             }

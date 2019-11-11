@@ -36,6 +36,7 @@ import java.util.TimeZone;
 
 import static java.util.GregorianCalendar.*;
 
+@Bean
 public class GregorianCutoverTest extends IntlTest {
 
     public static void main(String[] args) throws Exception {
@@ -188,7 +189,11 @@ public class GregorianCutoverTest extends IntlTest {
         }
     }
 
-    private void checkContinuity(Koyomi cal, int field) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkContinuity(Koyomi cal, int field) {
         cal.getTime();
         logln(Koyomi.getFieldName(field) + " starting on " + cal.toDateString());
         int max = cal.getActualMaximum(field);

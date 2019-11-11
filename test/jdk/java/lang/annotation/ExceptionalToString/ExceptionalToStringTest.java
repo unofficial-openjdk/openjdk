@@ -60,6 +60,7 @@
  * annotation method (AnnotationTypeMismatchException), and remove a
  * type whose Class literal is referenced (TypeNotPresentException).
  */
+@Bean
 public class ExceptionalToStringTest {
     public static void main(String... args) {
         String annotationAsString = AnnotationHost.class.getAnnotation(DangerousAnnotation.class).toString();

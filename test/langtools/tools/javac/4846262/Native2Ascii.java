@@ -38,6 +38,7 @@ import static java.nio.charset.StandardCharsets.*;
  * Simple utility to convert from native encoding file to ascii or reverse
  * including \udddd Unicode notation.
  */
+@Bean
 public class Native2Ascii {
     final Charset cs;
     final CharsetEncoder encoder;

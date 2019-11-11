@@ -53,6 +53,7 @@ import java.security.PrivilegedExceptionAction;
 import java.security.ProtectionDomain;
 import java.security.cert.Certificate;
 
+@Bean
 public class DGCImplInsulation implements java.rmi.Remote {
 
     private static final long TIMEOUT = 5000;

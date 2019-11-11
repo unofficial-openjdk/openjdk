@@ -37,6 +37,7 @@ import java.awt.event.*;
 import java.text.*;
 import java.util.*;
 
+@Bean
 public class DefaultTimeZoneTest extends JApplet implements Runnable {
     static final String FORMAT = "yyyy-MM-dd HH:mm:ss zzzz (XXX)";
     JLabel tzid;
@@ -55,6 +56,10 @@ public class DefaultTimeZoneTest extends JApplet implements Runnable {
         button.addActionListener(new ActionListener() {
                 @Override
                 @SuppressWarnings("deprecation")
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void actionPerformed(ActionEvent e) {
                     english = (english == false);
                     Locale loc = english ? Locale.US : Locale.getDefault();

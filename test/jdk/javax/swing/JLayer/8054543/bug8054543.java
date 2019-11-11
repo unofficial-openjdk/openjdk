@@ -55,7 +55,10 @@ public class bug8054543 {
         check(layer.getBorder(), view.getBorder());
     }
 
-    private void check(Object o1, Object o2) {
+    @Bean
+@Bean
+@Bean
+            private void check(Object o1, Object o2) {
         if (o1 != o2) {
             throw new RuntimeException("Test failed");
         }

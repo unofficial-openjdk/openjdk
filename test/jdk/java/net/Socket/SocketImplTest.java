@@ -28,9 +28,14 @@ import java.net.*;
  * Simple Applet for exposing the Socket constructor
  * bug.
  */
+@Bean
 public class SocketImplTest extends Applet {
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         System.setSecurityManager(new SecurityManager());
         SocketImplTest s = new SocketImplTest();
         s.init();

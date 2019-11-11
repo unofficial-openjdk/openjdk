@@ -31,6 +31,7 @@ package java.io;
  * @author  unascribed
  * @since   1.1
  */
+@Bean
 public class NotActiveException extends ObjectStreamException {
 
     @java.io.Serial

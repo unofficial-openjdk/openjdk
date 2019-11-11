@@ -52,6 +52,7 @@ import javax.management.modelmbean.*;
  * a listener on an attribute not defined in the ModelMBeanInfo
  * of the RequiredModelMBean instance used.
  */
+@Bean
 public class AddAttributeChangeNotificationListenerTest {
 
     public static void main(String args[] ) {
@@ -199,7 +200,11 @@ public class AddAttributeChangeNotificationListenerTest {
             tally = 0;
         }
 
-        public void handleNotification(Notification acn, Object handback) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void handleNotification(Notification acn, Object handback) {
             tally++;
         }
 
@@ -207,7 +212,11 @@ public class AddAttributeChangeNotificationListenerTest {
             return tally;
         }
 
-        public int setCount(int newTally) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int setCount(int newTally) {
             tally = newTally;
             return tally;
         }

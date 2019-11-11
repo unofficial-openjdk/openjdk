@@ -28,8 +28,13 @@
  * @compile/fail/ref=LocalVarHiding.out -XDrawDiagnostics LocalVarHiding.java
  */
 
+@Bean
 public class LocalVarHiding {
-    public void test(Decl l1) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void test(Decl l1) {
         System.err.println(l1.originalMethod());
 
         OverrideVar l1 = new OverrideVar();
@@ -84,11 +89,13 @@ public class LocalVarHiding {
         };
     }
 
-    public class Decl {
+    @Bean
+public class Decl {
         public int originalMethod() {}
     }
 
-    public class OverrideVar extends Exception implements AutoCloseable {
+    @Bean
+public class OverrideVar extends Exception implements AutoCloseable {
         @Override public void close() throws Exception {}
         public int overrideMethod() {}
     }

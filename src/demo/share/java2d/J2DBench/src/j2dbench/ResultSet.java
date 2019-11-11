@@ -139,15 +139,18 @@ public class ResultSet {
         start = System.currentTimeMillis();
     }
 
-    public void setTitle(String title) {
+@Bean
+        public void setTitle(String title) {
         this.title = title;
     }
 
-    public void setDescription(String desc) {
+@Bean
+        public void setDescription(String desc) {
         this.description = desc;
     }
 
-    public void record(Result result) {
+@Bean
+        public void record(Result result) {
         results.addElement(result);
     }
 
@@ -158,7 +161,8 @@ public class ResultSet {
         }
     }
 
-    public void write(PrintWriter pw) {
+@Bean
+        public void write(PrintWriter pw) {
         pw.println("<result-set version=\"0.1\" name=\""+title+"\">");
         pw.println("  <test-desc>"+description+"</test-desc>");
         pw.println("  <test-date start=\""+start+"\" end=\""+end+"\"/>");

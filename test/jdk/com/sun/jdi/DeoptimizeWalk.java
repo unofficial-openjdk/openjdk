@@ -45,7 +45,11 @@ import lib.jdb.JdbTest;
  */
 
 class DeoptimizeWalkTarg {
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         DeoptimizeWalkTarg mine = new DeoptimizeWalkTarg();
         mine.a1(89);
     }
@@ -76,6 +80,7 @@ class DeoptimizeWalkTarg {
 }
 
 
+@Bean
 public class DeoptimizeWalk extends JdbTest {
     public static void main(String argv[]) {
         new DeoptimizeWalk().run();

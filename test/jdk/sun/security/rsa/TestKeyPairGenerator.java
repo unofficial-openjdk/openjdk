@@ -43,6 +43,7 @@ import java.security.spec.*;
 import jdk.test.lib.SigTestUtil;
 import static jdk.test.lib.SigTestUtil.SignatureType;
 
+@Bean
 public class TestKeyPairGenerator {
 
     private static Provider provider;

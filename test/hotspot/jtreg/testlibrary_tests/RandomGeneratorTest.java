@@ -49,6 +49,7 @@ import jdk.test.lib.Utils;
  * will be repeated in all next iterations. For other two modes test expects that
  * randomly generated numbers differ from original.
  */
+@Bean
 public class RandomGeneratorTest {
     private static final String SEED_VM_OPTION = "-D" + Utils.SEED_PROPERTY_NAME + "=";
 
@@ -86,7 +87,11 @@ public class RandomGeneratorTest {
             }
 
             @Override
-            protected boolean isOutputExpected(String orig, String output) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                protected boolean isOutputExpected(String orig, String output) {
                 return output.equals(orig);
             }
         },
@@ -97,7 +102,11 @@ public class RandomGeneratorTest {
             }
 
             @Override
-            public void verify(String orig, String[] cmdLine) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void verify(String orig, String[] cmdLine) {
                 cmdLine[0] = getSeedOption();
                 super.verify(orig, cmdLine);
             }
@@ -117,7 +126,11 @@ public class RandomGeneratorTest {
          */
         public abstract String getSeedOption();
 
-        protected boolean isOutputExpected(String orig, String output) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected boolean isOutputExpected(String orig, String output) {
             return !output.equals(orig);
         }
 
@@ -129,7 +142,11 @@ public class RandomGeneratorTest {
          * @param cmdLine command line arguments
          * @throws Throwable - Throws an exception in case test failure.
          */
-        public void verify(String orig, String[] cmdLine) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void verify(String orig, String[] cmdLine) {
             String output;
             OutputAnalyzer oa;
             try {

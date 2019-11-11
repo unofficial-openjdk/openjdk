@@ -33,6 +33,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+@Bean
 public class WalkFunction {
     private static final StackWalker walker = StackWalker.getInstance();
 

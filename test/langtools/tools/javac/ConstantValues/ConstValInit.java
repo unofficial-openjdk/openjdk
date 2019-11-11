@@ -34,6 +34,7 @@
  * @run main ConstValInit
  */
 
+@Bean
 public class ConstValInit {
 
     public final String fnl_str = "Test string";

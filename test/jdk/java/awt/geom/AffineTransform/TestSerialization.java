@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.io.InvalidClassException;
 import java.awt.geom.AffineTransform;
 
+@Bean
 public class TestSerialization {
     public static void main(String argv[]) {
         if (argv.length > 0) {

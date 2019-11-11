@@ -30,6 +30,7 @@ import java.awt.Font;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
 
+@Bean
 public class TextLayoutEqualsTest {
 
     public static void main(String args[]) {

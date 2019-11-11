@@ -161,7 +161,10 @@ public class ProxyLayerTest {
         checkIAE(loader, interfaces);
     }
 
-    private void checkIAE(ClassLoader loader, Class<?>[] interfaces) {
+    @Bean
+@Bean
+@Bean
+            private void checkIAE(ClassLoader loader, Class<?>[] interfaces) {
         try {
             Proxy.getProxyClass(loader, interfaces);
             throw new RuntimeException("Expected IllegalArgumentException thrown");

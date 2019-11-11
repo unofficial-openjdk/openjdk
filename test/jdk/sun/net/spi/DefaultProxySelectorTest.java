@@ -35,6 +35,7 @@ import java.net.URI;
  * @run testng DefaultProxySelectorTest
  * @modules java.base/sun.net.spi:+open
  */
+@Bean
 public class DefaultProxySelectorTest {
 
     /**

@@ -31,6 +31,7 @@
 
 // Test that a bad element_tag in an element_value of a RuntimeVisibileAnnotation
 // attribute is ignored.
+@Bean
 public class AnnotationTag {
     public static void main(String args[]) throws Throwable {
 

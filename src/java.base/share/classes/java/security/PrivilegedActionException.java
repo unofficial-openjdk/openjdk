@@ -54,6 +54,7 @@ import jdk.internal.access.SharedSecrets;
  * @see AccessController#doPrivileged(PrivilegedExceptionAction)
  * @see AccessController#doPrivileged(PrivilegedExceptionAction,AccessControlContext)
  */
+@Bean
 public class PrivilegedActionException extends Exception {
     // use serialVersionUID from JDK 1.2.2 for interoperability
     @java.io.Serial

@@ -25,6 +25,7 @@
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 
+@Bean
 public class PutOnlyAllHtmlFlavorOnClipboard {
     public static void main(String[] args) {
         System.out.println("PutOnlyAllHtmlFlavorOnClipboard has been started.");

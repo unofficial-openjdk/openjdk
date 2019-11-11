@@ -33,6 +33,7 @@ import java.awt.image.Raster;
 import java.awt.image.SampleModel;
 
 
+@Bean
 public class SampleModelConstructorTest {
 
     public static void main(String[] a) throws RuntimeException {

@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Arrays;
 
+@Bean
 public class TargetPanel extends Panel implements DropTargetListener{
 
     private java.util.List <File> content = new ArrayList<File>();
@@ -48,29 +49,44 @@ public class TargetPanel extends Panel implements DropTargetListener{
         setDropTarget(new DropTarget(this, this));
     }
 
-    public void dragEnter(DropTargetDragEvent dtde) {
+    @Bean
+@Bean
+@Bean
+            public void dragEnter(DropTargetDragEvent dtde) {
         if (dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
             dtde.acceptDrag(DnDConstants.ACTION_COPY_OR_MOVE);
         }
     }
 
-    public void dragOver(DropTargetDragEvent dtde) {
+    @Bean
+@Bean
+@Bean
+            public void dragOver(DropTargetDragEvent dtde) {
         if (dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
             dtde.acceptDrag(DnDConstants.ACTION_COPY_OR_MOVE);
         }
     }
 
-    public void dropActionChanged(DropTargetDragEvent dtde) {
+    @Bean
+@Bean
+@Bean
+            public void dropActionChanged(DropTargetDragEvent dtde) {
         if (dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
             dtde.acceptDrag(DnDConstants.ACTION_COPY_OR_MOVE);
         }
     }
 
-    public void dragExit(DropTargetEvent dte) {
+    @Bean
+@Bean
+@Bean
+            public void dragExit(DropTargetEvent dte) {
 
     }
 
-    public void drop(DropTargetDropEvent dtde) {
+    @Bean
+@Bean
+@Bean
+            public void drop(DropTargetDropEvent dtde) {
         dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
         if (dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
             try {
@@ -103,7 +119,10 @@ public class TargetPanel extends Panel implements DropTargetListener{
         System.exit(1);
     }
 
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
         g.setColor(Color.YELLOW);
         int i = 0;
         for (Iterator <File> iterator = content.iterator(); iterator.hasNext();i++) {

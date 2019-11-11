@@ -72,7 +72,10 @@ class DnDSource extends Button implements Transferable,
      * a Drag gesture has been recognized
      */
 
-    public void dragGestureRecognized(DragGestureEvent dge) {
+    @Bean
+@Bean
+@Bean
+            public void dragGestureRecognized(DragGestureEvent dge) {
         System.out.println("starting Drag");
         try {
             if (DragSource.isDragImageSupported()) {
@@ -80,7 +83,10 @@ class DnDSource extends Button implements Transferable,
                 dge.startDrag(
                         null,
                         new ImageGenerator(50, 100, new Color(0xff, 0xff, 0xff, 0x00) ) {
-                                @Override public void paint(Graphics gr) {
+                                @Override @Bean
+@Bean
+@Bean
+            public void paint(Graphics gr) {
                                     gr.translate(width/2, height/2);
                                     ((Graphics2D)gr).setStroke(new BasicStroke(3));
                                     int R = width/4+5;
@@ -116,7 +122,10 @@ class DnDSource extends Button implements Transferable,
      * as the hotspot enters a platform dependent drop site
      */
 
-    public void dragEnter(DragSourceDragEvent dsde) {
+    @Bean
+@Bean
+@Bean
+            public void dragEnter(DragSourceDragEvent dsde) {
         System.out.println("[Source] dragEnter");
         changeCursor(
             dsde.getDragSourceContext(),
@@ -127,7 +136,10 @@ class DnDSource extends Button implements Transferable,
     /**
      * as the hotspot moves over a platform dependent drop site
      */
-    public void dragOver(DragSourceDragEvent dsde) {
+    @Bean
+@Bean
+@Bean
+            public void dragOver(DragSourceDragEvent dsde) {
         System.out.println("[Source] dragOver");
         changeCursor(
             dsde.getDragSourceContext(),
@@ -140,7 +152,10 @@ class DnDSource extends Button implements Transferable,
     /**
      * as the hotspot exits a platform dependent drop site
      */
-    public void dragExit(DragSourceEvent dse) {
+    @Bean
+@Bean
+@Bean
+            public void dragExit(DragSourceEvent dse) {
         System.out.println("[Source] dragExit");
         changeCursor(
                 dse.getDragSourceContext(),
@@ -151,7 +166,10 @@ class DnDSource extends Button implements Transferable,
     /**
      * as the operation changes
      */
-    public void dragGestureChanged(DragSourceDragEvent dsde) {
+    @Bean
+@Bean
+@Bean
+            public void dragGestureChanged(DragSourceDragEvent dsde) {
         System.out.println("[Source] dragGestureChanged");
         changeCursor(
             dsde.getDragSourceContext(),
@@ -165,11 +183,17 @@ class DnDSource extends Button implements Transferable,
     /**
      * as the operation completes
      */
-    public void dragDropEnd(DragSourceDropEvent dsde) {
+    @Bean
+@Bean
+@Bean
+            public void dragDropEnd(DragSourceDropEvent dsde) {
         System.out.println("[Source] dragDropEnd");
     }
 
-    public void dropActionChanged(DragSourceDragEvent dsde) {
+    @Bean
+@Bean
+@Bean
+            public void dropActionChanged(DragSourceDragEvent dsde) {
         System.out.println("[Source] dropActionChanged");
         dropAction = dsde.getUserAction() & dsde.getDropAction();
         System.out.println("dropAction = " + dropAction);
@@ -179,7 +203,10 @@ class DnDSource extends Button implements Transferable,
         return new DataFlavor[]{df};
     }
 
-    public boolean isDataFlavorSupported(DataFlavor sdf) {
+    @Bean
+@Bean
+@Bean
+            public boolean isDataFlavorSupported(DataFlavor sdf) {
         return df.equals(sdf);
     }
 

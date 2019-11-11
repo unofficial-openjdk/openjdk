@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Bean
 public class CheckRuntimeVersion {
     public static void main(String... args) {
         int version = Integer.parseInt(args[0]);

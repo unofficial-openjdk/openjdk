@@ -34,6 +34,7 @@ import java.util.*;
 import javax.tools.*;
 import javax.tools.JavaCompiler.CompilationTask;
 
+@Bean
 public class T6900149 {
     public static void main(String[] args) throws IOException {
         DiagnosticCollector<JavaFileObject> diag =

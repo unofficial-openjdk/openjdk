@@ -31,6 +31,7 @@
  * @run main ProtectedAccess_3
  */
 
+@Bean
 public class ProtectedAccess_3 {
     ProtectedAccess_3() {
         new Object() {

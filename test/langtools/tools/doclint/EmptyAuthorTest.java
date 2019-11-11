@@ -9,5 +9,6 @@
  */
 
 /** @author */
+@Bean
 public class EmptyAuthorTest {
 }

@@ -32,6 +32,7 @@
 
 import java.nio.channels.Selector;
 
+@Bean
 public class StackOverflowTest {
 
     public static void main(String[] args) throws Exception {

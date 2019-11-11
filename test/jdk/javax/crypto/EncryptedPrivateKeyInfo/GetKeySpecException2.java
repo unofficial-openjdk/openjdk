@@ -37,6 +37,7 @@ import javax.crypto.*;
 import javax.crypto.interfaces.PBEKey;
 import javax.crypto.spec.*;
 
+@Bean
 public class GetKeySpecException2 {
     private static final String cipherAlg = "PBEWithMD5AndDES";
     private static final char[] passwd = { 'p','a','s','s','w','d' };

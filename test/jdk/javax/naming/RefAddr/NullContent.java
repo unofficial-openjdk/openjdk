@@ -29,6 +29,7 @@
 
 import javax.naming.*;
 
+@Bean
 public class NullContent {
 
     public static void main(String[] args) throws Exception {

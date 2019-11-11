@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.nio.channels.*;
 import java.net.*;
 
+@Bean
 public class ExceptionTranslation {
     public static void main(String args[]) throws Exception {
         InetSocketAddress iAddr = new InetSocketAddress("nosuchhostname",5182);

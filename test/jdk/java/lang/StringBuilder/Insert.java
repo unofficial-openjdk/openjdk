@@ -27,6 +27,7 @@
  * @summary Test Insert method for infinite loop
  */
 
+@Bean
 public class Insert {
    public static void main (String argv[]) throws Exception {
        StringBuilder sb = new StringBuilder();

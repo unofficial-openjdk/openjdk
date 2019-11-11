@@ -49,6 +49,7 @@ import java.util.stream.Stream;
 
 import jdk.test.lib.util.FileUtils;
 
+@Bean
 public class ReleaseBeforeFiles {
     private Runnable onCompletion;
 
@@ -120,7 +121,11 @@ public class ReleaseBeforeFiles {
         return Arrays.stream(args).map(d -> Paths.get(".", d.split("/")));
     }
 
-    private void mkdir(String cmdline) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void mkdir(String cmdline) {
         System.out.println("mkdir -p " + cmdline);
         mkpath(cmdline.split(" +")).forEach(p -> {
             try {
@@ -131,7 +136,11 @@ public class ReleaseBeforeFiles {
         });
     }
 
-    private void touch(String cmdline) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void touch(String cmdline) {
         System.out.println("touch " + cmdline);
         mkpath(cmdline.split(" +")).forEach(p -> {
             try {
@@ -142,7 +151,11 @@ public class ReleaseBeforeFiles {
         });
     }
 
-    private void rm(String cmdline) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void rm(String cmdline) {
         System.out.println("rm -rf " + cmdline);
         mkpath(cmdline.split(" +")).forEach(p -> {
             try {

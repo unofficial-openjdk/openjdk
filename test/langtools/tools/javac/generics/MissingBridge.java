@@ -44,6 +44,7 @@ interface TestInterface
     void foo(String blah);
 }
 
+@Bean
 public class MissingBridge extends GenObject<String> implements TestInterface
 {
     public static void main(String[] args)

@@ -37,6 +37,7 @@ import java.security.AccessControlException;
 import java.security.AccessController;
 import java.security.PrivilegedExceptionAction;
 
+@Bean
 public class PackageAccessTest {
 
     public static void main(String[] args) {

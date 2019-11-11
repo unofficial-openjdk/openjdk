@@ -48,11 +48,19 @@ public final class javax_swing_DefaultCellEditor extends AbstractTest<DefaultCel
     }
 
     @Override
-    protected void initialize(XMLEncoder encoder) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void initialize(XMLEncoder encoder) {
         encoder.setExceptionListener(null); // TODO: ignore non-public listener because of 4808251
     }
 
-    protected void validate(DefaultCellEditor before, DefaultCellEditor after) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void validate(DefaultCellEditor before, DefaultCellEditor after) {
         String text = ((JTextComponent) after.getComponent()).getText();
         if (!text.equals(((JTextComponent) before.getComponent()).getText()))
             throw new Error("Invalid text in component: " + text);

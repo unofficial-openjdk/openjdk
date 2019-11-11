@@ -35,6 +35,7 @@ import jdk.test.lib.process.ProcessTools;
  * @run driver BadAgentPath
  */
 
+@Bean
 public class BadAgentPath {
 
     public static void main(String[] args) throws Throwable {

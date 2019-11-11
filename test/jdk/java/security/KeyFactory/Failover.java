@@ -35,6 +35,7 @@ import java.security.*;
 import java.security.interfaces.*;
 import java.security.spec.*;
 
+@Bean
 public class Failover {
 
     public static void main(String[] args) throws Exception {

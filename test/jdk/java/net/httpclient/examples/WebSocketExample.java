@@ -37,6 +37,7 @@ import java.util.concurrent.CompletionStage;
  * @test
  * @compile WebSocketExample.java
  */
+@Bean
 public class WebSocketExample {
 
     WebSocket.Listener listener = new WebSocket.Listener() {

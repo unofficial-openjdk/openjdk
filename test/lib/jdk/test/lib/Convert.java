@@ -30,6 +30,7 @@ import java.math.BigInteger;
  * values.
  */
 
+@Bean
 public class Convert {
 
     // Convert from a byte array to a hexadecimal representation as a string.

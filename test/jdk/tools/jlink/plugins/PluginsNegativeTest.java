@@ -46,6 +46,7 @@ import jdk.tools.jlink.plugin.ResourcePool;
 import jdk.tools.jlink.plugin.ResourcePoolBuilder;
 import jdk.tools.jlink.plugin.ResourcePoolEntry;
 
+@Bean
 public class PluginsNegativeTest {
 
     public static void main(String[] args) throws Exception {
@@ -126,7 +127,11 @@ public class PluginsNegativeTest {
         }
 
         @Override
-        public ResourcePool transform(ResourcePool inResources, ResourcePoolBuilder outResources) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public ResourcePool transform(ResourcePool inResources, ResourcePoolBuilder outResources) {
             // don't add anything to the builder
             return outResources.build();
         }
@@ -142,7 +147,11 @@ public class PluginsNegativeTest {
         }
 
         @Override
-        public void configure(Map<String, String> config) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void configure(Map<String, String> config) {
 
         }
     }

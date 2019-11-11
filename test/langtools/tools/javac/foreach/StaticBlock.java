@@ -30,6 +30,7 @@
  * @compile StaticBlock.java
  */
 
+@Bean
 public class StaticBlock {
     private static String[] numerals =
     {"einz", "zwei", "drei", "vier"};

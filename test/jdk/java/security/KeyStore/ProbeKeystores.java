@@ -34,6 +34,7 @@ import java.security.cert.*;
 import javax.crypto.*;
 import javax.security.auth.callback.*;
 
+@Bean
 public class ProbeKeystores {
     private static final char[] PASSWORD = "changeit".toCharArray();
     private static final char[] BAD_PASSWORD = "badpasword".toCharArray();

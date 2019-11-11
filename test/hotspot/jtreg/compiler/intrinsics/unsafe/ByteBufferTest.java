@@ -109,7 +109,11 @@ class MyByteBuffer {
     byte _get(long i) { return bytes[(int)i]; }
     void _put(long i, byte x) { bytes[(int)i] = x; }
 
-    private void putLongX(long a, long x) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void putLongX(long a, long x) {
         if (byteOrder == BIG_ENDIAN) {
             x = Long.reverseBytes(x);
         }
@@ -123,7 +127,11 @@ class MyByteBuffer {
         _put(a    , long0(x));
     }
 
-    private void putIntX(long a, int x) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void putIntX(long a, int x) {
         if (byteOrder == BIG_ENDIAN) {
             x = Integer.reverseBytes(x);
         }
@@ -133,7 +141,11 @@ class MyByteBuffer {
         _put(a    , int0(x));
     }
 
-    private void putShortX(int bi, short x) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void putShortX(int bi, short x) {
         if (byteOrder == BIG_ENDIAN) {
             x = Short.reverseBytes(x);
         }
@@ -141,7 +153,11 @@ class MyByteBuffer {
         _put(bi + 1, short1(x));
     }
 
-    static private int makeInt(byte b3, byte b2, byte b1, byte b0) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                private int makeInt(byte b3, byte b2, byte b1, byte b0) {
         return (((b3       ) << 24) |
                 ((b2 & 0xff) << 16) |
                 ((b1 & 0xff) <<  8) |
@@ -186,7 +202,11 @@ class MyByteBuffer {
         return x;
     }
 
-    static private short makeShort(byte b1, byte b0) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                private short makeShort(byte b1, byte b0) {
         return (short)((b1 << 8) | (b0 & 0xff));
     }
 
@@ -438,7 +458,11 @@ public abstract class ByteBufferTest implements Runnable {
     // failures when the template interpreter uses 80x87 and the JITs
     // use XMM registers.
     //
-    public double combine(double prev, long bits) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public double combine(double prev, long bits) {
         bits ^= Double.doubleToRawLongBits(prev);
         double result = Double.longBitsToDouble(bits);
         if (Double.isNaN(result)) {
@@ -449,7 +473,11 @@ public abstract class ByteBufferTest implements Runnable {
 
     // XOR the bit pattern of a float and an int, returning the result
     // as a float.  Convert sNaNs to qNaNs.
-    public Float combine(float prev, int bits) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Float combine(float prev, int bits) {
         bits ^= Float.floatToRawIntBits(prev);
         Float result = Float.intBitsToFloat(bits);
         if (Float.isNaN(result)) {

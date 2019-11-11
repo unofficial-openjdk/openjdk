@@ -26,6 +26,7 @@ import java.net.*;
 import java.util.*;
 import java.io.*;
 
+@Bean
 public class RedefineBigClassAgent {
     // N_REDEFINES = 2000 made my Solaris X86 box crawl on its knees
     // with the Server VM. The timeout is 600 seconds, but the test

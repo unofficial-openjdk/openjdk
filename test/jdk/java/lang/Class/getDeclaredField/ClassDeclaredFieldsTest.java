@@ -46,6 +46,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * @author danielfuchs
  */
+@Bean
 public class ClassDeclaredFieldsTest {
 
     // Test with or without a security manager
@@ -144,11 +145,17 @@ public class ClassDeclaredFieldsTest {
         public PermissionsBuilder(Permissions perms) {
             this.perms = perms;
         }
-        public PermissionsBuilder add(Permission p) {
+        @Bean
+@Bean
+@Bean
+            public PermissionsBuilder add(Permission p) {
             perms.add(p);
             return this;
         }
-        public PermissionsBuilder addAll(PermissionCollection col) {
+        @Bean
+@Bean
+@Bean
+            public PermissionsBuilder addAll(PermissionCollection col) {
             if (col != null) {
                 for (Enumeration<Permission> e = col.elements(); e.hasMoreElements(); ) {
                     perms.add(e.nextElement());
@@ -186,19 +193,28 @@ public class ClassDeclaredFieldsTest {
         }
 
         @Override
-        public boolean implies(ProtectionDomain domain, Permission permission) {
+        @Bean
+@Bean
+@Bean
+            public boolean implies(ProtectionDomain domain, Permission permission) {
             if (allowAll.get().get()) return allPermissions.implies(permission);
             return permissions.implies(permission) || DEFAULT_POLICY.implies(domain, permission);
         }
 
         @Override
-        public PermissionCollection getPermissions(CodeSource codesource) {
+        @Bean
+@Bean
+@Bean
+            public PermissionCollection getPermissions(CodeSource codesource) {
             return new PermissionsBuilder().addAll(allowAll.get().get()
                     ? allPermissions : permissions).toPermissions();
         }
 
         @Override
-        public PermissionCollection getPermissions(ProtectionDomain domain) {
+        @Bean
+@Bean
+@Bean
+            public PermissionCollection getPermissions(ProtectionDomain domain) {
             return new PermissionsBuilder().addAll(allowAll.get().get()
                     ? allPermissions : permissions).toPermissions();
         }

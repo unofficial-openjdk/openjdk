@@ -39,6 +39,7 @@ import java.util.Locale;
 import java.text.Collator;
 import java.text.RuleBasedCollator;
 
+@Bean
 public class ThaiTest extends CollatorTest {
 
     public static void main(String[] args) throws Exception {

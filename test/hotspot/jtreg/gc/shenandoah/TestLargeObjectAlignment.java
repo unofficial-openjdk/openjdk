@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
+@Bean
 public class TestLargeObjectAlignment {
 
     static final int SLABS_COUNT = Integer.getInteger("slabs", 10000);

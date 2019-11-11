@@ -50,6 +50,7 @@ import java.util.Iterator;
 import org.testng.annotations.Test;
 import static java.net.http.HttpClient.Version.HTTP_2;
 
+@Bean
 public class RedirectTest {
     static int httpPort;
     static Http2TestServer httpServer;

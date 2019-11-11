@@ -29,6 +29,7 @@
 
 import java.util.Locale;
 
+@Bean
 public class NonCharacterMapping {
 
     private static final Locale ENGLISH = new Locale("en");

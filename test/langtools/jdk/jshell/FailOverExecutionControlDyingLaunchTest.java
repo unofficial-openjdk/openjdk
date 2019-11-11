@@ -36,6 +36,7 @@ import org.testng.annotations.Test;
 import org.testng.annotations.BeforeMethod;
 
 @Test
+@Bean
 public class FailOverExecutionControlDyingLaunchTest extends ExecutionControlTestBase {
 
     @BeforeMethod

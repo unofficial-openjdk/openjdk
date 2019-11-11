@@ -197,7 +197,10 @@ class BorderedLabel extends Component {
     }
 
     @Override
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
 
         super.paint(g);
         Rectangle bounds = getBounds();
@@ -262,12 +265,18 @@ class EventBug extends Container {
 
     // Forward to the Window
     @Override
-    public void setLocation(int x, int y) {
+    @Bean
+@Bean
+@Bean
+            public void setLocation(int x, int y) {
         testFrame.setLocation(x, y);
     }
 
     @Override
-    public void setVisible(boolean b) {
+    @Bean
+@Bean
+@Bean
+            public void setVisible(boolean b) {
         testFrame.setVisible(b);
     }
 
@@ -276,15 +285,24 @@ class EventBug extends Container {
     }
 
     // Add listeners to Frame and button
-    public void addListeners(Component b) {
+    @Bean
+@Bean
+@Bean
+            public void addListeners(Component b) {
         b.setName("Button");
         b.addMouseListener(new MouseAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseEntered(MouseEvent e) {
                 buttonEnters++;
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseExited(MouseEvent e) {
                 buttonExits++;
             }
@@ -292,11 +310,17 @@ class EventBug extends Container {
         });
         testFrame.addMouseListener(new MouseAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseEntered(MouseEvent e) {
                 frameEnters++;
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseExited(MouseEvent e) {
                 frameExits++;
             }

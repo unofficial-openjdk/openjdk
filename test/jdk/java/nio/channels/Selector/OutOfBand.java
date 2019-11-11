@@ -35,6 +35,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.io.IOException;
 
+@Bean
 public class OutOfBand {
 
     public static void main(String[] args) throws Exception {

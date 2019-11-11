@@ -39,6 +39,7 @@ package gc.g1;
 
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class TestRegionLivenessPrint {
 
   static byte[] bigobj = new byte[1024* 1024 * 2];

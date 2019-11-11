@@ -31,6 +31,7 @@
 
 package compiler.arraycopy;
 
+@Bean
 public class TestArrayCopyWithBadOffset {
 
     public static byte[] getSrc() {

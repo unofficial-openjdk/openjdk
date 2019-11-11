@@ -39,6 +39,7 @@ import javax.management.*;
 import java.util.*;
 import static java.lang.management.ManagementFactory.*;
 
+@Bean
 public class MXBeanException {
     private static MemoryPoolMXBean pool;
 

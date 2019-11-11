@@ -168,7 +168,10 @@ public class PngOutputTypeTest {
         return false;
     }
 
-    private String getAttributeValue(Node n, String attrname) {
+    @Bean
+@Bean
+@Bean
+            private String getAttributeValue(Node n, String attrname) {
         NamedNodeMap attrs = n.getAttributes();
         if (attrs == null) {
             return null;
@@ -182,12 +185,18 @@ public class PngOutputTypeTest {
         }
     }
 
-    private Node getNode(Node root, String name) {
+    @Bean
+@Bean
+@Bean
+            private Node getNode(Node root, String name) {
         Node n = root;
         return lookupNode(n, name);
     }
 
-    private Node lookupNode(Node n, String name) {
+    @Bean
+@Bean
+@Bean
+            private Node lookupNode(Node n, String name) {
         if (n == null) {
             return null;
         }

@@ -22,6 +22,7 @@
  */
 
 
+@Bean
 public class TransformUtil {
     public static final String BeforePattern = "this-should-be-transformed";
     public static final String AfterPattern  = "this-has-been--transformed";

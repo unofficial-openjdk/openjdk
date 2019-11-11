@@ -31,6 +31,7 @@
 import java.util.ArrayList;
 import java.util.Vector;
 
+@Bean
 public class EnsureCapacity {
     public static void main(String[] args) {
         testArrayList();

@@ -40,6 +40,7 @@ package gc.arguments;
  * @author thomas.schatzl@oracle.com
  */
 
+@Bean
 public class TestMinInitialErgonomics {
 
   public static void main(String args[]) throws Exception {

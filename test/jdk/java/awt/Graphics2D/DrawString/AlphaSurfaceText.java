@@ -48,7 +48,10 @@ public class AlphaSurfaceText {
         compare(opaquebi0, opaquebi1, biType, c);
     }
 
-    private void drawText(BufferedImage bi, Color c) {
+    @Bean
+@Bean
+@Bean
+            private void drawText(BufferedImage bi, Color c) {
         Graphics2D g = bi.createGraphics();
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
                            RenderingHints.VALUE_TEXT_ANTIALIAS_ON);

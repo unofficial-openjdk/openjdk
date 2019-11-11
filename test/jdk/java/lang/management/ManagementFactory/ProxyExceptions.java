@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Properties;
 import com.sun.management.GcInfo;
 
+@Bean
 public class ProxyExceptions {
     private static MBeanServer server =
         ManagementFactory.getPlatformMBeanServer();

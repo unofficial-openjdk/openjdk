@@ -150,7 +150,10 @@ public class bug6209975 {
             thisObject = ro;
         }
 
-        public void paintIcon(Component c, Graphics g, int x, int y) {
+        @Bean
+@Bean
+@Bean
+            public void paintIcon(Component c, Graphics g, int x, int y) {
             Color color = g.getColor();
             g.setColor(Color.BLACK);
             g.fillRect(x, y, 10, 10);

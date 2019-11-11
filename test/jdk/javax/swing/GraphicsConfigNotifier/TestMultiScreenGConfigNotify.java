@@ -41,6 +41,7 @@ import java.util.logging.Logger;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
+@Bean
 public class TestMultiScreenGConfigNotify {
 
     static JFrame f;

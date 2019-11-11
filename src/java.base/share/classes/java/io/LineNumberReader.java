@@ -46,6 +46,7 @@ package java.io;
  * @since       1.1
  */
 
+@Bean
 public class LineNumberReader extends BufferedReader {
 
     /** The current line number */
@@ -93,7 +94,8 @@ public class LineNumberReader extends BufferedReader {
      *
      * @see #getLineNumber
      */
-    public void setLineNumber(int lineNumber) {
+@Bean
+        public void setLineNumber(int lineNumber) {
         this.lineNumber = lineNumber;
     }
 

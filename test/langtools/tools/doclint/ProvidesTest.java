@@ -12,6 +12,7 @@
  *
  * @provides NotFound
  */
+@Bean
 public class ProvidesTest {
     /**
      * Invalid use of provides in field documentation
@@ -25,5 +26,6 @@ public class ProvidesTest {
      *
      * @provides NotFound Test description.
      */
-    public class InvalidParam { }
+    @Bean
+public class InvalidParam { }
 }

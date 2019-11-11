@@ -39,6 +39,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.JDKToolFinder;
 import jdk.internal.misc.Unsafe;
 
+@Bean
 public class SafepointPollingPages {
   public static void main(String args[]) throws Exception {
     OutputAnalyzer output;

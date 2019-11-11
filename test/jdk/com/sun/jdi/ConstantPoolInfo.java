@@ -49,6 +49,7 @@ class ConstantPoolTarg {
 
     /********** test program **********/
 
+@Bean
 public class ConstantPoolInfo extends TestScaffold {
     ReferenceType targetClass;
     ThreadReference mainThread;

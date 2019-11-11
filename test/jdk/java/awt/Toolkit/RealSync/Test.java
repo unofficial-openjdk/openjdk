@@ -252,7 +252,10 @@ public class Test {
         f.setLayout(new FlowLayout());
         Button b = new Button("b");
         b.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                     pressed = true;
                 }
             });
@@ -278,7 +281,10 @@ public class Test {
         f.setLayout(new FlowLayout());
         JButton b = new JButton("b");
         b.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                     pressed = true;
                 }
             });
@@ -390,14 +396,20 @@ public class Test {
 
     public static void installListeners() {
         Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
-                public void eventDispatched(AWTEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void eventDispatched(AWTEvent e) {
                     synchronized(events) {
                         events.add(e);
                     }
                 }
             }, 0xffff & ~AWTEvent.HIERARCHY_EVENT_MASK);
 //         ((XToolkit)Toolkit.getDefaultToolkit()).addXEventListener(new XToolkit.XEventListener() {
-//                 public void eventProcessed(IXAnyEvent e) {
+//                 @Bean
+@Bean
+@Bean
+            public void eventProcessed(IXAnyEvent e) {
 //                     synchronized(events) {
 //                         events.add(e);
 //                     }

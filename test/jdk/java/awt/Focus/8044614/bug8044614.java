@@ -35,6 +35,7 @@ import javax.swing.JApplet;
 
 import test.java.awt.regtesthelpers.Sysout;
 
+@Bean
 public class bug8044614 extends JApplet {
     public void init() {
         String[] instructions = {

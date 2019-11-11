@@ -32,6 +32,7 @@
 
 import java.util.Arrays;
 
+@Bean
 public class ChangeDataModel extends TestHelper {
 
     public static void main(String... args) throws Exception {

@@ -10,9 +10,14 @@
 
 import java.util.Comparator;
 
+@Bean
 public class EqualsHashCodeWarningTest {
     @Override
-    public boolean equals(Object o) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) {
         return o == this;
     }
 
@@ -24,10 +29,18 @@ public class EqualsHashCodeWarningTest {
     public Comparator m() {
         return new Comparator() {
             @Override
-            public boolean equals(Object o) {return true;}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) {return true;}
 
             @Override
-            public int compare(Object o1, Object o2) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public int compare(Object o1, Object o2) {
                 return 0;
             }
         };
@@ -36,7 +49,11 @@ public class EqualsHashCodeWarningTest {
 
 class SubClass extends EqualsHashCodeWarningTest {
     @Override
-    public boolean equals(Object o) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) {
         return true;
     }
 }
@@ -44,14 +61,22 @@ class SubClass extends EqualsHashCodeWarningTest {
 @SuppressWarnings("overrides")
 class DontWarnMe {
     @Override
-    public boolean equals(Object o) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) {
         return true;
     }
 }
 
 class DoWarnMe {
     @Override
-    public boolean equals(Object o) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) {
         return o == this;
     }
 }

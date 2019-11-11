@@ -60,7 +60,11 @@ public class TestIndexTaglet extends JavadocTester {
         Path outDir = base.resolve("out");
 
         MethodBuilder method = MethodBuilder
-                .parse("public void func(A a) {}")
+                .parse("@Bean
+@Bean
+@Bean
+@Bean
+                public void func(A a) {}")
                 .setComments("test description with {@index search_phrase_a class a}");
 
         new ClassBuilder(tb, "pkg.A")

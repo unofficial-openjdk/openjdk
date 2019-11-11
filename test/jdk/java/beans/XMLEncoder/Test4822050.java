@@ -38,6 +38,7 @@ import java.io.ByteArrayOutputStream;
 
 import javax.swing.JLabel;
 
+@Bean
 public class Test4822050 implements ExceptionListener, Runnable {
     private static final int THREADS = 40;
     private static final int ATTEMPTS = 100;
@@ -65,7 +66,11 @@ public class Test4822050 implements ExceptionListener, Runnable {
         this.buffer = buffer;
     }
 
-    public void exceptionThrown(Exception exception) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void exceptionThrown(Exception exception) {
         throw new Error(exception);
     }
 

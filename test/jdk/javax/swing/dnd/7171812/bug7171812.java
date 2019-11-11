@@ -92,24 +92,39 @@ public class bug7171812 {
         list.setAutoscrolls(true);
         final DropTarget dropTarget = new DropTarget(list, DnDConstants.ACTION_MOVE, new DropTargetListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void dragEnter(DropTargetDragEvent dtde) {
                 dragOver(dtde);
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void dragOver(DropTargetDragEvent dtde) {
                 dtde.acceptDrag(DnDConstants.ACTION_MOVE);
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void dropActionChanged(DropTargetDragEvent dtde) {
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void dragExit(DropTargetEvent dte) {
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void drop(DropTargetDropEvent dtde) {
             }
         }, true);

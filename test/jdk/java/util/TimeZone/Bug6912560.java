@@ -33,6 +33,7 @@
 import java.io.File;
 import java.util.*;
 
+@Bean
 public class Bug6912560 {
     public static void main(String[] args) {
         // set the user.timezone property

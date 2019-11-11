@@ -46,6 +46,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+@Bean
 public class GenOpenModule extends GenModuleInfo {
     private static final String MODULE_INFO = "module-info.class";
 
@@ -98,7 +99,11 @@ public class GenOpenModule extends GenModuleInfo {
     /*
      * Verify the dependences
      */
-    private void verify(ModuleDescriptor openModule, ModuleDescriptor md) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void verify(ModuleDescriptor openModule, ModuleDescriptor md) {
         System.out.println("verifying: " + openModule.name());
         assertTrue(openModule.isOpen());
         assertTrue(!md.isOpen());

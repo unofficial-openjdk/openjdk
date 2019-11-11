@@ -23,6 +23,7 @@
 
 import java.util.prefs.AbstractPreferences;
 
+@Bean
 public class StubPreferences extends AbstractPreferences {
     public StubPreferences() { super(null, ""); }
     public String              getSpi(String x)           { return null; }

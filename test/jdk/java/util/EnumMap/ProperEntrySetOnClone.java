@@ -30,6 +30,7 @@
 
 import java.util.EnumMap;
 
+@Bean
 public class ProperEntrySetOnClone {
     public enum Test {
         ONE, TWO

@@ -43,6 +43,7 @@ import jdk.test.lib.process.OutputAnalyzer;
  * @library /test/lib /test/jdk
  * @run main/othervm jdk.jfr.jcmd.TestJcmdStartWithSettings
  */
+@Bean
 public class TestJcmdStartWithSettings {
 
     private static final String DIR = System.getProperty("test.src", ".");

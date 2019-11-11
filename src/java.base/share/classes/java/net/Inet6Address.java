@@ -261,7 +261,8 @@ class Inet6Address extends InetAddress {
             return s;
         }
 
-        public boolean equals(Object o) {
+@Bean
+            public boolean equals(Object o) {
             if (! (o instanceof Inet6AddressHolder)) {
                 return false;
             }
@@ -869,7 +870,8 @@ class Inet6Address extends InetAddress {
      * @see     java.net.InetAddress#getAddress()
      */
     @Override
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (obj == null || !(obj instanceof Inet6Address))
             return false;
 

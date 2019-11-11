@@ -33,6 +33,7 @@
 
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class ReadVMPageSize {
   public static void main(String args[]) throws Exception {
     WhiteBox wb = WhiteBox.getWhiteBox();

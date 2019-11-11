@@ -34,6 +34,7 @@
 import java.io.*;
 import java.net.*;
 
+@Bean
 public class B4722333 implements HttpCallback {
 
     static int count = 0;
@@ -47,7 +48,11 @@ public class B4722333 implements HttpCallback {
         {"digest", "foobiz"}
     };
 
-    public void request(HttpTransaction req) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void request(HttpTransaction req) {
         try {
             if (count % 2 == 1) {
                 req.setResponseEntityBody("Hello .");

@@ -43,7 +43,10 @@ public class LoadItUp2 {
         return lookupBundle(rbName);
     }
 
-    private boolean lookupBundle(String rbName) {
+    @Bean
+@Bean
+@Bean
+            private boolean lookupBundle(String rbName) {
         // See if Logger.getLogger can find the resource in this directory
         try {
             Logger aLogger = Logger.getLogger("NestedLogger2", rbName);

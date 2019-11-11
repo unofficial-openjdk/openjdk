@@ -42,6 +42,7 @@ import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 
+@Bean
 public class InterpolationQualityTest {
 
     private static final int testSize = 4, scaleFactor = 20, tolerance = 3;
@@ -66,14 +67,22 @@ public class InterpolationQualityTest {
         return bi;
     }
 
-    private BufferedImage createReferenceImage(Object hint) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private BufferedImage createReferenceImage(Object hint) {
         BufferedImage bi = new BufferedImage(sw, sh, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2d = bi.createGraphics();
         drawImage(g2d, hint);
         return bi;
     }
 
-    private void drawImage(Graphics2D g2d, Object hint) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void drawImage(Graphics2D g2d, Object hint) {
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, hint);
         g2d.drawImage(testImage, 0, 0, sw, sh, null);
     }
@@ -87,13 +96,21 @@ public class InterpolationQualityTest {
         vImg = getDefaultGC().createCompatibleVolatileImage(sw, sh);
     }
 
-    private void renderOffscreen(Object hint) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void renderOffscreen(Object hint) {
         Graphics2D g = vImg.createGraphics();
         drawImage(g, hint);
         g.dispose();
     }
 
-    private BufferedImage renderImage(Object hint) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private BufferedImage renderImage(Object hint) {
         BufferedImage snapshot;
         createVImg();
         renderOffscreen(hint);
@@ -112,11 +129,19 @@ public class InterpolationQualityTest {
         return snapshot;
     }
 
-    private boolean compareComponent(int comp1, int comp2) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean compareComponent(int comp1, int comp2) {
         return Math.abs(comp1 - comp2) <= tolerance;
     }
 
-    private boolean compareRGB(int rgb1, int rgb2) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean compareRGB(int rgb1, int rgb2) {
         Color col1 = new Color(rgb1);
         Color col2 = new Color(rgb2);
         return compareComponent(col1.getRed(), col2.getRed()) &&
@@ -125,7 +150,11 @@ public class InterpolationQualityTest {
                 compareComponent(col1.getAlpha(), col2.getAlpha());
     }
 
-    private boolean compareImages(BufferedImage img, BufferedImage ref, String imgName) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean compareImages(BufferedImage img, BufferedImage ref, String imgName) {
         for (int y = 0; y < ref.getHeight(); y++) {
             for (int x = 0; x < ref.getWidth(); x++) {
                 if (!compareRGB(ref.getRGB(x, y), img.getRGB(x, y))) {
@@ -139,7 +168,11 @@ public class InterpolationQualityTest {
         return true;
     }
 
-    private boolean test(Object hint) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean test(Object hint) {
         BufferedImage refImage = createReferenceImage(hint);
         BufferedImage resImage = renderImage(hint);
 
@@ -164,7 +197,11 @@ public class InterpolationQualityTest {
         }
     }
 
-    private String getHintName(Object hint) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String getHintName(Object hint) {
         if (hint == RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR) {
             return "nearest";
         }
@@ -179,7 +216,11 @@ public class InterpolationQualityTest {
         }
     }
 
-    private void dumpImage(BufferedImage bi, String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void dumpImage(BufferedImage bi, String name) {
         try {
             ImageIO.write(bi, "PNG", new File(name));
         } catch (IOException ex) {

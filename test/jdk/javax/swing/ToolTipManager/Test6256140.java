@@ -34,6 +34,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 
+@Bean
 public class Test6256140 {
 
     private static volatile JFormattedTextField ft;

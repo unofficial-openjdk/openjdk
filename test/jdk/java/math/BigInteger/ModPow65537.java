@@ -39,6 +39,7 @@ import java.security.spec.*;
 import java.util.Random;
 import jdk.test.lib.RandomFactory;
 
+@Bean
 public class ModPow65537 {
 
     public static void main(String[] args) throws Exception {

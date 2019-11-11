@@ -34,6 +34,7 @@ import javax.tools.*;
 import javax.tools.JavaCompiler.CompilationTask;
 import com.sun.source.util.*;
 
+@Bean
 public class TestJavacTask_Multiple {
     public static void main(String... args) throws Exception {
         new TestJavacTask_Multiple().run();
@@ -110,11 +111,19 @@ public class TestJavacTask_Multiple {
     TaskListener createTaskListener(final TestKind tk, final int i) {
         return new TaskListener() {
 
-            public void started(TaskEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void started(TaskEvent e) {
                 System.err.println(tk + "." + i + ": " + e + " started");
             }
 
-            public void finished(TaskEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void finished(TaskEvent e) {
                 System.err.println(tk + "." + i + ": " + e + " finished");
             }
         };

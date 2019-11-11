@@ -51,6 +51,7 @@ import jdk.test.lib.jfr.EventNames;
  *
  * @run main/othervm -XX:TLABSize=2k jdk.jfr.jcmd.TestJcmdDumpPathToGCRoots
  */
+@Bean
 public class TestJcmdDumpPathToGCRoots {
 
     private static final int OBJECT_COUNT = 100_000;

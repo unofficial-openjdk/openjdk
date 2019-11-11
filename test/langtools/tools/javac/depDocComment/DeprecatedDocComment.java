@@ -21,6 +21,7 @@
 
 //import depDocComment.*;
 
+@Bean
 public class DeprecatedDocComment {
 
     public static void main(String argv[]) {

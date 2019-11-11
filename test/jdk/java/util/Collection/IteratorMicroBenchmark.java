@@ -71,6 +71,7 @@ import java.util.stream.Stream;
  *
  * @author Martin Buchholz
  */
+@Bean
 public class IteratorMicroBenchmark {
     abstract static class Job {
         private final String name;
@@ -241,7 +242,11 @@ public class IteratorMicroBenchmark {
     // Checks for correctness *and* prevents loop optimizations
     static class Check {
         private int sum;
-        public void sum(int sum) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void sum(int sum) {
             if (this.sum == 0)
                 this.sum = sum;
             if (this.sum != sum)
@@ -384,7 +389,11 @@ public class IteratorMicroBenchmark {
     Object sneakyAdder(int[] sneakySum) {
         return new Object() {
             public int hashCode() { throw new AssertionError(); }
-            public boolean equals(Object z) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object z) {
                 sneakySum[0] += (int) z; return false; }};
     }
 

@@ -44,6 +44,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 @Test
+@Bean
 public class IdGeneratorTest {
 
     public JShell.Builder getBuilder() {
@@ -91,7 +92,11 @@ public class IdGeneratorTest {
         }
     }
 
-    private void checkIds(List<SnippetEvent> events) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkIds(List<SnippetEvent> events) {
         for (SnippetEvent event : events) {
             assertTrue(event.snippet().id().startsWith("custom"), "Not started with \"custom\": "
                     + event.snippet().id());

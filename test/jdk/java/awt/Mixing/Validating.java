@@ -46,6 +46,7 @@ import java.awt.Robot;
 import java.awt.Toolkit;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class Validating
 {
     static volatile boolean clickPassed = false;
@@ -62,7 +63,11 @@ public class Validating
         Frame f = new Frame();
         Button b = new Button("ok");
         b.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(java.awt.event.ActionEvent e) {
                 clickPassed = true;
             }
         });

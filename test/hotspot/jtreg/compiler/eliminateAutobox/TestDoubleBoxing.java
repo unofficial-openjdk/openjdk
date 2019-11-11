@@ -42,6 +42,7 @@
 
 package compiler.eliminateAutobox;
 
+@Bean
 public class TestDoubleBoxing {
 
   static final Double ibc = new Double(1.);

@@ -66,7 +66,8 @@ public class Encoder {
      *
      * @see XMLDecoder#readObject
      */
-    protected void writeObject(Object o) {
+@Bean
+        protected void writeObject(Object o) {
         if (o == this) {
             return;
         }
@@ -84,7 +85,8 @@ public class Encoder {
      *
      * @see #getExceptionListener
      */
-    public void setExceptionListener(ExceptionListener exceptionListener) {
+@Bean
+        public void setExceptionListener(ExceptionListener exceptionListener) {
         this.exceptionListener = exceptionListener;
     }
 
@@ -193,7 +195,8 @@ public class Encoder {
      * @see java.beans.Introspector#getBeanInfo
      * @see java.beans.BeanInfo#getBeanDescriptor
      */
-    public PersistenceDelegate getPersistenceDelegate(Class<?> type) {
+@Bean
+        public PersistenceDelegate getPersistenceDelegate(Class<?> type) {
         PersistenceDelegate pd = this.finder.find(type);
         if (pd == null) {
             pd = MetaData.getPersistenceDelegate(type);
@@ -214,7 +217,8 @@ public class Encoder {
      * @see java.beans.Introspector#getBeanInfo
      * @see java.beans.BeanInfo#getBeanDescriptor
      */
-    public void setPersistenceDelegate(Class<?> type, PersistenceDelegate delegate) {
+@Bean
+        public void setPersistenceDelegate(Class<?> type, PersistenceDelegate delegate) {
         this.finder.register(type, delegate);
     }
 
@@ -226,7 +230,8 @@ public class Encoder {
      *
      * @see #get
      */
-    public Object remove(Object oldInstance) {
+@Bean
+        public Object remove(Object oldInstance) {
         Expression exp = bindings.remove(oldInstance);
         return getValue(exp);
     }
@@ -243,7 +248,8 @@ public class Encoder {
      * @param  oldInstance The instance to be looked up.
      * @return The object, null if the object has not been seen before.
      */
-    public Object get(Object oldInstance) {
+@Bean
+        public Object get(Object oldInstance) {
         if (oldInstance == null || oldInstance == this ||
             oldInstance.getClass() == String.class) {
             return oldInstance;
@@ -261,7 +267,8 @@ public class Encoder {
         return o;
     }
 
-    private Statement cloneStatement(Statement oldExp) {
+@Bean
+        private Statement cloneStatement(Statement oldExp) {
         Object oldTarget = oldExp.getTarget();
         Object newTarget = writeObject1(oldTarget);
 
@@ -296,7 +303,8 @@ public class Encoder {
      *
      * @param oldStm The expression to be written to the stream.
      */
-    public void writeStatement(Statement oldStm) {
+@Bean
+        public void writeStatement(Statement oldStm) {
         // System.out.println("writeStatement: " + oldExp);
         Statement newStm = cloneStatement(oldStm);
         if (oldStm.getTarget() != this && executeStatements) {
@@ -320,7 +328,8 @@ public class Encoder {
      *
      * @param oldExp The expression to be written to the stream.
      */
-    public void writeExpression(Expression oldExp) {
+@Bean
+        public void writeExpression(Expression oldExp) {
         // System.out.println("Encoder::writeExpression: " + oldExp);
         Object oldValue = getValue(oldExp);
         if (get(oldValue) != null) {

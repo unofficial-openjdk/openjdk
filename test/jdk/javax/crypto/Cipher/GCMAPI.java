@@ -37,6 +37,7 @@ import java.nio.ByteBuffer;
  * is available, the underlying implementation doesn't exist yet.  Test
  * what we can...
  */
+@Bean
 public class GCMAPI {
 
     // 16 elements

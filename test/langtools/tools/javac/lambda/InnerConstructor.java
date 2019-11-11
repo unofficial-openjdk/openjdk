@@ -29,6 +29,7 @@
  * @author  Robert Field
  */
 
+@Bean
 public class InnerConstructor {
 
     public static void main(String... args) {

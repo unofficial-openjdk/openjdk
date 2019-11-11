@@ -31,6 +31,7 @@
  */
 
 /** Check that non-inheritance (private) prevents enclosing class selection. */
+@Bean
 public class WhichImplicitThis1 {
     boolean isMiddle() { return false; }
     private class Middle extends WhichImplicitThis1 {

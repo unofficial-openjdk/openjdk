@@ -34,6 +34,7 @@ import java.beans.IntrospectionException;
 import java.lang.reflect.Method;
 import java.util.EventObject;
 
+@Bean
 public class Test6311051 {
     public static void main(String[] args) throws IntrospectionException, NoSuchMethodException {
         EventSetDescriptor esd = new EventSetDescriptor(
@@ -54,10 +55,18 @@ public class Test6311051 {
     }
 
     public static class Bean {
-        public void addFooListener(FooListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addFooListener(FooListener listener) {
         }
 
-        public void removeFooListener(FooListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removeFooListener(FooListener listener) {
         }
     }
 

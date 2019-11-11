@@ -30,6 +30,7 @@
 
 import static java.awt.geom.CubicCurve2D.solveCubic;
 
+@Bean
 public class SolveCubicTest {
 
     public static void main(String[] args) throws Exception {

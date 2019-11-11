@@ -33,6 +33,7 @@ import java.nio.channels.Selector;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+@Bean
 public class SelectTimeout {
     private static final long BIG_TIMEOUT    = 100_000_001_000L; // 8165000
     private static final long BIGGER_TIMEOUT = 850_000_000_000_000L; // 8172547

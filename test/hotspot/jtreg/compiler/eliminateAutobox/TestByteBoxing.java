@@ -41,6 +41,7 @@
 
 package compiler.eliminateAutobox;
 
+@Bean
 public class TestByteBoxing {
 
   static final Byte ibc = new Byte((byte)1);

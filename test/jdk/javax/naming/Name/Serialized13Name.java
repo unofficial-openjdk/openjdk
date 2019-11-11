@@ -34,6 +34,7 @@ import javax.naming.*;
  * Ensure that a Name class object serialized with J2SE1.3 is
  * deserialized with J2SE1.5
  */
+@Bean
 public class Serialized13Name {
 
     public static void main(String args[]) throws Exception {

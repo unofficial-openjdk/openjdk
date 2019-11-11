@@ -84,6 +84,9 @@ public class bug4515762 {
         menuItem.addActionListener(new ActionListener() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent evt) {
                 JMenuItem item = (JMenuItem) evt.getSource();
                 if (actionExpected == false) {

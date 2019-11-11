@@ -42,6 +42,7 @@ package gc.concurrent_phase_control;
 
 import gc.concurrent_phase_control.CheckUnsupported;
 
+@Bean
 public class TestConcurrentPhaseControlSerial {
 
     public static void main(String[] args) throws Exception {

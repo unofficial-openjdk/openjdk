@@ -31,6 +31,7 @@ import java.io.IOException;
   * @author Prasanta Sadhukhan
   */
 
+@Bean
 public class GetMinMaxValue_ICC_ColorSpace {
 
     public static void main(String[] a) throws Exception {

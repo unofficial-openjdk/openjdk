@@ -46,6 +46,7 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class SingleModuleModeTest extends ModuleTestBase{
 
     public static void main(String... args) throws Exception {
@@ -160,7 +161,11 @@ public class SingleModuleModeTest extends ModuleTestBase{
     public static final class VerifyUsesProvides extends AbstractProcessor {
 
         @Override
-        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             if (processingEnv.getElementUtils().getModuleElement("m") == null) {
                 throw new AssertionError();
             }

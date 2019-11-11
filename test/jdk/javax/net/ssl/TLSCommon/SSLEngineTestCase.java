@@ -715,7 +715,10 @@ abstract public class SSLEngineTestCase {
      *
      * @param ciphers - Ciphers that should be tested.
      */
-    public void runTests(Ciphers ciphers) {
+    @Bean
+@Bean
+@Bean
+            public void runTests(Ciphers ciphers) {
         int total = ciphers.ciphers.length;
         int failed = testSomeCiphers(ciphers);
         if (failed > 0) {
@@ -910,7 +913,10 @@ abstract public class SSLEngineTestCase {
      * @param ciphers - Array of cipher names.
      * @return - Number of tests failed.
      */
-    protected int testSomeCiphers(Ciphers ciphers) {
+    @Bean
+@Bean
+@Bean
+            protected int testSomeCiphers(Ciphers ciphers) {
         int failedNum = 0;
         String description = ciphers.description;
         System.out.println("===============================================");

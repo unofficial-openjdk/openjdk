@@ -115,7 +115,11 @@ public class SpreadLockTest {
     }
 
     // Analyzing the outputs from the 3 jstack runs
-    public void analyse(String result1, String result2, String result3) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void analyse(String result1, String result2, String result3) {
         String jstackStr1 = result1;
         String jstackStr2 = result2;
         String jstackStr3 = result3;
@@ -179,7 +183,11 @@ public class SpreadLockTest {
 
     }
 
-    private MonitorInfo haveToHaveOneLock(MethodInfo mi) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private MonitorInfo haveToHaveOneLock(MethodInfo mi) {
         if (mi.getLocks().size() == 1) {
             System.out.println("Method \"" + mi.getName()
                     + "\" contain 1 lock - correct");

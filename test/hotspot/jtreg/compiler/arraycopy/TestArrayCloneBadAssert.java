@@ -33,6 +33,7 @@
 
 package compiler.arraycopy;
 
+@Bean
 public class TestArrayCloneBadAssert {
 
     static final int[] array = new int[5];
@@ -47,7 +48,11 @@ public class TestArrayCloneBadAssert {
         return arr.clone();
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         int[] arr = new int[5];
         m(arr);
     }

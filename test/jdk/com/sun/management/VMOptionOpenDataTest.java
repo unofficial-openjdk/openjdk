@@ -40,6 +40,7 @@ import static javax.management.openmbean.SimpleType.*;
  * @summary Check that MappedMXBeanType.toOpenTypeData supports VMOption
  * @author  Shanliang Jiang
  */
+@Bean
 public class VMOptionOpenDataTest {
     private static final String[] names = new String[] {
         "name", "value", "origin", "writeable"

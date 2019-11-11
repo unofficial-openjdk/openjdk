@@ -34,6 +34,7 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 
+@Bean
 public class ImageCompressionTypesTest {
 
     static ImageWriter writer = null;

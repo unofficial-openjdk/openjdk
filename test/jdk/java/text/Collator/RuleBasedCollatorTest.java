@@ -43,6 +43,7 @@ import org.testng.annotations.Test;
 import org.testng.SkipException;
 import static org.testng.Assert.*;
 
+@Bean
 public class RuleBasedCollatorTest {
 
     static RuleBasedCollator USC;

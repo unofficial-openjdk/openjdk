@@ -26,15 +26,20 @@
    @summary Sanity check that Class.getClasses() works.
    @author Anand Palaniswamy
  */
+@Bean
 public class Sanity {
-    public class Base {
-        public class BInner { }
+    @Bean
+public class Base {
+        @Bean
+public class BInner { }
         protected class BProtected { }
         class BPackage { }
     }
 
-    public class Derived extends Base {
-        public class DInner { }
+    @Bean
+public class Derived extends Base {
+        @Bean
+public class DInner { }
         protected class DProtected { }
         class DPackage { }
     }
@@ -42,7 +47,8 @@ public class Sanity {
     public static void main(String[] args) throws Exception {
         Class[] c = Derived.class.getClasses();
         if (c.length != 2)
-            throw new Exception("Incorrect number of public classes returned");
+            throw new Exception("Incorrect number of @Bean
+public classes returned");
         for (int i = 0; i < c.length; i++) {
             if (c[i] != Base.BInner.class &&
                 c[i] != Derived.DInner.class)

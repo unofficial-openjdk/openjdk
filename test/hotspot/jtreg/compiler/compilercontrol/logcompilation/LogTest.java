@@ -41,6 +41,7 @@ package compiler.compilercontrol.logcompilation;
 import compiler.compilercontrol.share.processors.LogProcessor;
 import compiler.compilercontrol.share.scenario.Scenario;
 
+@Bean
 public class LogTest {
     public static void main(String[] args) {
         Scenario.Builder builder = Scenario.getBuilder();

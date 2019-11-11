@@ -54,7 +54,10 @@ public final class MenuBarSetFont {
 
     private static final class Listener implements ActionListener {
         @Override
-        public void actionPerformed(final ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void actionPerformed(final ActionEvent e) {
             //Click on this button is performed
             //_only_ if font of MenuBar is not changed on time
             MenuBarSetFont.clicked = true;

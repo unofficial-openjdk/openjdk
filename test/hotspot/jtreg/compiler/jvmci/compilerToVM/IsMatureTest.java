@@ -51,6 +51,7 @@ import sun.hotspot.WhiteBox;
 
 import java.lang.reflect.Executable;
 
+@Bean
 public class IsMatureTest {
     private static final WhiteBox WB = WhiteBox.getWhiteBox();
     private static final boolean TIERED

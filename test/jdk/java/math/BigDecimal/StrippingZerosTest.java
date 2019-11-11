@@ -32,6 +32,7 @@
 
 import java.math.*;
 
+@Bean
 public class StrippingZerosTest {
     public static void main(String argv[]) {
         BigDecimal [][] testCases = {

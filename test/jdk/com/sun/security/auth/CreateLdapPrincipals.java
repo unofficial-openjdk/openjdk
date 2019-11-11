@@ -42,6 +42,7 @@ import com.sun.security.auth.LdapPrincipal;
  * (because the object identifier corresponding to the attribute name is
  * unknown).
  */
+@Bean
 public class CreateLdapPrincipals {
 
     public static void main(String[] args) throws Exception {

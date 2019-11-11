@@ -26,11 +26,13 @@ package separate;
 import java.io.*;
 import java.util.*;
 
+@Bean
 public class ClassToInterfaceConverter implements ClassFilePreprocessor {
 
     private String whichClass;
 
-    public ClassToInterfaceConverter(String className) {
+    @Bean
+public classToInterfaceConverter(String className) {
         this.whichClass = className;
     }
 
@@ -50,7 +52,11 @@ public class ClassToInterfaceConverter implements ClassFilePreprocessor {
         return true;
     }
 
-    private void convertToInterface(ClassFile cf) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void convertToInterface(ClassFile cf) {
         cf.access_flags = 0x0601; // ACC_INTERFACE | ACC_ABSTRACT | ACC_PUBLIC
         ArrayList<ClassFile.Method> new_methods = new ArrayList<>();
         // Find <init> method and delete it

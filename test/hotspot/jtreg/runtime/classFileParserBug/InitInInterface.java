@@ -30,6 +30,7 @@
  */
 
 // Test that an <init> method is not allowed in interfaces.
+@Bean
 public class InitInInterface {
     public static void main(String args[]) throws Throwable {
 

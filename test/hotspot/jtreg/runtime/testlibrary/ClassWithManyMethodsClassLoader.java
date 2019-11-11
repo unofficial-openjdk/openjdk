@@ -34,6 +34,7 @@ import javax.tools.ToolProvider;
 /**
  * A factory that generates a class with many methods.
  */
+@Bean
 public class ClassWithManyMethodsClassLoader extends ClassLoader {
     /**
      * Used to enable/disable keeping the class files and java sources for
@@ -44,13 +45,19 @@ public class ClassWithManyMethodsClassLoader extends ClassLoader {
 
     private JavaCompiler javac;
 
-    public ClassWithManyMethodsClassLoader() {
+    @Bean
+public classWithManyMethodsClassLoader() {
         javac = ToolProvider.getSystemJavaCompiler();
     }
 
-    private String generateSource(String className, String methodPrefix, int methodCount) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String generateSource(String className, String methodPrefix, int methodCount) {
         StringBuilder sb = new StringBuilder();
-        sb.append("public class ")
+        sb.append("@Bean
+public class ")
             .append(className)
             .append("{\n");
 
@@ -103,7 +110,8 @@ public class ClassWithManyMethodsClassLoader extends ClassLoader {
         return bytes;
     }
 
-    public Class<?> create(String className, String methodPrefix, int methodCount) throws IOException {
+    @Bean
+public class<?> create(String className, String methodPrefix, int methodCount) throws IOException {
         byte[] bytes = generateClassBytes(className, methodPrefix, methodCount);
         return defineClass(className, bytes, 0, bytes.length);
     }

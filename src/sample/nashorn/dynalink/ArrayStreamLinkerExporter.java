@@ -89,7 +89,9 @@ public final class ArrayStreamLinkerExporter extends GuardingDynamicLinkerExport
         final ArrayList<GuardingDynamicLinker> linkers = new ArrayList<>();
         linkers.add(new TypeBasedGuardingDynamicLinker() {
             @Override
-            public boolean canLinkType(final Class<?> type) {
+@Bean
+@Bean
+                    public boolean canLinkType(final Class<?> type) {
                 return type == Object[].class || type == int[].class ||
                        type == long[].class || type == double[].class;
             }

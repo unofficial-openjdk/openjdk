@@ -32,6 +32,7 @@
 
 import java.awt.*;
 
+@Bean
 public class HideMaximized {
     public static void main(String[] args) {
         if (!Toolkit.getDefaultToolkit().isFrameStateSupported(Frame.MAXIMIZED_BOTH)) {

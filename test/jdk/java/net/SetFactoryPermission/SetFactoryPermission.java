@@ -38,6 +38,7 @@ import java.net.URLConnection;
 import java.rmi.server.RMISocketFactory;
 import java.security.AccessControlException;
 
+@Bean
 public class SetFactoryPermission {
     static boolean success = false;
 

@@ -74,6 +74,7 @@ import static org.testng.Assert.assertTrue;
  * @run testng/othervm -Djdk.internal.httpclient.debug=true FlowAdapterSubscriberTest
  */
 
+@Bean
 public class FlowAdapterSubscriberTest {
 
     SSLContext sslContext;
@@ -430,11 +431,19 @@ public class FlowAdapterSubscriberTest {
         protected volatile ByteArrayOutputStream baos = new ByteArrayOutputStream();
         protected volatile String text;
 
-        public void onSubscribe(Flow.Subscription subscription) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onSubscribe(Flow.Subscription subscription) {
             this.subscription = subscription;
             subscription.request(Long.MAX_VALUE);
         }
-        public void onError(Throwable throwable) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onError(Throwable throwable) {
             throw new RuntimeException(throwable);
         }
         public void onComplete() {
@@ -446,7 +455,11 @@ public class FlowAdapterSubscriberTest {
     static class ListSubscriber extends AbstractSubscriber
         implements Flow.Subscriber<List<ByteBuffer>>, Supplier<String>
     {
-        @Override public void onNext(List<ByteBuffer> item) {
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(List<ByteBuffer> item) {
             for (ByteBuffer bb : item) {
                 byte[] ba = new byte[bb.remaining()];
                 bb.get(ba);
@@ -458,7 +471,11 @@ public class FlowAdapterSubscriberTest {
     static class CollectionSubscriber extends AbstractSubscriber
         implements Flow.Subscriber<Collection<ByteBuffer>>, Supplier<String>
     {
-        @Override public void onNext(Collection<ByteBuffer> item) {
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(Collection<ByteBuffer> item) {
             for (ByteBuffer bb : item) {
                 byte[] ba = new byte[bb.remaining()];
                 bb.get(ba);
@@ -470,7 +487,11 @@ public class FlowAdapterSubscriberTest {
     static class IterableSubscriber extends AbstractSubscriber
         implements Flow.Subscriber<Iterable<ByteBuffer>>, Supplier<String>
     {
-        @Override public void onNext(Iterable<ByteBuffer> item) {
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(Iterable<ByteBuffer> item) {
             for (ByteBuffer bb : item) {
                 byte[] ba = new byte[bb.remaining()];
                 bb.get(ba);
@@ -482,7 +503,11 @@ public class FlowAdapterSubscriberTest {
     static class ObjectSubscriber extends AbstractSubscriber
         implements Flow.Subscriber<Object>, Supplier<String>
     {
-        @Override public void onNext(Object item) {
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(Object item) {
             // What can anyone do with Object, cast or toString it ?
             uncheckedWrite(baos, item.toString().getBytes(UTF_8));
         }

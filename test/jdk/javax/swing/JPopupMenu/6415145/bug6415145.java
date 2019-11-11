@@ -87,7 +87,10 @@ public class bug6415145 {
     }
 
     private class MouseListener extends MouseAdapter {
-        public void mousePressed(MouseEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void mousePressed(MouseEvent e) {
             popupMenu.show(button, e.getX(), e.getY());
         }
     }
@@ -111,7 +114,10 @@ public class bug6415145 {
             robot.mouseRelease(InputEvent.BUTTON1_MASK);
         }
     }
-    private void moveMouseTo(ExtendedRobot robot, Component c) {
+    @Bean
+@Bean
+@Bean
+            private void moveMouseTo(ExtendedRobot robot, Component c) {
         java.awt.Point p = c.getLocationOnScreen();
         java.awt.Dimension size = c.getSize();
         p.x += size.width / 2;

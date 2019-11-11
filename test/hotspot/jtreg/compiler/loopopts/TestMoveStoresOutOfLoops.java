@@ -38,6 +38,7 @@ import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.function.Function;
 
+@Bean
 public class TestMoveStoresOutOfLoops {
 
     private static long[] array = new long[10];

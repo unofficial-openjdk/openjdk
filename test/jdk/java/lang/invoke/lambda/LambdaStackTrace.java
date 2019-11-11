@@ -45,6 +45,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.ACC_INTERFACE;
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PUBLIC;
 import static jdk.internal.org.objectweb.asm.Opcodes.V1_7;
 
+@Bean
 public class LambdaStackTrace {
 
     static File classes = new File(System.getProperty("test.classes"));
@@ -156,7 +157,8 @@ public class LambdaStackTrace {
 
     static void emitCode(File f) {
         ArrayList<String> scratch = new ArrayList<>();
-        scratch.add("public class Caller {");
+        scratch.add("@Bean
+public class Caller {");
         scratch.add("    public static void callStringMaker() {");
         scratch.add("        StringMaker sm = () -> { throw new RuntimeException(); };");
         scratch.add("        sm.make();");

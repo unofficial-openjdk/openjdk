@@ -30,6 +30,7 @@ import javax.swing.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessJFormattedTextField
  */
 
+@Bean
 public class HeadlessJFormattedTextField {
     public static void main(String args[]) {
         JTextField f = new JTextField("field");

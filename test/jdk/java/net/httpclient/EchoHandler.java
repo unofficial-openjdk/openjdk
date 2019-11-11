@@ -39,6 +39,7 @@ import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+@Bean
 public class EchoHandler implements HttpHandler {
     static final Path CWD = Paths.get(".");
     public EchoHandler() {}

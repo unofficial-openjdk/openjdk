@@ -43,6 +43,7 @@ import java.io.*;
 import java.nio.*;
 import java.nio.file.*;
 
+@Bean
 public class TestClasses {
 
   static final int COUNT = 32*1024;
@@ -56,7 +57,8 @@ public class TestClasses {
       return cw.toByteArray();
     }
 
-    public Class<?> loadClass(String name) throws ClassNotFoundException {
+    @Bean
+public class<?> loadClass(String name) throws ClassNotFoundException {
       if (!name.startsWith("Dummy")) {
         return super.loadClass(name);
       }

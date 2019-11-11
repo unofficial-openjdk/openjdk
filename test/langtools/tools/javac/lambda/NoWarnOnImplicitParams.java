@@ -8,7 +8,11 @@ import java.util.List;
 
 class NoWarnOnImplicitParams {
 
-    public void testRawMerge(List<String> ls) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testRawMerge(List<String> ls) {
         R12 r12_1 = l->"Foo";
         R12 r12_2 = (List l)->"Foo";
     }

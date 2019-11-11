@@ -74,7 +74,8 @@ public class ActionMap implements Serializable {
      *
      * @param map  the <code>ActionMap</code> that is the parent of this one
      */
-    public void setParent(ActionMap map) {
+@Bean
+        public void setParent(ActionMap map) {
         this.parent = map;
     }
 
@@ -98,7 +99,8 @@ public class ActionMap implements Serializable {
      * @param key a key
      * @param action a binding for {@code key}
      */
-    public void put(Object key, Action action) {
+@Bean
+        public void put(Object key, Action action) {
         if (key == null) {
             return;
         }
@@ -120,7 +122,8 @@ public class ActionMap implements Serializable {
      * @param key a key
      * @return the binding for {@code key}
      */
-    public Action get(Object key) {
+@Bean
+        public Action get(Object key) {
         Action value = (arrayTable == null) ? null :
                        (Action)arrayTable.get(key);
 
@@ -139,7 +142,8 @@ public class ActionMap implements Serializable {
      *
      * @param key a key
      */
-    public void remove(Object key) {
+@Bean
+        public void remove(Object key) {
         if (arrayTable != null) {
             arrayTable.remove(key);
         }

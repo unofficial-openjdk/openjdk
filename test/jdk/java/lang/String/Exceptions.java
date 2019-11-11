@@ -30,6 +30,7 @@
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 
+@Bean
 public class Exceptions {
     private static final byte [] b = { 0x48, 0x69, 0x2c, 0x20,
                                        0x44, 0x75, 0x6b, 0x65, 0x21 };

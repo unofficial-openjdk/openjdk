@@ -32,6 +32,7 @@
 
 import java.security.Provider;
 
+@Bean
 public class SampleTest extends PKCS11Test {
 
     public void main(Provider p) throws Exception {

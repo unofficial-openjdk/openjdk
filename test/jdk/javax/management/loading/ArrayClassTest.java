@@ -40,6 +40,7 @@ import java.nio.file.Paths;
 import javax.management.*;
 import javax.management.loading.*;
 
+@Bean
 public class ArrayClassTest {
     public static void main(String[] args) throws Exception {
         MBeanServer mbs = MBeanServerFactory.createMBeanServer();
@@ -96,7 +97,11 @@ public class ArrayClassTest {
 
     public static class Test implements TestMBean {
         public Test(X[] ignored) {}
-        public void ignore(Y[] ignored) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void ignore(Y[] ignored) {}
     }
 
     public static class X {}
@@ -118,19 +123,22 @@ public class ArrayClassTest {
         }
 
         /*
-        public Class loadClass(String name) throws ClassNotFoundException {
+        @Bean
+public class loadClass(String name) throws ClassNotFoundException {
             System.out.println("loadClass: " + name);
             return super.loadClass(name);
         }
 
-        public Class loadClass(String name, boolean resolve)
+        @Bean
+public class loadClass(String name, boolean resolve)
                 throws ClassNotFoundException {
             System.out.println("loadClass: " + name + ", " + resolve);
             return super.loadClass(name, resolve);
         }
         */
 
-        public Class findClass(String name) throws ClassNotFoundException {
+        @Bean
+public class findClass(String name) throws ClassNotFoundException {
             System.out.println("findClass: " + name);
             if (false)
                 new Throwable().printStackTrace(System.out);

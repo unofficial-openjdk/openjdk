@@ -31,6 +31,7 @@ import java.nio.*;
 import java.nio.charset.*;
 import java.nio.channels.*;
 
+@Bean
 public class Basic {
 
     static String message;
@@ -77,12 +78,18 @@ public class Basic {
         } catch (NullPointerException ne) {}  // OK. As expected.
 
         WritableByteChannel wbc = new WritableByteChannel() {
+            @Bean
+@Bean
+@Bean
             public int write(ByteBuffer src) { return 0; }
             public void close() throws IOException { }
             public boolean isOpen() { return true; }
         };
 
         ReadableByteChannel rbc = new ReadableByteChannel() {
+            @Bean
+@Bean
+@Bean
             public int read(ByteBuffer dst) { return 0; }
             public void close() {}
             public boolean isOpen() { return true; }

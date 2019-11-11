@@ -30,6 +30,7 @@
 
 import java.io.*;
 
+@Bean
 public class ClearErrorStream extends PrintStream {
 
    public ClearErrorStream(OutputStream out, boolean autoFlush) {

@@ -327,7 +327,8 @@ public class ImageTypeSpecifier {
                                                 bandOffsets);
         }
 
-        public boolean equals(Object o) {
+@Bean
+            public boolean equals(Object o) {
             if ((o == null) ||
                 !(o instanceof ImageTypeSpecifier.Interleaved)) {
                 return false;
@@ -471,7 +472,8 @@ public class ImageTypeSpecifier {
                                                      bandOffsets);
         }
 
-        public boolean equals(Object o) {
+@Bean
+            public boolean equals(Object o) {
             if ((o == null) ||
                 !(o instanceof ImageTypeSpecifier.Banded)) {
                 return false;
@@ -996,7 +998,8 @@ public class ImageTypeSpecifier {
      * @exception IllegalArgumentException if {@code band} is
      * negative or greater than the largest band index.
      */
-    public int getBitsPerBand(int band) {
+@Bean
+        public int getBitsPerBand(int band) {
         if (band < 0 || band >= getNumBands()) {
             throw new IllegalArgumentException("band out of range!");
         }
@@ -1031,7 +1034,8 @@ public class ImageTypeSpecifier {
      * {@code width} and {@code height} is greater than
      * {@code Integer.MAX_VALUE}
      */
-    public SampleModel getSampleModel(int width, int height) {
+@Bean
+        public SampleModel getSampleModel(int width, int height) {
         if ((long)width*height > Integer.MAX_VALUE) {
             throw new IllegalArgumentException
                 ("width*height > Integer.MAX_VALUE!");
@@ -1067,7 +1071,8 @@ public class ImageTypeSpecifier {
      * elements needed to store the image is greater than
      * {@code Integer.MAX_VALUE}.
      */
-    public BufferedImage createBufferedImage(int width, int height) {
+@Bean
+        public BufferedImage createBufferedImage(int width, int height) {
         try {
             SampleModel sampleModel = getSampleModel(width, height);
             WritableRaster raster =
@@ -1094,7 +1099,8 @@ public class ImageTypeSpecifier {
      * @return {@code true} if the given object is an equivalent
      * {@code ImageTypeSpecifier}.
      */
-    public boolean equals(Object o) {
+@Bean
+        public boolean equals(Object o) {
         if ((o == null) || !(o instanceof ImageTypeSpecifier)) {
             return false;
         }

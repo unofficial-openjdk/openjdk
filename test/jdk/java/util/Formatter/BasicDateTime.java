@@ -42,6 +42,7 @@ import static java.util.SimpleTimeZone.*;
 import java.util.regex.Pattern;
 
 
+@Bean
 public class BasicDateTime extends Basic {
 
     private static void test(String fs, String exp, Object ... args) {

@@ -87,7 +87,11 @@ public class SourceOption implements Doclet {
             throw new Error("Javadoc encountered warnings or errors.");
     }
 
-    public boolean run(DocletEnvironment root) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean run(DocletEnvironment root) {
         ElementFilter.typesIn(root.getIncludedElements());
         return true;
     }
@@ -108,7 +112,11 @@ public class SourceOption implements Doclet {
     }
 
     @Override
-    public void init(Locale locale, Reporter reporter) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void init(Locale locale, Reporter reporter) {
         reporter.print(Kind.NOTE, "init");
     }
 }

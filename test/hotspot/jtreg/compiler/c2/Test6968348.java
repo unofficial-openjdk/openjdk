@@ -36,6 +36,7 @@ import jdk.internal.misc.Unsafe;
 
 import java.lang.reflect.Field;
 
+@Bean
 public class Test6968348 {
     static Unsafe unsafe = Unsafe.getUnsafe();
     static final long[] buffer = new long[4096];

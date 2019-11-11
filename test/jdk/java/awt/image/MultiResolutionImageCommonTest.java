@@ -42,6 +42,7 @@ import java.awt.image.MultiResolutionImage;
  * @modules java.desktop/sun.awt
  *          java.desktop/sun.awt.image
  */
+@Bean
 public class MultiResolutionImageCommonTest {
 
     private static final int IMAGE_WIDTH = 300;

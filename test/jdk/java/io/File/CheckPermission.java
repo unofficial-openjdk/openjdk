@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@Bean
 public class CheckPermission {
 
     private static final String CHECK_PERMISSION_TEST = "CheckPermissionTest";
@@ -89,41 +90,69 @@ public class CheckPermission {
             System.setSecurityManager(new LoggingSecurityManager());
         }
 
-        private void checkFileOperation(FileOperation op, String file) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void checkFileOperation(FileOperation op, String file) {
             Checks checks = myChecks.get();
             if (checks != null)
                 checks.addFileOperation(op, file);
         }
 
         @Override
-        public void checkRead(String file) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void checkRead(String file) {
             checkFileOperation(FileOperation.READ, file);
         }
 
         @Override
-        public void checkWrite(String file) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void checkWrite(String file) {
             checkFileOperation(FileOperation.WRITE, file);
         }
 
         @Override
-        public void checkDelete(String file) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void checkDelete(String file) {
             checkFileOperation(FileOperation.DELETE, file);
         }
 
         @Override
-        public void checkExec(String file) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void checkExec(String file) {
             checkFileOperation(FileOperation.EXEC, file);
         }
 
         @Override
-        public void checkPermission(Permission perm) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void checkPermission(Permission perm) {
             Checks checks = myChecks.get();
             if (checks != null)
                 checks.permissionsChecked().add(perm);
         }
 
         @Override
-        public void checkPropertyAccess(String key) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void checkPropertyAccess(String key) {
             Checks checks = myChecks.get();
             if (checks != null)
                 checks.propertiesChecked().add(key);
@@ -245,7 +274,11 @@ public class CheckPermission {
         prepare();
         testFile.list(new FilenameFilter() {
             @Override
-            public boolean accept(File dir, String name) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public boolean accept(File dir, String name) {
                 return false;
             }
         });
@@ -258,7 +291,11 @@ public class CheckPermission {
         prepare();
         testFile.listFiles(new FilenameFilter() {
             @Override
-            public boolean accept(File dir, String name) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public boolean accept(File dir, String name) {
                 return false;
             }
         });
@@ -267,7 +304,11 @@ public class CheckPermission {
         prepare();
         testFile.listFiles(new FileFilter() {
             @Override
-            public boolean accept(File file) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public boolean accept(File file) {
                 return false;
             }
         });

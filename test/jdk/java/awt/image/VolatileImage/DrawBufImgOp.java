@@ -183,7 +183,10 @@ public class DrawBufImgOp extends Canvas {
         convolve7x7noop = new ConvolveOp(k7, ConvolveOp.EDGE_NO_OP, null);
     }
 
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
         synchronized (this) {
             if (done) {
                 return;
@@ -226,7 +229,10 @@ public class DrawBufImgOp extends Canvas {
      *       ConvolveOp (5x5)
      *       ConvolveOp (7x7)
      */
-    private void renderTest(Graphics2D g2d) {
+    @Bean
+@Bean
+@Bean
+            private void renderTest(Graphics2D g2d) {
         g2d.setColor(Color.white);
         g2d.fillRect(0, 0, TESTW, TESTH);
 
@@ -331,7 +337,10 @@ public class DrawBufImgOp extends Canvas {
         }
     }
 
-    private BufferedImage makeSourceImage(int size, int type) {
+    @Bean
+@Bean
+@Bean
+            private BufferedImage makeSourceImage(int size, int type) {
         int s2 = size/2;
         BufferedImage img = new BufferedImage(size, size, type);
         Graphics2D g2d = img.createGraphics();

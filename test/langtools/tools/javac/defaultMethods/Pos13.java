@@ -28,6 +28,7 @@
  * @compile Pos13.java
  */
 
+@Bean
 public class Pos13 {
 
     static int assertionCount = 0;

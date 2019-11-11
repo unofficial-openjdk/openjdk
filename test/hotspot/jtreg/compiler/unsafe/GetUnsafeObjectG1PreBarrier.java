@@ -37,6 +37,7 @@ import jdk.internal.misc.Unsafe;
 
 import java.lang.reflect.Field;
 
+@Bean
 public class GetUnsafeObjectG1PreBarrier {
     private static final Unsafe unsafe;
     private static final int N = 100_000;
@@ -70,7 +71,11 @@ public class GetUnsafeObjectG1PreBarrier {
         }
     }
 
-    private void readField(Object o, long fieldOffset) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void readField(Object o, long fieldOffset) {
         unsafe.getReference(o, fieldOffset);
     }
 }

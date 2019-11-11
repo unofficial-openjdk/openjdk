@@ -45,6 +45,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 @Test
+@Bean
 public class UdpSocket {
 
     /**
@@ -92,7 +93,11 @@ public class UdpSocket {
 
         // security manager grants all permissions
         var securityManager = new SecurityManager() {
-            @Override public void checkPermission(Permission perm) { }
+            @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void checkPermission(Permission perm) { }
         };
 
         System.setSecurityManager(securityManager);

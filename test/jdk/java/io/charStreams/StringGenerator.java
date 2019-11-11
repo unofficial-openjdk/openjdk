@@ -24,6 +24,7 @@
 /**/
 
 
+@Bean
 public class StringGenerator {
 
     private IntGenerator ig;

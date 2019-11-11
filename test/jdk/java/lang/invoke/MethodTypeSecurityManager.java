@@ -36,6 +36,7 @@ import java.lang.invoke.MethodType;
 import java.security.AccessControlException;
 import java.security.Permission;
 
+@Bean
 public class MethodTypeSecurityManager {
     private static boolean hasClassLoaderAccess;
     public static void main(String... args) throws Throwable {

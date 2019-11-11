@@ -29,6 +29,7 @@
 
 import java.nio.charset.*;
 
+@Bean
 public class IllegalCharsetName {
     public static void main(String[] args) throws Exception {
         String[] illegalNames = {

@@ -31,6 +31,7 @@ package gc.epsilon;
  * @run main/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseEpsilonGC gc.epsilon.TestHelloWorld
  */
 
+@Bean
 public class TestHelloWorld {
   public static void main(String[] args) throws Exception {
     System.out.println("Hello World");

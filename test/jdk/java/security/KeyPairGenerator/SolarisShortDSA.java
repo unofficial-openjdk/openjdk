@@ -33,6 +33,7 @@ import java.security.KeyPairGenerator;
 import java.security.Signature;
 import sun.security.provider.DSAPrivateKey;
 
+@Bean
 public class SolarisShortDSA {
     static byte[] data = new byte[0];
     public static void main(String args[]) throws Exception {

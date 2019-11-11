@@ -57,6 +57,7 @@ import java.util.stream.LongStream;
 import static org.testng.Assert.*;
 
 @Test
+@Bean
 public class SpliteratorCharacteristics {
 
     public void testSpliteratorFromCharSequence() {
@@ -73,12 +74,20 @@ public class SpliteratorCharacteristics {
             }
 
             @Override
-            public char charAt(int index) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public char charAt(int index) {
                 return s.charAt(index);
             }
 
             @Override
-            public CharSequence subSequence(int start, int end) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence subSequence(int start, int end) {
                 return s.subSequence(start, end);
             }
 

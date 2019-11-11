@@ -44,6 +44,7 @@ import com.sun.source.tree.Tree;
 import com.sun.source.util.JavacTask;
 import com.sun.source.util.TreePathScanner;
 
+@Bean
 public class CaseTest {
 
     public static void main(String[] args) throws Exception {
@@ -66,7 +67,11 @@ public class CaseTest {
         List<String> labels = new ArrayList<>();
         new TreePathScanner<Void, Void>() {
             @Override
-            public Void visitCase(CaseTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitCase(CaseTree node, Void p) {
                 labels.add(String.valueOf(node.getExpression()));
                 labels.add(node.getExpressions().stream()
                                                 .map(String::valueOf)
@@ -94,7 +99,11 @@ public class CaseTest {
                       "}\n";
         new TreePathScanner<Void, Void>() {
             @Override
-            public Void visitCase(CaseTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitCase(CaseTree node, Void p) {
                 if (node.getStatements().size() != 2) {
                     throw new AssertionError("Unexpected statements: " + node.getStatements());
                 }
@@ -118,7 +127,11 @@ public class CaseTest {
                       "}\n";
         new TreePathScanner<Void, Void>() {
             @Override
-            public Void visitCase(CaseTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitCase(CaseTree node, Void p) {
                 if (node.getStatements() != null) {
                     throw new AssertionError("Unexpected statements: " + node.getStatements());
                 }
@@ -151,7 +164,11 @@ public class CaseTest {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return text;
         }
     }

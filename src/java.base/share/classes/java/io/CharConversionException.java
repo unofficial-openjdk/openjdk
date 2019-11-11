@@ -30,6 +30,7 @@ package java.io;
  * @author      Asmus Freytag
  * @since       1.1
  */
+@Bean
 public class CharConversionException
     extends java.io.IOException
 {

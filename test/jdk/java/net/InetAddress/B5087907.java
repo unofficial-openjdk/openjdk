@@ -32,6 +32,7 @@
 
 import java.net.*;
 
+@Bean
 public class B5087907 {
 
     public static void main(String args[]) {

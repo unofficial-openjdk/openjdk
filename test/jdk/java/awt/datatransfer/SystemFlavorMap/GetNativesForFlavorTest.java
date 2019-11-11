@@ -36,6 +36,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.SystemFlavorMap;
 import java.util.Iterator;
 
+@Bean
 public class GetNativesForFlavorTest {
 
     final static SystemFlavorMap fm =

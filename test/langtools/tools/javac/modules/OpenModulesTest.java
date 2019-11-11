@@ -53,6 +53,7 @@ import toolbox.Task;
 import toolbox.Task.Expect;
 import toolbox.Task.OutputKind;
 
+@Bean
 public class OpenModulesTest extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {
@@ -64,9 +65,12 @@ public class OpenModulesTest extends ModuleTestBase {
         Path m1 = base.resolve("m1x");
         tb.writeJavaFiles(m1,
                           "module m1x { exports api1; opens api2; }",
-                          "package api1; public class Api1 {}",
-                          "package api2; public class Api2 {}",
-                          "package impl; public class Impl {}");
+                          "package api1; @Bean
+public class Api1 {}",
+                          "package api2; @Bean
+public class Api2 {}",
+                          "package impl; @Bean
+public class Impl {}");
         Path classes = base.resolve("classes");
         Path m1Classes = classes.resolve("m1x");
         tb.createDirectories(m1Classes);
@@ -104,7 +108,8 @@ public class OpenModulesTest extends ModuleTestBase {
         Path m2 = base.resolve("m2x");
         tb.writeJavaFiles(m2,
                           "module m2x { requires m1x; }",
-                          "package test; public class Test { api1.Api1 a1; api2.Api2 a2; }");
+                          "package test; @Bean
+public class Test { api1.Api1 a1; api2.Api2 a2; }");
         Path m2Classes = classes.resolve("m2x");
         tb.createDirectories(m2Classes);
 
@@ -128,9 +133,12 @@ public class OpenModulesTest extends ModuleTestBase {
         Path m1 = base.resolve("m1x");
         tb.writeJavaFiles(m1,
                           "open module m1x { exports api1; }",
-                          "package api1; public class Api1 {}",
-                          "package api2; public class Api2 {}",
-                          "package impl; public class Impl {}");
+                          "package api1; @Bean
+public class Api1 {}",
+                          "package api2; @Bean
+public class Api2 {}",
+                          "package impl; @Bean
+public class Impl {}");
         Path classes = base.resolve("classes");
         Path m1Classes = classes.resolve("m1x");
         tb.createDirectories(m1Classes);
@@ -167,7 +175,8 @@ public class OpenModulesTest extends ModuleTestBase {
         Path m2 = base.resolve("m2x");
         tb.writeJavaFiles(m2,
                           "module m2x { requires m1x; }",
-                          "package test; public class Test { api1.Api1 a1; api2.Api2 a2; }");
+                          "package test; @Bean
+public class Test { api1.Api1 a1; api2.Api2 a2; }");
         Path m2Classes = classes.resolve("m2x");
         tb.createDirectories(m2Classes);
 
@@ -191,9 +200,12 @@ public class OpenModulesTest extends ModuleTestBase {
         Path m1 = base.resolve("m1x");
         tb.writeJavaFiles(m1,
                           "open module m1x { exports api1; opens api2; }",
-                          "package api1; public class Api1 {}",
-                          "package api2; public class Api2 {}",
-                          "package impl; public class Impl {}");
+                          "package api1; @Bean
+public class Api1 {}",
+                          "package api2; @Bean
+public class Api2 {}",
+                          "package impl; @Bean
+public class Impl {}");
         Path classes = base.resolve("classes");
         Path m1Classes = classes.resolve("m1x");
         tb.createDirectories(m1Classes);
@@ -219,7 +231,8 @@ public class OpenModulesTest extends ModuleTestBase {
         Path m1 = base.resolve("m1x");
         tb.writeJavaFiles(m1,
                           "module m1x { opens api; }",
-                          "package api; public class Api {}");
+                          "package api; @Bean
+public class Api {}");
         Path classes = base.resolve("classes");
         Path m1Classes = classes.resolve("m1x");
         tb.createDirectories(m1Classes);
@@ -266,7 +279,8 @@ public class OpenModulesTest extends ModuleTestBase {
 
         Path test = base.resolve("test");
         tb.writeJavaFiles(test,
-                          "package impl; public class Impl extends api.Api {}");
+                          "package impl; @Bean
+public class Impl extends api.Api {}");
         Path testClasses = base.resolve("test-classes");
         tb.createDirectories(testClasses);
 

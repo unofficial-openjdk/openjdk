@@ -29,6 +29,7 @@
  * @run main PutfieldError
  */
 
+@Bean
 public class PutfieldError {
   public static void main(java.lang.String[] unused) {
     try {

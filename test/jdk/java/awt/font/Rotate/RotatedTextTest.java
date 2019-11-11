@@ -41,6 +41,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import javax.imageio.ImageIO;
 
+@Bean
 public class RotatedTextTest
 {
     static final int size = 720;

@@ -28,6 +28,7 @@ import java.lang.reflect.InvocationTargetException;
  * except that m has been made inaccessible and some exception should be
  * thrown instead.
  */
+@Bean
 public class InvokeSeveralWays {
     public static int test(String args[], Class expected) throws Exception {
         int failures = 0;

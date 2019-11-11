@@ -65,6 +65,9 @@ public class TexturePaintPrintingTest extends Component implements Printable {
         final JButton print = new JButton("Print");
         print.addActionListener(new AbstractAction() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 PrinterJob job = PrinterJob.getPrinterJob();
                 job.setPrintable(gpt);
@@ -88,11 +91,17 @@ public class TexturePaintPrintingTest extends Component implements Printable {
         return new Dimension(500,500);
     }
 
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
         doPaint((Graphics2D)g);
     }
 
-    public int print( Graphics graphics, PageFormat format, int index ) {
+    @Bean
+@Bean
+@Bean
+            public int print( Graphics graphics, PageFormat format, int index ) {
         Graphics2D g2d = (Graphics2D)graphics;
         g2d.translate(format.getImageableX(), format.getImageableY());
         doPaint(g2d);
@@ -100,7 +109,10 @@ public class TexturePaintPrintingTest extends Component implements Printable {
     }
 
     static final float DIM = 100;
-    public void doPaint(Graphics2D g2d) {
+    @Bean
+@Bean
+@Bean
+            public void doPaint(Graphics2D g2d) {
         BufferedImage patternImage = new BufferedImage(2,2,BufferedImage.TYPE_INT_ARGB);
         Graphics gImage = patternImage.getGraphics();
         gImage.setColor(Color.WHITE);
@@ -200,6 +212,9 @@ public class TexturePaintPrintingTest extends Component implements Printable {
         dialog.setVisible(true);
         dialog.addWindowListener(new WindowAdapter() {
            @Override
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent e) {
                 System.out.println("main dialog closing");
                 testGeneratedInterrupt = false;

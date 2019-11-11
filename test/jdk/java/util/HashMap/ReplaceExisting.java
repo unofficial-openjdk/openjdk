@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 
+@Bean
 public class ReplaceExisting {
     /* Number of entries required to trigger a resize for cap=16, load=0.75*/
     private static int ENTRIES = 13;

@@ -112,6 +112,7 @@ class myThread extends Thread {
 
     /********** test program **********/
 
+@Bean
 public class MonitorEventTest extends TestScaffold {
     ReferenceType targetClass;
     ThreadReference mainThread;
@@ -135,23 +136,39 @@ public class MonitorEventTest extends TestScaffold {
 
     /********** event handlers **********/
 
-    public void monitorContendedEnter(MonitorContendedEnterEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void monitorContendedEnter(MonitorContendedEnterEvent event) {
 
         actualContendedEnterCount++;
     }
 
-    public void monitorContendedEntered(MonitorContendedEnteredEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void monitorContendedEntered(MonitorContendedEnteredEvent event) {
 
         actualContendedEnteredCount++;
 
     }
 
-    public void monitorWait(MonitorWaitEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void monitorWait(MonitorWaitEvent event) {
 
         actualWaitCount++;
 
     }
-    public void monitorWaited(MonitorWaitedEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void monitorWaited(MonitorWaitedEvent event) {
 
         actualWaitedCount++;
 

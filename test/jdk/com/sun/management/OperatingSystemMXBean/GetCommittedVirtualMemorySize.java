@@ -49,6 +49,7 @@
 import com.sun.management.OperatingSystemMXBean;
 import java.lang.management.*;
 
+@Bean
 public class GetCommittedVirtualMemorySize {
 
     private static OperatingSystemMXBean mbean =

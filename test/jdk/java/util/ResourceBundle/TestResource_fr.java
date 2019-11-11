@@ -57,6 +57,7 @@
 
 import java.util.*;
 
+@Bean
 public class TestResource_fr extends ResourceBundle {
     public TestResource_fr() {
     }

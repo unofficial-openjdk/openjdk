@@ -31,6 +31,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test6753639 {
     public static void main(String[] args) throws InterruptedException {
         int END = Integer.MAX_VALUE;

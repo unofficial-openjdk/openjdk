@@ -288,6 +288,7 @@ class InvokeTarg {
 
     /********** test program **********/
 
+@Bean
 public class InvokeTest extends TestScaffold {
     ReferenceType targetClass;
     ThreadReference mainThread;
@@ -312,7 +313,11 @@ public class InvokeTest extends TestScaffold {
     /********** event handlers **********/
 
     // not use now
-    public void breakpointReached(BreakpointEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void breakpointReached(BreakpointEvent event) {
         println("Got BreakpointEvent");
         longValue = thisObject.getValue(longCheckField);
         booleanValue = thisObject.getValue(booleanCheckField);

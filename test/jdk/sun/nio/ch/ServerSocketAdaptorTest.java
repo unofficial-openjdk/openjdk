@@ -31,6 +31,7 @@ import java.net.ServerSocket;
 import java.net.SocketException;
 import java.nio.channels.ServerSocketChannel;
 
+@Bean
 public class ServerSocketAdaptorTest {
 
     public static void main(String[] args) throws IOException {

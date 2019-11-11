@@ -128,7 +128,11 @@ public class SourceTreeScannerTest extends AbstractTreeScannerTest {
 
         /** Record all tree nodes found by scanner. */
         @Override
-        public Void scan(Tree tree, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void scan(Tree tree, Void ignore) {
             if (tree == null)
                 return null;
             //System.err.println("FOUND: " + tree.getKind() + " " + trim(tree, 64));
@@ -137,7 +141,11 @@ public class SourceTreeScannerTest extends AbstractTreeScannerTest {
         }
 
         /** record all tree nodes found by reflection. */
-        public void reflectiveScan(Object o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void reflectiveScan(Object o) {
             if (o == null)
                 return;
             if (o instanceof JCTree) {

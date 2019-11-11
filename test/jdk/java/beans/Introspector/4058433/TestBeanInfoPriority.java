@@ -46,6 +46,7 @@ import java.util.Arrays;
  */
 
 
+@Bean
 public class TestBeanInfoPriority {
 
     // ========== test bean (annotations must be ignored!) ==========
@@ -71,7 +72,10 @@ public class TestBeanInfoPriority {
                 enumerationValues = {
                     "javax.swing.SwingConstants.NORTH"}
                 )
-        public void setValue(int v) { value = v; }
+        @Bean
+@Bean
+@Bean
+            public void setValue(int v) { value = v; }
         public  int getValue()      { return value; }
 
 
@@ -91,11 +95,23 @@ public class TestBeanInfoPriority {
         public   void setOther(double o) { other = o; }
         public double getOther()         { return other; }
 
-        public void addActionListener(ActionListener l) {}
-        public void removeActionListener(ActionListener l) {}
+        @Bean
+@Bean
+@Bean
+            public void addActionListener(ActionListener l) {}
+        @Bean
+@Bean
+@Bean
+            public void removeActionListener(ActionListener l) {}
 
-        public void addMouseListener(MouseListener l) {}
-        public void removeMouseListener(MouseListener l) {}
+        @Bean
+@Bean
+@Bean
+            public void addMouseListener(MouseListener l) {}
+        @Bean
+@Bean
+@Bean
+            public void removeMouseListener(MouseListener l) {}
     }
 
     // ========== user-defined bean info ==========

@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Bean
 public class DtraceRunner {
 
     private static final String DTRACE_DEFAULT_PATH = "/usr/sbin/dtrace";
@@ -68,7 +69,11 @@ public class DtraceRunner {
         return result;
     }
 
-    private void backupLogFile(File file) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void backupLogFile(File file) {
         if (file.exists()) {
             file.renameTo(new File(file.getPath() + ".bak"));
         }

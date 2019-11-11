@@ -30,6 +30,7 @@
 
 package compiler.floatingpoint;
 
+@Bean
 public class NaNTest {
     static void testFloat() {
         int originalValue = 0x7f800001;

@@ -48,6 +48,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.logging.Logger;
 
+@Bean
 public class SerialTest {
     private static final Path SER_DIR = Paths.get("sers");
     private static final String JAVA_BASE = "java.base";

@@ -29,6 +29,7 @@
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 
+@Bean
 public class SubclassCastUOE {
     public static void main(String[] args) throws Exception {
         ByteBuffer buf = ByteBuffer.allocateDirect(37);

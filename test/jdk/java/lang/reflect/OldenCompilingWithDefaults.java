@@ -31,6 +31,7 @@
 
 import java.lang.reflect.*;
 
+@Bean
 public class OldenCompilingWithDefaults {
     public OldenCompilingWithDefaults(){}
     static Object f;

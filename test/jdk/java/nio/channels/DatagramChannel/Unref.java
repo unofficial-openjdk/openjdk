@@ -44,6 +44,7 @@ import com.sun.management.UnixOperatingSystemMXBean;
 import jtreg.SkippedException;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class Unref {
 
     interface DatagramChannelSupplier {

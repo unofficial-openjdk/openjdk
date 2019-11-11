@@ -47,6 +47,7 @@ import java.util.logging.Logger;
  * one segment, parse the output of the packer to verify if this is indeed true.
  */
 
+@Bean
 public class Pack200Props {
 
     final static Logger log = Logger.getLogger("Pack200Props");

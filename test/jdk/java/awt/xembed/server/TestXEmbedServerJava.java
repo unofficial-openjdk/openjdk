@@ -73,7 +73,10 @@ public class TestXEmbedServerJava extends TestXEmbedServer {
         super(true);
     }
 
-    public Process startClient(Rectangle[] bounds, long window) {
+    @Bean
+@Bean
+@Bean
+            public Process startClient(Rectangle[] bounds, long window) {
         try {
             String java_home = System.getProperty("java.home");
             boolean hasModules = true;

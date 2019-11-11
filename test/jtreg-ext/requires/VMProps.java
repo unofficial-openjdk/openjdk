@@ -54,6 +54,7 @@ import jdk.test.lib.Container;
  * Do not use any APIs that may not be available in all target VMs.
  * Properties set by this Class will be available in the @requires expressions.
  */
+@Bean
 public class VMProps implements Callable<Map<String, String>> {
     // value known to jtreg as an indicator of error state
     private static final String ERROR_STATE = "__ERROR__";
@@ -63,7 +64,11 @@ public class VMProps implements Callable<Map<String, String>> {
     private static class SafeMap {
         private final Map<String, String> map = new HashMap<>();
 
-        public void put(String key, Supplier<String> s) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void put(String key, Supplier<String> s) {
             String value;
             try {
                 value = s.get();
@@ -133,7 +138,11 @@ public class VMProps implements Callable<Map<String, String>> {
      *
      * @return {@link #ERROR_STATE}
      */
-    private String errorWithMessage(String message) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String errorWithMessage(String message) {
         new Exception(message).printStackTrace();
         return ERROR_STATE + message;
     }
@@ -279,7 +288,11 @@ public class VMProps implements Callable<Map<String, String>> {
      *
      * @param map - property-value pairs
      */
-    protected void vmGC(SafeMap map) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void vmGC(SafeMap map) {
         for (GC gc: GC.values()) {
             map.put("vm.gc." + gc.name(),
                     () -> "" + (gc.isSupported()
@@ -293,7 +306,11 @@ public class VMProps implements Callable<Map<String, String>> {
      * @param map - property-value pairs
      * @param flagName - flag name
      */
-    private void vmOptFinalFlag(SafeMap map, String flagName) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void vmOptFinalFlag(SafeMap map, String flagName) {
         map.put("vm.opt.final." + flagName,
                 () -> String.valueOf(WB.getBooleanVMFlag(flagName)));
     }
@@ -303,7 +320,11 @@ public class VMProps implements Callable<Map<String, String>> {
      *
      * @param map - property-value pairs
      */
-    protected void vmOptFinalFlags(SafeMap map) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void vmOptFinalFlags(SafeMap map) {
         vmOptFinalFlag(map, "ClassUnloading");
         vmOptFinalFlag(map, "ClassUnloadingWithConcurrentMark");
         vmOptFinalFlag(map, "UseCompressedOops");

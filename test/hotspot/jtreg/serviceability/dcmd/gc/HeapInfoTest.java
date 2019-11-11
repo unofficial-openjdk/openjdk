@@ -41,7 +41,11 @@ import jdk.test.lib.process.OutputAnalyzer;
  * @run testng HeapInfoTest
  */
 public class HeapInfoTest {
-    public void run(CommandExecutor executor) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void run(CommandExecutor executor) {
         String cmd = "GC.heap_info";
         OutputAnalyzer output = executor.execute(cmd);
         output.shouldContain("Metaspace");

@@ -94,6 +94,9 @@ public class MouseDraggedTest {
         panel.addMouseMotionListener(new MouseAdapter() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseDragged(MouseEvent e) {
                 mouseDragged = true;
             }

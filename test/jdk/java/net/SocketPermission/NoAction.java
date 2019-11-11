@@ -28,6 +28,7 @@
  */
 import java.net.SocketPermission;
 
+@Bean
 public class NoAction {
 
     public static void main(String[] args) throws Exception {

@@ -32,6 +32,7 @@
  * @run main/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:+ShenandoahCriticalControlThreadPriority -Xmx1g TestCriticalControlThreadPriority
  */
 
+@Bean
 public class TestCriticalControlThreadPriority {
 
     public static void main(String[] args) throws Exception {

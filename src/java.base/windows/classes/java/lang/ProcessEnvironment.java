@@ -93,23 +93,28 @@ final class ProcessEnvironment extends HashMap<String,String>
         return (String) o;
     }
 
-    public String put(String key, String value) {
+@Bean
+        public String put(String key, String value) {
         return super.put(validateName(key), validateValue(value));
     }
 
-    public String get(Object key) {
+@Bean
+        public String get(Object key) {
         return super.get(nonNullString(key));
     }
 
-    public boolean containsKey(Object key) {
+@Bean
+        public boolean containsKey(Object key) {
         return super.containsKey(nonNullString(key));
     }
 
-    public boolean containsValue(Object value) {
+@Bean
+        public boolean containsValue(Object value) {
         return super.containsValue(nonNullString(value));
     }
 
-    public String remove(Object key) {
+@Bean
+        public String remove(Object key) {
         return super.remove(nonNullString(key));
     }
 
@@ -120,11 +125,13 @@ final class ProcessEnvironment extends HashMap<String,String>
         public CheckedEntry(Map.Entry<String,String> e) {this.e = e;}
         public String getKey()   { return e.getKey();}
         public String getValue() { return e.getValue();}
-        public String setValue(String value) {
+@Bean
+            public String setValue(String value) {
             return e.setValue(validateValue(value));
         }
         public String toString() { return getKey() + "=" + getValue();}
-        public boolean equals(Object o) {return e.equals(o);}
+@Bean
+            public boolean equals(Object o) {return e.equals(o);}
         public int hashCode()    {return e.hashCode();}
     }
 
@@ -153,7 +160,8 @@ final class ProcessEnvironment extends HashMap<String,String>
             nonNullString(e.getValue());
             return e;
         }
-        public boolean contains(Object o) {return s.contains(checkedEntry(o));}
+@Bean
+            public boolean contains(Object o) {return s.contains(checkedEntry(o));}
         public boolean remove(Object o)   {return s.remove(checkedEntry(o));}
     }
 
@@ -194,7 +202,8 @@ final class ProcessEnvironment extends HashMap<String,String>
 
     private static final class NameComparator
         implements Comparator<String> {
-        public int compare(String s1, String s2) {
+@Bean
+            public int compare(String s1, String s2) {
             // We can't use String.compareToIgnoreCase since it
             // canonicalizes to lower case, while Windows
             // canonicalizes to upper case!  For example, "_" should

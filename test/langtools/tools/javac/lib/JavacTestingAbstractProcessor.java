@@ -82,7 +82,11 @@ public abstract class JavacTestingAbstractProcessor extends AbstractProcessor {
     }
 
     @Override
-    public void init(ProcessingEnvironment processingEnv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void init(ProcessingEnvironment processingEnv) {
         super.init(processingEnv);
         elements = eltUtils  = processingEnv.getElementUtils();
         types = typeUtils = processingEnv.getTypeUtils();
@@ -91,7 +95,11 @@ public abstract class JavacTestingAbstractProcessor extends AbstractProcessor {
         options   = processingEnv.getOptions();
     }
 
-    protected void addExports(String moduleName, String... packageNames) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void addExports(String moduleName, String... packageNames) {
         for (String packageName : packageNames) {
             try {
                 ModuleLayer layer = ModuleLayer.boot();

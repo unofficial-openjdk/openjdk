@@ -52,6 +52,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 @Test
+@Bean
 public class Basic {
 
     /**
@@ -104,13 +105,21 @@ public class Basic {
         SelectableChannel invokedToRelease;
 
         @Override
-        public void implCloseChannel(SelectableChannel sc) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void implCloseChannel(SelectableChannel sc) {
             closeCount++;
             invokedToClose = sc;
         }
 
         @Override
-        public void implReleaseChannel(SelectableChannel sc) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void implReleaseChannel(SelectableChannel sc) {
             releaseCount++;
             invokedToRelease = sc;
         }
@@ -240,9 +249,17 @@ public class Basic {
         FileDescriptor fd = IOUtil.newFD(-1);
         Channels.readWriteSelectableChannel(fd, new SelectableChannelCloser() {
             @Override
-            public void implCloseChannel(SelectableChannel sc) { }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void implCloseChannel(SelectableChannel sc) { }
             @Override
-            public void implReleaseChannel(SelectableChannel sc) { }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void implReleaseChannel(SelectableChannel sc) { }
         });
     }
 
@@ -250,9 +267,17 @@ public class Basic {
     public void testNullFileDescriptor() throws IOException {
         Channels.readWriteSelectableChannel(null, new SelectableChannelCloser() {
             @Override
-            public void implCloseChannel(SelectableChannel sc) { }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void implCloseChannel(SelectableChannel sc) { }
             @Override
-            public void implReleaseChannel(SelectableChannel sc) { }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void implReleaseChannel(SelectableChannel sc) { }
         });
     }
 

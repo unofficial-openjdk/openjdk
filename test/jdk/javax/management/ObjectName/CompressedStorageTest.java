@@ -38,6 +38,7 @@ import java.util.function.Consumer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
+@Bean
 public class CompressedStorageTest {
     private static Method setDomainLengthM;
     private static Field compressedStorageFld;

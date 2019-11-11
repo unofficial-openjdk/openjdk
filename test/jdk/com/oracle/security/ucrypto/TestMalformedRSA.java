@@ -34,6 +34,7 @@ import java.util.*;
 import java.math.*;
 import javax.crypto.*;
 
+@Bean
 public class TestMalformedRSA extends UcryptoTest {
 
     // KAT

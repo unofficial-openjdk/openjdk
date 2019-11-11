@@ -26,6 +26,7 @@
 import java.io.*;
 
 
+@Bean
 public class ABCOutputStream extends OutputStream {
 
     int len;

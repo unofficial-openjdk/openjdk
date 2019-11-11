@@ -30,6 +30,7 @@
 
 import javax.imageio.ImageReadParam;
 
+@Bean
 public class ImageReadParamPasses {
 
     private static final int maxint = Integer.MAX_VALUE;

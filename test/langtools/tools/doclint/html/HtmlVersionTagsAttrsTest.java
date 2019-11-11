@@ -14,6 +14,7 @@
 /**
  * Test HTML tags and attributes based on the output HTML version option.
  */
+@Bean
 public class HtmlVersionTagsAttrsTest {
     /**
      * <a rev="help" href="rev_test.html">Help Page</a>

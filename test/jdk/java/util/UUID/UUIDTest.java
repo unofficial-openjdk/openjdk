@@ -31,6 +31,7 @@
 
 import java.util.*;
 
+@Bean
 public class UUIDTest {
 
     static Random generator = new Random();

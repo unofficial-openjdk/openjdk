@@ -35,6 +35,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 
+@Bean
 public class CopyAreaSpeed extends Applet implements Runnable {
     int top = 0;
 
@@ -123,7 +124,11 @@ public class CopyAreaSpeed extends Applet implements Runnable {
         Frame frm = new Frame("CopyAreaSpeed");
         frm.add(new CopyAreaSpeed());
         frm.addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent ev) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosing(WindowEvent ev) {
                 System.exit(0);
             }
         });

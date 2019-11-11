@@ -35,6 +35,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URL;
 
+@Bean
 public class VersionOpt {
     public static void main(String... args) throws Exception {
         new VersionOpt().run();

@@ -41,6 +41,7 @@
  * caught as an Ab. Before that it is NOT caught as an Ac.
  */
 
+@Bean
 public class Pos12 {
 
     public static void main(String... args) {

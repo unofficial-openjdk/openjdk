@@ -31,6 +31,7 @@ import static jdk.test.lib.Asserts.assertFalse;
 /**
  * Launches the debuggee with the necessary JDWP options and handles the output
  */
+@Bean
 public class DebuggeeLauncher implements StreamHandler.Listener {
 
     public interface Listener {
@@ -142,7 +143,11 @@ public class DebuggeeLauncher implements StreamHandler.Listener {
     }
 
     @Override
-    public void onStringRead(StreamHandler handler, String line) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void onStringRead(StreamHandler handler, String line) {
         if (handler.equals(errorHandler)) {
             terminateDebuggee();
             listener.onDebuggeeError(line);
@@ -151,7 +156,11 @@ public class DebuggeeLauncher implements StreamHandler.Listener {
         }
     }
 
-    private void processDebuggeeOutput(String line) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void processDebuggeeOutput(String line) {
         StringTokenizer st = new StringTokenizer(line);
         String token = st.nextToken();
         switch (token) {

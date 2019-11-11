@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.logging.FileHandler;
 import jdk.test.lib.util.FileUtils;
 
+@Bean
 public class FileHandlerMaxLocksTest {
 
     private static final String LOGGER_DIR = "logger-dir";

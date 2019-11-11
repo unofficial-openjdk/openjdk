@@ -41,6 +41,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import static java.net.Proxy.NO_PROXY;
 
+@Bean
 public class CookieManagerTest {
 
     static CookieTransactionHandler httpTrans;
@@ -200,7 +201,11 @@ class CookieTransactionHandler implements HttpHandler {
         return true;
     }
 
-    private void checkRequest(Headers hdrs) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkRequest(Headers hdrs) {
 
         assert testDone > 0;
         String cookieHeader = hdrs.getFirst("Cookie");

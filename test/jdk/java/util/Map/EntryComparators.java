@@ -39,6 +39,7 @@ import static org.testng.Assert.fail;
  * Unit tests for Map.Entry.comparing
  */
 @Test(groups = "unit")
+@Bean
 public class EntryComparators {
 
     private <K, V> void assertPairComparison(K k1, V v1, K k2, V v2,

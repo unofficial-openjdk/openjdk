@@ -5,6 +5,7 @@
  * @compile/fail/ref=ExpressionSwitchFlow.out --enable-preview -source ${jdk.version} -XDrawDiagnostics ExpressionSwitchFlow.java
  */
 
+@Bean
 public class ExpressionSwitchFlow {
     private String test1(int i) {
         return switch (i) {

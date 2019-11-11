@@ -39,6 +39,7 @@ import sun.hotspot.WhiteBox;
  */
 
 
+@Bean
 public class TestMetaspaceCMSCancel {
 
     public static void main(String[] args) throws Exception {

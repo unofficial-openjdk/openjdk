@@ -41,6 +41,7 @@ import static javax.lang.model.util.ElementFilter.*;
 
 
 @SupportedAnnotationTypes("*")
+@Bean
 public class T6439826 extends AbstractProcessor {
     public static void main(String... args) throws IOException {
         String testSrc = System.getProperty("test.src", ".");
@@ -95,7 +96,11 @@ public class T6439826 extends AbstractProcessor {
     }
 
     static class MyDiagListener implements DiagnosticListener {
-        public void report(Diagnostic d) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void report(Diagnostic d) {
             System.err.println(d);
             count++;
         }

@@ -28,6 +28,7 @@
  * @author Sergey Malenkov
  */
 
+@Bean
 public class Test7189112 {
 
     public static void main(String[] args) {
@@ -44,7 +45,11 @@ public class Test7189112 {
             return this.value;
         }
 
-        public void setValue(Object value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(Object value) {
             this.value = value;
         }
     }

@@ -32,6 +32,7 @@ import javax.swing.*;
 import java.awt.event.*;
 import javax.accessibility.*;
 
+@Bean
 public class bug8069268{
     public static void main(String[] args) throws Exception {
         TestableRootPane rootPane = new TestableRootPane();

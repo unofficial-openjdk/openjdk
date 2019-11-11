@@ -36,6 +36,7 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.IntStream;
 
+@Bean
 public class CalendarDataTest {
 
     // golden data from CLDR

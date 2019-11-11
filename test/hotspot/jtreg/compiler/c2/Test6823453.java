@@ -33,6 +33,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test6823453 {
 
     static long vara_1 = 1L;

@@ -44,6 +44,7 @@ import java.util.Collections;
 /* This might take a while and burn lots of metadata:
  * @run main/bootclasspath -DVarargsArrayTest.MAX_ARITY=255 -DVarargsArrayTest.EXHAUSTIVE=true VarargsArrayTest
  */
+@Bean
 public class VarargsArrayTest {
     private static final Class<?> CLASS = VarargsArrayTest.class;
     private static final int MAX_ARITY = Integer.getInteger(

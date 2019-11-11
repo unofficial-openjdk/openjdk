@@ -40,6 +40,7 @@ import javax.swing.JColorChooser;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
+@Bean
 public class Test6541987 implements Runnable {
     private static Robot robot;
 

@@ -42,6 +42,7 @@ package compiler.codegen;
 // bit test instructions for this test and it's not a bug if it
 // doesn't.  However, these test cases are ideal candidates for each
 // of the instruction forms.
+@Bean
 public class BitTests {
 
     private final XorShift r = new XorShift();

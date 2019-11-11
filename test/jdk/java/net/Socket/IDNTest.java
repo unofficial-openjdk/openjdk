@@ -31,6 +31,7 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 
 // internalized domain name test
+@Bean
 public class IDNTest {
     public static void main(String[] args) {
         try {

@@ -41,6 +41,7 @@ import jdk.internal.misc.Unsafe;
 
 import java.lang.reflect.Field;
 
+@Bean
 public class TestMaybeNullUnsafeAccess {
 
     static final jdk.internal.misc.Unsafe UNSAFE = Unsafe.getUnsafe();
@@ -72,7 +73,11 @@ public class TestMaybeNullUnsafeAccess {
         return f;
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         A a = new A();
         for (int i = 0; i < 20000; i++) {
             test_helper(null);

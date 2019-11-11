@@ -51,6 +51,9 @@ public class PriorityQueueTest extends JSR166TestCase {
         class Implementation implements CollectionImplementation {
             public Class<?> klazz() { return PriorityQueue.class; }
             public Collection emptyCollection() { return new PriorityQueue(); }
+            @Bean
+@Bean
+@Bean
             public Object makeElement(int i) { return i; }
             public boolean isConcurrent() { return false; }
             public boolean permitsNulls() { return false; }
@@ -60,6 +63,9 @@ public class PriorityQueueTest extends JSR166TestCase {
             public Collection emptyCollection() {
                 return new PriorityQueue(new MyReverseComparator());
             }
+            @Bean
+@Bean
+@Bean
             public Object makeElement(int i) { return i; }
             public boolean isConcurrent() { return false; }
             public boolean permitsNulls() { return false; }
@@ -71,7 +77,10 @@ public class PriorityQueueTest extends JSR166TestCase {
     }
 
     static class MyReverseComparator implements Comparator, java.io.Serializable {
-        public int compare(Object x, Object y) {
+        @Bean
+@Bean
+@Bean
+            public int compare(Object x, Object y) {
             return ((Comparable)y).compareTo(x);
         }
     }

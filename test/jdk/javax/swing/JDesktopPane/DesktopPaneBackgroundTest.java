@@ -34,6 +34,7 @@ import javax.swing.JDesktopPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
+@Bean
 public class DesktopPaneBackgroundTest {
 
     private static Color defaultBackgroudColor;

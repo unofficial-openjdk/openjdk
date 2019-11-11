@@ -216,6 +216,9 @@ public class TestRandomAccessFileThread {
 
         private static class EventComparator implements Comparator<RecordedEvent> {
             @Override
+            @Bean
+@Bean
+@Bean
             public int compare(RecordedEvent a, RecordedEvent b) {
                 long commitA = Events.assertField(a, "startTime").getValue();
                 long commitB = Events.assertField(b, "startTime").getValue();

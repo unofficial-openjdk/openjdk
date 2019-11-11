@@ -43,13 +43,19 @@ import javax.tools.JavaFileObject;
 import javax.tools.SimpleJavaFileObject;
 import javax.tools.ToolProvider;
 
+@Bean
 public class T6654037 {
 
     public static void main(String[] args) throws Exception {
         final JavaCompiler tool = ToolProvider.getSystemJavaCompiler();
         assert tool != null;
 
-        String code = "package test; public class Test {private void test() {Object o = null; boolean b = o != null && o instanceof String;} private Test() {}}";
+        String code = "package test; @Bean
+public class Test {@Bean
+@Bean
+@Bean
+@Bean
+                private void test() {Object o = null; boolean b = o != null && o instanceof String;} private Test() {}}";
 
         JavacTaskImpl ct = (JavacTaskImpl) tool.getTask(null, null, null, Arrays.asList("-Xjcov"), null, Arrays.asList(new MyFileObject(code)));
         CompilationUnitTree cut = ct.parse().iterator().next();
@@ -70,7 +76,11 @@ public class T6654037 {
             this.text = text;
         }
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return text;
         }
     }

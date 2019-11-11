@@ -1215,7 +1215,8 @@ public final class Integer extends Number
      * @return  {@code true} if the objects are the same;
      *          {@code false} otherwise.
      */
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (obj instanceof Integer) {
             return value == ((Integer)obj).intValue();
         }
@@ -1457,7 +1458,8 @@ public final class Integer extends Number
      *           comparison).
      * @since   1.2
      */
-    public int compareTo(Integer anotherInteger) {
+@Bean
+        public int compareTo(Integer anotherInteger) {
         return compare(this.value, anotherInteger.value);
     }
 
@@ -1852,7 +1854,8 @@ public final class Integer extends Number
      * @since 12
      */
     @Override
-    public Integer resolveConstantDesc(MethodHandles.Lookup lookup) {
+@Bean
+        public Integer resolveConstantDesc(MethodHandles.Lookup lookup) {
         return this;
     }
 

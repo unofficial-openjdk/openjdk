@@ -41,6 +41,7 @@ import jdk.test.lib.net.IPSupport;
  * @run main/othervm --limit-modules=java.base UnsupportedOptionsTest
  */
 
+@Bean
 public class UnsupportedOptionsTest {
 
     private static final List<SocketOption<?>> socketOptions = new ArrayList<>();

@@ -36,6 +36,7 @@ import jdk.test.lib.Asserts;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class TestClassUnloadingArguments {
 
     public static void testWith(String msg, boolean cu, boolean cuConc, String... args) throws Exception {

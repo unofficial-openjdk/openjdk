@@ -38,6 +38,7 @@
 import java.awt.*;
 import java.awt.event.*;
 
+@Bean
 public class InvocationEventTest
 {
     public static void main(String []s) throws Exception

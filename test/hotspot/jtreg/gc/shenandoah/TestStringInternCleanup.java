@@ -97,6 +97,7 @@
  *      TestStringInternCleanup
  */
 
+@Bean
 public class TestStringInternCleanup {
 
     static final int COUNT = 1_000_000;

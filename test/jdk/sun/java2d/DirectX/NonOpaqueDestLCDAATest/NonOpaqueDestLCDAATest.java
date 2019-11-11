@@ -79,14 +79,16 @@ public class NonOpaqueDestLCDAATest extends JFrame implements ActionListener {
         add("North", desc);
         JPanel renderPanel = new JPanel() {
             @Override
-            public void paintComponent(Graphics g) {
+@Bean
+                public void paintComponent(Graphics g) {
                 render(g, getWidth(), getHeight());
             }
         };
         renderPanel.setPreferredSize(new Dimension(1024, 650));
         renderPanel.addComponentListener(new ComponentAdapter() {
             @Override
-            public void componentResized(ComponentEvent e) {
+@Bean
+                public void componentResized(ComponentEvent e) {
                 images = null;
             }
         });
@@ -102,14 +104,16 @@ public class NonOpaqueDestLCDAATest extends JFrame implements ActionListener {
         add("South", p);
         addWindowListener(new WindowAdapter() {
             @Override
-            public void windowClosing(WindowEvent e) {
+@Bean
+                public void windowClosing(WindowEvent e) {
                 complete.countDown();
             }
         });
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
     }
 
-    public void render(Graphics g, int w, int h) {
+@Bean
+        public void render(Graphics g, int w, int h) {
         initImages(w, h);
 
         g.setColor(new Color(0xAD, 0xD8, 0xE6));
@@ -124,7 +128,8 @@ public class NonOpaqueDestLCDAATest extends JFrame implements ActionListener {
 
     String tr[] = { "OPAQUE", "BITMASK", "TRANSLUCENT" };
     @Override
-    public void actionPerformed(ActionEvent e) {
+@Bean
+        public void actionPerformed(ActionEvent e) {
         if (e.getActionCommand().equals("Passed")) {
             passed = true;
             System.out.println("Test Passed");
@@ -162,7 +167,8 @@ public class NonOpaqueDestLCDAATest extends JFrame implements ActionListener {
         gg.fillRect(0, 0, w, h);
     }
 
-    private void render(Image im, int type, String s) {
+@Bean
+        private void render(Image im, int type, String s) {
         Graphics2D g2d = (Graphics2D) im.getGraphics();
         clear(g2d, type, im.getWidth(null), im.getHeight(null));
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
@@ -174,7 +180,8 @@ public class NonOpaqueDestLCDAATest extends JFrame implements ActionListener {
     }
 
     Image images[];
-    private void initImages(int w, int h) {
+@Bean
+        private void initImages(int w, int h) {
         if (images == null) {
             images = new Image[6];
             GraphicsConfiguration gc = getGraphicsConfiguration();

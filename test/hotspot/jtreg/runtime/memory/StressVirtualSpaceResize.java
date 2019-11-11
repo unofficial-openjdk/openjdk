@@ -34,6 +34,7 @@
 
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class StressVirtualSpaceResize {
 
   public static void main(String args[]) throws Exception {

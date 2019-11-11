@@ -42,6 +42,7 @@ import java.text.*;
  * March 17, 1998: Added code to make sure big + dates are big + AD years, and
  * big - dates are big + BC years.
  */
+@Bean
 public class CalendarLimitTest extends IntlTest
 {
     // This number determined empirically; this is the old limit,

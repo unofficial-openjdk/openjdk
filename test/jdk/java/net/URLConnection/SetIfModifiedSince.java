@@ -34,6 +34,7 @@ import java.util.*;
 
 import jdk.test.lib.net.URIBuilder;
 
+@Bean
 public class SetIfModifiedSince {
     static volatile boolean successfulHeaderCheck = false;
     static final String MARKER = "A-test-name";

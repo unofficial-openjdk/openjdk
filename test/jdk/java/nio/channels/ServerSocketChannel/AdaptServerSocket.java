@@ -33,6 +33,7 @@ import java.nio.channels.*;
 import java.nio.charset.*;
 
 
+@Bean
 public class AdaptServerSocket {
 
     static java.io.PrintStream out = System.out;

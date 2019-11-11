@@ -47,6 +47,7 @@ import java.util.jar.JarOutputStream;
  * in the current time zone, and ensure the timestamp recorded in the unpacked
  * jar are the same.
  */
+@Bean
 public class TimeStamp {
     static final TimeZone tz = TimeZone.getDefault();
 

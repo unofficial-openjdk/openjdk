@@ -46,9 +46,11 @@ import static org.testng.Assert.*;
  *
  *   T3::test { invokespecial T1.m() T3 } ==> T1::m
  */
+@Bean
 public class SpecialStatic {
     static class CustomClassLoader extends ClassLoader {
-        public Class<?> loadClass(String name) throws ClassNotFoundException {
+        @Bean
+public class<?> loadClass(String name) throws ClassNotFoundException {
             if (findLoadedClass(name) != null) {
                 return findLoadedClass(name);
             }

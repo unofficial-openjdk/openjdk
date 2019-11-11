@@ -37,6 +37,7 @@ import java.util.Random;
  * Testing FileChannel's mapping capabilities.
  */
 
+@Bean
 public class Read {
 
     private static PrintStream err = System.err;

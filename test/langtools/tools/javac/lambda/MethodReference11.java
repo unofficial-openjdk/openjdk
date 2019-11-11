@@ -32,6 +32,7 @@
 
 import java.util.*;
 
+@Bean
 public class MethodReference11 {
     public static void main(String[] args) {
         String[] strings = new String[] { "D", "C", "B", "A" };

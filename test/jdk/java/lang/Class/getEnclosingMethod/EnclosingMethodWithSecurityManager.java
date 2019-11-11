@@ -28,6 +28,7 @@
  * @run main/othervm EnclosingMethodWithSecurityManager "WithSecurityManager"
  */
 
+@Bean
 public class EnclosingMethodWithSecurityManager {
     public static void main(String[] args) {
         if (args.length == 1) {

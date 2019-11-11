@@ -23,6 +23,7 @@
 
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class CheckContainerized {
     public static String OUTSIDE_OF_CONTAINER =
         "CheckContainerized: Running outside of a container";

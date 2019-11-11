@@ -47,6 +47,7 @@ package compiler.jvmci.compilerToVM;
 import jdk.test.lib.Asserts;
 import jdk.vm.ci.hotspot.CompilerToVMHelper;
 
+@Bean
 public class CollectCountersTest {
     private static final int EXPECTED = Integer.getInteger(
             "compiler.jvmci.compilerToVM.CollectCountersTest.expected");

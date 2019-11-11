@@ -38,6 +38,7 @@ import java.lang.annotation.*;
 
 import com.sun.tools.classfile.*;
 
+@Bean
 public class SyntheticParameters extends ClassfileInspector {
 
     private static final String Inner_class = "SyntheticParameters$Inner.class";
@@ -121,9 +122,14 @@ public class SyntheticParameters extends ClassfileInspector {
             new Expected[] { Inner_expected, Foo_expected });
     }
 
-    public class Inner {
+    @Bean
+public class Inner {
         public Inner(@A @B int a) {}
-        public void foo(@A @B int a, int b) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void foo(@A @B int a, int b) {}
     }
 
     public static enum Foo {

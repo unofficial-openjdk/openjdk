@@ -89,10 +89,14 @@ import jdk.internal.misc.VM;
  * that requires the current instant. A dependency injection framework is one
  * way to achieve this:
  * <pre>
- *  public class MyBean {
+ *  @Bean
+public class MyBean {
  *    private Clock clock;  // dependency inject
  *    ...
- *    public void process(LocalDate eventDate) {
+ *    @Bean
+@Bean
+@Bean
+            public void process(LocalDate eventDate) {
  *      if (eventDate.isBefore(LocalDate.now(clock)) {
  *        ...
  *      }
@@ -455,7 +459,10 @@ public abstract class Clock {
      * @return true if this is equal to the other clock
      */
     @Override
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(Object obj) {
         return super.equals(obj);
     }
 
@@ -505,7 +512,10 @@ public abstract class Clock {
             return zone;
         }
         @Override
-        public Clock withZone(ZoneId zone) {
+        @Bean
+@Bean
+@Bean
+            public Clock withZone(ZoneId zone) {
             if (zone.equals(this.zone)) {  // intentional NPE
                 return this;
             }
@@ -559,7 +569,10 @@ public abstract class Clock {
             return Instant.ofEpochSecond(localOffset, adjustment);
         }
         @Override
-        public boolean equals(Object obj) {
+        @Bean
+@Bean
+@Bean
+            public boolean equals(Object obj) {
             if (obj instanceof SystemClock) {
                 return zone.equals(((SystemClock) obj).zone);
             }
@@ -602,7 +615,10 @@ public abstract class Clock {
             return zone;
         }
         @Override
-        public Clock withZone(ZoneId zone) {
+        @Bean
+@Bean
+@Bean
+            public Clock withZone(ZoneId zone) {
             if (zone.equals(this.zone)) {  // intentional NPE
                 return this;
             }
@@ -617,7 +633,10 @@ public abstract class Clock {
             return instant;
         }
         @Override
-        public boolean equals(Object obj) {
+        @Bean
+@Bean
+@Bean
+            public boolean equals(Object obj) {
             if (obj instanceof FixedClock) {
                 FixedClock other = (FixedClock) obj;
                 return instant.equals(other.instant) && zone.equals(other.zone);
@@ -654,7 +673,10 @@ public abstract class Clock {
             return baseClock.getZone();
         }
         @Override
-        public Clock withZone(ZoneId zone) {
+        @Bean
+@Bean
+@Bean
+            public Clock withZone(ZoneId zone) {
             if (zone.equals(baseClock.getZone())) {  // intentional NPE
                 return this;
             }
@@ -669,7 +691,10 @@ public abstract class Clock {
             return baseClock.instant().plus(offset);
         }
         @Override
-        public boolean equals(Object obj) {
+        @Bean
+@Bean
+@Bean
+            public boolean equals(Object obj) {
             if (obj instanceof OffsetClock) {
                 OffsetClock other = (OffsetClock) obj;
                 return baseClock.equals(other.baseClock) && offset.equals(other.offset);
@@ -706,7 +731,10 @@ public abstract class Clock {
             return baseClock.getZone();
         }
         @Override
-        public Clock withZone(ZoneId zone) {
+        @Bean
+@Bean
+@Bean
+            public Clock withZone(ZoneId zone) {
             if (zone.equals(baseClock.getZone())) {  // intentional NPE
                 return this;
             }
@@ -729,7 +757,10 @@ public abstract class Clock {
             return instant.minusNanos(adjust);
         }
         @Override
-        public boolean equals(Object obj) {
+        @Bean
+@Bean
+@Bean
+            public boolean equals(Object obj) {
             if (obj instanceof TickClock) {
                 TickClock other = (TickClock) obj;
                 return baseClock.equals(other.baseClock) && tickNanos == other.tickNanos;

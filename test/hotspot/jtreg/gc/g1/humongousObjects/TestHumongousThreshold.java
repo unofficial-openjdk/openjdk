@@ -64,6 +64,7 @@ import sun.hotspot.WhiteBox;
  *
  */
 
+@Bean
 public class TestHumongousThreshold {
     private static final WhiteBox WHITE_BOX = WhiteBox.getWhiteBox();
     private static final int REGION_SIZE = WHITE_BOX.g1RegionSize();

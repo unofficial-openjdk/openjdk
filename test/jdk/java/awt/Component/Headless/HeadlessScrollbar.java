@@ -29,6 +29,7 @@ import java.awt.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessScrollbar
  */
 
+@Bean
 public class HeadlessScrollbar {
 
     public static void main(String args[]) {

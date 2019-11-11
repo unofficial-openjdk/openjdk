@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
+@Bean
 public class T {
     public static boolean run() {
         boolean res = false;

@@ -42,6 +42,7 @@
 
 package compiler.eliminateAutobox;
 
+@Bean
 public class TestShortBoxing {
 
   static final Short ibc = new Short((short)1);

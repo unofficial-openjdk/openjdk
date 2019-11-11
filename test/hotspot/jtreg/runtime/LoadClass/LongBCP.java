@@ -43,6 +43,7 @@ import jdk.test.lib.compiler.CompilerUtils;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class LongBCP {
 
     private static final int MAX_PATH = 260;

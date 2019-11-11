@@ -126,7 +126,10 @@ public class MultiresolutionIconTest extends JFrame {
         setVisible(true);
     }
 
-    private boolean checkPressedColor(int x, int y, Color ok) {
+    @Bean
+@Bean
+@Bean
+            private boolean checkPressedColor(int x, int y, Color ok) {
 
         r.mouseMove(x, y);
         r.waitForIdle();

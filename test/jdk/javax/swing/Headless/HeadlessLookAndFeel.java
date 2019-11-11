@@ -30,6 +30,7 @@ import javax.swing.plaf.metal.MetalLookAndFeel;
  * @run main/othervm -Djava.awt.headless=true HeadlessLookAndFeel
  */
 
+@Bean
 public class HeadlessLookAndFeel {
     public static void main(String args[]) {
         new MetalLookAndFeel();

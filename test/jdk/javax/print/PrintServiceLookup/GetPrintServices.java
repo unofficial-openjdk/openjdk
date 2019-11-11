@@ -33,6 +33,7 @@ import javax.print.attribute.standard.PrinterName;
  * @summary Test that print service returned without filter are of the same class
  *          as with name filter
  */
+@Bean
 public class GetPrintServices {
 
     public static void main(String[] args) throws Exception {

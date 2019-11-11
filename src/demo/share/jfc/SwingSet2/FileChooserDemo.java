@@ -52,6 +52,7 @@ import java.net.*;
  *
  * @author Jeff Dinkins
  */
+@Bean
 public class FileChooserDemo extends DemoModule {
     JLabel theImage;
     Icon jpgIcon;
@@ -144,7 +145,11 @@ public class FileChooserDemo extends DemoModule {
 
     public JButton createPlainFileChooserButton() {
         Action a = new AbstractAction(getString("FileChooserDemo.plainbutton")) {
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 JFileChooser fc = createFileChooser();
 
                 // show the filechooser
@@ -161,7 +166,11 @@ public class FileChooserDemo extends DemoModule {
 
     public JButton createPreviewFileChooserButton() {
         Action a = new AbstractAction(getString("FileChooserDemo.previewbutton")) {
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 JFileChooser fc = createFileChooser();
 
                 // Add filefilter & fileview
@@ -216,7 +225,11 @@ public class FileChooserDemo extends DemoModule {
 
     public JButton createCustomFileChooserButton() {
         Action a = new AbstractAction(getString("FileChooserDemo.custombutton")) {
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 fc = createFileChooser();
 
                 // Add filefilter & fileview
@@ -281,7 +294,11 @@ public class FileChooserDemo extends DemoModule {
 
     public Action createAboutAction() {
         return new AbstractAction(getString("FileChooserDemo.about")) {
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 File file = fc.getSelectedFile();
                 String text;
                 if(file == null) {
@@ -298,7 +315,11 @@ public class FileChooserDemo extends DemoModule {
 
     public Action createOKAction() {
         return new AbstractAction(getString("FileChooserDemo.ok")) {
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 dialog.dispose();
                 if (!e.getActionCommand().equals(JFileChooser.CANCEL_SELECTION)
                     && fc.getSelectedFile() != null) {
@@ -311,7 +332,11 @@ public class FileChooserDemo extends DemoModule {
 
     public Action createCancelAction() {
         return new AbstractAction(getString("FileChooserDemo.cancel")) {
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 dialog.dispose();
             }
         };
@@ -320,7 +345,11 @@ public class FileChooserDemo extends DemoModule {
     public Action createFindAction() {
         Icon icon = createImageIcon("filechooser/find.gif", getString("FileChooserDemo.find"));
         return new AbstractAction("", icon) {
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 String result = JOptionPane.showInputDialog(getDemoPanel(), getString("FileChooserDemo.findquestion"));
                 if (result != null) {
                     JOptionPane.showMessageDialog(getDemoPanel(), getString("FileChooserDemo.findresponse"));
@@ -332,7 +361,11 @@ public class FileChooserDemo extends DemoModule {
     public Action createHelpAction() {
         Icon icon = createImageIcon("filechooser/help.gif", getString("FileChooserDemo.help"));
         return new AbstractAction("", icon) {
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 JOptionPane.showMessageDialog(getDemoPanel(), getString("FileChooserDemo.helptext"));
             }
         };
@@ -363,11 +396,19 @@ public class FileChooserDemo extends DemoModule {
         }
     }
 
-    public void loadImage(String filename) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void loadImage(String filename) {
         theImage.setIcon(new MyImageIcon(filename));
     }
 
-    public JButton createButton(Action a) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JButton createButton(Action a) {
         JButton b = new JButton(a) {
             public Dimension getMaximumSize() {
                 int width = Short.MAX_VALUE;
@@ -378,7 +419,11 @@ public class FileChooserDemo extends DemoModule {
         return b;
     }
 
-    public JButton createImageButton(Action a) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JButton createImageButton(Action a) {
         JButton b = new JButton(a);
         b.setMargin(new Insets(0,0,0,0));
         return b;
@@ -394,7 +439,11 @@ class FilePreviewer extends JComponent implements PropertyChangeListener {
         setBorder(new BevelBorder(BevelBorder.LOWERED));
     }
 
-    public void loadImage(File f) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void loadImage(File f) {
         if (f == null) {
             thumbnail = null;
         } else {
@@ -408,7 +457,11 @@ class FilePreviewer extends JComponent implements PropertyChangeListener {
         }
     }
 
-    public void propertyChange(PropertyChangeEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void propertyChange(PropertyChangeEvent e) {
         String prop = e.getPropertyName();
         if(prop == JFileChooser.SELECTED_FILE_CHANGED_PROPERTY) {
             if(isShowing()) {
@@ -418,7 +471,11 @@ class FilePreviewer extends JComponent implements PropertyChangeListener {
         }
     }
 
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(Graphics g) {
         super.paint(g);
         if(thumbnail != null) {
             int x = getWidth()/2 - thumbnail.getIconWidth()/2;

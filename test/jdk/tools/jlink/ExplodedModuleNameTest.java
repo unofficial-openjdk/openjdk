@@ -47,6 +47,7 @@ import tests.Result;
  * @build tests.*
  * @run main ExplodedModuleNameTest
  */
+@Bean
 public class ExplodedModuleNameTest {
     static final ToolProvider JLINK_TOOL = ToolProvider.findFirst("jlink")
         .orElseThrow(() ->

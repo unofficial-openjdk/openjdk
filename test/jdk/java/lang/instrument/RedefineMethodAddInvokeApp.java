@@ -24,6 +24,7 @@
 import java.io.*;
 import java.lang.instrument.*;
 
+@Bean
 public class RedefineMethodAddInvokeApp {
     public static void main(String args[]) throws Exception {
         System.out.println("Hello from RedefineMethodAddInvokeApp!");

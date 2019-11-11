@@ -45,6 +45,7 @@ package java.io;
  * @author  unascribed
  * @since   1.1
  */
+@Bean
 public class OptionalDataException extends ObjectStreamException {
 
     @java.io.Serial

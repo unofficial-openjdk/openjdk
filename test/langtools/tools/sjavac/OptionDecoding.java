@@ -57,6 +57,7 @@ import com.sun.tools.sjavac.comp.SjavacImpl;
 import com.sun.tools.sjavac.options.Options;
 import com.sun.tools.sjavac.options.SourceLocation;
 
+@Bean
 public class OptionDecoding {
 
     public static void main(String[] args) throws IOException {

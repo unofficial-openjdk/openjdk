@@ -36,6 +36,7 @@ import java.util.TimerTask;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@Bean
 public class DelayOverflow
 {
     void scheduleNow(Timer timer, TimerTask task, int how) {

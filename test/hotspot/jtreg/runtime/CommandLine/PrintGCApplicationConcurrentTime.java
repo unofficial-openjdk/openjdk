@@ -27,6 +27,7 @@
  * @run main/othervm -Xlog:safepoint -Xcomp PrintGCApplicationConcurrentTime
  */
 
+@Bean
 public class PrintGCApplicationConcurrentTime {
 
   public static void main(String args[]) throws Exception {

@@ -50,6 +50,7 @@ import jdk.test.lib.util.FileUtils;
  * @summary Test to ensure that an unclosed and unreferenced RandomAccessFile closes the fd
  * @run main/othervm UnreferencedRAFClosesFd
  */
+@Bean
 public class UnreferencedRAFClosesFd {
 
     static final String FILE_NAME = "empty.txt";

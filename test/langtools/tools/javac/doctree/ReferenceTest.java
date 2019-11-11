@@ -108,6 +108,7 @@ import javax.tools.Diagnostic.Kind;
  * @see java.io.BufferedInputStream#BufferedInputStream(InputStream) Constructor
  */
 @SupportedAnnotationTypes("*")
+@Bean
 public class ReferenceTest extends AbstractProcessor {
     DocTrees trees;
 
@@ -117,13 +118,21 @@ public class ReferenceTest extends AbstractProcessor {
     }
 
     @Override
-    public void init(ProcessingEnvironment pEnv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void init(ProcessingEnvironment pEnv) {
         super.init(pEnv);
         trees = DocTrees.instance(pEnv);
     }
 
     @Override
-    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         for (Element e: roundEnv.getRootElements()) {
             new DocCommentScanner(trees.getPath(e)).scan();
         }
@@ -144,13 +153,21 @@ public class ReferenceTest extends AbstractProcessor {
         }
 
         @Override
-        public Void visitLink(LinkTree tree, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitLink(LinkTree tree, Void ignore) {
             checkReference(tree.getReference(), tree.getLabel());
             return null;
         }
 
         @Override
-        public Void visitSee(SeeTree tree, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitSee(SeeTree tree, Void ignore) {
             List<? extends DocTree> refLabel = tree.getReference();
             if (refLabel.size() > 1 && (refLabel.get(0) instanceof ReferenceTree)) {
                 ReferenceTree ref = (ReferenceTree) refLabel.get(0);

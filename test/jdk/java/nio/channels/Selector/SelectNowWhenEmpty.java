@@ -33,6 +33,7 @@ import java.nio.channels.*;
 import java.nio.channels.spi.SelectorProvider;
 
 
+@Bean
 public class SelectNowWhenEmpty {
     public static void main(String[] args) throws Exception {
         Selector s = SelectorProvider.provider().openSelector();

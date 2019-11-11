@@ -53,6 +53,7 @@ import javax.management.monitor.Monitor;
 import javax.management.monitor.MonitorNotification;
 import javax.management.monitor.StringMonitor;
 
+@Bean
 public class ThreadPoolTest {
 
     static int maxPoolSize;
@@ -62,7 +63,8 @@ public class ThreadPoolTest {
     static final long MAX_WAITING_TIME = 10000;
 
     // MBean class
-    public class ObservedObject implements ObservedObjectMBean {
+    @Bean
+public class ObservedObject implements ObservedObjectMBean {
         private boolean called = false;
         public Integer getInteger() {
             inform("getInteger()");
@@ -76,7 +78,11 @@ public class ThreadPoolTest {
             inform("getString()");
             return "";
         }
-        private void inform(String prop) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void inform(String prop) {
             synchronized(waiter) {
                 if (!called) {
                     called = true;
@@ -213,7 +219,11 @@ public class ThreadPoolTest {
             }
         }
 
-        public boolean waiting(long timeout) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean waiting(long timeout) {
             final long startTime = System.currentTimeMillis();
             long toWait = timeout;
 

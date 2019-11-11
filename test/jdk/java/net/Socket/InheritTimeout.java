@@ -35,6 +35,7 @@ import java.net.*;
 import java.io.InputStream;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class InheritTimeout {
 
     class Reaper extends Thread {

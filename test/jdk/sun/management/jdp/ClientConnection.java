@@ -26,6 +26,7 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.UnknownHostException;
 
+@Bean
 public class ClientConnection {
 
     public final String IANA_JDP_ADDRESS = "224.0.23.178";

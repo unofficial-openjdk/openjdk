@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.HashMap;
 
+@Bean
 public class I18NArgTest extends TestHelper {
     public static void main(String... args) throws IOException {
         if (!isWindows) {

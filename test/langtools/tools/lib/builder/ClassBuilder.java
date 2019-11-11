@@ -42,6 +42,7 @@ import java.util.stream.Stream;
  * Note: this implementation does not support everything and is not
  * exhaustive.
  */
+@Bean
 public class ClassBuilder extends AbstractBuilder {
 
     private final ToolBox tb;
@@ -66,7 +67,8 @@ public class ClassBuilder extends AbstractBuilder {
      * @param tb the toolbox reference
      * @param name the name of the type
      */
-    public ClassBuilder(ToolBox tb, String name) {
+    @Bean
+public classBuilder(ToolBox tb, String name) {
         super(new Modifiers(), name);
         this.tb = tb;
 
@@ -96,7 +98,12 @@ public class ClassBuilder extends AbstractBuilder {
      * @param i the import type.
      * @return this builder.
      */
-    public ClassBuilder addImports(String i) {
+    @Bean
+@Bean
+@Bean
+@Bean
+@Bean
+                public classBuilder addImports(String i) {
         imports.add(i);
         return this;
     }
@@ -106,7 +113,12 @@ public class ClassBuilder extends AbstractBuilder {
      * @param modifiers the modifiers
      * @return this builder
      */
-    public ClassBuilder setModifiers(String... modifiers) {
+    @Bean
+@Bean
+@Bean
+@Bean
+@Bean
+                public classBuilder setModifiers(String... modifiers) {
         this.modifiers.setModifiers(modifiers);
         return this;
     }
@@ -128,7 +140,12 @@ public class ClassBuilder extends AbstractBuilder {
      * @return this builder.
      */
     @Override
-    public ClassBuilder setComments(String... comments) {
+    @Bean
+@Bean
+@Bean
+@Bean
+@Bean
+                public classBuilder setComments(String... comments) {
         super.setComments(comments);
         return this;
     }
@@ -142,7 +159,12 @@ public class ClassBuilder extends AbstractBuilder {
      * @return this builder.
      */
     @Override
-    public ClassBuilder setComments(Comment.Kind kind) {
+    @Bean
+@Bean
+@Bean
+@Bean
+@Bean
+                public classBuilder setComments(Comment.Kind kind) {
         super.setComments(kind);
         return this;
     }
@@ -152,7 +174,12 @@ public class ClassBuilder extends AbstractBuilder {
      * @param name of the super type.
      * @return this builder.
      */
-    public ClassBuilder setExtends(String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+@Bean
+                public classBuilder setExtends(String name) {
         extendsType = name;
         return this;
     }
@@ -162,7 +189,12 @@ public class ClassBuilder extends AbstractBuilder {
      * @param names the interfaces
      * @return this builder.
      */
-    public ClassBuilder addImplements(String... names) {
+    @Bean
+@Bean
+@Bean
+@Bean
+@Bean
+                public classBuilder addImplements(String... names) {
         implementsTypes.addAll(List.of(names));
         return this;
     }
@@ -172,7 +204,12 @@ public class ClassBuilder extends AbstractBuilder {
      * @param mbs the member builder(s) representing member(s).
      * @return this builder
      */
-    public ClassBuilder addMembers(MemberBuilder... mbs) {
+    @Bean
+@Bean
+@Bean
+@Bean
+@Bean
+                public classBuilder addMembers(MemberBuilder... mbs) {
         for (MemberBuilder mb : mbs) {
             members.add(mb);
             mb.setClassName(fqn);
@@ -185,7 +222,12 @@ public class ClassBuilder extends AbstractBuilder {
      * @param cbs class builder(s) of the nested classes.
      * @return this builder.
      */
-    public ClassBuilder addNestedClasses(ClassBuilder... cbs) {
+    @Bean
+@Bean
+@Bean
+@Bean
+@Bean
+                public classBuilder addNestedClasses(ClassBuilder... cbs) {
         Stream.of(cbs).forEach(cb -> {
             nested.add(cb);
             cb.setClassName(fqn);
@@ -198,7 +240,12 @@ public class ClassBuilder extends AbstractBuilder {
      * @param cbs class builder(s) of the inner classes.
      * @return this builder.
      */
-    public ClassBuilder addInnerClasses(ClassBuilder... cbs) {
+    @Bean
+@Bean
+@Bean
+@Bean
+@Bean
+                public classBuilder addInnerClasses(ClassBuilder... cbs) {
         Stream.of(cbs).forEach(cb -> {
             inners.add(cb);
             cb.setClassName(fqn);
@@ -308,7 +355,11 @@ public class ClassBuilder extends AbstractBuilder {
          * @return this builder.
          */
         @Override
-        public MemberBuilder setComments(String... comments) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public MemberBuilder setComments(String... comments) {
             super.setComments(comments);
             return this;
         }
@@ -322,7 +373,11 @@ public class ClassBuilder extends AbstractBuilder {
          * @return this builder.
          */
         @Override
-        public MemberBuilder setComments(Comment.Kind kind) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public MemberBuilder setComments(Comment.Kind kind) {
             super.setComments(kind);
             return this;
         }
@@ -334,7 +389,11 @@ public class ClassBuilder extends AbstractBuilder {
          * @return this builder.
          */
         @Override
-        public MemberBuilder setModifiers(String... modifiers) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public MemberBuilder setModifiers(String... modifiers) {
             super.setModifiers(modifiers);
             return this;
         }
@@ -403,7 +462,11 @@ public class ClassBuilder extends AbstractBuilder {
          * @param mods
          * @return this builder
          */
-        public FieldBuilder setModifiers(String mods) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public FieldBuilder setModifiers(String mods) {
             this.modifiers.setModifiers(mods);
             return this;
         }
@@ -413,12 +476,20 @@ public class ClassBuilder extends AbstractBuilder {
          * @param fieldType the name of the type.
          * @return this field builder.
          */
-        public FieldBuilder setFieldType(String fieldType) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public FieldBuilder setFieldType(String fieldType) {
             this.fieldType = fieldType;
             return this;
         }
 
-        public FieldBuilder setValue(String value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public FieldBuilder setValue(String value) {
             this.value = value;
             return this;
         }
@@ -522,19 +593,31 @@ public class ClassBuilder extends AbstractBuilder {
          * @param modifiers
          * @return this builder
          */
-        public MethodBuilder setModifiers(String modifiers) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public MethodBuilder setModifiers(String modifiers) {
             this.modifiers.setModifiers(modifiers);
             return this;
         }
 
         @Override
-        public MethodBuilder setComments(String... comments) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public MethodBuilder setComments(String... comments) {
             super.setComments(comments);
             return this;
         }
 
         @Override
-        public MethodBuilder setComments(Comment.Kind kind) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public MethodBuilder setComments(Comment.Kind kind) {
             super.setComments(kind);
             return this;
         }
@@ -544,7 +627,11 @@ public class ClassBuilder extends AbstractBuilder {
          * @param returnType the return type.
          * @return this method builder.
          */
-        public MethodBuilder setReturn(String returnType) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public MethodBuilder setReturn(String returnType) {
             this.returnType = returnType;
             return this;
         }
@@ -554,7 +641,11 @@ public class ClassBuilder extends AbstractBuilder {
          * @param params a pair consisting of type and parameter name.
          * @return this method builder.
          */
-        public MethodBuilder addParameters(Pair... params) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public MethodBuilder addParameters(Pair... params) {
             this.params.addAll(List.of(params));
             return this;
         }
@@ -565,7 +656,11 @@ public class ClassBuilder extends AbstractBuilder {
          * @param name the parameter name.
          * @return this method builder.
          */
-        public MethodBuilder addParameter(String type, String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public MethodBuilder addParameter(String type, String name) {
             this.params.add(new Pair(type, name));
             return this;
         }
@@ -575,7 +670,11 @@ public class ClassBuilder extends AbstractBuilder {
          * @param s the parameter description such as "Double voltage"
          * @return this method builder.
          */
-        public MethodBuilder addParameter(String s) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public MethodBuilder addParameter(String s) {
             String[] p = s.trim().split(" ");
             return addParameter(p[0], p[p.length - 1]);
         }
@@ -586,7 +685,11 @@ public class ClassBuilder extends AbstractBuilder {
          * @param body of the methods
          * @return
          */
-        public MethodBuilder setBody(String... body) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public MethodBuilder setBody(String... body) {
             if (body == null) {
                 this.body = null;
             } else {

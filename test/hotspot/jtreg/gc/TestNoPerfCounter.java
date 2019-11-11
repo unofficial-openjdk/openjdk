@@ -31,6 +31,7 @@ package gc;
  * @run main/othervm -XX:-UsePerfData gc.TestNoPerfCounter
  */
 
+@Bean
 public class TestNoPerfCounter {
     public static void main(String[] args) throws Exception {
         // Nothing to do

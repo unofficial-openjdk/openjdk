@@ -63,68 +63,148 @@ public final class TestMethodOrderDependence {
             return null;
         }
 
-        public void setFoo(Character foo) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(Character foo) {
         }
 
-        public void setFoo(String foo) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(String foo) {
         }
 
-        public void setFoo(Object[] foo) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(Object[] foo) {
         }
 
-        public void setFoo(Enum foo) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(Enum foo) {
         }
 
-        public void setFoo(Long foo) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(Long foo) {
         }
 
-        public void setFoo(Long[] foo) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(Long[] foo) {
         }
 
-        public void setFoo(Long foo, int i) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(Long foo, int i) {
         }
 
-        public void setFoo(Object foo) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(Object foo) {
         }
 
-        public void setFoo(AbstractList foo) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(AbstractList foo) {
         }
 
-        public void setFoo(ArrayList foo) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(ArrayList foo) {
         }
 
-        public void setFoo(Integer foo) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(Integer foo) {
         }
 
-        public void setFoo(Number foo) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(Number foo) {
         }
 
-        public void setFoo(Comparable<?> foo) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(Comparable<?> foo) {
         }
 
-        public void setFoo(Serializable foo) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(Serializable foo) {
         }
 
-        public void setFoo(Vector<?> foo) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(Vector<?> foo) {
         }
 
-        public void setFoo(long foo) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(long foo) {
         }
 
-        public void setFoo(int foo) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(int foo) {
         }
 
         public Enum getE() {
             return null;
         }
 
-        public void setE(Enum e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setE(Enum e) {
         }
 
-        public void setE(Float e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setE(Float e) {
         }
 
-        public void setE(Long e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setE(Long e) {
         }
     }
 

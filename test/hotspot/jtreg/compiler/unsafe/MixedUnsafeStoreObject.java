@@ -33,6 +33,7 @@ package compiler.unsafe;
 
 import jdk.internal.misc.Unsafe;
 
+@Bean
 public class MixedUnsafeStoreObject {
     static final Unsafe UNSAFE = Unsafe.getUnsafe();
 

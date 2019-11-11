@@ -34,6 +34,7 @@
 
 import javax.management.*;
 
+@Bean
 public class NotAnMBeanTest {
     public static void main(String[] args) throws Exception {
         System.out.println("Try to create a java.lang.Integer as an MBean");

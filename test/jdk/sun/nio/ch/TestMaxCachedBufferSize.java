@@ -53,6 +53,7 @@ import java.util.concurrent.CountDownLatch;
  * @run main/othervm -Djdk.nio.maxCachedBufferSize=10000000 TestMaxCachedBufferSize
  * @summary Test the implementation of the jdk.nio.maxCachedBufferSize property.
  */
+@Bean
 public class TestMaxCachedBufferSize {
     private static final int DEFAULT_ITERS = 10 * 1000;
     private static final int DEFAULT_THREAD_NUM = 4;

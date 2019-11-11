@@ -92,7 +92,11 @@ public class GeneratingClassLoader extends ClassLoader {
         return PREFIX;
     }
 
-    public String getClassName(int number) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String getClassName(int number) {
         StringBuffer sb = new StringBuffer();
         sb.append(PREFIX);
         sb.append(number);
@@ -152,7 +156,11 @@ public class GeneratingClassLoader extends ClassLoader {
         }
     }
 
-    private void getOffsets(byte[] bytecode) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void getOffsets(byte[] bytecode) {
         List<Integer> offsets = new ArrayList<Integer>();
         if (this.offsets == null) {
             String pname = templateClassName.replace(".", "/");

@@ -31,6 +31,7 @@
  * @run main BitwiseAssignment
  */
 
+@Bean
 public class BitwiseAssignment {
     private static class Inner {
         private int data = 4711;

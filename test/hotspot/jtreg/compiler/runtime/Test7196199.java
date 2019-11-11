@@ -35,6 +35,7 @@
 
 package compiler.runtime;
 
+@Bean
 public class Test7196199 {
     private static final int ARRLEN = 97;
     private static final int ITERS = 5000;

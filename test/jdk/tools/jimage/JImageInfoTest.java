@@ -32,6 +32,7 @@
 
 import java.util.Arrays;
 
+@Bean
 public class JImageInfoTest extends JImageCliTest {
     public void testInfo() {
         jimage("info", getImagePath())

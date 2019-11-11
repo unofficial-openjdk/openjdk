@@ -30,6 +30,7 @@ import java.awt.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessEventQueue
  */
 
+@Bean
 public class HeadlessEventQueue {
     public static void main(String args[]) {
         EventQueue eq = new EventQueue();

@@ -36,6 +36,7 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
+@Bean
 public class ThreadCpuTimesDeadlock {
 
     public static byte[] dummy;

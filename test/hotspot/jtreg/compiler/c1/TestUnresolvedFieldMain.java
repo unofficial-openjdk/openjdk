@@ -32,6 +32,7 @@
 
 package compiler.c1;
 
+@Bean
 public class TestUnresolvedFieldMain {
     public static void main(String[] args) {
         try {

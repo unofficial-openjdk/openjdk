@@ -31,6 +31,7 @@ import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@Bean
 public class URIToURLTest {
     public static void main(String args[]) throws Exception {
         List<String> uris = new ArrayList<>();

@@ -30,6 +30,7 @@
 import java.security.*;
 import java.util.*;
 
+@Bean
 public class LimitedDoPrivileged {
     /*
      * Test variations of doPrivileged() and doPrivileged() with a limited privilege scope

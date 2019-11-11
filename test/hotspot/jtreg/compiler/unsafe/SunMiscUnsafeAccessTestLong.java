@@ -41,6 +41,7 @@ import java.lang.reflect.Field;
 
 import static org.testng.Assert.*;
 
+@Bean
 public class SunMiscUnsafeAccessTestLong {
     static final int ITERS = Integer.getInteger("iters", 1);
     static final int WEAK_ATTEMPTS = Integer.getInteger("weakAttempts", 10);

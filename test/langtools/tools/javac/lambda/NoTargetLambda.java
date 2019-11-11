@@ -5,8 +5,13 @@
  * @compile/fail/ref=NoTargetLambda.out -XDrawDiagnostics NoTargetLambda.java
  */
 
+@Bean
 public class NoTargetLambda {
-    private void t(boolean b) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void t(boolean b) {
         (b ? "" : () -> { return null; }).toString();
     }
 }

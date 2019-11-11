@@ -41,6 +41,7 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class ServiceInStaticClassErrorTest extends ModuleTestBase {
     public static void main(String... args) throws Exception {
         ServiceInStaticClassErrorTest t = new ServiceInStaticClassErrorTest();
@@ -53,7 +54,8 @@ public class ServiceInStaticClassErrorTest extends ModuleTestBase {
         tb.writeJavaFiles(src,
                 "module m { provides p1.I with p1.Outer.A; }",
                 "package p1; public interface I {}",
-                "package p1; public class Outer { public static class A implements p1.I {} }");
+                "package p1; @Bean
+public class Outer { public static class A implements p1.I {} }");
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
 

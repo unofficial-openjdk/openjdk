@@ -88,7 +88,8 @@ public abstract class OSXSurfaceData extends BufImgSurfaceData {
         // Thread.dumpStack();
     }
 
-    public void validatePipe(SunGraphics2D sg2d) {
+@Bean
+        public void validatePipe(SunGraphics2D sg2d) {
 
         if (sg2d.compositeState <= SunGraphics2D.COMP_ALPHA) {
             if (sCocoaTextPipe == null) {
@@ -105,7 +106,8 @@ public abstract class OSXSurfaceData extends BufImgSurfaceData {
         }
     }
 
-    protected void setPipesToQuartzComposite(SunGraphics2D sg2d) {
+@Bean
+        protected void setPipesToQuartzComposite(SunGraphics2D sg2d) {
         if (sQuartzCompositePipe == null) {
             sQuartzCompositePipe = new CompositeCRenderer();
         }
@@ -130,7 +132,8 @@ public abstract class OSXSurfaceData extends BufImgSurfaceData {
         return fConfig;
     }
 
-    protected void setBounds(int x, int y, int w, int h) {
+@Bean
+        protected void setBounds(int x, int y, int w, int h) {
         fBounds.setBounds(x, y, w, y + h);
     }
 
@@ -141,7 +144,8 @@ public abstract class OSXSurfaceData extends BufImgSurfaceData {
 
     GraphicsConfiguration sDefaultGraphicsConfiguration = null;
 
-    protected BufferedImage getCompositingImage(int w, int h) {
+@Bean
+        protected BufferedImage getCompositingImage(int w, int h) {
         if (sDefaultGraphicsConfiguration == null) {
             sDefaultGraphicsConfiguration = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
         }
@@ -152,7 +156,8 @@ public abstract class OSXSurfaceData extends BufImgSurfaceData {
         return img;
     }
 
-    protected BufferedImage getCompositingImageSame(BufferedImage img, int w, int h) {
+@Bean
+        protected BufferedImage getCompositingImageSame(BufferedImage img, int w, int h) {
         if ((img == null) || (img.getWidth() != w) || (img.getHeight() != h)) {
             img = getCompositingImage(w, h);
         }
@@ -161,7 +166,8 @@ public abstract class OSXSurfaceData extends BufImgSurfaceData {
 
     BufferedImage sSrcComposite = null;
 
-    public BufferedImage getCompositingSrcImage(int w, int h) {
+@Bean
+        public BufferedImage getCompositingSrcImage(int w, int h) {
         // <rdar://problem/3720263>. Changed from getCompositingImageBiggerOrSame() to
         // getCompositingImageSame(). (vm)
         BufferedImage bim = getCompositingImageSame(sSrcComposite, w, h);
@@ -171,7 +177,8 @@ public abstract class OSXSurfaceData extends BufImgSurfaceData {
 
     BufferedImage sDstInComposite = null;
 
-    public BufferedImage getCompositingDstInImage(int w, int h) {
+@Bean
+        public BufferedImage getCompositingDstInImage(int w, int h) {
         BufferedImage bim = getCompositingImageSame(sDstInComposite, w, h);
         sDstInComposite = bim;
         return bim;
@@ -179,13 +186,15 @@ public abstract class OSXSurfaceData extends BufImgSurfaceData {
 
     BufferedImage sDstOutComposite = null;
 
-    public BufferedImage getCompositingDstOutImage(int w, int h) {
+@Bean
+        public BufferedImage getCompositingDstOutImage(int w, int h) {
         BufferedImage bim = getCompositingImageSame(sDstOutComposite, w, h);
         sDstOutComposite = bim;
         return bim;
     }
 
-    public void clearRect(BufferedImage bim, int w, int h) {
+@Bean
+        public void clearRect(BufferedImage bim, int w, int h) {
         Graphics2D g = bim.createGraphics();
         g.setComposite(AlphaComposite.Clear);
         g.fillRect(0, 0, w, h);
@@ -984,13 +993,15 @@ public abstract class OSXSurfaceData extends BufImgSurfaceData {
         return pi.getWindingRule();
     }
 
-    public void doLine(CRenderer renderer, SunGraphics2D sg2d, float x1, float y1, float x2, float y2) {
+@Bean
+        public void doLine(CRenderer renderer, SunGraphics2D sg2d, float x1, float y1, float x2, float y2) {
         // System.err.println("-- doLine x1="+x1+" y1="+y1+" x2="+x2+" y2="+y2+" paint="+sg2d.paint);
         setupGraphicsState(sg2d, kLine, sg2d.font, 0, 0, fBounds.width, fBounds.height);
         renderer.doLine(this, x1, y1, x2, y2);
     }
 
-    public void doRect(CRenderer renderer, SunGraphics2D sg2d, float x, float y, float width, float height, boolean isfill) {
+@Bean
+        public void doRect(CRenderer renderer, SunGraphics2D sg2d, float x, float y, float width, float height, boolean isfill) {
         // System.err.println("-- doRect x="+x+" y="+y+" w="+width+" h="+height+" isfill="+isfill+" paint="+sg2d.paint);
         if ((isfill) && (isCustomPaint(sg2d))) {
             setupGraphicsState(sg2d, kRect, (int) x, (int) y, (int) width, (int) height);
@@ -1000,7 +1011,8 @@ public abstract class OSXSurfaceData extends BufImgSurfaceData {
         renderer.doRect(this, x, y, width, height, isfill);
     }
 
-    public void doRoundRect(CRenderer renderer, SunGraphics2D sg2d, float x, float y, float width, float height, float arcW, float arcH, boolean isfill) {
+@Bean
+        public void doRoundRect(CRenderer renderer, SunGraphics2D sg2d, float x, float y, float width, float height, float arcW, float arcH, boolean isfill) {
         // System.err.println("--- doRoundRect");
         if ((isfill) && (isCustomPaint(sg2d))) {
             setupGraphicsState(sg2d, kRoundRect, (int) x, (int) y, (int) width, (int) height);
@@ -1010,7 +1022,8 @@ public abstract class OSXSurfaceData extends BufImgSurfaceData {
         renderer.doRoundRect(this, x, y, width, height, arcW, arcH, isfill);
     }
 
-    public void doOval(CRenderer renderer, SunGraphics2D sg2d, float x, float y, float width, float height, boolean isfill) {
+@Bean
+        public void doOval(CRenderer renderer, SunGraphics2D sg2d, float x, float y, float width, float height, boolean isfill) {
         // System.err.println("--- doOval");
         if ((isfill) && (isCustomPaint(sg2d))) {
             setupGraphicsState(sg2d, kOval, (int) x, (int) y, (int) width, (int) height);
@@ -1020,7 +1033,8 @@ public abstract class OSXSurfaceData extends BufImgSurfaceData {
         renderer.doOval(this, x, y, width, height, isfill);
     }
 
-    public void doArc(CRenderer renderer, SunGraphics2D sg2d, float x, float y, float width, float height, float startAngle, float arcAngle, int type, boolean isfill) {
+@Bean
+        public void doArc(CRenderer renderer, SunGraphics2D sg2d, float x, float y, float width, float height, float startAngle, float arcAngle, int type, boolean isfill) {
         // System.err.println("--- doArc");
         if ((isfill) && (isCustomPaint(sg2d))) {
             setupGraphicsState(sg2d, kArc, (int) x, (int) y, (int) width, (int) height);
@@ -1031,7 +1045,8 @@ public abstract class OSXSurfaceData extends BufImgSurfaceData {
         renderer.doArc(this, x, y, width, height, startAngle, arcAngle, type, isfill);
     }
 
-    public void doPolygon(CRenderer renderer, SunGraphics2D sg2d, int[] xpoints, int[] ypoints, int npoints, boolean ispolygon, boolean isfill) {
+@Bean
+        public void doPolygon(CRenderer renderer, SunGraphics2D sg2d, int[] xpoints, int[] ypoints, int npoints, boolean ispolygon, boolean isfill) {
         // System.err.println("--- doPolygon");
 
         if ((isfill) && (isCustomPaint(sg2d))) {
@@ -1064,7 +1079,8 @@ public abstract class OSXSurfaceData extends BufImgSurfaceData {
     FloatBuffer shapeCoordinatesArray = null;
     IntBuffer shapeTypesArray = null;
 
-    public void drawfillShape(CRenderer renderer, SunGraphics2D sg2d, GeneralPath gp, boolean isfill, boolean shouldApplyOffset) {
+@Bean
+        public void drawfillShape(CRenderer renderer, SunGraphics2D sg2d, GeneralPath gp, boolean isfill, boolean shouldApplyOffset) {
         // System.err.println("--- drawfillShape");
 
         if ((isfill) && (isCustomPaint(sg2d))) {
@@ -1089,7 +1105,8 @@ public abstract class OSXSurfaceData extends BufImgSurfaceData {
         renderer.doShape(this, shapeLength, shapeCoordinatesArray, shapeTypesArray, windingRule, isfill, shouldApplyOffset);
     }
 
-    public void blitImage(CRenderer renderer, SunGraphics2D sg2d, SurfaceData img, boolean fliph, boolean flipv, int sx, int sy, int sw, int sh, int dx, int dy, int dw, int dh, Color bgColor) {
+@Bean
+        public void blitImage(CRenderer renderer, SunGraphics2D sg2d, SurfaceData img, boolean fliph, boolean flipv, int sx, int sy, int sw, int sh, int dx, int dy, int dw, int dh, Color bgColor) {
         // System.err.println("--- blitImage sx="+sx+", sy="+sy+", sw="+sw+", sh="+sh+", img="+img);
         OSXOffScreenSurfaceData osxsd = (OSXOffScreenSurfaceData) img;
         synchronized (osxsd.getLockObject()) {
@@ -1112,7 +1129,8 @@ public abstract class OSXSurfaceData extends BufImgSurfaceData {
         public void drawIntoCGContext(final long cgContext);
     }
 
-    public void drawString(CTextPipe renderer, SunGraphics2D sg2d, long nativeStrikePtr, String str, double x, double y) {
+@Bean
+        public void drawString(CTextPipe renderer, SunGraphics2D sg2d, long nativeStrikePtr, String str, double x, double y) {
         // System.err.println("--- drawString str=\""+str+"\"");
         // see <rdar://problem/3825795>. We don't want to call anything if the string is empty!
         if (str.length() == 0) { return; }
@@ -1121,13 +1139,15 @@ public abstract class OSXSurfaceData extends BufImgSurfaceData {
         renderer.doDrawString(this, nativeStrikePtr, str, x, y);
     }
 
-    public void drawGlyphs(CTextPipe renderer, SunGraphics2D sg2d, long nativeStrikePtr, GlyphVector gv, float x, float y) {
+@Bean
+        public void drawGlyphs(CTextPipe renderer, SunGraphics2D sg2d, long nativeStrikePtr, GlyphVector gv, float x, float y) {
         // System.err.println("--- drawGlyphs");
         setupGraphicsState(sg2d, kGlyphs, gv.getFont(), 0, 0, fBounds.width, fBounds.height);
         renderer.doDrawGlyphs(this, nativeStrikePtr, gv, x, y);
     }
 
-    public void drawUnicodes(CTextPipe renderer, SunGraphics2D sg2d, long nativeStrikePtr, char[] unicodes, int offset, int length, float x, float y) {
+@Bean
+        public void drawUnicodes(CTextPipe renderer, SunGraphics2D sg2d, long nativeStrikePtr, char[] unicodes, int offset, int length, float x, float y) {
         // System.err.println("--- drawUnicodes "+(new String(unicodes, offset, length)));
         setupGraphicsState(sg2d, kUnicodes, sg2d.font, 0, 0, fBounds.width, fBounds.height);
         if (length == 1) {
@@ -1177,7 +1197,8 @@ public abstract class OSXSurfaceData extends BufImgSurfaceData {
      * Clips the copy area to the heavyweight bounds and returns the clipped rectangle.
      * The returned clipped rectangle is in the coordinate space of the surface.
      */
-    protected Rectangle clipCopyArea(SunGraphics2D sg2d, int x, int y, int w, int h, int dx, int dy) {
+@Bean
+        protected Rectangle clipCopyArea(SunGraphics2D sg2d, int x, int y, int w, int h, int dx, int dy) {
         // we need to clip against the heavyweight bounds
         copyAreaBounds.setBounds(sg2d.devClip.getLoX(), sg2d.devClip.getLoY(), sg2d.devClip.getWidth(), sg2d.devClip.getHeight());
 
@@ -1211,14 +1232,16 @@ public abstract class OSXSurfaceData extends BufImgSurfaceData {
     // marked as protected and it is intended for subclasses to override if they need to
     // be notified when the surface is dirtied. See CPeerSurfaceData.markDirty() for implementation.
     // We don't do anything for buffered images.
-    protected void markDirty(boolean markAsDirty) {
+@Bean
+        protected void markDirty(boolean markAsDirty) {
         // do nothing by default
     }
 
     // LazyDrawing optimization implementation:
 
     @Override
-    public boolean canRenderLCDText(SunGraphics2D sg2d) {
+@Bean
+        public boolean canRenderLCDText(SunGraphics2D sg2d) {
         if (sg2d.compositeState <= SunGraphics2D.COMP_ISCOPY &&
                 sg2d.paintState <= SunGraphics2D.PAINT_ALPHACOLOR &&
                 sg2d.clipState <= SunGraphics2D.CLIP_RECTANGULAR &&

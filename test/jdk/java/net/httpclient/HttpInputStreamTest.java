@@ -50,6 +50,7 @@ import static java.lang.System.err;
  * @run main/othervm/manual -Dtest.debug=true HttpInputStreamTest
  * @author daniel fuchs
  */
+@Bean
 public class HttpInputStreamTest {
 
     public static boolean DEBUG = Boolean.getBoolean("test.debug");
@@ -195,7 +196,11 @@ public class HttpInputStreamTest {
             }
 
             @Override
-            public void onSubscribe(Flow.Subscription s) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void onSubscribe(Flow.Subscription s) {
                 if (this.subscription != null) {
                     s.cancel();
                     return;
@@ -208,7 +213,11 @@ public class HttpInputStreamTest {
             }
 
             @Override
-            public void onNext(List<ByteBuffer> t) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(List<ByteBuffer> t) {
                 try {
                     if (DEBUG) err.println("next item received");
                     if (!buffers.offer(t)) {
@@ -226,7 +235,11 @@ public class HttpInputStreamTest {
             }
 
             @Override
-            public void onError(Throwable thrwbl) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void onError(Throwable thrwbl) {
                 subscription = null;
                 failed = thrwbl;
             }

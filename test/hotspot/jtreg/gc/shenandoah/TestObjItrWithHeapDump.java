@@ -36,6 +36,7 @@ import java.util.*;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class TestObjItrWithHeapDump {
     public static void testWith(String... args) throws Exception {
         String[] cmds = Arrays.copyOf(args, args.length + 2);

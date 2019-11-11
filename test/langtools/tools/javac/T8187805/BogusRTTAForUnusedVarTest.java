@@ -43,6 +43,7 @@ import com.sun.tools.classfile.TypeAnnotation;
 import com.sun.tools.classfile.TypeAnnotation.Position;
 import com.sun.tools.javac.util.Assert;
 
+@Bean
 public class BogusRTTAForUnusedVarTest {
 
     class Foo {

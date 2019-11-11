@@ -34,6 +34,7 @@ import java.awt.image.ComponentSampleModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.SampleModel;
 
+@Bean
 public class GetDataElementsTest {
 
     public static int width = 100;

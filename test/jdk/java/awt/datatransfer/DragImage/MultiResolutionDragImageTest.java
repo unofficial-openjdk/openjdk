@@ -39,6 +39,7 @@ import static java.awt.event.InputEvent.BUTTON1_DOWN_MASK;
  * @modules java.desktop/sun.awt.image
  * @run main MultiResolutionDragImageTest TEST_DRAG
  */
+@Bean
 public class MultiResolutionDragImageTest {
 
     private static final Color COLOR_1X = Color.BLUE;

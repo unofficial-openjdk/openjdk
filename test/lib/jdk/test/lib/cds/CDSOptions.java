@@ -45,44 +45,76 @@ public class CDSOptions {
     }
 
 
-    public CDSOptions addPrefix(String... prefix) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public CDSOptions addPrefix(String... prefix) {
         for (String s : prefix) this.prefix.add(s);
         return this;
     }
 
 
-    public CDSOptions addSuffix(String... suffix) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public CDSOptions addSuffix(String... suffix) {
         for (String s : suffix) this.suffix.add(s);
         return this;
     }
 
-    public CDSOptions setXShareMode(String mode) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public CDSOptions setXShareMode(String mode) {
         this.xShareMode = mode;
         return this;
     }
 
 
-    public CDSOptions setArchiveName(String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public CDSOptions setArchiveName(String name) {
         this.archiveName = name;
         return this;
     }
 
 
-    public CDSOptions setUseVersion(boolean use) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public CDSOptions setUseVersion(boolean use) {
         this.useVersion = use;
         return this;
     }
 
-    public CDSOptions setUseSystemArchive(boolean use) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public CDSOptions setUseSystemArchive(boolean use) {
         this.useSystemArchive = use;
         return this;
     }
 
-    public CDSOptions setClassList(String[] list) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public CDSOptions setClassList(String[] list) {
         this.classList = list;
         return this;
     }
-    public CDSOptions setClassList(ArrayList<String> list) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public CDSOptions setClassList(ArrayList<String> list) {
         String array[] = new String[list.size()];
         list.toArray(array);
         this.classList = array;

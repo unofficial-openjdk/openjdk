@@ -44,6 +44,7 @@ package gc;
  * @run main/othervm gc.TestObjectAlignment -Xmx20M -XX:-ExplicitGCInvokesConcurrent -XX:+IgnoreUnrecognizedVMOptions -XX:ObjectAlignmentInBytes=256
  */
 
+@Bean
 public class TestObjectAlignment {
 
   public static byte[] garbage;

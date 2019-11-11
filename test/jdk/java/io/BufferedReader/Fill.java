@@ -33,6 +33,7 @@ import java.io.Reader;
 import java.io.BufferedReader;
 
 
+@Bean
 public class Fill {
 
     /**

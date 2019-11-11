@@ -27,6 +27,7 @@
  * @summary Object.wait(long, int) throws inappropriate IllegalArgumentException
  */
 
+@Bean
 public class WaitTooLong {
     public static void main(String[] args) {
         test(0);

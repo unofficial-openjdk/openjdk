@@ -37,6 +37,7 @@ import java.lang.reflect.*;
 import java.util.*;
 import javax.management.*;
 
+@Bean
 public class DescriptorTest {
     private static String failureMessage;
 

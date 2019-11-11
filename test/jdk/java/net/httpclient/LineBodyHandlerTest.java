@@ -83,6 +83,7 @@ import static org.testng.Assert.assertTrue;
  * @run testng/othervm LineBodyHandlerTest
  */
 
+@Bean
 public class LineBodyHandlerTest implements HttpServerAdapters {
 
     SSLContext sslContext;
@@ -580,11 +581,19 @@ public class LineBodyHandlerTest implements HttpServerAdapters {
         protected volatile RuntimeException error;
         protected final List<Object> list = new CopyOnWriteArrayList<>();
 
-        public void onSubscribe(Flow.Subscription subscription) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onSubscribe(Flow.Subscription subscription) {
             this.subscription = subscription;
             subscription.request(Long.MAX_VALUE);
         }
-        public void onError(Throwable throwable) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onError(Throwable throwable) {
             System.out.println(this + " onError: " + throwable);
             error = new RuntimeException(throwable);
         }
@@ -601,7 +610,11 @@ public class LineBodyHandlerTest implements HttpServerAdapters {
     static class StringSubscriber extends AbstractSubscriber
             implements Flow.Subscriber<String>, Supplier<String>
     {
-        @Override public void onNext(String item) {
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(String item) {
             System.out.print(this + " onNext: \"" + item + "\"");
             if (baos.length() != 0) baos.append('\n');
             baos.append(item);
@@ -612,7 +625,11 @@ public class LineBodyHandlerTest implements HttpServerAdapters {
     static class CharSequenceSubscriber extends AbstractSubscriber
             implements Flow.Subscriber<CharSequence>, Supplier<String>
     {
-        @Override public void onNext(CharSequence item) {
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(CharSequence item) {
             System.out.print(this + " onNext: " + item);
             if (baos.length() != 0) baos.append('\n');
             baos.append(item);
@@ -623,7 +640,11 @@ public class LineBodyHandlerTest implements HttpServerAdapters {
     static class ObjectSubscriber extends AbstractSubscriber
             implements Flow.Subscriber<Object>, Supplier<String>
     {
-        @Override public void onNext(Object item) {
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(Object item) {
             System.out.print(this + " onNext: " + item);
             if (baos.length() != 0) baos.append('\n');
             baos.append(item);

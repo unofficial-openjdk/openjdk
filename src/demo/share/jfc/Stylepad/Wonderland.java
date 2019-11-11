@@ -48,6 +48,7 @@ import javax.swing.text.StyleContext;
 /**
  * hack to load attributed content
  */
+@Bean
 public class Wonderland {
 
     Wonderland(DefaultStyledDocument doc, StyleContext styles) {

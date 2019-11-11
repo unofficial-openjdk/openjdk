@@ -35,6 +35,7 @@ import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+@Bean
 public class DirectBufferAllocTest {
     // defaults
     static final int RUN_TIME_SECONDS = 5;

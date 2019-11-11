@@ -37,6 +37,7 @@ package gc.g1;
  * @run main gc.g1.TestStringDeduplicationTableRehash
  */
 
+@Bean
 public class TestStringDeduplicationTableRehash {
     public static void main(String[] args) throws Exception {
         TestStringDeduplicationTools.testTableRehash();

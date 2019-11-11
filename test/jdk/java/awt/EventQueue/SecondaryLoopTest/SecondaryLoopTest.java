@@ -33,6 +33,7 @@ import java.awt.*;
 /**
  * Unit test for java.awt.SecondaryLoop implementation
  */
+@Bean
 public class SecondaryLoopTest {
 
     private static volatile boolean loopStarted;

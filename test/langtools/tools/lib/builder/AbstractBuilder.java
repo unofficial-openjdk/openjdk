@@ -64,7 +64,11 @@ public abstract class AbstractBuilder {
      * @param comment for the member.
      * @return this builder.
      */
-    public AbstractBuilder setComments(Comment comment) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public AbstractBuilder setComments(Comment comment) {
         this.comments = comment;
         return this;
     }
@@ -74,7 +78,11 @@ public abstract class AbstractBuilder {
      * @param comments for the member.
      * @return this builder.
      */
-    public AbstractBuilder setComments(String... comments) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public AbstractBuilder setComments(String... comments) {
         this.comments = new Comment(comments);
         return this;
     }
@@ -87,7 +95,11 @@ public abstract class AbstractBuilder {
      * @param kind of comment, automatic or no comment.
      * @return this builder.
      */
-    public AbstractBuilder setComments(Comment.Kind kind) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public AbstractBuilder setComments(Comment.Kind kind) {
         switch (kind) {
             case NO_API_COMMENT: case AUTO: case INHERIT_DOC:
                 this.comments = new Comment(kind);
@@ -191,7 +203,11 @@ public abstract class AbstractBuilder {
          * Sets the modifiers for this element.
          * @param modifiers
          */
-        public void setModifiers(String... modifiers) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setModifiers(String... modifiers) {
             this.modifiers = List.of(modifiers);
         }
 
@@ -199,7 +215,11 @@ public abstract class AbstractBuilder {
          * Sets the modifiers for this element.
          * @param modifiers
          */
-        public void setModifiers(List<String> modifiers) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setModifiers(List<String> modifiers) {
             this.modifiers = modifiers;
         }
 
@@ -227,7 +247,11 @@ public abstract class AbstractBuilder {
          * Prints a string without NL.
          * @param s the string to print.
          */
-        public void print(String s) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void print(String s) {
             pw.print(s);
         }
 
@@ -235,7 +259,11 @@ public abstract class AbstractBuilder {
          * Prints a string with a NL.
          * @param s the string to print.
          */
-        public void println(String s) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void println(String s) {
             pw.println(s);
         }
     }

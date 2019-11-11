@@ -41,6 +41,7 @@ import java.util.*;
 
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class GetLocalHostWithSM {
 
         public static void main(String[] args) throws Exception {

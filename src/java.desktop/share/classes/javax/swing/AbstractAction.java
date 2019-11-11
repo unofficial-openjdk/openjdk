@@ -162,7 +162,8 @@ public abstract class AbstractAction implements Action, Cloneable, Serializable
      *          are no keys, it will return <code>null</code>
      * @see Action#getValue
      */
-    public Object getValue(String key) {
+@Bean
+        public Object getValue(String key) {
         if (key == "enabled") {
             return enabled;
         }
@@ -179,7 +180,8 @@ public abstract class AbstractAction implements Action, Cloneable, Serializable
      * @param newValue the <code>Object</code> to store using this key
      * @see Action#putValue
      */
-    public void putValue(String key, Object newValue) {
+@Bean
+        public void putValue(String key, Object newValue) {
         Object oldValue = null;
         if (key == "enabled") {
             // Treat putValue("enabled") the same way as a call to setEnabled.
@@ -230,7 +232,8 @@ public abstract class AbstractAction implements Action, Cloneable, Serializable
      *                  disable it
      * @see Action#setEnabled
      */
-    public void setEnabled(boolean newValue) {
+@Bean
+        public void setEnabled(boolean newValue) {
         boolean oldValue = this.enabled;
 
         if (oldValue != newValue) {
@@ -274,7 +277,8 @@ public abstract class AbstractAction implements Action, Cloneable, Serializable
      * @param oldValue  the old value of the property
      * @param newValue  the new value of the property
      */
-    protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
+@Bean
+        protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
         if (changeSupport == null ||
             (oldValue != null && newValue != null && oldValue.equals(newValue))) {
             return;

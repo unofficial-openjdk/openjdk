@@ -34,6 +34,7 @@ import java.io.FileOutputStream;
 import sun.security.krb5.internal.ccache.CCacheInputStream;
 import sun.security.krb5.internal.ccache.CredentialsCache;
 
+@Bean
 public class UnknownCCEntry {
     public static void main(String[] args) throws Exception {
         // This is a ccache file generated on a test machine:

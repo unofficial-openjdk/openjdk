@@ -34,6 +34,7 @@ package compiler.c2;
 
 import java.util.function.Supplier;
 
+@Bean
 public class TestIfWithDeadRegion {
 
     static String msg;

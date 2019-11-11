@@ -43,6 +43,7 @@
  * so this will test debugging a class in the archive.
  */
 
+@Bean
 public class CDSBreakpointTest extends CDSJDITest {
     static String jarClasses[] = {
         // BreakpointTarg is the only class we need in the archive. It will

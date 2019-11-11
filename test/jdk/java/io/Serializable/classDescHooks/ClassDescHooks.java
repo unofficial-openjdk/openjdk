@@ -36,7 +36,10 @@ class Foo implements Serializable {
     Integer i = 2;
     Long l = 3L;
 
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(Object obj) {
         if (obj instanceof Foo) {
             Foo ofoo = (Foo) obj;
             return s.equals(ofoo.s) && i.equals(ofoo.i) && l.equals(ofoo.l);

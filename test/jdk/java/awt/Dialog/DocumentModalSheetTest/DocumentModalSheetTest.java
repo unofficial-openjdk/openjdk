@@ -41,6 +41,7 @@ import javax.swing.JTextArea;
 import javax.swing.Timer;
 import javax.swing.SwingUtilities;
 
+@Bean
 public class DocumentModalSheetTest {
 
     private static JFrame jFrame;
@@ -129,6 +130,9 @@ public class DocumentModalSheetTest {
         jDialog.add(jLabel);
 
         timer = new Timer(sleepTime, new ActionListener() {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 jDialog.setVisible(false);
                 testContinueFlag = false;

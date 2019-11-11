@@ -45,6 +45,7 @@ import com.sun.net.httpserver.Headers;
 import static java.net.Proxy.NO_PROXY;
 import jdk.test.lib.net.URIBuilder;
 
+@Bean
 public class UnmodifiableMaps {
 
     void test(String[] args) throws Exception {

@@ -56,6 +56,7 @@ import javax.crypto.KeyAgreement;
 import javax.crypto.spec.DHPrivateKeySpec;
 import javax.crypto.spec.DHPublicKeySpec;
 
+@Bean
 public class KeySpecTest {
 
     public static void main(String[] args) throws Exception {

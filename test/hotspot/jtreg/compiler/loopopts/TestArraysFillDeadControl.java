@@ -35,6 +35,7 @@ package compiler.loopopts;
 
 import java.util.Arrays;
 
+@Bean
 public class TestArraysFillDeadControl {
 
     static void dont_inline() {

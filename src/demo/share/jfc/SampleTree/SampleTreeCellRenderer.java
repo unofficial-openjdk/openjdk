@@ -53,6 +53,7 @@ import javax.swing.UIManager;
 
 
 @SuppressWarnings("serial")
+@Bean
 public class SampleTreeCellRenderer extends JLabel implements TreeCellRenderer {
 
     /** Font used if the string to be displayed isn't a font. */
@@ -140,7 +141,11 @@ public class SampleTreeCellRenderer extends JLabel implements TreeCellRenderer {
      * will also fill behind the icon.  Something that isn't desirable.
      */
     @Override
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(Graphics g) {
         Color bColor;
         Icon currentI = getIcon();
 

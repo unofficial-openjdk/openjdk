@@ -30,6 +30,7 @@ import static jdk.test.lib.Asserts.*;
  * @library /test/lib
  * @summary Tests the different assertions in the Assert class
  */
+@Bean
 public class AssertsTest {
     private static class Foo implements Comparable<Foo> {
         final int id;
@@ -37,7 +38,11 @@ public class AssertsTest {
             this.id = id;
         }
 
-        public int compareTo(Foo f) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int compareTo(Foo f) {
             return new Integer(id).compareTo(new Integer(f.id));
         }
         public String toString() {

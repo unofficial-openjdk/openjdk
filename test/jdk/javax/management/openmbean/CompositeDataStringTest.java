@@ -35,6 +35,7 @@ import javax.management.openmbean.CompositeType;
 import javax.management.openmbean.OpenType;
 import javax.management.openmbean.SimpleType;
 
+@Bean
 public class CompositeDataStringTest {
     public static void main(String[] args) throws Exception {
         CompositeType basicCT = new CompositeType(

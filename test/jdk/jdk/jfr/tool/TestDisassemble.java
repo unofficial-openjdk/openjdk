@@ -46,6 +46,7 @@ import jdk.test.lib.process.OutputAnalyzer;
  * @library /test/lib /test/jdk
  * @run main/othervm jdk.jfr.tool.TestDisassemble
  */
+@Bean
 public class TestDisassemble {
 
     public static void main(String[] args) throws Throwable {

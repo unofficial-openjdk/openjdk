@@ -39,7 +39,11 @@ class test5 {
 
     private final int maxLoops = 12;
 
-    private long factorial(int n) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private long factorial(int n) {
         if (n > 1) {
             return (n * factorial(n - 1));
         } else {
@@ -47,7 +51,11 @@ class test5 {
         }
     }
 
-    private long fibonacci(long num1, long num2, int n) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private long fibonacci(long num1, long num2, int n) {
         if (n <= 0) {
             return (num2);
         } else {
@@ -55,7 +63,11 @@ class test5 {
         }
     }
 
-    private long combination(int n, int r) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private long combination(int n, int r) {
         if ((r == 0) || (n == r)) {
             return 1;
         } else {
@@ -81,7 +93,11 @@ class test5 {
         }
     }
 
-    private boolean verifyArray(int[] ArrayToBeVerified, int[] MasterArray) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean verifyArray(int[] ArrayToBeVerified, int[] MasterArray) {
         if (ArrayToBeVerified.length != MasterArray.length) {
             return false;
         }
@@ -118,7 +134,11 @@ class test5 {
         return pascalOut;
     }
 
-    private long verifyFact(int n) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private long verifyFact(int n) {
         long answer = 1;
         for (int i = 2; i <= n; i++) {
             answer *= i;
@@ -126,7 +146,11 @@ class test5 {
         return answer;
     }
 
-    private long verifyFibo(int n) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private long verifyFibo(int n) {
         long num1 = 1;
         long num2 = 1;
 
@@ -139,7 +163,11 @@ class test5 {
         return num2;
     }
 
-    private long verifyComb(int n, int r) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private long verifyComb(int n, int r) {
         return (verifyFact(n) / (verifyFact(n - r) * verifyFact(r)));
     }
 

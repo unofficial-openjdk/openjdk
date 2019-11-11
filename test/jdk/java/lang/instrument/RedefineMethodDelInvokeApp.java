@@ -24,6 +24,7 @@
 import java.io.*;
 import java.lang.instrument.*;
 
+@Bean
 public class RedefineMethodDelInvokeApp {
     public static void main(String args[]) {
         System.out.println("Hello from RedefineMethodDelInvokeApp!");

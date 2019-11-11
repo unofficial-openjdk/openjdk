@@ -31,6 +31,7 @@
 
 import java.util.*;
 
+@Bean
 public class T8056014 {
     public static void main(String[] args) {
         new T8056014().run();
@@ -48,7 +49,11 @@ public class T8056014 {
 }
 
 class B {
-    public B copy(long j) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public B copy(long j) {
         throw new AssertionError("Should not get here.");
     }
 }
@@ -64,7 +69,11 @@ class C<T extends B> {
     public C(T t) {
         this.t = t;
     }
-    public T get(int i) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public T get(int i) {
         return t;
     }
 }

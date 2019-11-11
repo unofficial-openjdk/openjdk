@@ -39,6 +39,7 @@ import jdk.jfr.internal.Type;
  * @modules jdk.jfr/jdk.jfr.internal
  * @run main/othervm jdk.jfr.jvm.TestClassId
  */
+@Bean
 public class TestClassId {
 
     public static void main(String... args) {

@@ -30,6 +30,7 @@
 import javax.script.*;
 import java.util.*;
 
+@Bean
 public class DummyScriptEngineFactory implements ScriptEngineFactory {
     public String getEngineName() {
         return "dummy";
@@ -51,7 +52,11 @@ public class DummyScriptEngineFactory implements ScriptEngineFactory {
         return "-1.0";
     }
 
-    public String getMethodCallSyntax(String obj, String m, String... args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String getMethodCallSyntax(String obj, String m, String... args) {
         StringBuffer buf = new StringBuffer();
         buf.append("call " + m + " ");
         buf.append(" on " + obj + " with ");
@@ -70,11 +75,19 @@ public class DummyScriptEngineFactory implements ScriptEngineFactory {
         return names;
     }
 
-    public String getOutputStatement(String str) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String getOutputStatement(String str) {
         return "output " + str;
     }
 
-    public String getParameter(String key) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String getParameter(String key) {
         if (key.equals(ScriptEngine.ENGINE)) {
             return getEngineName();
         } else if (key.equals(ScriptEngine.ENGINE_VERSION)) {
@@ -90,7 +103,11 @@ public class DummyScriptEngineFactory implements ScriptEngineFactory {
         }
     }
 
-    public String getProgram(String... statements) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String getProgram(String... statements) {
         Objects.requireNonNull(statements);
         StringBuffer buf = new StringBuffer();
         for (String stat : statements) {

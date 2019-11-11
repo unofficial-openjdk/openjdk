@@ -29,6 +29,7 @@
  * @compile CCEForFunctionalInterExtedingRawSuperInterTest.java
  */
 
+@Bean
 public class CCEForFunctionalInterExtedingRawSuperInterTest {
     interface X<A> { <T extends A> void execute(int a); }
     interface Y<B> { <S extends B> void execute(int a); }

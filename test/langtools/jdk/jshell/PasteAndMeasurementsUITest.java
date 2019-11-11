@@ -46,6 +46,7 @@ import java.lang.reflect.Field;
 import org.testng.annotations.Test;
 
 @Test
+@Bean
 public class PasteAndMeasurementsUITest extends UITesting {
 
     public PasteAndMeasurementsUITest() {

@@ -35,6 +35,7 @@
 import java.util.Hashtable;
 import javax.management.ObjectName;
 
+@Bean
 public class ValueWildcardTest {
 
     private static int createObjectName(int i,

@@ -35,6 +35,7 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 
+@Bean
 public class Helpers {
 
     /**
@@ -109,7 +110,8 @@ public class Helpers {
      * Generates class with specified name, which extends specified class, with specified constructor and specified
      * count of long fields
      * Generated class will looks like this:
-     * public class ClassName extends SuperClass {
+     * @Bean
+public class ClassName extends SuperClass {
      * ClassName() {super();}
      * long f0;
      * ...
@@ -126,7 +128,8 @@ public class Helpers {
     public static String generate(String className, String superClass, String constructor, long fieldCount) {
 
         return new StringBuilder()
-                .append(String.format("public class %s%s {\n", className, superClass == null ? ""
+                .append(String.format("@Bean
+public class %s%s {\n", className, superClass == null ? ""
                         : " extends " + superClass))
                 .append(constructor == null ? "" : constructor)
                 .append(fieldsGenerator(fieldCount))
@@ -185,7 +188,8 @@ public class Helpers {
     /**
      * Generates and compiles class with instance of specified size and load it in specified class loader
      * Generated class will looks like this:
-     * public class ClassName extends SuperClass {
+     * @Bean
+public class ClassName extends SuperClass {
      * long f0;
      * ...
      * long fNNN;
@@ -206,7 +210,8 @@ public class Helpers {
                                                   Path workDir, String prefix)
             throws IOException, ClassNotFoundException {
 
-        generateByTemplateAndCompile(className, null, "public class ${ClassName} extends ${BaseClass} {\n${Fields}}\n",
+        generateByTemplateAndCompile(className, null, "@Bean
+public class ${ClassName} extends ${BaseClass} {\n${Fields}}\n",
                 "", instanceSize, workDir, prefix);
 
         return classLoader.loadClass(className);
@@ -231,7 +236,8 @@ public class Helpers {
      *                      with values from className and baseClass,one entry of ${Fields} will be replaced with
      *                      generated long fields. Class template should look like this:
      *                      imports;
-     *                      public class ${ClassName} extends ${BaseClass} {
+     *                      @Bean
+public class ${ClassName} extends ${BaseClass} {
      *                         public ${ClassName}  { some code here;}
      *                         some methods
      *                         ${Fields}

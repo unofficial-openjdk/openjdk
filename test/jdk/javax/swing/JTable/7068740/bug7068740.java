@@ -60,6 +60,9 @@ public class bug7068740 extends JFrame {
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public Object getValueAt(int row, int column) {
                 return "(" + row + "," + column + ")";
             }

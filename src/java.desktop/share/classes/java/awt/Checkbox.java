@@ -267,7 +267,8 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
      *                        {@code null} for no label.
      * @see      #getLabel
      */
-    public void setLabel(String label) {
+@Bean
+        public void setLabel(String label) {
         boolean testvalid = false;
 
         synchronized (this) {
@@ -314,7 +315,8 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
      * @param     state   the boolean state of the check box
      * @see       #getState
      */
-    public void setState(boolean state) {
+@Bean
+        public void setState(boolean state) {
         /* Cannot hold check box lock when calling group.setSelectedCheckbox. */
         CheckboxGroup group = this.group;
         if (group != null) {
@@ -367,7 +369,8 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
      *                to remove this check box from any check box group
      * @see       #getCheckboxGroup
      */
-    public void setCheckboxGroup(CheckboxGroup g) {
+@Bean
+        public void setCheckboxGroup(CheckboxGroup g) {
         CheckboxGroup oldGroup;
         boolean oldState;
 
@@ -541,7 +544,8 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
      * @see           #processItemEvent
      * @since         1.1
      */
-    protected void processEvent(AWTEvent e) {
+@Bean
+        protected void processEvent(AWTEvent e) {
         if (e instanceof ItemEvent) {
             processItemEvent((ItemEvent)e);
             return;
@@ -573,7 +577,8 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
      * @see         java.awt.Component#enableEvents
      * @since       1.1
      */
-    protected void processItemEvent(ItemEvent e) {
+@Bean
+        protected void processItemEvent(ItemEvent e) {
         ItemListener listener = itemListener;
         if (listener != null) {
             listener.itemStateChanged(e);
@@ -724,7 +729,8 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
          * Fire accessible property change events when the state of the
          * toggle button changes.
          */
-        public void itemStateChanged(ItemEvent e) {
+@Bean
+            public void itemStateChanged(ItemEvent e) {
             Checkbox cb = (Checkbox) e.getSource();
             if (Checkbox.this.accessibleContext != null) {
                 if (cb.getState()) {
@@ -779,7 +785,8 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
          *
          * @param i zero-based index of the actions
          */
-        public String getAccessibleActionDescription(int i) {
+@Bean
+            public String getAccessibleActionDescription(int i) {
             return null;  //  To be fully implemented in a future release
         }
 
@@ -789,7 +796,8 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
          * @param i zero-based index of actions
          * @return true if the action was performed; else false.
          */
-        public boolean doAccessibleAction(int i) {
+@Bean
+            public boolean doAccessibleAction(int i) {
             return false;    //  To be fully implemented in a future release
         }
 
@@ -810,7 +818,8 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
          * @return True if the value was set; else False
          * @see #getCurrentAccessibleValue
          */
-        public boolean setCurrentAccessibleValue(Number n) {
+@Bean
+            public boolean setCurrentAccessibleValue(Number n) {
             return false;  //  To be fully implemented in a future release
         }
 

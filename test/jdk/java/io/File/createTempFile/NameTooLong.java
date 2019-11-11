@@ -30,6 +30,7 @@
 import java.io.File;
 import java.io.IOException;
 
+@Bean
 public class NameTooLong {
     public static void main(String[] args) {
         String[][] prefixSuffix = new String[][] {

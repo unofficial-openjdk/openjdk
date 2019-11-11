@@ -78,6 +78,7 @@ import static java.lang.System.out;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.testng.Assert.assertEquals;
 
+@Bean
 public class InvalidInputStreamSubscriptionRequest implements HttpServerAdapters {
 
     SSLContext sslContext;
@@ -117,7 +118,11 @@ public class InvalidInputStreamSubscriptionRequest implements HttpServerAdapters
         }
 
         @Override
-        public void execute(Runnable command) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void execute(Runnable command) {
             long id = tasks.incrementAndGet();
             executor.execute(() -> {
                 try {
@@ -386,7 +391,11 @@ public class InvalidInputStreamSubscriptionRequest implements HttpServerAdapters
         }
 
         @Override
-        public void request(long n) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void request(long n) {
             if (executor == null) {
                 subscription.request(-n);
             } else {
@@ -412,18 +421,30 @@ public class InvalidInputStreamSubscriptionRequest implements HttpServerAdapters
         }
 
         @Override
-        public void onSubscribe(Flow.Subscription subscription) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onSubscribe(Flow.Subscription subscription) {
             System.out.println("Subscription is: " + subscription);
             subscriber.onSubscribe(new BadSubscription(subscription));
         }
 
         @Override
-        public void onNext(List<ByteBuffer> item) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(List<ByteBuffer> item) {
             subscriber.onNext(item);
         }
 
         @Override
-        public void onError(Throwable throwable) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onError(Throwable throwable) {
             subscriber.onError(throwable);
         }
 

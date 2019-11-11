@@ -43,6 +43,7 @@ import java.util.stream.Stream;
 
 import static java.lang.invoke.MethodType.methodType;
 
+@Bean
 public class CondyTypeValidationTest {
     static final MethodHandles.Lookup L = MethodHandles.lookup();
     static final String BSM_TYPE = methodType(Object.class, MethodHandles.Lookup.class, String.class, Object.class)

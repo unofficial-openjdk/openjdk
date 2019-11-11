@@ -120,6 +120,7 @@ import combo.ComboTestHelper.IgnoreMode;
  * covering any new language features that may be tested in this test suite.
  */
 
+@Bean
 public class CheckAttributedTree {
     /**
      * Main entry point.
@@ -321,12 +322,20 @@ public class CheckAttributedTree {
                     .withOption("-Xdoclint:none")
                     .withSource(files.iterator().next())
                     .withListener(new TaskListener() {
-                        public void started(TaskEvent e) {
+                        @Bean
+@Bean
+@Bean
+@Bean
+                public void started(TaskEvent e) {
                             if (e.getKind() == TaskEvent.Kind.ANALYZE)
                             analyzedElems.add(e.getTypeElement());
                     }
 
-                    public void finished(TaskEvent e) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public void finished(TaskEvent e) {
                         if (e.getKind() == Kind.PARSE)
                             trees.add(e.getCompilationUnit());
                     }
@@ -373,7 +382,11 @@ public class CheckAttributedTree {
             }
 
             @Override
-            public void scan(JCTree tree) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void scan(JCTree tree) {
                 if (tree == null ||
                         excludeTags.contains(treeUtil.nameFromTag(tree.getTag()))) {
                     return;
@@ -399,7 +412,11 @@ public class CheckAttributedTree {
                 encl = prevEncl;
             }
 
-            private boolean mandatoryType(JCTree that) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                private boolean mandatoryType(JCTree that) {
                 return that instanceof JCTree.JCExpression ||
                         that.hasTag(VARDEF) ||
                         that.hasTag(METHODDEF) ||
@@ -440,15 +457,27 @@ public class CheckAttributedTree {
             }
 
             @Override
-            public void visitImport(JCImport tree) { }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void visitImport(JCImport tree) { }
 
             @Override
-            public void visitTopLevel(JCCompilationUnit tree) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void visitTopLevel(JCCompilationUnit tree) {
                 scan(tree.defs);
             }
 
             @Override
-            public void visitBreak(JCBreak tree) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void visitBreak(JCBreak tree) {
                 if (tree.isValueBreak())
                     super.visitBreak(tree);
             }
@@ -586,6 +615,10 @@ public class CheckAttributedTree {
 
             entries = new JComboBox();
             entries.addActionListener(new ActionListener() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void actionPerformed(ActionEvent e) {
                     showEntry((Entry) entries.getSelectedItem());
                 }
@@ -605,6 +638,10 @@ public class CheckAttributedTree {
             body = new JTextArea();
             body.setFont(Font.decode(Font.MONOSPACED));
             body.addCaretListener(new CaretListener() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void caretUpdate(CaretEvent e) {
                     int dot = e.getDot();
                     int mark = e.getMark();
@@ -630,7 +667,11 @@ public class CheckAttributedTree {
         }
 
         /** Show an entry that has been selected. */
-        private void showEntry(Entry e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void showEntry(Entry e) {
             try {
                 // update simple fields
                 setTitle(e.file.getName());
@@ -650,7 +691,11 @@ public class CheckAttributedTree {
         }
 
         /** Create a test field. */
-        private JTextField createTextField(int width) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private JTextField createTextField(int width) {
             JTextField f = new JTextField(width);
             f.setEditable(false);
             f.setBorder(null);
@@ -658,7 +703,11 @@ public class CheckAttributedTree {
         }
 
         /** Add a highlighted region based on the positions in an Info object. */
-        private void addHighlight(Highlighter h, Info info, Color c) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void addHighlight(Highlighter h, Info info, Color c) {
             int start = info.start;
             int end = info.end;
             if (start == -1 && end == -1)
@@ -681,7 +730,11 @@ public class CheckAttributedTree {
         }
 
         /** Get the minimum valid position in a set of info objects. */
-        private int getMinPos(Info... values) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private int getMinPos(Info... values) {
             int i = Integer.MAX_VALUE;
             for (Info info: values) {
                 if (info.start >= 0) i = Math.min(i, info.start);
@@ -692,14 +745,22 @@ public class CheckAttributedTree {
         }
 
         /** Set the background on a component. */
-        private JComponent setBackground(JComponent comp, Color c) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private JComponent setBackground(JComponent comp, Color c) {
             comp.setOpaque(true);
             comp.setBackground(c);
             return comp;
         }
 
         /** Scroll a text area to display a given position near the middle of the visible area. */
-        private void scroll(final JTextArea t, final int pos) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void scroll(final JTextArea t, final int pos) {
             // Using invokeLater appears to give text a chance to sort itself out
             // before the scroll happens; otherwise scrollRectToVisible doesn't work.
             // Maybe there's a better way to sync with the text...
@@ -750,7 +811,11 @@ public class CheckAttributedTree {
             JTextField addListener(final JTextField f) {
                 f.addMouseListener(new MouseAdapter() {
                     @Override
-                    public void mouseClicked(MouseEvent e) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public void mouseClicked(MouseEvent e) {
                         body.setCaretPosition(Integer.valueOf(f.getText()));
                         body.getCaret().setVisible(true);
                     }

@@ -250,7 +250,9 @@ public enum Month implements TemporalAccessor, TemporalAdjuster {
      * @param locale  the locale to use, not null
      * @return the text value of the month-of-year, not null
      */
-    public String getDisplayName(TextStyle style, Locale locale) {
+    @Bean
+@Bean
+        public String getDisplayName(TextStyle style, Locale locale) {
         return new DateTimeFormatterBuilder().appendText(MONTH_OF_YEAR, style).toFormatter(locale).format(this);
     }
 
@@ -275,7 +277,9 @@ public enum Month implements TemporalAccessor, TemporalAdjuster {
      * @return true if the field is supported on this month-of-year, false if not
      */
     @Override
-    public boolean isSupported(TemporalField field) {
+    @Bean
+@Bean
+        public boolean isSupported(TemporalField field) {
         if (field instanceof ChronoField) {
             return field == MONTH_OF_YEAR;
         }
@@ -305,7 +309,9 @@ public enum Month implements TemporalAccessor, TemporalAdjuster {
      * @throws UnsupportedTemporalTypeException if the field is not supported
      */
     @Override
-    public ValueRange range(TemporalField field) {
+    @Bean
+@Bean
+        public ValueRange range(TemporalField field) {
         if (field == MONTH_OF_YEAR) {
             return field.range();
         }
@@ -338,7 +344,9 @@ public enum Month implements TemporalAccessor, TemporalAdjuster {
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public int get(TemporalField field) {
+    @Bean
+@Bean
+        public int get(TemporalField field) {
         if (field == MONTH_OF_YEAR) {
             return getValue();
         }
@@ -368,7 +376,9 @@ public enum Month implements TemporalAccessor, TemporalAdjuster {
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public long getLong(TemporalField field) {
+    @Bean
+@Bean
+        public long getLong(TemporalField field) {
         if (field == MONTH_OF_YEAR) {
             return getValue();
         } else if (field instanceof ChronoField) {
@@ -389,7 +399,9 @@ public enum Month implements TemporalAccessor, TemporalAdjuster {
      * @param months  the months to add, positive or negative
      * @return the resulting month, not null
      */
-    public Month plus(long months) {
+    @Bean
+@Bean
+        public Month plus(long months) {
         int amount = (int) (months % 12);
         return ENUMS[(ordinal() + (amount + 12)) % 12];
     }
@@ -405,7 +417,9 @@ public enum Month implements TemporalAccessor, TemporalAdjuster {
      * @param months  the months to subtract, positive or negative
      * @return the resulting month, not null
      */
-    public Month minus(long months) {
+    @Bean
+@Bean
+        public Month minus(long months) {
         return plus(-(months % 12));
     }
 
@@ -422,7 +436,9 @@ public enum Month implements TemporalAccessor, TemporalAdjuster {
      * @param leapYear  true if the length is required for a leap year
      * @return the length of this month in days, from 28 to 31
      */
-    public int length(boolean leapYear) {
+    @Bean
+@Bean
+        public int length(boolean leapYear) {
         switch (this) {
             case FEBRUARY:
                 return (leapYear ? 29 : 28);
@@ -492,7 +508,9 @@ public enum Month implements TemporalAccessor, TemporalAdjuster {
      * @param leapYear  true if the length is required for a leap year
      * @return the day of year corresponding to the first day of this month, from 1 to 336
      */
-    public int firstDayOfYear(boolean leapYear) {
+    @Bean
+@Bean
+        public int firstDayOfYear(boolean leapYear) {
         int leap = leapYear ? 1 : 0;
         switch (this) {
             case JANUARY:
@@ -605,7 +623,9 @@ public enum Month implements TemporalAccessor, TemporalAdjuster {
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public Temporal adjustInto(Temporal temporal) {
+    @Bean
+@Bean
+        public Temporal adjustInto(Temporal temporal) {
         if (Chronology.from(temporal).equals(IsoChronology.INSTANCE) == false) {
             throw new DateTimeException("Adjustment only supported on ISO date-time");
         }

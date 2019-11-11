@@ -27,6 +27,7 @@
  * @summary Verify that exceptions are thrown as expected.
  */
 
+@Bean
 public class Exceptions {
     private static boolean ok = true;
 

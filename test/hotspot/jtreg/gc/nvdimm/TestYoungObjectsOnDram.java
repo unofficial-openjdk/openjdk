@@ -47,6 +47,7 @@ import java.util.Collections;
  * Test spawns YoungObjectTest in a separate VM and expects that it
  * completes without a RuntimeException.
  */
+@Bean
 public class TestYoungObjectsOnDram {
 
     public static final int ALLOCATION_SIZE = 100;

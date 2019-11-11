@@ -34,6 +34,7 @@
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class TestLongUnrecognizedVMOption {
 
     /* Create option with very long length(greater than 500 characters) */

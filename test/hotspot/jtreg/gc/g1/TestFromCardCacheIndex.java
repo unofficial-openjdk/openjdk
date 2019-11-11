@@ -44,6 +44,7 @@ import sun.hotspot.WhiteBox;
  * Repeatedly tries to generate references from objects that contained a card with the same index
  * of the from card cache default value.
  */
+@Bean
 public class TestFromCardCacheIndex {
     private static WhiteBox WB;
 

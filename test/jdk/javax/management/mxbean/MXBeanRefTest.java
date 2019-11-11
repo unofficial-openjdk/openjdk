@@ -44,6 +44,7 @@ import javax.management.MBeanServerInvocationHandler;
 import javax.management.ObjectName;
 import javax.management.openmbean.OpenDataException;
 
+@Bean
 public class MXBeanRefTest {
     public static void main(String[] args) throws Exception {
         MBeanServer mbs = MBeanServerFactory.createMBeanServer();
@@ -146,7 +147,11 @@ public class MXBeanRefTest {
             return prod;
         }
 
-        public void setProduct(ProductMXBean p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setProduct(ProductMXBean p) {
             this.prod = p;
         }
 

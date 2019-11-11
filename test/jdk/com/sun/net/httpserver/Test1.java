@@ -55,6 +55,7 @@ import jdk.test.lib.net.URIBuilder;
  * this option.
  */
 
+@Bean
 public class Test1 extends Test {
 
     static SSLContext ctx;

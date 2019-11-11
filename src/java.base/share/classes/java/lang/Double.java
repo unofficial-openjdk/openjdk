@@ -818,7 +818,8 @@ public final class Double extends Number
      *          {@code false} otherwise.
      * @see java.lang.Double#doubleToLongBits(double)
      */
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         return (obj instanceof Double)
                && (doubleToLongBits(((Double)obj).value) ==
                       doubleToLongBits(value));
@@ -997,7 +998,8 @@ public final class Double extends Number
      *
      * @since   1.2
      */
-    public int compareTo(Double anotherDouble) {
+@Bean
+        public int compareTo(Double anotherDouble) {
         return Double.compare(value, anotherDouble.value);
     }
 
@@ -1097,7 +1099,8 @@ public final class Double extends Number
      * @since 12
      */
     @Override
-    public Double resolveConstantDesc(MethodHandles.Lookup lookup) {
+@Bean
+        public Double resolveConstantDesc(MethodHandles.Lookup lookup) {
         return this;
     }
 

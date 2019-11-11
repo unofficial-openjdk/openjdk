@@ -47,6 +47,7 @@ import com.sun.source.util.*;
 /*
  * Check the local elements of a scope against the contents of string literals and top-level comment.
  */
+@Bean
 public class CheckLocalElements extends Checker {
     public static void main(String... args) throws Exception {
         Checker chk = new CheckLocalElements();
@@ -54,7 +55,11 @@ public class CheckLocalElements extends Checker {
     }
 
     @Override
-    protected boolean checkLocal(Scope s, String ref) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected boolean checkLocal(Scope s, String ref) {
         Iterator<? extends Element> elemIter = s.getLocalElements().iterator();
         ref = ref.trim();
         String[] refs = ref.length() == 0 ? new String[0] : ref.split("[ ]*,[ ]*", -1);
@@ -110,21 +115,37 @@ public class CheckLocalElements extends Checker {
     //where:
         Pattern TOPLEVEL_SCOPE_DEF = Pattern.compile("TOPLEVEL_SCOPE:(.*)");
 
-    private String getEnclosingName(Element e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String getEnclosingName(Element e) {
         Element encl = e.getEnclosingElement();
         return encl == null ? "" : encl.accept(qualNameVisitor, null);
     }
 
     private ElementVisitor<String,Void> qualNameVisitor = new SimpleElementVisitor9<String,Void>() {
-        protected String defaultAction(Element e, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected String defaultAction(Element e, Void ignore) {
             return "";
         }
 
-        public String visitPackage(PackageElement e, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String visitPackage(PackageElement e, Void ignore) {
             return e.getQualifiedName().toString();
         }
 
-        public String visitType(TypeElement e, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String visitType(TypeElement e, Void ignore) {
             return e.getQualifiedName().toString();
         }
     };

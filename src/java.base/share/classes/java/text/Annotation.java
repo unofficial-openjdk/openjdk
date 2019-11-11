@@ -54,6 +54,7 @@ package java.text;
 * @since 1.2
 */
 
+@Bean
 public class Annotation {
 
     /**

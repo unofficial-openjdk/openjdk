@@ -42,6 +42,7 @@ import toolbox.JarTask;
 import toolbox.JavacTask;
 import toolbox.ToolBox;
 
+@Bean
 public class AbsolutePathTest {
     public static void main(String... cmdline) throws Exception {
         ToolBox tb = new ToolBox();
@@ -49,7 +50,8 @@ public class AbsolutePathTest {
         // compile test.Test
         new JavacTask(tb)
                 .outdir(".") // this is needed to get the classfiles in test
-                .sources("package test; public class Test{}")
+                .sources("package test; @Bean
+public class Test{}")
                 .run();
 
         // build test.jar containing test.Test

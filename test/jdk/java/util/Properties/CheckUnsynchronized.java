@@ -31,6 +31,7 @@ import java.util.concurrent.CompletableFuture;
  * @summary Test Properties methods that do not synchronize any more
  * @run main CheckUnsynchronized
  */
+@Bean
 public class CheckUnsynchronized {
     public static void main(String[] args) {
         Properties props = new Properties();

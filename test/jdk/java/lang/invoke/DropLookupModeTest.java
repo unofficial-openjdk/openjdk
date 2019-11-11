@@ -36,6 +36,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 @Test
+@Bean
 public class DropLookupModeTest {
 
     /**
@@ -121,7 +122,11 @@ public class DropLookupModeTest {
      * and UNCONDITIONAL
      */
     @Test(dataProvider = "unconditionals")
-    public void testUnconditionalLookup(Lookup unconditionalLookup, Class<?> expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testUnconditionalLookup(Lookup unconditionalLookup, Class<?> expected) {
         assertTrue(unconditionalLookup.lookupModes() == UNCONDITIONAL);
 
         assertPublicLookup(unconditionalLookup.dropLookupMode(PRIVATE), expected);
@@ -136,7 +141,11 @@ public class DropLookupModeTest {
         assertTrue(lookup.lookupModes() == 0);
     }
 
-    private void assertPublicLookup(Lookup lookup, Class<?> expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertPublicLookup(Lookup lookup, Class<?> expected) {
         assertTrue(lookup.lookupClass() == expected);
         assertTrue(lookup.lookupModes() == UNCONDITIONAL);
     }
@@ -155,7 +164,11 @@ public class DropLookupModeTest {
      * Check that IllegalArgumentException is thrown for bad input
      */
     @Test(dataProvider = "badInput", expectedExceptions = {IllegalArgumentException.class})
-    public void testBadInput(Integer modeToDrop, Object ignore) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testBadInput(Integer modeToDrop, Object ignore) {
         MethodHandles.lookup().dropLookupMode(modeToDrop);
     }
 

@@ -52,6 +52,9 @@ public class MouseMovedTest {
 
         TrayIcon icon = new TrayIcon(new BufferedImage(20, 20, BufferedImage.TYPE_INT_RGB), "Test icon");
         icon.addMouseMotionListener(new MouseMotionAdapter() {
+            @Bean
+@Bean
+@Bean
             public void mouseMoved(MouseEvent event) {
                 moved = true;
                 System.out.println("Mouse moved");

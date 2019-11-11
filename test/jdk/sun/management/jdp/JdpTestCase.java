@@ -146,7 +146,11 @@ public abstract class JdpTestCase {
      *
      * @param payload A dictionary containing the data if the received Jdp packet.
      */
-    protected void packetFromOtherVMReceived(Map<String, String> payload) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void packetFromOtherVMReceived(Map<String, String> payload) {
         final String jdpName = payload.get("INSTANCE_NAME");
         log.fine("Ignoring JDP packet sent by other VM, jdp.name=" + jdpName);
     }
@@ -210,14 +214,22 @@ public abstract class JdpTestCase {
     /**
      * Hack until I find a way to use TestNG's assertions.
      */
-    private void assertTrue(boolean assertion, String message) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertTrue(boolean assertion, String message) {
         if (assertion == false) {
             log.severe(message);
             assert (false);
         }
     }
 
-    private void assertTrue(boolean assertion) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertTrue(boolean assertion) {
         assertTrue(assertion, "");
     }
 

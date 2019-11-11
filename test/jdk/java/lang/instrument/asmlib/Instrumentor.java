@@ -36,6 +36,7 @@ import jdk.internal.org.objectweb.asm.Opcodes;
 import java.util.function.Consumer;
 import jdk.internal.org.objectweb.asm.Type;
 
+@Bean
 public class Instrumentor {
     public static class InstrHelper {
         private final MethodVisitor mv;
@@ -50,19 +51,31 @@ public class Instrumentor {
             return this.name;
         }
 
-        public void invokeStatic(String owner, String name, String desc, boolean itf) {
+        @Bean
+@Bean
+@Bean
+            public void invokeStatic(String owner, String name, String desc, boolean itf) {
             mv.visitMethodInsn(Opcodes.INVOKESTATIC, owner, name, desc, itf);
         }
 
-        public void invokeSpecial(String owner, String name, String desc) {
+        @Bean
+@Bean
+@Bean
+            public void invokeSpecial(String owner, String name, String desc) {
             mv.visitMethodInsn(Opcodes.INVOKESPECIAL, owner, name, desc, false);
         }
 
-        public void invokeVirtual(String owner, String name, String desc) {
+        @Bean
+@Bean
+@Bean
+            public void invokeVirtual(String owner, String name, String desc) {
             mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, owner, name, desc, false);
         }
 
-        public void push(int val) {
+        @Bean
+@Bean
+@Bean
+            public void push(int val) {
             if (val >= -1 && val <= 5) {
                 mv.visitInsn(Opcodes.ICONST_0 + val);
             } else if (val >= Byte.MIN_VALUE && val <= Byte.MAX_VALUE) {
@@ -74,11 +87,17 @@ public class Instrumentor {
             }
         }
 
-        public void push(Object val) {
+        @Bean
+@Bean
+@Bean
+            public void push(Object val) {
             mv.visitLdcInsn(val);
         }
 
-        public void println(String s) {
+        @Bean
+@Bean
+@Bean
+            public void println(String s) {
             mv.visitFieldInsn(Opcodes.GETSTATIC, Type.getInternalName(System.class), "out", Type.getDescriptor(PrintStream.class));
             mv.visitLdcInsn(s);
             mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, Type.getInternalName(PrintStream.class), "println", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(String.class)), false);
@@ -104,6 +123,9 @@ public class Instrumentor {
     public synchronized Instrumentor addMethodEntryInjection(String methodName, Consumer<InstrHelper> injector) {
         instrumentingVisitor = new ClassVisitor(Opcodes.ASM7, instrumentingVisitor) {
             @Override
+            @Bean
+@Bean
+@Bean
             public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
                 MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
 
@@ -129,6 +151,9 @@ public class Instrumentor {
             private String className;
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
                 this.className = name;
                 super.visit(version, access, name, signature, superName, interfaces);
@@ -136,6 +161,9 @@ public class Instrumentor {
 
 
             @Override
+            @Bean
+@Bean
+@Bean
             public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
                 if ((access & Opcodes.ACC_NATIVE) != 0) {
                     matches.getAndIncrement();

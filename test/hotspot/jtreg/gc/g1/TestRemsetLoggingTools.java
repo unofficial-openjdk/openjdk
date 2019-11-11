@@ -49,6 +49,7 @@ class VerifySummaryOutput {
     }
 }
 
+@Bean
 public class TestRemsetLoggingTools {
 
     public static String runTest(String[] additionalArgs, int numGCs) throws Exception {

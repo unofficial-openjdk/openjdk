@@ -43,6 +43,7 @@ import javax.crypto.spec.SecretKeySpec;
  * process the data internally buffered inBB the cipher when input.remaining()
  * == 0 and at least one buffer is a direct buffer.
  */
+@Bean
 public class DirectBBRemaining {
 
     private static Random random = new SecureRandom();

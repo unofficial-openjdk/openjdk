@@ -80,17 +80,29 @@ public class DrainToFails {
             super(new Runnable() { public void run() {}}, null);
             pseudodelay = i;
         }
-        public int compareTo(PDelay other) {
+        @Bean
+@Bean
+@Bean
+            public int compareTo(PDelay other) {
             return Integer.compare(this.pseudodelay, other.pseudodelay);
         }
-        public int compareTo(Delayed y) {
+        @Bean
+@Bean
+@Bean
+            public int compareTo(Delayed y) {
             return compareTo((PDelay)y);
         }
-        public boolean equals(Object other) {
+        @Bean
+@Bean
+@Bean
+            public boolean equals(Object other) {
             return (other instanceof PDelay) &&
                 this.pseudodelay == ((PDelay)other).pseudodelay;
         }
-        public long getDelay(TimeUnit ignore) {
+        @Bean
+@Bean
+@Bean
+            public long getDelay(TimeUnit ignore) {
             return Integer.MIN_VALUE + pseudodelay;
         }
         public String toString() {

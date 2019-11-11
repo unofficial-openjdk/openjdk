@@ -42,6 +42,7 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.Task.Expect;
 
+@Bean
 public class ProvidesTest extends ModuleTestBase {
     public static void main(String... args) throws Exception {
         ProvidesTest t = new ProvidesTest();
@@ -53,8 +54,10 @@ public class ProvidesTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                 "module m { provides p1.C1 with p2.C2; }",
-                "package p1; public class C1 { }",
-                "package p2; public class C2 extends p1.C1 { }");
+                "package p1; @Bean
+public class C1 { }",
+                "package p2; @Bean
+public class C2 extends p1.C1 { }");
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
 
@@ -70,10 +73,12 @@ public class ProvidesTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src.resolve("m1x"),
                 "module m1x { exports p1; }",
-                "package p1; public class C1 { }");
+                "package p1; @Bean
+public class C1 { }");
         tb.writeJavaFiles(src.resolve("m2x"),
                 "module m2x { requires m1x; provides p1.C1 with p2.C2; }",
-                "package p2; public class C2 extends p1.C1 { }");
+                "package p2; @Bean
+public class C2 extends p1.C1 { }");
         Path modules = base.resolve("modules");
         Files.createDirectories(modules);
 
@@ -91,7 +96,8 @@ public class ProvidesTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                 "module m { provides p.C; }",
-                "package p; public class C { }");
+                "package p; @Bean
+public class C { }");
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
 
@@ -113,8 +119,10 @@ public class ProvidesTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                 "module m { exports p1; exports p2; provides p1.C1 with p2.C2, p2.C2; }",
-                "package p1; public class C1 { }",
-                "package p2; public class C2 extends p1.C1 { }");
+                "package p1; @Bean
+public class C1 { }",
+                "package p2; @Bean
+public class C2 extends p1.C1 { }");
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
 
@@ -139,8 +147,10 @@ public class ProvidesTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                 "module m { exports p1; provides p1.C1 with p2.C2; provides p1.C1 with p2.C2; }",
-                "package p1; public class C1 { }",
-                "package p2; public class C2 extends p1.C1 { }");
+                "package p1; @Bean
+public class C1 { }",
+                "package p2; @Bean
+public class C2 extends p1.C1 { }");
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
 
@@ -166,7 +176,8 @@ public class ProvidesTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                 "module m { provides p.Missing with p.C; }",
-                "package p; public class C extends p.Missing { }");
+                "package p; @Bean
+public class C extends p.Missing { }");
 
         List<String> output = new JavacTask(tb)
                 .options("-XDrawDiagnostics")
@@ -190,7 +201,8 @@ public class ProvidesTest extends ModuleTestBase {
         Path modules = base.resolve("modules");
         tb.writeJavaFiles(modules.resolve("M"),
                 "module M { exports p; }",
-                "package p; public class Service { }");
+                "package p; @Bean
+public class Service { }");
         tb.writeJavaFiles(modules.resolve("L"),
                 "module L { requires M; provides p.Service with p.Service; }");
 
@@ -216,8 +228,10 @@ public class ProvidesTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                 "module m { provides p.A with p.B; }",
-                "package p; public class A { }",
-                "package p; public class B { }");
+                "package p; @Bean
+public class A { }",
+                "package p; @Bean
+public class B { }");
 
         List<String> output = new JavacTask(tb)
                 .options("-XDrawDiagnostics")
@@ -242,7 +256,8 @@ public class ProvidesTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                 "module m { provides p.C with p.Impl; }",
-                "package p; public class C { }");
+                "package p; @Bean
+public class C { }");
 
         List<String> output = new JavacTask(tb)
                 .options("-XDrawDiagnostics")
@@ -264,9 +279,12 @@ public class ProvidesTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                 "module m { provides p.C with p.Impl1, p.Impl2; }",
-                "package p; public class C { }",
-                "package p; public class Impl1 extends p.C { }",
-                "package p; public class Impl2 extends p.C { }");
+                "package p; @Bean
+public class C { }",
+                "package p; @Bean
+public class Impl1 extends p.C { }",
+                "package p; @Bean
+public class Impl2 extends p.C { }");
 
         new JavacTask(tb)
                 .outdir(Files.createDirectories(base.resolve("classes")))
@@ -280,9 +298,12 @@ public class ProvidesTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                 "module m { exports p; provides p.C with p.Impl1; provides p.C with p.Impl2; }",
-                "package p; public class C { }",
-                "package p; public class Impl1 extends p.C { }",
-                "package p; public class Impl2 extends p.C { }");
+                "package p; @Bean
+public class C { }",
+                "package p; @Bean
+public class Impl1 extends p.C { }",
+                "package p; @Bean
+public class Impl2 extends p.C { }");
 
         List<String> output = new JavacTask(tb)
                 .options("-XDrawDiagnostics")
@@ -306,7 +327,8 @@ public class ProvidesTest extends ModuleTestBase {
                 "module m { provides p.Service1 with p.Impl; provides p.Service2 with p.Impl; }",
                 "package p; public interface Service1 { }",
                 "package p; public abstract class Service2 { }",
-                "package p; public class Impl extends p.Service2 implements p.Service1 { }");
+                "package p; @Bean
+public class Impl extends p.Service2 implements p.Service1 { }");
 
         new JavacTask(tb)
                 .outdir(Files.createDirectories(base.resolve("classes")))
@@ -320,7 +342,8 @@ public class ProvidesTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                 "module m { provides p1.C1 with p2.C2; }",
-                "package p1; public class C1 { }",
+                "package p1; @Bean
+public class C1 { }",
                 "package p2; public abstract class C2 extends p1.C1 { }");
 
         List<String> output = new JavacTask(tb)
@@ -366,7 +389,8 @@ public class ProvidesTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                 "module m { provides p1.C1 with p2.C2; }",
-                "package p1; public class C1 { }",
+                "package p1; @Bean
+public class C1 { }",
                 "package p2; class C2 extends p1.C1 { }");
 
         List<String> output = new JavacTask(tb)
@@ -389,8 +413,10 @@ public class ProvidesTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                 "module m { uses p1.C1; provides p1.C1 with p2.C2; }",
-                "package p1; public class C1 { }",
-                "package p2; public class C2 extends p1.C1 { public C2(String str) { } }");
+                "package p1; @Bean
+public class C1 { }",
+                "package p2; @Bean
+public class C2 extends p1.C1 { public C2(String str) { } }");
 
         List<String> output = new JavacTask(tb)
                 .options("-XDrawDiagnostics")
@@ -412,8 +438,10 @@ public class ProvidesTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                 "module m { uses p1.C1; provides p1.C1 with p2.C2; }",
-                "package p1; public class C1 { }",
-                "package p2; public class C2 extends p1.C1 { private C2() { } }");
+                "package p1; @Bean
+public class C1 { }",
+                "package p2; @Bean
+public class C2 extends p1.C1 { private C2() { } }");
 
         List<String> output = new JavacTask(tb)
                 .options("-XDrawDiagnostics")
@@ -435,9 +463,12 @@ public class ProvidesTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                 "module m { provides p1.C1 with p2.C3; }",
-                "package p1; public class C1 { }",
-                "package p2; public class C2 extends p1.C1 {  }",
-                "package p2; public class C3 extends p2.C2 {  }");
+                "package p1; @Bean
+public class C1 { }",
+                "package p2; @Bean
+public class C2 extends p1.C1 {  }",
+                "package p2; @Bean
+public class C3 extends p2.C2 {  }");
 
         new JavacTask(tb)
                 .outdir(Files.createDirectories(base.resolve("classes")))
@@ -451,8 +482,11 @@ public class ProvidesTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                 "module m { provides p1.C1 with p2.C2.Inner; }",
-                "package p1; public class C1 { }",
-                "package p2; public class C2  { public class Inner extends p1.C1 { } }");
+                "package p1; @Bean
+public class C1 { }",
+                "package p2; @Bean
+public class C2  { @Bean
+public class Inner extends p1.C1 { } }");
 
         List<String> output = new JavacTask(tb)
                 .options("-XDrawDiagnostics")
@@ -474,8 +508,11 @@ public class ProvidesTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                 "module m { provides p1.C1.InnerDefinition with p2.C2; }",
-                "package p1; public class C1 { public class InnerDefinition { } }",
-                "package p2; public class C2 extends p1.C1.InnerDefinition { public C2() { new p1.C1().super(); } }");
+                "package p1; @Bean
+public class C1 { @Bean
+public class InnerDefinition { } }",
+                "package p2; @Bean
+public class C2 extends p1.C1.InnerDefinition { public C2() { new p1.C1().super(); } }");
 
         new JavacTask(tb)
                 .options("-XDrawDiagnostics")
@@ -491,7 +528,8 @@ public class ProvidesTest extends ModuleTestBase {
         tb.writeJavaFiles(src,
                 "module m { exports p1; provides p1.C1 with p2.C2; }",
                 "package p1; public interface C1 { }",
-                "package p2; public class C2 { public static p1.C1 provider() { return null; } }");
+                "package p2; @Bean
+public class C2 { public static p1.C1 provider() { return null; } }");
 
         new JavacTask(tb)
                 .options("-XDrawDiagnostics")
@@ -505,7 +543,8 @@ public class ProvidesTest extends ModuleTestBase {
         List<String> expected;
 
         tb.writeJavaFiles(src,
-                "package p2; public class C2 { public p1.C1 provider() { return null; } }");
+                "package p2; @Bean
+public class C2 { public p1.C1 provider() { return null; } }");
 
         output = new JavacTask(tb)
                 .options("-XDrawDiagnostics")
@@ -523,7 +562,8 @@ public class ProvidesTest extends ModuleTestBase {
         }
 
         tb.writeJavaFiles(src,
-                "package p2; public class C2 { static p1.C1 provider() { return null; } }");
+                "package p2; @Bean
+public class C2 { static p1.C1 provider() { return null; } }");
 
         output = new JavacTask(tb)
                 .options("-XDrawDiagnostics")
@@ -541,7 +581,8 @@ public class ProvidesTest extends ModuleTestBase {
         }
 
         tb.writeJavaFiles(src,
-                "package p2; public class C2 { public static Object provider() { return null; } }");
+                "package p2; @Bean
+public class C2 { public static Object provider() { return null; } }");
 
         output = new JavacTask(tb)
                 .options("-XDrawDiagnostics")
@@ -559,7 +600,8 @@ public class ProvidesTest extends ModuleTestBase {
         }
 
         tb.writeJavaFiles(src,
-                "package p2; public class C2 { public static p1.C1 provider = new p1.C1() {}; }");
+                "package p2; @Bean
+public class C2 { public static p1.C1 provider = new p1.C1() {}; }");
 
         output = new JavacTask(tb)
                 .options("-XDrawDiagnostics")

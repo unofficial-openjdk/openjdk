@@ -35,6 +35,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
+@Bean
 public class ExceptionTest {
     private static final String ERROR_MSG = "error from JavaScript";
 

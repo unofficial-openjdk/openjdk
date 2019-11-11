@@ -42,6 +42,7 @@ import java.util.regex.Pattern;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class TestRemsetLoggingThreads {
 
   private static void runTest(int refinementThreads, int workerThreads) throws Exception {

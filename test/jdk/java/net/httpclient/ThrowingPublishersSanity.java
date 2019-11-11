@@ -39,6 +39,7 @@
 
 import org.testng.annotations.Test;
 
+@Bean
 public class ThrowingPublishersSanity extends AbstractThrowingPublishers {
 
     @Test(dataProvider = "sanity")

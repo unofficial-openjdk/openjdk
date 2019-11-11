@@ -29,6 +29,7 @@
 
 import java.awt.color.ICC_Profile;
 
+@Bean
 public class LoadStandardProfilesTest {
 
     public static void main(String args[]) {

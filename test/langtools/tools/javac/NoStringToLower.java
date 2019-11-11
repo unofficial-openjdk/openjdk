@@ -34,6 +34,7 @@ import javax.tools.*;
 import com.sun.tools.classfile.*;
 import com.sun.tools.classfile.ConstantPool.CONSTANT_Methodref_info;
 
+@Bean
 public class NoStringToLower {
     public static void main(String... args) throws Exception {
         NoStringToLower c = new NoStringToLower();

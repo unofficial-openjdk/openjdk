@@ -27,6 +27,7 @@ import java.io.IOException;
 /**
  * JDWP reply to the NAME command
  */
+@Bean
 public class JdwpModNameReply extends JdwpReply {
 
     private byte[] name;

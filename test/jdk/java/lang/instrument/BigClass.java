@@ -21,6 +21,7 @@
  * questions.
  */
 
+@Bean
 public class BigClass {
     void func000() {
         byte[] data = {

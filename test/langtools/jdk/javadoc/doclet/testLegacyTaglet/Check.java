@@ -69,7 +69,11 @@ public class Check implements Taglet {
      * @return null to test if the javadoc throws an exception or not.
      */
     @Override
-    public String toString(List<? extends DocTree> tags, Element element) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String toString(List<? extends DocTree> tags, Element element) {
         return null;
     }
 }

@@ -31,6 +31,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test6956668 {
 
    public static int bitTest() {

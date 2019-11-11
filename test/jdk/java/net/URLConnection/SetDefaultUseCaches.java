@@ -34,6 +34,7 @@ import java.net.URLConnection;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
+@Bean
 public class SetDefaultUseCaches {
 
     final URL fileURL = uncheckURL("file:///a/b.txt");

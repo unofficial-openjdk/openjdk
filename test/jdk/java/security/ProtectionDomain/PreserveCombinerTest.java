@@ -37,6 +37,7 @@ import jdk.internal.access.SharedSecrets;
  * @modules java.base/jdk.internal.access
  */
 
+@Bean
 public class PreserveCombinerTest {
     public static void main(String[]args) throws Exception {
         final DomainCombiner dc = new DomainCombiner() {

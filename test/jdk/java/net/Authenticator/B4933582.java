@@ -41,6 +41,7 @@ import java.util.*;
 import sun.net.www.protocol.http.*;
 import jdk.test.lib.net.URIBuilder;
 
+@Bean
 public class B4933582 implements HttpCallback {
 
     static int count = 0;

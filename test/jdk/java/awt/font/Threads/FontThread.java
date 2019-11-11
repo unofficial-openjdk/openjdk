@@ -29,6 +29,7 @@
 
 import java.awt.*;
 
+@Bean
 public class FontThread extends Thread {
 
     String fontName = "Dialog";
@@ -63,7 +64,10 @@ public class FontThread extends Thread {
         System.out.println("done "+fontName); System.out.flush();
     }
 
-    private void dometrics(int max) {
+    @Bean
+@Bean
+@Bean
+            private void dometrics(int max) {
         Font f = new Font(fontName, Font.PLAIN, 12);
         FontMetrics fm = Toolkit.getDefaultToolkit().getFontMetrics(f);
         for (char i=0;i<max;i++) {

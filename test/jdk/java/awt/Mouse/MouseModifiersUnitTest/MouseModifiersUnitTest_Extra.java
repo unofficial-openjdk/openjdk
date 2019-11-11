@@ -469,7 +469,10 @@ class CheckingModifierAdapterExtra extends MouseAdapter{
         this.modifier = modifier;
     }
 
-    public void mousePressed(MouseEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void mousePressed(MouseEvent e) {
         System.out.println("PRESSED "+e);
         if (e.getButton() <= MouseEvent.BUTTON3) {
             System.out.println("Standard button affected. Skip.");
@@ -477,7 +480,10 @@ class CheckingModifierAdapterExtra extends MouseAdapter{
             MouseModifiersUnitTest_Extra.checkPressedModifiersTest(modifier, e);
         }
     }
-    public void mouseReleased(MouseEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void mouseReleased(MouseEvent e) {
         System.out.println("RELEASED "+e);
         if (e.getButton() <= MouseEvent.BUTTON3) {
             System.out.println("Standard button affected. Skip.");
@@ -485,7 +491,10 @@ class CheckingModifierAdapterExtra extends MouseAdapter{
             MouseModifiersUnitTest_Extra.checkReleasedModifiersTest(modifier, e);
         }
     }
-    public void mouseClicked(MouseEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void mouseClicked(MouseEvent e) {
         System.out.println("CLICKED "+e);
         if (e.getButton() <= MouseEvent.BUTTON3) {
             System.out.println("Standard button affected. Skip.");

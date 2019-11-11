@@ -39,6 +39,7 @@ import java.nio.CharBuffer;
  *
  * @author vyom.tewari@oacle.com
  */
+@Bean
 public class Bug6856817 {
 
     private static final String str = "This is just a test string that i am using it to test the CharBuffer.append(CharSequence csq)  for little bit performance improvement.";

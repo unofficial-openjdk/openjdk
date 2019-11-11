@@ -33,6 +33,7 @@
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class DoubleFlagWithIntegerValue {
   public static void testDoubleFlagWithValue(String value) throws Exception {
     ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-XX:G1ConcMarkStepDurationMillis=" + value, "-version");

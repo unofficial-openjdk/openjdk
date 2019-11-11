@@ -31,6 +31,7 @@ import java.awt.*;
  */
 
 
+@Bean
 public class HeadlessBasicStroke {
     public static void main (String[] args) {
         BasicStroke bs;

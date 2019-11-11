@@ -39,6 +39,7 @@ import jdk.test.lib.containers.docker.DockerRunOptions;
 import jdk.test.lib.containers.docker.DockerTestUtils;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class TestMemoryAwareness {
     private static final String imageName = Common.imageName("memory");
 

@@ -27,6 +27,7 @@
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 
+@Bean
 public class Utils {
     private static final ThreadMXBean tm = ManagementFactory.getThreadMXBean();
     private static final int MAX_RETRY = 200;

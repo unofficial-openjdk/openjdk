@@ -43,6 +43,7 @@ import jdk.test.lib.Utils;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+@Bean
 public class SupplementalJapaneseEraTestRun {
     @DataProvider(name = "validprop")
     Object[][] validPropertyData() {

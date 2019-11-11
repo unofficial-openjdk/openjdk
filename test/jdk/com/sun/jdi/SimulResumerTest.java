@@ -100,6 +100,7 @@ class SimulResumerTarg extends Thread {
 
 /********** test program **********/
 
+@Bean
 public class SimulResumerTest extends TestScaffold {
     ReferenceType targetClass;
     ThreadReference mainThread;
@@ -122,7 +123,11 @@ public class SimulResumerTest extends TestScaffold {
 
     /* BreakpointEvent handler */
 
-    public void breakpointReached(BreakpointEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void breakpointReached(BreakpointEvent event) {
         // save ThreadRefs for the two debuggee threads
         ThreadReference thr = event.thread();
         if (bkpts == 0) {

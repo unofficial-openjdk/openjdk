@@ -32,6 +32,7 @@
 import java.lang.annotation.*;
 import java.lang.reflect.*;
 
+@Bean
 public class OrderUnitTest {
 
     public static void main(String[] args) {

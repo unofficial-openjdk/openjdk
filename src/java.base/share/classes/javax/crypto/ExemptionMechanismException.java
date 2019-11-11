@@ -33,6 +33,7 @@ import java.security.GeneralSecurityException;
  * @since 1.4
  */
 
+@Bean
 public class ExemptionMechanismException extends GeneralSecurityException {
 
     @java.io.Serial

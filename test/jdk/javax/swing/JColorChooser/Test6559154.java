@@ -38,11 +38,16 @@ import javax.swing.JDialog;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
+@Bean
 public class Test6559154 implements ActionListener, Runnable {
 
     private JDialog dialog;
 
-    public void actionPerformed(ActionEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent event) {
         if (this.dialog != null) {
             this.dialog.dispose();
         }

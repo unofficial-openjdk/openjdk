@@ -23,6 +23,7 @@
 
 import java.lang.instrument.Instrumentation;
 
+@Bean
 public class RedefineSubclassWithTwoInterfacesAgent {
     private static Instrumentation instrumentation;
 

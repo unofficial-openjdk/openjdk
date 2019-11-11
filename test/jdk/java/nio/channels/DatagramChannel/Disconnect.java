@@ -36,6 +36,7 @@ import java.nio.channels.*;
 import java.io.IOException;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class Disconnect {
     public static void main(String[] args) throws IOException {
         IPSupport.throwSkippedExceptionIfNonOperational();

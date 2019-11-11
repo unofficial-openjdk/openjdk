@@ -36,6 +36,7 @@ import sun.awt.ComponentFactory;
  *          java.desktop/sun.awt
  * @summary Crash Trend in 1.9.0-ea-b93 (sun.awt.DefaultMouseInfoPeer.fillPointWithCoords)
  */
+@Bean
 public class PointerInfoCrashTest {
 
     public static void main(String[] args) {

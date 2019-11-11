@@ -29,6 +29,7 @@
  * @summary Test custom system loader initialization and verify their ancestors
  */
 
+@Bean
 public class InitSystemLoaderTest {
     public static void main(String... args) {
         // check that system class loader is the custom loader

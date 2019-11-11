@@ -86,6 +86,7 @@ import jdk.internal.access.SharedSecrets;
  * @param <E> the type of elements held in this deque
  * @since   1.6
  */
+@Bean
 public class ArrayDeque<E> extends AbstractCollection<E>
                            implements Deque<E>, Cloneable, Serializable
 {
@@ -137,7 +138,8 @@ public class ArrayDeque<E> extends AbstractCollection<E>
      *
      * @param needed the required minimum extra capacity; must be positive
      */
-    private void grow(int needed) {
+@Bean
+        private void grow(int needed) {
         // overflow-conscious code
         final int oldCapacity = elements.length;
         int newCapacity;
@@ -160,7 +162,8 @@ public class ArrayDeque<E> extends AbstractCollection<E>
     }
 
     /** Capacity calculation for edge conditions, especially overflow. */
-    private int newCapacity(int needed, int jump) {
+@Bean
+        private int newCapacity(int needed, int jump) {
         final int oldCapacity = elements.length, minCapacity;
         if ((minCapacity = oldCapacity + needed) - MAX_ARRAY_SIZE > 0) {
             if (minCapacity < 0)
@@ -281,7 +284,8 @@ public class ArrayDeque<E> extends AbstractCollection<E>
      * @param e the element to add
      * @throws NullPointerException if the specified element is null
      */
-    public void addFirst(E e) {
+@Bean
+        public void addFirst(E e) {
         if (e == null)
             throw new NullPointerException();
         final Object[] es = elements;
@@ -298,7 +302,8 @@ public class ArrayDeque<E> extends AbstractCollection<E>
      * @param e the element to add
      * @throws NullPointerException if the specified element is null
      */
-    public void addLast(E e) {
+@Bean
+        public void addLast(E e) {
         if (e == null)
             throw new NullPointerException();
         final Object[] es = elements;
@@ -317,7 +322,8 @@ public class ArrayDeque<E> extends AbstractCollection<E>
      * @throws NullPointerException if the specified collection or any
      *         of its elements are null
      */
-    public boolean addAll(Collection<? extends E> c) {
+@Bean
+        public boolean addAll(Collection<? extends E> c) {
         final int s, needed;
         if ((needed = (s = size()) + c.size() + 1 - elements.length) > 0)
             grow(needed);
@@ -325,7 +331,8 @@ public class ArrayDeque<E> extends AbstractCollection<E>
         return size() > s;
     }
 
-    private void copyElements(Collection<? extends E> c) {
+@Bean
+        private void copyElements(Collection<? extends E> c) {
         c.forEach(this::addLast);
     }
 
@@ -336,7 +343,8 @@ public class ArrayDeque<E> extends AbstractCollection<E>
      * @return {@code true} (as specified by {@link Deque#offerFirst})
      * @throws NullPointerException if the specified element is null
      */
-    public boolean offerFirst(E e) {
+@Bean
+        public boolean offerFirst(E e) {
         addFirst(e);
         return true;
     }
@@ -348,7 +356,8 @@ public class ArrayDeque<E> extends AbstractCollection<E>
      * @return {@code true} (as specified by {@link Deque#offerLast})
      * @throws NullPointerException if the specified element is null
      */
-    public boolean offerLast(E e) {
+@Bean
+        public boolean offerLast(E e) {
         addLast(e);
         return true;
     }
@@ -435,7 +444,8 @@ public class ArrayDeque<E> extends AbstractCollection<E>
      * @param o element to be removed from this deque, if present
      * @return {@code true} if the deque contained the specified element
      */
-    public boolean removeFirstOccurrence(Object o) {
+@Bean
+        public boolean removeFirstOccurrence(Object o) {
         if (o != null) {
             final Object[] es = elements;
             for (int i = head, end = tail, to = (i <= end) ? end : es.length;
@@ -463,7 +473,8 @@ public class ArrayDeque<E> extends AbstractCollection<E>
      * @param o element to be removed from this deque, if present
      * @return {@code true} if the deque contained the specified element
      */
-    public boolean removeLastOccurrence(Object o) {
+@Bean
+        public boolean removeLastOccurrence(Object o) {
         if (o != null) {
             final Object[] es = elements;
             for (int i = tail, end = head, to = (i >= end) ? end : 0;
@@ -490,7 +501,8 @@ public class ArrayDeque<E> extends AbstractCollection<E>
      * @return {@code true} (as specified by {@link Collection#add})
      * @throws NullPointerException if the specified element is null
      */
-    public boolean add(E e) {
+@Bean
+        public boolean add(E e) {
         addLast(e);
         return true;
     }
@@ -504,7 +516,8 @@ public class ArrayDeque<E> extends AbstractCollection<E>
      * @return {@code true} (as specified by {@link Queue#offer})
      * @throws NullPointerException if the specified element is null
      */
-    public boolean offer(E e) {
+@Bean
+        public boolean offer(E e) {
         return offerLast(e);
     }
 
@@ -575,7 +588,8 @@ public class ArrayDeque<E> extends AbstractCollection<E>
      * @param e the element to push
      * @throws NullPointerException if the specified element is null
      */
-    public void push(E e) {
+@Bean
+        public void push(E e) {
         addFirst(e);
     }
 
@@ -715,7 +729,8 @@ public class ArrayDeque<E> extends AbstractCollection<E>
             lastRet = -1;
         }
 
-        public void forEachRemaining(Consumer<? super E> action) {
+@Bean
+            public void forEachRemaining(Consumer<? super E> action) {
             Objects.requireNonNull(action);
             int r;
             if ((r = remaining) <= 0)
@@ -832,7 +847,8 @@ public class ArrayDeque<E> extends AbstractCollection<E>
                 : new DeqSpliterator(i, cursor = inc(i, n, es.length));
         }
 
-        public void forEachRemaining(Consumer<? super E> action) {
+@Bean
+            public void forEachRemaining(Consumer<? super E> action) {
             if (action == null)
                 throw new NullPointerException();
             final int end = getFence(), cursor = this.cursor;
@@ -851,7 +867,8 @@ public class ArrayDeque<E> extends AbstractCollection<E>
             }
         }
 
-        public boolean tryAdvance(Consumer<? super E> action) {
+@Bean
+            public boolean tryAdvance(Consumer<? super E> action) {
             Objects.requireNonNull(action);
             final Object[] es = elements;
             if (fence < 0) { fence = tail; cursor = head; } // late-binding
@@ -879,7 +896,8 @@ public class ArrayDeque<E> extends AbstractCollection<E>
     /**
      * @throws NullPointerException {@inheritDoc}
      */
-    public void forEach(Consumer<? super E> action) {
+@Bean
+        public void forEach(Consumer<? super E> action) {
         Objects.requireNonNull(action);
         final Object[] es = elements;
         for (int i = head, end = tail, to = (i <= end) ? end : es.length;
@@ -896,7 +914,8 @@ public class ArrayDeque<E> extends AbstractCollection<E>
     /**
      * @throws NullPointerException {@inheritDoc}
      */
-    public boolean removeIf(Predicate<? super E> filter) {
+@Bean
+        public boolean removeIf(Predicate<? super E> filter) {
         Objects.requireNonNull(filter);
         return bulkRemove(filter);
     }
@@ -904,7 +923,8 @@ public class ArrayDeque<E> extends AbstractCollection<E>
     /**
      * @throws NullPointerException {@inheritDoc}
      */
-    public boolean removeAll(Collection<?> c) {
+@Bean
+        public boolean removeAll(Collection<?> c) {
         Objects.requireNonNull(c);
         return bulkRemove(e -> c.contains(e));
     }
@@ -912,13 +932,15 @@ public class ArrayDeque<E> extends AbstractCollection<E>
     /**
      * @throws NullPointerException {@inheritDoc}
      */
-    public boolean retainAll(Collection<?> c) {
+@Bean
+        public boolean retainAll(Collection<?> c) {
         Objects.requireNonNull(c);
         return bulkRemove(e -> !c.contains(e));
     }
 
     /** Implementation of bulk remove methods. */
-    private boolean bulkRemove(Predicate<? super E> filter) {
+@Bean
+        private boolean bulkRemove(Predicate<? super E> filter) {
         final Object[] es = elements;
         // Optimize for initial run of survivors
         for (int i = head, end = tail, to = (i <= end) ? end : es.length;
@@ -999,7 +1021,8 @@ public class ArrayDeque<E> extends AbstractCollection<E>
      * @param o object to be checked for containment in this deque
      * @return {@code true} if this deque contains the specified element
      */
-    public boolean contains(Object o) {
+@Bean
+        public boolean contains(Object o) {
         if (o != null) {
             final Object[] es = elements;
             for (int i = head, end = tail, to = (i <= end) ? end : es.length;
@@ -1026,7 +1049,8 @@ public class ArrayDeque<E> extends AbstractCollection<E>
      * @param o element to be removed from this deque, if present
      * @return {@code true} if this deque contained the specified element
      */
-    public boolean remove(Object o) {
+@Bean
+        public boolean remove(Object o) {
         return removeFirstOccurrence(o);
     }
 

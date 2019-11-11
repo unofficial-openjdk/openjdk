@@ -38,6 +38,7 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 import javax.imageio.stream.ImageOutputStream;
 
+@Bean
 public class StreamFlush {
 
     public static void main(String[] args) throws IOException {

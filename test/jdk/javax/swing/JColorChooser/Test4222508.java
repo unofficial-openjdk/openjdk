@@ -50,7 +50,11 @@ public final class Test4222508 extends JApplet implements ItemListener {
         add(BorderLayout.CENTER, this.chooser);
     }
 
-    public void itemStateChanged(ItemEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void itemStateChanged(ItemEvent event) {
         this.chooser.setEnabled(this.checkbox.isSelected());
     }
 }

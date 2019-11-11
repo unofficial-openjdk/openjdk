@@ -83,11 +83,20 @@ public class ScheduledExecutorSubclassTest extends JSR166TestCase {
             ran = true;
             task.run();
         }
-        public long getDelay(TimeUnit unit) { return task.getDelay(unit); }
-        public int compareTo(Delayed t) {
+        @Bean
+@Bean
+@Bean
+            public long getDelay(TimeUnit unit) { return task.getDelay(unit); }
+        @Bean
+@Bean
+@Bean
+            public int compareTo(Delayed t) {
             return task.compareTo(((CustomTask)t).task);
         }
-        public boolean cancel(boolean mayInterruptIfRunning) {
+        @Bean
+@Bean
+@Bean
+            public boolean cancel(boolean mayInterruptIfRunning) {
             return task.cancel(mayInterruptIfRunning);
         }
         public boolean isCancelled() { return task.isCancelled(); }

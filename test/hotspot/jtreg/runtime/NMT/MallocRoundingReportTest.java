@@ -40,6 +40,7 @@ import jdk.test.lib.JDKToolFinder;
 
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class MallocRoundingReportTest {
     private static long K = 1024;
 

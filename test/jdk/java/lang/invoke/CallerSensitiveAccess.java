@@ -55,6 +55,7 @@ import org.testng.annotations.NoInjection;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
+@Bean
 public class CallerSensitiveAccess {
 
     /**
@@ -193,7 +194,11 @@ public class CallerSensitiveAccess {
     public static class S1 extends AccessibleObject { }
     public static class S2 extends AccessibleObject {
         @Override
-        public void setAccessible(boolean flag) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAccessible(boolean flag) {
             super.setAccessible(flag);
         }
     }
@@ -307,7 +312,8 @@ public class CallerSensitiveAccess {
     // -- supporting methods --
 
     /**
-     * Returns a stream of all caller sensitive methods on public classes in packages
+     * Returns a stream of all caller sensitive methods on @Bean
+public classes in packages
      * exported by a named module.
      */
     static Stream<Method> callerSensitiveMethods(Module module) {
@@ -319,7 +325,8 @@ public class CallerSensitiveAccess {
         // find all ".class" resources in the module
         // transform the resource name to a class name
         // load every class in the exported packages
-        // return the caller sensitive methods of the public classes
+        // return the caller sensitive methods of the @Bean
+public classes
         try (ModuleReader reader = mref.open()) {
             return reader.list()
                     .filter(rn -> rn.endsWith(".class"))

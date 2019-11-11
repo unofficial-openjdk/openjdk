@@ -28,6 +28,7 @@
  *          unpredictable results.
  */
 
+@Bean
 public class Suspend implements Runnable {
 
     private static volatile int count = 0;

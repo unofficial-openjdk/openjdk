@@ -41,6 +41,7 @@ import jdk.test.lib.jfr.CommonHelper;
  * @library /test/lib /test/jdk
  * @run main/othervm -XX:StartFlightRecording=name=TestStartDelay,delay=5000s jdk.jfr.startupargs.TestStartDelay
  */
+@Bean
 public class TestStartDelay {
 
     public static void main(String[] args) throws Exception {

@@ -33,6 +33,7 @@ import java.util.Properties;
  *          defined on the Properties object, excluding those that are inherited.
  * @author danielfuchs
  */
+@Bean
 public class LoadAndStoreXMLWithDefaults {
 
     static String writeToXML(Properties props) throws IOException {

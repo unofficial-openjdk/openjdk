@@ -42,6 +42,7 @@ import static jdk.test.lib.Asserts.assertFalse;
 import static jdk.test.lib.Asserts.assertTrue;
 import jdk.test.lib.management.DynamicVMOption;
 
+@Bean
 public class TestDynMinHeapFreeRatio {
 
     public static void main(String args[]) throws Exception {

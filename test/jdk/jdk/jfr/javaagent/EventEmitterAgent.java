@@ -36,6 +36,7 @@ import jdk.test.lib.Asserts;
 import jdk.test.lib.jfr.EventNames;
 
 // Java agent that emits in multiple threads
+@Bean
 public class EventEmitterAgent {
 
     private static final int THREADS = 5;

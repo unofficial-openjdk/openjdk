@@ -56,6 +56,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+@Bean
 public class Function {
     public static void main(String[] args) throws Exception {
 
@@ -155,8 +156,16 @@ public class Function {
     public static class Five extends MessageDigest {
         static final byte[] dig = {0x14, 0x02, (byte)0x84}; //base64 -> FAKE
         public Five() { super("Five"); }
-        protected void engineUpdate(byte input) { }
-        protected void engineUpdate(byte[] input, int offset, int len) { }
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void engineUpdate(byte input) { }
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void engineUpdate(byte[] input, int offset, int len) { }
         protected byte[] engineDigest() { return dig; }
         protected void engineReset() { }
     }

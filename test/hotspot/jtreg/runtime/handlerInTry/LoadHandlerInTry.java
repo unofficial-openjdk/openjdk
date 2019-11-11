@@ -64,6 +64,7 @@
  *    should get thrown.
  */
 
+@Bean
 public class LoadHandlerInTry {
 
     public static void main(String[] args) throws Exception {

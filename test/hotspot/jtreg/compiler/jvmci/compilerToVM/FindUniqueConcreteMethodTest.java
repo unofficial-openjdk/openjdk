@@ -60,6 +60,7 @@ import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
 
+@Bean
 public class FindUniqueConcreteMethodTest {
     public static void main(String args[]) {
         FindUniqueConcreteMethodTest test = new FindUniqueConcreteMethodTest();

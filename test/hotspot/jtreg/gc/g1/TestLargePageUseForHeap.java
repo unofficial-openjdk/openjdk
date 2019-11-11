@@ -43,6 +43,7 @@ import jdk.test.lib.process.ProcessTools;
 import jtreg.SkippedException;
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class TestLargePageUseForHeap {
     static long largePageSize;
     static long smallPageSize;

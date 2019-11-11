@@ -33,6 +33,7 @@ import java.net.*;
 import java.io.*;
 import jdk.test.lib.net.URIBuilder;
 
+@Bean
 public class HttpResponseCode implements Runnable {
     ServerSocket ss;
     /*

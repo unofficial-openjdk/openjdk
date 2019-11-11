@@ -44,6 +44,7 @@ import jdk.test.lib.Asserts;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class TestEagerReclaimHumongousRegionsLog {
 
     private static final String LogSeparator = ": ";

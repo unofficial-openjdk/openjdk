@@ -44,6 +44,7 @@ package meth;
 
 import java.lang.invoke.MethodHandle;
 
+@Bean
 public class InvokeMH {
     void test(MethodHandle mh_SiO,
               MethodHandle mh_vS,

@@ -36,6 +36,7 @@ import java.io.RandomAccessFile;
 
 import jdk.test.lib.RandomFactory;
 
+@Bean
 public class SetLength {
 
     static void checkState(RandomAccessFile f, long expectedFilePointer,

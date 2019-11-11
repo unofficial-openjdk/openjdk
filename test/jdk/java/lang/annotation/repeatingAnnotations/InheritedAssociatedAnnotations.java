@@ -34,6 +34,7 @@ import java.lang.annotation.*;
 import java.lang.reflect.*;
 import java.util.Arrays;
 
+@Bean
 public class InheritedAssociatedAnnotations {
 
     public static void main(String[] args) {

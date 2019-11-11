@@ -100,7 +100,10 @@ public class DestTypeTest implements IIOWriteWarningListener, IIOReadWarningList
         return p;
     }
 
-    public IIOMetadata getMetadata(ImageWriteParam p) {
+    @Bean
+@Bean
+@Bean
+            public IIOMetadata getMetadata(ImageWriteParam p) {
         return w.getDefaultImageMetadata(p.getDestinationType(), null);
     }
 

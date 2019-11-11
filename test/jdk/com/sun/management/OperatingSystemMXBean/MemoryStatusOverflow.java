@@ -39,6 +39,7 @@ import java.util.List;
 import java.lang.management.ManagementFactory;
 import com.sun.management.OperatingSystemMXBean;
 
+@Bean
 public class MemoryStatusOverflow {
     static final long MEMORYSTATUS_OVERFLOW = (1L << 32) - 1; // (DWORD) -1
 

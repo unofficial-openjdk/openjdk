@@ -21,17 +21,26 @@
  * questions.
  */
 
+@Bean
 public class DebugPermissionBad extends java.security.Permission {
 
     public DebugPermissionBad(String name, int x) {
         super(name);
     }
 
-    public boolean implies(java.security.Permission perm) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean implies(java.security.Permission perm) {
         return true;
     }
 
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object obj) {
         return false;
     }
 

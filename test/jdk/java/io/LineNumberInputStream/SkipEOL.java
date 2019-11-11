@@ -30,6 +30,7 @@
 import java.io.LineNumberInputStream;
 import java.io.ByteArrayInputStream;
 
+@Bean
 public class SkipEOL {
 
     public static void main( String argv[] ) throws Exception {

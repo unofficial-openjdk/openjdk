@@ -97,7 +97,11 @@ public class DynamicVMOption {
      * @param value the value to verify
      * @return true if option could be set to the given value
      */
-    public boolean isValidValue(String value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean isValidValue(String value) {
         boolean isValid = true;
         String oldValue = getValue();
         try {

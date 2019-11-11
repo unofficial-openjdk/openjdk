@@ -54,6 +54,7 @@ import jdk.test.lib.Utils;
  * the JMX agent, there are other tests for that. This test makes sure it is
  * possible to start the agent via attach.
  */
+@Bean
 public class StartManagementAgent {
     public static void main(String[] args) throws Throwable {
         ProcessThread processThread = null;

@@ -37,6 +37,7 @@ import static javax.management.openmbean.SimpleType.*;
  * A converter utiltiy class to automatically convert a given
  * class to a CompositeType.
  */
+@Bean
 public class OpenTypeConverter {
     private static final WeakHashMap<Class,OpenType> convertedTypes =
         new WeakHashMap<Class,OpenType>();
@@ -91,11 +92,17 @@ public class OpenTypeConverter {
             return 0;
         }
 
-        public boolean equals(Object o) {
+        @Bean
+@Bean
+@Bean
+            public boolean equals(Object o) {
             return false;
         }
 
-        public boolean isValue(Object o) {
+        @Bean
+@Bean
+@Bean
+            public boolean isValue(Object o) {
             return false;
         }
     }

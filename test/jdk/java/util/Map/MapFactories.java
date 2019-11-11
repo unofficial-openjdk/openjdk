@@ -55,6 +55,7 @@ import static org.testng.Assert.fail;
  * @run testng MapFactories
  */
 
+@Bean
 public class MapFactories {
 
     static final int MAX_ENTRIES = 20; // should be larger than the largest fixed-arg overload
@@ -127,33 +128,57 @@ public class MapFactories {
     }
 
     @Test(dataProvider="all", expectedExceptions=UnsupportedOperationException.class)
-    public void cannotPutNew(Map<Integer,String> act, Map<Integer,String> exp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void cannotPutNew(Map<Integer,String> act, Map<Integer,String> exp) {
         act.put(-1, "xyzzy");
     }
 
     @Test(dataProvider="nonempty", expectedExceptions=UnsupportedOperationException.class)
-    public void cannotPutOld(Map<Integer,String> act, Map<Integer,String> exp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void cannotPutOld(Map<Integer,String> act, Map<Integer,String> exp) {
         act.put(0, "a");
     }
 
     @Test(dataProvider="nonempty", expectedExceptions=UnsupportedOperationException.class)
-    public void cannotRemove(Map<Integer,String> act, Map<Integer,String> exp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void cannotRemove(Map<Integer,String> act, Map<Integer,String> exp) {
         act.remove(act.keySet().iterator().next());
     }
 
     @Test(dataProvider="all")
-    public void contentsMatch(Map<Integer,String> act, Map<Integer,String> exp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void contentsMatch(Map<Integer,String> act, Map<Integer,String> exp) {
         assertEquals(act, exp);
     }
 
     @Test(dataProvider="all")
-    public void containsAllKeys(Map<Integer,String> act, Map<Integer,String> exp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void containsAllKeys(Map<Integer,String> act, Map<Integer,String> exp) {
         assertTrue(act.keySet().containsAll(exp.keySet()));
         assertTrue(exp.keySet().containsAll(act.keySet()));
     }
 
     @Test(dataProvider="all")
-    public void containsAllValues(Map<Integer,String> act, Map<Integer,String> exp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void containsAllValues(Map<Integer,String> act, Map<Integer,String> exp) {
         assertTrue(act.values().containsAll(exp.values()));
         assertTrue(exp.values().containsAll(act.values()));
     }
@@ -216,7 +241,11 @@ public class MapFactories {
     }
 
     @Test(dataProvider="all")
-    public void hashCodeEquals(Map<Integer,String> act, Map<Integer,String> exp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void hashCodeEquals(Map<Integer,String> act, Map<Integer,String> exp) {
         assertEquals(act.hashCode(), exp.hashCode());
     }
 
@@ -377,22 +406,38 @@ public class MapFactories {
     }
 
     @Test(dataProvider="all", expectedExceptions=NullPointerException.class)
-    public void containsValueNullShouldThrowNPE(Map<Integer,String> act, Map<Integer,String> exp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void containsValueNullShouldThrowNPE(Map<Integer,String> act, Map<Integer,String> exp) {
         act.containsValue(null);
     }
 
     @Test(dataProvider="all", expectedExceptions=NullPointerException.class)
-    public void containsKeyNullShouldThrowNPE(Map<Integer,String> act, Map<Integer,String> exp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void containsKeyNullShouldThrowNPE(Map<Integer,String> act, Map<Integer,String> exp) {
         act.containsKey(null);
     }
 
     @Test(dataProvider="all", expectedExceptions=NullPointerException.class)
-    public void getNullShouldThrowNPE(Map<Integer,String> act, Map<Integer,String> exp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void getNullShouldThrowNPE(Map<Integer,String> act, Map<Integer,String> exp) {
         act.get(null);
     }
 
     @Test(dataProvider="all")
-    public void serialEquality(Map<Integer, String> act, Map<Integer, String> exp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void serialEquality(Map<Integer, String> act, Map<Integer, String> exp) {
         // assume that act.equals(exp) tested elsewhere
         Map<Integer, String> copy = serialClone(act);
         assertEquals(act, copy);

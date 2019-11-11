@@ -29,6 +29,7 @@
 
 import java.io.PrintStream;
 
+@Bean
 public class OversynchronizedTest extends Thread {
     private static TestObj testObj = new TestObj("This is a test.");
     private static int loopNum = 100;

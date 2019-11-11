@@ -30,13 +30,18 @@
  *
  */
 
+@Bean
 public class StripMinedLoopReorgOffsets {
 
     public static final int N = 400;
 
     public static long instanceCount=-4622920139809038929L;
 
-    public void mainTest(String[] strArr1) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void mainTest(String[] strArr1) {
 
         int i1=-211, i20=54720, i21=205, i22=2184, i23=58, i24=-50110, iArr3[]=new int[N];
 

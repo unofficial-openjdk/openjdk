@@ -63,9 +63,17 @@ abstract class AC implements One, Two {
 }
 
 class CC extends AC {
-    public void m(Object o) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void m(Object o) {
     }
-    public void m(String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void m(String s) {
     }
     public void m1() {
     }
@@ -76,6 +84,7 @@ class CC extends AC {
 
 /********** test program **********/
 
+@Bean
 public class VisibleMethods extends TestScaffold {
     ReferenceType targetClass;
     ThreadReference mainThread;
@@ -126,7 +135,11 @@ public class VisibleMethods extends TestScaffold {
         }
     }
 
-    private int countMatches(List<String> list1, String[] list2) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int countMatches(List<String> list1, String[] list2) {
         int count = 0;
         for (String s1 : list1) {
             for (String s2 : list2) {

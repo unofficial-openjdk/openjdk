@@ -56,6 +56,7 @@ import static org.testng.Assert.assertTrue;
  * @summary unit tests for java.lang.constant.CondyDescTest
  */
 @Test
+@Bean
 public class CondyDescTest extends SymbolicDescTest {
     private final static ConstantDesc[] EMPTY_ARGS = new ConstantDesc[0];
     private final static ClassDesc CD_ConstantBootstraps = ClassDesc.of("java.lang.invoke.ConstantBootstraps");

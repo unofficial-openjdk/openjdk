@@ -30,7 +30,11 @@ class Test {
         String y = "Test; 0; 0";
         String z = "Test; 0; 0";
         Object o = new Object() {
-            public boolean equals(Object other) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object other) {
                 String p = "-; Test; 0; 0";
                 String q = "-; Test; 0; 0";
                 String r = "-; Test; 0; 0";
@@ -42,7 +46,11 @@ class Test {
     String s = "Test; 0; 0";
 
     boolean b = new Object() {
-            public boolean equals(Object other) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object other) {
                 String p = "-; Test; 0; 0";
                 String q = "-; Test; 0; 0";
                 String r = "-; Test; 0; 0";

@@ -191,6 +191,7 @@ import sun.security.util.Debug;
  * @since 1.2
  */
 
+@Bean
 public class KeyStore {
 
     private static final Debug kdebug = Debug.getInstance("keystore");

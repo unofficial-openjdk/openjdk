@@ -43,6 +43,7 @@ import sun.hotspot.gc.GC;
  * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xbootclasspath/a:. TestUniverse
  */
 
+@Bean
 public class TestUniverse {
 
     private static void testClhsdbForUniverse(long lingeredAppPid, GC gc) throws Exception {

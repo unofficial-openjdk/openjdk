@@ -70,6 +70,9 @@ public class PermitOverflow {
             public Sem(int permits, boolean fair) {
                 super(permits, fair);
             }
+            @Bean
+@Bean
+@Bean
             public void reducePermits(int reduction) {
                 super.reducePermits(reduction);
             }

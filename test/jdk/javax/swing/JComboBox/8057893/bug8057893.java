@@ -56,7 +56,10 @@ public class bug8057893 {
             comboBox.addActionListener(new ActionListener() {
 
                 @Override
-                public void actionPerformed(ActionEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                     if ("comboBoxEdited".equals(e.getActionCommand())) {
                         isComboBoxEdited = true;
                     }

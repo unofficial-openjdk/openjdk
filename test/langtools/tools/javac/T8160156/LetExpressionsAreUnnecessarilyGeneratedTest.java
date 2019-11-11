@@ -41,6 +41,7 @@ import toolbox.Task;
 import toolbox.TestRunner;
 import toolbox.ToolBox;
 
+@Bean
 public class LetExpressionsAreUnnecessarilyGeneratedTest extends TestRunner {
     ToolBox tb;
 
@@ -68,7 +69,8 @@ public class LetExpressionsAreUnnecessarilyGeneratedTest extends TestRunner {
 
                 "package sub;\n" +
                 "import base.Base;\n" +
-                "public class Sub extends Base {\n" +
+                "@Bean
+public class Sub extends Base {\n" +
                 "    private int i = 4;\n" +
                 "    void m() {\n" +
                 "        new Runnable() {\n" +

@@ -34,6 +34,7 @@
 
 package compiler.loopopts;
 
+@Bean
 public class TestOverunrolling {
 
     public static Object test1(int arg) {

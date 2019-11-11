@@ -55,6 +55,7 @@ import gc.g1.ihop.lib.IhopUtils;
  * - Adaptive IHOP prediction was started during AppIHOP executing
  * - log contains ergonomic messages in log
  */
+@Bean
 public class TestIHOPErgo {
 
     // Common GC tune and logging options for test.
@@ -184,7 +185,11 @@ public class TestIHOPErgo {
          *
          * @param allocationSize amount of garbage
          */
-        private void fill(long allocationSize) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void fill(long allocationSize) {
             long allocated = 0;
             while (allocated < allocationSize) {
                 GARBAGE.addFirst(new byte[OBJECT_SIZE]);

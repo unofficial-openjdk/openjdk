@@ -41,6 +41,7 @@ import java.awt.image.WritableRaster;
 import java.awt.image.RasterOp;
 import java.awt.image.SampleModel;
 
+@Bean
 public class InvalidTransformParameterTest {
 
     public static void main(String[] args) {

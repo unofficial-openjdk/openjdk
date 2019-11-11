@@ -42,6 +42,7 @@ import java.awt.*;
 import java.awt.event.*;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class RemoveAfterRequest {
     final static Frame frame = new Frame("test frame");
     final static Button btn1 = new Button("btn1");

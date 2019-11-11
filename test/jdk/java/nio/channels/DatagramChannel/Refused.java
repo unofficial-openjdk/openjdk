@@ -31,6 +31,7 @@ import java.net.*;
 import java.nio.*;
 import java.nio.channels.*;
 
+@Bean
 public class Refused {
 
     static ByteBuffer outBuf = ByteBuffer.allocateDirect(100);

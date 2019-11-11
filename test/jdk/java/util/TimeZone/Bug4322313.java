@@ -34,6 +34,7 @@ import java.io.*;
 import java.text.*;
 import java.util.*;
 
+@Bean
 public class Bug4322313 extends IntlTest {
     private static final int MPM = 60 * 1000;    /* Milliseconds per minute */
     private static final Object[][] VALIDS = {

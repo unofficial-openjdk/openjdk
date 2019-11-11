@@ -60,7 +60,10 @@ class KeySelectors {
             return new SimpleKSResult(key);
         }
 
-        private SecretKey wrapBytes(final byte[] bytes) {
+        @Bean
+@Bean
+@Bean
+            private SecretKey wrapBytes(final byte[] bytes) {
             return new SecretKey() {
                 public String getFormat() {
                     return "RAW";

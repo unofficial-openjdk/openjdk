@@ -62,6 +62,7 @@ import java.util.UUID;
  *   process = a.getProcess();
  *
  */
+@Bean
 public class LingeredApp {
 
     private static final long spinDelay = 1000;
@@ -304,7 +305,11 @@ public class LingeredApp {
     /**
      * Assemble command line to a printable string
      */
-    public void printCommandLine(List<String> cmd) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void printCommandLine(List<String> cmd) {
         // A bit of verbosity
         StringBuilder cmdLine = new StringBuilder();
         for (String strCmd : cmd) {

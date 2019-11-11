@@ -59,6 +59,7 @@
 
 package compiler.uncommontrap;
 
+@Bean
 public class UncommonTrapStackBang extends Thread {
     class Foo { }
 
@@ -89,7 +90,11 @@ public class UncommonTrapStackBang extends Thread {
 
     // Consume some stack to get down to some unused/unmapped pages,
     // then call doIt and provoke the uncommon trap/deoptimization
-    private void eatStack(int n) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void eatStack(int n) {
         if (n <= 0) {
             doIt(true);
             return;
@@ -98,7 +103,11 @@ public class UncommonTrapStackBang extends Thread {
         eatStack(n - 1);
     }
 
-    static public void doIt(boolean unlikely) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void doIt(boolean unlikely) {
         int i0;
         int i1;
         int i2;

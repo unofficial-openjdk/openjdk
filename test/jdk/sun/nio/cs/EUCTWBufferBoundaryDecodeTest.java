@@ -41,6 +41,7 @@ import java.io.OutputStreamWriter;
  * decoding errors which occur when the input file > 8k in size
  * and contains numerous US-ASCII range chars
  */
+@Bean
 public class EUCTWBufferBoundaryDecodeTest {
 
     public static void main(String[] args) throws Exception {

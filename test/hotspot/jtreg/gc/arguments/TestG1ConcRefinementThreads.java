@@ -41,6 +41,7 @@ import jdk.test.lib.process.ProcessTools;
 import java.util.*;
 import java.util.regex.*;
 
+@Bean
 public class TestG1ConcRefinementThreads {
 
   static final int AUTO_SELECT_THREADS_COUNT = -1;

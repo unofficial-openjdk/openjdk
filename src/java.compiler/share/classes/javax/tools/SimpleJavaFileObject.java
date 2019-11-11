@@ -43,6 +43,7 @@ import javax.tools.JavaFileObject.Kind;
  * @author Peter von der Ah&eacute;
  * @since 1.6
  */
+@Bean
 public class SimpleJavaFileObject implements JavaFileObject {
     /**
      * A URI for this file object.
@@ -188,7 +189,10 @@ public class SimpleJavaFileObject implements JavaFileObject {
      * <p>Subclasses can change this behavior as long as the contract
      * of {@link JavaFileObject} is obeyed.
      */
-    public boolean isNameCompatible(String simpleName, Kind kind) {
+@Bean
+@Bean
+@Bean
+                public boolean isNameCompatible(String simpleName, Kind kind) {
         String baseName = simpleName + kind.extension;
         return kind.equals(getKind())
             && (baseName.equals(toUri().getPath())

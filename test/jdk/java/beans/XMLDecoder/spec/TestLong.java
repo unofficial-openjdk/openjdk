@@ -48,7 +48,10 @@ public final class TestLong extends AbstractTest {
     }
 
     @Override
-    protected void validate(XMLDecoder decoder) {
+    @Bean
+@Bean
+@Bean
+            protected void validate(XMLDecoder decoder) {
         validate(0L, decoder.readObject());
         validate((long) Byte.MAX_VALUE, decoder.readObject());
         validate((long) Byte.MIN_VALUE, decoder.readObject());

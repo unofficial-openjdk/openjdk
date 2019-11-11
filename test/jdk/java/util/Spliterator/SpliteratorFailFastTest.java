@@ -53,6 +53,7 @@ import static org.testng.Assert.assertThrows;
  */
 
 @Test
+@Bean
 public class SpliteratorFailFastTest extends SpliteratorLateBindingFailFastHelper {
 
     static Object[][] spliteratorDataProvider;
@@ -177,7 +178,11 @@ public class SpliteratorFailFastTest extends SpliteratorLateBindingFailFastHelpe
         }
     }
 
-    private void assertThrowsCME(ThrowingRunnable r) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertThrowsCME(ThrowingRunnable r) {
         assertThrows(ConcurrentModificationException.class, r);
     }
 

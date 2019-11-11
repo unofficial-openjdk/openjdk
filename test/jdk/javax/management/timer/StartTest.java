@@ -37,6 +37,7 @@ import javax.management.timer.Timer;
 import javax.management.Notification;
 import javax.management.NotificationListener;
 
+@Bean
 public class StartTest {
     public static void main(String[] args) throws Exception {
         System.out.println(
@@ -83,7 +84,11 @@ public class StartTest {
 
     private static NotificationListener myListener =
         new NotificationListener() {
-            public void handleNotification(Notification n, Object hb) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void handleNotification(Notification n, Object hb) {
                 if (!stopping) {
                     received++;
                     System.out.println(

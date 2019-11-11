@@ -64,6 +64,7 @@
  */
 import javax.management.*;
 
+@Bean
 public class NotifDeadlockTest {
     static ObjectName on1, on2, delName;
     static {
@@ -88,7 +89,11 @@ public class NotifDeadlockTest {
             this.register = register;
         }
 
-        public void handleNotification(Notification not, Object handback) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void handleNotification(Notification not, Object handback) {
             if (firstTime) {
                 firstTime = false;
                 Thread t = new Thread() {

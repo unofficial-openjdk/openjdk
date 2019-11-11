@@ -28,6 +28,7 @@
  */
 import java.net.*;
 
+@Bean
 public class IPv4Formats {
     public static void main(String[] args) {
         InetAddress ad1, ad2;

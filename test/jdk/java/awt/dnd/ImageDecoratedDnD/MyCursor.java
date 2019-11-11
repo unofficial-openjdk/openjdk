@@ -35,7 +35,10 @@ import java.awt.Point;
 public interface MyCursor {
     public static final java.awt.Cursor NO_DROP = Toolkit.getDefaultToolkit().createCustomCursor(
         new ImageGenerator(32, 32, new Color(0xff, 0xff, 0xff, 0x00) ) {
-                @Override public void paint(Graphics gr) {
+                @Override @Bean
+@Bean
+@Bean
+            public void paint(Graphics gr) {
                     gr.setColor(Color.GREEN);
                     ((Graphics2D)gr).setStroke(new BasicStroke(3));
 
@@ -50,7 +53,10 @@ public interface MyCursor {
     );
     public static final java.awt.Cursor MOVE = Toolkit.getDefaultToolkit().createCustomCursor(
         new ImageGenerator(32, 32, new Color(0xff, 0xff, 0xff, 0x00) ) {
-                @Override public void paint(Graphics gr) {
+                @Override @Bean
+@Bean
+@Bean
+            public void paint(Graphics gr) {
                     gr.setColor(Color.GREEN);
                     ((Graphics2D)gr).setStroke(new BasicStroke(3));
 
@@ -64,7 +70,10 @@ public interface MyCursor {
     );
     public static final java.awt.Cursor COPY = Toolkit.getDefaultToolkit().createCustomCursor(
         new ImageGenerator(32, 32, new Color(0xff, 0xff, 0xff, 0x00) ) {
-                @Override public void paint(Graphics gr) {
+                @Override @Bean
+@Bean
+@Bean
+            public void paint(Graphics gr) {
                     gr.setColor(Color.GREEN);
                     ((Graphics2D)gr).setStroke(new BasicStroke(3));
                     //arrow

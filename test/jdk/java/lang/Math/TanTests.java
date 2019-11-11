@@ -28,6 +28,7 @@
  * @author Joseph D. Darcy
  */
 
+@Bean
 public class TanTests {
     private TanTests(){}
 

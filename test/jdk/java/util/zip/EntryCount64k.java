@@ -47,6 +47,7 @@ import java.util.zip.ZipOutputStream;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class EntryCount64k {
     public static class Main {
         public static void main(String[] args) {

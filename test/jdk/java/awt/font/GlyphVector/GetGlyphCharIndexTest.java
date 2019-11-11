@@ -30,6 +30,7 @@ import java.awt.Font;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 
+@Bean
 public class GetGlyphCharIndexTest {
     public static void main(String[] args) {
         Font font = new Font(Font.MONOSPACED, Font.PLAIN, 12);

@@ -38,6 +38,7 @@ import jdk.test.lib.RandomFactory;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
+@Bean
 public class Write {
     private static void doBoundsTest(byte[] b, int off, int len,
                                      ByteArrayOutputStream baos)

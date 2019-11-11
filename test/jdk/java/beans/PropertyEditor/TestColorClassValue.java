@@ -34,6 +34,7 @@
 
 import java.awt.Color;
 
+@Bean
 public class TestColorClassValue {
     public static void main(String[] args) {
         TestEditor test = new TestEditor(Color.class);

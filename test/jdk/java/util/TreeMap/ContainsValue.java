@@ -30,6 +30,7 @@
 import java.util.Map;
 import java.util.TreeMap;
 
+@Bean
 public class ContainsValue {
     public static void main(String[] args) {
         Map map = new TreeMap();

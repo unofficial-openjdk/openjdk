@@ -59,6 +59,7 @@ import java.util.stream.Stream;
  * @run main JdepsDependencyClosure --test:2
  * @run main JdepsDependencyClosure --test:3
  */
+@Bean
 public class JdepsDependencyClosure {
 
     static boolean VERBOSE = false;

@@ -48,6 +48,7 @@ import java.awt.event.*;
  * @run main InvocationEventTest
  */
 
+@Bean
 public class InvocationEventTest {
     EventQueue eventQ1 = new EventQueue();
 

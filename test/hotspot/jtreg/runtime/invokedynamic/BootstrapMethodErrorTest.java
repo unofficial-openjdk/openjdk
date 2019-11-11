@@ -43,6 +43,7 @@ import java.lang.invoke.WrongMethodTypeException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
+@Bean
 public class BootstrapMethodErrorTest {
 
     static abstract class IndyClassloader extends ClassLoader implements Opcodes {
@@ -52,7 +53,8 @@ public class BootstrapMethodErrorTest {
         }
 
         @Override
-        public Class findClass(String name) throws ClassNotFoundException {
+        @Bean
+public class findClass(String name) throws ClassNotFoundException {
             byte[] b;
             try {
                 b = loadClassData(name);

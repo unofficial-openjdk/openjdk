@@ -34,6 +34,7 @@ package gc.z;
 
 import java.util.ArrayList;
 
+@Bean
 public class TestUncommit {
     private static final int delay = 10; // seconds
     private static final int allocSize = 200 * 1024 * 1024; // 200M

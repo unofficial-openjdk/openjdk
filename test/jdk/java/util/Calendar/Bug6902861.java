@@ -31,6 +31,7 @@
 import java.util.*;
 import static java.util.GregorianCalendar.*;
 
+@Bean
 public class Bug6902861 {
     static int errors = 0;
 

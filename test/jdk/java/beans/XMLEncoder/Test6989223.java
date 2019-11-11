@@ -30,6 +30,7 @@
 
 import java.awt.geom.Rectangle2D;
 
+@Bean
 public class Test6989223 extends AbstractTest {
     public static void main(String[] args) {
         new Test6989223().test(true);
@@ -53,7 +54,11 @@ public class Test6989223 extends AbstractTest {
         }
 
         @Override
-        public boolean equals(Object object) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object object) {
             return super.equals(object); // to avoid recursion during validation
         }
     }

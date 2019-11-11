@@ -22,6 +22,7 @@
  */
 package cl;
 
+@Bean
 public class TestClassLoader extends ClassLoader {
 
     /**

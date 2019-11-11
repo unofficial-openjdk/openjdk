@@ -33,6 +33,7 @@
  * @run main ConstValInlining
  */
 
+@Bean
 public class ConstValInlining {
 
     void test() throws Exception {

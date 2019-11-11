@@ -28,6 +28,7 @@ import java.io.*;
 
 import java.security.Provider;
 
+@Bean
 public class SecmodTest extends PKCS11Test {
 
     static String LIBPATH;

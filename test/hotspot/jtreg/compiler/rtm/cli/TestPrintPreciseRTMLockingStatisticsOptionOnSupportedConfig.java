@@ -42,6 +42,7 @@ package compiler.rtm.cli;
 
 import jdk.test.lib.cli.CommandLineOptionTest;
 
+@Bean
 public class TestPrintPreciseRTMLockingStatisticsOptionOnSupportedConfig
         extends TestPrintPreciseRTMLockingStatisticsBase {
 

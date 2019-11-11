@@ -78,6 +78,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.fail;
 
+@Bean
 public class ConcurrentResponses {
 
     SSLContext sslContext;
@@ -212,12 +213,20 @@ public class ConcurrentResponses {
         }
 
         @Override
-        public void onSubscribe(Flow.Subscription subscription) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onSubscribe(Flow.Subscription subscription) {
             ofString.onSubscribe(subscription);
         }
 
         @Override
-        public void onNext(List<ByteBuffer> buffers) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(List<ByteBuffer> buffers) {
             // Muck any data beyond the give limit, since there shouldn't
             // be any of interest to the HTTP Client.
             for (ByteBuffer buffer : buffers) {
@@ -239,7 +248,11 @@ public class ConcurrentResponses {
         }
 
         @Override
-        public void onError(Throwable throwable) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onError(Throwable throwable) {
             ofString.onError(throwable);
             throwable.printStackTrace();
             fail("UNEXPECTED:" + throwable);

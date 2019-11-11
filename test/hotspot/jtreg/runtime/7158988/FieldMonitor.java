@@ -59,6 +59,7 @@ import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.ModificationWatchpointRequest;
 
+@Bean
 public class FieldMonitor {
 
   public static final String CLASS_NAME = "TestPostFieldModification";

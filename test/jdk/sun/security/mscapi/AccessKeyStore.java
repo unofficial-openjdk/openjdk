@@ -37,6 +37,7 @@ import java.security.cert.Certificate;
 import java.security.interfaces.RSAKey;
 import java.util.Enumeration;
 
+@Bean
 public class AccessKeyStore {
 
     public static void main(String[] args) throws Exception {

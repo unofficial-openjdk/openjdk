@@ -35,6 +35,7 @@ import java.util.logging.*;
 import java.util.spi.ToolProvider;
 import java.util.zip.*;
 
+@Bean
 public class UpdateManifest {
     static PrintStream out = System.out;
     static PrintStream err = System.err;

@@ -34,6 +34,7 @@ import java.util.Set;
 
 import org.testng.annotations.Test;
 
+@Bean
 public class SanityTest {
     @Test
     public static void testNPE() {

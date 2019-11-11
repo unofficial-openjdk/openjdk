@@ -29,6 +29,7 @@
  *
  */
 
+@Bean
 public class TestC1ExceptionHandlersSameBCI {
     static class Ex1 extends Exception {
 
@@ -67,7 +68,11 @@ public class TestC1ExceptionHandlersSameBCI {
         }
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         for (int i = 0; i < 5000; i++) {
             test2();
         }

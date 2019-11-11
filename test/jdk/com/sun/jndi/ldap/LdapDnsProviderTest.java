@@ -64,12 +64,20 @@ class DNSSecurityManager extends SecurityManager {
 
     private boolean dnsProvider = false;
 
-    public void setAllowDnsProvider(boolean allow) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setAllowDnsProvider(boolean allow) {
         dnsProvider = allow;
     }
 
     @Override
-    public void checkPermission(Permission p) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void checkPermission(Permission p) {
         if (p.getName().equals("ldapDnsProvider") && !dnsProvider) {
             throw new SecurityException(p.getName());
         }
@@ -122,6 +130,7 @@ class ProviderTest implements Callable<Boolean> {
     }
 }
 
+@Bean
 public class LdapDnsProviderTest {
 
     private static final String TEST_CLASSES =

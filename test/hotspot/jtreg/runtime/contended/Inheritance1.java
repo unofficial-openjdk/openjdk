@@ -47,6 +47,7 @@ import jdk.internal.vm.annotation.Contended;
  * @modules java.base/jdk.internal.vm.annotation
  * @run main/othervm -XX:-RestrictContended Inheritance1
  */
+@Bean
 public class Inheritance1 {
 
     private static final Unsafe U = Unsafe.getUnsafe();

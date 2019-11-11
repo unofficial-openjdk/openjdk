@@ -31,6 +31,7 @@
 import java.net.*;
 import java.io.*;
 
+@Bean
 public class CustomSocketImplFactory implements SocketImplFactory {
 
     @Override

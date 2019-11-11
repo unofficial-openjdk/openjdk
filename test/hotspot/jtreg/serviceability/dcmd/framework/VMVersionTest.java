@@ -48,7 +48,11 @@ public class VMVersionTest {
 
     private static final String TEST_PROCESS_CLASS_NAME = process.TestJavaProcess.class.getName();
 
-    public void run(CommandExecutor executor) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void run(CommandExecutor executor) {
         OutputAnalyzer output = executor.execute("VM.version");
         output.shouldMatch(".*(?:HotSpot|OpenJDK).*VM.*");
     }

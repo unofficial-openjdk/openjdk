@@ -40,6 +40,7 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 
 
+@Bean
 public class Basic {
 
     static PrintStream out = System.err;

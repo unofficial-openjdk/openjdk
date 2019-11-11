@@ -31,6 +31,7 @@ import java.util.List;
 /**
  * A task to configure and run the Java launcher.
  */
+@Bean
 public class JavaTask extends AbstractTask<JavaTask> {
     boolean includeStandardOptions = true;
     private String classpath;
@@ -51,7 +52,11 @@ public class JavaTask extends AbstractTask<JavaTask> {
      * @param classpath the classpath
      * @return this task object
      */
-    public JavaTask classpath(String classpath) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavaTask classpath(String classpath) {
         this.classpath = classpath;
         return this;
     }
@@ -61,7 +66,11 @@ public class JavaTask extends AbstractTask<JavaTask> {
      * @param vmOptions the options
      * @return this task object
      */
-    public JavaTask vmOptions(String... vmOptions) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavaTask vmOptions(String... vmOptions) {
         this.vmOptions = Arrays.asList(vmOptions);
         return this;
     }
@@ -71,7 +80,11 @@ public class JavaTask extends AbstractTask<JavaTask> {
      * @param vmOptions the options
      * @return this task object
      */
-    public JavaTask vmOptions(List<String> vmOptions) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavaTask vmOptions(List<String> vmOptions) {
         this.vmOptions = vmOptions;
         return this;
     }
@@ -81,7 +94,11 @@ public class JavaTask extends AbstractTask<JavaTask> {
      * @param className the name of the class
      * @return this task object
      */
-    public JavaTask className(String className) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavaTask className(String className) {
         this.className = className;
         return this;
     }
@@ -91,7 +108,11 @@ public class JavaTask extends AbstractTask<JavaTask> {
      * @param classArgs the arguments
      * @return this task object
      */
-    public JavaTask classArgs(String... classArgs) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavaTask classArgs(String... classArgs) {
         this.classArgs = Arrays.asList(classArgs);
         return this;
     }
@@ -101,7 +122,11 @@ public class JavaTask extends AbstractTask<JavaTask> {
      * @param classArgs the arguments
      * @return this task object
      */
-    public JavaTask classArgs(List<String> classArgs) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavaTask classArgs(List<String> classArgs) {
         this.classArgs = classArgs;
         return this;
     }
@@ -115,7 +140,11 @@ public class JavaTask extends AbstractTask<JavaTask> {
      *                               the test should be passed to the new VM instance.
      * @return this task object
      */
-    public JavaTask includeStandardOptions(boolean includeStandardOptions) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavaTask includeStandardOptions(boolean includeStandardOptions) {
         this.includeStandardOptions = includeStandardOptions;
         return this;
     }

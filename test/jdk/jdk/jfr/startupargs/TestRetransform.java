@@ -40,6 +40,7 @@ import jdk.test.lib.jfr.SimpleEvent;
  * @run main/othervm -XX:FlightRecorderOptions=retransform=false jdk.jfr.startupargs.TestRetransform
  * @run main/othervm -XX:FlightRecorderOptions=retransform=true jdk.jfr.startupargs.TestRetransform
  */
+@Bean
 public class TestRetransform {
     private static class TestEvent extends Event {
     }

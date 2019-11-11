@@ -40,6 +40,7 @@ import compiler.compilercontrol.share.SingleCommand;
 import compiler.compilercontrol.share.scenario.Command;
 import compiler.compilercontrol.share.scenario.Scenario;
 
+@Bean
 public class AddCompileOnlyTest {
     public static void main(String[] args) {
         new SingleCommand(Command.COMPILEONLY, Scenario.Type.JCMD)

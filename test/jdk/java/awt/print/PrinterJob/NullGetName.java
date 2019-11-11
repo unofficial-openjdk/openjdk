@@ -55,7 +55,10 @@ class ImagePrintService implements PrintService {
         return null;
     }
 
-    public boolean isAttributeCategorySupported(Class category) {
+    @Bean
+@Bean
+@Bean
+            public boolean isAttributeCategorySupported(Class category) {
         // TODO Auto-generated method stub
         return false;
     }
@@ -71,7 +74,10 @@ class ImagePrintService implements PrintService {
     }
 
 
-    public boolean isDocFlavorSupported(DocFlavor flavor) {
+    @Bean
+@Bean
+@Bean
+            public boolean isDocFlavorSupported(DocFlavor flavor) {
         if(DocFlavor.SERVICE_FORMATTED.PAGEABLE.equals(flavor))
             return true;
         if(DocFlavor.SERVICE_FORMATTED.PRINTABLE.equals(flavor))
@@ -107,7 +113,10 @@ class ImagePrintService implements PrintService {
 
     }
 
-    public Object getDefaultAttributeValue(Class category) {
+    @Bean
+@Bean
+@Bean
+            public Object getDefaultAttributeValue(Class category) {
         // TODO Auto-generated method stub
         return null;
     }

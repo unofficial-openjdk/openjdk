@@ -31,6 +31,7 @@ import java.io.File;
 
 import javax.imageio.ImageIO;
 
+@Bean
 public class ImageIOWriteNull {
 
     public static void main(String[] args) {

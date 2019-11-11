@@ -30,6 +30,7 @@
 import java.util.Formatter;
 import java.util.Locale;
 
+@Bean
 public class NullArg {
 
     public static void main(String [] args) {

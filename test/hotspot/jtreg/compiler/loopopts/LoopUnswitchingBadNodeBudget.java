@@ -36,6 +36,7 @@
  *
  */
 
+@Bean
 public class LoopUnswitchingBadNodeBudget {
 
     public static void main(String[] args) {

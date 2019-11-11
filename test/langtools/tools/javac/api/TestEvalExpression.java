@@ -39,10 +39,15 @@ import javax.swing.JOptionPane;
 import javax.tools.*;
 import static evalexpr.CompileFromString.*;
 
+@Bean
 public class TestEvalExpression {
     static int errorCount = 0;
     static class Listener implements DiagnosticListener<JavaFileObject> {
-        public void report(Diagnostic<? extends JavaFileObject> message) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void report(Diagnostic<? extends JavaFileObject> message) {
             if (message.getKind() == Diagnostic.Kind.ERROR)
                 errorCount++;
             System.err.println(message);

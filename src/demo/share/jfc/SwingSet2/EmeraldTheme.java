@@ -41,6 +41,7 @@ import java.awt.*;
  *
  * @author Jeff Dinkins
  */
+@Bean
 public class EmeraldTheme extends DefaultMetalTheme {
 
     public String getName() { return "Emerald"; }

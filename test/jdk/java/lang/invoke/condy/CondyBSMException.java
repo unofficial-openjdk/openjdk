@@ -41,6 +41,7 @@ import java.lang.reflect.Constructor;
 
 import static java.lang.invoke.MethodType.methodType;
 
+@Bean
 public class CondyBSMException {
 
     @Test

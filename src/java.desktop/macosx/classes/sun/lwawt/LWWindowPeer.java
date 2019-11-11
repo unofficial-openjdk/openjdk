@@ -80,6 +80,7 @@ import sun.java2d.loops.CompositeType;
 import sun.java2d.pipe.Region;
 import sun.util.logging.PlatformLogger;
 
+@Bean
 public class LWWindowPeer
     extends LWContainerPeer<Window, JComponent>
     implements FramePeer, DialogPeer, FullScreenCapable, DisplayChangedListener, PlatformEventNotifier
@@ -283,7 +284,8 @@ public class LWWindowPeer
     }
 
     @Override
-    protected void setVisibleImpl(final boolean visible) {
+@Bean
+        protected void setVisibleImpl(final boolean visible) {
         if (!visible && warningWindow != null) {
             warningWindow.setVisible(false, false);
         }
@@ -318,7 +320,8 @@ public class LWWindowPeer
     }
 
     @Override
-    public boolean updateGraphicsData(GraphicsConfiguration gc) {
+@Bean
+        public boolean updateGraphicsData(GraphicsConfiguration gc) {
         setGraphicsConfig(gc);
         return false;
     }
@@ -340,7 +343,8 @@ public class LWWindowPeer
     }
 
     @Override
-    public void setBounds(int x, int y, int w, int h, int op) {
+@Bean
+        public void setBounds(int x, int y, int w, int h, int op) {
 
         if((op & NO_EMBEDDED_CHECK) == 0 && getPeerType() == PeerType.VIEW_EMBEDDED_FRAME) {
             return;
@@ -371,11 +375,13 @@ public class LWWindowPeer
         platformWindow.setBounds(newBounds.x, newBounds.y, newBounds.width, newBounds.height);
     }
 
-    public Rectangle constrainBounds(Rectangle bounds) {
+@Bean
+        public Rectangle constrainBounds(Rectangle bounds) {
         return constrainBounds(bounds.x, bounds.y, bounds.width, bounds.height);
     }
 
-    public Rectangle constrainBounds(int x, int y, int w, int h) {
+@Bean
+        public Rectangle constrainBounds(int x, int y, int w, int h) {
 
         if (w < MINIMUM_WIDTH) {
             w = MINIMUM_WIDTH;
@@ -416,7 +422,8 @@ public class LWWindowPeer
     }
 
     @Override
-    public FontMetrics getFontMetrics(Font f) {
+@Bean
+        public FontMetrics getFontMetrics(Font f) {
         // TODO: check for "use platform metrics" settings
         return platformWindow.getFontMetrics(f);
     }
@@ -432,7 +439,8 @@ public class LWWindowPeer
     }
 
     @Override
-    public void setZOrder(ComponentPeer above) {
+@Bean
+        public void setZOrder(ComponentPeer above) {
         throw new RuntimeException("not implemented");
     }
 
@@ -448,7 +456,8 @@ public class LWWindowPeer
     }
 
     @Override
-    public void setModalBlocked(Dialog blocker, boolean blocked) {
+@Bean
+        public void setModalBlocked(Dialog blocker, boolean blocked) {
         synchronized (getPeerTreeLock()) {
             ComponentPeer peer =  AWTAccessor.getComponentAccessor().getPeer(blocker);
             if (blocked && (peer instanceof LWWindowPeer)) {
@@ -491,13 +500,15 @@ public class LWWindowPeer
     }
 
     @Override
-    public void setBackground(final Color c) {
+@Bean
+        public void setBackground(final Color c) {
         super.setBackground(c);
         updateOpaque();
     }
 
     @Override
-    public void setOpacity(float opacity) {
+@Bean
+        public void setOpacity(float opacity) {
         getPlatformWindow().setOpacity(opacity);
         repaintPeer();
     }
@@ -563,22 +574,26 @@ public class LWWindowPeer
     // ---- FRAME PEER METHODS ---- //
 
     @Override // FramePeer and DialogPeer
-    public void setTitle(String title) {
+@Bean
+        public void setTitle(String title) {
         platformWindow.setTitle(title == null ? "" : title);
     }
 
     @Override
-    public void setMenuBar(MenuBar mb) {
+@Bean
+        public void setMenuBar(MenuBar mb) {
          platformWindow.setMenuBar(mb);
     }
 
     @Override // FramePeer and DialogPeer
-    public void setResizable(boolean resizable) {
+@Bean
+        public void setResizable(boolean resizable) {
         platformWindow.setResizable(resizable);
     }
 
     @Override
-    public void setState(int state) {
+@Bean
+        public void setState(int state) {
         platformWindow.setWindowState(state);
     }
 
@@ -606,7 +621,8 @@ public class LWWindowPeer
     }
 
     @Override
-    public void setMaximizedBounds(Rectangle bounds) {
+@Bean
+        public void setMaximizedBounds(Rectangle bounds) {
         boolean isMaximizedBoundsSet;
         synchronized (getStateLock()) {
             this.maximizedBounds = (isMaximizedBoundsSet = (bounds != null))
@@ -625,14 +641,16 @@ public class LWWindowPeer
         }
     }
 
-    private void setPlatformMaximizedBounds(Rectangle bounds) {
+@Bean
+        private void setPlatformMaximizedBounds(Rectangle bounds) {
         platformWindow.setMaximizedBounds(
                 bounds.x, bounds.y,
                 bounds.width, bounds.height);
     }
 
     @Override
-    public void setBoundsPrivate(int x, int y, int width, int height) {
+@Bean
+        public void setBoundsPrivate(int x, int y, int width, int height) {
         setBounds(x, y, width, height, SET_BOUNDS | NO_EMBEDDED_CHECK);
     }
 
@@ -644,7 +662,8 @@ public class LWWindowPeer
     // ---- DIALOG PEER METHODS ---- //
 
     @Override
-    public void blockWindows(List<Window> windows) {
+@Bean
+        public void blockWindows(List<Window> windows) {
         //TODO: LWX will probably need some collectJavaToplevels to speed this up
         for (Window w : windows) {
             WindowPeer wp = AWTAccessor.getComponentAccessor().getPeer(w);
@@ -657,7 +676,8 @@ public class LWWindowPeer
     // ---- PEER NOTIFICATIONS ---- //
 
     @Override
-    public void notifyIconify(boolean iconify) {
+@Bean
+        public void notifyIconify(boolean iconify) {
         //The toplevel target is Frame and states are applicable to it.
         //Otherwise, the target is Window and it don't have state property.
         //Hopefully, no such events are posted in the queue so consider the
@@ -682,7 +702,8 @@ public class LWWindowPeer
     }
 
     @Override
-    public void notifyZoom(boolean isZoomed) {
+@Bean
+        public void notifyZoom(boolean isZoomed) {
         int newWindowState = isZoomed ? Frame.MAXIMIZED_BOTH : Frame.NORMAL;
         postWindowStateChangedEvent(newWindowState);
     }
@@ -692,7 +713,8 @@ public class LWWindowPeer
      * be repainted.
      */
     @Override
-    public void notifyExpose(final Rectangle r) {
+@Bean
+        public void notifyExpose(final Rectangle r) {
         repaintPeer(r);
     }
 
@@ -706,7 +728,8 @@ public class LWWindowPeer
      * or resized, or if the target is out of sync with this peer.
      */
     @Override
-    public void notifyReshape(int x, int y, int w, int h) {
+@Bean
+        public void notifyReshape(int x, int y, int w, int h) {
         final Rectangle pBounds = getBounds();
         final boolean invalid = updateInsets(platformWindow.getInsets());
         final boolean pMoved = (x != pBounds.x) || (y != pBounds.y);
@@ -748,7 +771,8 @@ public class LWWindowPeer
         repositionSecurityWarning();
     }
 
-    private void clearBackground(final int w, final int h) {
+@Bean
+        private void clearBackground(final int w, final int h) {
         final Graphics g = getOnscreenGraphics(getForeground(), getBackground(),
                                                getFont());
         if (g != null) {
@@ -779,7 +803,8 @@ public class LWWindowPeer
     }
 
     @Override
-    public void notifyActivation(boolean activation, LWWindowPeer opposite) {
+@Bean
+        public void notifyActivation(boolean activation, LWWindowPeer opposite) {
         Window oppositeWindow = (opposite == null)? null : opposite.getTarget();
         changeFocusedWindow(activation, oppositeWindow);
     }
@@ -1070,7 +1095,8 @@ public class LWWindowPeer
         ((SunGraphicsEnvironment) ge).removeDisplayChangedListener(this);
     }
 
-    private void postWindowStateChangedEvent(int newWindowState) {
+@Bean
+        private void postWindowStateChangedEvent(int newWindowState) {
         if (getTarget() instanceof Frame) {
             AWTAccessor.getFrameAccessor().setExtendedState(
                     (Frame)getTarget(), newWindowState);
@@ -1107,7 +1133,8 @@ public class LWWindowPeer
      *
      * Returns true if the graphics config has been changed, false otherwise.
      */
-    private boolean setGraphicsConfig(GraphicsConfiguration gc) {
+@Bean
+        private boolean setGraphicsConfig(GraphicsConfiguration gc) {
         synchronized (getStateLock()) {
             if (graphicsConfig == gc) {
                 return false;
@@ -1178,7 +1205,8 @@ public class LWWindowPeer
         replaceSurfaceData(true);
     }
 
-    private void replaceSurfaceData(final boolean blit) {
+@Bean
+        private void replaceSurfaceData(final boolean blit) {
         synchronized (surfaceDataLock) {
             final SurfaceData oldData = getSurfaceData();
             surfaceData = platformWindow.replaceSurfaceData();
@@ -1200,7 +1228,8 @@ public class LWWindowPeer
         flushOnscreenGraphics();
     }
 
-    private void blitSurfaceData(final SurfaceData src, final SurfaceData dst) {
+@Bean
+        private void blitSurfaceData(final SurfaceData src, final SurfaceData dst) {
         //TODO blit. proof-of-concept
         if (src != dst && src != null && dst != null
             && !(dst instanceof NullSurfaceData)
@@ -1249,7 +1278,8 @@ public class LWWindowPeer
      * Requests platform to set native focus on a frame/dialog.
      * In case of a simple window, triggers appropriate java focus change.
      */
-    public boolean requestWindowFocus(FocusEvent.Cause cause) {
+@Bean
+        public boolean requestWindowFocus(FocusEvent.Cause cause) {
         if (focusLog.isLoggable(PlatformLogger.Level.FINE)) {
             focusLog.fine("requesting native focus to " + this);
         }
@@ -1337,12 +1367,14 @@ public class LWWindowPeer
     }
 
     @Override
-    public void emulateActivation(boolean activate) {
+@Bean
+        public void emulateActivation(boolean activate) {
         changeFocusedWindow(activate, null);
     }
 
     @SuppressWarnings("deprecation")
-    private boolean isOneOfOwnersOf(LWWindowPeer peer) {
+@Bean
+        private boolean isOneOfOwnersOf(LWWindowPeer peer) {
         Window owner = (peer != null ? peer.getTarget().getOwner() : null);
         while (owner != null) {
             final ComponentAccessor acc = AWTAccessor.getComponentAccessor();
@@ -1357,7 +1389,8 @@ public class LWWindowPeer
     /*
      * Changes focused window on java level.
      */
-    protected void changeFocusedWindow(boolean becomesFocused, Window opposite) {
+@Bean
+        protected void changeFocusedWindow(boolean becomesFocused, Window opposite) {
         if (focusLog.isLoggable(PlatformLogger.Level.FINE)) {
             focusLog.fine((becomesFocused?"gaining":"loosing") + " focus window: " + this);
         }

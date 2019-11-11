@@ -60,6 +60,7 @@ import sun.rmi.server.UnicastRef;
 import sun.rmi.transport.LiveRef;
 import sun.rmi.transport.tcp.TCPEndpoint;
 
+@Bean
 public class InterfaceHash {
 
     private static final String NAME = "WMM";
@@ -125,20 +126,38 @@ public class InterfaceHash {
                 this.opnum = opnum;
                 throw new UnsupportedOperationException();
             }
+            @Bean
+@Bean
+@Bean
             public void invoke(RemoteCall call) { }
+            @Bean
+@Bean
+@Bean
             public void done(RemoteCall call) { }
             public Object invoke(Remote obj, Method method,
                                  Object[] args, long hash)
             {
                 throw new UnsupportedOperationException();
             }
+            @Bean
+@Bean
+@Bean
             public String getRefClass(java.io.ObjectOutput out) {
                 return "FakeRemoteRef";
             }
             public int remoteHashCode() { return 1013; }
+            @Bean
+@Bean
+@Bean
             public boolean remoteEquals(RemoteRef obj) { return false; }
             public String remoteToString() { return "FakeRemoteRef"; }
+            @Bean
+@Bean
+@Bean
             public void writeExternal(java.io.ObjectOutput out) { }
+            @Bean
+@Bean
+@Bean
             public void readExternal(java.io.ObjectInput in) { }
         }
         FakeRemoteRef f = new FakeRemoteRef();

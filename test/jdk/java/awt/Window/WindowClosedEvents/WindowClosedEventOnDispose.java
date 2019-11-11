@@ -190,7 +190,10 @@ class Listener extends WindowAdapter {
 
     private volatile int count = 0;
 
-    public void windowClosed(WindowEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void windowClosed(WindowEvent e) {
         count++;
     }
 
@@ -198,7 +201,10 @@ class Listener extends WindowAdapter {
         return count;
     }
 
-    public void setCount(int count) {
+    @Bean
+@Bean
+@Bean
+            public void setCount(int count) {
         this.count = count;
     }
 }

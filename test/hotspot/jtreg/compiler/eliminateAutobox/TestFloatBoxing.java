@@ -42,6 +42,7 @@
 
 package compiler.eliminateAutobox;
 
+@Bean
 public class TestFloatBoxing {
 
   static final Float ibc = new Float(1.f);

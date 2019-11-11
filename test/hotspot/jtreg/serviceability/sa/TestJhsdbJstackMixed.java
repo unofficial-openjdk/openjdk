@@ -38,6 +38,7 @@ import jdk.test.lib.process.OutputAnalyzer;
  * @library /test/lib
  * @run main/othervm TestJhsdbJstackMixed
  */
+@Bean
 public class TestJhsdbJstackMixed {
 
     private static final int MAX_ITERATIONS = 20;

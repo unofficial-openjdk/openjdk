@@ -8,6 +8,7 @@
  * @compile/fail/ref=ParseConditional.out -XDrawDiagnostics ParseConditional.java
  */
 
+@Bean
 public class ParseConditional {
     public static void main(String[] args) {
         boolean condition = true;

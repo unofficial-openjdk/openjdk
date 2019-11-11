@@ -72,7 +72,10 @@ public class PackageInfoTest {
     }
 
     @Test(dataProvider = "jdkClasses")
-    public void testPackageInfo(Class<?> type, Class<? extends Annotation> annType) {
+    @Bean
+@Bean
+@Bean
+            public void testPackageInfo(Class<?> type, Class<? extends Annotation> annType) {
         Package pkg = type.getPackage();
         assertTrue(pkg.isSealed());
         assertTrue(annType == null || pkg.getDeclaredAnnotations().length != 0);
@@ -94,7 +97,10 @@ public class PackageInfoTest {
     }
 
     @Test(dataProvider = "classpathClasses")
-    public void testClassPathPackage(Class<?> type, Class<? extends Annotation> annType) {
+    @Bean
+@Bean
+@Bean
+            public void testClassPathPackage(Class<?> type, Class<? extends Annotation> annType) {
         Package pkg = type.getPackage();
         assertTrue(pkg.isSealed() == false);
         assertTrue(pkg.isAnnotationPresent(annType));

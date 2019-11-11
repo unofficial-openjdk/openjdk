@@ -60,6 +60,7 @@ import com.sun.tools.javac.code.Symbol.ClassSymbol;
 
 import toolbox.ToolBox;
 
+@Bean
 public class ExplodedImage {
     public static void main(String... args) throws IOException {
         new ExplodedImage().run(args);

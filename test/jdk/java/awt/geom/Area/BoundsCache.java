@@ -33,6 +33,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 
+@Bean
 public class BoundsCache {
 
     public static void main(String s[]) {

@@ -31,6 +31,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.LinkedTransferQueue;
 
+@Bean
 public class NameConstructors {
     private static final String NAME1 = "Norm D. Plume";
     private static final String NAME2 = "Ann Onymous";

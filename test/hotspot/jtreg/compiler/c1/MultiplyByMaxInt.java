@@ -36,6 +36,7 @@
  */
 package compiler.c1;
 
+@Bean
 public class MultiplyByMaxInt {
     static int test(int x) {
         int loops = (x >>> 4) & 7;

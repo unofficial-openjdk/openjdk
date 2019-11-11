@@ -36,6 +36,7 @@ import java.util.*;
 import javax.management.*;
 import javax.management.relation.*;
 
+@Bean
 public class RelationTypeTest {
     public static void main(String[] args) throws Exception {
         System.out.println("Test that relation type checking uses " +

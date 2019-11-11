@@ -34,6 +34,7 @@
 
 package compiler.codegen;
 
+@Bean
 public class Test8005033 {
     public static int MINUS_ONE = -1;
 

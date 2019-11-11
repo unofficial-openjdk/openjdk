@@ -44,6 +44,7 @@ import java.util.Arrays;
 
 import static org.junit.Assert.*;
 
+@Bean
 public class MethodHandlesPermuteArgumentsTest extends MethodHandlesTest {
 
     @Test // SLOW

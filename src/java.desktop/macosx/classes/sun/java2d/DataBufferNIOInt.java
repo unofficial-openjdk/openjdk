@@ -65,7 +65,8 @@ public final class DataBufferNIOInt extends DataBuffer {
      * @param bank The bank whose Buffer you want to get.
      * @return The Buffer for the specified bank.
      */
-    public IntBuffer getBuffer(int bank) {
+@Bean
+        public IntBuffer getBuffer(int bank) {
         return bankdata[bank];
     }
 
@@ -105,7 +106,8 @@ public final class DataBufferNIOInt extends DataBuffer {
      * @see #setElem(int, int)
      * @see #setElem(int, int, int)
      */
-    public int getElem(int i) {
+@Bean
+        public int getElem(int i) {
         return data.get(i+offset);
     }
 
@@ -118,7 +120,8 @@ public final class DataBufferNIOInt extends DataBuffer {
      * @see #setElem(int, int)
      * @see #setElem(int, int, int)
      */
-    public int getElem(int bank, int i) {
+@Bean
+        public int getElem(int bank, int i) {
         return bankdata[bank].get(i+offsets[bank]);
     }
 
@@ -131,7 +134,8 @@ public final class DataBufferNIOInt extends DataBuffer {
      * @see #getElem(int)
      * @see #getElem(int, int)
      */
-    public void setElem(int i, int val) {
+@Bean
+        public void setElem(int i, int val) {
         data.put(i+offset, val);
     }
 
@@ -144,7 +148,8 @@ public final class DataBufferNIOInt extends DataBuffer {
      * @see #getElem(int)
      * @see #getElem(int, int)
      */
-    public void setElem(int bank, int i, int val) {
+@Bean
+        public void setElem(int bank, int i, int val) {
         bankdata[bank].put(i+offsets[bank], val);
     }
 

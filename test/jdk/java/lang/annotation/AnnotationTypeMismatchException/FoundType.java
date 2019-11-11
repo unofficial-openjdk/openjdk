@@ -31,6 +31,7 @@
 
 import java.lang.annotation.*;
 
+@Bean
 public class FoundType {
 
     private static final String TYPE = "a.halting.Problem";

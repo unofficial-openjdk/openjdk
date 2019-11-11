@@ -38,6 +38,7 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.joining;
 
 @Test
+@Bean
 public class StreamEncoderOut {
 
     enum Input {

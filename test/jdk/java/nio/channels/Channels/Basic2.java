@@ -33,6 +33,7 @@ import java.io.*;
 import java.nio.channels.*;
 import java.util.Random;
 
+@Bean
 public class Basic2 {
 
     static final Random rand = new Random();

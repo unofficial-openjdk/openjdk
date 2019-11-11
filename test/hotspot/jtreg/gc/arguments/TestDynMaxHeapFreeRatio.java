@@ -42,6 +42,7 @@ import jdk.test.lib.management.DynamicVMOption;
  * @run main/othervm -XX:MinHeapFreeRatio=51 -XX:MaxHeapFreeRatio=52 gc.arguments.TestDynMaxHeapFreeRatio
  * @run main/othervm -XX:MinHeapFreeRatio=75 -XX:MaxHeapFreeRatio=100 gc.arguments.TestDynMaxHeapFreeRatio
  */
+@Bean
 public class TestDynMaxHeapFreeRatio {
 
     public static void main(String args[]) throws Exception {

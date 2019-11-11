@@ -56,7 +56,10 @@ public class CalendarAdapter extends Calendar {
         }
     }
 
-    public void setFirstDayOfWeek(int w) {
+    @Bean
+@Bean
+@Bean
+            public void setFirstDayOfWeek(int w) {
         cal.setFirstDayOfWeek(w);
     }
 
@@ -64,7 +67,10 @@ public class CalendarAdapter extends Calendar {
         return cal.getFirstDayOfWeek();
     }
 
-    public void setMinimalDaysInFirstWeek(int value) {
+    @Bean
+@Bean
+@Bean
+            public void setMinimalDaysInFirstWeek(int value) {
         cal.setMinimalDaysInFirstWeek(value);
     }
 
@@ -76,27 +82,45 @@ public class CalendarAdapter extends Calendar {
         return cal.getTimeInMillis();
     }
 
-    public void setTimeInMillis(long millis) {
+    @Bean
+@Bean
+@Bean
+            public void setTimeInMillis(long millis) {
         cal.setTimeInMillis(millis);
     }
 
-    public int get(int field) {
+    @Bean
+@Bean
+@Bean
+            public int get(int field) {
         return cal.get(field);
     }
 
-    public void set(int field, int value) {
+    @Bean
+@Bean
+@Bean
+            public void set(int field, int value) {
         cal.set(field, value);
     }
 
-    public void add(int field, int amount) {
+    @Bean
+@Bean
+@Bean
+            public void add(int field, int amount) {
         cal.add(field, amount);
     }
 
-    public void roll(int field, boolean dir) {
+    @Bean
+@Bean
+@Bean
+            public void roll(int field, boolean dir) {
         cal.roll(field, dir);
     }
 
-    public void roll(int field, int amount) {
+    @Bean
+@Bean
+@Bean
+            public void roll(int field, int amount) {
         cal.roll(field, amount);
     }
 
@@ -105,7 +129,10 @@ public class CalendarAdapter extends Calendar {
         cal.set(year, month, date);
     }
 
-    public void setDate(int era, int year, int month, int date) {
+    @Bean
+@Bean
+@Bean
+            public void setDate(int era, int year, int month, int date) {
         cal.set(ERA, era);
         cal.set(year, month, date);
     }
@@ -129,31 +156,52 @@ public class CalendarAdapter extends Calendar {
         return cal.isSet(field);
     }
 
-    public int getMaximum(int field) {
+    @Bean
+@Bean
+@Bean
+            public int getMaximum(int field) {
         return cal.getMaximum(field);
     }
 
-    public int getLeastMaximum(int field) {
+    @Bean
+@Bean
+@Bean
+            public int getLeastMaximum(int field) {
         return cal.getLeastMaximum(field);
     }
 
-    public int getActualMaximum(int field) {
+    @Bean
+@Bean
+@Bean
+            public int getActualMaximum(int field) {
         return cal.getActualMaximum(field);
     }
 
-    public int getMinimum(int field) {
+    @Bean
+@Bean
+@Bean
+            public int getMinimum(int field) {
         return cal.getMinimum(field);
     }
 
-    public int getGreatestMinimum(int field) {
+    @Bean
+@Bean
+@Bean
+            public int getGreatestMinimum(int field) {
         return cal.getGreatestMinimum(field);
     }
 
-    public int getActualMinimum(int field) {
+    @Bean
+@Bean
+@Bean
+            public int getActualMinimum(int field) {
         return cal.getActualMinimum(field);
     }
 
-    public void setLenient(boolean lenient) {
+    @Bean
+@Bean
+@Bean
+            public void setLenient(boolean lenient) {
         cal.setLenient(lenient);
     }
 
@@ -423,11 +471,17 @@ public class CalendarAdapter extends Calendar {
         return "    " + s;
     }
 
-    private void setMessage(String msg) {
+    @Bean
+@Bean
+@Bean
+            private void setMessage(String msg) {
         this.msg = new StringBuffer(msg);
     }
 
-    private void appendMessage(String msg) {
+    @Bean
+@Bean
+@Bean
+            private void appendMessage(String msg) {
         this.msg.append(msg);
     }
 

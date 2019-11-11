@@ -34,6 +34,7 @@ import java.nio.channels.*;
 import java.net.*;
 import java.util.concurrent.*;
 
+@Bean
 public class WithSecurityManager {
     public static void main(String[] args) throws Exception {
         boolean allow = false;

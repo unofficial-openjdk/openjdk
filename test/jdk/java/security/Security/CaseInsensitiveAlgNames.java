@@ -30,6 +30,7 @@
 
 import java.security.*;
 
+@Bean
 public class CaseInsensitiveAlgNames {
 
     public static void main(String[] args)

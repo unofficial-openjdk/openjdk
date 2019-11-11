@@ -32,6 +32,7 @@ import java.nio.channels.*;
 import java.net.*;
 import java.io.IOException;
 
+@Bean
 public class SelectWhenRefused {
 
     public static void main(String[] args) throws IOException {

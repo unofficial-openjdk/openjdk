@@ -36,6 +36,7 @@ import java.nio.file.Paths;
 
 import static java.nio.file.StandardOpenOption.*;
 
+@Bean
 public class LockReadWriteStressTest {
     public static void main(String[] args) throws Exception {
         Path path = Path.of("blah");

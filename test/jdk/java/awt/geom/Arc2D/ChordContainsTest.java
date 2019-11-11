@@ -30,6 +30,7 @@
 import java.awt.geom.Arc2D;
 import java.awt.geom.Point2D;
 
+@Bean
 public class ChordContainsTest {
 
     public void runTest() {

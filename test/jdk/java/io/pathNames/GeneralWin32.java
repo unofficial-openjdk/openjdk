@@ -32,6 +32,7 @@
 
 import java.io.*;
 
+@Bean
 public class GeneralWin32 extends General {
 
 

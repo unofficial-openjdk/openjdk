@@ -33,6 +33,7 @@ import java.io.*;
  * a workspace where the race condition can occur. However it should
  * never fail on a workspace where the bug has been fixed.
  */
+@Bean
 public class CloseAndAvailableRC {
     public static void main(final String[] args) throws Exception {
         CloseAndAvailableRC rc = new CloseAndAvailableRC();

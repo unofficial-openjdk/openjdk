@@ -35,6 +35,7 @@ import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.ArrayList;
 
+@Bean
 public class CaptureTest {
 
     private static final int SYNTHETIC = 0x1000;
@@ -67,7 +68,11 @@ public class CaptureTest {
                                 errors + " errors");
     }
 
-    private void error(final String msg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void error(final String msg) {
         System.err.println("Error: " + msg);
         errors++;
     }
@@ -141,11 +146,19 @@ public class CaptureTest {
             }
         }
 
-        public Tester makeInner(final String message) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Tester makeInner(final String message) {
             return new InnerTester(2);
         }
 
-        public Tester makeLocal(final String message) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Tester makeLocal(final String message) {
             class LocalTester extends Tester {
                 public LocalTester(final int localparam) {
                     super(localparam);
@@ -183,7 +196,11 @@ public class CaptureTest {
             return new LocalTester(2);
         }
 
-        public Tester makeAnonExtendsLocal(final String message) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Tester makeAnonExtendsLocal(final String message) {
             abstract class LocalTester extends Tester {
                 public LocalTester(final int localparam) {
                     super(localparam);
@@ -222,7 +239,11 @@ public class CaptureTest {
             };
         }
 
-        public Tester makeAnonExtendsInner(final String message) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Tester makeAnonExtendsInner(final String message) {
             return new InnerTester(2) {
                 protected String[] names() {
                     return new String[] {
@@ -254,7 +275,11 @@ public class CaptureTest {
             };
         }
 
-        public Tester makeAnon(final String message) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Tester makeAnon(final String message) {
             return new Tester(2) {
                 protected String[] names() {
                     return new String[] {

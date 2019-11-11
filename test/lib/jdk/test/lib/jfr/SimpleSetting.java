@@ -32,12 +32,20 @@ import jdk.jfr.SettingControl;
 public class SimpleSetting extends SettingControl {
 
     @Override
-    public String combine(Set<String> settingValue) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String combine(Set<String> settingValue) {
         return "none";
     }
 
     @Override
-    public void setValue(String value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(String value) {
     }
 
     @Override

@@ -53,6 +53,7 @@ import org.testng.annotations.Test;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.testng.Assert.*;
 
+@Bean
 public class ServerPush {
 
     static final int LOOPS = 13;
@@ -214,7 +215,10 @@ public class ServerPush {
         public byte[] getAccumulatedBytes() { return accumulatedBytes; }
 
         @Override
-        public void accept(Optional<byte[]> optionalBytes) {
+        @Bean
+@Bean
+@Bean
+            public void accept(Optional<byte[]> optionalBytes) {
             assert accumulatedBytes == null;
             if (!optionalBytes.isPresent()) {
                 int size = listByteArrays.stream().mapToInt(ba -> ba.length).sum();

@@ -30,6 +30,7 @@
  * @compile  T4695847.java
  */
 
+@Bean
 public class T4695847<T> {
     T4695847<T> next;
     static <T> int size(T4695847<T> bt) {

@@ -35,6 +35,7 @@ import java.lang.Helper;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+@Bean
 public class TestStringIntrinsicRangeChecks {
     // Prepare test arrays
     private static int SIZE = 16;

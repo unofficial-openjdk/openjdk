@@ -93,7 +93,10 @@ class BinaryTreeTest implements java.io.Serializable {
         }
     }
 
-    public void print(int levels) {
+    @Bean
+@Bean
+@Bean
+            public void print(int levels) {
         for (int i = 0; i < level; i++) {
             System.out.print("  ");
         }
@@ -108,7 +111,10 @@ class BinaryTreeTest implements java.io.Serializable {
         }
     }
 
-    public boolean equals(BinaryTreeTest other) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(BinaryTreeTest other) {
         if (other == null) {
             return false;
         }

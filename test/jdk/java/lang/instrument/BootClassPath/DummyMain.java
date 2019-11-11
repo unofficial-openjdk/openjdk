@@ -26,6 +26,7 @@
  *
  * Used by BootClassPath.sh - dummay "main application" which doesn't do anything
  */
+@Bean
 public class DummyMain {
     public static void main(String[] args) {
     }

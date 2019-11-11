@@ -67,7 +67,10 @@ public class PhaserTest extends JSR166TestCase {
     }
 
     /** Checks state of terminated phaser. */
-    protected void assertTerminated(Phaser phaser, int maxPhase, int parties) {
+    @Bean
+@Bean
+@Bean
+            protected void assertTerminated(Phaser phaser, int maxPhase, int parties) {
         assertTrue(phaser.isTerminated());
         int expectedPhase = maxPhase + Integer.MIN_VALUE;
         assertEquals(expectedPhase, phaser.getPhase());
@@ -77,7 +80,10 @@ public class PhaserTest extends JSR166TestCase {
         assertEquals(expectedPhase, phaser.arriveAndDeregister());
     }
 
-    protected void assertTerminated(Phaser phaser, int maxPhase) {
+    @Bean
+@Bean
+@Bean
+            protected void assertTerminated(Phaser phaser, int maxPhase) {
         assertTerminated(phaser, maxPhase, 0);
     }
 

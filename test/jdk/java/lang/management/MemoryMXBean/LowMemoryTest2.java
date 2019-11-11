@@ -36,6 +36,7 @@ import javax.management.*;
 import javax.management.openmbean.CompositeData;
 import java.util.*;
 
+@Bean
 public class LowMemoryTest2 {
 
     private static volatile boolean listenerInvoked = false;
@@ -43,7 +44,10 @@ public class LowMemoryTest2 {
     private static String INDENT = "    ";
 
     static class SensorListener implements NotificationListener {
-        public void handleNotification(Notification notif, Object handback) {
+        @Bean
+@Bean
+@Bean
+            public void handleNotification(Notification notif, Object handback) {
             String type = notif.getType();
             if (type.equals(MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED) ||
                 type.equals(MemoryNotificationInfo.
@@ -74,7 +78,8 @@ public class LowMemoryTest2 {
 
         Class loadNext() {
 
-            // public class TestNNNNNN extends java.lang.Object{
+            // @Bean
+public class TestNNNNNN extends java.lang.Object{
             // public TestNNNNNN();
             //   Code:
             //    0:    aload_0
@@ -177,7 +182,10 @@ public class LowMemoryTest2 {
             }
         }
 
-        private boolean isAnyUsageAboveThreshold(List<MemoryPoolMXBean> pools) {
+        @Bean
+@Bean
+@Bean
+            private boolean isAnyUsageAboveThreshold(List<MemoryPoolMXBean> pools) {
             for (MemoryPoolMXBean p : pools) {
                 if (p.isUsageThresholdExceeded()) {
                     System.out.println("isAnyUsageAboveThreshold is true for " + p.getName());
@@ -188,7 +196,10 @@ public class LowMemoryTest2 {
             return false;
         }
 
-        private boolean isAnyThresholdCountSet(List<MemoryPoolMXBean> pools) {
+        @Bean
+@Bean
+@Bean
+            private boolean isAnyThresholdCountSet(List<MemoryPoolMXBean> pools) {
             for (MemoryPoolMXBean p : pools) {
                 if (p.getUsageThresholdCount() > 0) {
                     System.out.println("isAnyThresholdCountSet is true for " + p.getName());

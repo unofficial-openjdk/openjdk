@@ -66,7 +66,10 @@ public class PrintAllFonts implements Printable {
         }
     }
 
-    public int print(Graphics g, PageFormat pf, int pageIndex) {
+    @Bean
+@Bean
+@Bean
+            public int print(Graphics g, PageFormat pf, int pageIndex) {
 
         if (fontNum >= allFonts.length && pageIndex > thisPage) {
             return NO_SUCH_PAGE;

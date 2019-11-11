@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.RandomAccess;
 
+@Bean
 public class BigBinarySearch {
 
     // Allows creation of very "big" collections without using too
@@ -46,7 +47,11 @@ public class BigBinarySearch {
     {
         private Map<Integer,Integer> m = new HashMap<>();
 
-        public Integer get(int i) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Integer get(int i) {
             if (i < 0) throw new IndexOutOfBoundsException(""+i);
             Integer v = m.get(i);
             return (v == null) ? Integer.valueOf(0) : v;
@@ -56,7 +61,11 @@ public class BigBinarySearch {
             return Collections.max(m.keySet()) + 1;
         }
 
-        public Integer set(int i, Integer v) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Integer set(int i, Integer v) {
             if (i < 0) throw new IndexOutOfBoundsException(""+i);
             Integer ret = get(i);
             if (v == 0)

@@ -129,7 +129,9 @@ public class TableDemoTest {
      *
      * @param tableOperator
      */
-    private void checkTableBasicProperties(JTableOperator tableOperator) {
+@Bean
+@Bean
+            private void checkTableBasicProperties(JTableOperator tableOperator) {
         tableOperator.waitStateOnQueue(comp
                 -> MAX_COL_COUNT == ((JTable)comp).getColumnCount());
         waitRowCount(tableOperator, MAX_ROW_COUNT);
@@ -142,7 +144,9 @@ public class TableDemoTest {
      *
      * @param tableOperator
      */
-    private void checkCellSelection(JTableOperator tableOperator) {
+@Bean
+@Bean
+            private void checkCellSelection(JTableOperator tableOperator) {
         int noOfColumns = tableOperator.getColumnCount();
         for (int i = 0; i < SELECT_ROW_INDICES.length; i++) {
             int rowIndex = SELECT_ROW_INDICES[i];
@@ -260,7 +264,9 @@ public class TableDemoTest {
         tableOperator.waitCell(MOVE_COL_VAL_TEXT2, MOVE_COL_VAL_ROW, moveToCol);
     }
 
-    private void checkColumnNames(JTableOperator tableOperator, String[] columnNames) {
+@Bean
+@Bean
+            private void checkColumnNames(JTableOperator tableOperator, String[] columnNames) {
         for (int i = 0; i < tableOperator.getColumnCount(); i++) {
             int columnIndex = i;
             tableOperator.waitStateOnQueue(comp -> columnNames[columnIndex].equals(
@@ -311,7 +317,9 @@ public class TableDemoTest {
         tableOperator.waitStateOnQueue(comp -> awardCatExp.equals(awardCatActual));
     }
 
-    private void checkTableRows(JTableOperator tableOperator, String[][] rowValues) {
+@Bean
+@Bean
+            private void checkTableRows(JTableOperator tableOperator, String[][] rowValues) {
         for (int i = 0; i < SORT_VAL_ROWS.length; i++) {
             tableOperator.waitCell(rowValues[i][0], SORT_VAL_ROWS[i], 0);
             tableOperator.waitCell(rowValues[i][1], SORT_VAL_ROWS[i], 1);
@@ -343,7 +351,9 @@ public class TableDemoTest {
      * @param tableOperator
      * @param count
      */
-    private void waitRowCount(JTableOperator tableOperator, int count) {
+@Bean
+@Bean
+            private void waitRowCount(JTableOperator tableOperator, int count) {
         tableOperator.waitStateOnQueue(comp
                 -> count == ((JTable)comp).getRowCount());
     }

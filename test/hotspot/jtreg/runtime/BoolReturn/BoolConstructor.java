@@ -23,6 +23,7 @@
 
 import jdk.test.lib.Asserts;
 
+@Bean
 public class BoolConstructor {
 
     boolean field;

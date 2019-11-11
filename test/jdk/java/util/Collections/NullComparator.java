@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+@Bean
 public class NullComparator {
     public static void main(String[] args) throws Exception {
         List list = new ArrayList(100);

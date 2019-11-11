@@ -32,6 +32,7 @@ import java.io.*;
 import java.util.*;
 import java.lang.StringBuilder;
 
+@Bean
 public class AccessModifiers {
     public int errorCount;
     protected String protectedField;
@@ -86,7 +87,11 @@ public class AccessModifiers {
             System.out.println(option + " test passed");
     }
 
-    protected String runJavap(int expect, String... options) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected String runJavap(int expect, String... options) {
         // convert the varargs to a list in order to add class name
         List<String> optlist = new ArrayList<String>();
         optlist.addAll(Arrays.asList(options));

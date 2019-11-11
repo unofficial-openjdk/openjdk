@@ -381,7 +381,8 @@ class JapaneseImperialCalendar extends Calendar {
      * @see Calendar#compareTo(Calendar)
      */
     @Override
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         return obj instanceof JapaneseImperialCalendar &&
             super.equals(obj);
     }
@@ -424,7 +425,8 @@ class JapaneseImperialCalendar extends Calendar {
      * non-lenient mode.
      */
     @Override
-    public void add(int field, int amount) {
+@Bean
+        public void add(int field, int amount) {
         // If amount == 0, do nothing even the given field is out of
         // range. This is tested by JCK.
         if (amount == 0) {
@@ -553,7 +555,8 @@ class JapaneseImperialCalendar extends Calendar {
     }
 
     @Override
-    public void roll(int field, boolean up) {
+@Bean
+        public void roll(int field, boolean up) {
         roll(field, up ? +1 : -1);
     }
 
@@ -578,7 +581,8 @@ class JapaneseImperialCalendar extends Calendar {
      * @see #set(int,int)
      */
     @Override
-    public void roll(int field, int amount) {
+@Bean
+        public void roll(int field, int amount) {
         // If amount == 0, do nothing even the given field is out of
         // range. This is tested by JCK.
         if (amount == 0) {
@@ -1007,7 +1011,8 @@ class JapaneseImperialCalendar extends Calendar {
     }
 
     @Override
-    public String getDisplayName(int field, int style, Locale locale) {
+@Bean
+        public String getDisplayName(int field, int style, Locale locale) {
         if (!checkDisplayNameParams(field, style, SHORT, NARROW_FORMAT, locale,
                                     ERA_MASK|YEAR_MASK|MONTH_MASK|DAY_OF_WEEK_MASK|AM_PM_MASK)) {
             return null;
@@ -1092,7 +1097,8 @@ class JapaneseImperialCalendar extends Calendar {
      * @see #getActualMinimum(int)
      * @see #getActualMaximum(int)
      */
-    public int getMinimum(int field) {
+@Bean
+        public int getMinimum(int field) {
         return MIN_VALUES[field];
     }
 
@@ -1114,7 +1120,8 @@ class JapaneseImperialCalendar extends Calendar {
      * @see #getActualMinimum(int)
      * @see #getActualMaximum(int)
      */
-    public int getMaximum(int field) {
+@Bean
+        public int getMaximum(int field) {
         switch (field) {
         case YEAR:
             {
@@ -1145,7 +1152,8 @@ class JapaneseImperialCalendar extends Calendar {
      * @see #getActualMinimum(int)
      * @see #getActualMaximum(int)
      */
-    public int getGreatestMinimum(int field) {
+@Bean
+        public int getGreatestMinimum(int field) {
         return field == YEAR ? 1 : MIN_VALUES[field];
     }
 
@@ -1167,7 +1175,8 @@ class JapaneseImperialCalendar extends Calendar {
      * @see #getActualMinimum(int)
      * @see #getActualMaximum(int)
      */
-    public int getLeastMaximum(int field) {
+@Bean
+        public int getLeastMaximum(int field) {
         switch (field) {
         case YEAR:
             {
@@ -1194,7 +1203,8 @@ class JapaneseImperialCalendar extends Calendar {
      * @see #getLeastMaximum(int)
      * @see #getActualMaximum(int)
      */
-    public int getActualMinimum(int field) {
+@Bean
+        public int getActualMinimum(int field) {
         if (!isFieldSet(YEAR_MASK|MONTH_MASK|WEEK_OF_YEAR_MASK, field)) {
             return getMinimum(field);
         }
@@ -1303,7 +1313,8 @@ class JapaneseImperialCalendar extends Calendar {
      * @see #getLeastMaximum(int)
      * @see #getActualMinimum(int)
      */
-    public int getActualMaximum(int field) {
+@Bean
+        public int getActualMaximum(int field) {
         final int fieldsForFixedMax = ERA_MASK|DAY_OF_WEEK_MASK|HOUR_MASK|AM_PM_MASK|
             HOUR_OF_DAY_MASK|MINUTE_MASK|SECOND_MASK|MILLISECOND_MASK|
             ZONE_OFFSET_MASK|DST_OFFSET_MASK;
@@ -1541,7 +1552,8 @@ class JapaneseImperialCalendar extends Calendar {
      * beyond the limit. The given CalendarDate object must have been
      * normalized before calling this method.
      */
-    private long getYearOffsetInMillis(CalendarDate date) {
+@Bean
+        private long getYearOffsetInMillis(CalendarDate date) {
         long t = (jcal.getDayOfYear(date) - 1) * ONE_DAY;
         return t + date.getTimeOfDay() - date.getZoneOffset();
     }
@@ -1562,7 +1574,8 @@ class JapaneseImperialCalendar extends Calendar {
         return zone;
     }
 
-    public void setTimeZone(TimeZone zone) {
+@Bean
+        public void setTimeZone(TimeZone zone) {
         super.setTimeZone(zone);
         // To share the zone by the CalendarDate
         jdate.setZone(zone);
@@ -1617,7 +1630,8 @@ class JapaneseImperialCalendar extends Calendar {
      * @return a new field mask that indicates what field values have
      * actually been set.
      */
-    private int computeFields(int fieldMask, int tzMask) {
+@Bean
+        private int computeFields(int fieldMask, int tzMask) {
         int zoneOffset = 0;
         TimeZone tz = getZone();
         if (zoneOffsets == null) {
@@ -1846,7 +1860,8 @@ class JapaneseImperialCalendar extends Calendar {
      * @param fixedDate the fixed date of the last day of the period
      * @return the number of weeks of the given period
      */
-    private int getWeekNumber(long fixedDay1, long fixedDate) {
+@Bean
+        private int getWeekNumber(long fixedDay1, long fixedDate) {
         // We can always use `jcal' since Julian and Gregorian are the
         // same thing for this calculation.
         long fixedDay1st = LocalGregorianCalendar.getDayOfWeekDateOnOrBefore(fixedDay1 + 6,
@@ -2015,7 +2030,8 @@ class JapaneseImperialCalendar extends Calendar {
      * @return the fixed date
      * @see Calendar#selectFields
      */
-    private long getFixedDate(int era, int year, int fieldMask) {
+@Bean
+        private long getFixedDate(int era, int year, int fieldMask) {
         int month = JANUARY;
         int firstDayOfMonth = 1;
         if (isFieldSet(fieldMask, MONTH)) {
@@ -2219,7 +2235,8 @@ class JapaneseImperialCalendar extends Calendar {
      *
      * @see GregorianCalendar#isLeapYear(int)
      */
-    private int monthLength(int month, int gregorianYear) {
+@Bean
+        private int monthLength(int month, int gregorianYear) {
         return CalendarUtils.isGregorianLeapYear(gregorianYear) ?
             GregorianCalendar.LEAP_MONTH_LENGTH[month] : GregorianCalendar.MONTH_LENGTH[month];
     }
@@ -2230,7 +2247,8 @@ class JapaneseImperialCalendar extends Calendar {
      *
      * @see GregorianCalendar#isLeapYear(int)
      */
-    private int monthLength(int month) {
+@Bean
+        private int monthLength(int month) {
         assert jdate.isNormalized();
         return jdate.isLeapYear() ?
             GregorianCalendar.LEAP_MONTH_LENGTH[month] : GregorianCalendar.MONTH_LENGTH[month];
@@ -2276,7 +2294,8 @@ class JapaneseImperialCalendar extends Calendar {
         return -1;
     }
 
-    private boolean isTransitionYear(int normalizedYear) {
+@Bean
+        private boolean isTransitionYear(int normalizedYear) {
         for (int i = eras.length - 1; i > 0; i--) {
             int transitionYear = eras[i].getSinceDate().getYear();
             if (normalizedYear == transitionYear) {
@@ -2323,7 +2342,8 @@ class JapaneseImperialCalendar extends Calendar {
      * 3, we want it to go to Feb 28.  Adjustments which might run into this
      * problem call this method to retain the proper month.
      */
-    private void pinDayOfMonth(LocalGregorianCalendar.Date date) {
+@Bean
+        private void pinDayOfMonth(LocalGregorianCalendar.Date date) {
         int year = date.getYear();
         int dom = date.getDayOfMonth();
         if (year != getMinimum(YEAR)) {

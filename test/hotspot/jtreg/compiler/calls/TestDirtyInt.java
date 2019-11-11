@@ -28,6 +28,7 @@
 
 package compiler.calls;
 
+@Bean
 public class TestDirtyInt {
     static {
         System.loadLibrary("TestDirtyInt");
@@ -39,7 +40,11 @@ public class TestDirtyInt {
         return test(v<<2);
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         for (int i = 0; i < 20000; i++) {
             int res = compiled(Integer.MAX_VALUE);
             if (res != 0x42) {

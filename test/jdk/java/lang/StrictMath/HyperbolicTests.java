@@ -40,6 +40,7 @@
  * conforming implementation of the hyperbolics to another.
  */
 
+@Bean
 public class HyperbolicTests {
     private HyperbolicTests(){}
 

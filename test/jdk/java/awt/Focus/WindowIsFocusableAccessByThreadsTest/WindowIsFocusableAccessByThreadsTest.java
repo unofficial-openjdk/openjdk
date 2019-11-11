@@ -38,6 +38,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@Bean
 public class WindowIsFocusableAccessByThreadsTest {
     private static AtomicBoolean testPassed = new AtomicBoolean(true);
     private static volatile TestFrame frame;

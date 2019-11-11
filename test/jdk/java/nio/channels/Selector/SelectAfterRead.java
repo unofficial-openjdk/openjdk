@@ -33,6 +33,7 @@ import java.nio.channels.Selector;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 
+@Bean
 public class SelectAfterRead {
 
     private static final int TIMEOUT = 1000;

@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Locale;
 
 
+@Bean
 public class Bug8035133 {
 
     private static boolean err = false;

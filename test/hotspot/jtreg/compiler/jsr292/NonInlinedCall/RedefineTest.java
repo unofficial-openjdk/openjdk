@@ -65,6 +65,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.ACC_STATIC;
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_SUPER;
 import static jdk.internal.org.objectweb.asm.Opcodes.IRETURN;
 
+@Bean
 public class RedefineTest {
     static final MethodHandles.Lookup LOOKUP = MethodHandleHelper.IMPL_LOOKUP;
     static final String NAME = "compiler/jsr292/NonInlinedCall/RedefineTest$T";

@@ -32,6 +32,7 @@
 import java.awt.*;
 import java.awt.event.*;
 
+@Bean
 public class FocusSubRequestTest {
     Frame frame = new Frame("Test Frame");
     Button button = new Button("button");
@@ -47,14 +48,20 @@ public class FocusSubRequestTest {
     public void init() {
         frame.add(button);
         button.addFocusListener(new FocusAdapter() {
-                public void focusGained(FocusEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void focusGained(FocusEvent e) {
                     System.out.println("FocusSubRequestTest: focusGained for: " + e.getSource());
                     ((Component)e.getSource()).requestFocus();
                 }
             });
 
         button.addKeyListener(new KeyAdapter() {
-                public void keyPressed(KeyEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void keyPressed(KeyEvent e) {
                     System.out.println("FocusSubRequestTest: keyPressed for: " + e.getSource());
                     passed = true;
                 }
@@ -89,7 +96,10 @@ public class FocusSubRequestTest {
         }
     }
 
-    private void waitTillShown(Component component) {
+    @Bean
+@Bean
+@Bean
+            private void waitTillShown(Component component) {
         while (true) {
             try {
                 Thread.sleep(100);

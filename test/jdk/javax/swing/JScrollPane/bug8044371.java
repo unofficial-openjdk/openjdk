@@ -37,6 +37,7 @@ import java.awt.*;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 
+@Bean
 public class bug8044371 implements AdjustmentListener {
     JSplitPane sptPane;
     int lastAdjust = 0;
@@ -62,7 +63,11 @@ public class bug8044371 implements AdjustmentListener {
         frame.getContentPane().add(sptPane);
     }
 
-    public void adjustmentValueChanged(AdjustmentEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void adjustmentValueChanged(AdjustmentEvent e) {
         System.out.println( "adjustmentValueChanged: "  + e.getValue());
         lastAdjust = e.getValue();
     }

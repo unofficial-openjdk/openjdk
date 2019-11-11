@@ -50,6 +50,7 @@ import jdk.vm.ci.hotspot.HotSpotResolvedJavaMethod;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Modifier;
 
+@Bean
 public class GetBytecodeTest {
 
     public static void main(String[] args) {

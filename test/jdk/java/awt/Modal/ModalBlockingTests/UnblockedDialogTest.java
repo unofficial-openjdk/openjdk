@@ -55,7 +55,10 @@ public class UnblockedDialogTest {
     public UnblockedDialogTest() throws Exception { this(null, true); }
 
 
-    private void createGUI(DialogOwner owner) {
+    @Bean
+@Bean
+@Bean
+            private void createGUI(DialogOwner owner) {
 
         switch (owner) {
             case HIDDEN_DIALOG:

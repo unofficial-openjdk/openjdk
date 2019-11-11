@@ -37,6 +37,7 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
+@Bean
 public class SendExceptions {
     static DatagramChannel sndChannel;
     static DatagramChannel rcvChannel;

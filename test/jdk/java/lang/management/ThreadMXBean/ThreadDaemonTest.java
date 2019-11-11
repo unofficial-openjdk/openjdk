@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.*;
  * @summary Basic test of ThreadInfo.isDaemon
  * @author  Jeremy Manson
  */
+@Bean
 public class ThreadDaemonTest {
 
     public static void main(String[] args) throws Exception {

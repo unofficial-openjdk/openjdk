@@ -49,6 +49,7 @@ import com.sun.tools.javac.api.JavacTool;
 /**
  * A task to configure and run the Java compiler, javac.
  */
+@Bean
 public class JavacTask extends AbstractTask<JavacTask> {
     private boolean includeStandardOptions;
     private List<Path> classpath;
@@ -86,7 +87,11 @@ public class JavacTask extends AbstractTask<JavacTask> {
      * @param classpath the classpath
      * @return this task object
      */
-    public JavacTask classpath(String classpath) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavacTask classpath(String classpath) {
         this.classpath = Stream.of(classpath.split(File.pathSeparator))
                 .filter(s -> !s.isEmpty())
                 .map(s -> Paths.get(s))
@@ -99,7 +104,11 @@ public class JavacTask extends AbstractTask<JavacTask> {
      * @param classpath the classpath
      * @return this task object
      */
-    public JavacTask classpath(Path... classpath) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavacTask classpath(Path... classpath) {
         this.classpath = Arrays.asList(classpath);
         return this;
     }
@@ -109,7 +118,11 @@ public class JavacTask extends AbstractTask<JavacTask> {
      * @param classpath the classpath
      * @return this task object
      */
-    public JavacTask classpath(List<Path> classpath) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavacTask classpath(List<Path> classpath) {
         this.classpath = classpath;
         return this;
     }
@@ -119,7 +132,11 @@ public class JavacTask extends AbstractTask<JavacTask> {
      * @param sourcepath the sourcepath
      * @return this task object
      */
-    public JavacTask sourcepath(String sourcepath) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavacTask sourcepath(String sourcepath) {
         this.sourcepath = Stream.of(sourcepath.split(File.pathSeparator))
                 .filter(s -> !s.isEmpty())
                 .map(s -> Paths.get(s))
@@ -132,7 +149,11 @@ public class JavacTask extends AbstractTask<JavacTask> {
      * @param sourcepath the sourcepath
      * @return this task object
      */
-    public JavacTask sourcepath(Path... sourcepath) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavacTask sourcepath(Path... sourcepath) {
         this.sourcepath = Arrays.asList(sourcepath);
         return this;
     }
@@ -142,7 +163,11 @@ public class JavacTask extends AbstractTask<JavacTask> {
      * @param sourcepath the sourcepath
      * @return this task object
      */
-    public JavacTask sourcepath(List<Path> sourcepath) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavacTask sourcepath(List<Path> sourcepath) {
         this.sourcepath = sourcepath;
         return this;
     }
@@ -152,7 +177,11 @@ public class JavacTask extends AbstractTask<JavacTask> {
      * @param outdir the output directory
      * @return this task object
      */
-    public JavacTask outdir(String outdir) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavacTask outdir(String outdir) {
         this.outdir = Paths.get(outdir);
         return this;
     }
@@ -162,7 +191,11 @@ public class JavacTask extends AbstractTask<JavacTask> {
      * @param outdir the output directory
      * @return this task object
      */
-    public JavacTask outdir(Path outdir) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavacTask outdir(Path outdir) {
         this.outdir = outdir;
         return this;
     }
@@ -172,7 +205,11 @@ public class JavacTask extends AbstractTask<JavacTask> {
      * @param options the options
      * @return this task object
      */
-    public JavacTask options(String... options) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavacTask options(String... options) {
         this.options = Arrays.asList(options);
         return this;
     }
@@ -182,7 +219,11 @@ public class JavacTask extends AbstractTask<JavacTask> {
      * @param spaceSeparatedOption the space separated options
      * @return this task object
      */
-    public JavacTask spaceSeparatedOptions(String spaceSeparatedOption) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavacTask spaceSeparatedOptions(String spaceSeparatedOption) {
         this.options = Arrays.asList(spaceSeparatedOption.split("\\s+"));
         return this;
     }
@@ -192,7 +233,11 @@ public class JavacTask extends AbstractTask<JavacTask> {
      * @param options the options
      * @return this task object
      */
-    public JavacTask options(List<String> options) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavacTask options(List<String> options) {
         this.options = options;
         return this;
     }
@@ -202,7 +247,11 @@ public class JavacTask extends AbstractTask<JavacTask> {
      * @param classes the classes
      * @return this task object
      */
-    public JavacTask classes(String... classes) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavacTask classes(String... classes) {
         this.classes = Arrays.asList(classes);
         return this;
     }
@@ -212,7 +261,11 @@ public class JavacTask extends AbstractTask<JavacTask> {
      * @param files the files
      * @return this task object
      */
-    public JavacTask files(String... files) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavacTask files(String... files) {
         this.files = Arrays.asList(files);
         return this;
     }
@@ -222,7 +275,11 @@ public class JavacTask extends AbstractTask<JavacTask> {
      * @param files the files
      * @return this task object
      */
-    public JavacTask files(Path... files) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavacTask files(Path... files) {
         this.files = Stream.of(files)
                 .map(Path::toString)
                 .collect(Collectors.toList());
@@ -234,7 +291,11 @@ public class JavacTask extends AbstractTask<JavacTask> {
      * @param files the files
      * @return this task object
      */
-    public JavacTask files(List<Path> files) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavacTask files(List<Path> files) {
         this.files = files.stream()
                 .map(Path::toString)
                 .collect(Collectors.toList());
@@ -248,7 +309,11 @@ public class JavacTask extends AbstractTask<JavacTask> {
      * @param sources the sources
      * @return this task object
      */
-    public JavacTask sources(String... sources) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavacTask sources(String... sources) {
         fileObjects = Stream.of(sources)
                 .map(s -> new ToolBox.JavaSource(s))
                 .collect(Collectors.toList());
@@ -260,7 +325,11 @@ public class JavacTask extends AbstractTask<JavacTask> {
      * @param fileManager the file manager
      * @return this task object
      */
-    public JavacTask fileManager(JavaFileManager fileManager) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavacTask fileManager(JavaFileManager fileManager) {
         this.fileManager = fileManager;
         return this;
     }
@@ -270,7 +339,11 @@ public class JavacTask extends AbstractTask<JavacTask> {
      * @param callback the callback
      * @return this task object
      */
-    public JavacTask callback(Consumer<com.sun.source.util.JavacTask> callback) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavacTask callback(Consumer<com.sun.source.util.JavacTask> callback) {
         this.callback = callback;
         return this;
     }
@@ -375,7 +448,11 @@ public class JavacTask extends AbstractTask<JavacTask> {
         ((StandardJavaFileManager) fileManager).setLocationFromPaths(location, files);
     }
 
-    private int runCommand(PrintWriter pw) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int runCommand(PrintWriter pw) {
         List<String> args = getAllArgs();
         String[] argsArray = args.toArray(new String[args.size()]);
         return com.sun.tools.javac.Main.compile(argsArray, pw);
@@ -425,7 +502,11 @@ public class JavacTask extends AbstractTask<JavacTask> {
         return args;
     }
 
-    private String toSearchPath(List<Path> files) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String toSearchPath(List<Path> files) {
         return files.stream()
             .map(Path::toString)
             .collect(Collectors.joining(File.pathSeparator));

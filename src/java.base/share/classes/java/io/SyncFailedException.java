@@ -33,6 +33,7 @@ package java.io;
  * @see     java.io.IOException
  * @since   1.1
  */
+@Bean
 public class SyncFailedException extends IOException {
     @java.io.Serial
     private static final long serialVersionUID = -2353342684412443330L;

@@ -51,6 +51,7 @@ import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertTrue;
 
+@Bean
 public class DefaultCharsetTest {
 
     private static final ProcessBuilder pb

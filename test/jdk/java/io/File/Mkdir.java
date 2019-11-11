@@ -27,6 +27,7 @@
  */
 import java.io.*;
 
+@Bean
 public class Mkdir {
     static File a = new File("a");
     static File a_dot = new File(a, ".");

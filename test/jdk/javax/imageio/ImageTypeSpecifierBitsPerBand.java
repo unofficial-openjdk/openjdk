@@ -31,6 +31,7 @@ import java.awt.image.BufferedImage;
 
 import javax.imageio.ImageTypeSpecifier;
 
+@Bean
 public class ImageTypeSpecifierBitsPerBand {
 
     public static void main(String[] args) {

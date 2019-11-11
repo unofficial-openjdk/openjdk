@@ -39,6 +39,7 @@ import sun.hotspot.WhiteBox;
  * and option -XX:+WhiteBoxAPI should be explicitly
  * specified on command line.
  */
+@Bean
 public class CPUInfo {
 
     private static final List<String> features;

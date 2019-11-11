@@ -33,6 +33,7 @@ package java.io;
  * @since       1.1
  */
 
+@Bean
 public class PipedWriter extends Writer {
 
     /* REMIND: identification of the read and write sides needs to be

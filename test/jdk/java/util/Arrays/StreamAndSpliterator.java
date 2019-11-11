@@ -37,6 +37,7 @@ import org.testng.Assert.ThrowingRunnable;
 
 import static org.testng.Assert.assertThrows;
 
+@Bean
 public class StreamAndSpliterator {
     @Test
     public void testStreamNPEs() {

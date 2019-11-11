@@ -33,6 +33,7 @@ import java.beans.JavaBean;
  * @summary Tests the JavaBean annotation
  * @author Sergey Malenkov
  */
+@Bean
 public class TestJavaBean {
 
     static final String DSCR = "description";
@@ -98,17 +99,26 @@ public class TestJavaBean {
             return this.value;
         }
 
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
     }
 
     @JavaBean(defaultEventSet = ACT)
     public static class DES {
-        public void addActionListener(ActionListener listener) {
+        @Bean
+@Bean
+@Bean
+            public void addActionListener(ActionListener listener) {
         }
 
-        public void removeActionListener(ActionListener listener) {
+        @Bean
+@Bean
+@Bean
+            public void removeActionListener(ActionListener listener) {
         }
     }
 
@@ -120,17 +130,26 @@ public class TestJavaBean {
             return this.value;
         }
 
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
     }
 
     @JavaBean(description = DSCR, defaultEventSet = ACT)
     public static class DDES {
-        public void addActionListener(ActionListener listener) {
+        @Bean
+@Bean
+@Bean
+            public void addActionListener(ActionListener listener) {
         }
 
-        public void removeActionListener(ActionListener listener) {
+        @Bean
+@Bean
+@Bean
+            public void removeActionListener(ActionListener listener) {
         }
     }
 
@@ -142,14 +161,23 @@ public class TestJavaBean {
             return this.value;
         }
 
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
 
-        public void addActionListener(ActionListener listener) {
+        @Bean
+@Bean
+@Bean
+            public void addActionListener(ActionListener listener) {
         }
 
-        public void removeActionListener(ActionListener listener) {
+        @Bean
+@Bean
+@Bean
+            public void removeActionListener(ActionListener listener) {
         }
     }
 
@@ -161,14 +189,23 @@ public class TestJavaBean {
             return this.value;
         }
 
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
 
-        public void addActionListener(ActionListener listener) {
+        @Bean
+@Bean
+@Bean
+            public void addActionListener(ActionListener listener) {
         }
 
-        public void removeActionListener(ActionListener listener) {
+        @Bean
+@Bean
+@Bean
+            public void removeActionListener(ActionListener listener) {
         }
     }
 }

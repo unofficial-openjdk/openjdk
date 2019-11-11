@@ -33,6 +33,7 @@ package compiler.c2;
 
 import java.lang.reflect.Constructor;
 
+@Bean
 public class Test6792161 {
     static Constructor test(Class cls) throws Exception {
         Class[] args= { String.class };

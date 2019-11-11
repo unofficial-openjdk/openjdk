@@ -30,6 +30,7 @@
 
 import java.lang.annotation.*;
 
+@Bean
 public class IsAnnotationType {
     interface AnnotationPoseur extends Annotation {
     }

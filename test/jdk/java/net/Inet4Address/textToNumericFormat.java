@@ -40,6 +40,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
 
+@Bean
 public class textToNumericFormat {
 
     public static void main(String[] args) throws UnknownHostException {

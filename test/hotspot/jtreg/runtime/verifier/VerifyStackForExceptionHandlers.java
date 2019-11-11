@@ -29,6 +29,7 @@
  * @author Keith McGuigan
  */
 
+@Bean
 public class VerifyStackForExceptionHandlers extends ClassLoader {
     public static void main(String argv[]) throws Exception {
         VerifyStackForExceptionHandlers t =
@@ -50,7 +51,8 @@ public class VerifyStackForExceptionHandlers extends ClassLoader {
 
     private void loadGoodClass() {
         /* -- code for class A --
-           public class A {
+           @Bean
+public class A {
                public static void f() {}
            }
         */
@@ -82,7 +84,8 @@ public class VerifyStackForExceptionHandlers extends ClassLoader {
 
     private void loadBadClass() throws VerifyError {
         /* -- code for class B --
-           public class B {
+           @Bean
+public class B {
                public static void g() {}
                public static void f() {
                   // bytecode modified to have a max_stack value of 0

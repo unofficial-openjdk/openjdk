@@ -41,17 +41,30 @@
 import javax.management.*;
 import java.lang.reflect.*;
 
+@Bean
 public class MBeanInfoEqualsTest {
     // Class just used for reflection
     private static class Toy {
         public Toy() {}
         public Toy(int a, String b) {}
         public int getA() {return 0;}
-        public void setA(int a) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setA(int a) {}
         public boolean isB() {return false;}
-        public void setB(boolean b) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setB(boolean b) {}
         public void run() {}
-        public void blah(int a, String b) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void blah(int a, String b) {}
     }
 
     static final Class toy = Toy.class;

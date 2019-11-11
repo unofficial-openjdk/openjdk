@@ -117,7 +117,9 @@ public class RepaintManagerFPUIScaleTest {
         failButton.setActionCommand("Fail");
         failButton.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {
+@Bean
+@Bean
+                    public void actionPerformed(ActionEvent e) {
                 mainFrame.dispose();
                 countDownLatch.countDown();
             }
@@ -141,7 +143,9 @@ public class RepaintManagerFPUIScaleTest {
         mainFrame.addWindowListener(new WindowAdapter() {
 
             @Override
-            public void windowClosing(WindowEvent e) {
+@Bean
+@Bean
+                    public void windowClosing(WindowEvent e) {
                 mainFrame.dispose();
                 countDownLatch.countDown();
             }

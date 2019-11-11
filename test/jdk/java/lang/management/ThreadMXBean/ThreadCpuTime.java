@@ -31,6 +31,7 @@
 
 import java.lang.management.*;
 
+@Bean
 public class ThreadCpuTime {
     private static ThreadMXBean mbean = ManagementFactory.getThreadMXBean();
     private static boolean testFailed = false;

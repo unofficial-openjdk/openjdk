@@ -44,6 +44,7 @@ import toolbox.JavacTask;
 import toolbox.ToolBox;
 
 // Original test: test/tools/javac/6302184/T6302184.sh
+@Bean
 public class HiddenOptionsShouldUseGivenEncodingTest {
 
     public static void main(String[] args) throws Exception {

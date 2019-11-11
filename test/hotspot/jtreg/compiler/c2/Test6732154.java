@@ -33,6 +33,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test6732154 {
 
     // Exact copy of sun.print.PSPrinterJob.ascii85Encode([b)[b

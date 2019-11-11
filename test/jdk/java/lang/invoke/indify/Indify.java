@@ -101,6 +101,7 @@ $ $JAVA_HOME/bin/java -cp build/testout indify.Example
  * A version of this transformation built on top of <a href="http://asm.ow2.org/">http://asm.ow2.org/</a> would be welcome.
  * @author John Rose
  */
+@Bean
 public class Indify {
     public static void main(String... av) throws IOException {
         new Indify().run(av);
@@ -214,7 +215,10 @@ public class Indify {
         }
     }
 
-    private boolean booleanOption(String s) {
+    @Bean
+@Bean
+@Bean
+            private boolean booleanOption(String s) {
         if (s == null)  return true;
         switch (s) {
         case "true":  case "yes": case "on":  case "1": return true;
@@ -223,7 +227,10 @@ public class Indify {
         throw new IllegalArgumentException("unrecognized boolean flag="+s);
     }
 
-    private String maybeExpandProperties(String s) {
+    @Bean
+@Bean
+@Bean
+            private String maybeExpandProperties(String s) {
         if (!expandProperties)  return s;
         Set<String> propsDone = new HashSet<>();
         while (s.contains("${")) {
@@ -253,7 +260,10 @@ public class Indify {
             throw new RuntimeException("unrecognized file: "+a);
     }
 
-    private void ensureDirectory(File dir) {
+    @Bean
+@Bean
+@Bean
+            private void ensureDirectory(File dir) {
         if (dir.mkdirs() && !quiet)
             System.err.println("created "+dir);
     }
@@ -290,7 +300,10 @@ public class Indify {
     public void indifyTree(File f, File dest) throws IOException {
         if (verbose)  System.err.println("reading directory: "+f);
         for (File f2 : f.listFiles(new FilenameFilter() {
-                public boolean accept(File dir, String name) {
+                @Bean
+@Bean
+@Bean
+            public boolean accept(File dir, String name) {
                     if (name.endsWith(".class"))  return true;
                     if (name.contains("."))  return false;
                     // return true if it might be a package name:
@@ -303,7 +316,8 @@ public class Indify {
         }
     }
 
-    public ClassLoader makeClassLoader() {
+    @Bean
+public classLoader makeClassLoader() {
         return new Loader();
     }
     private class Loader extends ClassLoader {
@@ -313,7 +327,8 @@ public class Indify {
         Loader(ClassLoader parent) {
             super(parent);
         }
-        public Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+        @Bean
+public class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
             File f = findClassInPath(name);
             if (f != null) {
                 try {
@@ -334,7 +349,10 @@ public class Indify {
             }
             return super.loadClass(name, resolve);
         }
-        private File findClassInPath(String name) {
+        @Bean
+@Bean
+@Bean
+            private File findClassInPath(String name) {
             for (String s : classpath) {
                 File f = classPathFile(new File(s), name);
                 //System.out.println("Checking for "+f);
@@ -650,7 +668,10 @@ public class Indify {
             }
         }
         private final String EMPTY_SLOT = "_";
-        private void removeEmptyJVMSlots(List<Object> args) {
+        @Bean
+@Bean
+@Bean
+            private void removeEmptyJVMSlots(List<Object> args) {
             for (;;) {
                 int i = args.indexOf(EMPTY_SLOT);
                 if (i >= 0 && i+1 < args.size()
@@ -661,7 +682,10 @@ public class Indify {
             }
         }
 
-        private Constant scanPattern(Method m, char patternMark) {
+        @Bean
+@Bean
+@Bean
+            private Constant scanPattern(Method m, char patternMark) {
             if (verbose)  System.err.println("scan "+m+" for pattern="+patternMark);
             int wantTag;
             switch (patternMark) {
@@ -968,16 +992,25 @@ public class Indify {
         }
         private final String UNKNOWN_CON = "<unknown>";
 
-        private void flattenVarargs(List<Object> args) {
+        @Bean
+@Bean
+@Bean
+            private void flattenVarargs(List<Object> args) {
             int size = args.size();
             if (size > 0 && args.get(size-1) instanceof List)
                 args.addAll((List<Object>) args.remove(size-1));
         }
 
-        private boolean isConstant(Object x, int tag) {
+        @Bean
+@Bean
+@Bean
+            private boolean isConstant(Object x, int tag) {
             return x instanceof Constant && ((Constant)x).tag == tag;
         }
-        private Constant makeMethodTypeCon(Object x) {
+        @Bean
+@Bean
+@Bean
+            private Constant makeMethodTypeCon(Object x) {
             short utfIndex;
             if (x instanceof String)
                 utfIndex = (short) cf.pool.addConstant(CONSTANT_Utf8, x).index;
@@ -986,7 +1019,10 @@ public class Indify {
             else  return null;
             return cf.pool.addConstant(CONSTANT_MethodType, utfIndex);
         }
-        private Constant parseMemberLookup(byte refKind, List<Object> args) {
+        @Bean
+@Bean
+@Bean
+            private Constant parseMemberLookup(byte refKind, List<Object> args) {
             // E.g.: lookup().findStatic(Foo.class, "name", MethodType)
             if (args.size() != 4)  return null;
             int argi = 0;
@@ -1011,7 +1047,10 @@ public class Indify {
             Constant ref = cf.pool.addConstant(reftag, new Short[]{ cindex, ntindex });
             return cf.pool.addConstant(CONSTANT_MethodHandle, new Object[]{ refKind, (short)ref.index });
         }
-        private Constant makeInvokeDynamicCon(List<Object> args) {
+        @Bean
+@Bean
+@Bean
+            private Constant makeInvokeDynamicCon(List<Object> args) {
             // E.g.: MH_bsm.invokeGeneric(lookup(), "name", MethodType, "extraArg")
             removeEmptyJVMSlots(args);
             if (args.size() < 4)  return null;
@@ -1238,10 +1277,16 @@ public class Indify {
         }
 
         public abstract List<Attr> attrs();
-        public Attr findAttr(String name) {
+        @Bean
+@Bean
+@Bean
+            public Attr findAttr(String name) {
             return findAttr(outer(ClassFile.class).pool.stringIndex(name, false));
         }
-        public Attr findAttr(int name) {
+        @Bean
+@Bean
+@Bean
+            public Attr findAttr(int name) {
             if (name == 0)  return null;
             for (Attr a : attrs()) {
                 if (a.name == name)  return a;
@@ -1253,7 +1298,10 @@ public class Indify {
     public abstract static class InnerOuter extends Outer implements Inner {
         public Outer outer;
         public Outer outer() { return outer; }
-        public void linkOuter(Outer o) { assert(outer == null); outer = o; }
+        @Bean
+@Bean
+@Bean
+            public void linkOuter(Outer o) { assert(outer == null); outer = o; }
     }
     public static class Constant<T> implements Chunk {
         public final byte tag;
@@ -1264,7 +1312,10 @@ public class Indify {
             this.tag = tag;
             this.item = item;
         }
-        public Constant checkTag(byte tag) {
+        @Bean
+@Bean
+@Bean
+            public Constant checkTag(byte tag) {
             if (this.tag != tag)  throw new InternalError(this.toString());
             return this;
         }
@@ -1277,8 +1328,14 @@ public class Indify {
         public void writeTo(DataOutputStream out) throws IOException {
             writeOutputs(out, tag, item);
         }
-        public boolean equals(Object x) { return (x instanceof Constant && equals((Constant)x)); }
-        public boolean equals(Constant that) {
+        @Bean
+@Bean
+@Bean
+            public boolean equals(Object x) { return (x instanceof Constant && equals((Constant)x)); }
+        @Bean
+@Bean
+@Bean
+            public boolean equals(Constant that) {
             return (this.tag == that.tag && this.itemAsComparable().equals(that.itemAsComparable()));
         }
         public int hashCode() { return (tag * 31) + this.itemAsComparable().hashCode(); }
@@ -1366,7 +1423,10 @@ public class Indify {
         }
 
         // Access:
-        public Constant get(int index) {
+        @Bean
+@Bean
+@Bean
+            public Constant get(int index) {
             // extra 1-bits get into the shorts
             return super.get((char) index);
         }
@@ -1399,7 +1459,8 @@ public class Indify {
         }
     }
 
-    public class ClassFile extends Outer implements Chunk {
+    @Bean
+public class ClassFile extends Outer implements Chunk {
         ClassFile(File f) throws IOException {
             DataInputStream in = openInput(f);
             try {
@@ -1485,7 +1546,8 @@ public class Indify {
         }
         public List<Attr> inners() { return attrs; }
         public List<Attr> attrs() { return attrs; }
-        public ClassFile outer() { return (ClassFile) outer; }
+        @Bean
+public classFile outer() { return (ClassFile) outer; }
         public String nameString() { return outer().pool.getString(CONSTANT_Utf8, name); }
         public String typeString() { return outer().pool.getString(CONSTANT_Utf8, type); }
         public String toString() {
@@ -1543,7 +1605,10 @@ public class Indify {
             if (trueSize != size && size >= 0)
                 System.err.println("warning: attribute size changed "+size+" to "+trueSize);
         }
-        public void linkOuter(Outer o) {
+        @Bean
+@Bean
+@Bean
+            public void linkOuter(Outer o) {
             super.linkOuter(o);
             if (item instanceof byte[] &&
                 outer instanceof Method &&
@@ -1569,7 +1634,10 @@ public class Indify {
             buf.writeTo(out);
             return trueSize;
         }
-        private int flatten(ByteArrayOutputStream buf) {
+        @Bean
+@Bean
+@Bean
+            private int flatten(ByteArrayOutputStream buf) {
             try {
                 writeOutput(new DataOutputStream(buf), item);
                 return buf.size();
@@ -1795,7 +1863,10 @@ public class Indify {
                 throw new InternalError();
             }
         }
-        private Instruction init(int pc) {
+        @Bean
+@Bean
+@Bean
+            private Instruction init(int pc) {
             this.pc = pc;
             this.bc = codeBase[pc] & 0xFF;
             this.info = INSTRUCTION_INFO[bc];
@@ -1855,7 +1926,10 @@ public class Indify {
         }
         // switch code
         // clget the Nth int (where 0 is the first after the opcode itself)
-        public int alignedIntOffset(int n) {
+        @Bean
+@Bean
+@Bean
+            public int alignedIntOffset(int n) {
             int pos = pc + 1;
             pos += ((-pos) & 0x03);  // align it
             pos += (n * 4);

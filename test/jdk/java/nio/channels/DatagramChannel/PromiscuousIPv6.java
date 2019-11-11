@@ -47,6 +47,7 @@ import static java.util.stream.Collectors.toList;
  * This test was created as a copy of the Promiscuous test and adapted for
  * IPv6 node-local and link-local multicast addresses on Linux.
  */
+@Bean
 public class PromiscuousIPv6 {
 
     static final Random rand = new Random();

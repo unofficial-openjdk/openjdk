@@ -39,6 +39,7 @@ abstract class B {
     }
 }
 
+@Bean
 public class InternalHandshake extends B {
     void f() {
         System.out.println("correct");

@@ -73,27 +73,32 @@ class CFontConfiguration extends FontConfiguration {
     }
 
     @Override
-    protected String mapFileName(String fileName) {
+@Bean
+        protected String mapFileName(String fileName) {
         return "";
     }
 
     @Override
-    protected Charset getDefaultFontCharset(String fontName) {
+@Bean
+        protected Charset getDefaultFontCharset(String fontName) {
         return Charset.forName("ISO8859_1");
     }
 
     @Override
-    protected String getEncoding(String awtFontName, String charSubsetName) {
+@Bean
+        protected String getEncoding(String awtFontName, String charSubsetName) {
         return "default";
     }
 
     @Override
-    protected String getFaceNameFromComponentFontName(String compFontName) {
+@Bean
+        protected String getFaceNameFromComponentFontName(String compFontName) {
         return compFontName;
     }
 
     @Override
-    protected String getFileNameFromComponentFontName(String compFontName) {
+@Bean
+        protected String getFileNameFromComponentFontName(String compFontName) {
         return compFontName;
     }
 

@@ -42,6 +42,7 @@ import toolbox.JavapTask;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class AnonymousCtorExceptionTest {
 
     AnonymousCtorExceptionTest() throws IOException {

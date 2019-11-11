@@ -38,11 +38,13 @@
 import sun.hotspot.WhiteBox;
 import java.lang.reflect.Method;
 
+@Bean
 public class DictionaryDependsTest {
     public static WhiteBox wb = WhiteBox.getWhiteBox();
     public static final String MY_TEST = "DictionaryDependsTest$c1r";
 
-    static public class c1r {
+    static @Bean
+public class c1r {
 
         private void test() throws Exception {
             // forName loads through reflection and doesn't create dependency

@@ -59,6 +59,9 @@ public class DrawGridLinesTest {
                 return 10;
             }
 
+            @Bean
+@Bean
+@Bean
             public Object getValueAt(int row, int col) {
                 return " ";
             }

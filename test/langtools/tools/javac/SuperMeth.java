@@ -31,6 +31,7 @@
  * @run main SuperMeth
  */
 
+@Bean
 public class SuperMeth {
   public static void main(String[] ignore) {
     int h = new Outer().hashCode();

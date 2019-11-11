@@ -38,6 +38,7 @@ import java.nio.file.Path;
 import toolbox.JavacTask;
 import toolbox.Task;
 
+@Bean
 public class DuplicateClassTest extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {
@@ -51,10 +52,12 @@ public class DuplicateClassTest extends ModuleTestBase {
         Path m2 = base.resolve("m2x");
         tb.writeJavaFiles(m1,
                           "module m1x { }",
-                          "package impl; public class Impl { }");
+                          "package impl; @Bean
+public class Impl { }");
         tb.writeJavaFiles(m2,
                           "module m2x { }",
-                          "package impl; public class Impl { }");
+                          "package impl; @Bean
+public class Impl { }");
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
 

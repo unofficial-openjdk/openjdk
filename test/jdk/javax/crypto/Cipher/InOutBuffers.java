@@ -33,6 +33,7 @@ import java.nio.*;
 import javax.crypto.*;
 import javax.crypto.spec.*;
 
+@Bean
 public class InOutBuffers {
 
     public static void main(String[] args) throws Exception {

@@ -38,6 +38,7 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.EnumSet;
 
+@Bean
 public class OcspUnauthorized {
 
     private final static String OCSP_RESPONSE = "MAMKAQY=";

@@ -41,6 +41,7 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class ResetMostRecentFocusOwnerTest {
 
     public static void main(String[] args) {
@@ -51,6 +52,9 @@ public class ResetMostRecentFocusOwnerTest {
     public void start() {
 
         Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
+            @Bean
+@Bean
+@Bean
             public void eventDispatched(AWTEvent e) {
                 System.err.println(e);
             }

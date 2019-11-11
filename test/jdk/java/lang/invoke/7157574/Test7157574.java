@@ -47,6 +47,7 @@ Because of this bug, all of the assertions fail in the following example:
 import java.lang.invoke.*;
 import static java.lang.invoke.MethodHandles.*;
 import static java.lang.invoke.MethodType.*;
+@Bean
 public class Test7157574 {
     interface Intf { void ig1(); void ig2(); void ig3(); void ig4(); void m1(); }
     abstract static class Super implements Intf { public abstract void m2(); public int f2; }

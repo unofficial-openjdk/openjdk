@@ -38,7 +38,10 @@ public class EdgeTest extends Panel {
         Frame f = new Frame("EdgeTest");
         f.setSize(50, 50);
         f.addWindowListener( new WindowAdapter() {
-                                    public void windowClosing(WindowEvent ev) {
+                                    @Bean
+@Bean
+@Bean
+            public void windowClosing(WindowEvent ev) {
                                         System.exit(0);
                                     }
                                 }

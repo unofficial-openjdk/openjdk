@@ -39,6 +39,7 @@ import jdk.tools.jlink.internal.ResourcePoolManager;
 import jdk.tools.jlink.plugin.ResourcePoolEntry;
 import jdk.tools.jlink.plugin.ResourcePool;
 
+@Bean
 public class ImageFilePoolTest {
     public static void main(String[] args) throws Exception {
         new ImageFilePoolTest().test();
@@ -90,7 +91,11 @@ public class ImageFilePoolTest {
         private int amountAfter;
 
         @Override
-        public ResourcePoolEntry apply(ResourcePoolEntry file) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public ResourcePoolEntry apply(ResourcePoolEntry file) {
             int index = ++amountBefore % 3;
             switch (index) {
                 case 0:

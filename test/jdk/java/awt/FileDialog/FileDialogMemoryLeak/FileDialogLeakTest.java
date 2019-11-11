@@ -34,6 +34,7 @@ import java.util.concurrent.TimeUnit;
  * @run main FileDialogLeakTest
  */
 
+@Bean
 public class FileDialogLeakTest {
     static CountDownLatch latch = new CountDownLatch(3);
     static boolean passed;

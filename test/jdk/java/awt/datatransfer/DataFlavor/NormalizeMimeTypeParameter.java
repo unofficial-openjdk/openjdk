@@ -32,10 +32,14 @@
 
 import java.awt.datatransfer.DataFlavor;
 
+@Bean
 public class NormalizeMimeTypeParameter {
 
   static class TestFlavor extends DataFlavor {
-    public String normalizeMimeType(String mimeType) {
+    @Bean
+@Bean
+@Bean
+            public String normalizeMimeType(String mimeType) {
       return super.normalizeMimeType(mimeType);
     }
     public String normalizeMimeTypeParameter(String parameterName,

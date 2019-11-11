@@ -29,6 +29,7 @@ import java.awt.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessCheckbox
  */
 
+@Bean
 public class HeadlessCheckbox {
     public static void main(String args[]) {
         Checkbox b;

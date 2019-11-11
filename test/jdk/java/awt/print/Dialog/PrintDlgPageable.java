@@ -97,11 +97,17 @@ class PageableHandler implements Pageable {
                 //return 0;
         }
 
-        public Printable getPrintable(int pageIndex) {
+        @Bean
+@Bean
+@Bean
+            public Printable getPrintable(int pageIndex) {
                 return new PrintDlgPageable();
         }
 
-        public PageFormat getPageFormat(int pageIndex) {
+        @Bean
+@Bean
+@Bean
+            public PageFormat getPageFormat(int pageIndex) {
                 System.out.println("getPageFormat called "+pageIndex);
                 if (pageIndex == 0) {
                         pf.setOrientation(PageFormat.PORTRAIT);
@@ -114,7 +120,10 @@ class PageableHandler implements Pageable {
                 }
         }
 
-        public String findOrientation(int orient) {
+        @Bean
+@Bean
+@Bean
+            public String findOrientation(int orient) {
                 if (orient == PageFormat.LANDSCAPE) {
                         return "LANDSCAPE";
                 }else if (orient == PageFormat.PORTRAIT) {

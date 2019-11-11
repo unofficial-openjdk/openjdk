@@ -31,6 +31,7 @@
 
 import java.io.*;
 
+@Bean
 public class NotConnected {
     public static void main( String[] argv ) throws Exception {
         PipedInputStream i = new PipedInputStream();

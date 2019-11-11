@@ -31,6 +31,7 @@
 import java.lang.reflect.AnnotatedType;
 import java.util.Arrays;
 
+@Bean
 public class GetAnnotatedSuperclass {
     private static final Class<?>[] nullTestData = {
         Object.class,

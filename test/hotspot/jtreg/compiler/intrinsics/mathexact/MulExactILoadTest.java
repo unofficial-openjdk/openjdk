@@ -34,6 +34,7 @@
 
 package compiler.intrinsics.mathexact;
 
+@Bean
 public class MulExactILoadTest {
     public static void main(String[] args) {
         Verify.LoadTest.init();

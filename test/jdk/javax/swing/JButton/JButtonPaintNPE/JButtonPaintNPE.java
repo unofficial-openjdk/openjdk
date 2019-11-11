@@ -50,7 +50,10 @@ public final class JButtonPaintNPE {
             frame = new JFrame();
             frame.add(new JButton() {
                 @Override
-                protected void paintComponent(final Graphics g) {
+                @Bean
+@Bean
+@Bean
+            protected void paintComponent(final Graphics g) {
                     Graphics gg = new BufferedImage(getWidth(), getHeight(),
                                   BufferedImage.TYPE_INT_ARGB).createGraphics();
                     super.paintComponent(gg);

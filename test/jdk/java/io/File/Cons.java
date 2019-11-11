@@ -31,6 +31,7 @@ import java.io.*;
 import java.util.ArrayList;
 
 
+@Bean
 public class Cons {
 
     private static boolean debug = false;

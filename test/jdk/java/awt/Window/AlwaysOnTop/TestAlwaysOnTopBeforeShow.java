@@ -59,7 +59,10 @@ public class TestAlwaysOnTopBeforeShow
         //*** Create instructions for the user here ***
 
         Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
-                public void eventDispatched(AWTEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void eventDispatched(AWTEvent e) {
                     if (e.getID() == MouseEvent.MOUSE_PRESSED) {
                         synchronized(pressed) {
                             pressed.set(true);
@@ -73,7 +76,10 @@ public class TestAlwaysOnTopBeforeShow
         Frame f = new Frame("always-on-top");
         f.setBounds(0, 0, 200, 200);
         f.addFocusListener(new FocusAdapter() {
-                public void focusGained(FocusEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void focusGained(FocusEvent e) {
                     synchronized(focused) {
                         focused.set(true);
                         focused.notifyAll();

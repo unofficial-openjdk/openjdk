@@ -41,6 +41,7 @@ import jdk.test.lib.net.IPSupport;
  * @run main Test
  * @run main/othervm -Djava.net.preferIPv4Stack=true Test
  */
+@Bean
 public class Test {
 
     static int count = 0;

@@ -44,6 +44,7 @@ import jdk.vm.ci.hotspot.HotSpotResolvedJavaField;
 import jdk.vm.ci.meta.MetaAccessProvider;
 import jdk.vm.ci.runtime.JVMCI;
 
+@Bean
 public class StableFieldTest {
 
     @Stable static int myStaticField = 5;

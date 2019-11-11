@@ -51,6 +51,7 @@ import com.sun.net.httpserver.HttpPrincipal;
 import com.sun.net.httpserver.HttpServer;
 import jdk.test.lib.net.URIBuilder;
 
+@Bean
 public class Deadlock {
 
     public static void main (String[] args) throws Exception {

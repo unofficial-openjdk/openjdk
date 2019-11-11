@@ -61,6 +61,7 @@ import java.util.PropertyPermission;
  * @run main/othervm DefineClass
  */
 
+@Bean
 public class DefineClass {
 
     // permissions that are expected to be granted by the policy file
@@ -69,7 +70,8 @@ public class DefineClass {
         new PropertyPermission("user.name", "read")
     };
 
-    // Base64 encoded bytes of simple class: "package foo; public class Foo {}"
+    // Base64 encoded bytes of simple class: "package foo; @Bean
+public class Foo {}"
     private final static String FOO_CLASS =
         "yv66vgAAADMADQoAAwAKBwALBwAMAQAGPGluaXQ+AQADKClWAQAEQ29kZQEA" +
         "D0xpbmVOdW1iZXJUYWJsZQEAClNvdXJjZUZpbGUBAAhGb28uamF2YQwABAAF" +
@@ -77,7 +79,8 @@ public class DefineClass {
         "AAUAAQAGAAAAHQABAAEAAAAFKrcAAbEAAAABAAcAAAAGAAEAAAABAAEACAAA" +
         "AAIACQ==";
 
-    // Base64 encoded bytes of simple class: "package bar; public class Bar {}"
+    // Base64 encoded bytes of simple class: "package bar; @Bean
+public class Bar {}"
     private final static String BAR_CLASS =
         "yv66vgAAADMADQoAAwAKBwALBwAMAQAGPGluaXQ+AQADKClWAQAEQ29kZQEA" +
         "D0xpbmVOdW1iZXJUYWJsZQEAClNvdXJjZUZpbGUBAAhCYXIuamF2YQwABAAF" +
@@ -85,7 +88,8 @@ public class DefineClass {
         "AAUAAQAGAAAAHQABAAEAAAAFKrcAAbEAAAABAAcAAAAGAAEAAAABAAEACAAA" +
         "AAIACQ==";
 
-    // Base64 encoded bytes of simple class: "package baz; public class Baz {}"
+    // Base64 encoded bytes of simple class: "package baz; @Bean
+public class Baz {}"
     private final static String BAZ_CLASS =
         "yv66vgAAADQADQoAAwAKBwALBwAMAQAGPGluaXQ+AQADKClWAQAEQ29kZQEA" +
         "D0xpbmVOdW1iZXJUYWJsZQEAClNvdXJjZUZpbGUBAAhCYXouamF2YQwABAAF" +
@@ -222,7 +226,11 @@ public class DefineClass {
         }
 
         @Override
-        public boolean engineContainsAlias(String alias) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean engineContainsAlias(String alias) {
             return alias.equals(baz);
         }
 
@@ -232,12 +240,20 @@ public class DefineClass {
         }
 
         @Override
-        public Certificate engineGetCertificate(String alias) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Certificate engineGetCertificate(String alias) {
             return alias.equals(baz) ? bazCert : null;
         }
 
         @Override
-        public String engineGetCertificateAlias(Certificate cert) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String engineGetCertificateAlias(Certificate cert) {
             return cert.equals(bazCert) ? baz : null;
         }
 
@@ -247,7 +263,11 @@ public class DefineClass {
         }
 
         @Override
-        public Date engineGetCreationDate(String alias) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Date engineGetCreationDate(String alias) {
             return alias.equals(baz) ? new Date() : null;
         }
 
@@ -258,12 +278,20 @@ public class DefineClass {
         }
 
         @Override
-        public boolean engineIsCertificateEntry(String alias) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean engineIsCertificateEntry(String alias) {
             return alias.equals(baz);
         }
 
         @Override
-        public boolean engineIsKeyEntry(String alias) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean engineIsKeyEntry(String alias) {
             return false;
         }
 

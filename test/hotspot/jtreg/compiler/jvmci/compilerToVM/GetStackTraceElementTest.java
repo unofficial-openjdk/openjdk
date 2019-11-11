@@ -52,6 +52,7 @@ import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 
+@Bean
 public class GetStackTraceElementTest {
 
     public static void main(String[] args) {

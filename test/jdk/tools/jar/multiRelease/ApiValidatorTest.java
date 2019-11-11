@@ -51,10 +51,12 @@ import java.nio.file.Paths;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Bean
 public class ApiValidatorTest extends MRTestBase {
 
     static final Pattern MODULE_PATTERN = Pattern.compile("module (\\w+)");
-    static final Pattern CLASS_PATTERN = Pattern.compile("package (\\w+).*public class (\\w+)");
+    static final Pattern CLASS_PATTERN = Pattern.compile("package (\\w+).*@Bean
+public class (\\w+)");
 
     private Path root;
     private Path classes;
@@ -71,7 +73,8 @@ public class ApiValidatorTest extends MRTestBase {
 
         String METHOD_SIG = "#SIG";
         String classTemplate =
-                "public class C { \n" +
+                "@Bean
+public class C { \n" +
                         "    " + METHOD_SIG + "{ throw new RuntimeException(); };\n" +
                         "}\n";
         String base = classTemplate.replace(METHOD_SIG, sigBase);
@@ -117,7 +120,8 @@ public class ApiValidatorTest extends MRTestBase {
     public void introducingPublicMembers(String publicAPI) throws Throwable {
         String API = "#API";
         String classTemplate =
-                "public class C { \n" +
+                "@Bean
+public class C { \n" +
                         "    " + API + "\n" +
                         "    public void method(){ };\n" +
                         "}\n";
@@ -138,7 +142,8 @@ public class ApiValidatorTest extends MRTestBase {
     Object[][] publicAPI() {
         return new Object[][]{
 // @ignore JDK-8172148  {"protected class Inner { public void m(){ } } "}, // protected inner class
-// @ignore JDK-8172148  {"public class Inner { public void m(){ } }"},  // public inner class
+// @ignore JDK-8172148  {"@Bean
+public class Inner { public void m(){ } }"},  // public inner class
 // @ignore JDK-8172148  {"public enum E { A; }"},  // public enum
                 {"public void m(){ }"}, // public method
                 {"protected void m(){ }"}, // protected method
@@ -149,7 +154,8 @@ public class ApiValidatorTest extends MRTestBase {
     public void introducingPrivateMembers(String privateAPI) throws Throwable {
         String API = "#API";
         String classTemplate =
-                "public class C { \n" +
+                "@Bean
+public class C { \n" +
                         "    " + API + "\n" +
                         "    public void method(){ };\n" +
                         "}\n";
@@ -364,9 +370,12 @@ public class ApiValidatorTest extends MRTestBase {
                                       boolean expectSuccess,
                                       String expectedMessage) throws Throwable {
         String[] moduleClasses = {
-                "package pkg1; public class A { }",
-                "package pkg2; public class B extends pkg1.A { }",
-                "package pkg3; public class C extends pkg2.B { }"};
+                "package pkg1; @Bean
+public class A { }",
+                "package pkg2; @Bean
+public class B extends pkg1.A { }",
+                "package pkg3; @Bean
+public class C extends pkg2.B { }"};
         compileModule(classes.resolve("base"),
                 "module A { " + baseDirectives + " }",
                 moduleClasses);

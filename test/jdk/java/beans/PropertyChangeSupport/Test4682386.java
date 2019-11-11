@@ -62,6 +62,7 @@ import javax.swing.JTable;
  * There is no new functionality from the implementation of this RFE.
  * Semantically, it should be equivalent.
  */
+@Bean
 public class Test4682386 {
     private static final String FOO = "foo";
     private static final String BAR = "bar";
@@ -251,7 +252,11 @@ public class Test4682386 {
      * Handler for the property change events.
      */
     private static class PropertyListener implements PropertyChangeListener {
-        public void propertyChange(PropertyChangeEvent event) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void propertyChange(PropertyChangeEvent event) {
             // blank since this should execute as fast as possible.
         }
     }
@@ -264,11 +269,19 @@ public class Test4682386 {
         private boolean foo;
         private String bar;
 
-        public void addPropertyChangeListener(PropertyChangeListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addPropertyChangeListener(PropertyChangeListener listener) {
             this.pcs.addPropertyChangeListener(listener);
         }
 
-        public void removePropertyChangeListener(PropertyChangeListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener listener) {
             this.pcs.removePropertyChangeListener(listener);
         }
 
@@ -280,7 +293,11 @@ public class Test4682386 {
             return this.foo;
         }
 
-        public void setFoo(boolean foo) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(boolean foo) {
             boolean old = this.foo;
             this.foo = foo;
             this.pcs.firePropertyChange(FOO, old, foo);
@@ -290,7 +307,11 @@ public class Test4682386 {
             return this.bar;
         }
 
-        public void setBar(String bar) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setBar(String bar) {
             String old = this.bar;
             this.bar = bar;
             this.pcs.firePropertyChange(BAR, old, bar);

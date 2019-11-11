@@ -42,6 +42,7 @@ import jtreg.SkippedException;
  * an example of how to write a test.
  */
 
+@Bean
 public class ClhsdbLauncher {
 
     private Process toolProcess;

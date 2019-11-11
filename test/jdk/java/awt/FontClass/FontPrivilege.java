@@ -30,6 +30,7 @@
 
 import java.awt.Font;
 
+@Bean
 public class FontPrivilege {
 
     public static void main(String[] args) throws Exception {

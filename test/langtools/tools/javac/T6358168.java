@@ -47,6 +47,7 @@ import com.sun.tools.javac.util.List; // disambiguate
 
 
 @SupportedAnnotationTypes("*")
+@Bean
 public class T6358168 extends AbstractProcessor {
     private static final String testClasses = System.getProperty("test.classes");
     private static final String testSrc = System.getProperty("test.src");
@@ -120,7 +121,11 @@ public class T6358168 extends AbstractProcessor {
     }
 
     @Override
-    public boolean process(Set<? extends TypeElement> tes, RoundEnvironment renv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> tes, RoundEnvironment renv) {
         return true;
     }
 }

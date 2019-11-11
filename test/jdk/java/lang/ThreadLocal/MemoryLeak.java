@@ -28,6 +28,7 @@
  * @author  Josh Bloch
  */
 
+@Bean
 public class MemoryLeak {
     public static void main(String[] args) {
         for (int i = 0; i < 1100000; i++) {

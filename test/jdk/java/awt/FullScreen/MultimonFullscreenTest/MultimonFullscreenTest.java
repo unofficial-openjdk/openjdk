@@ -79,6 +79,7 @@ import java.util.Random;
 /**
  */
 
+@Bean
 public class MultimonFullscreenTest extends Frame implements ActionListener {
     GraphicsDevice  defDev = GraphicsEnvironment.getLocalGraphicsEnvironment().
             getDefaultScreenDevice();
@@ -99,6 +100,9 @@ public class MultimonFullscreenTest extends Frame implements ActionListener {
     public MultimonFullscreenTest(String title) {
         super(title);
         addWindowListener(new WindowAdapter() {
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent e) {
                 System.exit(0);
             }
@@ -127,6 +131,9 @@ public class MultimonFullscreenTest extends Frame implements ActionListener {
         p1.setLayout(new GridLayout(2,0));
         Checkbox cb = new Checkbox("Change DM on entering FS");
         cb.addItemListener(new ItemListener() {
+            @Bean
+@Bean
+@Bean
             public void itemStateChanged(ItemEvent e) {
                 dmChange = ((Checkbox)e.getSource()).getState();
             }
@@ -134,7 +141,10 @@ public class MultimonFullscreenTest extends Frame implements ActionListener {
         p1.add(cb);
 //        cb = new Checkbox("Exit FS on window dispose");
 //        cb.addItemListener(new ItemListener() {
-//            public void itemStateChanged(ItemEvent e) {
+//            @Bean
+@Bean
+@Bean
+            public void itemStateChanged(ItemEvent e) {
 //                setNullOnDispose = ((Checkbox)e.getSource()).getState();
 //            }
 //        });
@@ -142,6 +152,9 @@ public class MultimonFullscreenTest extends Frame implements ActionListener {
         CheckboxGroup cbg = new CheckboxGroup();
         cb = new Checkbox("Use Frame to enter FS", cbg, true);
         cb.addItemListener(new ItemListener() {
+            @Bean
+@Bean
+@Bean
             public void itemStateChanged(ItemEvent e) {
                 useFSFrame = true;
                 useFSWindow = false;
@@ -151,6 +164,9 @@ public class MultimonFullscreenTest extends Frame implements ActionListener {
         p1.add(cb);
         cb = new Checkbox("Use Window to enter FS", cbg, false);
         cb.addItemListener(new ItemListener() {
+            @Bean
+@Bean
+@Bean
             public void itemStateChanged(ItemEvent e) {
                 useFSFrame = false;
                 useFSWindow = true;
@@ -160,6 +176,9 @@ public class MultimonFullscreenTest extends Frame implements ActionListener {
         p1.add(cb);
         cb = new Checkbox("Use Dialog to enter FS", cbg, false);
         cb.addItemListener(new ItemListener() {
+            @Bean
+@Bean
+@Bean
             public void itemStateChanged(ItemEvent e) {
                 useFSFrame = false;
                 useFSWindow = false;
@@ -169,6 +188,9 @@ public class MultimonFullscreenTest extends Frame implements ActionListener {
         p1.add(cb);
         cb = new Checkbox("Run render loop");
         cb.addItemListener(new ItemListener() {
+            @Bean
+@Bean
+@Bean
             public void itemStateChanged(ItemEvent e) {
                 runRenderLoop = ((Checkbox)e.getSource()).getState();
             }
@@ -176,6 +198,9 @@ public class MultimonFullscreenTest extends Frame implements ActionListener {
         p1.add(cb);
         cb = new Checkbox("Use BufferStrategy in render loop");
         cb.addItemListener(new ItemListener() {
+            @Bean
+@Bean
+@Bean
             public void itemStateChanged(ItemEvent e) {
                 useBS = ((Checkbox)e.getSource()).getState();
             }
@@ -183,6 +208,9 @@ public class MultimonFullscreenTest extends Frame implements ActionListener {
         p1.add(cb);
         cb = new Checkbox("Add Children to FS window");
         cb.addItemListener(new ItemListener() {
+            @Bean
+@Bean
+@Bean
             public void itemStateChanged(ItemEvent e) {
                 addHWChildren = ((Checkbox)e.getSource()).getState();
             }
@@ -243,14 +271,20 @@ public class MultimonFullscreenTest extends Frame implements ActionListener {
 
     }
 
-    public void actionPerformed(ActionEvent ae) {
+    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent ae) {
         GraphicsDevice dev = deviceMap.get(ae.getSource());
         System.err.println("Setting FS on device:"+dev);
         final Window fsWindow;
 
         if (useFSWindow) {
             fsWindow = new Window(this, dev.getDefaultConfiguration()) {
-                public void paint(Graphics g) {
+                @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
                     renderDimensions(g, getBounds(),
                                      this.getGraphicsConfiguration());
                 }
@@ -259,7 +293,10 @@ public class MultimonFullscreenTest extends Frame implements ActionListener {
             fsWindow = new Dialog((Frame)null, "FS Dialog on device "+dev, false,
                                  dev.getDefaultConfiguration());
             fsWindow.add(new Component() {
-                public void paint(Graphics g) {
+                @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
                     renderDimensions(g, getBounds(),
                                      this.getGraphicsConfiguration());
                 }
@@ -268,14 +305,20 @@ public class MultimonFullscreenTest extends Frame implements ActionListener {
             fsWindow = new Frame("FS Frame on device "+dev,
                                  dev.getDefaultConfiguration())
             {
-                public void paint(Graphics g) {
+                @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
                     renderDimensions(g, getBounds(),
                                      this.getGraphicsConfiguration());
                 }
             };
             if (addHWChildren) {
                 fsWindow.add("South", new Panel() {
-                    public void paint(Graphics g) {
+                    @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
                         g.setColor(Color.red);
                         g.fillRect(0, 0, getWidth(), getHeight());
                     }
@@ -284,6 +327,9 @@ public class MultimonFullscreenTest extends Frame implements ActionListener {
             }
         }
         fsWindow.addMouseListener(new MouseAdapter() {
+            @Bean
+@Bean
+@Bean
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() > 1) {
                     done = true;
@@ -370,7 +416,10 @@ public class MultimonFullscreenTest extends Frame implements ActionListener {
                 new MultimonFullscreenTest("Test Full Screen");
     }
     class WindowHandler extends WindowAdapter {
-        public void windowClosing(WindowEvent we) {
+        @Bean
+@Bean
+@Bean
+            public void windowClosing(WindowEvent we) {
             done = true;
             Window w = (Window)we.getSource();
             if (setNullOnDispose) {

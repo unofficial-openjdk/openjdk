@@ -42,6 +42,7 @@ import static org.testng.Assert.*;
 
 import static java.lang.invoke.MethodType.*;
 
+@Bean
 public class VarHandleTestMethodTypeShort extends VarHandleBaseTest {
     static final short static_final_v = (short)0x0123;
 

@@ -38,6 +38,7 @@ import jdk.test.lib.containers.docker.DockerRunOptions;
 import jdk.test.lib.containers.docker.DockerTestUtils;
 import jdk.test.lib.containers.cgroup.CPUSetsReader;
 
+@Bean
 public class TestCPUAwareness {
     private static final String imageName = Common.imageName("cpu");
     private static final int availableCPUs = Runtime.getRuntime().availableProcessors();

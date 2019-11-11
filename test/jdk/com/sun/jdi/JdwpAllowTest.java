@@ -46,6 +46,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
+@Bean
 public class JdwpAllowTest {
 
     public static int handshake(int port) throws IOException {

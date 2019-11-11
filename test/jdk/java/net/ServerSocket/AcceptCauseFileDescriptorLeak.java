@@ -54,6 +54,7 @@ import java.util.List;
 import jdk.test.lib.JDKToolFinder;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class AcceptCauseFileDescriptorLeak {
     private static final int REPS = 2048;
     private static final int THRESHOLD = 1024;

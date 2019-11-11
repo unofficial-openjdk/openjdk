@@ -59,7 +59,10 @@ public class SecurityDialogTest extends Frame implements ActionListener {
         SecurityDialogTest test = new SecurityDialogTest();
     }
 
-    public void actionPerformed(ActionEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
 
         if (e.getSource() == setSecurity) {
             if (isNative) {

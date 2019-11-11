@@ -29,6 +29,7 @@
  * @run main/othervm --enable-preview ExpressionSwitchBugs
  */
 
+@Bean
 public class ExpressionSwitchBugs {
     public static void main(String... args) {
         new ExpressionSwitchBugs().testNested();
@@ -114,11 +115,19 @@ public class ExpressionSwitchBugs {
         default -> throw new IllegalStateException();
     });
 
-    private int id(int i) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int id(int i) {
         return i;
     }
 
-    private int id(Object o) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int id(Object o) {
         return -1;
     }
 
@@ -148,7 +157,11 @@ public class ExpressionSwitchBugs {
             this.i = i;
         }
 
-        public int test(boolean fromSuper) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int test(boolean fromSuper) {
             return switch (fromSuper ? 0 : 1) {
                 case 0 -> {
                     yield super.i;

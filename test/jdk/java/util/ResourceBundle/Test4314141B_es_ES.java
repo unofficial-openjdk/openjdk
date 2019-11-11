@@ -22,6 +22,7 @@
  */
 import java.util.ListResourceBundle;
 
+@Bean
 public class Test4314141B_es_ES extends ListResourceBundle {
     protected Object[][] getContents() {
         return new Object[][] {

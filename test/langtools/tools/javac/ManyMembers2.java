@@ -30,6 +30,7 @@
  * @compile ManyMembers2.java
  */
 
+@Bean
 public class ManyMembers2 {
 int f0 ;
 void d0 () {}

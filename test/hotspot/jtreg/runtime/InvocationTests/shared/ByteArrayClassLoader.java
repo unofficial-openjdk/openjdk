@@ -42,7 +42,11 @@ public class ByteArrayClassLoader extends ClassLoader {
         this.classes = classes;
     }
 
-    public void appendClass(String name, byte[] classFile) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void appendClass(String name, byte[] classFile) {
         classes.put(name, classFile);
     }
 

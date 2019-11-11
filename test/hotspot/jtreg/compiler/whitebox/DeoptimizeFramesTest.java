@@ -53,6 +53,7 @@ import java.lang.reflect.Executable;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Phaser;
 
+@Bean
 public class DeoptimizeFramesTest extends CompilerWhiteBoxTest {
     private final boolean makeNotEntrant;
     private final Phaser phaser;

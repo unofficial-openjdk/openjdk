@@ -38,6 +38,7 @@ import javax.imageio.spi.IIORegistry;
 import javax.imageio.spi.ImageReaderSpi;
 import com.sun.imageio.plugins.png.PNGMetadata;
 
+@Bean
 public class MetadataFormatPrinter {
 
     private int indentLevel = 0;
@@ -64,12 +65,20 @@ public class MetadataFormatPrinter {
         column = 0;
     }
 
-    private void println(String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void println(String s) {
         out.println(s);
         column = 0;
     }
 
-    private void printWrapped(String in, int leftIndent) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void printWrapped(String in, int leftIndent) {
         StringTokenizer t = new StringTokenizer(in);
         while (t.hasMoreTokens()) {
             String s = t.nextToken();
@@ -87,7 +96,11 @@ public class MetadataFormatPrinter {
         }
     }
 
-    private void print(String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void print(String s) {
         int length = s.length();
         if (column + length > maxColumn) {
             println();
@@ -98,7 +111,11 @@ public class MetadataFormatPrinter {
         column += length;
     }
 
-    private void print(IIOMetadataFormat format) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void print(IIOMetadataFormat format) {
         String rootName = format.getRootName();
         println("<!DOCTYPE \"" +
                            rootName +

@@ -27,6 +27,7 @@
 
 package p1;
 
+@Bean
 public class BS {
     protected String u = "bsu";
     protected String o() { return "bso"; }

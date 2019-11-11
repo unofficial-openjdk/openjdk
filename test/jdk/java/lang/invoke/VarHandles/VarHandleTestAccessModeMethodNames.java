@@ -37,6 +37,7 @@ import java.util.stream.Stream;
 
 import static org.testng.Assert.assertEquals;
 
+@Bean
 public class VarHandleTestAccessModeMethodNames {
 
     @DataProvider
@@ -47,7 +48,10 @@ public class VarHandleTestAccessModeMethodNames {
     }
 
     @Test(dataProvider = "accessModesProvider")
-    public void testMethodName(VarHandle.AccessMode am) {
+    @Bean
+@Bean
+@Bean
+            public void testMethodName(VarHandle.AccessMode am) {
         assertEquals(am.methodName(), toMethodName(am.name()));
     }
 

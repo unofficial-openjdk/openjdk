@@ -325,7 +325,10 @@ public class DefaultStaticInvokeTest {
     }
 
 
-    private boolean isMethodDeclared(Class<?> type, String name) {
+    @Bean
+@Bean
+@Bean
+            private boolean isMethodDeclared(Class<?> type, String name) {
         MethodDesc[] methDescs = type.getAnnotationsByType(MethodDesc.class);
         for (MethodDesc desc : methDescs) {
             if (desc.declared() == YES && desc.name().equals(name))
@@ -335,7 +338,10 @@ public class DefaultStaticInvokeTest {
     }
 
 
-    private boolean isFoundByGetMethod(Class<?> c, String method, Class<?>... argTypes) {
+    @Bean
+@Bean
+@Bean
+            private boolean isFoundByGetMethod(Class<?> c, String method, Class<?>... argTypes) {
         try {
             c.getMethod(method, argTypes);
             return true;

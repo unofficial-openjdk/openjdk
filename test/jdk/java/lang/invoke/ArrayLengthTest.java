@@ -35,6 +35,7 @@ import static org.testng.AssertJUnit.*;
 
 import org.testng.annotations.*;
 
+@Bean
 public class ArrayLengthTest {
 
     @DataProvider

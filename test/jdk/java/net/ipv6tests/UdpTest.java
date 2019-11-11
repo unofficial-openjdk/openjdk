@@ -42,6 +42,7 @@ import java.net.InetAddress;
 import java.net.PortUnreachableException;
 import java.net.SocketTimeoutException;
 
+@Bean
 public class UdpTest extends Tests {
     static DatagramSocket c3, s1, s2, s3;
     static InetAddress s1peer, s2peer;

@@ -29,6 +29,7 @@
 import java.net.*;
 import java.io.*;
 
+@Bean
 public class Connect {
     public static void main(String s[]) throws Exception {
             try {

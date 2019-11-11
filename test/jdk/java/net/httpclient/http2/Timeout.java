@@ -45,6 +45,7 @@ import javax.net.ssl.SSLSocket;
  * @summary Check if HttpTimeoutException is thrown if a server doesn't reply
  * @run main/othervm Timeout
  */
+@Bean
 public class Timeout {
 
     private static final int RANDOM_PORT = 0;

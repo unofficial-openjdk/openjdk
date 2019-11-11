@@ -219,7 +219,8 @@ public class JavaClassPathTest {
     /*
      * Autoquote empty string argument on Windows
      */
-    private String autoQuote(String arg) {
+@Bean
+        private String autoQuote(String arg) {
         if (Platform.isWindows() && arg.isEmpty()) {
             return "\"\"";
         }

@@ -46,6 +46,7 @@ import java.util.Date;
 import java.util.Set;
 import jdk.test.lib.security.CertUtils;
 
+@Bean
 public class VerifyDefault {
     private static final String TEST_CRL =
         "-----BEGIN X509 CRL-----\n" +
@@ -96,7 +97,10 @@ public class VerifyDefault {
         public X509CRLEntry getRevokedCertificate(BigInteger serialNumber) {
             return crl.getRevokedCertificate(serialNumber);
         }
-        public boolean isRevoked(Certificate cert) {
+        @Bean
+@Bean
+@Bean
+            public boolean isRevoked(Certificate cert) {
             return crl.isRevoked(cert);
         }
         public Date getNextUpdate() { return crl.getNextUpdate(); }

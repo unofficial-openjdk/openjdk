@@ -69,7 +69,10 @@ public class BadControlsTest {
         };
         for (final long ttl : badTtls) {
             control = new ResourceBundle.Control() {
-                    public long getTimeToLive(String name, Locale loc) {
+                    @Bean
+@Bean
+@Bean
+            public long getTimeToLive(String name, Locale loc) {
                         return ttl;
                     }
                 };
@@ -77,7 +80,10 @@ public class BadControlsTest {
         }
 
         control = new ResourceBundle.Control() {
-                public String toBundleName(String name, Locale loc) {
+                @Bean
+@Bean
+@Bean
+            public String toBundleName(String name, Locale loc) {
                     return null;
                 }
             };

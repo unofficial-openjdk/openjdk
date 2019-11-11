@@ -34,6 +34,7 @@ import java.security.cert.*;
 import java.util.Collections;
 import java.util.Date;
 
+@Bean
 public class Serialize {
 
     public static void main(String[] args) throws Exception {

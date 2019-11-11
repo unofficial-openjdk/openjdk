@@ -54,6 +54,7 @@ import java.io.File;
  * @compile -XDstringConcat=indyWithConstants -source 9 -target 9 TestIndyStringConcat.java
  * @run main TestIndyStringConcat true
  */
+@Bean
 public class TestIndyStringConcat {
 
     static String other;

@@ -33,12 +33,17 @@ import java.io.FileReader;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 
+@Bean
 public class Test2 {
         public static class Testobj {
                 private String val;
                 public Testobj(String s) {
                         val = s;
                 }
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void setVal(String v) {
                         val = v;
                 }

@@ -42,6 +42,7 @@ import gc.testlibrary.PerfCounters;
  * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:-UseCompressedOops -XX:-UseCompressedClassPointers -XX:+UseSerialGC -XX:+UsePerfData -Xint gc.metaspace.TestPerfCountersAndMemoryPools
  * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:+UseCompressedOops -XX:+UseCompressedClassPointers -XX:+UseSerialGC -XX:+UsePerfData -Xint gc.metaspace.TestPerfCountersAndMemoryPools
  */
+@Bean
 public class TestPerfCountersAndMemoryPools {
     public static void main(String[] args) throws Exception {
         checkMemoryUsage("Metaspace", "sun.gc.metaspace");

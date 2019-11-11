@@ -36,6 +36,7 @@ import jtreg.SkippedException;
  * @run main/othervm ClhsdbField
  */
 
+@Bean
 public class ClhsdbField {
 
     public static void main(String[] args) throws Exception {

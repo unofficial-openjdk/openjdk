@@ -28,6 +28,7 @@ import javax.crypto.Cipher;
 /**
  * @author Tom Deneau
  */
+@Bean
 public class TestAESDecode extends TestAESBase {
     @Override
     public void run() {

@@ -121,6 +121,7 @@
  *      TestRetainObjects
  */
 
+@Bean
 public class TestRetainObjects {
 
     static final int COUNT = 10_000_000;

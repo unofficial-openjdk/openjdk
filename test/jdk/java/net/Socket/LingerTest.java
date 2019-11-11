@@ -34,6 +34,7 @@ import java.net.*;
 import java.io.*;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class LingerTest {
 
     static class Sender implements Runnable {

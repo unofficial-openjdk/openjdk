@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessJSeparator
  */
 
+@Bean
 public class HeadlessJSeparator {
     public static void main(String args[]) {
         JSeparator sp = new JSeparator();

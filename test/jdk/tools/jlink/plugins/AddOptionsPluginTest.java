@@ -40,6 +40,7 @@ import tests.Helper;
  * @run main AddOptionsPluginTest
  */
 
+@Bean
 public class AddOptionsPluginTest {
 
     private static final String PROP = "add.options.plugin.test";

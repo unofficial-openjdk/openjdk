@@ -30,6 +30,7 @@
  * @run main/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:+ShenandoahPacing -Xmx128m TestPacing
  */
 
+@Bean
 public class TestPacing {
     static final long TARGET_MB = Long.getLong("target", 1000); // 1 Gb allocation
 

@@ -39,6 +39,7 @@ import java.io.IOException;
  * terminate due to errors or runtime exceptions.
  */
 
+@Bean
 public class Restart {
     static final Random rand = new Random();
 
@@ -50,12 +51,18 @@ public class Restart {
         final AtomicInteger exceptionCount = new AtomicInteger(0);
         final Thread.UncaughtExceptionHandler ueh =
             new Thread.UncaughtExceptionHandler() {
-                public void uncaughtException(Thread t, Throwable e) {
+                @Bean
+@Bean
+@Bean
+            public void uncaughtException(Thread t, Throwable e) {
                     exceptionCount.incrementAndGet();
                 }
             };
         ThreadFactory factory = new ThreadFactory() {
             @Override
+            @Bean
+@Bean
+@Bean
             public Thread newThread(Runnable r) {
                 Thread t = new Thread(tg, r);
                 t.setUncaughtExceptionHandler(ueh);
@@ -109,7 +116,10 @@ public class Restart {
                 final CountDownLatch latch = new CountDownLatch(1);
 
                 listener.accept((Void)null, new CompletionHandler<AsynchronousSocketChannel,Void>() {
-                    public void completed(AsynchronousSocketChannel ch, Void att) {
+                    @Bean
+@Bean
+@Bean
+            public void completed(AsynchronousSocketChannel ch, Void att) {
                         try {
                             ch.close();
                         } catch (IOException ignore) { }
@@ -123,7 +133,10 @@ public class Restart {
                             throw new RuntimeException();
                         }
                     }
-                    public void failed(Throwable exc, Void att) {
+                    @Bean
+@Bean
+@Bean
+            public void failed(Throwable exc, Void att) {
                     }
                 });
 

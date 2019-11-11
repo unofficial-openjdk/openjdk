@@ -31,6 +31,7 @@
 
 import java.io.*;
 
+@Bean
 public class QuoteTest {
 
     static String testStr = "token1 token2 \"The test string\" token4";

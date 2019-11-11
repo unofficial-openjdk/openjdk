@@ -35,6 +35,7 @@ import java.io.PrintStream;
 
 import java.util.Map;
 
+@Bean
 public class WildcardPortSupport {
 
     private static final String PORT_ARG = "port";

@@ -42,10 +42,15 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 
 @SupportedAnnotationTypes("*")
+@Bean
 public class ReleaseModulesAndTypeElement extends AbstractProcessor {
 
     @Override
-    public boolean process(Set<? extends TypeElement> roots, RoundEnvironment roundEnv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> roots, RoundEnvironment roundEnv) {
         Elements elements = processingEnv.getElementUtils();
         if (elements.getTypeElement(JX_A_P_GENERATED) == null) {
             throw new AssertionError("jx.a.p.Generated not found by unqualified search!");

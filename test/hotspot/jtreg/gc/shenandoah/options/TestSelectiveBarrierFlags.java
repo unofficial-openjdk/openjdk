@@ -38,6 +38,7 @@ import java.util.concurrent.*;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class TestSelectiveBarrierFlags {
 
     public static void main(String[] args) throws Exception {

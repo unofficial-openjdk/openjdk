@@ -41,6 +41,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.UserPrincipal;
 import java.util.UUID;
 import java.util.logging.FileHandler;
+@Bean
 public class CheckLockLocationTest {
 
     private static final String NON_WRITABLE_DIR = "non-writable-dir";

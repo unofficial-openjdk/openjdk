@@ -33,6 +33,7 @@ import java.io.IOException;
  * @run main Settings
  * @author ksrini
  */
+@Bean
 public class Settings extends TestHelper {
     private static File testJar = null;
 

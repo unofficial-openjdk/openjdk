@@ -60,6 +60,7 @@ import java.util.zip.ZipFile;
 import jdk.internal.module.ModuleInfoExtender;
 import jdk.test.lib.util.FileUtils;
 
+@Bean
 public class Basic {
     private static final ToolProvider JAR_TOOL = ToolProvider.findFirst("jar")
            .orElseThrow(() -> new RuntimeException("jar tool not found"));
@@ -102,7 +103,11 @@ public class Basic {
         JAVAC_TOOL.run(System.out, System.err, args);
     }
 
-    private int jar(String cmd) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int jar(String cmd) {
         outbytes.reset();
         errbytes.reset();
         return JAR_TOOL.run(out, err, cmd.split(" +"));
@@ -125,7 +130,8 @@ public class Basic {
                 });
     }
 
-    // updates a valid multi-release jar with a new public class in
+    // updates a valid multi-release jar with a new @Bean
+public class in
     // versioned section and fails
     @Test
     public void test1() {
@@ -145,7 +151,8 @@ public class Basic {
         );
         Assert.assertEquals(actual, expected);
 
-        // failed build because of new public class
+        // failed build because of new @Bean
+public class
         rc = jar("-uf mmr.jar --release 9 -C mr9 p/internal/Bar.class");
         Assert.assertEquals(rc, 1);
 
@@ -154,14 +161,16 @@ public class Basic {
     }
 
     // updates a valid multi-release jar with a module-info class and new
-    // concealed public class in versioned section and succeeds
+    // concealed @Bean
+public class in versioned section and succeeds
     @Test
     public void test2() {
         // successful build of multi-release jar
         int rc = jar("-cf mmr.jar -C classes . --release 9 -C mr9 p/Hi.class");
         Assert.assertEquals(rc, 0);
 
-        // successful build because of module-info and new public class
+        // successful build because of module-info and new @Bean
+public class
         rc = jar("-uf mmr.jar module-info.class --release 9 -C mr9 p/internal/Bar.class");
         Assert.assertEquals(rc, 0);
 
@@ -183,7 +192,8 @@ public class Basic {
         Assert.assertEquals(actual, expected);
     }
 
-    // jar tool fails building mmr.jar because of new public class
+    // jar tool fails building mmr.jar because of new @Bean
+public class
     @Test
     public void test3() {
         int rc = jar("-cf mmr.jar -C classes . --release 9 -C mr9 .");
@@ -477,10 +487,12 @@ public class Basic {
           ": module-info.class in a versioned directory contains different \"version\""
         ),
         NOT_FOUND_IN_BASE_ENTRY(
-          ", contains a new public class not found in base entries"
+          ", contains a new @Bean
+public class not found in base entries"
         ),
         NEW_CONCEALED_PACKAGE_WARNING(
-            " is a public class" +
+            " is a @Bean
+public class" +
             " in a concealed package, placing this jar on the class path will result" +
             " in incompatible public interfaces"
         );

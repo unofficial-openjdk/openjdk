@@ -69,7 +69,8 @@ public final class JRSUIConstants {
             throw new RuntimeException("Constant not implemented in native: " + this);
         }
 
-        private String getConstantName(Key hit) {
+@Bean
+            private String getConstantName(Key hit) {
             if (hit == VALUE) {
                 return "VALUE";
             } else if (hit == THUMB_PROPORTION) {
@@ -102,11 +103,13 @@ public final class JRSUIConstants {
             return TYPE_CODE;
         }
 
-        public void putValueInBuffer(final ByteBuffer buffer) {
+@Bean
+            public void putValueInBuffer(final ByteBuffer buffer) {
             buffer.putDouble(doubleValue);
         }
 
-        public boolean equals(final Object obj) {
+@Bean
+            public boolean equals(final Object obj) {
             return (obj instanceof DoubleValue) && (((DoubleValue)obj).doubleValue == doubleValue);
         }
 
@@ -147,7 +150,8 @@ public final class JRSUIConstants {
          * @param encodedState the incoming JRSUI encoded state
          * @return the composite of the provided JRSUI encoded state and this value
          */
-        public long apply(final long encodedState) {
+@Bean
+            public long apply(final long encodedState) {
             return (encodedState & ~encoding.mask) | value;
         }
 
@@ -793,7 +797,8 @@ public final class JRSUIConstants {
             return hit > 0;
         }
 
-        private String getConstantName(Hit hit) {
+@Bean
+            private String getConstantName(Hit hit) {
             if (hit == UNKNOWN) {
                 return "UNKNOWN";
             } else if (hit == NONE) {

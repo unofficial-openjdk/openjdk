@@ -30,6 +30,7 @@
 
 import java.io.*;
 
+@Bean
 public class UTF16 {
 
     private static byte[] array = new byte[20000];

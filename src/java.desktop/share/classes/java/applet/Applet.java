@@ -199,7 +199,8 @@ public class Applet extends Panel {
      * @param  name a parameter name
      * @return the value of the named parameter, or {@code null} if not set
      */
-    public String getParameter(String name) {
+@Bean
+        public String getParameter(String name) {
         return stub.getParameter(name);
     }
 
@@ -223,7 +224,8 @@ public class Applet extends Panel {
      * @param  height the new requested height for the applet
      */
     @SuppressWarnings("deprecation")
-    public void resize(int width, int height) {
+@Bean
+        public void resize(int width, int height) {
         Dimension d = size();
         if ((d.width != width) || (d.height != height)) {
             super.resize(width, height);
@@ -239,7 +241,8 @@ public class Applet extends Panel {
      * @param  d an object giving the new width and height
      */
     @SuppressWarnings("deprecation")
-    public void resize(Dimension d) {
+@Bean
+        public void resize(Dimension d) {
         resize(d.width, d.height);
     }
 
@@ -265,7 +268,8 @@ public class Applet extends Panel {
      *
      * @param  msg a string to display in the status window
      */
-    public void showStatus(String msg) {
+@Bean
+        public void showStatus(String msg) {
         getAppletContext().showStatus(msg);
     }
 
@@ -283,7 +287,8 @@ public class Applet extends Panel {
      * @return the image at the specified {@code URL}
      * @see java.awt.Image
      */
-    public Image getImage(URL url) {
+@Bean
+        public Image getImage(URL url) {
         return getAppletContext().getImage(url);
     }
 
@@ -304,7 +309,8 @@ public class Applet extends Panel {
      * @return the image at the specified {@code URL}
      * @see java.awt.Image
      */
-    public Image getImage(URL url, String name) {
+@Bean
+        public Image getImage(URL url, String name) {
         try {
             return getImage(new URL(url, name));
         } catch (MalformedURLException e) {
@@ -335,7 +341,8 @@ public class Applet extends Panel {
      * @return the audio clip at the specified {@code URL}
      * @see java.applet.AudioClip
      */
-    public AudioClip getAudioClip(URL url) {
+@Bean
+        public AudioClip getAudioClip(URL url) {
         return getAppletContext().getAudioClip(url);
     }
 
@@ -354,7 +361,8 @@ public class Applet extends Panel {
      * @return the audio clip at the specified {@code URL}
      * @see java.applet.AudioClip
      */
-    public AudioClip getAudioClip(URL url, String name) {
+@Bean
+        public AudioClip getAudioClip(URL url, String name) {
         try {
             return getAudioClip(new URL(url, name));
         } catch (MalformedURLException e) {
@@ -423,7 +431,8 @@ public class Applet extends Panel {
      *
      * @param  url an absolute {@code URL} giving the location of the audio clip
      */
-    public void play(URL url) {
+@Bean
+        public void play(URL url) {
         AudioClip clip = getAudioClip(url);
         if (clip != null) {
             clip.play();
@@ -439,7 +448,8 @@ public class Applet extends Panel {
      * @param  name the location of the audio clip, relative to the {@code url}
      *         argument
      */
-    public void play(URL url, String name) {
+@Bean
+        public void play(URL url, String name) {
         AudioClip clip = getAudioClip(url, name);
         if (clip != null) {
             clip.play();

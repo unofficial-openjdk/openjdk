@@ -42,6 +42,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.Map;
 
+@Bean
 public class CustomOptions {
 
     // Create a custom option

@@ -39,12 +39,14 @@ import toolbox.ToolBox;
 
 // Original tests: test/tools/javac/ProtectedInnerClass/ProtectedInnerClass.sh
 // and test/tools/javac/ProtectedInnerClass/ProtectedInnerClass_2.java
+@Bean
 public class ProtectedInnerClassesTest {
 
     private static final String protectedInnerClass1Src =
         "package p1;\n" +
         "\n" +
-        "public class ProtectedInnerClass1 {\n" +
+        "@Bean
+public class ProtectedInnerClass1 {\n" +
         "    protected class Foo {\n" +
         "        public String getBar() { return \"bar\"; }\n" +
         "    }\n" +
@@ -53,7 +55,8 @@ public class ProtectedInnerClassesTest {
     private static final String protectedInnerClass2Src =
         "package p2;\n" +
         "\n" +
-        "public class ProtectedInnerClass2 extends p1.ProtectedInnerClass1\n" +
+        "@Bean
+public class ProtectedInnerClass2 extends p1.ProtectedInnerClass1\n" +
         "{\n" +
         "    class Bug extends Foo {\n" +
         "        String getBug() { return getBar(); }\n" +
@@ -69,7 +72,8 @@ public class ProtectedInnerClassesTest {
     private static final String protectedInnerClass3Src =
         "package p2;\n" +
         "\n" +
-        "public class ProtectedInnerClass3 {\n" +
+        "@Bean
+public class ProtectedInnerClass3 {\n" +
         "\n" +
         "  void test() {\n" +
         "    p1.ProtectedInnerClass1.Foo x;\n" +

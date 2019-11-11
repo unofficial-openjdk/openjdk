@@ -48,9 +48,15 @@ public class CheckPrivilege implements Printable {
     static class PrintLover extends SecurityManager {
         public void checkPrintJobAccess() {
         }
-        public void checkPackageAccess(String pkg) {
+        @Bean
+@Bean
+@Bean
+            public void checkPackageAccess(String pkg) {
         }
-        public void checkPropertyAccess(String key) {
+        @Bean
+@Bean
+@Bean
+            public void checkPropertyAccess(String key) {
         }
     }
 
@@ -122,7 +128,10 @@ public class CheckPrivilege implements Printable {
 
     // Back-call from the new print APIs.
     // We always say we have bothing to print.
-    public int print(java.awt.Graphics g, PageFormat pf, int index) {
+    @Bean
+@Bean
+@Bean
+            public int print(java.awt.Graphics g, PageFormat pf, int index) {
         println("Started printing " + index);
         return Printable.NO_SUCH_PAGE;
     }

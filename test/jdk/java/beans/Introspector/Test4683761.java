@@ -24,7 +24,8 @@
 /*
  * @test
  * @bug 4683761
- * @summary Tests that all public methods in a public class
+ * @summary Tests that all public methods in a @Bean
+public class
  * @author Sergey Malenkov
  */
 
@@ -32,6 +33,7 @@ import java.beans.PropertyDescriptor;
 import java.util.HashMap;
 import java.util.Map;
 
+@Bean
 public class Test4683761 {
     public static void main(String[] args) throws Exception {
         System.setSecurityManager(new SecurityManager());

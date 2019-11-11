@@ -64,7 +64,11 @@ final class SwingTest implements Runnable {
 
     private SwingTest(Class<?> type) {
         Set<Method> methods = new TreeSet<Method>(new Comparator<Method>() {
-            public int compare(Method first, Method second) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public int compare(Method first, Method second) {
                 return first.getName().compareTo(second.getName());
             }
         });

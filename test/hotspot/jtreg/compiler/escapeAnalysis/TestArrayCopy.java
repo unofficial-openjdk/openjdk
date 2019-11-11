@@ -48,6 +48,7 @@ package compiler.escapeAnalysis;
 import sun.hotspot.WhiteBox;
 import java.lang.reflect.Method;
 
+@Bean
 public class TestArrayCopy {
 
     private static final WhiteBox WB = WhiteBox.getWhiteBox();

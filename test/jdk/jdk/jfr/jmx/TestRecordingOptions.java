@@ -40,6 +40,7 @@ import jdk.test.lib.Asserts;
  * @library /test/lib /test/jdk
  * @run main/othervm jdk.jfr.jmx.TestRecordingOptions
  */
+@Bean
 public class TestRecordingOptions {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public static void main(String[] args) throws Exception {

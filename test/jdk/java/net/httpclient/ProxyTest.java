@@ -73,12 +73,17 @@ import static java.net.Proxy.NO_PROXY;
  * @run main/othervm ProxyTest
  * @author danielfuchs
  */
+@Bean
 public class ProxyTest {
 
     static {
         try {
             HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier() {
-                    public boolean verify(String hostname, SSLSession session) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean verify(String hostname, SSLSession session) {
                         return true;
                     }
                 });
@@ -153,7 +158,11 @@ public class ProxyTest {
         }
 
         @Override
-        public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
             proxySelector.connectFailed(uri, sa, ioe);
         }
     }

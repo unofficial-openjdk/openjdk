@@ -37,6 +37,7 @@ import javax.management.*;
 import javax.management.remote.*;
 import javax.management.modelmbean.*;
 
+@Bean
 public class DescriptorSupportSerialTest {
     public static void main(String[] args) throws Exception {
         if (java.io.Serializable.class.isAssignableFrom(Thread.class))

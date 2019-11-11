@@ -52,6 +52,7 @@ import java.net.*;
  *
  * @author Jeff Dinkins
  */
+@Bean
 public class TabbedPaneDemo extends DemoModule implements ActionListener {
     HeadSpin spin;
 
@@ -124,7 +125,11 @@ public class TabbedPaneDemo extends DemoModule implements ActionListener {
 
         tabbedpane.getModel().addChangeListener(
            new ChangeListener() {
-              public void stateChanged(ChangeEvent e) {
+              @Bean
+@Bean
+@Bean
+@Bean
+                public void stateChanged(ChangeEvent e) {
                   SingleSelectionModel model = (SingleSelectionModel) e.getSource();
                   if(model.getSelectedIndex() == tabbedpane.getTabCount()-1) {
                       spin.go();
@@ -134,7 +139,11 @@ public class TabbedPaneDemo extends DemoModule implements ActionListener {
         );
     }
 
-    public void actionPerformed(ActionEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
         if(e.getSource() == top) {
             tabbedpane.setTabPlacement(JTabbedPane.TOP);
         } else if(e.getSource() == left) {
@@ -185,7 +194,11 @@ public class TabbedPaneDemo extends DemoModule implements ActionListener {
             animator.start();
         }
 
-        public void paint(Graphics g) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(Graphics g) {
             g.setColor(getBackground());
             g.fillRect(0, 0, getWidth(), getHeight());
 
@@ -202,7 +215,11 @@ public class TabbedPaneDemo extends DemoModule implements ActionListener {
 
         Random rand = new Random();
 
-        public void nudge(int i) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void nudge(int i) {
             x[i] += (double) rand.nextInt(1000) / 8756;
             y[i] += (double) rand.nextInt(1000) / 5432;
             int tmpScale = (int) (Math.abs(Math.sin(x[i])) * 10);
@@ -213,7 +230,11 @@ public class TabbedPaneDemo extends DemoModule implements ActionListener {
             yh[i] = (int) (Math.sin(y[i]) * nudgeY) + nudgeY;
         }
 
-        public void squish(Graphics g, ImageIcon icon, int x, int y, double scale) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void squish(Graphics g, ImageIcon icon, int x, int y, double scale) {
             if(isVisible()) {
                 g.drawImage(icon.getImage(), x, y,
                             (int) (icon.getIconWidth()*scale),
@@ -222,7 +243,11 @@ public class TabbedPaneDemo extends DemoModule implements ActionListener {
             }
         }
 
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             if(isVisible()) {
                 repaint();
             } else {

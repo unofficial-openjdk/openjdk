@@ -43,6 +43,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 import org.testng.annotations.BeforeMethod;
 
+@Bean
 public class ExecutionControlSpecTest extends KullaTesting {
 
     ClassLoader ccl;
@@ -56,7 +57,8 @@ public class ExecutionControlSpecTest extends KullaTesting {
         Path modDir = Paths.get("mod");
         compiler.compile(modDir,
                 pkg +
-                "public class PrefixingExecutionControl extends jdk.jshell.execution.LocalExecutionControl {\n" +
+                "@Bean
+public class PrefixingExecutionControl extends jdk.jshell.execution.LocalExecutionControl {\n" +
                 "    @Override\n" +
                 "    public String invoke(String className, String methodName)\n" +
                 "            throws RunException, InternalException, EngineTerminationException {\n" +
@@ -64,7 +66,8 @@ public class ExecutionControlSpecTest extends KullaTesting {
                 "    }\n" +
                 "}\n",
                 pkg +
-                "public class PrefixingExecutionControlProvider implements jdk.jshell.spi.ExecutionControlProvider {\n" +
+                "@Bean
+public class PrefixingExecutionControlProvider implements jdk.jshell.spi.ExecutionControlProvider {\n" +
                 "    @Override\n" +
                 "    public String name() {\n" +
                 "        return \"prefixing\";\n" +

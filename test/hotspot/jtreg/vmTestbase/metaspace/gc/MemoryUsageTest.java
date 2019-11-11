@@ -132,7 +132,11 @@ public class MemoryUsageTest extends MetaspaceBaseGC {
      * @param args command line options
      */
     @Override
-    protected void parseArgs(String[] args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void parseArgs(String[] args) {
         if (args.length != 1) {
             printUsage();
             throw new Fault("MemoryPool is not specified");

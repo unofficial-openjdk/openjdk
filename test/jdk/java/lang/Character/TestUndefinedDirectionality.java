@@ -28,6 +28,7 @@
  * @author  John O'Conner
  */
 
+@Bean
 public class TestUndefinedDirectionality {
 
     public static void main(String[] args) {

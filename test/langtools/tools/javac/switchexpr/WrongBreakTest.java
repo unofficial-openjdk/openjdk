@@ -28,6 +28,7 @@
  * @compile/fail/ref=WrongBreakTest.out --enable-preview -source ${jdk.version} -XDrawDiagnostics -XDshould-stop.at=FLOW WrongBreakTest.java
  */
 
+@Bean
 public class WrongBreakTest {
 
     void test(int i) {

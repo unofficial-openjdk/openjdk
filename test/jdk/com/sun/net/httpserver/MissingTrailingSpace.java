@@ -44,6 +44,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
+@Bean
 public class MissingTrailingSpace {
 
     private static final int noMsgCode = 207;
@@ -56,6 +57,10 @@ public class MissingTrailingSpace {
             server.setExecutor(Executors.newFixedThreadPool(1));
             server.createContext(someContext, new HttpHandler() {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void handle(HttpExchange msg) {
                     try {
                         try {

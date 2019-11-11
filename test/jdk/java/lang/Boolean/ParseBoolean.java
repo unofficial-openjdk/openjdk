@@ -27,6 +27,7 @@
  * @summary test Boolean.parseBoolean
  */
 
+@Bean
 public class ParseBoolean {
     public static void main(String[] args) throws Exception {
         checkTrue(Boolean.parseBoolean("TRUE"));

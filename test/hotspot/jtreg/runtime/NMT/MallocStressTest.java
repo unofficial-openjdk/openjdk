@@ -43,6 +43,7 @@ import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class MallocStressTest {
     private static int K = 1024;
 

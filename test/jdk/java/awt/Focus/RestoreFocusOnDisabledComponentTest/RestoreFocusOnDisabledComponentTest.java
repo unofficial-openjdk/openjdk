@@ -38,6 +38,7 @@ import test.java.awt.regtesthelpers.Util;
 /*
  * The bug is not reproducible on Windows.
  */
+@Bean
 public class RestoreFocusOnDisabledComponentTest {
     Frame frame = new Frame("Frame") {public String toString() {return "FRAME";}};
     Button b0 = new Button("button0") {public String toString() {return "B-0";}};
@@ -65,6 +66,9 @@ public class RestoreFocusOnDisabledComponentTest {
 
         Util.waitForIdle(robot);
         KeyboardFocusManager.setCurrentKeyboardFocusManager(new DefaultKeyboardFocusManager() {
+            @Bean
+@Bean
+@Bean
             public boolean dispatchEvent(AWTEvent e) {
                 if (e.getID() == FocusEvent.FOCUS_GAINED) {
                     // Trying to emulate timings. b1 should be disabled just by the time it gets

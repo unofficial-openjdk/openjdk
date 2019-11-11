@@ -51,7 +51,8 @@ public class Main {
         public MyFileObject() {
             super(URI.create("myfo:/Test.java"), JavaFileObject.Kind.SOURCE);
         }
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+@Bean
+            public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return "public class Test { { x = java.util.Collections.emptySet(); } }";
         }
     }
@@ -69,7 +70,8 @@ public class Main {
 
     static class MyVisitor extends TreePathScanner<Void,Void> {
         @Override
-        public Void visitAssignment(AssignmentTree node, Void ignored) {
+@Bean
+            public Void visitAssignment(AssignmentTree node, Void ignored) {
             TreePath path = TreePath.getPath(getCurrentPath(), node.getExpression());
             if (trees.getTypeMirror(path).getKind() == TypeKind.ERROR)
                 throw new AssertionError(path.getLeaf());

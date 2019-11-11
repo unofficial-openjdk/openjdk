@@ -45,7 +45,11 @@ abstract class Checker {
         File testSrc = new File(System.getProperty("test.src"));
 
         DiagnosticListener<JavaFileObject> dl = new DiagnosticListener<JavaFileObject>() {
-            public void report(Diagnostic d) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void report(Diagnostic d) {
                 System.err.println(d);
                 if (d.getKind() == Diagnostic.Kind.ERROR)
                     errors = true;
@@ -77,7 +81,11 @@ abstract class Checker {
     }
 
     // default impl: split ref at ";" and call checkLocal(scope, ref_segment) on scope and its enclosing scopes
-    protected boolean check(Scope s, String ref) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected boolean check(Scope s, String ref) {
         // System.err.println("check scope: " + s);
         // System.err.println("check ref: " + ref);
         if (s == null && (ref == null || ref.trim().length() == 0))
@@ -150,7 +158,11 @@ abstract class Checker {
             return null;
         }
 
-        private String abbrev(Tree tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private String abbrev(Tree tree) {
             int max = 48;
             String s = tree.toString().replaceAll("[ \n]+", " ");
             return (s.length() < max ? s : s.substring(0, max-3) + "...");

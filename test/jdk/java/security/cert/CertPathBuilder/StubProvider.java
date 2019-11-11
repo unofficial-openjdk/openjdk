@@ -28,6 +28,7 @@
  */
 import java.security.Provider;
 
+@Bean
 public class StubProvider extends Provider {
     public StubProvider() {
         super( "StubProvider", "1.1", "No Info");

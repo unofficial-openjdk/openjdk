@@ -42,6 +42,7 @@ import jdk.test.lib.RandomFactory;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
 
+@Bean
 public class PrimeTest {
 
     private static final int DEFAULT_UPPER_BOUND = 1299709; // 100000th prime

@@ -68,6 +68,9 @@ public class InputMethodsTest extends Applet {
 
         btnIM.addActionListener(new ActionListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 inputMethodsEnabled = !inputMethodsEnabled;
                 setBtnText();

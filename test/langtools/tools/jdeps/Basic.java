@@ -44,6 +44,7 @@ import java.util.stream.Collectors;
 
 import static java.nio.file.StandardCopyOption.*;
 
+@Bean
 public class Basic {
     public static void main(String... args) throws Exception {
         int errors = 0;

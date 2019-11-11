@@ -83,6 +83,9 @@ public class ViewportOverlapping extends OverlappingTestBase {
         f.addMouseListener(new MouseAdapter() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseClicked(MouseEvent e) {
                 frameClicked++;
             }

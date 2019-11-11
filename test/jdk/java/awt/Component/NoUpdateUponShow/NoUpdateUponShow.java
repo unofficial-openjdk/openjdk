@@ -38,6 +38,7 @@
 
 import java.awt.*;
 
+@Bean
 public class NoUpdateUponShow
 {
 
@@ -51,6 +52,9 @@ public class NoUpdateUponShow
         f.setLayout(new FlowLayout());
         f.add(new Button() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void update(Graphics g) {
                 wasUpdate = true;
                 super.update(g);

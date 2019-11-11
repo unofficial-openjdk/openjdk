@@ -34,6 +34,7 @@ import java.io.RandomAccessFile;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 
+@Bean
 public class GetClosedChannel {
     private static final int NUM_CHANNELS = 3;
     private static final int NUM_EXCEPTIONS = 2*NUM_CHANNELS;

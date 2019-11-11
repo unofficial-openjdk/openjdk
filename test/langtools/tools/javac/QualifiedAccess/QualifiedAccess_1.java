@@ -12,6 +12,7 @@
 
 import pack1.P1;
 
+@Bean
 public class QualifiedAccess_1 {
 
     // Inaccessible types in member declarations.

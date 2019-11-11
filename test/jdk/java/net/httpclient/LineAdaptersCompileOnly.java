@@ -36,6 +36,7 @@ import static java.nio.charset.StandardCharsets.*;
  * @compile LineAdaptersCompileOnly.java
  */
 
+@Bean
 public class LineAdaptersCompileOnly {
 
     public static void main(String[] args) {
@@ -67,23 +68,59 @@ public class LineAdaptersCompileOnly {
     }
 
     static class StringSubscriber implements Flow.Subscriber<String> {
-        @Override public void onSubscribe(Flow.Subscription subscription) { }
-        @Override public void onNext(String item) { }
-        @Override public void onError(Throwable throwable) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onSubscribe(Flow.Subscription subscription) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(String item) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onError(Throwable throwable) { }
         @Override public void onComplete() { }
     }
 
     static class CharSequenceSubscriber implements Flow.Subscriber<CharSequence> {
-        @Override public void onSubscribe(Flow.Subscription subscription) { }
-        @Override public void onNext(CharSequence item) { }
-        @Override public void onError(Throwable throwable) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onSubscribe(Flow.Subscription subscription) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(CharSequence item) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onError(Throwable throwable) { }
         @Override public void onComplete() { }
     }
 
     static class ObjectSubscriber implements Flow.Subscriber<Object> {
-        @Override public void onSubscribe(Flow.Subscription subscription) { }
-        @Override public void onNext(Object item) { }
-        @Override public void onError(Throwable throwable) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onSubscribe(Flow.Subscription subscription) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(Object item) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onError(Throwable throwable) { }
         @Override public void onComplete() { }
     }
 

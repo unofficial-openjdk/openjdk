@@ -5,6 +5,7 @@
  * @compile/fail/ref=BadBinaryLiterals.7.out -XDrawDiagnostics BadBinaryLiterals.java
  */
 
+@Bean
 public class BadBinaryLiterals {
     int valid = 0b0;            // valid literal, illegal in source 6
     int baddigit = 0b012;       // bad digit

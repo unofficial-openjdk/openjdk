@@ -32,11 +32,16 @@
 import java.security.*;
 import java.net.*;
 
+@Bean
 public class RecursionDebug {
 
     // non bootclasspath SecurityManager
     public static class RecursionSM extends SecurityManager {
-        public void checkPermission(Permission p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void checkPermission(Permission p) {
             super.checkPermission(p);
         }
     }

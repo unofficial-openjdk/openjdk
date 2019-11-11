@@ -30,6 +30,7 @@
 
 import java.beans.VetoableChangeSupport;
 
+@Bean
 public class Test4076065 {
     public static void main(String[] args) {
         try {

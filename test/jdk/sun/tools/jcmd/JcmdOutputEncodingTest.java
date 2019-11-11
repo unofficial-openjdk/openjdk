@@ -36,6 +36,7 @@ import jdk.test.lib.JDKToolLauncher;
  * @library /test/lib
  * @run main JcmdOutputEncodingTest
  */
+@Bean
 public class JcmdOutputEncodingTest {
 
     public static void main(String[] args) throws Exception {

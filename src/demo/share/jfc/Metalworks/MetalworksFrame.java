@@ -96,7 +96,11 @@ public final class MetalworksFrame extends JFrame {
         this.addWindowListener(new WindowAdapter() {
 
             @Override
-            public void windowClosing(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosing(WindowEvent e) {
                 quit();
             }
         });
@@ -154,21 +158,33 @@ public final class MetalworksFrame extends JFrame {
 
         newWin.addActionListener(new ActionListener() {
 
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 newDocument();
             }
         });
 
         open.addActionListener(new ActionListener() {
 
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 openDocument();
             }
         });
 
         quit.addActionListener(new ActionListener() {
 
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 quit();
             }
         });
@@ -195,7 +211,11 @@ public final class MetalworksFrame extends JFrame {
 
         prefs.addActionListener(new ActionListener() {
 
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 openPrefsWindow();
             }
         });
@@ -219,7 +239,11 @@ public final class MetalworksFrame extends JFrame {
 
         inBox.addActionListener(new ActionListener() {
 
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 openInBox();
             }
         });
@@ -247,7 +271,11 @@ public final class MetalworksFrame extends JFrame {
 
         slow.addActionListener(new ActionListener() {
 
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 // for right now I'm saying if you set the mode
                 // to something other than a specified mode
                 // it will revert to the old way
@@ -258,14 +286,22 @@ public final class MetalworksFrame extends JFrame {
 
         live.addActionListener(new ActionListener() {
 
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 desktop.setDragMode(JDesktopPane.LIVE_DRAG_MODE);
             }
         });
 
         outline.addActionListener(new ActionListener() {
 
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 desktop.setDragMode(JDesktopPane.OUTLINE_DRAG_MODE);
             }
         });
@@ -284,14 +320,22 @@ public final class MetalworksFrame extends JFrame {
 
         about.addActionListener(new ActionListener() {
 
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 showAboutBox();
             }
         });
 
         openHelp.addActionListener(new ActionListener() {
 
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 openHelpWindow();
             }
         });

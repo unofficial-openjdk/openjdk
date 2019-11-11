@@ -39,6 +39,7 @@ import static org.testng.Assert.*;
  * @modules java.management/javax.management.loading:open
  * @run testng MLetInternalsTest
  */
+@Bean
 public class MLetInternalsTest {
     private final static String CONSTRUCT_PARAMETER = "constructParameter";
 

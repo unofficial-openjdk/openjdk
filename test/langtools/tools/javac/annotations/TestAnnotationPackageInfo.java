@@ -34,6 +34,7 @@ import java.util.*;
 import javax.tools.*;
 import com.sun.source.util.*;
 
+@Bean
 public class TestAnnotationPackageInfo {
     public static void main(String... args) throws Exception {
         new TestAnnotationPackageInfo().run();
@@ -46,7 +47,11 @@ public class TestAnnotationPackageInfo {
             this.text = text;
         }
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return text;
         }
     }

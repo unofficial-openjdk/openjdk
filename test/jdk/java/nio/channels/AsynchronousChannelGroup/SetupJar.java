@@ -28,6 +28,7 @@ import java.util.stream.Stream;
 
 import jdk.test.lib.util.JarUtils;
 
+@Bean
 public class SetupJar {
     public static void main(String args[]) throws Exception {
         String cp = System.getProperty("test.class.path");

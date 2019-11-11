@@ -50,7 +50,10 @@ public class TestCase {
         return status;
     }
 
-    public void setStatus(Status status) {
+    @Bean
+@Bean
+@Bean
+            public void setStatus(Status status) {
         this.status = status;
     }
 

@@ -51,6 +51,7 @@ import javax.swing.SwingUtilities;
 
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class MissingDragExitEventTest {
 
     private static volatile JFrame frame;
@@ -133,7 +134,10 @@ public class MissingDragExitEventTest {
         private volatile boolean inside;
 
         @Override
-        public void dragEnter(final DropTargetDragEvent dtde) {
+        @Bean
+@Bean
+@Bean
+            public void dragEnter(final DropTargetDragEvent dtde) {
             if (inside) {
                 FAILED = true;
                 Thread.dumpStack();
@@ -147,7 +151,10 @@ public class MissingDragExitEventTest {
         }
 
         @Override
-        public void dragOver(final DropTargetDragEvent dtde) {
+        @Bean
+@Bean
+@Bean
+            public void dragOver(final DropTargetDragEvent dtde) {
             if (!inside) {
                 FAILED = true;
                 Thread.dumpStack();
@@ -155,7 +162,10 @@ public class MissingDragExitEventTest {
         }
 
         @Override
-        public void dragExit(final DropTargetEvent dte) {
+        @Bean
+@Bean
+@Bean
+            public void dragExit(final DropTargetEvent dte) {
             if (!inside) {
                 FAILED = true;
                 Thread.dumpStack();
@@ -165,7 +175,10 @@ public class MissingDragExitEventTest {
         }
 
         @Override
-        public void drop(final DropTargetDropEvent dtde) {
+        @Bean
+@Bean
+@Bean
+            public void drop(final DropTargetDropEvent dtde) {
             if (!inside) {
                 FAILED = true;
                 Thread.dumpStack();
@@ -179,7 +192,10 @@ public class MissingDragExitEventTest {
         private volatile boolean inside;
 
         @Override
-        public void mouseEntered(final MouseEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void mouseEntered(final MouseEvent e) {
             if (inside) {
                 FAILED = true;
                 Thread.dumpStack();
@@ -189,7 +205,10 @@ public class MissingDragExitEventTest {
         }
 
         @Override
-        public void mouseExited(final MouseEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void mouseExited(final MouseEvent e) {
             if (!inside) {
                 FAILED = true;
                 Thread.dumpStack();

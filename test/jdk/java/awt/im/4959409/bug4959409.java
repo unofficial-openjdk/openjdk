@@ -54,7 +54,10 @@ class TestFrame extends JFrame implements KeyListener {
         setVisible(true);
     }
 
-    public void keyPressed(KeyEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void keyPressed(KeyEvent e) {
         int code = e.getKeyCode();
         int mods = e.getModifiers();
         if (code == '1' && mods == KeyEvent.SHIFT_MASK) {
@@ -64,9 +67,15 @@ class TestFrame extends JFrame implements KeyListener {
         }
     }
 
-    public void keyTyped(KeyEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void keyTyped(KeyEvent e) {
     }
 
-    public void keyReleased(KeyEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void keyReleased(KeyEvent e) {
     }
 }

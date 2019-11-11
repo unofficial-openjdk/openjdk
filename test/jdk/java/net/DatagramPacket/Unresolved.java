@@ -30,6 +30,7 @@
  */
 import java.net.*;
 
+@Bean
 public class Unresolved {
     public static void main(String[] args) throws Exception {
         InetSocketAddress remAddr =  InetSocketAddress.createUnresolved( "foo.bar", 161  );

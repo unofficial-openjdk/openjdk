@@ -30,6 +30,7 @@
  *
  */
 
+@Bean
 public class ACasLoadsStoresBadMem {
     public static void main(String[] args) {
         int[] dst = new int[5];

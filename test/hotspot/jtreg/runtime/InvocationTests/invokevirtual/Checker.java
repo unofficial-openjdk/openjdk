@@ -70,7 +70,11 @@ public class Checker extends shared.Checker {
         return getOverriddenMethod(staticTargetClass, dynamicTargetClass);
     }
 
-    public Method getOverriddenMethod(Class staticTarget, Class dynamicTarget) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Method getOverriddenMethod(Class staticTarget, Class dynamicTarget) {
         // Assertion #1. C is a subclass of A
         if (!staticTarget.isAssignableFrom(dynamicTarget)) {
             return null;

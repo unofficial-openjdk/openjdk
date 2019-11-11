@@ -45,6 +45,7 @@ package gc.survivorAlignment;
  *                   -XX:-ExplicitGCInvokesConcurrent -XX:-ResizePLAB
  *                   gc.survivorAlignment.TestPromotionLABLargeSurvivorAlignment
  */
+@Bean
 public class TestPromotionLABLargeSurvivorAlignment {
     public static void main(String args[]) {
         Object garbage[] = new Object[1000000];

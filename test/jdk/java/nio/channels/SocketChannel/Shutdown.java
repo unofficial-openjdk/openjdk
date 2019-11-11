@@ -31,6 +31,7 @@ import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
 
+@Bean
 public class Shutdown {
 
     /**

@@ -59,7 +59,10 @@ public class ConcurrentContainsKeyTest {
             this.a = a;
         }
 
-        public int compareTo(X o) {
+        @Bean
+@Bean
+@Bean
+            public int compareTo(X o) {
             return this.a - o.a;
         }
 

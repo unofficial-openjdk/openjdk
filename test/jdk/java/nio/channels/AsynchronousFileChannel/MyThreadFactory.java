@@ -24,6 +24,7 @@
 import java.util.concurrent.ThreadFactory;
 import java.util.*;
 
+@Bean
 public class MyThreadFactory implements ThreadFactory {
 
     private static final Set<Thread> threads = new HashSet<Thread>();
@@ -38,7 +39,10 @@ public class MyThreadFactory implements ThreadFactory {
     }
 
     @Override
-    public Thread newThread(Runnable r) {
+    @Bean
+@Bean
+@Bean
+            public Thread newThread(Runnable r) {
         Thread t = new Thread(r);
         t.setDaemon(true);
         synchronized (threads) {

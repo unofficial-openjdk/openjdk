@@ -26,5 +26,6 @@
  */
 @Missing
 @Marker
+@Bean
 public class A {
 }

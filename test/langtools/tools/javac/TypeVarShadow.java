@@ -28,6 +28,7 @@
  * @run compile TypeVarShadow.java
  */
 
+@Bean
 public class TypeVarShadow {
     class T<E> {}
 

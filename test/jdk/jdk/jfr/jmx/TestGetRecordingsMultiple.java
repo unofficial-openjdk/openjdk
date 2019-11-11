@@ -38,6 +38,7 @@ import jdk.test.lib.Asserts;
  * @library /test/lib /test/jdk
  * @run main/othervm jdk.jfr.jmx.TestGetRecordingsMultiple
  */
+@Bean
 public class TestGetRecordingsMultiple {
 
     private static class TestRecording {

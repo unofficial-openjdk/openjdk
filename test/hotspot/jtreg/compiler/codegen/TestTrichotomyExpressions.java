@@ -51,6 +51,7 @@ enum Operation { SMALLER, SMALLER_EQUAL, EQUAL, GREATER_EQUAL, GREATER, ALWAYS_F
     Operation op();
 }
 
+@Bean
 public class TestTrichotomyExpressions {
 
     public static int compare1(int a, int b) {

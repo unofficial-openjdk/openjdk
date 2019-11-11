@@ -59,6 +59,7 @@ import javax.swing.JPopupMenu;
 import test.java.awt.regtesthelpers.Util;
 import test.java.awt.regtesthelpers.UtilInternal;
 
+@Bean
 public class EmbeddedFrameTest1
 {
     public static void main( String args[] ) throws AWTException
@@ -75,7 +76,10 @@ public class EmbeddedFrameTest1
             final JPopupMenu menu = new JPopupMenu();
             JButton item = new JButton("A button in popup");
             item.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
+                    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                         System.out.println("Button pressed");
                     }
                 });
@@ -84,7 +88,10 @@ public class EmbeddedFrameTest1
 
             final JButton btn = new JButton("Press me to see popup");
             btn.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
+                    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                         menu.show(btn, 0, btn.getHeight());
                     }
                 });

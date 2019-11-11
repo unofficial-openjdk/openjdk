@@ -37,6 +37,7 @@ import static java.net.Proxy.NO_PROXY;
  * Request should get serviced by the cache handler. Response get
  * saved through the cache handler.
  */
+@Bean
 public class getResponseCode {
     static URL url;
     static String FNPrefix;

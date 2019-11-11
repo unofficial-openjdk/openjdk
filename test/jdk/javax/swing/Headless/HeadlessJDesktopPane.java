@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessJDesktopPane
  */
 
+@Bean
 public class HeadlessJDesktopPane {
     public static void main(String args[]) {
         JComponent ch = new JComponent(){};

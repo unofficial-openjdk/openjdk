@@ -33,6 +33,7 @@ import java.io.ByteArrayInputStream;
 import java.security.cert.CertificateFactory;
 import java.util.Collection;
 
+@Bean
 public class GenerateCertificatesEmptyCollection {
 
     public static void main(String[] args) throws Exception {

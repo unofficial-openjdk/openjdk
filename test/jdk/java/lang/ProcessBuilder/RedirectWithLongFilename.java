@@ -34,6 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+@Bean
 public class RedirectWithLongFilename {
 
     public static void main(String[] args) throws Exception {

@@ -45,6 +45,7 @@ import com.sun.tools.javac.util.AbstractLog;
 import com.sun.tools.javac.util.JCDiagnostic;
 
 /**This analyzer guards against legacy Log.error/warning/note methods that don't use the typed keys.*/
+@Bean
 public class LegacyLogMethodAnalyzer extends AbstractCodingRulesAnalyzer {
 
     public LegacyLogMethodAnalyzer(JavacTask task) {
@@ -59,14 +60,22 @@ public class LegacyLogMethodAnalyzer extends AbstractCodingRulesAnalyzer {
     class LegacyLogMethodVisitor extends TreeScanner {
 
         @Override
-        public void visitClassDef(JCClassDecl tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitClassDef(JCClassDecl tree) {
             if (!tree.sym.packge().fullname.toString().startsWith("com.sun.tools.javac."))
                 return ;
             super.visitClassDef(tree);
         }
 
         @Override
-        public void visitApply(JCMethodInvocation tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitApply(JCMethodInvocation tree) {
             checkLegacyLogMethod(tree);
             super.visitApply(tree);
         }

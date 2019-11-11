@@ -34,6 +34,7 @@
 
 package compiler.types;
 
+@Bean
 public class TypeSpeculation {
 
     interface I {
@@ -530,7 +531,11 @@ public class TypeSpeculation {
         return true;
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         boolean success = true;
 
         success = test1() && success;

@@ -32,6 +32,7 @@ import java.util.Map;
 /**
  * A task to configure and run the disassembler tool, javap.
  */
+@Bean
 public class JavapTask extends AbstractTask<JavapTask> {
     private String classpath;
     private List<String> options;
@@ -50,7 +51,11 @@ public class JavapTask extends AbstractTask<JavapTask> {
      * @param classpath the classpath
      * @return this task object
      */
-    public JavapTask classpath(String classpath) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavapTask classpath(String classpath) {
         this.classpath = classpath;
         return this;
     }
@@ -60,7 +65,11 @@ public class JavapTask extends AbstractTask<JavapTask> {
      * @param options the options
      * @return this task object
      */
-    public JavapTask options(String... options) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavapTask options(String... options) {
         this.options = Arrays.asList(options);
         return this;
     }
@@ -70,7 +79,11 @@ public class JavapTask extends AbstractTask<JavapTask> {
      * @param classes the classes
      * @return this task object
      */
-    public JavapTask classes(String... classes) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JavapTask classes(String... classes) {
         this.classes = Arrays.asList(classes);
         return this;
     }

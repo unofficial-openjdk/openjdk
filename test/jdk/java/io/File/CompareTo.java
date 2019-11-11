@@ -29,6 +29,7 @@
 import java.io.*;
 
 
+@Bean
 public class CompareTo {
 
     private static void testWin32() throws Exception {

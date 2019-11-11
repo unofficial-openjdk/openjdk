@@ -38,6 +38,7 @@ import java.util.Arrays;
 import javax.management.RuntimeOperationsException;
 import javax.management.modelmbean.DescriptorSupport;
 
+@Bean
 public class DescriptorSupportXMLTest {
     public static void main(String[] args) throws Exception {
         System.out.println("Testing that DescriptorSupport.toXMLString() " +

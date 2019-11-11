@@ -28,6 +28,7 @@
  * @compile DivByZero.java
  * @author turnidge
  */
+@Bean
 public class DivByZero {
     float f1 = 1.0f;
 

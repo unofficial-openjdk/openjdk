@@ -281,7 +281,11 @@ public final class KeychainStore extends KeyStoreSpi {
      * @return the certificate, or null if the given alias does not exist or
      * does not contain a certificate.
      */
-    public Certificate engineGetCertificate(String alias) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Certificate engineGetCertificate(String alias) {
         permissionCheck();
 
         Object entry = entries.get(alias.toLowerCase());
@@ -309,7 +313,11 @@ public final class KeychainStore extends KeyStoreSpi {
      * @return the creation date of this entry, or null if the given alias does
      * not exist
      */
-    public Date engineGetCreationDate(String alias) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Date engineGetCreationDate(String alias) {
         permissionCheck();
 
         Object entry = entries.get(alias.toLowerCase());
@@ -540,7 +548,11 @@ public final class KeychainStore extends KeyStoreSpi {
      *
      * @return true if the alias exists, false otherwise
      */
-    public boolean engineContainsAlias(String alias) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean engineContainsAlias(String alias) {
         permissionCheck();
         return entries.containsKey(alias.toLowerCase());
     }
@@ -562,7 +574,11 @@ public final class KeychainStore extends KeyStoreSpi {
      * @return true if the entry identified by the given alias is a
      * <i>key entry</i>, false otherwise.
      */
-    public boolean engineIsKeyEntry(String alias) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean engineIsKeyEntry(String alias) {
         permissionCheck();
         Object entry = entries.get(alias.toLowerCase());
         if ((entry != null) && (entry instanceof KeyEntry)) {
@@ -579,7 +595,11 @@ public final class KeychainStore extends KeyStoreSpi {
      * @return true if the entry identified by the given alias is a
      * <i>trusted certificate entry</i>, false otherwise.
      */
-    public boolean engineIsCertificateEntry(String alias) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean engineIsCertificateEntry(String alias) {
         permissionCheck();
         Object entry = entries.get(alias.toLowerCase());
         if ((entry != null) && (entry instanceof TrustedCertEntry)) {
@@ -605,7 +625,11 @@ public final class KeychainStore extends KeyStoreSpi {
      * @return the (alias) name of the first entry with matching certificate,
      * or null if no such entry exists in this keystore.
      */
-    public String engineGetCertificateAlias(Certificate cert) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String engineGetCertificateAlias(Certificate cert) {
         permissionCheck();
         Certificate certElem;
 
@@ -704,7 +728,11 @@ public final class KeychainStore extends KeyStoreSpi {
         addedEntries.clear();
     }
 
-    private long addCertificateToKeychain(String alias, Certificate cert) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private long addCertificateToKeychain(String alias, Certificate cert) {
         byte[] certblob = null;
         long returnValue = 0;
 
@@ -781,7 +809,11 @@ public final class KeychainStore extends KeyStoreSpi {
     /**
      * Callback method from _scanKeychain.  If a trusted certificate is found, this method will be called.
      */
-    private void createTrustedCertEntry(String alias, long keychainItemRef, long creationDate, byte[] derStream) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void createTrustedCertEntry(String alias, long keychainItemRef, long creationDate, byte[] derStream) {
         TrustedCertEntry tce = new TrustedCertEntry();
 
         try {

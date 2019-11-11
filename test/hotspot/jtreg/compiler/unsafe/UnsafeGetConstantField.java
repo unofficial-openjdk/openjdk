@@ -92,6 +92,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.PUTFIELD;
 import static jdk.internal.org.objectweb.asm.Opcodes.PUTSTATIC;
 import static jdk.internal.org.objectweb.asm.Opcodes.RETURN;
 
+@Bean
 public class UnsafeGetConstantField {
     static final Class<?> THIS_CLASS = UnsafeGetConstantField.class;
     static final Unsafe U = Unsafe.getUnsafe();

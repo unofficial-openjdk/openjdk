@@ -47,6 +47,7 @@ class RedefineClassTest_A {
     }
 }
 
+@Bean
 public class RedefineClassTest {
 
     public static String newClass = "class RedefineClassTest_A { public int Method() { return 2; } }";

@@ -38,6 +38,7 @@
 import java.lang.instrument.Instrumentation;
 import java.util.jar.JarFile;
 
+@Bean
 public class CircularityErrorTest {
 
     static Instrumentation ins;

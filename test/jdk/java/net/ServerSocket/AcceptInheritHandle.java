@@ -39,6 +39,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class AcceptInheritHandle {
 
     enum ServerSocketProducer {

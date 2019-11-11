@@ -31,6 +31,7 @@ import java.awt.geom.Area;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
+@Bean
 public class NPETests {
     static boolean verbose;
     static int numfailures = 0;

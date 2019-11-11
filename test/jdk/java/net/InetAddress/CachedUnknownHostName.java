@@ -30,6 +30,7 @@
 
 import java.net.InetAddress;
 
+@Bean
 public class CachedUnknownHostName {
   public static void main(String argv[]) throws Exception {
     String hostname = new String("bogusHostName");

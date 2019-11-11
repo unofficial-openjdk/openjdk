@@ -37,6 +37,7 @@ import javax.imageio.spi.ImageInputStreamSpi;
 import javax.imageio.spi.ServiceRegistry;
 import javax.imageio.stream.ImageInputStream;
 
+@Bean
 public class ServiceRegistrySyncTest {
     public static void main(String[] args) throws InterruptedException {
 
@@ -119,7 +120,11 @@ class MyService extends ImageInputStreamSpi {
     }
 
     @Override
-    public String getDescription(Locale locale) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String getDescription(Locale locale) {
         return null;
     }
 

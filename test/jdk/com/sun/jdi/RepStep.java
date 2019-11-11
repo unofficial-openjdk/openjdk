@@ -42,6 +42,7 @@ import jdk.test.lib.process.StreamPumper;
 
 import java.util.*;
 
+@Bean
 public class RepStep {
     static final String TARGET = "RepStepTarg";
     static final int GRANULARITY = StepRequest.STEP_LINE;
@@ -69,7 +70,11 @@ public class RepStep {
         dieNice();
     }
 
-    private void createStep(ThreadReference thread) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void createStep(ThreadReference thread) {
         final StepRequest sr =
                   requestManager.createStepRequest(thread,
                                                    GRANULARITY,
@@ -172,7 +177,11 @@ public class RepStep {
         new StreamPumper(vm.process().getInputStream())
                 .addPump(new StreamPumper.LinePump() {
                     @Override
-                    protected void processLine(String line) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                protected void processLine(String line) {
                         System.out.println("[debugee_stdout] " + line);
                     }
                 })
@@ -180,7 +189,11 @@ public class RepStep {
         new StreamPumper(vm.process().getErrorStream())
                 .addPump(new StreamPumper.LinePump() {
                     @Override
-                    protected void processLine(String line) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                protected void processLine(String line) {
                         System.err.println("[debugee_stderr] " + line);
                     }
                 })

@@ -42,6 +42,7 @@ import com.sun.source.util.*;
 import com.sun.tools.javac.api.*;
 
 @SupportedAnnotationTypes("*")
+@Bean
 public class T8142931 extends AbstractProcessor {
 
     public java.util.List<? extends javax.xml.namespace.QName> f0;
@@ -72,7 +73,11 @@ public class T8142931 extends AbstractProcessor {
     }
 
     @Override
-    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         Set<? extends Element> set = roundEnv.getRootElements();
         for (Element element : set) {
             Collection<VariableElement> fields = ElementFilter.fieldsIn(((TypeElement) element).getEnclosedElements());
@@ -94,7 +99,11 @@ public class T8142931 extends AbstractProcessor {
     }
 
     static class MyDiagListener implements DiagnosticListener {
-        public void report(Diagnostic d) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void report(Diagnostic d) {
             System.err.println(d);
             count++;
         }

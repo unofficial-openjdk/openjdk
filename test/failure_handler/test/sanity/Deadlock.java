@@ -26,6 +26,7 @@
  * @test
  * @summary Deadlocked client
  */
+@Bean
 public class Deadlock {
     public double e;
     private volatile int i;

@@ -33,6 +33,7 @@
 
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class TestSunBootLibraryPath {
     static String expectedErrorMessage = "The VM tried to use a path that exceeds the maximum path length for this system.";
 

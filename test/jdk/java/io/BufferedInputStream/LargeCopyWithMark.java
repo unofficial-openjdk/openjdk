@@ -36,6 +36,7 @@ import java.io.OutputStream;
 import static jdk.test.lib.process.ProcessTools.*;
 
 
+@Bean
 public class LargeCopyWithMark {
 
     public static void main(String[] args) throws Exception {

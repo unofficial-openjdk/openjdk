@@ -33,6 +33,7 @@
 
 import java.util.*;
 
+@Bean
 public class MissingCast2 {
   public static void main(String[] args) {
           new E();

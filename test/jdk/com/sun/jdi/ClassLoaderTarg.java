@@ -31,7 +31,8 @@ class ClassLoaderTarg extends ClassLoader {
     private Hashtable loaded = new Hashtable();
     String id;
 
-    public ClassLoaderTarg(String id) {
+    @Bean
+public classLoaderTarg(String id) {
         this.id = id;
     }
 

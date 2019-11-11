@@ -31,6 +31,7 @@
 import java.io.*;
 import java.util.*;
 
+@Bean
 public class StickySize {
     static void equalClones(BitSet s, int expectedSize) {
         equal(expectedSize, clone(s).size());

@@ -51,6 +51,7 @@ import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.util.function.BiFunction;
 
+@Bean
 public class CastNullCheckDroppingsTest {
 
     private static final WhiteBox WHITE_BOX = WhiteBox.getWhiteBox();

@@ -56,16 +56,25 @@ public class Client {
         return socket.getSession();
     }
 
-    private void setEnabledCipherSuites(String... cipherSuites) {
+    @Bean
+@Bean
+@Bean
+            private void setEnabledCipherSuites(String... cipherSuites) {
         socket.setEnabledCipherSuites(cipherSuites);
     }
 
-    private void setEnabledProtocols(String... protocols) {
+    @Bean
+@Bean
+@Bean
+            private void setEnabledProtocols(String... protocols) {
         socket.setEnabledProtocols(protocols);
     }
 
     @SuppressWarnings(value = { "unchecked", "rawtypes" })
-    private void setServerName(String hostname) {
+    @Bean
+@Bean
+@Bean
+            private void setServerName(String hostname) {
         List serverNames = new ArrayList();
         serverNames.add(createSNIHostName(hostname));
         SSLParameters params = socket.getSSLParameters();
@@ -75,7 +84,10 @@ public class Client {
 
     // Create SNIHostName via reflection due to pre-8 JDK builds don't support
     // SNI. Those JDK builds cannot find classes SNIServerName and SNIHostName.
-    private Object createSNIHostName(String hostname) {
+    @Bean
+@Bean
+@Bean
+            private Object createSNIHostName(String hostname) {
         try {
             Class<?> clazz = Class.forName("javax.net.ssl.SNIHostName");
             return clazz.getConstructor(String.class).newInstance(hostname);
@@ -84,7 +96,10 @@ public class Client {
         }
     }
 
-    private void setApplicationProtocols(String... protocols) {
+    @Bean
+@Bean
+@Bean
+            private void setApplicationProtocols(String... protocols) {
         SSLParameters params = socket.getSSLParameters();
         params.setApplicationProtocols(protocols);
         socket.setSSLParameters(params);

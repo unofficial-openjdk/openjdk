@@ -27,6 +27,7 @@
  * @run main/othervm TestThreadStackSizes
  */
 
+@Bean
 public class TestThreadStackSizes extends Thread {
     static final int K = 1024;
 

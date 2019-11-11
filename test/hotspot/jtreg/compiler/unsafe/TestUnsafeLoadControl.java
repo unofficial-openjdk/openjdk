@@ -37,6 +37,7 @@ import jdk.internal.misc.Unsafe;
 
 import java.lang.reflect.Field;
 
+@Bean
 public class TestUnsafeLoadControl {
 
     private static final Unsafe UNSAFE;
@@ -80,7 +81,11 @@ public class TestUnsafeLoadControl {
         return sum;
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         boolean[] flags = new boolean[10];
         for (int i = 0; i < flags.length; i++) {
             flags[i] = true;

@@ -90,6 +90,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *                   LargeHandshakeTest
  *
  */
+@Bean
 public class LargeHandshakeTest implements HttpServerAdapters {
 
     // Use this command to regenerate the keystore file whose content is
@@ -989,7 +990,11 @@ public class LargeHandshakeTest implements HttpServerAdapters {
         SSLContext.setDefault(context);
     }
 
-    public HttpClient newHttpClient(ProxySelector ps) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public HttpClient newHttpClient(ProxySelector ps) {
         HttpClient.Builder builder = HttpClient
                 .newBuilder()
                 .sslContext(context)
@@ -1106,7 +1111,11 @@ public class LargeHandshakeTest implements HttpServerAdapters {
         futures.add(resp);
     }
 
-    private void requestCompleted(HttpRequest request, HttpResponse<?> r, Throwable t) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void requestCompleted(HttpRequest request, HttpResponse<?> r, Throwable t) {
         responseCounter.incrementAndGet();
         pending.remove(request.uri());
         System.out.println(request + " -> " + (t == null ? r : t)
@@ -1171,7 +1180,11 @@ public class LargeHandshakeTest implements HttpServerAdapters {
         }
 
         @Override
-        public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
             System.err.println("Connection to proxy failed: " + ioe);
             System.err.println("Proxy: " + sa);
             System.err.println("\tURI: " + uri);

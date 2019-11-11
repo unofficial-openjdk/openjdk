@@ -44,7 +44,11 @@ import jdk.test.lib.dcmd.JMXExecutor;
  * @run testng/othervm -Xlog:gc:RunGC.gclog -XX:-ExplicitGCInvokesConcurrent RunGCTest
  */
 public class RunGCTest {
-    public void run(CommandExecutor executor) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void run(CommandExecutor executor) {
         executor.execute("GC.run");
 
         Path gcLogPath = Paths.get("RunGC.gclog").toAbsolutePath();

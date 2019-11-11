@@ -37,6 +37,7 @@ import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.plaf.basic.BasicColorChooserUI;
 
+@Bean
 public class Test6707406 extends BasicColorChooserUI implements PropertyChangeListener {
     public static void main(String[] args) throws Exception {
         test();
@@ -59,6 +60,10 @@ public class Test6707406 extends BasicColorChooserUI implements PropertyChangeLi
         return this;
     }
 
-    public void propertyChange(PropertyChangeEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void propertyChange(PropertyChangeEvent event) {
     }
 }

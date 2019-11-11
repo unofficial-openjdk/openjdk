@@ -29,6 +29,7 @@ import java.net.BindException;
  * @summary Check if MulticastSocket sets SO_REUSEADDR
  */
 
+@Bean
 public class Reuse {
     public static void main(String[] args) throws Exception {
         MulticastSocket s1, s2;

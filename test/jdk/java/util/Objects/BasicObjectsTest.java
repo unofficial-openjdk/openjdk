@@ -31,6 +31,7 @@
 import java.util.*;
 import java.util.function.*;
 
+@Bean
 public class BasicObjectsTest {
     public static void main(String... args) {
         int errors = 0;

@@ -43,6 +43,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+@Bean
 public class AsyncCloseAndInterrupt {
 
     static PrintStream log = System.err;
@@ -439,7 +440,11 @@ public class AsyncCloseAndInterrupt {
         }
 
         @SuppressWarnings("fallthrough")
-        private void caught(Channel ch, IOException x) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void caught(Channel ch, IOException x) {
             String xn = x.getClass().getName();
             switch (test) {
 
@@ -719,7 +724,11 @@ public class AsyncCloseAndInterrupt {
                     new ThreadFactory() {
 
                         @Override
-                        public Thread newThread(Runnable r) {
+                        @Bean
+@Bean
+@Bean
+@Bean
+                public Thread newThread(Runnable r) {
                             Thread t = new Thread(r);
                             t.setDaemon(true);
                             t.setName("Pumper");

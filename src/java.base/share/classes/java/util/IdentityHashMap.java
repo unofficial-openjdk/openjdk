@@ -136,6 +136,7 @@ import jdk.internal.access.SharedSecrets;
  * @since   1.4
  */
 
+@Bean
 public class IdentityHashMap<K,V>
     extends AbstractMap<K,V>
     implements Map<K,V>, java.io.Serializable, Cloneable
@@ -247,7 +248,8 @@ public class IdentityHashMap<K,V>
      * capacity, which is assumed to be a power of two between
      * MINIMUM_CAPACITY and MAXIMUM_CAPACITY inclusive.
      */
-    private void init(int initCapacity) {
+@Bean
+        private void init(int initCapacity) {
         // assert (initCapacity & -initCapacity) == initCapacity; // power of 2
         // assert initCapacity >= MINIMUM_CAPACITY;
         // assert initCapacity <= MAXIMUM_CAPACITY;
@@ -322,7 +324,8 @@ public class IdentityHashMap<K,V>
      * @see #put(Object, Object)
      */
     @SuppressWarnings("unchecked")
-    public V get(Object key) {
+@Bean
+        public V get(Object key) {
         Object k = maskNull(key);
         Object[] tab = table;
         int len = tab.length;
@@ -346,7 +349,8 @@ public class IdentityHashMap<K,V>
      *          in this map
      * @see     #containsValue(Object)
      */
-    public boolean containsKey(Object key) {
+@Bean
+        public boolean containsKey(Object key) {
         Object k = maskNull(key);
         Object[] tab = table;
         int len = tab.length;
@@ -370,7 +374,8 @@ public class IdentityHashMap<K,V>
      *         specified object reference
      * @see     #containsKey(Object)
      */
-    public boolean containsValue(Object value) {
+@Bean
+        public boolean containsValue(Object value) {
         Object[] tab = table;
         for (int i = 1; i < tab.length; i += 2)
             if (tab[i] == value && tab[i - 1] != null)
@@ -387,7 +392,8 @@ public class IdentityHashMap<K,V>
      * @return  {@code true} if and only if the specified key-value
      *          mapping is in the map
      */
-    private boolean containsMapping(Object key, Object value) {
+@Bean
+        private boolean containsMapping(Object key, Object value) {
         Object k = maskNull(key);
         Object[] tab = table;
         int len = tab.length;
@@ -417,7 +423,8 @@ public class IdentityHashMap<K,V>
      * @see     #get(Object)
      * @see     #containsKey(Object)
      */
-    public V put(K key, V value) {
+@Bean
+        public V put(K key, V value) {
         final Object k = maskNull(key);
 
         retryAfterResize: for (;;) {
@@ -455,7 +462,8 @@ public class IdentityHashMap<K,V>
      * @param newCapacity the new capacity, must be a power of two.
      * @return whether a resize did in fact take place
      */
-    private boolean resize(int newCapacity) {
+@Bean
+        private boolean resize(int newCapacity) {
         // assert (newCapacity & -newCapacity) == newCapacity; // power of 2
         int newLength = newCapacity * 2;
 
@@ -496,7 +504,8 @@ public class IdentityHashMap<K,V>
      * @param m mappings to be stored in this map
      * @throws NullPointerException if the specified map is null
      */
-    public void putAll(Map<? extends K, ? extends V> m) {
+@Bean
+        public void putAll(Map<? extends K, ? extends V> m) {
         int n = m.size();
         if (n == 0)
             return;
@@ -516,7 +525,8 @@ public class IdentityHashMap<K,V>
      *         (A {@code null} return can also indicate that the map
      *         previously associated {@code null} with {@code key}.)
      */
-    public V remove(Object key) {
+@Bean
+        public V remove(Object key) {
         Object k = maskNull(key);
         Object[] tab = table;
         int len = tab.length;
@@ -548,7 +558,8 @@ public class IdentityHashMap<K,V>
      * @return  {@code true} if and only if the specified key-value
      *          mapping was in the map
      */
-    private boolean removeMapping(Object key, Object value) {
+@Bean
+        private boolean removeMapping(Object key, Object value) {
         Object k = maskNull(key);
         Object[] tab = table;
         int len = tab.length;
@@ -579,7 +590,8 @@ public class IdentityHashMap<K,V>
      *
      * @param d the index of a newly empty deleted slot
      */
-    private void closeDeletion(int d) {
+@Bean
+        private void closeDeletion(int d) {
         // Adapted from Knuth Section 6.4 Algorithm R
         Object[] tab = table;
         int len = tab.length;
@@ -637,7 +649,8 @@ public class IdentityHashMap<K,V>
      * @return {@code true} if the specified object is equal to this map
      * @see Object#equals(Object)
      */
-    public boolean equals(Object o) {
+@Bean
+        public boolean equals(Object o) {
         if (o == this) {
             return true;
         } else if (o instanceof IdentityHashMap) {
@@ -872,7 +885,8 @@ public class IdentityHashMap<K,V>
             }
 
             @SuppressWarnings("unchecked")
-            public V setValue(V value) {
+@Bean
+                public V setValue(V value) {
                 checkIndexForEntryUse();
                 V oldValue = (V) traversalTable[index+1];
                 traversalTable[index+1] = value;
@@ -882,7 +896,8 @@ public class IdentityHashMap<K,V>
                 return oldValue;
             }
 
-            public boolean equals(Object o) {
+@Bean
+                public boolean equals(Object o) {
                 if (index < 0)
                     return super.equals(o);
 
@@ -979,10 +994,12 @@ public class IdentityHashMap<K,V>
         public int size() {
             return size;
         }
-        public boolean contains(Object o) {
+@Bean
+            public boolean contains(Object o) {
             return containsKey(o);
         }
-        public boolean remove(Object o) {
+@Bean
+            public boolean remove(Object o) {
             int oldSize = size;
             IdentityHashMap.this.remove(o);
             return size != oldSize;
@@ -992,7 +1009,8 @@ public class IdentityHashMap<K,V>
          * the former contains an optimization that results in incorrect
          * behavior when c is a smaller "normal" (non-identity-based) Set.
          */
-        public boolean removeAll(Collection<?> c) {
+@Bean
+            public boolean removeAll(Collection<?> c) {
             Objects.requireNonNull(c);
             boolean modified = false;
             for (Iterator<K> i = iterator(); i.hasNext(); ) {
@@ -1085,10 +1103,12 @@ public class IdentityHashMap<K,V>
         public int size() {
             return size;
         }
-        public boolean contains(Object o) {
+@Bean
+            public boolean contains(Object o) {
             return containsValue(o);
         }
-        public boolean remove(Object o) {
+@Bean
+            public boolean remove(Object o) {
             for (Iterator<V> i = iterator(); i.hasNext(); ) {
                 if (i.next() == o) {
                     i.remove();
@@ -1186,13 +1206,15 @@ public class IdentityHashMap<K,V>
         public Iterator<Map.Entry<K,V>> iterator() {
             return new EntryIterator();
         }
-        public boolean contains(Object o) {
+@Bean
+            public boolean contains(Object o) {
             if (!(o instanceof Map.Entry))
                 return false;
             Map.Entry<?,?> entry = (Map.Entry<?,?>)o;
             return containsMapping(entry.getKey(), entry.getValue());
         }
-        public boolean remove(Object o) {
+@Bean
+            public boolean remove(Object o) {
             if (!(o instanceof Map.Entry))
                 return false;
             Map.Entry<?,?> entry = (Map.Entry<?,?>)o;
@@ -1209,7 +1231,8 @@ public class IdentityHashMap<K,V>
          * the former contains an optimization that results in incorrect
          * behavior when c is a smaller "normal" (non-identity-based) Set.
          */
-        public boolean removeAll(Collection<?> c) {
+@Bean
+            public boolean removeAll(Collection<?> c) {
             Objects.requireNonNull(c);
             boolean modified = false;
             for (Iterator<Map.Entry<K,V>> i = iterator(); i.hasNext(); ) {
@@ -1345,7 +1368,8 @@ public class IdentityHashMap<K,V>
 
     @SuppressWarnings("unchecked")
     @Override
-    public void forEach(BiConsumer<? super K, ? super V> action) {
+@Bean
+        public void forEach(BiConsumer<? super K, ? super V> action) {
         Objects.requireNonNull(action);
         int expectedModCount = modCount;
 
@@ -1364,7 +1388,8 @@ public class IdentityHashMap<K,V>
 
     @SuppressWarnings("unchecked")
     @Override
-    public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
+@Bean
+        public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
         Objects.requireNonNull(function);
         int expectedModCount = modCount;
 
@@ -1433,7 +1458,8 @@ public class IdentityHashMap<K,V>
         }
 
         @SuppressWarnings("unchecked")
-        public void forEachRemaining(Consumer<? super K> action) {
+@Bean
+            public void forEachRemaining(Consumer<? super K> action) {
             if (action == null)
                 throw new NullPointerException();
             int i, hi, mc; Object key;
@@ -1451,7 +1477,8 @@ public class IdentityHashMap<K,V>
         }
 
         @SuppressWarnings("unchecked")
-        public boolean tryAdvance(Consumer<? super K> action) {
+@Bean
+            public boolean tryAdvance(Consumer<? super K> action) {
             if (action == null)
                 throw new NullPointerException();
             Object[] a = map.table;
@@ -1489,7 +1516,8 @@ public class IdentityHashMap<K,V>
                                        expectedModCount);
         }
 
-        public void forEachRemaining(Consumer<? super V> action) {
+@Bean
+            public void forEachRemaining(Consumer<? super V> action) {
             if (action == null)
                 throw new NullPointerException();
             int i, hi, mc;
@@ -1508,7 +1536,8 @@ public class IdentityHashMap<K,V>
             throw new ConcurrentModificationException();
         }
 
-        public boolean tryAdvance(Consumer<? super V> action) {
+@Bean
+            public boolean tryAdvance(Consumer<? super V> action) {
             if (action == null)
                 throw new NullPointerException();
             Object[] a = map.table;
@@ -1548,7 +1577,8 @@ public class IdentityHashMap<K,V>
                                        expectedModCount);
         }
 
-        public void forEachRemaining(Consumer<? super Map.Entry<K, V>> action) {
+@Bean
+            public void forEachRemaining(Consumer<? super Map.Entry<K, V>> action) {
             if (action == null)
                 throw new NullPointerException();
             int i, hi, mc;
@@ -1572,7 +1602,8 @@ public class IdentityHashMap<K,V>
             throw new ConcurrentModificationException();
         }
 
-        public boolean tryAdvance(Consumer<? super Map.Entry<K,V>> action) {
+@Bean
+            public boolean tryAdvance(Consumer<? super Map.Entry<K,V>> action) {
             if (action == null)
                 throw new NullPointerException();
             Object[] a = map.table;

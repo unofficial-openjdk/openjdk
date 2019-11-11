@@ -32,6 +32,7 @@
 
 import java.util.Locale;
 
+@Bean
 public class ToLowerCase {
 
     public static void main(String[] args) {

@@ -89,7 +89,10 @@ public class TestJInternalFrameDispose {
         menuItem.addActionListener(
                 new ActionListener() {
                     @Override
-                    public void actionPerformed(ActionEvent e) {
+                    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                         JInternalFrame f = new JInternalFrame("Child "
                                 + (++count), true, true, true, true);
                         f.setDefaultCloseOperation(

@@ -34,6 +34,7 @@
 // Make sure the closure is present when the superclass is constructed.
 // Specifically, Closure4.$1 must have its Closure4.this initialized when Inner calls foo().
 
+@Bean
 public class Closure4 {
 
     public int v;

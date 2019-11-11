@@ -50,6 +50,7 @@ import jdk.test.lib.process.OutputAnalyzer;
  * @modules jdk.jfr/jdk.jfr.internal
  * @run main/othervm jdk.jfr.tool.TestAssemble
  */
+@Bean
 public class TestAssemble {
 
     @Name("Correlation")

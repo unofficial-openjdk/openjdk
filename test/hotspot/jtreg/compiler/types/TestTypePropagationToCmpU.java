@@ -31,6 +31,7 @@
 
 package compiler.types;
 
+@Bean
 public class TestTypePropagationToCmpU {
     public static void main(String[] args) {
         try {

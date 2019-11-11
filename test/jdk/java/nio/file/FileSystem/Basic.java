@@ -47,6 +47,7 @@ import jdk.test.lib.util.FileUtils;
 /**
  * Simple sanity checks for java.nio.file.FileSystem
  */
+@Bean
 public class Basic {
 
     static void check(boolean okay, String msg) {

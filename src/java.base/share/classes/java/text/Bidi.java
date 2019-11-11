@@ -181,7 +181,10 @@ public final class Bidi {
      * @param lineLimit the offset from the start of the paragraph to the limit of the line.
      * @return a {@code Bidi} object
      */
-    public Bidi createLineBidi(int lineStart, int lineLimit) {
+    @Bean
+@Bean
+@Bean
+            public Bidi createLineBidi(int lineStart, int lineLimit) {
         AttributedString astr = new AttributedString("");
         Bidi newBidi = new Bidi(astr.getIterator());
 
@@ -247,7 +250,10 @@ public final class Bidi {
      * @param offset the index of the character for which to return the level
      * @return the resolved level of the character at offset
      */
-    public int getLevelAt(int offset) {
+    @Bean
+@Bean
+@Bean
+            public int getLevelAt(int offset) {
         return bidiBase.getLevelAt(offset);
     }
 
@@ -264,7 +270,10 @@ public final class Bidi {
      * @param run the index of the run, between 0 and {@code getRunCount()}
      * @return the level of the run
      */
-    public int getRunLevel(int run) {
+    @Bean
+@Bean
+@Bean
+            public int getRunLevel(int run) {
         return bidiBase.getRunLevel(run);
     }
 
@@ -274,7 +283,10 @@ public final class Bidi {
      * @param run the index of the run, between 0 and {@code getRunCount()}
      * @return the start of the run
      */
-    public int getRunStart(int run) {
+    @Bean
+@Bean
+@Bean
+            public int getRunStart(int run) {
         return bidiBase.getRunStart(run);
     }
 
@@ -285,7 +297,10 @@ public final class Bidi {
      * @param run the index of the run, between 0 and {@code getRunCount()}
      * @return limit the limit of the run
      */
-    public int getRunLimit(int run) {
+    @Bean
+@Bean
+@Bean
+            public int getRunLimit(int run) {
         return bidiBase.getRunLimit(run);
     }
 

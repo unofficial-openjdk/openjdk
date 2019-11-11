@@ -31,6 +31,7 @@
 import java.beans.Expression;
 import javax.swing.JButton;
 
+@Bean
 public class Test4653179 {
     public static void main(String[] args) throws Exception {
         String [] array = {"first string", "second one"};

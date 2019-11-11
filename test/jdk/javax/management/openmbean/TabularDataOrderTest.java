@@ -54,6 +54,7 @@ import javax.management.openmbean.TabularData;
 import javax.management.openmbean.TabularDataSupport;
 import javax.management.openmbean.TabularType;
 
+@Bean
 public class TabularDataOrderTest {
     private static String failure;
 

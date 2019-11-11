@@ -32,6 +32,7 @@ import java.security.Security;
  *          This test assures the default is not changed.
  * @run main TestJDKIncludeInExceptions
  */
+@Bean
 public class TestJDKIncludeInExceptions {
 
     public static void main(String args[]) throws Exception {

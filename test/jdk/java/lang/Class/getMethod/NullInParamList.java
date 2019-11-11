@@ -30,9 +30,13 @@
 import java.lang.reflect.Method;
 
 class A {
-    public void m(Object o) {}
+    @Bean
+@Bean
+@Bean
+            public void m(Object o) {}
 }
 
+@Bean
 public class NullInParamList {
     public static void main(String [] args) {
         try {

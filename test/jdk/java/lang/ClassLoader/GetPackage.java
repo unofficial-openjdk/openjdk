@@ -28,6 +28,7 @@
  *          return consistent values.
  */
 
+@Bean
 public class GetPackage {
     public static void main(String arg[]) throws Exception {
         TestClassLoader parent = new TestClassLoader();
@@ -50,14 +51,22 @@ class TestClassLoader extends ClassLoader {
         super(parent);
     }
 
-    public Package defineEmptyPackage(String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Package defineEmptyPackage(String name) {
         return definePackage(name, null, null, null, null, null, null, null);
     }
 
     /* test to see if getPackage() and getPackages()
      * are consistent.
      */
-    public boolean testPackageView(String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean testPackageView(String name) {
         Package[] pkgs = getPackages();
         Package pkg = getPackage(name);
         for(int i = 0; i < pkgs.length; i++)

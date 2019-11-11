@@ -33,6 +33,7 @@ package java.io;
  * @since       1.1
  */
 
+@Bean
 public class StringReader extends Reader {
 
     private String str;

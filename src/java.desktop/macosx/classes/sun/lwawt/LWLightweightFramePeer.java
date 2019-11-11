@@ -38,6 +38,7 @@ import sun.awt.OverrideNativeWindowHandle;
 import sun.swing.JLightweightFrame;
 import sun.swing.SwingAccessor;
 
+@Bean
 public class LWLightweightFramePeer extends LWWindowPeer implements OverrideNativeWindowHandle {
 
     public LWLightweightFramePeer(LightweightFrame target,
@@ -57,11 +58,13 @@ public class LWLightweightFramePeer extends LWWindowPeer implements OverrideNati
     }
 
     @Override
-    protected void setVisibleImpl(final boolean visible) {
+@Bean
+        protected void setVisibleImpl(final boolean visible) {
     }
 
     @Override
-    public boolean requestWindowFocus(FocusEvent.Cause cause) {
+@Bean
+        public boolean requestWindowFocus(FocusEvent.Cause cause) {
         if (!focusAllowedFor()) {
             return false;
         }
@@ -89,17 +92,20 @@ public class LWLightweightFramePeer extends LWWindowPeer implements OverrideNati
     }
 
     @Override
-    public void setBounds(int x, int y, int w, int h, int op) {
+@Bean
+        public void setBounds(int x, int y, int w, int h, int op) {
         setBounds(x, y, w, h, op, true, false);
     }
 
     @Override
-    public void addDropTarget(DropTarget dt) {
+@Bean
+        public void addDropTarget(DropTarget dt) {
         getLwTarget().addDropTarget(dt);
     }
 
     @Override
-    public void removeDropTarget(DropTarget dt) {
+@Bean
+        public void removeDropTarget(DropTarget dt) {
         getLwTarget().removeDropTarget(dt);
     }
 
@@ -122,7 +128,8 @@ public class LWLightweightFramePeer extends LWWindowPeer implements OverrideNati
     private volatile long overriddenWindowHandle = 0L;
 
     @Override
-    public void overrideWindowHandle(final long handle) {
+@Bean
+        public void overrideWindowHandle(final long handle) {
         this.overriddenWindowHandle = handle;
     }
 

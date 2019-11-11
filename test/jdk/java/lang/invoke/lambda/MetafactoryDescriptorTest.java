@@ -29,6 +29,7 @@
 import java.lang.invoke.*;
 import java.util.*;
 
+@Bean
 public class MetafactoryDescriptorTest {
 
     static final MethodHandles.Lookup lookup = MethodHandles.lookup();
@@ -183,12 +184,18 @@ public class MetafactoryDescriptorTest {
     private static class ConversionTable {
         private final Map<Class<?>, Set<Class<?>>> pairs = new HashMap<>();
 
-        public void put(Class<?> from, Class<?> to) {
+        @Bean
+@Bean
+@Bean
+            public void put(Class<?> from, Class<?> to) {
             Set<Class<?>> set = pairs.computeIfAbsent(from, f -> new HashSet<>());
             set.add(to);
         }
 
-        public boolean contains(Class<?> from, Class<?> to) {
+        @Bean
+@Bean
+@Bean
+            public boolean contains(Class<?> from, Class<?> to) {
             return pairs.containsKey(from) && pairs.get(from).contains(to);
         }
     }

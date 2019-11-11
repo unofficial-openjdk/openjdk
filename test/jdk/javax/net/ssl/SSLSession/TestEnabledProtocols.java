@@ -66,7 +66,10 @@ public class TestEnabledProtocols extends SSLSocketTemplate {
     }
 
     @Override
-    protected void configureServerSocket(SSLServerSocket sslServerSocket) {
+    @Bean
+@Bean
+@Bean
+            protected void configureServerSocket(SSLServerSocket sslServerSocket) {
         sslServerSocket.setEnabledProtocols(serverProtocols);
     }
 

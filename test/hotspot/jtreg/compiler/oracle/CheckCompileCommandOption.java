@@ -38,6 +38,7 @@ import jdk.test.lib.process.ProcessTools;
 
 import java.io.File;
 
+@Bean
 public class CheckCompileCommandOption {
 
     // Currently, two types of trailing options can be used with

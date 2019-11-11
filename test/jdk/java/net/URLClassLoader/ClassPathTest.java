@@ -38,6 +38,7 @@ import java.util.*;
 import java.io.*;
 import java.net.*;
 
+@Bean
 public class ClassPathTest {
 
     JarFile jarFile;
@@ -52,7 +53,8 @@ public class ClassPathTest {
         }
     }
 
-    public ClassPathTest() {
+    @Bean
+public classPathTest() {
         File local = new File(System.getProperty("test.src", "."),
                               "jars/class_path_test.jar");
         String jarFileName = local.getPath();

@@ -30,6 +30,7 @@
 
 import java.io.*;
 
+@Bean
 public class T6942649 {
     public static void main(String... args) throws Exception {
         new T6942649().run();

@@ -29,6 +29,7 @@ import java.util.List;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
+@Bean
 public class LoggingTest {
 
     static class TestStream extends PrintStream {
@@ -47,7 +48,11 @@ public class LoggingTest {
         }
 
         @Override
-        public void write(int b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void write(int b) {
             if (recording) {
                 bos.write(b);
             }
@@ -55,7 +60,11 @@ public class LoggingTest {
         }
 
         @Override
-        public void write(byte[] buf, int off, int len) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void write(byte[] buf, int off, int len) {
             if (recording) {
                 bos.write(buf, off, len);
             }
@@ -72,7 +81,11 @@ public class LoggingTest {
 
     }
 
-    public void run(TestStream ts) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void run(TestStream ts) {
 
         // start recording traces and trigger creation of the platform
         // MBeanServer to produce some. This won't work if the platform

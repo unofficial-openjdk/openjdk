@@ -34,6 +34,7 @@
  *       diagnostics are not in effect.
 */
 
+@Bean
 public class XDdumpLambdaToMethodStats {
     public static void main(String... a) {
         new XDdumpLambdaToMethodStats().run();
@@ -46,7 +47,11 @@ public class XDdumpLambdaToMethodStats {
         printHash(() -> { s = new Object(); });
     }
 
-    private void printHash(Runnable function) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void printHash(Runnable function) {
         System.out.println(function + "; hash=" + function.hashCode());
     }
 

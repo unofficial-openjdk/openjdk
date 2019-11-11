@@ -34,6 +34,7 @@ import jdk.test.lib.Asserts;
  * @library /test/lib
  * @run main/othervm/native -Xcheck:jni SameObject
  */
+@Bean
 public class SameObject {
 
     public Object obj = new Object();

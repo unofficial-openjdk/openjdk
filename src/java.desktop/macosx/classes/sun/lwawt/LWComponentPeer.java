@@ -248,7 +248,8 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
             // todo swing: later on we will probably have one global RM
             SwingUtilities3.setDelegateRepaintManager(delegate, new RepaintManager() {
                 @Override
-                public void addDirtyRegion(final JComponent c, final int x, final int y, final int w, final int h) {
+@Bean
+                    public void addDirtyRegion(final JComponent c, final int x, final int y, final int w, final int h) {
                     repaintPeer(SwingUtilities.convertRectangle(
                             c, new Rectangle(x, y, w, h), getDelegate()));
                 }
@@ -442,7 +443,8 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
      * data and back buffer.
      */
     @Override
-    public boolean updateGraphicsData(GraphicsConfiguration gc) {
+@Bean
+        public boolean updateGraphicsData(GraphicsConfiguration gc) {
         // TODO: not implemented
 //        throw new RuntimeException("Has not been implemented yet.");
         return false;
@@ -471,7 +473,8 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
 
     }
 
-    private void applyConstrain(final Graphics g) {
+@Bean
+        private void applyConstrain(final Graphics g) {
         final SunGraphics2D sg2d = (SunGraphics2D) g;
         final Rectangle size = localToWindow(getSize());
         sg2d.constrain(size.x, size.y, size.width, size.height, getVisibleRegion());
@@ -544,7 +547,8 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
     }
 
     // Helper method
-    public void setBounds(Rectangle r) {
+@Bean
+        public void setBounds(Rectangle r) {
         setBounds(r.x, r.y, r.width, r.height, SET_BOUNDS);
     }
 
@@ -552,7 +556,8 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
      * This method could be called on the toolkit thread.
      */
     @Override
-    public void setBounds(int x, int y, int w, int h, int op) {
+@Bean
+        public void setBounds(int x, int y, int w, int h, int op) {
         setBounds(x, y, w, h, op, true, false);
     }
 
@@ -633,7 +638,8 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
     }
 
     @Override
-    public void setBackground(final Color c) {
+@Bean
+        public void setBackground(final Color c) {
         final Color oldBg = getBackground();
         if (oldBg == c || (oldBg != null && oldBg.equals(c))) {
             return;
@@ -659,7 +665,8 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
     }
 
     @Override
-    public void setForeground(final Color c) {
+@Bean
+        public void setForeground(final Color c) {
         final Color oldFg = getForeground();
         if (oldFg == c || (oldFg != null && oldFg.equals(c))) {
             return;
@@ -685,7 +692,8 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
     }
 
     @Override
-    public void setFont(final Font f) {
+@Bean
+        public void setFont(final Font f) {
         final Font oldF = getFont();
         if (oldF == f || (oldF != null && oldF.equals(f))) {
             return;
@@ -711,7 +719,8 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
     }
 
     @Override
-    public FontMetrics getFontMetrics(final Font f) {
+@Bean
+        public FontMetrics getFontMetrics(final Font f) {
         // Borrow the metrics from the top-level window
 //        return getWindowPeer().getFontMetrics(f);
         // Obtain the metrics from the offscreen window where this peer is
@@ -731,7 +740,8 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
     }
 
     @Override
-    public void setEnabled(final boolean e) {
+@Bean
+        public void setEnabled(final boolean e) {
         boolean status = e;
         final LWComponentPeer<?, ?> cp = getContainerPeer();
         if (cp != null) {
@@ -763,7 +773,8 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
     }
 
     @Override
-    public void setVisible(final boolean v) {
+@Bean
+        public void setVisible(final boolean v) {
         synchronized (getStateLock()) {
             if (visible == v) {
                 return;
@@ -773,7 +784,8 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
         setVisibleImpl(v);
     }
 
-    protected void setVisibleImpl(final boolean v) {
+@Bean
+        protected void setVisibleImpl(final boolean v) {
         final D delegate = getDelegate();
 
         if (delegate != null) {
@@ -796,17 +808,20 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
     }
 
     @Override
-    public void paint(final Graphics g) {
+@Bean
+        public void paint(final Graphics g) {
         getTarget().paint(g);
     }
 
     @Override
-    public void print(final Graphics g) {
+@Bean
+        public void print(final Graphics g) {
         getTarget().print(g);
     }
 
     @Override
-    public void reparent(ContainerPeer newContainer) {
+@Bean
+        public void reparent(ContainerPeer newContainer) {
         // TODO: not implemented
         throw new UnsupportedOperationException("ComponentPeer.reparent()");
     }
@@ -818,7 +833,8 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
     }
 
     @Override
-    public void setZOrder(final ComponentPeer above) {
+@Bean
+        public void setZOrder(final ComponentPeer above) {
         LWContainerPeer<?, ?> cp = getContainerPeer();
         // Don't check containerPeer for null as it can only happen
         // for windows, but this method is overridden in
@@ -827,7 +843,8 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
     }
 
     @Override
-    public void coalescePaintEvent(PaintEvent e) {
+@Bean
+        public void coalescePaintEvent(PaintEvent e) {
         if (!(e instanceof IgnorePaintEvent)) {
             Rectangle r = e.getUpdateRect();
             if ((r != null) && !r.isEmpty()) {
@@ -890,7 +907,8 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
      * empty. In the XPeers or WPeers we use some magic constants, but here we
      * try to use something more useful,
      */
-    private Dimension validateSize(final Dimension size) {
+@Bean
+        private Dimension validateSize(final Dimension size) {
         if (size.width == 0 || size.height == 0) {
             final FontMetrics fm = getFontMetrics(getFont());
             size.width = fm.charWidth(WIDE_CHAR);
@@ -1009,13 +1027,15 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
     }
 
     @Override
-    public boolean prepareImage(Image img, int w, int h, ImageObserver o) {
+@Bean
+        public boolean prepareImage(Image img, int w, int h, ImageObserver o) {
         // TODO: is it a right/complete implementation?
         return Toolkit.getDefaultToolkit().prepareImage(img, w, h, o);
     }
 
     @Override
-    public int checkImage(Image img, int w, int h, ImageObserver o) {
+@Bean
+        public int checkImage(Image img, int w, int h, ImageObserver o) {
         // TODO: is it a right/complete implementation?
         return Toolkit.getDefaultToolkit().checkImage(img, w, h, o);
     }
@@ -1061,7 +1081,8 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
 
     // DropTargetPeer Method
     @Override
-    public void addDropTarget(DropTarget dt) {
+@Bean
+        public void addDropTarget(DropTarget dt) {
         LWWindowPeer winPeer = getWindowPeerOrSelf();
         if (winPeer != null && winPeer != this) {
             // We need to register the DropTarget in the
@@ -1085,7 +1106,8 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
 
     // DropTargetPeer Method
     @Override
-    public void removeDropTarget(DropTarget dt) {
+@Bean
+        public void removeDropTarget(DropTarget dt) {
         LWWindowPeer winPeer = getWindowPeerOrSelf();
         if (winPeer != null && winPeer != this) {
             // We need to unregister the DropTarget in the
@@ -1168,11 +1190,13 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
     /**
      * Post an event to the proper Java EDT.
      */
-    public void postEvent(final AWTEvent event) {
+@Bean
+        public void postEvent(final AWTEvent event) {
         LWToolkit.postEvent(event);
     }
 
-    protected void postPaintEvent(int x, int y, int w, int h) {
+@Bean
+        protected void postPaintEvent(int x, int y, int w, int h) {
         // TODO: call getIgnoreRepaint() directly with the right ACC
         if (AWTAccessor.getComponentAccessor().getIgnoreRepaint(target)) {
             return;
@@ -1189,7 +1213,8 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
      * processed by the target.
      */
     @Override
-    public void handleEvent(AWTEvent e) {
+@Bean
+        public void handleEvent(AWTEvent e) {
         if ((e instanceof InputEvent) && ((InputEvent) e).isConsumed()) {
             return;
         }
@@ -1212,7 +1237,8 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
         sendEventToDelegate(e);
     }
 
-    protected void sendEventToDelegate(final AWTEvent e) {
+@Bean
+        protected void sendEventToDelegate(final AWTEvent e) {
         if (getDelegate() == null || !isShowing() || !isEnabled()) {
             return;
         }
@@ -1235,7 +1261,8 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
      * swing delegate.
      */
     @SuppressWarnings("deprecation")
-    private AWTEvent createDelegateEvent(final AWTEvent e) {
+@Bean
+        private AWTEvent createDelegateEvent(final AWTEvent e) {
         // TODO modifiers should be changed to getModifiers()|getModifiersEx()?
         AWTEvent delegateEvent = null;
         if (e instanceof MouseWheelEvent) {
@@ -1284,7 +1311,8 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
         return delegateEvent;
     }
 
-    protected void handleJavaMouseEvent(MouseEvent e) {
+@Bean
+        protected void handleJavaMouseEvent(MouseEvent e) {
         Component target = getTarget();
         assert (e.getSource() == target);
 
@@ -1344,11 +1372,13 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
      * coordinates local to this component. The given window peer must be
      * the window where this component is in.
      */
-    public Point windowToLocal(int x, int y, LWWindowPeer wp) {
+@Bean
+        public Point windowToLocal(int x, int y, LWWindowPeer wp) {
         return windowToLocal(new Point(x, y), wp);
     }
 
-    public Point windowToLocal(Point p, LWWindowPeer wp) {
+@Bean
+        public Point windowToLocal(Point p, LWWindowPeer wp) {
         LWComponentPeer<?, ?> cp = this;
         while (cp != wp) {
             Rectangle cpb = cp.getBounds();
@@ -1360,16 +1390,19 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
         return new Point(p);
     }
 
-    public Rectangle windowToLocal(Rectangle r, LWWindowPeer wp) {
+@Bean
+        public Rectangle windowToLocal(Rectangle r, LWWindowPeer wp) {
         Point p = windowToLocal(r.getLocation(), wp);
         return new Rectangle(p, r.getSize());
     }
 
-    public Point localToWindow(int x, int y) {
+@Bean
+        public Point localToWindow(int x, int y) {
         return localToWindow(new Point(x, y));
     }
 
-    public Point localToWindow(Point p) {
+@Bean
+        public Point localToWindow(Point p) {
         LWComponentPeer<?, ?> cp = getContainerPeer();
         Rectangle r = getBounds();
         while (cp != null) {
@@ -1382,7 +1415,8 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
         return new Point(p);
     }
 
-    public Rectangle localToWindow(Rectangle r) {
+@Bean
+        public Rectangle localToWindow(Rectangle r) {
         Point p = localToWindow(r.getLocation());
         return new Rectangle(p, r.getSize());
     }

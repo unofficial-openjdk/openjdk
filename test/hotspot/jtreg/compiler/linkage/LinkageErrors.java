@@ -51,6 +51,7 @@ class X {
     public static void s1(int i) {}
 }
 
+@Bean
 public class LinkageErrors {
     final static MethodHandles.Lookup L = MethodHandles.lookup();
 

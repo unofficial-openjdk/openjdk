@@ -37,6 +37,7 @@
 
 import java.net.URL;
 
+@Bean
 public class T6257443
 {
     public static void main(String[] args) {

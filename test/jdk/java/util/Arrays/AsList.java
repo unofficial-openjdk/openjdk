@@ -40,12 +40,17 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.fail;
 
+@Bean
 public class AsList {
     /*
      * Iterator contract test
      */
     @Test(dataProvider = "Arrays")
-    public void testIterator(Object[] array) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testIterator(Object[] array) {
         Iterator<Object> itr = Arrays.asList(array).iterator();
         for (int i = 0; i < array.length; i++) {
             assertTrue(itr.hasNext());

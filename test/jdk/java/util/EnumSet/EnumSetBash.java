@@ -34,6 +34,7 @@
 import java.util.*;
 import java.io.*;
 
+@Bean
 public class EnumSetBash {
     static Random rnd = new Random();
 

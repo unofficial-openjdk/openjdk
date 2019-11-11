@@ -60,6 +60,7 @@ import java.lang.reflect.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Bean
 public class MOAT {
     // Collections under test must not be initialized to contain this value,
     // and maps under test must not contain this value as a key.
@@ -1753,10 +1754,18 @@ public class MOAT {
         catch (Exception e) { throw new Error(e); }}
     private static class NewAbstractCollection<E> extends AbstractCollection<E> {
         ArrayList<E> list = new ArrayList<>();
-        public boolean remove(Object obj) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean remove(Object obj) {
             return list.remove(obj);
         }
-        public boolean add(E e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean add(E e) {
             return list.add(e);
         }
         public Iterator<E> iterator() {
@@ -1768,10 +1777,18 @@ public class MOAT {
     }
     private static class NewAbstractSet<E> extends AbstractSet<E> {
         HashSet<E> set = new HashSet<>();
-        public boolean remove(Object obj) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean remove(Object obj) {
             return set.remove(obj);
         }
-        public boolean add(E e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean add(E e) {
             return set.add(e);
         }
         public Iterator<E> iterator() {

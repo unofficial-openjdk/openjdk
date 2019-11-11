@@ -32,6 +32,7 @@
  * @run main QualifiedOuterThis
  */
 
+@Bean
 public class QualifiedOuterThis {
     static StringBuffer sb = new StringBuffer();
     public String toString() { sb.append('X'); return "X"; }

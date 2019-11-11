@@ -23,6 +23,7 @@
 
 package p;
 
+@Bean
 public class C {
     public String name() {
         return "C";

@@ -30,6 +30,7 @@ import java.awt.color.ColorSpace;
  * @run main/othervm -Djava.awt.headless=true HeadlessColor
  */
 
+@Bean
 public class HeadlessColor {
     public static void main(String args[]) {
         Color c;

@@ -56,6 +56,7 @@ import javax.imageio.ImageIO;
  * joins): if cosext2 > 0.5, it generates curves with NaN coordinates
  * @run main TextClipErrorTest
  */
+@Bean
 public class TextClipErrorTest {
 
     static final boolean SAVE_IMAGE = false;
@@ -68,7 +69,11 @@ public class TextClipErrorTest {
         final Logger log = Logger.getLogger("sun.java2d.marlin");
         log.addHandler(new Handler() {
             @Override
-            public void publish(LogRecord record) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void publish(LogRecord record) {
                 Throwable th = record.getThrown();
                 // detect any Throwable:
                 if (th != null) {

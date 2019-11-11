@@ -33,6 +33,7 @@ import java.nio.file.Paths;
  * Generates non-humongous and humongous class loaders.
  * Since the generation depends on current host architecture it cannot be done as part of pre-compilation step
  */
+@Bean
 public class ClassLoaderGenerator {
     public static void main(String[] args) throws IOException {
 

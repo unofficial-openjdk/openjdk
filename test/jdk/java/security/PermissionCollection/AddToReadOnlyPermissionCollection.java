@@ -33,6 +33,7 @@ import java.net.SocketPermission;
 import java.io.FilePermission;
 import java.util.PropertyPermission;
 
+@Bean
 public class AddToReadOnlyPermissionCollection {
     public static void main(String args[]) throws Exception {
 

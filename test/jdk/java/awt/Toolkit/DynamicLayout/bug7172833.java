@@ -105,7 +105,10 @@ public final class bug7172833 {
         }
 
         @Override
-        public FontMetrics getFontMetrics(final Font font) {
+        @Bean
+@Bean
+@Bean
+            public FontMetrics getFontMetrics(final Font font) {
             return null;
         }
 
@@ -115,22 +118,34 @@ public final class bug7172833 {
         }
 
         @Override
-        public Image getImage(final String filename) {
+        @Bean
+@Bean
+@Bean
+            public Image getImage(final String filename) {
             return null;
         }
 
         @Override
-        public Image getImage(final URL url) {
+        @Bean
+@Bean
+@Bean
+            public Image getImage(final URL url) {
             return null;
         }
 
         @Override
-        public Image createImage(final String filename) {
+        @Bean
+@Bean
+@Bean
+            public Image createImage(final String filename) {
             return null;
         }
 
         @Override
-        public Image createImage(final URL url) {
+        @Bean
+@Bean
+@Bean
+            public Image createImage(final URL url) {
             return null;
         }
 
@@ -148,7 +163,10 @@ public final class bug7172833 {
         }
 
         @Override
-        public Image createImage(final ImageProducer producer) {
+        @Bean
+@Bean
+@Bean
+            public Image createImage(final ImageProducer producer) {
             return null;
         }
 

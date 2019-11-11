@@ -31,6 +31,7 @@ import java.io.*;
 import java.security.UnresolvedPermission;
 import java.security.cert.*;
 
+@Bean
 public class AccessorMethods {
 
     private static final String SIGNER1 = "AccessorMethods.signer1";

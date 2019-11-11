@@ -31,6 +31,7 @@
 import java.net.*;
 import java.util.Enumeration;
 
+@Bean
 public class StringScope {
 
     public static void main(String args[]) throws Exception {

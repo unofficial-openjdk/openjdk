@@ -52,6 +52,7 @@ import java.awt.*;
  * @author Steve Wilson
  * @author Alexander Kouznetsov
  */
+@Bean
 public class BigContrastMetalTheme extends ContrastMetalTheme {
 
     @Override
@@ -100,7 +101,11 @@ public class BigContrastMetalTheme extends ContrastMetalTheme {
     }
 
     @Override
-    public void addCustomEntriesToTable(UIDefaults table) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void addCustomEntriesToTable(UIDefaults table) {
         super.addCustomEntriesToTable(table);
 
         final int internalFrameIconSize = 30;

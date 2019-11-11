@@ -37,6 +37,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.spi.ToolProvider;
 
+@Bean
 public class VerboseClassPathTest {
     public static void main(String... args) throws Exception {
         new VerboseClassPathTest().run();

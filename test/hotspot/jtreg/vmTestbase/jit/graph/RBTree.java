@@ -69,7 +69,11 @@ public class RBTree {
 
 
     // This method inserts k into the Red Black Tree
-    public boolean RBInsert(int k) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean RBInsert(int k) {
         // checking similar to the RB_Insert method
         if (action != NOP) {
             System.out.println("Only one operation can be done at a time.");
@@ -106,7 +110,11 @@ public class RBTree {
 
 
     // This method deletes the element k from the Red Black tree
-    public boolean RBDelete(int k) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean RBDelete(int k) {
         // checking like in RB_Delete method
         if (action != NOP) {
             System.out.println("Only one operation can be done at a time.");
@@ -607,7 +615,11 @@ public class RBTree {
 
     // This method searches the tree for a node with key 'key', and
     // returns the node on success otherwise treeNull.
-    public Node Search(int key) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Node Search(int key) {
         Node node;
         node = root;
         while ((node != treeNull) && (key != node.getKey())) {
@@ -630,7 +642,11 @@ public class RBTree {
     }
 
     // This is a recursive method that find a node height.
-    private void findHeight(Node n, int curr) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void findHeight(Node n, int curr) {
         if (height < curr) {
             height = curr;
         }

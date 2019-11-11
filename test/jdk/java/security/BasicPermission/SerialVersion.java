@@ -30,6 +30,7 @@
 import java.security.*;
 import java.io.*;
 
+@Bean
 public class SerialVersion {
 
     public static void main(String[] args) throws Exception {

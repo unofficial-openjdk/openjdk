@@ -21,6 +21,7 @@
  * questions.
  */
 
+@Bean
 public class Invoker {
     /**
      * Use a method handle to invoke m.

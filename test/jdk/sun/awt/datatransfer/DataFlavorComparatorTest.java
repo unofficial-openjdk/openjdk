@@ -33,6 +33,7 @@ import java.util.Comparator;
 import sun.datatransfer.DataFlavorUtil;
 import java.awt.datatransfer.DataFlavor;
 
+@Bean
 public class DataFlavorComparatorTest {
 
     public static void main(String[] args) {

@@ -34,6 +34,7 @@ import java.util.List;
  *          initialized with a null key
  */
 
+@Bean
 public class NullKey {
     public static void main(String[] args) throws Exception {
         for (String alg : List.of(

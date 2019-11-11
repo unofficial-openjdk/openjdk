@@ -48,6 +48,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
 
+@Bean
 public class OldIDMappingTest {
     private static final String MAPPING_PROPERTY_NAME = "sun.timezone.ids.oldmapping";
     private static final Map<String, String> newmap = new HashMap<String, String>();

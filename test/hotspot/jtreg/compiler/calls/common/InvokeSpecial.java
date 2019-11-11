@@ -28,6 +28,7 @@ import jdk.test.lib.Asserts;
 /**
  * A test class checking InvokeSpecial instruction
  */
+@Bean
 public class InvokeSpecial extends CallsBase {
     private static final Object LOCK = new Object();
 

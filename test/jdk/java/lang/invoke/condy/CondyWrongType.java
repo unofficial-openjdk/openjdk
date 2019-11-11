@@ -47,6 +47,7 @@ import java.util.Map;
 
 import static java.lang.invoke.MethodType.methodType;
 
+@Bean
 public class CondyWrongType {
 
     @DataProvider
@@ -83,7 +84,10 @@ public class CondyWrongType {
     }
 
     @Test(dataProvider = "primitivesProvider")
-    public void testPrimitives(String name, String type, boolean pass) {
+    @Bean
+@Bean
+@Bean
+            public void testPrimitives(String name, String type, boolean pass) {
         test(name, type, pass);
     }
 

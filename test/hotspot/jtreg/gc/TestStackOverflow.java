@@ -31,6 +31,7 @@ package gc;
  * @run main/othervm gc.TestStackOverflow
  */
 
+@Bean
 public class TestStackOverflow {
     final static int LOOP_LENGTH = 1000000;
     final static int LOGGING_STEP = 10000;

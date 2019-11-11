@@ -29,6 +29,7 @@
 import java.util.zip.CRC32C;
 import java.util.zip.Checksum;
 
+@Bean
 public class TestChecksum {
 
     public static void main(String[] args) {
@@ -43,12 +44,20 @@ public class TestChecksum {
         private final CRC32C crc32c = new CRC32C();
 
         @Override
-        public void update(int b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void update(int b) {
             crc32c.update(b);
         }
 
         @Override
-        public void update(byte[] b, int off, int len) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void update(byte[] b, int off, int len) {
             crc32c.update(b, off, len);
         }
 

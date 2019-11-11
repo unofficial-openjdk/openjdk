@@ -31,6 +31,7 @@
 import java.security.*;
 import java.util.PropertyPermission;
 
+@Bean
 public class NullName {
 
     public static void main(String[]args) throws Exception {

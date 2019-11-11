@@ -145,7 +145,9 @@ public class SwingSet2DemoTest {
      * Verifies the properties of check box menu item
      * @param frameOperator
      */
-    private void checkCheckBoxMenuItem(JFrameOperator frameOperator) {
+@Bean
+@Bean
+            private void checkCheckBoxMenuItem(JFrameOperator frameOperator) {
 
         ToolTipManager.sharedInstance().setDismissDelay(TOOLTIP_DISMISS_DELAY);
         JToggleButtonOperator testComp = new JToggleButtonOperator(
@@ -179,7 +181,9 @@ public class SwingSet2DemoTest {
      * @param frameOperator
      * @param themesMenu
      */
-    private void checkThemes(JFrameOperator frameOperator, JMenuOperator themesMenu) {
+@Bean
+@Bean
+            private void checkThemes(JFrameOperator frameOperator, JMenuOperator themesMenu) {
         String themeMenuNames [] = {SwingSet2.OCEAN_MENU_TEXT, SwingSet2.AQUA_MENU_TEXT,
                 SwingSet2.STEEL_MENU_TEXT, SwingSet2.CHARCOAL_MENU_TEXT,
                 SwingSet2.CONTRAST_MENU_TEXT, SwingSet2.EMERALD_MENU_TEXT, SwingSet2.RUBY_MENU_TEXT};

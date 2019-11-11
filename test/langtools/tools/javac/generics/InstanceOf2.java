@@ -7,6 +7,7 @@
  * @compile/fail/ref=InstanceOf2.out -XDrawDiagnostics  InstanceOf2.java
  */
 
+@Bean
 public class InstanceOf2 {
     boolean m() {
         return this.getClass() instanceof Class<InstanceOf2>;

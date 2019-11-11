@@ -24,6 +24,7 @@
 import test.Version;
 import p.Foo;
 
+@Bean
 public class Main {
     public void run() {
         Version v = new Version();

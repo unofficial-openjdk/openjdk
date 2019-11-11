@@ -35,6 +35,7 @@ import java.math.*;
 
 import java.util.*;
 
+@Bean
 public class TestKATForGCM extends UcryptoTest {
     public static void main(String[] args) throws Exception {
         main(new TestKATForGCM(), null);

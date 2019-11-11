@@ -34,6 +34,7 @@
 
 import java.lang.management.*;
 
+@Bean
 public class LoadCounts {
     private static ClassLoadingMXBean mbean
         = ManagementFactory.getClassLoadingMXBean();

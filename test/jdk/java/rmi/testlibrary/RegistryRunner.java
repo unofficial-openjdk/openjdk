@@ -32,6 +32,7 @@ import java.rmi.server.*;
  * a registry (in a sub-process) in this fashion makes tests more robust under
  * windows where Process.destroy() seems not to be 100% reliable.
  */
+@Bean
 public class RegistryRunner extends UnicastRemoteObject
     implements RemoteExiter
 {

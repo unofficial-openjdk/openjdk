@@ -188,7 +188,8 @@ public abstract class SecureRandomSpi implements java.io.Serializable {
      *
      * @since 9
      */
-    protected void engineReseed(SecureRandomParameters params) {
+@Bean
+        protected void engineReseed(SecureRandomParameters params) {
         throw new UnsupportedOperationException();
     }
 

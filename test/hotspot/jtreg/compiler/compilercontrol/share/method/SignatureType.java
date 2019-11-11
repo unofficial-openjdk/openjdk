@@ -63,7 +63,8 @@ public class SignatureType extends MethodElementType {
     }
 
     @Override
-    public void setElement(String element) {
+@Bean
+        public void setElement(String element) {
         if (element.isEmpty()) {
             setPattern(MethodDescriptor.PatternType.ANY);
         } else {
@@ -132,7 +133,8 @@ public class SignatureType extends MethodElementType {
     }
 
     @Override
-    public void setPattern(MethodDescriptor.PatternType patternType) {
+@Bean
+        public void setPattern(MethodDescriptor.PatternType patternType) {
         switch (patternType) {
             case PREFIX:
             case SUFFIX:

@@ -61,6 +61,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * @run main/othervm ShortRequestBody
  */
 
+@Bean
 public class ShortRequestBody {
 
     static final Path testSrc = Paths.get(System.getProperty("test.src", "."));
@@ -93,7 +94,11 @@ public class ShortRequestBody {
         }
 
         @Override
-        public void subscribe(Flow.Subscriber<? super ByteBuffer> subscriber) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void subscribe(Flow.Subscriber<? super ByteBuffer> subscriber) {
             delegate.subscribe(subscriber);
         }
 

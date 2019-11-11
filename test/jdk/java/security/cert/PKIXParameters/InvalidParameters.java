@@ -36,6 +36,7 @@ import java.security.cert.TrustAnchor;
 import java.util.Collections;
 import java.util.Set;
 
+@Bean
 public class InvalidParameters {
 
     public static void main(String[] args) throws Exception {

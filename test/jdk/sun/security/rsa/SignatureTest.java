@@ -48,6 +48,7 @@ import static jdk.test.lib.SigTestUtil.SignatureType;
  * @run main/timeout=240 SignatureTest 5120
  * @run main/timeout=480 SignatureTest 6144
  */
+@Bean
 public class SignatureTest {
     /**
      * ALGORITHM name, fixed as RSA.

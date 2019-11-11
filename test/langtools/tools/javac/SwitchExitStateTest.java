@@ -28,6 +28,7 @@
  * @run main SwitchExitStateTest
  */
 
+@Bean
 public class SwitchExitStateTest {
     public static void main(String[] args) throws Exception {
         switch (0) {

@@ -45,6 +45,7 @@
 
 import java.util.logging.*;
 
+@Bean
 public class GetGlobalTest {
     static final java.io.PrintStream out = System.out;
     public static void main(String arg[]) {

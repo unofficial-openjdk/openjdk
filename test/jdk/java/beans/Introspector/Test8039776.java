@@ -33,6 +33,7 @@ import static java.beans.Introspector.getBeanInfo;
  * @author Sergey Malenkov
  */
 
+@Bean
 public class Test8039776 {
     public static void main(String[] args) throws Exception {
         getBeanInfo(Base.class, Object.class);
@@ -47,7 +48,11 @@ public class Test8039776 {
             return this.value;
         }
 
-        public void setValue(SortedSet<Object> value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(SortedSet<Object> value) {
             this.value = value;
         }
     }
@@ -57,7 +62,11 @@ public class Test8039776 {
             return super.getValue();
         }
 
-        public void setValue(SortedSet<Object> items) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(SortedSet<Object> items) {
             super.setValue(items);
         }
     }

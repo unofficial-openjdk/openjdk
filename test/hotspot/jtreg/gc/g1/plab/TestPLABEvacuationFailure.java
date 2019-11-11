@@ -55,6 +55,7 @@ import gc.g1.plab.lib.PlabInfo;
  * that both fields 'failure_waste' and 'failure_used' for Evacuation Failure statistic
  * are non zero, and zero for other statistics.
  */
+@Bean
 public class TestPLABEvacuationFailure {
 
     /* PLAB statistics fields which are checked.

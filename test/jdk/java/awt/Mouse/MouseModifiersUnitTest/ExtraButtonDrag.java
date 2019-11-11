@@ -52,18 +52,30 @@ public class ExtraButtonDrag extends Frame {
         Frame frame = new ExtraButtonDrag();
 
         MouseAdapter ma = new MouseAdapter() {
-                public void mouseDragged(MouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void mouseDragged(MouseEvent e) {
                     System.out.println("Dragged "+e);// +" : "+ e.getButton() + " : " +e.getButtonState(e.getButton()));
                     dragged = true;
                 }
-                public void mouseMoved(MouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void mouseMoved(MouseEvent e) {
                     System.out.println("Moved "+e);
                     moved = true;
                 }
-                public void mousePressed(MouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void mousePressed(MouseEvent e) {
                     System.out.println(">>> "+e);
                 }
-                public void mouseReleased(MouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void mouseReleased(MouseEvent e) {
                     System.out.println(">>> "+e);
                 }
 

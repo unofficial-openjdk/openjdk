@@ -58,7 +58,11 @@ import com.sun.tools.javac.code.Symbol.VarSymbol;
 public class ArrayTypeToString extends JavacTestingAbstractProcessor {
     @Foo(0) String @Foo(1)[] @Foo(2)[] @Foo(3)[] field;
 
-    public boolean process(Set<? extends TypeElement> tes, RoundEnvironment renv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> tes, RoundEnvironment renv) {
         for (TypeElement te : tes) {
             for (Element e : renv.getElementsAnnotatedWith(te)) {
                 String s = ((VarSymbol) e).type.toString();

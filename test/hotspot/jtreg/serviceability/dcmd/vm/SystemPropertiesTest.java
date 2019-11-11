@@ -41,7 +41,11 @@ public class SystemPropertiesTest {
     private final static String PROPERTY_NAME  = "SystemPropertiesTestPropertyName";
     private final static String PROPERTY_VALUE = "SystemPropertiesTestPropertyValue";
 
-    public void run(CommandExecutor executor) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void run(CommandExecutor executor) {
         System.setProperty(PROPERTY_NAME, PROPERTY_VALUE);
 
         OutputAnalyzer output = executor.execute("VM.system_properties");

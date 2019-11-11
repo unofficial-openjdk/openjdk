@@ -36,6 +36,7 @@
  * <p> Para c2.
  * <p> Para c3.</p>
  */
+@Bean
 public class ParaTagTest {
     /**
      * m1 <code>code </code>.

@@ -70,6 +70,9 @@ public class JComboBoxOverlapping extends OverlappingTestBase {
         cb.setPreferredSize(new Dimension(frame.getContentPane().getWidth(), 20));
         cb.addActionListener(new ActionListener() {
 
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 if (e.getSource() == cb) {
                     lwClicked = true;

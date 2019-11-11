@@ -203,7 +203,10 @@ public class MultiPageImageTIFFFieldTest {
         s.close();
     }
 
-    private void checkBufferedImages(BufferedImage im1, BufferedImage im2) {
+    @Bean
+@Bean
+@Bean
+            private void checkBufferedImages(BufferedImage im1, BufferedImage im2) {
 
         check(im1.getWidth()  == W1, "invalid width for image 1");
         check(im1.getHeight() == H1, "invalid height for image 1");
@@ -366,7 +369,10 @@ public class MultiPageImageTIFFFieldTest {
         }
     }
 
-    private void check(boolean ok, String msg) {
+    @Bean
+@Bean
+@Bean
+            private void check(boolean ok, String msg) {
 
         if (!ok) { throw new RuntimeException(msg); }
     }

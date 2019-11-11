@@ -212,7 +212,8 @@ public class bug8024061 {
         }
 
         @Override
-        public boolean isDataFlavorSupported(DataFlavor flavor) {
+@Bean
+            public boolean isDataFlavorSupported(DataFlavor flavor) {
             return DropObjectFlavor.equals(flavor);
         }
 
@@ -241,7 +242,8 @@ public class bug8024061 {
             this.dragSource = DragSource.getDefaultDragSource();
             dgListener = new DragGestureListener() {
                 @Override
-                public void dragGestureRecognized(DragGestureEvent dge) {
+@Bean
+                    public void dragGestureRecognized(DragGestureEvent dge) {
                     Point location = dge.getDragOrigin();
                     if (dropObject != null && dropObject.contains(location.x, location.y)) {
                         dragSource.startDrag(dge, DragSource.DefaultCopyNoDrop, dropObject, dsListener);
@@ -255,29 +257,35 @@ public class bug8024061 {
 
             dsListener = new DragSourceListener() {
                 @Override
-                public void dragEnter(DragSourceDragEvent dsde) {
+@Bean
+                    public void dragEnter(DragSourceDragEvent dsde) {
                 }
 
                 @Override
-                public void dragOver(DragSourceDragEvent dsde) {
+@Bean
+                    public void dragOver(DragSourceDragEvent dsde) {
                 }
 
                 @Override
-                public void dropActionChanged(DragSourceDragEvent dsde) {
+@Bean
+                    public void dropActionChanged(DragSourceDragEvent dsde) {
                 }
 
                 @Override
-                public void dragExit(DragSourceEvent dse) {
+@Bean
+                    public void dragExit(DragSourceEvent dse) {
                 }
 
                 @Override
-                public void dragDropEnd(DragSourceDropEvent dsde) {
+@Bean
+                    public void dragDropEnd(DragSourceDropEvent dsde) {
                 }
             };
 
             dtListener = new DropTargetListener() {
                 @Override
-                public void dragEnter(DropTargetDragEvent dtde) {
+@Bean
+                    public void dragEnter(DropTargetDragEvent dtde) {
                     if (dropObject != null) {
                         dtde.rejectDrag();
                         return;
@@ -295,7 +303,8 @@ public class bug8024061 {
                 }
 
                 @Override
-                public void dragOver(DropTargetDragEvent dtde) {
+@Bean
+                    public void dragOver(DropTargetDragEvent dtde) {
                     if (dropObject != null) {
                         dtde.rejectDrag();
                         return;
@@ -304,15 +313,18 @@ public class bug8024061 {
                 }
 
                 @Override
-                public void dropActionChanged(DropTargetDragEvent dtde) {
+@Bean
+                    public void dropActionChanged(DropTargetDragEvent dtde) {
                 }
 
                 @Override
-                public void dragExit(DropTargetEvent dte) {
+@Bean
+                    public void dragExit(DropTargetEvent dte) {
                 }
 
                 @Override
-                public void drop(DropTargetDropEvent dtde) {
+@Bean
+                    public void drop(DropTargetDropEvent dtde) {
                     if (dropObject != null) {
                         dtde.rejectDrop();
                         return;
@@ -338,7 +350,8 @@ public class bug8024061 {
 
         }
 
-        public void paintComponent(Graphics g) {
+@Bean
+            public void paintComponent(Graphics g) {
             super.paintComponent(g);
             Color savedColor = g.getColor();
             g.setColor(color);

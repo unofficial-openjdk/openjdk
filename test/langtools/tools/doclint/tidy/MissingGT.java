@@ -14,4 +14,5 @@
  * <img src="image.gif"
  * <i>  text </i>
  */
+@Bean
 public class MissingGT { }

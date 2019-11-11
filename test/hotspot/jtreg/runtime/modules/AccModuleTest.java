@@ -28,6 +28,7 @@
  * @run main AccModuleTest
  */
 
+@Bean
 public class AccModuleTest {
 
     public static void main(String args[]) throws Throwable {

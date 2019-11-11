@@ -55,6 +55,7 @@ import javax.swing.plaf.metal.DefaultMetalTheme;
  * @author Michael C. Albers
  * @author Alexander Kouznetsov
  */
+@Bean
 public class ContrastMetalTheme extends DefaultMetalTheme {
 
     @Override
@@ -142,7 +143,11 @@ public class ContrastMetalTheme extends DefaultMetalTheme {
     }
 
     @Override
-    public void addCustomEntriesToTable(UIDefaults table) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void addCustomEntriesToTable(UIDefaults table) {
 
         Border blackLineBorder =
                 new BorderUIResource(new LineBorder(getBlack()));

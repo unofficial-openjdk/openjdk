@@ -34,6 +34,7 @@ import java.io.FileReader;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 
+@Bean
 public class Test1  {
         public static void main(String[] args) throws Exception {
             System.out.println("\nTest1\n");

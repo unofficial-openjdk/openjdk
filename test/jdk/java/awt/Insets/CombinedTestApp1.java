@@ -36,6 +36,7 @@ import java.awt.*;
 import java.awt.event.*;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class CombinedTestApp1
 {
     public static void main(String[] args)
@@ -50,6 +51,10 @@ public class CombinedTestApp1
 
         MenuItem quit = new MenuItem("Quit", new MenuShortcut(KeyEvent.VK_Q));
         quit.addActionListener(new ActionListener() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void actionPerformed(ActionEvent e) { System.exit(0);}
             });
         file.add(quit);

@@ -36,6 +36,7 @@
 import java.util.*;
 import javax.management.*;
 
+@Bean
 public class SetWrongTypeAttributeTest {
     // In this 2D array, the first element of each subarray is an attribute
     // to do setAttribute on, and the remaining elements are values that
@@ -72,21 +73,33 @@ public class SetWrongTypeAttributeTest {
         public boolean isFoo() {
             return foo;
         }
-        public void setFoo(boolean foo) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(boolean foo) {
             this.foo = foo;
         }
 
         public String getName() {
             return name;
         }
-        public void setName(String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setName(String name) {
             this.name = name;
         }
 
         public Map<String,String> getProperties() {
             return properties;
         }
-        public void setProperties(Map<String,String> map) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setProperties(Map<String,String> map) {
             this.properties = map;
         }
 
@@ -107,21 +120,33 @@ public class SetWrongTypeAttributeTest {
         public boolean isFoo() {
             return foo;
         }
-        public void setFoo(boolean foo) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(boolean foo) {
             this.foo = foo;
         }
 
         public String getName() {
             return name;
         }
-        public void setName(String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setName(String name) {
             this.name = name;
         }
 
         public Map<String,String> getProperties() {
             return properties;
         }
-        public void setProperties(Map<String,String> map) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setProperties(Map<String,String> map) {
             this.properties = map;
         }
 
@@ -138,21 +163,33 @@ public class SetWrongTypeAttributeTest {
         public boolean isFoo() {
             return foo;
         }
-        public void setFoo(boolean foo) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFoo(boolean foo) {
             this.foo = foo;
         }
 
         public String getName() {
             return name;
         }
-        public void setName(String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setName(String name) {
             this.name = name;
         }
 
         public Map<String,String> getProperties() {
             return properties;
         }
-        public void setProperties(Map<String,String> map) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setProperties(Map<String,String> map) {
             this.properties = map;
         }
 

@@ -33,6 +33,7 @@ import sun.net.util.*;
 /*
  * Unit test for sun.net.util.IPAddressUtil
  */
+@Bean
 public class IPAddressUtilTest {
     final static Boolean good = Boolean.TRUE;
     final static Boolean bad = Boolean.FALSE;

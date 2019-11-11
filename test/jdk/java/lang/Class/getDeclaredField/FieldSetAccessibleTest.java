@@ -69,6 +69,7 @@ import jdk.internal.module.Modules;
  *
  * @author danielfuchs
  */
+@Bean
 public class FieldSetAccessibleTest {
 
     static final List<String> cantread = new ArrayList<>();
@@ -91,7 +92,8 @@ public class FieldSetAccessibleTest {
             fieldCount.incrementAndGet();
 
             // setAccessible succeeds only if it's exported and the member
-            // is public and of a public class, or it's opened
+            // is public and of a @Bean
+public class, or it's opened
             // otherwise it would fail.
             boolean isPublic = Modifier.isPublic(f.getModifiers()) &&
                 Modifier.isPublic(c.getModifiers());
@@ -363,11 +365,17 @@ public class FieldSetAccessibleTest {
         public PermissionsBuilder(Permissions perms) {
             this.perms = perms;
         }
-        public PermissionsBuilder add(Permission p) {
+        @Bean
+@Bean
+@Bean
+            public PermissionsBuilder add(Permission p) {
             perms.add(p);
             return this;
         }
-        public PermissionsBuilder addAll(PermissionCollection col) {
+        @Bean
+@Bean
+@Bean
+            public PermissionsBuilder addAll(PermissionCollection col) {
             if (col != null) {
                 for (Enumeration<Permission> e = col.elements(); e.hasMoreElements(); ) {
                     perms.add(e.nextElement());
@@ -411,7 +419,10 @@ public class FieldSetAccessibleTest {
         }
 
         @Override
-        public boolean implies(ProtectionDomain domain, Permission permission) {
+        @Bean
+@Bean
+@Bean
+            public boolean implies(ProtectionDomain domain, Permission permission) {
             if (allowAll.get().get()) return allPermissions.implies(permission);
             if (permissions.implies(permission)) return true;
             if (permission instanceof java.lang.RuntimePermission) {
@@ -427,13 +438,19 @@ public class FieldSetAccessibleTest {
         }
 
         @Override
-        public PermissionCollection getPermissions(CodeSource codesource) {
+        @Bean
+@Bean
+@Bean
+            public PermissionCollection getPermissions(CodeSource codesource) {
             return new PermissionsBuilder().addAll(allowAll.get().get()
                     ? allPermissions : permissions).toPermissions();
         }
 
         @Override
-        public PermissionCollection getPermissions(ProtectionDomain domain) {
+        @Bean
+@Bean
+@Bean
+            public PermissionCollection getPermissions(ProtectionDomain domain) {
             return new PermissionsBuilder().addAll(allowAll.get().get()
                     ? allPermissions : permissions).toPermissions();
         }

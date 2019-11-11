@@ -96,7 +96,9 @@ public class bug6608456 {
     }
     static class TestRepaintManager extends RepaintManager {
         @Override
-        public void addDirtyRegion(JComponent c, int x, int y, int w, int h) {
+@Bean
+@Bean
+                public void addDirtyRegion(JComponent c, int x, int y, int w, int h) {
             if (RepaintManager.currentManager(c) == this) {
                 testFuture.defaultCalled();
             } else {

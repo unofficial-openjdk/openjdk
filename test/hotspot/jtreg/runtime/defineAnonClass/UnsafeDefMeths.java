@@ -56,6 +56,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.PUTFIELD;
 import static jdk.internal.org.objectweb.asm.Opcodes.RETURN;
 import static jdk.internal.org.objectweb.asm.Opcodes.V1_8;
 
+@Bean
 public class UnsafeDefMeths {
 
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();
@@ -87,7 +88,8 @@ public class UnsafeDefMeths {
 
     // Generate a class similar to:
     //
-    // public class UnsafeDefMeths$I$$impl implements UnsafeDefMeths$I, UnsafeDefMeths$Struct {
+    // @Bean
+public class UnsafeDefMeths$I$$impl implements UnsafeDefMeths$I, UnsafeDefMeths$Struct {
     //
     //     public UnsafeDefMeths$StructPointer ptr;
     //

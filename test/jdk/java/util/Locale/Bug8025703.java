@@ -31,6 +31,7 @@
 import java.util.*;
 import java.util.Locale.LanguageRange;
 
+@Bean
 public class Bug8025703 {
 
     public static void main(String[] args) {

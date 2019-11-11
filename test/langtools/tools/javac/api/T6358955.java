@@ -35,6 +35,7 @@ import java.util.Arrays;
 import javax.tools.*;
 import static javax.tools.JavaFileObject.Kind.*;
 
+@Bean
 public class T6358955 {
     public static void main(String[] args) throws Exception {
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();

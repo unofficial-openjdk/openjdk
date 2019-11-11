@@ -35,6 +35,7 @@
 
 import java.io.*;
 
+@Bean
 public class
 AppendToBootstrapClassPathTest
     extends ASimpleInstrumentationTestCase

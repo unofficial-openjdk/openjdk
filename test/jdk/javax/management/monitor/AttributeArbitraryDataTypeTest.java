@@ -57,6 +57,7 @@ import javax.management.openmbean.OpenDataException;
 import javax.management.openmbean.OpenType;
 import javax.management.openmbean.SimpleType;
 
+@Bean
 public class AttributeArbitraryDataTypeTest implements NotificationListener {
 
     // Flag to notify that a message has been received
@@ -84,13 +85,18 @@ public class AttributeArbitraryDataTypeTest implements NotificationListener {
     }
 
     // ComplexAttribute class
-    public class ComplexAttribute {
+    @Bean
+public class ComplexAttribute {
 
         public Integer getIntegerAttribute() {
             return i;
         }
 
-        public void setIntegerAttribute(Integer i) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setIntegerAttribute(Integer i) {
             this.i = i;
         }
 
@@ -98,7 +104,11 @@ public class AttributeArbitraryDataTypeTest implements NotificationListener {
             return d;
         }
 
-        public void setDoubleAttribute(Double d) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setDoubleAttribute(Double d) {
             this.d = d;
         }
 
@@ -106,7 +116,11 @@ public class AttributeArbitraryDataTypeTest implements NotificationListener {
             return s;
         }
 
-        public void setStringAttribute(String s) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setStringAttribute(String s) {
             this.s = s;
         }
 
@@ -114,7 +128,11 @@ public class AttributeArbitraryDataTypeTest implements NotificationListener {
             return a;
         }
 
-        public void setArrayAttribute(Integer[] a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setArrayAttribute(Integer[] a) {
             this.a = a;
         }
 
@@ -122,7 +140,11 @@ public class AttributeArbitraryDataTypeTest implements NotificationListener {
             return e;
         }
 
-        public void setEnumAttribute(Match e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setEnumAttribute(Match e) {
             this.e = e;
         }
 
@@ -134,7 +156,8 @@ public class AttributeArbitraryDataTypeTest implements NotificationListener {
     }
 
     // MBean class
-    public class ObservedObject implements ObservedObjectMBean {
+    @Bean
+public class ObservedObject implements ObservedObjectMBean {
 
         // Simple type buried in complex getter
         //
@@ -142,7 +165,11 @@ public class AttributeArbitraryDataTypeTest implements NotificationListener {
             return ca;
         }
 
-        public void setComplexAttribute(ComplexAttribute ca) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setComplexAttribute(ComplexAttribute ca) {
             this.ca = ca;
         }
 

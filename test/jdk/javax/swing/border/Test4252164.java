@@ -37,12 +37,17 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.LineBorder;
 
+@Bean
 public class Test4252164 extends JApplet implements MouseWheelListener {
     private int thickness;
     private JLabel rounded;
     private JLabel straight;
 
-    public void mouseWheelMoved(MouseWheelEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void mouseWheelMoved(MouseWheelEvent event) {
         update(event.getWheelRotation());
     }
 
@@ -64,7 +69,11 @@ public class Test4252164 extends JApplet implements MouseWheelListener {
         return panel;
     }
 
-    private void update(int thickness) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void update(int thickness) {
         this.thickness += thickness;
 
         this.rounded.setBorder(new LineBorder(Color.RED, this.thickness, true));

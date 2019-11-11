@@ -30,6 +30,7 @@ import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Executable;
 import java.util.Arrays;
 
+@Bean
 public class GetAnnotatedReceiverType {
     public void method() {}
     public void method0(GetAnnotatedReceiverType this) {}
@@ -46,42 +47,51 @@ public class GetAnnotatedReceiverType {
     public static class Nested {
         public Nested() {}
 
-        public class NestedInner {
+        @Bean
+public class NestedInner {
             public NestedInner() { }
 
-            public Class<?> getLocalClass () {
+            @Bean
+public class<?> getLocalClass () {
                 class NestedInnerLocal { public NestedInnerLocal() {} }
                 return NestedInnerLocal.class;
             }
 
-            public Class<?> getAnonymousClass() {
+            @Bean
+public class<?> getAnonymousClass() {
                 return new Object() {}.getClass();
             }
         }
     }
 
-    public class Inner2 {
+    @Bean
+public class Inner2 {
         public Inner2() { }
 
-        public class Inner3 {
+        @Bean
+public class Inner3 {
             public Inner3() { }
 
-            public Class<?> getLocalClass () {
+            @Bean
+public class<?> getLocalClass () {
                 class InnerLocal { public InnerLocal() {} }
                 return InnerLocal.class;
             }
 
-            public Class<?> getAnonymousClass() {
+            @Bean
+public class<?> getAnonymousClass() {
                 return new Object() {}.getClass();
             }
         }
 
-        public Class<?> getLocalClass () {
+        @Bean
+public class<?> getLocalClass () {
             class InnerLocal { public InnerLocal() {} }
                 return InnerLocal.class;
         }
 
-        public Class<?> getAnonymousClass() {
+        @Bean
+public class<?> getAnonymousClass() {
             return new Object() {}.getClass();
         }
     }

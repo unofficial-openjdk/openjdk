@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+@Bean
 public class SegmentedCodeCacheDtraceTestWorker {
 
     private static final String METHOD1_NAME = "foo";
@@ -86,7 +87,11 @@ public class SegmentedCodeCacheDtraceTestWorker {
         }
     }
 
-    private void waitForCompilation(Executable executable, int compLevel) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void waitForCompilation(Executable executable, int compLevel) {
         if (compLevel > 0) {
             Utils.waitForCondition(() -> wb.isMethodCompiled(executable));
         }

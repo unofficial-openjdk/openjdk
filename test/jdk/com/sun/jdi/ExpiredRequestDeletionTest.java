@@ -56,6 +56,7 @@ class ExpiredRequestDeletionTarg {
 
     /********** test program **********/
 
+@Bean
 public class ExpiredRequestDeletionTest extends TestScaffold {
     EventRequestManager erm;
     ReferenceType targetClass;
@@ -72,7 +73,11 @@ public class ExpiredRequestDeletionTest extends TestScaffold {
 
     /********** event handlers **********/
 
-    public void breakpointReached(BreakpointEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void breakpointReached(BreakpointEvent event) {
         try {
             EventRequest req = event.request();
             if (req != null) {
@@ -87,7 +92,11 @@ public class ExpiredRequestDeletionTest extends TestScaffold {
         }
     }
 
-    public void stepCompleted(StepEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void stepCompleted(StepEvent event) {
         try {
             EventRequest req = event.request();
             if (req != null) {

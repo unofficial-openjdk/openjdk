@@ -38,9 +38,17 @@ class TargetType61 {
         void put(T t);
     }
 
-    public boolean add(CharSequence s) { return false; }
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean add(CharSequence s) { return false; }
 
-    public void addAll(Stream<? extends CharSequence> stream) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void addAll(Stream<? extends CharSequence> stream) {
         stream.forEach(this::add);
         stream.forEach(e -> { add(e); });
     }

@@ -36,6 +36,7 @@
 import javax.management.MBeanServerDelegate;
 import javax.management.ObjectName;
 
+@Bean
 public class DelegateNameWildcardNameTest {
 
     public static void main(String[] args) throws Exception {

@@ -27,6 +27,7 @@ package sun.text;
 
 import sun.text.normalizer.NormalizerBase;
 
+@Bean
 public class CollatorUtilities {
 
     public static int toLegacyMode(NormalizerBase.Mode mode) {

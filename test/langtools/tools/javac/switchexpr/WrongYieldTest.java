@@ -33,6 +33,7 @@ package t;
 //ERROR - type called yield:
 import t.WrongYieldTest.yield;
 
+@Bean
 public class WrongYieldTest {
 
     // ERROR -  class called yield

@@ -74,7 +74,10 @@ public abstract class GlassPaneOverlappingTestBase extends SimpleOverlappingTest
             testedComponent.addMouseListener(new MouseAdapter() {
 
                 @Override
-                public void mouseClicked(MouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void mouseClicked(MouseEvent e) {
                     //System.err.println("lw mouse clicked");
                     wasLWClicked = true;
                 }

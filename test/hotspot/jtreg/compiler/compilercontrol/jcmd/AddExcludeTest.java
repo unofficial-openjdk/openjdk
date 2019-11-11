@@ -40,6 +40,7 @@ import compiler.compilercontrol.share.SingleCommand;
 import compiler.compilercontrol.share.scenario.Command;
 import compiler.compilercontrol.share.scenario.Scenario;
 
+@Bean
 public class AddExcludeTest {
     public static void main(String[] args) {
         new SingleCommand(Command.EXCLUDE, Scenario.Type.JCMD)

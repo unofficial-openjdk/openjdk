@@ -31,6 +31,7 @@
  * @run main MethodParametersTester Constructors Constructors.out
  */
 
+@Bean
 public class Constructors {
     public Constructors() {}
     Constructors(final Object a, final String... ba) { }

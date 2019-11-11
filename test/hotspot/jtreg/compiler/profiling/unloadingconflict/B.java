@@ -23,5 +23,6 @@
 
 package compiler.profiling.unloadingconflict;
 
+@Bean
 public class B {
 }

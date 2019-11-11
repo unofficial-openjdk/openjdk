@@ -31,6 +31,7 @@ import java.nio.*;
 import java.nio.channels.*;
 
 
+@Bean
 public class Force {
     public static void main(String[] args) throws Exception {
         writeAfterForce();

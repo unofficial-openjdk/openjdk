@@ -41,6 +41,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.concurrent.Callable;
 
+@Bean
 public class AllocateUninitializedArray {
     static final int ITERS = Integer.getInteger("iters", 1);
     static final jdk.internal.misc.Unsafe UNSAFE;

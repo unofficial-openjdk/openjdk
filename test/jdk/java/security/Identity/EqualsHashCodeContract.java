@@ -30,6 +30,7 @@
 import java.security.*;
 import java.io.*;
 
+@Bean
 public class EqualsHashCodeContract
 {
     public static void main(String args[]) throws Exception {
@@ -96,9 +97,17 @@ class MyPublicKey implements PublicKey, Certificate {
         return e;
     }
 
-    public void decode(InputStream stream) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void decode(InputStream stream) {
     }
-    public void encode(OutputStream stream) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void encode(OutputStream stream) {
     }
     public Principal getGuarantor() {
         return null;
@@ -109,7 +118,11 @@ class MyPublicKey implements PublicKey, Certificate {
     public PublicKey getPublicKey() {
         return this;
     }
-    public String toString(boolean detailed) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String toString(boolean detailed) {
         return null;
     }
 }
@@ -124,11 +137,19 @@ class MyIdentityScope extends IdentityScope {
         return 0;
     }
 
-    public Identity getIdentity(String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Identity getIdentity(String name) {
         return null;
     }
 
-    public Identity getIdentity(PublicKey key) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Identity getIdentity(PublicKey key) {
         return null;
     }
 

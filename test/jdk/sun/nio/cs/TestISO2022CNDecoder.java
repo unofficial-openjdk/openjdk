@@ -37,6 +37,7 @@ import java.io.*;
 import java.nio.*;
 import java.nio.charset.*;
 
+@Bean
 public class TestISO2022CNDecoder
 {
     private static String encodingName = "ISO2022CN";

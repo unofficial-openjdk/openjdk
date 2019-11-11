@@ -34,6 +34,7 @@
 
 package compiler.runtime;
 
+@Bean
 public class Test6859338 {
     static Object[] o = new Object[] { new Object(), null };
     public static void main(String[] args) {

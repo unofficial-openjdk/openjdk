@@ -34,6 +34,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.util.Vector;
 
+@Bean
 public class EqualsHashcode {
     public static final int NUMTESTS = 1000;
 
@@ -103,7 +104,11 @@ public class EqualsHashcode {
             return new Float(v);
         }
 
-        public void restore(Object o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void restore(Object o) {
             v = ((Float) o).floatValue();
         }
 
@@ -162,7 +167,11 @@ public class EqualsHashcode {
             return new Double(v);
         }
 
-        public void restore(Object o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void restore(Object o) {
             v = ((Double) o).doubleValue();
         }
 
@@ -225,7 +234,11 @@ public class EqualsHashcode {
             return new Integer(v);
         }
 
-        public void restore(Object o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void restore(Object o) {
             v = ((Integer) o).intValue();
         }
 
@@ -253,7 +266,11 @@ public class EqualsHashcode {
     public static abstract class ShapeTester {
         public Vector params = new Vector();
 
-        public void addParam(Val v) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addParam(Val v) {
             params.add(v);
         }
 
@@ -265,7 +282,11 @@ public class EqualsHashcode {
             return ret;
         }
 
-        public void error(String desc) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void error(String desc) {
             Val params[] = getParamArray();
             for (int j = 0; j < params.length; j++) {
                 System.err.println(params[j]);

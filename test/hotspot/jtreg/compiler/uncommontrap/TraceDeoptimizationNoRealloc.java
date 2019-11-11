@@ -33,6 +33,7 @@
 
 package compiler.uncommontrap;
 
+@Bean
 public class TraceDeoptimizationNoRealloc {
 
     static void m(boolean some_condition) {
@@ -42,7 +43,11 @@ public class TraceDeoptimizationNoRealloc {
     }
 
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         for (int i = 0; i < 20000; i++) {
             m(false);
         }

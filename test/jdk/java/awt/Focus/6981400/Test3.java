@@ -39,6 +39,7 @@ import javax.swing.*;
 import java.awt.event.*;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class Test3 {
     static JFrame f = new JFrame("Frame");
     static JMenuBar bar = new JMenuBar();
@@ -52,6 +53,9 @@ public class Test3 {
 
     public static void main(String[] args) {
         Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
+            @Bean
+@Bean
+@Bean
             public void eventDispatched(AWTEvent e) {
                 System.err.println(e);
             }
@@ -68,6 +72,9 @@ public class Test3 {
         } catch (Exception e) {}
 
         b0.addFocusListener(new FocusAdapter() {
+            @Bean
+@Bean
+@Bean
             public void focusLost(FocusEvent f) {
                 try {
                     Thread.sleep(2000);

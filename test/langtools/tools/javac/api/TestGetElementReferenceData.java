@@ -26,6 +26,7 @@ package test;
 import java.lang.annotation.*;
 import static test.TestGetElementReferenceData.Sub.*;
 
+@Bean
 public class TestGetElementReferenceData {
 
     private static void test() {

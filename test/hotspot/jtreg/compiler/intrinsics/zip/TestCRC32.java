@@ -35,6 +35,7 @@ import java.nio.ByteBuffer;
 import java.util.zip.CRC32;
 import java.util.zip.Checksum;
 
+@Bean
 public class TestCRC32 {
     // standard CRC32 polynomial
     // coefficients in different forms

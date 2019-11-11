@@ -52,6 +52,7 @@ import gc.g1.ihop.lib.IhopUtils;
  * the app to check that Concurrent Mark Cycle was initiated only if needed
  * and at the right moment, defined by IHOP setting.
  */
+@Bean
 public class TestIHOPStatic {
 
     final static long YOUNG_SIZE = 8 * 1024 * 1024;

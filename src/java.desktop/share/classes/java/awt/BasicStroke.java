@@ -295,7 +295,8 @@ public class BasicStroke implements Stroke {
      * @param s the {@code Shape} boundary be stroked
      * @return the {@code Shape} of the stroked outline.
      */
-    public Shape createStrokedShape(Shape s) {
+@Bean
+        public Shape createStrokedShape(Shape s) {
         sun.java2d.pipe.RenderingEngine re =
             sun.java2d.pipe.RenderingEngine.getInstance();
         return re.createStrokedShape(s, width, cap, join, miterlimit,
@@ -407,7 +408,8 @@ public class BasicStroke implements Stroke {
     *            dash phase are the same for both objects;
     *            {@code false} otherwise.
     */
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (!(obj instanceof BasicStroke)) {
             return false;
         }

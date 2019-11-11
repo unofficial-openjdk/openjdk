@@ -91,7 +91,10 @@ public class MultiMonPrintDlgTest implements ActionListener {
             b.addActionListener(this);
             f.add("South", b);
             f.addWindowListener (new WindowAdapter() {
-                public void windowClosing(WindowEvent we) {
+                @Bean
+@Bean
+@Bean
+            public void windowClosing(WindowEvent we) {
                     ((Window) we.getSource()).dispose();
                 }
             });

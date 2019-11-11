@@ -47,6 +47,7 @@ import javax.tools.JavaFileObject;
 
 /**Test comment abc*\\def\
  *xyz\u0021\\u0021*/
+@Bean
 public class T4910483 {
     public static void main(String... args) {
         JavaCompiler compiler = JavaCompiler.instance(new Context());

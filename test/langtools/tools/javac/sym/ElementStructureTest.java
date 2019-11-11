@@ -119,6 +119,7 @@ import toolbox.ToolBox;
  *
  *     java ElementStructureTest generate-output $LANGTOOLS_DIR/make/data/symbols/include.list classes-6 6 /tmp/actual /tmp/expected
  */
+@Bean
 public class ElementStructureTest {
 
     static final byte[] hash6 = new byte[] {
@@ -334,12 +335,20 @@ public class ElementStructureTest {
         }
 
         @Override
-        public Void visit(Element e, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visit(Element e, Void p) {
             return e.accept(this, p);
         }
 
         @Override
-        public Void visit(Element e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visit(Element e) {
             return e.accept(this, null);
         }
 
@@ -400,7 +409,11 @@ public class ElementStructureTest {
         }
 
         @Override
-        public Void visitExecutable(ExecutableElement e, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitExecutable(ExecutableElement e, Void p) {
             if (!acceptAccess(e))
                 return null;
             try {
@@ -430,7 +443,11 @@ public class ElementStructureTest {
          * for many cases where TypeKind.NONE was specified; translate
          * back to null to compare against old hashes.
          */
-        private TypeMirror typeMirrorTranslate(TypeMirror type) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private TypeMirror typeMirrorTranslate(TypeMirror type) {
             if (type.getKind() == javax.lang.model.type.TypeKind.NONE)
                 return null;
             else
@@ -438,7 +455,11 @@ public class ElementStructureTest {
         }
 
         @Override
-        public Void visitPackage(PackageElement e, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitPackage(PackageElement e, Void p) {
             List<Element> types = new ArrayList<>(e.getEnclosedElements());
             Collections.sort(types, (e1, e2) -> e1.getSimpleName().toString().compareTo(e2.getSimpleName().toString()));
             for (Element encl : types) {
@@ -448,7 +469,11 @@ public class ElementStructureTest {
         }
 
         @Override
-        public Void visitType(TypeElement e, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitType(TypeElement e, Void p) {
             if (!acceptAccess(e))
                 return null;
             writeType(e);
@@ -479,7 +504,11 @@ public class ElementStructureTest {
         }
 
         @Override
-        public Void visitVariable(VariableElement e, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitVariable(VariableElement e, Void p) {
             if (!acceptAccess(e))
                 return null;
             try {
@@ -493,7 +522,11 @@ public class ElementStructureTest {
         }
 
         @Override
-        public Void visitTypeParameter(TypeParameterElement e, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitTypeParameter(TypeParameterElement e, Void p) {
             try {
                 analyzeElement(e);
                 out.write(e.getBounds().toString());
@@ -505,12 +538,20 @@ public class ElementStructureTest {
         }
 
         @Override
-        public Void visitModule(ModuleElement e, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitModule(ModuleElement e, Void p) {
             throw new IllegalStateException("Not supported yet.");
         }
 
         @Override
-        public Void visitUnknown(Element e, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitUnknown(Element e, Void p) {
             throw new IllegalStateException("Should not get here.");
         }
 
@@ -527,7 +568,12 @@ public class ElementStructureTest {
         }
 
         @Override
-        public ClassLoader getClassLoader(Location location) {
+        @Bean
+@Bean
+@Bean
+@Bean
+@Bean
+                public classLoader getClassLoader(Location location) {
             return new URLClassLoader(new URL[0]);
         }
 
@@ -551,22 +597,38 @@ public class ElementStructureTest {
         }
 
         @Override
-        public String inferBinaryName(Location location, JavaFileObject file) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String inferBinaryName(Location location, JavaFileObject file) {
             return file2ClassName.get(file);
         }
 
         @Override
-        public boolean isSameFile(FileObject a, FileObject b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean isSameFile(FileObject a, FileObject b) {
             return a == b;
         }
 
         @Override
-        public boolean handleOption(String current, Iterator<String> remaining) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean handleOption(String current, Iterator<String> remaining) {
             return false;
         }
 
         @Override
-        public boolean hasLocation(Location location) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean hasLocation(Location location) {
             return location == StandardLocation.PLATFORM_CLASS_PATH;
         }
 
@@ -602,7 +664,11 @@ public class ElementStructureTest {
         }
 
         @Override
-        public int isSupportedOption(String option) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int isSupportedOption(String option) {
             return -1;
         }
 
@@ -622,7 +688,11 @@ public class ElementStructureTest {
         }
 
         @Override
-        public boolean isNameCompatible(String simpleName, Kind kind) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean isNameCompatible(String simpleName, Kind kind) {
             return true;
         }
 

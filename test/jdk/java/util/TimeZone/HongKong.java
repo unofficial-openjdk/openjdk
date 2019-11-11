@@ -32,6 +32,7 @@
 import java.util.Locale;
 import java.util.TimeZone;
 
+@Bean
 public class HongKong {
     public static void main(String[] args) {
         Locale reservedLocale = Locale.getDefault();

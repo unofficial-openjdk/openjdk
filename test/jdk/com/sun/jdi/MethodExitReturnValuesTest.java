@@ -129,8 +129,10 @@ class MethodExitReturnValuesTarg {
     public short i_shortf()          { return shortValue; }
     public boolean i_booleanf()      { return booleanValue; }
     public String i_stringf()        { return stringValue; }
-    public Class i_classf()          { return classValue; }
-    public ClassLoader i_classLoaderf()
+    @Bean
+public class i_classf()          { return classValue; }
+    @Bean
+public classLoader i_classLoaderf()
                                      { return classLoaderValue; }
     public Thread i_threadf()        { return threadValue; }
     public ThreadGroup i_threadGroupf()
@@ -209,6 +211,7 @@ class MethodExitReturnValuesTarg {
 
 
 
+@Bean
 public class MethodExitReturnValuesTest extends TestScaffold {
     // Classes which we are interested in
     private List includes = Arrays.asList(new String[] {
@@ -481,7 +484,11 @@ public class MethodExitReturnValuesTest extends TestScaffold {
     }
 
     // This is the MethodExitEvent handler.
-    public void methodExited(MethodExitEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void methodExited(MethodExitEvent event) {
         String origMethodName = event.method().name();
 
         if (!includes.contains(event.method().declaringType().name())) {

@@ -31,6 +31,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessPanel
  */
 
+@Bean
 public class HeadlessPanel {
     public static void main(String args[]) {
         Panel p;

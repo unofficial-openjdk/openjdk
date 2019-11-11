@@ -45,6 +45,7 @@ import static java.net.http.HttpClient.Version.HTTP_2;
 import org.testng.annotations.Test;
 
 @Test
+@Bean
 public class FixedThreadPoolTest {
     static int httpPort, httpsPort;
     static Http2TestServer httpServer, httpsServer;

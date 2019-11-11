@@ -86,7 +86,11 @@ class VMConnection {
     }
 
 
-    private Connector findConnector(String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Connector findConnector(String name) {
         List connectors = Bootstrap.virtualMachineManager().allConnectors();
         Iterator iter = connectors.iterator();
         while (iter.hasNext()) {
@@ -98,7 +102,11 @@ class VMConnection {
         return null;
     }
 
-    private Map parseConnectorArgs(Connector connector, String argString) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Map parseConnectorArgs(Connector connector, String argString) {
         StringTokenizer tokenizer = new StringTokenizer(argString, ",");
         Map arguments = connector.defaultArguments();
 
@@ -280,7 +288,11 @@ class VMConnection {
      *  Needs to be high priority, else debugger may exit before
      *  it can be displayed.
      */
-    private void displayRemoteOutput(final InputStream stream) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void displayRemoteOutput(final InputStream stream) {
         Thread thr = new Thread("output reader") {
             public void run() {
                 try {
@@ -297,7 +309,11 @@ class VMConnection {
         thr.start();
     }
 
-    private void dumpFailedLaunchInfo(Process process) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void dumpFailedLaunchInfo(Process process) {
         try {
             dumpStream(process.getErrorStream());
             dumpStream(process.getInputStream());

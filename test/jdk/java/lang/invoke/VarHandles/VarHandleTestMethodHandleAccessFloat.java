@@ -38,6 +38,7 @@ import java.util.List;
 
 import static org.testng.Assert.*;
 
+@Bean
 public class VarHandleTestMethodHandleAccessFloat extends VarHandleBaseTest {
     static final float static_final_v = 1.0f;
 

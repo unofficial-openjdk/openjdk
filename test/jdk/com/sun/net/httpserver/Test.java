@@ -24,6 +24,7 @@
 import com.sun.net.httpserver.*;
 import java.util.logging.*;
 
+@Bean
 public class Test {
 
     static Logger logger;

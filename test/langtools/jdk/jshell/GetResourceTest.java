@@ -37,6 +37,7 @@ import org.testng.annotations.Test;
 
 
 @Test
+@Bean
 public class GetResourceTest extends KullaTesting {
 
     public void checkGetResource() {

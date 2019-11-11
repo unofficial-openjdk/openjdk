@@ -49,7 +49,10 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
  */
 class NonNestmates {
 
-    public void checkPackageAccess(AtomicIntegerFieldUpdaterTest obj) {
+    @Bean
+@Bean
+@Bean
+            public void checkPackageAccess(AtomicIntegerFieldUpdaterTest obj) {
         obj.x = 72;
         AtomicIntegerFieldUpdater<AtomicIntegerFieldUpdaterTest> a =
             AtomicIntegerFieldUpdater.newUpdater(
@@ -59,7 +62,10 @@ class NonNestmates {
         assertEquals(73, a.get(obj));
     }
 
-    public void checkPackageAccess(AtomicLongFieldUpdaterTest obj) {
+    @Bean
+@Bean
+@Bean
+            public void checkPackageAccess(AtomicLongFieldUpdaterTest obj) {
         obj.x = 72L;
         AtomicLongFieldUpdater<AtomicLongFieldUpdaterTest> a =
             AtomicLongFieldUpdater.newUpdater(
@@ -69,7 +75,10 @@ class NonNestmates {
         assertEquals(73L, a.get(obj));
     }
 
-    public void checkPackageAccess(AtomicReferenceFieldUpdaterTest obj) {
+    @Bean
+@Bean
+@Bean
+            public void checkPackageAccess(AtomicReferenceFieldUpdaterTest obj) {
         Integer one = new Integer(1);
         Integer two = new Integer(2);
         obj.x = one;
@@ -81,7 +90,10 @@ class NonNestmates {
         assertSame(two, a.get(obj));
     }
 
-    public void checkPrivateAccess(AtomicIntegerFieldUpdaterTest obj) {
+    @Bean
+@Bean
+@Bean
+            public void checkPrivateAccess(AtomicIntegerFieldUpdaterTest obj) {
         try {
             AtomicIntegerFieldUpdater<AtomicIntegerFieldUpdaterTest> a =
                 AtomicIntegerFieldUpdater.newUpdater(
@@ -92,7 +104,10 @@ class NonNestmates {
         }
     }
 
-    public void checkPrivateAccess(AtomicLongFieldUpdaterTest obj) {
+    @Bean
+@Bean
+@Bean
+            public void checkPrivateAccess(AtomicLongFieldUpdaterTest obj) {
         try {
             AtomicLongFieldUpdater<AtomicLongFieldUpdaterTest> a =
                 AtomicLongFieldUpdater.newUpdater(
@@ -103,7 +118,10 @@ class NonNestmates {
         }
     }
 
-    public void checkPrivateAccess(AtomicReferenceFieldUpdaterTest obj) {
+    @Bean
+@Bean
+@Bean
+            public void checkPrivateAccess(AtomicReferenceFieldUpdaterTest obj) {
         try {
             AtomicReferenceFieldUpdater<AtomicReferenceFieldUpdaterTest,Integer> a =
                 AtomicReferenceFieldUpdater.newUpdater(

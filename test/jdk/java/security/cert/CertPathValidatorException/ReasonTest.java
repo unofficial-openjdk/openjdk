@@ -30,6 +30,7 @@
 import java.security.cert.CertPathValidatorException;
 import java.security.cert.CertPathValidatorException.BasicReason;
 
+@Bean
 public class ReasonTest {
     private static volatile boolean failed = false;
     public static void main(String[] args) throws Exception {

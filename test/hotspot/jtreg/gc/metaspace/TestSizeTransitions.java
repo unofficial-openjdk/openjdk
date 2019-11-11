@@ -67,6 +67,7 @@ import java.util.List;
  * @run driver gc.metaspace.TestSizeTransitions true  -XX:+UseConcMarkSweepGC
  */
 
+@Bean
 public class TestSizeTransitions {
   public static class Run {
     public static void main(String... args) throws Exception {

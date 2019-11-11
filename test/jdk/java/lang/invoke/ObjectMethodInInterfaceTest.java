@@ -33,6 +33,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 
+@Bean
 public class ObjectMethodInInterfaceTest {
     public static void main(String[] args) throws Throwable {
         MethodHandle mh = MethodHandles.lookup().findVirtual(CharSequence.class, "toString", MethodType.methodType(String.class));

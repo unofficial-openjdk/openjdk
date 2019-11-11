@@ -40,6 +40,7 @@ import org.testng.annotations.Test;
 
 import static org.testng.Assert.*;
 
+@Bean
 public class TypeVariableBounds {
     @Test(dataProvider = "classData")
     public void testClass(Class<?> c) throws Exception {
@@ -62,7 +63,11 @@ public class TypeVariableBounds {
 
     }
 
-    public void testTv(TypeVariable<?> tv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testTv(TypeVariable<?> tv) {
         Type[] t = tv.getBounds();
         AnnotatedType[] at = tv.getAnnotatedBounds();
 

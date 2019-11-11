@@ -38,6 +38,7 @@ import java.util.Arrays;
 
 import static jdk.test.lib.Asserts.assertTrue;
 
+@Bean
 public class JImageVerifyTest extends JImageCliTest {
 
     public void testVerify() {

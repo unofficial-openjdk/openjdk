@@ -59,10 +59,16 @@ public class SemaphoreTest extends JSR166TestCase {
         public Collection<Thread> getQueuedThreads() {
             return super.getQueuedThreads();
         }
-        public boolean hasQueuedThread(Thread t) {
+        @Bean
+@Bean
+@Bean
+            public boolean hasQueuedThread(Thread t) {
             return super.getQueuedThreads().contains(t);
         }
-        public void reducePermits(int reduction) {
+        @Bean
+@Bean
+@Bean
+            public void reducePermits(int reduction) {
             super.reducePermits(reduction);
         }
     }
@@ -181,7 +187,10 @@ public class SemaphoreTest extends JSR166TestCase {
      */
     public void testConstructor()      { testConstructor(false); }
     public void testConstructor_fair() { testConstructor(true); }
-    public void testConstructor(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testConstructor(boolean fair) {
         for (int permits : new int[] { -42, -1, 0, 1, 42 }) {
             Semaphore s = new Semaphore(permits, fair);
             assertEquals(permits, s.availablePermits());
@@ -205,7 +214,10 @@ public class SemaphoreTest extends JSR166TestCase {
      */
     public void testTryAcquireInSameThread()      { testTryAcquireInSameThread(false); }
     public void testTryAcquireInSameThread_fair() { testTryAcquireInSameThread(true); }
-    public void testTryAcquireInSameThread(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testTryAcquireInSameThread(boolean fair) {
         Semaphore s = new Semaphore(2, fair);
         assertEquals(2, s.availablePermits());
         assertTrue(s.tryAcquire());
@@ -250,7 +262,10 @@ public class SemaphoreTest extends JSR166TestCase {
     public void testInterruptible_tryAcquireTimed_fair()  { testInterruptible(true,  AcquireMethod.tryAcquireTimed); }
     public void testInterruptible_tryAcquireTimedN()      { testInterruptible(false, AcquireMethod.tryAcquireTimedN); }
     public void testInterruptible_tryAcquireTimedN_fair() { testInterruptible(true,  AcquireMethod.tryAcquireTimedN); }
-    public void testInterruptible(boolean fair, final AcquireMethod acquirer) {
+    @Bean
+@Bean
+@Bean
+            public void testInterruptible(boolean fair, final AcquireMethod acquirer) {
         final PublicSemaphore s = new PublicSemaphore(0, fair);
         final java.util.concurrent.CyclicBarrier pleaseInterrupt
             = new java.util.concurrent.CyclicBarrier(2);
@@ -306,7 +321,10 @@ public class SemaphoreTest extends JSR166TestCase {
     public void testUninterruptible_acquireUninterruptibly_fair()  { testUninterruptible(true,  AcquireMethod.acquireUninterruptibly); }
     public void testUninterruptible_acquireUninterruptiblyN()      { testUninterruptible(false, AcquireMethod.acquireUninterruptiblyN); }
     public void testUninterruptible_acquireUninterruptiblyN_fair() { testUninterruptible(true,  AcquireMethod.acquireUninterruptiblyN); }
-    public void testUninterruptible(boolean fair, final AcquireMethod acquirer) {
+    @Bean
+@Bean
+@Bean
+            public void testUninterruptible(boolean fair, final AcquireMethod acquirer) {
         final PublicSemaphore s = new PublicSemaphore(0, fair);
         final Semaphore pleaseInterrupt = new Semaphore(-1, fair);
 
@@ -346,7 +364,10 @@ public class SemaphoreTest extends JSR166TestCase {
      */
     public void testHasQueuedThreads()      { testHasQueuedThreads(false); }
     public void testHasQueuedThreads_fair() { testHasQueuedThreads(true); }
-    public void testHasQueuedThreads(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testHasQueuedThreads(boolean fair) {
         final PublicSemaphore lock = new PublicSemaphore(1, fair);
         assertFalse(lock.hasQueuedThreads());
         lock.acquireUninterruptibly();
@@ -369,7 +390,10 @@ public class SemaphoreTest extends JSR166TestCase {
      */
     public void testGetQueueLength()      { testGetQueueLength(false); }
     public void testGetQueueLength_fair() { testGetQueueLength(true); }
-    public void testGetQueueLength(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testGetQueueLength(boolean fair) {
         final PublicSemaphore lock = new PublicSemaphore(1, fair);
         assertEquals(0, lock.getQueueLength());
         lock.acquireUninterruptibly();
@@ -392,7 +416,10 @@ public class SemaphoreTest extends JSR166TestCase {
      */
     public void testGetQueuedThreads()      { testGetQueuedThreads(false); }
     public void testGetQueuedThreads_fair() { testGetQueuedThreads(true); }
-    public void testGetQueuedThreads(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testGetQueuedThreads(boolean fair) {
         final PublicSemaphore lock = new PublicSemaphore(1, fair);
         assertTrue(lock.getQueuedThreads().isEmpty());
         lock.acquireUninterruptibly();
@@ -418,7 +445,10 @@ public class SemaphoreTest extends JSR166TestCase {
      */
     public void testDrainPermits()      { testDrainPermits(false); }
     public void testDrainPermits_fair() { testDrainPermits(true); }
-    public void testDrainPermits(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testDrainPermits(boolean fair) {
         Semaphore s = new Semaphore(0, fair);
         assertEquals(0, s.availablePermits());
         assertEquals(0, s.drainPermits());
@@ -434,7 +464,10 @@ public class SemaphoreTest extends JSR166TestCase {
      */
     public void testReleaseIAE()      { testReleaseIAE(false); }
     public void testReleaseIAE_fair() { testReleaseIAE(true); }
-    public void testReleaseIAE(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testReleaseIAE(boolean fair) {
         Semaphore s = new Semaphore(10, fair);
         try {
             s.release(-1);
@@ -447,7 +480,10 @@ public class SemaphoreTest extends JSR166TestCase {
      */
     public void testReducePermitsIAE()      { testReducePermitsIAE(false); }
     public void testReducePermitsIAE_fair() { testReducePermitsIAE(true); }
-    public void testReducePermitsIAE(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testReducePermitsIAE(boolean fair) {
         PublicSemaphore s = new PublicSemaphore(10, fair);
         try {
             s.reducePermits(-1);
@@ -460,7 +496,10 @@ public class SemaphoreTest extends JSR166TestCase {
      */
     public void testReducePermits()      { testReducePermits(false); }
     public void testReducePermits_fair() { testReducePermits(true); }
-    public void testReducePermits(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testReducePermits(boolean fair) {
         PublicSemaphore s = new PublicSemaphore(10, fair);
         assertEquals(10, s.availablePermits());
         s.reducePermits(0);
@@ -481,7 +520,10 @@ public class SemaphoreTest extends JSR166TestCase {
      */
     public void testSerialization()      { testSerialization(false); }
     public void testSerialization_fair() { testSerialization(true); }
-    public void testSerialization(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testSerialization(boolean fair) {
         try {
             Semaphore s = new Semaphore(3, fair);
             s.acquire();
@@ -526,7 +568,10 @@ public class SemaphoreTest extends JSR166TestCase {
      */
     public void testTryAcquireNInSameThread()      { testTryAcquireNInSameThread(false); }
     public void testTryAcquireNInSameThread_fair() { testTryAcquireNInSameThread(true); }
-    public void testTryAcquireNInSameThread(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testTryAcquireNInSameThread(boolean fair) {
         Semaphore s = new Semaphore(2, fair);
         assertEquals(2, s.availablePermits());
         assertFalse(s.tryAcquire(3));
@@ -661,7 +706,10 @@ public class SemaphoreTest extends JSR166TestCase {
      */
     public void testToString()      { testToString(false); }
     public void testToString_fair() { testToString(true); }
-    public void testToString(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testToString(boolean fair) {
         PublicSemaphore s = new PublicSemaphore(0, fair);
         assertTrue(s.toString().contains("Permits = 0"));
         s.release();

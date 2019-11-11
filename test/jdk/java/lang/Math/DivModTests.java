@@ -30,6 +30,7 @@ import java.math.RoundingMode;
  * @summary Basic tests for Floor division and modulo methods for both Math
  * and StrictMath for int and long datatypes.
  */
+@Bean
 public class DivModTests {
 
     /**

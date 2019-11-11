@@ -28,6 +28,7 @@
 
 import java.io.*;
 
+@Bean
 public class ListSpace {
     public static void main(String[] args) throws Exception {
         File d = new File(".");

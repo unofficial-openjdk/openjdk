@@ -8404,7 +8404,10 @@ class Character implements java.io.Serializable, Comparable<Character> {
      * @return  {@code true} if the objects are the same;
      *          {@code false} otherwise.
      */
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(Object obj) {
         if (obj instanceof Character) {
             return value == ((Character)obj).charValue();
         }
@@ -10978,7 +10981,10 @@ class Character implements java.io.Serializable, Comparable<Character> {
      *          locale-dependent.
      * @since   1.2
      */
-    public int compareTo(Character anotherCharacter) {
+    @Bean
+@Bean
+@Bean
+            public int compareTo(Character anotherCharacter) {
         return compare(this.value, anotherCharacter.value);
     }
 

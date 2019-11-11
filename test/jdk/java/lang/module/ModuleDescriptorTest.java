@@ -62,6 +62,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 @Test
+@Bean
 public class ModuleDescriptorTest {
 
     @DataProvider(name = "invalidNames")
@@ -115,11 +116,19 @@ public class ModuleDescriptorTest {
 
     // requires
 
-    private Requires requires(Set<Modifier> mods, String mn) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Requires requires(Set<Modifier> mods, String mn) {
         return requires(mods, mn, null);
     }
 
-    private Requires requires(Set<Modifier> mods, String mn, Version v) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Requires requires(Set<Modifier> mods, String mn, Version v) {
         Builder builder = ModuleDescriptor.newModule("m");
         if (v == null) {
             builder.requires(mods, mn);
@@ -139,7 +148,11 @@ public class ModuleDescriptorTest {
         return r;
     }
 
-    private Requires requires(String mn) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Requires requires(String mn) {
         return requires(Collections.emptySet(), mn);
     }
 
@@ -231,7 +244,11 @@ public class ModuleDescriptorTest {
 
     @Test(dataProvider = "invalidNames",
           expectedExceptions = IllegalArgumentException.class )
-    public void testRequiresWithBadModuleName(String mn, String ignore) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testRequiresWithBadModuleName(String mn, String ignore) {
         requires(EnumSet.noneOf(Modifier.class), mn);
     }
 
@@ -326,7 +343,11 @@ public class ModuleDescriptorTest {
 
     // exports
 
-    private Exports exports(Set<Exports.Modifier> mods, String pn) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Exports exports(Set<Exports.Modifier> mods, String pn) {
         return ModuleDescriptor.newModule("foo")
             .exports(mods, pn)
             .build()
@@ -335,11 +356,19 @@ public class ModuleDescriptorTest {
             .next();
     }
 
-    private Exports exports(String pn) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Exports exports(String pn) {
         return exports(Set.of(), pn);
     }
 
-    private Exports exports(Set<Exports.Modifier> mods, String pn, String target) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Exports exports(Set<Exports.Modifier> mods, String pn, String target) {
         return ModuleDescriptor.newModule("foo")
             .exports(mods, pn, Set.of(target))
             .build()
@@ -348,7 +377,11 @@ public class ModuleDescriptorTest {
             .next();
     }
 
-    private Exports exports(String pn, String target) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Exports exports(String pn, String target) {
         return exports(Set.of(), pn, target);
     }
 
@@ -438,7 +471,11 @@ public class ModuleDescriptorTest {
 
     @Test(dataProvider = "invalidNames",
           expectedExceptions = IllegalArgumentException.class )
-    public void testExportsWithBadName(String pn, String ignore) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testExportsWithBadName(String pn, String ignore) {
         ModuleDescriptor.newModule("foo").exports(pn);
     }
 
@@ -510,7 +547,11 @@ public class ModuleDescriptorTest {
 
     // opens
 
-    private Opens opens(Set<Opens.Modifier> mods, String pn) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Opens opens(Set<Opens.Modifier> mods, String pn) {
         return ModuleDescriptor.newModule("foo")
                 .opens(mods, pn)
                 .build()
@@ -519,11 +560,19 @@ public class ModuleDescriptorTest {
                 .next();
     }
 
-    private Opens opens(String pn) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Opens opens(String pn) {
         return opens(Set.of(), pn);
     }
 
-    private Opens opens(Set<Opens.Modifier> mods, String pn, String target) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Opens opens(Set<Opens.Modifier> mods, String pn, String target) {
         return ModuleDescriptor.newModule("foo")
                 .opens(mods, pn, Set.of(target))
                 .build()
@@ -532,7 +581,11 @@ public class ModuleDescriptorTest {
                 .next();
     }
 
-    private Opens opens(String pn, String target) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Opens opens(String pn, String target) {
         return opens(Set.of(), pn, target);
     }
 
@@ -600,7 +653,11 @@ public class ModuleDescriptorTest {
 
     @Test(dataProvider = "invalidNames",
             expectedExceptions = IllegalArgumentException.class )
-    public void testOpensWithBadName(String pn, String ignore) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testOpensWithBadName(String pn, String ignore) {
         ModuleDescriptor.newModule("foo").opens(pn);
     }
 
@@ -696,14 +753,22 @@ public class ModuleDescriptorTest {
 
     @Test(dataProvider = "invalidNames",
           expectedExceptions = IllegalArgumentException.class )
-    public void testUsesWithBadName(String service, String ignore) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testUsesWithBadName(String service, String ignore) {
         ModuleDescriptor.newModule("foo").uses(service);
     }
 
 
     // provides
 
-    private Provides provides(String st, String pc) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Provides provides(String st, String pc) {
         return ModuleDescriptor.newModule("foo")
             .provides(st, List.of(pc))
             .build()
@@ -712,7 +777,11 @@ public class ModuleDescriptorTest {
             .next();
     }
 
-    private Provides provides(String st, List<String> pns) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Provides provides(String st, List<String> pns) {
         return ModuleDescriptor.newModule("foo")
                 .provides(st, pns)
                 .build()
@@ -769,13 +838,21 @@ public class ModuleDescriptorTest {
 
     @Test(dataProvider = "invalidNames",
           expectedExceptions = IllegalArgumentException.class )
-    public void testProvidesWithBadService(String service, String ignore) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testProvidesWithBadService(String service, String ignore) {
         ModuleDescriptor.newModule("foo").provides(service, List.of("p.Provider"));
     }
 
     @Test(dataProvider = "invalidNames",
           expectedExceptions = IllegalArgumentException.class )
-    public void testProvidesWithBadProvider(String provider, String ignore) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testProvidesWithBadProvider(String provider, String ignore) {
         List<String> names = new ArrayList<>(); // allows nulls
         names.add(provider);
         ModuleDescriptor.newModule("foo").provides("p.Service", names);
@@ -960,7 +1037,11 @@ public class ModuleDescriptorTest {
 
     @Test(dataProvider = "invalidNames",
           expectedExceptions = IllegalArgumentException.class )
-    public void testPackagesWithBadName(String pn, String ignore) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testPackagesWithBadName(String pn, String ignore) {
         Set<String> pkgs = new HashSet<>();  // allows nulls
         pkgs.add(pn);
         ModuleDescriptor.newModule("foo").packages(pkgs);
@@ -975,7 +1056,11 @@ public class ModuleDescriptorTest {
 
     @Test(dataProvider = "invalidNames",
           expectedExceptions = IllegalArgumentException.class )
-    public void testBadModuleName(String mn, String ignore) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testBadModuleName(String mn, String ignore) {
         ModuleDescriptor.newModule(mn);
     }
 
@@ -1034,7 +1119,11 @@ public class ModuleDescriptorTest {
      * Basic test for unparseable module versions
      */
     @Test(dataProvider = "unparseableVersions")
-    public void testUnparseableModuleVersion(String vs1, String vs2) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testUnparseableModuleVersion(String vs1, String vs2) {
         ModuleDescriptor descriptor1 = newModule("m", vs1);
         ModuleDescriptor descriptor2 = newModule("m", vs2);
 
@@ -1061,7 +1150,11 @@ public class ModuleDescriptorTest {
      * at compile version.
      */
     @Test(dataProvider = "unparseableVersions")
-    public void testUnparseableCompiledVersion(String vs1, String vs2) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testUnparseableCompiledVersion(String vs1, String vs2) {
         Requires r1 = newRequires("m", vs1);
         Requires r2 = newRequires("m", vs2);
 
@@ -1083,7 +1176,11 @@ public class ModuleDescriptorTest {
         assertTrue(r2.compareTo(r1) == 1);
     }
 
-    private ModuleDescriptor newModule(String name, String vs) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private ModuleDescriptor newModule(String name, String vs) {
         JavaLangModuleAccess JLMA = SharedSecrets.getJavaLangModuleAccess();
         Builder builder = JLMA.newModuleBuilder(name, false, Set.of());
         if (vs != null)
@@ -1093,7 +1190,11 @@ public class ModuleDescriptorTest {
         return ModuleDescriptor.read(bb);
     }
 
-    private Requires newRequires(String name, String vs) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Requires newRequires(String name, String vs) {
         JavaLangModuleAccess JLMA = SharedSecrets.getJavaLangModuleAccess();
         Builder builder = JLMA.newModuleBuilder("foo", false, Set.of());
         if (vs == null) {
@@ -1110,7 +1211,11 @@ public class ModuleDescriptorTest {
         return r;
     }
 
-    private boolean isParsableVersion(String vs) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean isParsableVersion(String vs) {
         try {
             Version.parse(vs);
             return true;
@@ -1296,7 +1401,11 @@ public class ModuleDescriptorTest {
 
     @Test(dataProvider = "invalidNames",
           expectedExceptions = IllegalArgumentException.class )
-    public void testMainClassWithBadName(String mainClass, String ignore) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testMainClassWithBadName(String mainClass, String ignore) {
         Builder builder = ModuleDescriptor.newModule("foo");
         builder.mainClass(mainClass);
     }
@@ -1488,7 +1597,11 @@ public class ModuleDescriptorTest {
     }
 
     @Test(dataProvider = "sortedModuleDescriptors")
-    public void testCompare(ModuleDescriptor md1, ModuleDescriptor md2) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testCompare(ModuleDescriptor md1, ModuleDescriptor md2) {
         assertNotEquals(md1, md2);
         assertTrue(md1.compareTo(md2) == 1);
         assertTrue(md2.compareTo(md1) == -1);

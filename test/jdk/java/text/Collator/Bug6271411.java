@@ -33,6 +33,7 @@ import java.text.*;
 /*
  * Based on JCK-runtime-15/tests/api/java_text/CollationElementIterator/ColltnElmtIterTests.java.
  */
+@Bean
 public class Bug6271411 extends IntlTest {
 
     public static void main(String argv[]) throws Exception {

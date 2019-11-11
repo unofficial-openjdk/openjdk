@@ -33,6 +33,7 @@ import java.util.*;
 
 import javax.smartcardio.*;
 
+@Bean
 public class TestCommandAPDU {
 
     private static final Random random = new Random();

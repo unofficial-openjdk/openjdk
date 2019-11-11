@@ -51,6 +51,7 @@ import javax.management.ObjectName;
  * @author Sun Microsystems, 2005 - All rights reserved.
  */
 
+@Bean
 public class AnnotationSecurityTest {
 
     /** Creates a new instance of AnnotationSecurityTest */

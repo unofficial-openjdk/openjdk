@@ -30,6 +30,7 @@
 
 import java.math.*;
 
+@Bean
 public class PowTests {
     static int zeroAndOneTests() {
         int failures = 0;

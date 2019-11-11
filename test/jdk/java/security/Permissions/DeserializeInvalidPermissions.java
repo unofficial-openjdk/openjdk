@@ -34,6 +34,7 @@ import java.io.ObjectInputStream;
 import java.security.Permissions;
 import java.util.Base64;
 
+@Bean
 public class DeserializeInvalidPermissions {
 
     private static final String BASE = System.getProperty("test.src", ".");

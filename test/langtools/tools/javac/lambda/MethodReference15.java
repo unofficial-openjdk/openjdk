@@ -30,6 +30,7 @@
  * @compile -Werror MethodReference15.java
  */
 
+@Bean
 public class MethodReference15 {
 
     interface SAM {

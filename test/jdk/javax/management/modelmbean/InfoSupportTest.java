@@ -40,6 +40,7 @@ import javax.management.Descriptor;
 import javax.management.RuntimeOperationsException;
 import javax.management.modelmbean.*;
 
+@Bean
 public class InfoSupportTest {
     public static void main(String[] args) throws Exception {
         boolean ok = true;

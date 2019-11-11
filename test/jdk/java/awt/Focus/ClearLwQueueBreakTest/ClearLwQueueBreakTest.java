@@ -37,6 +37,7 @@ import java.awt.event.*;
 import test.java.awt.regtesthelpers.Util;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@Bean
 public class ClearLwQueueBreakTest {
     JFrame f1 = new JFrame("frame");
     JFrame f2 = new JFrame("frame");
@@ -62,12 +63,18 @@ public class ClearLwQueueBreakTest {
 
     public void start() {
         b.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                     f2.setVisible(true);
                 }
             });
         tf2.addKeyListener(new KeyAdapter() {
-                public void keyTyped(KeyEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void keyTyped(KeyEvent e) {
                     if (e.getKeyChar() == '9') {
                         synchronized (typed) {
                             typed.set(true);
@@ -77,7 +84,10 @@ public class ClearLwQueueBreakTest {
                 }
             });
         tf3.addKeyListener(new KeyAdapter() {
-                public void keyTyped(KeyEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void keyTyped(KeyEvent e) {
                     if (e.getKeyChar() == '8') {
                         synchronized (typed) {
                             typed.set(true);
@@ -88,7 +98,10 @@ public class ClearLwQueueBreakTest {
             });
 
         listener1 = new FocusAdapter() {
-                public void focusGained(FocusEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void focusGained(FocusEvent e) {
                     b.requestFocus();
                     tf1.requestFocus();
                     tf1.setFocusable(false);
@@ -97,7 +110,10 @@ public class ClearLwQueueBreakTest {
             };
 
         listener2 = new FocusAdapter() {
-                public void focusGained(FocusEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void focusGained(FocusEvent e) {
                     b.requestFocus();
                     tf1.requestFocus();
                     tf2.requestFocus();

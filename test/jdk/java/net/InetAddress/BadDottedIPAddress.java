@@ -32,6 +32,7 @@
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+@Bean
 public class BadDottedIPAddress {
 
     public static void main(String args[]) throws Exception {

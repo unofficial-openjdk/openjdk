@@ -15,9 +15,14 @@ import javax.tools.Diagnostic.Kind;
 import com.sun.source.util.TreePath;
 import com.sun.source.util.Trees;
 
+@Bean
 public class TestMultipleErrors extends JavacTestingAbstractProcessor {
     @Override
-    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         for (Element root : roundEnv.getRootElements()) {
             processingEnv.getMessager().printMessage(Kind.ERROR, "error1", root);
             processingEnv.getMessager().printMessage(Kind.ERROR, "error2", root);

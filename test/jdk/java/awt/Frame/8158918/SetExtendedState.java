@@ -31,6 +31,7 @@
 
 import java.awt.Frame;
 
+@Bean
 public class SetExtendedState {
 
     public static void main(String[] args) {

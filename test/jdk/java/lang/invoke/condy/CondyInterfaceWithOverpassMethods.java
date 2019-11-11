@@ -41,6 +41,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 
 @Test
+@Bean
 public class CondyInterfaceWithOverpassMethods {
     interface A {
         int a();

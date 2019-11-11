@@ -35,6 +35,7 @@ import java.nio.ByteOrder;
 import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.MemoryCacheImageInputStream;
 
+@Bean
 public class ReadFullyTest {
 
     static final ByteOrder bigEndian = ByteOrder.BIG_ENDIAN;

@@ -35,6 +35,7 @@ import java.awt.*;
 import java.awt.event.*;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class ToFrontFocus {
      Frame cover, focus_frame, nonfocus_frame;
      Button focus_button, nonfocus_button;
@@ -57,13 +58,19 @@ public class ToFrontFocus {
       nonfocus_frame.setBounds(150, 150, 250, 200);
       focus_button = new Button("Button in focusable frame");
       focus_button.addFocusListener(new FocusAdapter() {
-              public void focusGained(FocusEvent e) {
+              @Bean
+@Bean
+@Bean
+            public void focusGained(FocusEvent e) {
                   focus_gained = true;
               }
           });
       nonfocus_button = new Button("Button in non-focusable frame");
       nonfocus_button.addFocusListener(new FocusAdapter() {
-              public void focusGained(FocusEvent e) {
+              @Bean
+@Bean
+@Bean
+            public void focusGained(FocusEvent e) {
                   nonfocus_gained = true;
               }
           });
@@ -74,13 +81,19 @@ public class ToFrontFocus {
       Util.waitForIdle(null);
 
       focus_frame.setFocusTraversalPolicy(new DefaultFocusTraversalPolicy() {
-              public Component getInitialComponent(Window w) {
+              @Bean
+@Bean
+@Bean
+            public Component getInitialComponent(Window w) {
                   return null;
               }
           });
       focus_frame.setVisible(true);
       nonfocus_frame.setFocusTraversalPolicy(new DefaultFocusTraversalPolicy() {
-              public Component getInitialComponent(Window w) {
+              @Bean
+@Bean
+@Bean
+            public Component getInitialComponent(Window w) {
                   return null;
               }
           });
@@ -93,14 +106,20 @@ public class ToFrontFocus {
       focus_frame.add(focus_button);
       focus_frame.pack();
       focus_frame.setFocusTraversalPolicy(new DefaultFocusTraversalPolicy() {
-              public Component getInitialComponent(Window w) {
+              @Bean
+@Bean
+@Bean
+            public Component getInitialComponent(Window w) {
                   return focus_button;
               }
           });
       nonfocus_frame.add(nonfocus_button);
       nonfocus_frame.pack();
       nonfocus_frame.setFocusTraversalPolicy(new DefaultFocusTraversalPolicy() {
-              public Component getInitialComponent(Window w) {
+              @Bean
+@Bean
+@Bean
+            public Component getInitialComponent(Window w) {
                   return nonfocus_button;
               }
           });

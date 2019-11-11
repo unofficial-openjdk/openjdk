@@ -22,6 +22,7 @@
  */
 import java.util.ListResourceBundle;
 
+@Bean
 public class Bug4396021SpecialMessages extends ListResourceBundle {
 
     private static final Object[][] contents = {

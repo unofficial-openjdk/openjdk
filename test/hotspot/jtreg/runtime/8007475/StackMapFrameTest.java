@@ -27,6 +27,7 @@
  * @summary Test memory stomp in stack map test
  * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:+UseMallocOnly StackMapFrameTest
  */
+@Bean
 public class StackMapFrameTest {
 
   public static void foo() {

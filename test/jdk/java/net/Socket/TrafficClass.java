@@ -35,6 +35,7 @@ import java.nio.*;
 import java.nio.channels.*;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class TrafficClass {
 
     static final int IPTOS_RELIABILITY = 0x4;

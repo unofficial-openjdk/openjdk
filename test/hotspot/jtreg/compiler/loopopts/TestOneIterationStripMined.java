@@ -32,6 +32,7 @@
 
 package compiler.loopopts;
 
+@Bean
 public class TestOneIterationStripMined {
     static int iField;
     static volatile Object oField;

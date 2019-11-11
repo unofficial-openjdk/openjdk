@@ -42,6 +42,7 @@
 
 package compiler.intrinsics.string;
 
+@Bean
 public class TestStringCompareToDifferentLength {
     private final int size;
 
@@ -65,7 +66,11 @@ public class TestStringCompareToDifferentLength {
         this.size = size;
     }
 
-    private void testCompareTo(int delta) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testCompareTo(int delta) {
         char strsrc[] = new char[size + delta];
         // generate ASCII string
         for (int i = 0; i < size + delta; i++) {
@@ -86,7 +91,11 @@ public class TestStringCompareToDifferentLength {
         }
     }
 
-    private void checkCase(String str2, String str1, int expected, String caseName) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkCase(String str2, String str1, int expected, String caseName) {
         int result = str2.compareTo(str1);
         int reversedResult = str1.compareTo(str2);
         if (expected != result || result != -reversedResult) {

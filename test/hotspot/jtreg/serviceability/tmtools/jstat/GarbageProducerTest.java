@@ -75,7 +75,11 @@ public class GarbageProducerTest {
         checkOldGenMeasurement(measurement2);
     }
 
-    private void checkOldGenMeasurement(JstatResults measurement2) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkOldGenMeasurement(JstatResults measurement2) {
         float oldGenAllocationRatio = garbageProducer.getOldGenAllocationRatio() - MEASUREMENT_TOLERANCE;
         // Assert that space has been utilized accordingly
         JstatResults.assertSpaceUtilization(measurement2, TARGET_MEMORY_USAGE, oldGenAllocationRatio);

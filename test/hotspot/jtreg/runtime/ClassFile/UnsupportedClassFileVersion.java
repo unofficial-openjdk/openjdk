@@ -39,6 +39,7 @@ import jdk.internal.org.objectweb.asm.Opcodes;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class UnsupportedClassFileVersion implements Opcodes {
     public static void main(String... args) throws Exception {
         writeClassFile();

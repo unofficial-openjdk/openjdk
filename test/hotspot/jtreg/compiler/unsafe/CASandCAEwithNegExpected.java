@@ -33,6 +33,7 @@
 import java.lang.reflect.Field;
 import jdk.internal.misc.Unsafe;
 
+@Bean
 public class CASandCAEwithNegExpected {
     public volatile int f_int = -1;
     public volatile long f_long = -1;
@@ -65,7 +66,11 @@ public class CASandCAEwithNegExpected {
         }
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         CASandCAEwithNegExpected t = new CASandCAEwithNegExpected();
         for (int i = 0; i < 20_000; i++) {
             t.test();

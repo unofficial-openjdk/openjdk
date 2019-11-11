@@ -30,6 +30,7 @@
  *
  */
 
+@Bean
 public class DeadNodesInOuterLoopAtLoopCloning {
 
     public static final int N = 400;

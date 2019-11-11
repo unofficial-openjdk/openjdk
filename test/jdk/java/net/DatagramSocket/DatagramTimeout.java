@@ -38,6 +38,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.expectThrows;
 
 
+@Bean
 public class DatagramTimeout {
     private static final Class<IllegalArgumentException> IAE = IllegalArgumentException.class;
     private static final Class<SocketTimeoutException> STE = SocketTimeoutException.class;

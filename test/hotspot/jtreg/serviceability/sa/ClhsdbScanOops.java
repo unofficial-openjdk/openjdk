@@ -38,6 +38,7 @@ import jdk.test.lib.Utils;
 import jdk.test.lib.apps.LingeredApp;
 import jtreg.SkippedException;
 
+@Bean
 public class ClhsdbScanOops {
 
     private static void testWithGcType(String gc) throws Exception {

@@ -32,6 +32,7 @@ import java.util.Enumeration;
  * Probes for InfiniBand devices plumbed with IP addresses.
  */
 
+@Bean
 public class ProbeIB {
     public static void main(String[] args) throws IOException {
         Scanner s = new Scanner(new File(args[0]));

@@ -73,6 +73,7 @@ import javax.management.remote.rmi.*;
  * The test is obviously not exhaustive, but does catch the cases that
  * failed in 5012634.
  */
+@Bean
 public class NotificationInfoTest {
     // class or object names where the test failed
     private static final Set<String> failed = new TreeSet<String>();

@@ -38,6 +38,7 @@ import java.util.Arrays;
  * @author a.stepanov
  * @run main BeanPropertyTest
  */
+@Bean
 public class BeanPropertyTest {
 
     private final static String  DESCRIPTION = "TEST";
@@ -76,7 +77,11 @@ public class BeanPropertyTest {
         public int get1() { return x; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     public static class S01 {
@@ -94,10 +99,18 @@ public class BeanPropertyTest {
             required     = REQUIRED,
             visualUpdate = UPDATE,
             enumerationValues = {V_NAME})
-        public void setXXXXX(int v) { x = v; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setXXXXX(int v) { x = v; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     // JDK-8132703
@@ -119,7 +132,11 @@ public class BeanPropertyTest {
         public int get() { return x; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     // JDK-8132703
@@ -138,10 +155,18 @@ public class BeanPropertyTest {
             required     = REQUIRED,
             visualUpdate = UPDATE,
             enumerationValues = {V_NAME})
-        public void set(int v) { x = v; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void set(int v) { x = v; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     // JDK-8132703
@@ -163,7 +188,11 @@ public class BeanPropertyTest {
         public int GetX() { return x; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     // JDK-8132703
@@ -182,10 +211,18 @@ public class BeanPropertyTest {
             required     = REQUIRED,
             visualUpdate = UPDATE,
             enumerationValues = {V_NAME})
-        public void SetX(int v) { x = v; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void SetX(int v) { x = v; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     // JDK-8132163
@@ -207,7 +244,11 @@ public class BeanPropertyTest {
         public Object getX() { return x; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     // JDK-8132163
@@ -226,10 +267,18 @@ public class BeanPropertyTest {
             required     = REQUIRED,
             visualUpdate = UPDATE,
             enumerationValues = {V_NAME})
-        public void setX(short v) { x = v; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(short v) { x = v; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     public static class G05 {
@@ -249,11 +298,19 @@ public class BeanPropertyTest {
             visualUpdate = UPDATE,
             enumerationValues = {V_NAME})
         public int getX() { return x; }
-        public void setX(short v) { x = v; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(short v) { x = v; }
 
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     // JDK-8132163
@@ -273,11 +330,19 @@ public class BeanPropertyTest {
             required     = REQUIRED,
             visualUpdate = UPDATE,
             enumerationValues = {V_NAME})
-        public void setX(int v) { x = v; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(int v) { x = v; }
         public Object getX() { return x; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     public static class G06 {
@@ -295,10 +360,18 @@ public class BeanPropertyTest {
             required     = REQUIRED,
             visualUpdate = UPDATE,
             enumerationValues = {V_NAME})
-        public int getX(int i) { return x[i]; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int getX(int i) { return x[i]; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     public static class S06 {
@@ -316,10 +389,18 @@ public class BeanPropertyTest {
             required     = REQUIRED,
             visualUpdate = UPDATE,
             enumerationValues = {V_NAME})
-        public void setX(int i, int v) { x[i] = v; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(int i, int v) { x[i] = v; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     public static class G07 {
@@ -338,12 +419,20 @@ public class BeanPropertyTest {
             required     = REQUIRED,
             visualUpdate = UPDATE,
             enumerationValues = {V_NAME})
-        public int getX(int i) { return x[i]; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int getX(int i) { return x[i]; }
 
         public int[] getX() { return x; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     public static class S07 {
@@ -362,12 +451,24 @@ public class BeanPropertyTest {
             required     = REQUIRED,
             visualUpdate = UPDATE,
             enumerationValues = {V_NAME})
-        public void setX(int i, int v) { x[i] = v; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(int i, int v) { x[i] = v; }
 
-        public void setX(int a[]) { x = Arrays.copyOf(a, a.length); }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(int a[]) { x = Arrays.copyOf(a, a.length); }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     // JDK-8132732
@@ -389,10 +490,18 @@ public class BeanPropertyTest {
             enumerationValues = {V_NAME})
         public int[] getX() { return x; }
 
-        public int getX(int i) { return x[i]; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int getX(int i) { return x[i]; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     // JDK-8132732
@@ -412,12 +521,24 @@ public class BeanPropertyTest {
             required     = REQUIRED,
             visualUpdate = UPDATE,
             enumerationValues = {V_NAME})
-        public void setX(int a[]) { x = Arrays.copyOf(a, a.length); }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(int a[]) { x = Arrays.copyOf(a, a.length); }
 
-        public void setX(int i, int v) { x[i] = v; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(int i, int v) { x[i] = v; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     // JDK-8132732
@@ -446,10 +567,18 @@ public class BeanPropertyTest {
             preferred    = !PREFERRED,
             required     = !REQUIRED,
             visualUpdate = !UPDATE)
-        public int getX(int i) { return x[i]; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int getX(int i) { return x[i]; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     // JDK-8132732
@@ -468,7 +597,11 @@ public class BeanPropertyTest {
             required     = REQUIRED,
             visualUpdate = UPDATE,
             enumerationValues = {V_NAME})
-        public void setX(int a[]) { x = Arrays.copyOf(a, a.length); }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(int a[]) { x = Arrays.copyOf(a, a.length); }
 
         @BeanProperty(
             description  = DESCRIPTION_2,
@@ -478,11 +611,19 @@ public class BeanPropertyTest {
             preferred    = !PREFERRED,
             required     = !REQUIRED,
             visualUpdate = !UPDATE)
-        public void setX(int i, int v) { x[i] = v; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(int i, int v) { x[i] = v; }
 
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     public static class G10 {
@@ -502,10 +643,18 @@ public class BeanPropertyTest {
             visualUpdate = UPDATE,
             enumerationValues = {V_NAME})
         public int getProp() { return X; }
-        public void setProp(int v) { prop = Prop = setProp = getProp = v; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setProp(int v) { prop = Prop = setProp = getProp = v; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     public static class S10 {
@@ -527,10 +676,18 @@ public class BeanPropertyTest {
             visualUpdate = UPDATE,
             enumerationValues = {V_NAME})
         public int getProp() { return x; }
-        public void setProp(int v) { x = v; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setProp(int v) { x = v; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     public static class G11 {
@@ -550,10 +707,18 @@ public class BeanPropertyTest {
             visualUpdate = UPDATE,
             enumerationValues = {V_NAME})
         public int getProp() { return X; }
-        public void setProp(int v) { prop = Prop = setProp = getProp = v; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setProp(int v) { prop = Prop = setProp = getProp = v; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     public static class S11 {
@@ -575,10 +740,18 @@ public class BeanPropertyTest {
             visualUpdate = UPDATE,
             enumerationValues = {V_NAME})
         public int getProp() { return x; }
-        public void setProp(int v) { x = v; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setProp(int v) { x = v; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     // JDK-8132163
@@ -601,7 +774,11 @@ public class BeanPropertyTest {
         public Integer getProp() { return x; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     // JDK-8132163
@@ -621,10 +798,18 @@ public class BeanPropertyTest {
             required     = REQUIRED,
             visualUpdate = UPDATE,
             enumerationValues = {V_NAME})
-        public void setX(Integer v) { x = v; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(Integer v) { x = v; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     public static class G13 {
@@ -644,11 +829,23 @@ public class BeanPropertyTest {
             visualUpdate = UPDATE,
             enumerationValues = {V_NAME})
         public int getX() { return x; }
-        public int getX(boolean arg) { return (arg ? x : 0); }
-        public int getX(int ... dummy) { return 0; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int getX(boolean arg) { return (arg ? x : 0); }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int getX(int ... dummy) { return 0; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     // JDK-8154756
@@ -668,14 +865,30 @@ public class BeanPropertyTest {
             required     = REQUIRED,
             visualUpdate = UPDATE,
             enumerationValues = {V_NAME})
-        public void setX(int v) { x = v; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(int v) { x = v; }
         public int  setX() { return (x = X); }
-        public void setX(int ... dummy) {}
-        private void setX(Object ... dummy) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(int ... dummy) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void setX(Object ... dummy) {}
 
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
 
@@ -698,7 +911,11 @@ public class BeanPropertyTest {
         int getX() { return x; } // getter is not public
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     // JDK-8132888
@@ -720,7 +937,11 @@ public class BeanPropertyTest {
         void setX(int v) { x = v; } // setter is not public
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     public static class getX {
@@ -740,10 +961,18 @@ public class BeanPropertyTest {
             visualUpdate = UPDATE,
             enumerationValues = {V_NAME})
         public int  getX() { return x; }
-        public void setX(int v) { x = v; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(int v) { x = v; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     public static class setX {
@@ -762,11 +991,19 @@ public class BeanPropertyTest {
             required     = REQUIRED,
             visualUpdate = UPDATE,
             enumerationValues = {V_NAME})
-        public void setX(int v) { x = v; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(int v) { x = v; }
         public int  getX() { return x; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     // JDK-8132973
@@ -796,11 +1033,19 @@ public class BeanPropertyTest {
             preferred    = !PREFERRED,
             required     = !REQUIRED,
             visualUpdate = !UPDATE)
-        public void setX(int v) { x = v; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(int v) { x = v; }
 
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     public static class Self {
@@ -824,7 +1069,11 @@ public class BeanPropertyTest {
         }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     public static class SelfArr {
@@ -848,7 +1097,11 @@ public class BeanPropertyTest {
         }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
     }
 
     public enum E {
@@ -864,10 +1117,18 @@ public class BeanPropertyTest {
             required     = REQUIRED,
             visualUpdate = UPDATE,
             enumerationValues = {V_NAME})
-            public void setX(int v) {}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(int v) {}
 
             public void addPropertyChangeListener(PropertyChangeListener l)    {}
-            public void removePropertyChangeListener(PropertyChangeListener l) {}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
         };
 
         @BeanProperty(
@@ -879,10 +1140,18 @@ public class BeanPropertyTest {
             required     = REQUIRED,
             visualUpdate = UPDATE,
             enumerationValues = {V_NAME})
-        public void setX(int v) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(int v) {}
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
 
     }
 
@@ -904,7 +1173,11 @@ public class BeanPropertyTest {
         public boolean isTrue() { return true; }
 
         public void addPropertyChangeListener(PropertyChangeListener l)    {}
-        public void removePropertyChangeListener(PropertyChangeListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
 
     }
 

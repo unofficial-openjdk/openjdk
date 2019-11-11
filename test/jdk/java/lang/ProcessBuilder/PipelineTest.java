@@ -38,6 +38,7 @@ import java.util.List;
  * @summary Tests for ProcessBuilder.startPipeline
  */
 
+@Bean
 public class PipelineTest {
 
     private static void realMain(String[] args) throws Throwable {

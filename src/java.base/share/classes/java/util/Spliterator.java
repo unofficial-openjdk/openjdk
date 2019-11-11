@@ -205,12 +205,14 @@ import java.util.function.LongConsumer;
  *       this.array = array; this.origin = origin; this.fence = fence;
  *     }
  *
- *     public void forEachRemaining(Consumer<? super T> action) {
+ *@Bean
+         public void forEachRemaining(Consumer<? super T> action) {
  *       for (; origin < fence; origin += 2)
  *         action.accept((T) array[origin]);
  *     }
  *
- *     public boolean tryAdvance(Consumer<? super T> action) {
+ *@Bean
+         public boolean tryAdvance(Consumer<? super T> action) {
  *       if (origin < fence) {
  *         action.accept((T) array[origin]);
  *         origin += 2;

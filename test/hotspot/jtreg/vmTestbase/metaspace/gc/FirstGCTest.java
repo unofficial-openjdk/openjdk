@@ -84,7 +84,11 @@ public class FirstGCTest extends MetaspaceBaseGC {
 
 
     @Override
-    protected void parseArgs(String[] args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void parseArgs(String[] args) {
         final String XXSize = "-XX:MetaspaceSize=";
         for (String va: vmArgs) {
             if (va.startsWith(XXSize)) {
@@ -170,7 +174,11 @@ public class FirstGCTest extends MetaspaceBaseGC {
      * @param times limit of attempts to provoke GC
      * @return true if GC has happened, false if limit has exceeded.
      */
-    protected boolean eatMemoryUntilGC(int times) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected boolean eatMemoryUntilGC(int times) {
         System.out.println("%%%% Loading classes");
         System.out.println("% iter#  :   used  : commited");
         System.out.println("..............................");

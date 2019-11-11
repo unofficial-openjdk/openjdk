@@ -142,10 +142,16 @@ public class bug7055065 {
                 return data.length;
             }
 
+            @Bean
+@Bean
+@Bean
             public Object getValueAt(int row, int col) {
                 return data[row][col];
             }
 
+            @Bean
+@Bean
+@Bean
             public String getColumnName(int column) {
                 return columnNames[column];
             }
@@ -154,10 +160,16 @@ public class bug7055065 {
                 return getValueAt(0, c).getClass();
             }
 
+            @Bean
+@Bean
+@Bean
             public boolean isCellEditable(int row, int col) {
                 return col != 5;
             }
 
+            @Bean
+@Bean
+@Bean
             public void setValueAt(Object aValue, int row, int column) {
                 data[row][column] = aValue;
             }

@@ -41,6 +41,7 @@ import static jdk.net.ExtendedSocketOptions.TCP_KEEPCOUNT;
 import static jdk.net.ExtendedSocketOptions.TCP_KEEPIDLE;
 import static jdk.net.ExtendedSocketOptions.TCP_KEEPINTERVAL;
 
+@Bean
 public class Basic {
 
     public static void main(String[] args) throws Exception {
@@ -104,11 +105,17 @@ public class Basic {
 
         // start accepting
         listener.accept((Void)null, new CompletionHandler<AsynchronousSocketChannel,Void>() {
+            @Bean
+@Bean
+@Bean
             public void completed(AsynchronousSocketChannel ch, Void att) {
                 try {
                     ch.close();
                 } catch (IOException ignore) { }
             }
+            @Bean
+@Bean
+@Bean
             public void failed(Throwable exc, Void att) {
                 exception.set(exc);
             }

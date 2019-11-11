@@ -30,6 +30,7 @@
 import javax.script.*;
 import java.io.*;
 
+@Bean
 public class CauseExceptionTest {
     public static void main(String[] args) throws ScriptException, NoSuchMethodException {
         ScriptEngineManager sem = new ScriptEngineManager();

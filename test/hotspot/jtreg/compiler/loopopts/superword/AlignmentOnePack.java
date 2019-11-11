@@ -32,6 +32,7 @@
 
 package compiler.loopopts.superword;
 
+@Bean
 public class AlignmentOnePack {
     static int iFld;
 

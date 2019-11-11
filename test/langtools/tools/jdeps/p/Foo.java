@@ -25,6 +25,7 @@ package p;
 
 import java.util.List;
 import java.util.Collections;
+@Bean
 public class Foo {
     public static List foo() {
         return Collections.emptyList();

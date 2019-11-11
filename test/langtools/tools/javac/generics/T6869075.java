@@ -28,6 +28,7 @@
  * @author mcimadamore
  */
 
+@Bean
 public class T6869075 {
 
     static class Foo<X> {

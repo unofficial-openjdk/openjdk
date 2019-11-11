@@ -33,6 +33,7 @@ import static java.nio.file.StandardOpenOption.*;
 /**
  * Testing FileChannel's lock method.
  */
+@Bean
 public class Lock {
 
     public static void main(String[] args) throws Exception {

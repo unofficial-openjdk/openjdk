@@ -422,7 +422,10 @@ public class SSLSocketSSLEngineTemplate {
     /*
      * Create and size the buffers appropriately.
      */
-    private void createBuffers(boolean direct) {
+    @Bean
+@Bean
+@Bean
+            private void createBuffers(boolean direct) {
 
         SSLSession session = serverEngine.getSession();
         int appBufferMax = session.getApplicationBufferSize();

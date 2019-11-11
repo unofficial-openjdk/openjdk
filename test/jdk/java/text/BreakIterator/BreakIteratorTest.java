@@ -72,6 +72,7 @@ import java.util.Vector;
 import java.util.Enumeration;
 import java.io.*;
 
+@Bean
 public class BreakIteratorTest extends IntlTest
 {
     private BreakIterator characterBreak;
@@ -95,7 +96,11 @@ public class BreakIteratorTest extends IntlTest
     // general test subroutines
     //=========================================================================
 
-    private void generalIteratorTest(BreakIterator bi, Vector expectedResult) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void generalIteratorTest(BreakIterator bi, Vector expectedResult) {
         StringBuffer buffer = new StringBuffer();
         String text;
         for (int i = 0; i < expectedResult.size(); i++) {
@@ -134,7 +139,11 @@ public class BreakIteratorTest extends IntlTest
         doMultipleSelectionTest(bi, text);
     }
 
-    private Vector testFirstAndNext(BreakIterator bi, String text) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Vector testFirstAndNext(BreakIterator bi, String text) {
         int p = bi.first();
         int lastP = p;
         Vector<String> result = new Vector<String>();
@@ -160,7 +169,11 @@ public class BreakIteratorTest extends IntlTest
         return result;
     }
 
-    private Vector testLastAndPrevious(BreakIterator bi, String text) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Vector testLastAndPrevious(BreakIterator bi, String text) {
         int p = bi.last();
         int lastP = p;
         Vector<String> result = new Vector<String>();
@@ -186,7 +199,11 @@ public class BreakIteratorTest extends IntlTest
         return result;
     }
 
-    private void compareFragmentLists(String f1Name, String f2Name, Vector f1, Vector f2) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void compareFragmentLists(String f1Name, String f2Name, Vector f1, Vector f2) {
         int p1 = 0;
         int p2 = 0;
         String s1;
@@ -240,7 +257,11 @@ public class BreakIteratorTest extends IntlTest
         }
     }
 
-    private void testFollowing(BreakIterator bi, String text, int[] boundaries) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testFollowing(BreakIterator bi, String text, int[] boundaries) {
         logln("testFollowing():");
         int p = 2;
         int i = 0;
@@ -260,7 +281,11 @@ public class BreakIteratorTest extends IntlTest
         }
     }
 
-    private void testPreceding(BreakIterator bi, String text, int[] boundaries) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testPreceding(BreakIterator bi, String text, int[] boundaries) {
         logln("testPreceding():");
         int p = 0;
         int i = 0;
@@ -280,7 +305,11 @@ public class BreakIteratorTest extends IntlTest
         }
     }
 
-    private void testIsBoundary(BreakIterator bi, String text, int[] boundaries) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testIsBoundary(BreakIterator bi, String text, int[] boundaries) {
         logln("testIsBoundary():");
         int p = 1;
         boolean isB;
@@ -448,7 +477,11 @@ public class BreakIteratorTest extends IntlTest
         }
     }
 
-    public void debugLogln(String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void debugLogln(String s) {
         final String zeros = "0000";
         String temp;
         StringBuffer out = new StringBuffer();

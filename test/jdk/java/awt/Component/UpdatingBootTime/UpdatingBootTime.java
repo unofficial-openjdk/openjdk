@@ -38,6 +38,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.Date;
 
+@Bean
 public class UpdatingBootTime extends Applet
 {
     //Declare things used in the test, like buttons and labels here

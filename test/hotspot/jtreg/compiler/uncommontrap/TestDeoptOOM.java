@@ -35,6 +35,7 @@
 
 package compiler.uncommontrap;
 
+@Bean
 public class TestDeoptOOM {
 
     long f1;

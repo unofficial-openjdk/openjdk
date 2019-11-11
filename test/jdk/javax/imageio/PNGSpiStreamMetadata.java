@@ -35,6 +35,7 @@ import javax.imageio.spi.ImageWriterSpi;
 import com.sun.imageio.plugins.png.PNGImageReaderSpi;
 import com.sun.imageio.plugins.png.PNGImageWriterSpi;
 
+@Bean
 public class PNGSpiStreamMetadata {
 
     private static void fatal() {

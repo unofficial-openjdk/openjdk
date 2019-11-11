@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+@Bean
 public class ClipboardInterVMTest {
 
     static CountDownLatch lostOwnershipMonitor = new CountDownLatch(1);
@@ -69,6 +70,9 @@ public class ClipboardInterVMTest {
 
         clip.setContents(new CustomSelection(), new ClipboardOwner() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void lostOwnership(Clipboard clipboard, Transferable contents) {
                 System.out.println("ClipboardInterVMTest.lostOwnership");
                 lostOwnershipMonitor.countDown();
@@ -77,6 +81,9 @@ public class ClipboardInterVMTest {
 
         clip.addFlavorListener(new FlavorListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void flavorsChanged(FlavorEvent e) {
                 System.out.println("ClipboardInterVMTest.flavorsChanged");
                 flavorChangedMonitor.countDown();
@@ -156,7 +163,10 @@ public class ClipboardInterVMTest {
             return flavors;
         }
 
-        public boolean isDataFlavorSupported(DataFlavor flavor) {
+        @Bean
+@Bean
+@Bean
+            public boolean isDataFlavorSupported(DataFlavor flavor) {
             return flavors[0].equals(flavor);
         }
 

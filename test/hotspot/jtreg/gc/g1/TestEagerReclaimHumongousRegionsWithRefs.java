@@ -90,6 +90,7 @@ class TestEagerReclaimHumongousRegionsWithRefsReclaimRegionFast {
     }
 }
 
+@Bean
 public class TestEagerReclaimHumongousRegionsWithRefs {
 
     public static void main(String[] args) throws Exception {

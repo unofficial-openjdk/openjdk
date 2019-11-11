@@ -10,6 +10,7 @@
  * @compile/ref=T4880220.error.out/fail -XDrawDiagnostics -Werror -Xlint:all         T4880220.java
  */
 
+@Bean
 public class T4880220 {
     void m1() {
         int good_1 = C.m();

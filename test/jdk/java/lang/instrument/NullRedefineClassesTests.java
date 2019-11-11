@@ -35,6 +35,7 @@
 import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.UnmodifiableClassException;
 
+@Bean
 public class
 NullRedefineClassesTests
     extends ASimpleInstrumentationTestCase

@@ -34,6 +34,7 @@ import java.util.*;
 
 import jdk.test.lib.net.URIBuilder;
 
+@Bean
 public class HttpTest {
 
     /*

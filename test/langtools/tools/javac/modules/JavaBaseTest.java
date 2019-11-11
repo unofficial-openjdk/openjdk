@@ -59,6 +59,7 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class JavaBaseTest {
 
     public static void main(String... args) throws Exception {
@@ -266,7 +267,11 @@ public class JavaBaseTest {
         new ClassWriter().write(cf2, modInfo.toFile());
     }
 
-    private void error(String message) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void error(String message) {
         System.err.println("Error: " + message);
         errorCount++;
     }

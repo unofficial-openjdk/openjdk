@@ -75,7 +75,8 @@ class MyImageFilter extends ImageFilter {
     }
 
     @Override
-    public void imageComplete(int status) {
+@Bean
+        public void imageComplete(int status) {
         switch (testScenario) {
             case "SUCCESS":
                 if (status == SINGLEFRAMEDONE) {

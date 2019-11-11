@@ -21,6 +21,7 @@
  * questions.
  */
 
+@Bean
 public class RedefineMethodDelInvokeTarget {
     public void test() {
         myMethod0();

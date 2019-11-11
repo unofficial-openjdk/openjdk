@@ -24,6 +24,7 @@
 package p;
 import p.Tree.*;
 
+@Bean
 public class TreeScanner<E extends Throwable> extends Visitor<E> {
 
     /** Visitor method: Scan a single node.

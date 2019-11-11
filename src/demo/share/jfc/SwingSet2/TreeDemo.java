@@ -49,6 +49,7 @@ import java.net.*;
  *
  * @author Jeff Dinkins
  */
+@Bean
 public class TreeDemo extends DemoModule {
 
     JTree tree;

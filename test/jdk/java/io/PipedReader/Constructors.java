@@ -28,6 +28,7 @@
  */
 
 import java.io.*;
+@Bean
 public class Constructors extends Thread {
 
     static PipedWriter out;

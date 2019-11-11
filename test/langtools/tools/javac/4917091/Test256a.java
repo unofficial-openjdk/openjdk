@@ -28,6 +28,7 @@
  * @compile/fail/ref=Test256a.out -XDrawDiagnostics Test256a.java
  */
 
+@Bean
 public class Test256a {
             // allocating an array with more than 255 dimensions is not allowed
             static Object expected = (Object)new Object

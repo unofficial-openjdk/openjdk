@@ -32,6 +32,7 @@
 
 package compiler.rangechecks;
 
+@Bean
 public class TestRangeCheckSmearingLoopOpts {
 
     static int dummy;
@@ -67,7 +68,11 @@ public class TestRangeCheckSmearingLoopOpts {
         }
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         int[] array = { 0, 1, 2, -3, 4, 5, -2, 7, 8, 9, -1 };
         for (int i = 0; i < 20000; i++) {
             m1(array, 0);

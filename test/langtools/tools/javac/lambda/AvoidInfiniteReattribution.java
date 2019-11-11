@@ -46,6 +46,7 @@ import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.Context.Factory;
 
+@Bean
 public class AvoidInfiniteReattribution {
 
     public static void main(String... args) throws Exception {
@@ -57,7 +58,11 @@ public class AvoidInfiniteReattribution {
         JavaSource source = new JavaSource("class Test {" +
                                            "    I i = STOP -> {};" +
                                            "    interface I {" +
-                                           "        public void test(int i) {}" +
+                                           "        @Bean
+@Bean
+@Bean
+@Bean
+                public void test(int i) {}" +
                                            "    }" +
                                            "}");
         Context context = new Context();
@@ -83,7 +88,11 @@ public class AvoidInfiniteReattribution {
             super(context);
         }
 
-        @Override public void visitVarDef(JCVariableDecl tree) {
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void visitVarDef(JCVariableDecl tree) {
             if (tree.name.contentEquals("STOP"))
                 throw new StopException();
             super.visitVarDef(tree);
@@ -102,7 +111,11 @@ public class AvoidInfiniteReattribution {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return source;
         }
 

@@ -46,6 +46,7 @@ class CommandCommentDelimiterTarg {
 }
 
 
+@Bean
 public class CommandCommentDelimiter extends JdbTest {
     public static void main(String argv[]) {
         new CommandCommentDelimiter().run();

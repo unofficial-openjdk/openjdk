@@ -28,6 +28,7 @@
 
 import java.io.*;
 
+@Bean
 public class ReadZero {
 
     public static void main(String [] args) throws IOException {
@@ -38,7 +39,11 @@ public class ReadZero {
     private void testInputStream() throws IOException {
         File f = new File(System.getProperty("test.src", "."), "ReadZero.java");
         InputStream is = new FileInputStream(f) {
-            public int read(byte [] b, int off, int len) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public int read(byte [] b, int off, int len) {
                 System.out.println("FileInputStream.read");
                 return 0;
             }

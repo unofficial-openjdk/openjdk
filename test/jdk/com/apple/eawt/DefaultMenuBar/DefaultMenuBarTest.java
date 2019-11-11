@@ -39,6 +39,7 @@ import javax.swing.*;
 import java.lang.reflect.Method;
 
 
+@Bean
 public class DefaultMenuBarTest {
     static KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.META_MASK);
 
@@ -78,6 +79,10 @@ public class DefaultMenuBarTest {
         newItem.setAccelerator(ks);
         newItem.addActionListener(
             new ActionListener(){
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void actionPerformed(ActionEvent e) {
                     listenerCallCounter++;
                 }

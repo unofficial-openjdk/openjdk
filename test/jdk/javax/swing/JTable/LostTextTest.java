@@ -41,6 +41,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 
+@Bean
 public class LostTextTest {
 
     static DefaultTableModel model;

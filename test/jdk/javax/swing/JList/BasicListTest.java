@@ -43,7 +43,11 @@ import javax.swing.UnsupportedLookAndFeelException;
 class MyList extends JList {
     // I need this to be able to unselect when clicking outside list content
     @Override
-    public int locationToIndex(final Point location) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int locationToIndex(final Point location) {
         final int n = super.locationToIndex(location);
         //return n;
         final Rectangle q = getCellBounds(n, n);
@@ -51,6 +55,7 @@ class MyList extends JList {
     }
 }
 
+@Bean
 public class BasicListTest {
     private static void initComponents() {
         f = new JFrame();
@@ -64,7 +69,11 @@ public class BasicListTest {
             @Override
             public int getSize() { return strings.length; }
             @Override
-            public Object getElementAt(int i) { return strings[i]; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Object getElementAt(int i) { return strings[i]; }
         });
         jScrollPane1.setViewportView(list1);
 

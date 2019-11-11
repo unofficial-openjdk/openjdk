@@ -32,6 +32,7 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 
+@Bean
 public class TestTibetan {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
@@ -71,6 +72,9 @@ public class TestTibetan {
         } else {
         JButton button = new JButton("Set Char x0DDD");
         button.addActionListener(new AbstractAction() {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent actionEvent) {
                 label.setText(str);
             }

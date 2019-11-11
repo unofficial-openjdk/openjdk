@@ -31,6 +31,7 @@ import java.io.*;
 import java.nio.*;
 import java.nio.charset.*;
 
+@Bean
 public class TestCp834_SBCS {
     public static void main(String args[]) throws Exception {
         // The correctness of 1:1 mapping is Coverted by CoderTest.java

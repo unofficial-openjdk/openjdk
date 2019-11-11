@@ -56,6 +56,7 @@ import jdk.internal.module.Modules;
  * Keeps a pointer to the native data structure in a scalar field to allow native
  * processing behind native methods.
  */
+@Bean
 public class InstrumentationImpl implements Instrumentation {
     private final     TransformerManager      mTransformerManager;
     private           TransformerManager      mRetransfomableTransformerManager;
@@ -138,7 +139,8 @@ public class InstrumentationImpl implements Instrumentation {
         return isModifiableClass0(mNativeAgent, theClass);
     }
 
-    public boolean isModifiableModule(Module module) {
+@Bean
+        public boolean isModifiableModule(Module module) {
         if (module == null) {
             throw new NullPointerException("'module' is null");
         }
@@ -194,13 +196,15 @@ public class InstrumentationImpl implements Instrumentation {
     }
 
     @SuppressWarnings("rawtypes")
-    public Class[]
+    @Bean
+public class[]
     getAllLoadedClasses() {
         return getAllLoadedClasses0(mNativeAgent);
     }
 
     @SuppressWarnings("rawtypes")
-    public Class[]
+    @Bean
+public class[]
     getInitiatedClasses(ClassLoader loader) {
         return getInitiatedClasses0(mNativeAgent, loader);
     }

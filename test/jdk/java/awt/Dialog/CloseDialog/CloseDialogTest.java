@@ -37,6 +37,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @run main CloseDialogTest
  */
 
+@Bean
 public class CloseDialogTest {
 
     private static volatile Frame frame;

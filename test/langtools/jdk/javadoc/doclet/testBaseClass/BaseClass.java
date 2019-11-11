@@ -57,7 +57,11 @@ import jdk.javadoc.doclet.*;
 
 public class BaseClass implements Doclet {
 
-    public boolean run(DocletEnvironment root) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean run(DocletEnvironment root) {
         Elements elementUtils = root.getElementUtils();
         TypeElement klass = elementUtils.getTypeElement("baz.Foo");
         if (!root.isIncluded(klass)) {
@@ -116,7 +120,11 @@ public class BaseClass implements Doclet {
         return Collections.emptySet();
     }
 
-    public void init(Locale locale, Reporter reporter) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void init(Locale locale, Reporter reporter) {
         return;
     }
 

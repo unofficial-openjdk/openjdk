@@ -41,6 +41,7 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class SourceInSymlinkTest extends ModuleTestBase {
     public static void main(String... args) throws Exception {
         SourceInSymlinkTest t = new SourceInSymlinkTest();
@@ -52,7 +53,8 @@ public class SourceInSymlinkTest extends ModuleTestBase {
         Path src = base.resolve("src");
         Path src_m = src.resolve("m");
         tb.writeFile(src_m.resolve("module-info.java"), "module m { }");
-        tb.writeJavaFiles(src_m, "package p; public class A{}");
+        tb.writeJavaFiles(src_m, "package p; @Bean
+public class A{}");
 
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);

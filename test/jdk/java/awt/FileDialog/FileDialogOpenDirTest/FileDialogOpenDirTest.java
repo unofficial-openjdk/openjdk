@@ -33,6 +33,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.applet.*;
 
+@Bean
 public class FileDialogOpenDirTest extends Applet {
 
     public static void main(String[] args) {
@@ -75,7 +76,10 @@ public class FileDialogOpenDirTest extends Applet {
         Button open = new Button("Open File Dialog");
 
         open.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                     new FileDialog(new Frame()).show();
                 }
             });

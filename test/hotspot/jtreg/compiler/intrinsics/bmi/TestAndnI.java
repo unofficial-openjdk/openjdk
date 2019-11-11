@@ -40,6 +40,7 @@ package compiler.intrinsics.bmi;
 
 import sun.hotspot.cpuinfo.CPUInfo;
 
+@Bean
 public class TestAndnI {
 
     public static void main(String args[]) throws Throwable {
@@ -57,11 +58,19 @@ public class TestAndnI {
 
     public static class AndnIExpr extends Expr.BMIBinaryIntExpr {
 
-        public int intExpr(int src1, int src2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int intExpr(int src1, int src2) {
             return ~src1 & src2;
         }
 
-        public int intExpr(int src1, Expr.MemI src2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int intExpr(int src1, Expr.MemI src2) {
             if (src2 != null) {
                 return ~src1 & src2.value;
             } else {
@@ -69,7 +78,11 @@ public class TestAndnI {
             }
         }
 
-        public int intExpr(Expr.MemI src1, int src2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int intExpr(Expr.MemI src1, int src2) {
             if (src1 != null) {
                 return ~src1.value & src2;
             } else {
@@ -77,7 +90,11 @@ public class TestAndnI {
             }
         }
 
-        public int intExpr(Expr.MemI src1, Expr.MemI src2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int intExpr(Expr.MemI src1, Expr.MemI src2) {
             if (src1 != null && src2 != null) {
                 return ~src1.value & src2.value;
             } else {
@@ -88,11 +105,19 @@ public class TestAndnI {
 
     public static class AndnICommutativeExpr extends Expr.BMIBinaryIntExpr {
 
-        public int intExpr(int src1, int src2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int intExpr(int src1, int src2) {
             return src1 & ~src2;
         }
 
-        public int intExpr(int src1, Expr.MemI src2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int intExpr(int src1, Expr.MemI src2) {
             if (src2 != null) {
                 return src1 & ~src2.value;
             } else {
@@ -100,7 +125,11 @@ public class TestAndnI {
             }
         }
 
-        public int intExpr(Expr.MemI src1, int src2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int intExpr(Expr.MemI src1, int src2) {
             if (src1 != null) {
                 return src1.value & ~src2;
             } else {
@@ -108,7 +137,11 @@ public class TestAndnI {
             }
         }
 
-        public int intExpr(Expr.MemI src1, Expr.MemI src2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int intExpr(Expr.MemI src1, Expr.MemI src2) {
             if (src1 != null && src2 != null) {
                 return src1.value & ~src2.value;
             } else {

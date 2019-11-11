@@ -40,6 +40,7 @@ import java.awt.Robot;
 
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class DialogAboveFrameTest {
     public static void main(String[] args) {
         Robot robot = Util.createRobot();

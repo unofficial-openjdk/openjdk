@@ -51,6 +51,7 @@ package compiler.jvmci.events;
 import jdk.test.lib.process.ExitCode;
 import jdk.test.lib.cli.CommandLineOptionTest;
 
+@Bean
 public class JvmciShutdownEventTest {
     private final static String[] MESSAGE = new String[]{
         JvmciShutdownEventListener.MESSAGE

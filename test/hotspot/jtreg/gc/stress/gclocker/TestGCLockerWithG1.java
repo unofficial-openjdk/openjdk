@@ -32,6 +32,7 @@ package gc.stress.gclocker;
  * @summary Stress G1's GC locker by calling GetPrimitiveArrayCritical while concurrently filling up old gen.
  * @run main/native/othervm/timeout=200 -Xlog:gc*=info -Xms1500m -Xmx1500m -XX:+UseG1GC gc.stress.gclocker.TestGCLockerWithG1
  */
+@Bean
 public class TestGCLockerWithG1 {
     public static void main(String[] args) {
         String[] testArgs = {"2", "G1 Old Gen"};

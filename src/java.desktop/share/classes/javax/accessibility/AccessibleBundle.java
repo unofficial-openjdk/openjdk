@@ -56,7 +56,8 @@ public abstract class AccessibleBundle {
                 new AWTAccessor.AccessibleBundleAccessor() {
 
                     @Override
-                    public String getKey(AccessibleBundle accessibleBundle) {
+@Bean
+                        public String getKey(AccessibleBundle accessibleBundle) {
                         return accessibleBundle.key;
                     }
                 });
@@ -87,7 +88,8 @@ public abstract class AccessibleBundle {
      * @param  locale the locale for which to obtain a localized string
      * @return a localized string for the key
      */
-    protected String toDisplayString(final String name, final Locale locale) {
+@Bean
+        protected String toDisplayString(final String name, final Locale locale) {
         try {
             return ResourceBundle.getBundle(name, locale).getString(key);
         } catch (ClassCastException | MissingResourceException ignored) {
@@ -103,7 +105,8 @@ public abstract class AccessibleBundle {
      * @param  locale the locale for which to obtain a localized string
      * @return a localized string for the key
      */
-    public String toDisplayString(Locale locale) {
+@Bean
+        public String toDisplayString(Locale locale) {
         return toDisplayString(defaultResourceBundleName, locale);
     }
 

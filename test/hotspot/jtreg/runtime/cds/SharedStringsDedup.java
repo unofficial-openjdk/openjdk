@@ -37,6 +37,7 @@ import java.io.File;
 // and -XX:+UseStringDeduplication. We run in -Xshare:auto mode so
 // we don't need to worry about CDS archive mapping failure (which
 // doesn't happen often so it won't impact coverage).
+@Bean
 public class SharedStringsDedup {
     public static void main(String[] args) throws Exception {
         OutputAnalyzer out =

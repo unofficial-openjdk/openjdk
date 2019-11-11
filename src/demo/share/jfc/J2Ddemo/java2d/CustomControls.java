@@ -64,7 +64,11 @@ public abstract class CustomControls extends JPanel implements Runnable {
         addMouseListener(new MouseAdapter() {
 
             @Override
-            public void mouseClicked(MouseEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void mouseClicked(MouseEvent e) {
                 if (thread == null) { start(); } else { stop(); }
             }
         });
@@ -76,7 +80,11 @@ public abstract class CustomControls extends JPanel implements Runnable {
     }
 
     @Override
-    public void paintComponent(Graphics g) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void paintComponent(Graphics g) {
         super.paintComponent(g);
         g.setColor(doNotifier ? blue : Color.gray);
         g.fillRect(getSize().width-2, 0, 2, 2);

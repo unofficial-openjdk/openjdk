@@ -35,6 +35,7 @@ import java.awt.event.*;
 import java.awt.geom.*;
 import java.awt.image.*;
 
+@Bean
 public class PolyVertTest {
     static int TESTWIDTH;
     static int TESTHEIGHT;
@@ -68,7 +69,11 @@ public class PolyVertTest {
     static boolean hwonly;
 
     static WindowListener windowCloser = new WindowAdapter() {
-        public void windowClosing(WindowEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosing(WindowEvent e) {
             e.getWindow().hide();
             if (--numframes <= 0) {
                 System.exit(0);
@@ -614,7 +619,11 @@ public class PolyVertTest {
             return new Dimension(bimg.getWidth(), bimg.getHeight());
         }
 
-        public void paint(Graphics g) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(Graphics g) {
             g.drawImage(bimg, 0, 0, null);
         }
     }
@@ -626,7 +635,11 @@ public class PolyVertTest {
             return new Dimension(TESTWIDTH, TESTHEIGHT);
         }
 
-        public void paint(Graphics g) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(Graphics g) {
             if (bimg != null ||
                 getWidth() < TESTWIDTH ||
                 getHeight() < TESTHEIGHT)

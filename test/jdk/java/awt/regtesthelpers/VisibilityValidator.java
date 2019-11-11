@@ -32,6 +32,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 //import junit.framework.Assert;
+@Bean
 public class VisibilityValidator {
 
     // Wait up to five seconds for our window events
@@ -74,15 +75,27 @@ public class VisibilityValidator {
     public VisibilityValidator(Window win) {
         this.win = win;
         WindowAdapter watcher = new WindowAdapter() {
-            public void windowOpened(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowOpened(WindowEvent e) {
                 doOpen();
             }
 
-            public void windowActivated(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowActivated(WindowEvent e) {
                 doActivate();
             }
 
-            public void windowGainedFocus(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowGainedFocus(WindowEvent e) {
                 doGainedFocus();
             }
         };

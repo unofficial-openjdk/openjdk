@@ -332,7 +332,10 @@ public class DateFormatRoundTripTest extends IntlTest {
     /**
      * TimeZone must be set to tc.zone before this method is called.
      */
-    private void doTestInZone(TestCase tc) {
+    @Bean
+@Bean
+@Bean
+            private void doTestInZone(TestCase tc) {
         logln(escape(tc.toString()));
         Locale save = Locale.getDefault();
         try {
@@ -350,7 +353,10 @@ public class DateFormatRoundTripTest extends IntlTest {
         }
     }
 
-    private void doTest(TestCase tc) {
+    @Bean
+@Bean
+@Bean
+            private void doTest(TestCase tc) {
         if (tc.zone == null) {
             // Just run in the default zone
             doTestInZone(tc);

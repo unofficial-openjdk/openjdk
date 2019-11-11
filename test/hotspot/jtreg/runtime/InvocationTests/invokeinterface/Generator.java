@@ -83,7 +83,11 @@ public class Generator extends AbstractGenerator {
         super(args);
     }
 
-    protected Checker getChecker(Class paramClass, Class targetClass) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected Checker getChecker(Class paramClass, Class targetClass) {
         return new Checker(paramClass, targetClass);
     }
 

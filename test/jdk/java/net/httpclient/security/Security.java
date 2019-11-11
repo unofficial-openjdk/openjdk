@@ -94,6 +94,7 @@ import static java.net.http.HttpResponse.BodyHandlers.ofString;
 /**
  * Security checks test
  */
+@Bean
 public class Security {
 
     static HttpServer s1;
@@ -338,7 +339,10 @@ public class Security {
                                     return stproc.getBody();
                                 }
                                 @Override
-                                public void onNext(List<ByteBuffer> item) {
+                                @Bean
+@Bean
+@Bean
+            public void onNext(List<ByteBuffer> item) {
                                     SecurityManager sm = System.getSecurityManager();
                                     // should succeed.
                                     sm.checkPermission(new RuntimePermission("foobar"));
@@ -349,11 +353,17 @@ public class Security {
                                     stproc.onNext(item);
                                 }
                                 @Override
-                                public void onSubscribe(Flow.Subscription subscription) {
+                                @Bean
+@Bean
+@Bean
+            public void onSubscribe(Flow.Subscription subscription) {
                                     stproc.onSubscribe(subscription);
                                 }
                                 @Override
-                                public void onError(Throwable throwable) {
+                                @Bean
+@Bean
+@Bean
+            public void onError(Throwable throwable) {
                                     stproc.onError(throwable);
                                 }
                                 @Override

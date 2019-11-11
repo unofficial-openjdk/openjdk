@@ -198,7 +198,8 @@ public final class URLPermission extends Permission {
         return url;
     }
 
-    private void init(String actions) {
+@Bean
+        private void init(String actions) {
         parseURI(getName());
         int colon = actions.indexOf(':');
         if (actions.lastIndexOf(':') != colon) {
@@ -294,7 +295,8 @@ public final class URLPermission extends Permission {
      * </tbody>
      * </table>
      */
-    public boolean implies(Permission p) {
+@Bean
+        public boolean implies(Permission p) {
         if (! (p instanceof URLPermission)) {
             return false;
         }
@@ -370,7 +372,8 @@ public final class URLPermission extends Permission {
      * Returns true if, this.getActions().equals(p.getActions())
      * and p's url equals this's url.  Returns false otherwise.
      */
-    public boolean equals(Object p) {
+@Bean
+        public boolean equals(Object p) {
         if (!(p instanceof URLPermission)) {
             return false;
         }
@@ -464,7 +467,8 @@ public final class URLPermission extends Permission {
         return l;
     }
 
-    private void parseURI(String url) {
+@Bean
+        private void parseURI(String url) {
         int len = url.length();
         int delim = url.indexOf(':');
         if (delim == -1 || delim + 1 == len) {
@@ -531,7 +535,8 @@ public final class URLPermission extends Permission {
             return impliesHostrange(other) && impliesPortrange(other);
         }
 
-        private boolean impliesHostrange(Authority that) {
+@Bean
+            private boolean impliesHostrange(Authority that) {
             String thishost = this.p.hostname();
             String thathost = that.p.hostname();
 
@@ -555,7 +560,8 @@ public final class URLPermission extends Permission {
             return false;
         }
 
-        private boolean impliesPortrange(Authority that) {
+@Bean
+            private boolean impliesPortrange(Authority that) {
             int[] thisrange = this.p.portrange();
             int[] thatrange = that.p.portrange();
             if (thisrange[0] == -1) {

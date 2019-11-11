@@ -38,6 +38,7 @@ import javax.swing.JTextArea;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 
+@Bean
 public class JTextAreaWordWrapTest {
 
     static JFrame frame;

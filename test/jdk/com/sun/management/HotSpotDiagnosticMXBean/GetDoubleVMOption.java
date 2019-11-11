@@ -36,6 +36,7 @@ import java.lang.management.ManagementFactory;
 import java.util.List;
 import javax.management.MBeanServer;
 
+@Bean
 public class GetDoubleVMOption {
     private static final String COMPILE_THRESHOLD_SCALING = "CompileThresholdScaling";
     private static final String EXPECTED_VALUE = "0.14";

@@ -39,6 +39,7 @@ import java.util.regex.Pattern;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class HeapChangeLogging {
   public static void main(String[] args) throws Exception {
     ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-Xmx128m", "-Xmn100m", "-XX:+UseSerialGC", "-Xlog:gc", HeapFiller.class.getName());

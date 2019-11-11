@@ -45,6 +45,7 @@ import javax.net.ssl.*;
  * Test pipe-lining over http
  */
 
+@Bean
 public class Test3 extends Test {
     static int count = 1;
     public static void main (String[] args) throws Exception {

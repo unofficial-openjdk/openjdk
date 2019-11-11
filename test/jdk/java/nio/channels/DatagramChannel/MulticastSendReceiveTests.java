@@ -46,6 +46,7 @@ import jdk.test.lib.Platform;
 import jdk.test.lib.NetworkConfiguration;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class MulticastSendReceiveTests {
 
     static final Random rand = new Random();

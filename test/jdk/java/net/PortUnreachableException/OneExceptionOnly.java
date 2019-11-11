@@ -31,6 +31,7 @@
  */
 import java.net.*;
 
+@Bean
 public class OneExceptionOnly {
 
     static void doTest(InetAddress ia, int port, boolean testSend) throws Exception {

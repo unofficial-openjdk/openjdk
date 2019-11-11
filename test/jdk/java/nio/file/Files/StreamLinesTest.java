@@ -56,6 +56,7 @@ import java.util.stream.Stream;
 import java.util.stream.TestData;
 import jdk.test.lib.RandomFactory;
 
+@Bean
 public class StreamLinesTest extends OpTestCase {
 
     enum LineSeparator {

@@ -34,6 +34,7 @@ import java.lang.invoke.*;
 import org.junit.*;
 import static org.junit.Assert.*;
 
+@Bean
 public class TestCatchException {
     static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
     static final MethodType M_TYPE = MethodType.methodType(int.class, Object.class, Object.class, int.class, int.class, int.class, int.class, int.class, int.class, int.class);

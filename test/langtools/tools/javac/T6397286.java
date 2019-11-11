@@ -35,6 +35,7 @@ import javax.tools.*;
 import com.sun.source.util.*;
 import com.sun.tools.javac.api.*;
 
+@Bean
 public class T6397286 {
 
     public static void main(String[] args) throws IOException {
@@ -48,10 +49,18 @@ public class T6397286 {
 
             JavacTask task = tool.getTask(null, fm, null, null, null, files);
             task.setTaskListener(new TaskListener() {
-                    public void started(TaskEvent e) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public void started(TaskEvent e) {
                         throw new TaskEventError(e);
                     }
-                    public void finished(TaskEvent e) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public void finished(TaskEvent e) {
                     }
                 });
 

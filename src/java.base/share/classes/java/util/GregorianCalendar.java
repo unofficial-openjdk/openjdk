@@ -328,6 +328,7 @@ import sun.util.calendar.ZoneInfo;
  * @author David Goldsmith, Mark Davis, Chen-Lieh Huang, Alan Liu
  * @since 1.1
  */
+@Bean
 public class GregorianCalendar extends Calendar {
     /*
      * Implementation Notes
@@ -755,7 +756,8 @@ public class GregorianCalendar extends Calendar {
      *
      * @param date the given Gregorian cutover date.
      */
-    public void setGregorianChange(Date date) {
+@Bean
+        public void setGregorianChange(Date date) {
         long cutoverTime = date.getTime();
         if (cutoverTime == gregorianCutover) {
             return;
@@ -766,7 +768,8 @@ public class GregorianCalendar extends Calendar {
         setGregorianChange(cutoverTime);
     }
 
-    private void setGregorianChange(long cutoverTime) {
+@Bean
+        private void setGregorianChange(long cutoverTime) {
         gregorianCutover = cutoverTime;
         gregorianCutoverDate = CalendarUtils.floorDivide(cutoverTime, ONE_DAY)
                                 + EPOCH_OFFSET;
@@ -818,7 +821,8 @@ public class GregorianCalendar extends Calendar {
      * @param year the given year.
      * @return {@code true} if the given year is a leap year; {@code false} otherwise.
      */
-    public boolean isLeapYear(int year) {
+@Bean
+        public boolean isLeapYear(int year) {
         if ((year & 3) != 0) {
             return false;
         }
@@ -867,7 +871,8 @@ public class GregorianCalendar extends Calendar {
      * @see Calendar#compareTo(Calendar)
      */
     @Override
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         return obj instanceof GregorianCalendar &&
             super.equals(obj) &&
             gregorianCutover == ((GregorianCalendar)obj).gregorianCutover;
@@ -910,7 +915,8 @@ public class GregorianCalendar extends Calendar {
      * non-lenient mode.
      */
     @Override
-    public void add(int field, int amount) {
+@Bean
+        public void add(int field, int amount) {
         // If amount == 0, do nothing even the given field is out of
         // range. This is tested by JCK.
         if (amount == 0) {
@@ -1109,7 +1115,8 @@ public class GregorianCalendar extends Calendar {
      * @see #set(int,int)
      */
     @Override
-    public void roll(int field, boolean up) {
+@Bean
+        public void roll(int field, boolean up) {
         roll(field, up ? +1 : -1);
     }
 
@@ -1158,7 +1165,8 @@ public class GregorianCalendar extends Calendar {
      * @since 1.2
      */
     @Override
-    public void roll(int field, int amount) {
+@Bean
+        public void roll(int field, int amount) {
         // If amount == 0, do nothing even the given field is out of
         // range. This is tested by JCK.
         if (amount == 0) {
@@ -1530,7 +1538,8 @@ public class GregorianCalendar extends Calendar {
      * @see #getActualMaximum(int)
      */
     @Override
-    public int getMinimum(int field) {
+@Bean
+        public int getMinimum(int field) {
         return MIN_VALUES[field];
     }
 
@@ -1554,7 +1563,8 @@ public class GregorianCalendar extends Calendar {
      * @see #getActualMaximum(int)
      */
     @Override
-    public int getMaximum(int field) {
+@Bean
+        public int getMaximum(int field) {
         switch (field) {
         case MONTH:
         case DAY_OF_MONTH:
@@ -1603,7 +1613,8 @@ public class GregorianCalendar extends Calendar {
      * @see #getActualMaximum(int)
      */
     @Override
-    public int getGreatestMinimum(int field) {
+@Bean
+        public int getGreatestMinimum(int field) {
         if (field == DAY_OF_MONTH) {
             BaseCalendar.Date d = getGregorianCutoverDate();
             long mon1 = getFixedDateMonth1(d, gregorianCutoverDate);
@@ -1633,7 +1644,8 @@ public class GregorianCalendar extends Calendar {
      * @see #getActualMaximum(int)
      */
     @Override
-    public int getLeastMaximum(int field) {
+@Bean
+        public int getLeastMaximum(int field) {
         switch (field) {
         case MONTH:
         case DAY_OF_MONTH:
@@ -1683,7 +1695,8 @@ public class GregorianCalendar extends Calendar {
      * @since 1.2
      */
     @Override
-    public int getActualMinimum(int field) {
+@Bean
+        public int getActualMinimum(int field) {
         if (field == DAY_OF_MONTH) {
             GregorianCalendar gc = getNormalizedCalendar();
             int year = gc.cdate.getNormalizedYear();
@@ -1727,7 +1740,8 @@ public class GregorianCalendar extends Calendar {
      * @since 1.2
      */
     @Override
-    public int getActualMaximum(int field) {
+@Bean
+        public int getActualMaximum(int field) {
         final int fieldsForFixedMax = ERA_MASK|DAY_OF_WEEK_MASK|HOUR_MASK|AM_PM_MASK|
             HOUR_OF_DAY_MASK|MINUTE_MASK|SECOND_MASK|MILLISECOND_MASK|
             ZONE_OFFSET_MASK|DST_OFFSET_MASK;
@@ -2025,7 +2039,8 @@ public class GregorianCalendar extends Calendar {
     }
 
     @Override
-    public void setTimeZone(TimeZone zone) {
+@Bean
+        public void setTimeZone(TimeZone zone) {
         super.setTimeZone(zone);
         // To share the zone by CalendarDates
         gdate.setZone(zone);
@@ -2193,7 +2208,8 @@ public class GregorianCalendar extends Calendar {
      * @since 1.7
      */
     @Override
-    public void setWeekDate(int weekYear, int weekOfYear, int dayOfWeek) {
+@Bean
+        public void setWeekDate(int weekYear, int weekOfYear, int dayOfWeek) {
         if (dayOfWeek < SUNDAY || dayOfWeek > SATURDAY) {
             throw new IllegalArgumentException("invalid dayOfWeek: " + dayOfWeek);
         }
@@ -2327,7 +2343,8 @@ public class GregorianCalendar extends Calendar {
      * @return a new field mask that indicates what field values have
      * actually been set.
      */
-    private int computeFields(int fieldMask, int tzMask) {
+@Bean
+        private int computeFields(int fieldMask, int tzMask) {
         int zoneOffset = 0;
         TimeZone tz = getZone();
         if (zoneOffsets == null) {
@@ -2605,7 +2622,8 @@ public class GregorianCalendar extends Calendar {
      * @param fixedDate the fixed date of the last day of the period
      * @return the number of weeks of the given period
      */
-    private int getWeekNumber(long fixedDay1, long fixedDate) {
+@Bean
+        private int getWeekNumber(long fixedDay1, long fixedDate) {
         // We can always use `gcal' since Julian and Gregorian are the
         // same thing for this calculation.
         long fixedDay1st = Gregorian.getDayOfWeekDateOnOrBefore(fixedDay1 + 6,
@@ -2842,7 +2860,8 @@ public class GregorianCalendar extends Calendar {
      * @return the fixed date
      * @see Calendar#selectFields
      */
-    private long getFixedDate(BaseCalendar cal, int year, int fieldMask) {
+@Bean
+        private long getFixedDate(BaseCalendar cal, int year, int fieldMask) {
         int month = JANUARY;
         if (isFieldSet(fieldMask, MONTH)) {
             // No need to check if MONTH has been set (no isSet(MONTH)
@@ -3007,7 +3026,8 @@ public class GregorianCalendar extends Calendar {
      * Determines if the specified year (normalized) is the Gregorian
      * cutover year. This object must have been normalized.
      */
-    private boolean isCutoverYear(int normalizedYear) {
+@Bean
+        private boolean isCutoverYear(int normalizedYear) {
         int cutoverYear = (calsys == gcal) ? gregorianCutoverYear : gregorianCutoverYearJulian;
         return normalizedYear == cutoverYear;
     }
@@ -3115,7 +3135,8 @@ public class GregorianCalendar extends Calendar {
      *
      * @see #isLeapYear(int)
      */
-    private int monthLength(int month, int year) {
+@Bean
+        private int monthLength(int month, int year) {
         return isLeapYear(year) ? LEAP_MONTH_LENGTH[month] : MONTH_LENGTH[month];
     }
 
@@ -3125,7 +3146,8 @@ public class GregorianCalendar extends Calendar {
      *
      * @see #isLeapYear(int)
      */
-    private int monthLength(int month) {
+@Bean
+        private int monthLength(int month) {
         int year = internalGet(YEAR);
         if (internalGetEra() == BCE) {
             year = 1 - year;
@@ -3157,7 +3179,8 @@ public class GregorianCalendar extends Calendar {
      * Returns the length (in days) of the specified year. The year
      * must be normalized.
      */
-    private int yearLength(int year) {
+@Bean
+        private int yearLength(int year) {
         return isLeapYear(year) ? 366 : 365;
     }
 

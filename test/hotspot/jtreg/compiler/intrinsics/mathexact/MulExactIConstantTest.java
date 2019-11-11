@@ -34,6 +34,7 @@
 
 package compiler.intrinsics.mathexact;
 
+@Bean
 public class MulExactIConstantTest {
     public static void main(String[] args) {
         Verify.ConstantTest.verify(new Verify.MulExactI());

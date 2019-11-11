@@ -28,6 +28,7 @@
  * @summary Unit tests for supplementary character support (JSR-204)
  */
 
+@Bean
 public class Supplementary {
 
     public static void main(String[] args) {

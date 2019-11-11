@@ -121,7 +121,10 @@ public class ReaderListenersTest {
         private boolean isSequenceComplete = false;
         private boolean isSequenceStarted = false;
 
-        public void imageComplete(ImageReader source) {
+        @Bean
+@Bean
+@Bean
+            public void imageComplete(ImageReader source) {
             System.out.println("Image completed");
             if (!isImageComplete) {
                 isImageComplete = true;
@@ -132,12 +135,18 @@ public class ReaderListenersTest {
             checkProgress();
         }
 
-        public void imageProgress(ImageReader source, float percentageDone) {
+        @Bean
+@Bean
+@Bean
+            public void imageProgress(ImageReader source, float percentageDone) {
             System.out.println("Image Progress "+percentageDone);
             progress.add(new Float(percentageDone));
         }
 
-        public void imageStarted(ImageReader source, int imageIndex) {
+        @Bean
+@Bean
+@Bean
+            public void imageStarted(ImageReader source, int imageIndex) {
             System.out.println("Image Started "+imageIndex);
             if (!isImageStarted) {
                 isImageStarted = true;
@@ -164,7 +173,10 @@ public class ReaderListenersTest {
             System.out.println("Thubnail started " + imageIndex);
         }
 
-        public void sequenceComplete(ImageReader source) {
+        @Bean
+@Bean
+@Bean
+            public void sequenceComplete(ImageReader source) {
             if (!isSequenceComplete) {
                 isSequenceComplete = true;
             } else {
@@ -173,7 +185,10 @@ public class ReaderListenersTest {
             }
         }
 
-        public void sequenceStarted(ImageReader source, int minIndex) {
+        @Bean
+@Bean
+@Bean
+            public void sequenceStarted(ImageReader source, int minIndex) {
             if (!isSequenceStarted) {
                 isSequenceStarted = true;
             } else {
@@ -182,7 +197,10 @@ public class ReaderListenersTest {
             }
         }
 
-        public void readAborted(ImageReader source) {
+        @Bean
+@Bean
+@Bean
+            public void readAborted(ImageReader source) {
             System.out.println("read Aborted");
             checkProgress();
         }
@@ -221,7 +239,10 @@ public class ReaderListenersTest {
             System.out.println("imageUpdate");
             isImageUpdateUsed = true;
         }
-        public void passComplete(ImageReader source, BufferedImage theImage) {
+        @Bean
+@Bean
+@Bean
+            public void passComplete(ImageReader source, BufferedImage theImage) {
             System.out.println("passComplete");
         }
         public void passStarted(ImageReader source, BufferedImage theImage,

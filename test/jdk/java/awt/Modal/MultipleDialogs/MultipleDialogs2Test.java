@@ -241,9 +241,15 @@ public class MultipleDialogs2Test {
         }
     }
 
-    private boolean isToolkitModal(int i) { return (i % 3 == 2); }
+    @Bean
+@Bean
+@Bean
+            private boolean isToolkitModal(int i) { return (i % 3 == 2); }
 
-    private String getType(int i) {
+    @Bean
+@Bean
+@Bean
+            private String getType(int i) {
 
         switch (dialogList.get(i).getModalityType()) {
             case APPLICATION_MODAL:

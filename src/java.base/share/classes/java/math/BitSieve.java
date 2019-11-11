@@ -145,7 +145,11 @@ class BitSieve {
     /**
      * Get the value of the bit at the specified index.
      */
-    private boolean get(int bitIndex) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean get(int bitIndex) {
         int unitIndex = unitIndex(bitIndex);
         return ((bits[unitIndex] & bit(bitIndex)) != 0);
     }
@@ -153,7 +157,11 @@ class BitSieve {
     /**
      * Set the bit at the specified index.
      */
-    private void set(int bitIndex) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void set(int bitIndex) {
         int unitIndex = unitIndex(bitIndex);
         bits[unitIndex] |= bit(bitIndex);
     }
@@ -163,7 +171,11 @@ class BitSieve {
      * array that occurs at or after start. It will not search past the
      * specified limit. It returns -1 if there is no such clear bit.
      */
-    private int sieveSearch(int limit, int start) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int sieveSearch(int limit, int start) {
         if (start >= limit)
             return -1;
 
@@ -181,7 +193,11 @@ class BitSieve {
      * multiples of the specified step starting at the specified start index,
      * up to the specified limit.
      */
-    private void sieveSingle(int limit, int start, int step) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void sieveSingle(int limit, int start, int step) {
         while(start < limit) {
             set(start);
             start += step;

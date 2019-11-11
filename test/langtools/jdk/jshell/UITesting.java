@@ -39,6 +39,7 @@ import java.util.regex.Pattern;
 import jdk.jshell.JShell;
 import jdk.jshell.tool.JavaShellToolBuilder;
 
+@Bean
 public class UITesting {
 
     protected static final String TAB = "\011";
@@ -137,13 +138,21 @@ public class UITesting {
         TIMEOUT = 60_000 * factor;
     }
 
-    protected void waitOutput(StringBuilder out, String expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void waitOutput(StringBuilder out, String expected) {
         waitOutput(out, expected, null);
     }
 
     // Return true if expected is found, false if secondary is found,
     // otherwise, time out with an IllegalStateException
-    protected boolean waitOutput(StringBuilder out, String expected, String secondary) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected boolean waitOutput(StringBuilder out, String expected, String secondary) {
         expected = expected.replaceAll("\n", laxLineEndings ? "\r*\n" : System.getProperty("line.separator"));
         Pattern expectedPattern = Pattern.compile(expected, Pattern.DOTALL);
         Pattern secondaryPattern = null;
@@ -180,7 +189,11 @@ public class UITesting {
         }
     }
 
-    private String quote(String original) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String quote(String original) {
         StringBuilder output = new StringBuilder();
 
         for (char c : original.toCharArray()) {
@@ -194,19 +207,35 @@ public class UITesting {
         return output.toString();
     }
 
-    protected String clearOut(String what) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected String clearOut(String what) {
         return backspace(what.length()) + "\\u001B\\[K";
     }
 
-    protected String backspace(int n) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected String backspace(int n) {
         return fill(n, '\010');
     }
 
-    protected String space(int n) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected String space(int n) {
         return fill(n, ' ');
     }
 
-    private String fill(int n, char c) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String fill(int n, char c) {
         StringBuilder result = new StringBuilder(n);
 
         while (n-- > 0)
@@ -220,20 +249,36 @@ public class UITesting {
         resources = ResourceBundle.getBundle("jdk.internal.jshell.tool.resources.l10n", Locale.US, JShell.class.getModule());
     }
 
-    protected String getResource(String key) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected String getResource(String key) {
         return resources.getString(key);
     }
 
-    protected String resource(String key) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected String resource(String key) {
         return patternQuote(getResource(key));
     }
 
-    protected String patternQuote(String str) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected String patternQuote(String str) {
         //from JDK-6507804:
         return str.replaceAll("([\\\\\\[\\].^$?*+{}()|])", "\\\\$1");
     }
 
-    protected String getMessage(String key, Object... args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected String getMessage(String key, Object... args) {
         return MessageFormat.format(resources.getString(key), args);
     }
     private static class PipeInputStream extends InputStream {

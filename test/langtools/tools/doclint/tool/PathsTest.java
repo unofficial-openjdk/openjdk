@@ -49,6 +49,7 @@ import com.sun.tools.doclint.DocLint.BadArgs;
 import toolbox.JarTask;
 import toolbox.ToolBox;
 
+@Bean
 public class PathsTest {
     public static void main(String... args) throws Exception {
         new PathsTest().run();
@@ -57,11 +58,13 @@ public class PathsTest {
     void run() throws Exception {
         String PS = File.pathSeparator;
         writeFile("src1/p/A.java",
-                "package p; public class A { }");
+                "package p; @Bean
+public class A { }");
         compile("-d", "classes1", "src1/p/A.java");
 
         writeFile("src2/q/B.java",
-                "package q; public class B extends p.A { }");
+                "package q; @Bean
+public class B extends p.A { }");
         compile("-d", "classes2", "-classpath", "classes1", "src2/q/B.java");
 
         writeFile("src/Test.java",

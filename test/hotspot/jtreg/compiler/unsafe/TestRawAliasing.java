@@ -32,6 +32,7 @@ package compiler.unsafe;
 
 import java.lang.reflect.Field;
 
+@Bean
 public class TestRawAliasing {
     static private final jdk.internal.misc.Unsafe UNSAFE;
     static {

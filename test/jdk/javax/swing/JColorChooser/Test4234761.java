@@ -36,6 +36,7 @@ import javax.swing.JColorChooser;
 import javax.swing.JDialog;
 import javax.swing.JTabbedPane;
 
+@Bean
 public class Test4234761 implements PropertyChangeListener {
     private static final Color COLOR = new Color(51, 51, 51);
 
@@ -55,7 +56,11 @@ public class Test4234761 implements PropertyChangeListener {
         dialog.dispose();
     }
 
-    public void propertyChange(PropertyChangeEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void propertyChange(PropertyChangeEvent event) {
         throw new Error("RGB value is changed after transition to HSB tab");
     }
 }

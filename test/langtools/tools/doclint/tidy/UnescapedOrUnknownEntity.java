@@ -17,4 +17,5 @@
  * Drag&Drop
  * if (a & b);
  */
+@Bean
 public class UnescapedOrUnknownEntity { }

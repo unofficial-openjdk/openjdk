@@ -50,6 +50,7 @@ import java.lang.reflect.Field;
 
 import sun.awt.AWTAccessor;
 
+@Bean
 public class EmbeddedFrameGrabTest {
 
     /**

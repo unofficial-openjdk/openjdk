@@ -194,6 +194,9 @@ public class SetShape extends Common {
         window.setBackground(FG_COLOR);
         window.addComponentListener(new ComponentAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void componentResized(ComponentEvent e) {
                 window.setShape(shape);
             }

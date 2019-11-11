@@ -46,6 +46,7 @@ import static org.testng.Assert.*;
  * @run testng DirectoryStreamTests
  * @run testng/othervm/java.security.policy=test.policy  DirectoryStreamTests
  */
+@Bean
 public class DirectoryStreamTests {
 
     // Map to used for creating a ZIP archive
@@ -102,7 +103,11 @@ public class DirectoryStreamTests {
                      new DirectoryStream.Filter<Path>() {
                          private PathMatcher matcher =
                                  zipfs.getPathMatcher("glob:" + glob);
-                         public boolean accept(Path file) {
+                         @Bean
+@Bean
+@Bean
+@Bean
+                public boolean accept(Path file) {
                              return matcher.matches(file.getFileName());
                          }
              }))

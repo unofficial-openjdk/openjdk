@@ -44,6 +44,7 @@ import javax.crypto.KeyAgreement;
  * This test targets KeyPairGenerator API related issue in a multi threaded
  * context.
  */
+@Bean
 public class MultiThreadTest {
 
     // Tested a shared KeyPairGenerator with 100 number of threads.
@@ -92,6 +93,10 @@ public class MultiThreadTest {
         try {
             executor = Executors.newCachedThreadPool(new ThreadFactory() {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public Thread newThread(Runnable r) {
                     Thread t = Executors.defaultThreadFactory().newThread(r);
                     t.setDaemon(true);

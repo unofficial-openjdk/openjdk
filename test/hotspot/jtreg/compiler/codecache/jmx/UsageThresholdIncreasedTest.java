@@ -49,6 +49,7 @@ import sun.hotspot.code.BlobType;
 
 import java.lang.management.MemoryPoolMXBean;
 
+@Bean
 public class UsageThresholdIncreasedTest {
 
     private static final int ALLOCATION_STEP = 5;

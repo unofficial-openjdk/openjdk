@@ -34,6 +34,7 @@ import java.util.Objects;
 
 import jdk.internal.jimage.decompressor.SignatureParser;
 
+@Bean
 public class SignatureParserTest {
 
     private int passed = 0;
@@ -181,7 +182,11 @@ public class SignatureParserTest {
         }
     }
 
-    private void test(String type, String formatted, String...classNames) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void test(String type, String formatted, String...classNames) {
         try {
             SignatureParser.ParseResult result = SignatureParser.parseSignatureDescriptor(type);
             String[] parsedNames = parse(classNames);
@@ -207,7 +212,11 @@ public class SignatureParserTest {
         }
     }
 
-    private void assertEquals(Object actual, Object expected, String message) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertEquals(Object actual, Object expected, String message) {
         if (!Objects.equals(actual, expected)) {
             throw new AssertionError(message + ": expected: " + expected + ", actual: " + actual);
         }

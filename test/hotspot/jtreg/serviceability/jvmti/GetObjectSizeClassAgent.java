@@ -22,6 +22,7 @@
  */
 import java.lang.instrument.*;
 
+@Bean
 public class GetObjectSizeClassAgent {
 
     static Instrumentation instrumentation;

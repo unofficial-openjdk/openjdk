@@ -34,6 +34,7 @@ import java.beans.Statement;
  * Ambiguous method signature should throw an exception.
  * Statement should execute the most specific method.
  */
+@Bean
 public class Test4530962 {
     public static void main(String[] args) throws Exception {
         try {
@@ -60,15 +61,27 @@ public class Test4530962 {
      * All ambiguous method declarations should fail.
      */
     public static class A {
-        public void m(X x1, X x2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void m(X x1, X x2) {
             throw new Error("A.m(X,X) should not be called");
         }
 
-        public void m(X x1, Y y2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void m(X x1, Y y2) {
             throw new Error("A.m(X,Y) should not be called");
         }
 
-        public void m(Y y1, X x2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void m(Y y1, X x2) {
             throw new Error("A.m(Y,X) should not be called");
         }
     }
@@ -77,11 +90,19 @@ public class Test4530962 {
      * The most specific method in this case would be the second declaration.
      */
     public static class B {
-        public void m(X x1, X x2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void m(X x1, X x2) {
             throw new Error("B.m(X,X) should not be called");
         }
 
-        public void m(X x1, Y y2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void m(X x1, Y y2) {
             // expected: B.m(X,Y) should be called
         }
     }
@@ -90,11 +111,19 @@ public class Test4530962 {
      * The most specific method in this case would be the first declaration.
      */
     public static class C {
-        public void m(Y y1, Y y2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void m(Y y1, Y y2) {
             // expected: C.m(Y,Y) should be called
         }
 
-        public void m(X x1, X x2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void m(X x1, X x2) {
             throw new Error("C.m(X,X) should not be called");
         }
     }
@@ -103,11 +132,19 @@ public class Test4530962 {
      * Same as the previous case but flip methods.
      */
     public static class D {
-        public void m(X x1, X x2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void m(X x1, X x2) {
             throw new Error("D.m(X,X) should not be called");
         }
 
-        public void m(Y y1, Y y2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void m(Y y1, Y y2) {
             // expected: D.m(Y,Y) should be called
         }
     }
@@ -116,7 +153,11 @@ public class Test4530962 {
      * The method should be called with (Z,Z).
      */
     public static class E {
-        public void m(X x1, X x2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void m(X x1, X x2) {
             // expected: E.m(X,X) should be called
         }
     }

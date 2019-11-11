@@ -34,6 +34,7 @@
 
 import jdk.test.lib.Asserts;
 
+@Bean
 public class TestPutMain {
     public static void main(String[] args) {
         boolean exception = false;

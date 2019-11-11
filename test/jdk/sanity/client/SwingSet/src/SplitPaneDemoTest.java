@@ -135,9 +135,13 @@ public class SplitPaneDemoTest {
                 (splitPane.getMaximumDividerLocation() + splitPane.getMinimumDividerLocation()) / 2, splitPane.getDividerLocation());
     }
 
-    private void waitDividerSize(JSplitPaneOperator splitPane, int size) {
+@Bean
+@Bean
+            private void waitDividerSize(JSplitPaneOperator splitPane, int size) {
         splitPane.waitState(new ComponentChooser() {
-            public boolean checkComponent(Component c) {
+@Bean
+@Bean
+                    public boolean checkComponent(Component c) {
                 return splitPane.getDividerSize() == size;
             }
             public String getDescription() {
@@ -153,9 +157,13 @@ public class SplitPaneDemoTest {
         waitDividerSize(splitPane, amount);
     }
 
-    private void waitDividerLocation(JSplitPaneOperator splitPane, int location) {
+@Bean
+@Bean
+            private void waitDividerLocation(JSplitPaneOperator splitPane, int location) {
         splitPane.waitState(new ComponentChooser() {
-            public boolean checkComponent(Component c) {
+@Bean
+@Bean
+                    public boolean checkComponent(Component c) {
                 return splitPane.getDividerLocation() == location;
             }
             public String getDescription() {
@@ -205,7 +213,9 @@ public class SplitPaneDemoTest {
                 checkBox.doClick();
             }
             splitPane.waitState(new ComponentChooser() {
-                public boolean checkComponent(Component c) {
+@Bean
+@Bean
+                        public boolean checkComponent(Component c) {
                     return !splitPane.isOneTouchExpandable();
                 }
                 public String getDescription() {

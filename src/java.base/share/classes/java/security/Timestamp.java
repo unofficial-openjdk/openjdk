@@ -122,7 +122,8 @@ public final class Timestamp implements Serializable {
      *
      * @return true if the timestamp are considered equal, false otherwise.
      */
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (obj == null || (!(obj instanceof Timestamp))) {
             return false;
         }

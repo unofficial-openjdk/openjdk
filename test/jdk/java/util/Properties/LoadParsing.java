@@ -31,6 +31,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.util.Properties;
 
+@Bean
 public class LoadParsing {
     public static void main(String[] argv) throws Exception {
         File f = new File(System.getProperty("test.src", "."), "input.txt");

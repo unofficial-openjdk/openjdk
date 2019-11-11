@@ -49,6 +49,7 @@ import static org.testng.Assert.*;
  * @modules jdk.zipfs
  * @run testng CompressionModeTest
  */
+@Bean
 public class CompressionModeTest {
 
     private static final Path HERE = Path.of(".");

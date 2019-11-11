@@ -54,6 +54,7 @@ import java.util.zip.ZipException;
 
 import jdk.test.lib.util.FileUtils;
 
+@Bean
 public class InputFilesTest {
     private static final ToolProvider JAR_TOOL = ToolProvider.findFirst("jar")
         .orElseThrow(() ->
@@ -157,7 +158,11 @@ public class InputFilesTest {
         return Arrays.stream(args).map(d -> Paths.get(".", d.split("/")));
     }
 
-    private void mkdir(String cmdline) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void mkdir(String cmdline) {
         System.out.println("mkdir -p " + cmdline);
         mkpath(cmdline.split(" +")).forEach(p -> {
             try {
@@ -168,7 +173,11 @@ public class InputFilesTest {
         });
     }
 
-    private void touch(String cmdline) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void touch(String cmdline) {
         System.out.println("touch " + cmdline);
         mkpath(cmdline.split(" +")).forEach(p -> {
             try {
@@ -179,7 +188,11 @@ public class InputFilesTest {
         });
     }
 
-    private void rm(String cmdline) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void rm(String cmdline) {
         System.out.println("rm -rf " + cmdline);
         mkpath(cmdline.split(" +")).forEach(p -> {
             try {

@@ -31,6 +31,7 @@ import java.util.WeakHashMap;
  * @author  Josh Bloch
  */
 
+@Bean
 public class ZeroInitCap {
     public static void main(String[] args) {
         Map map = new WeakHashMap(0);

@@ -30,6 +30,7 @@
 import java.util.GregorianCalendar ;
 import static java.util.Calendar.*;
 
+@Bean
 public class bug4028518 {
 
     public static void main(String[] args)

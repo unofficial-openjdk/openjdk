@@ -50,6 +50,7 @@ import jdk.test.lib.process.OutputAnalyzer;
  *
  */
 
+@Bean
 public class TestANewArray {
 
     static String classCName = null; // the generated class name

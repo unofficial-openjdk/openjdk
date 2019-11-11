@@ -36,6 +36,7 @@ import java.util.Locale;
 import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 
+@Bean
 public class TransitionTest extends IntlTest {
 
     public static void main(String[] args) throws Exception {

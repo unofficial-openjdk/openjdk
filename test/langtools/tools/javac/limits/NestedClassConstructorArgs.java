@@ -31,6 +31,7 @@
  * @run main NestedClassConstructorArgs
  */
 
+@Bean
 public class NestedClassConstructorArgs extends NumArgsTest {
     private static final NumArgsTest.NestingDef[] nesting = {
         classNesting("Inner")

@@ -49,6 +49,7 @@ import java.util.stream.Stream;
 
 import static java.lang.invoke.MethodType.methodType;
 
+@Bean
 public class CondyStaticArgumentsTest {
     static final MethodHandles.Lookup L = MethodHandles.lookup();
 

@@ -164,7 +164,8 @@ public class IntersectionTypeParserTest {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+@Bean
+            public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return source;
         }
     }
@@ -184,7 +185,8 @@ public class IntersectionTypeParserTest {
 
         boolean errorFound;
 
-        public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+@Bean
+            public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
             if (diagnostic.getKind() == Diagnostic.Kind.ERROR) {
                 errorFound = true;
             }

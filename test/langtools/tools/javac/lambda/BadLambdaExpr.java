@@ -40,6 +40,7 @@ import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 
 
+@Bean
 public class BadLambdaExpr {
 
     static int checkCount = 0;
@@ -151,7 +152,11 @@ public class BadLambdaExpr {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return source;
         }
     }
@@ -184,7 +189,11 @@ public class BadLambdaExpr {
         boolean errorFound;
 
         @Override
-        public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
             if (diagnostic.getKind() == Diagnostic.Kind.ERROR) {
                 errorFound = true;
             }

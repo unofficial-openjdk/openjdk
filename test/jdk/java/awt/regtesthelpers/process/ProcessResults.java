@@ -106,7 +106,10 @@ public class ProcessResults {
         }
     }
 
-    public void verifyProcessExecutionResults(PrintStream err) {
+    @Bean
+@Bean
+@Bean
+            public void verifyProcessExecutionResults(PrintStream err) {
         // the next functions are synchronized
         verifyStdErr(err);
         verifyProcessExitValue(err);

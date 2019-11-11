@@ -39,6 +39,7 @@
 
 import java.io.*;
 
+@Bean
 public class CheckUnicode {
     public static void main(String args[]) throws Exception {
 

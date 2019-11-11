@@ -54,6 +54,7 @@ import java.net.*;
  * @author Scott Violet
  * @author Jeff Dinkins
  */
+@Bean
 public class SplitPaneDemo extends DemoModule {
 
     JSplitPane splitPane = null;
@@ -112,7 +113,11 @@ public class SplitPaneDemo extends DemoModule {
         button = new JRadioButton(getString("SplitPaneDemo.vert_split"));
         button.setMnemonic(getMnemonic("SplitPaneDemo.vert_split_mnemonic"));
         button.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 splitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
             }
         });
@@ -124,7 +129,11 @@ public class SplitPaneDemo extends DemoModule {
         button.setMnemonic(getMnemonic("SplitPaneDemo.horz_split_mnemonic"));
         button.setSelected(true);
         button.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 splitPane.setOrientation(JSplitPane.HORIZONTAL_SPLIT);
             }
         });
@@ -138,7 +147,11 @@ public class SplitPaneDemo extends DemoModule {
         checkBox.setSelected(true);
 
         checkBox.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void stateChanged(ChangeEvent e) {
                 splitPane.setContinuousLayout(
                     ((JCheckBox)e.getSource()).isSelected());
             }
@@ -152,7 +165,11 @@ public class SplitPaneDemo extends DemoModule {
         checkBox.setSelected(true);
 
         checkBox.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void stateChanged(ChangeEvent e) {
                 splitPane.setOneTouchExpandable(
                     ((JCheckBox) e.getSource()).isSelected());
             }
@@ -169,7 +186,11 @@ public class SplitPaneDemo extends DemoModule {
         divSize.setColumns(5);
         divSize.getAccessibleContext().setAccessibleName(getString("SplitPaneDemo.divider_size"));
         divSize.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 String  value = ((JTextField)e.getSource()).getText();
                 int newSize;
 
@@ -202,7 +223,11 @@ public class SplitPaneDemo extends DemoModule {
         earthSize.setColumns(5);
         earthSize.getAccessibleContext().setAccessibleName(getString("SplitPaneDemo.first_component_min_size"));
         earthSize.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 String           value = ((JTextField)e.getSource()).getText();
                 int              newSize;
 
@@ -236,7 +261,11 @@ public class SplitPaneDemo extends DemoModule {
         moonSize.setColumns(5);
         moonSize.getAccessibleContext().setAccessibleName(getString("SplitPaneDemo.second_component_min_size"));
         moonSize.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 String           value = ((JTextField)e.getSource()).getText();
                 int              newSize;
 

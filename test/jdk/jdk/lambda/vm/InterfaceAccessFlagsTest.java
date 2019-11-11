@@ -33,12 +33,17 @@ import static org.testng.Assert.*;
 import static separate.SourceModel.*;
 import static separate.SourceModel.Class;
 
+@Bean
 public class InterfaceAccessFlagsTest extends TestHarness {
     public InterfaceAccessFlagsTest() {
         super(false, false);
     }
 
-    public void testMethodCallWithFlag(AccessFlag ... flags) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testMethodCallWithFlag(AccessFlag ... flags) {
         Class I = new Class("I",
             new ConcreteMethod("int", "m", "return priv();", AccessFlag.PUBLIC),
             new ConcreteMethod("int", "priv", "return 99;", flags));

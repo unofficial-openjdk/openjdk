@@ -40,6 +40,7 @@ import sun.awt.shell.ShellFolderColumnInfo;
 import javax.swing.filechooser.FileSystemView;
 import java.io.File;
 
+@Bean
 public class bug8017487
 {
     public static void main(String[] p_args) throws Exception {

@@ -28,6 +28,7 @@
 
 import java.io.*;
 
+@Bean
 public class Skip {
     public static void main( String argv[] ) throws Exception {
         StringReader in = new StringReader("1234567");

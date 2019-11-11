@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessJLabel
  */
 
+@Bean
 public class HeadlessJLabel {
     public static void main(String args[]) {
         JLabel l = new JLabel("<html><body><bold>Foo</bold></body></html>");

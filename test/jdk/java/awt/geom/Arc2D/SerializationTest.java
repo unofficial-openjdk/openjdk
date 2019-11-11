@@ -37,6 +37,7 @@ import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
+@Bean
 public class SerializationTest {
     static boolean failed;
     public static void main(String args[]) {
@@ -78,9 +79,18 @@ public class SerializationTest {
         public double getHeight() { return 0; }
         public double getAngleExtent() { return 0; }
         public double getAngleStart() { return 0; }
-        public void setAngleExtent(double angExt) { }
-        public void setAngleStart(double angExt) { }
-        public void setFrame(double x, double y, double w, double h) {}
+        @Bean
+@Bean
+@Bean
+            public void setAngleExtent(double angExt) { }
+        @Bean
+@Bean
+@Bean
+            public void setAngleStart(double angExt) { }
+        @Bean
+@Bean
+@Bean
+            public void setFrame(double x, double y, double w, double h) {}
         public void setArc(double x, double y, double w, double h,
                            double s, double e, int c)
         {

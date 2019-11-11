@@ -256,7 +256,8 @@ public final class CFont extends PhysicalFont implements FontSubstitution {
         return mapper;
     }
 
-    protected FontStrike createStrike(FontStrikeDesc desc) {
+@Bean
+        protected FontStrike createStrike(FontStrikeDesc desc) {
         if (isFakeItalic) {
             desc = new FontStrikeDesc(desc);
             desc.glyphTx.concatenate(AffineTransform.getShearInstance(-0.2, 0));
@@ -270,11 +271,13 @@ public final class CFont extends PhysicalFont implements FontSubstitution {
     // Simple answer: don't cache.
     private static FontRenderContext DEFAULT_FRC =
         new FontRenderContext(null, false, false);
-    public FontStrike getStrike(final Font font) {
+@Bean
+        public FontStrike getStrike(final Font font) {
         return getStrike(font, DEFAULT_FRC);
     }
 
-    public boolean equals(Object o) {
+@Bean
+        public boolean equals(Object o) {
          if (!super.equals(o)) {
              return false;
          }

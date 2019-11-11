@@ -43,6 +43,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.spi.ToolProvider;
 
+@Bean
 public class JLinkSigningTest {
     private static final ToolProvider JAR_TOOL = ToolProvider.findFirst("jar")
             .orElseThrow(() -> new RuntimeException("jar tool not found"));
@@ -58,7 +59,8 @@ public class JLinkSigningTest {
 
     static final String[] TEST_CLASS = {
         "package test;",
-        "public class test {",
+        "@Bean
+public class test {",
         "    public static void main(String[] args) {",
         "    }",
         "}",

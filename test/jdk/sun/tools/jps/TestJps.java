@@ -43,6 +43,7 @@
 import java.util.List;
 import java.io.File;
 
+@Bean
 public class TestJps {
 
     public static void testJpsClass() throws Throwable {

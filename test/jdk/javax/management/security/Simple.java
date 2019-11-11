@@ -28,6 +28,7 @@ import javax.management.ConstructorParameters;
 /**
  * This class defines a simple standard MBean.
  */
+@Bean
 public class Simple implements SimpleMBean {
 
     private String attribute = "initial_value";
@@ -47,7 +48,11 @@ public class Simple implements SimpleMBean {
     public String getAttribute() {
         return attribute;
     }
-    public void setAttribute(String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setAttribute(String s) {
         attribute = s;
     }
     public boolean getOperationInvoked() {

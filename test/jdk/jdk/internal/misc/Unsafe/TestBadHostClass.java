@@ -57,7 +57,10 @@ public class TestBadHostClass {
         return ((classFile[8] & 0xFF) << 8) | (classFile[9] & 0xFF);
     }
 
-    static public void badHostClass(Class<?> hostClass) {
+    static @Bean
+@Bean
+@Bean
+            public void badHostClass(Class<?> hostClass) {
         // choose a class name in the same package as the host class
         String className;
         if (hostClass != null) {

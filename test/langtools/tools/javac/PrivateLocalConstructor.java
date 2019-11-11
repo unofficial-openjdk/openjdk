@@ -28,6 +28,7 @@
  * @author gafter
  */
 
+@Bean
 public class PrivateLocalConstructor {
     Object Write(final String s)
     {

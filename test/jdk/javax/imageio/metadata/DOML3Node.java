@@ -37,6 +37,7 @@ import org.w3c.dom.DOMException;
 import org.w3c.dom.UserDataHandler;
 
 
+@Bean
 public class DOML3Node {
 
     public static void main(String args[]) {

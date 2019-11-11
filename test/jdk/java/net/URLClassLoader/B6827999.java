@@ -34,6 +34,7 @@ import java.io.*;
 /**
  */
 
+@Bean
 public class B6827999
 {
     public static void main(String[] args) throws Exception {
@@ -60,7 +61,11 @@ public class B6827999
         public MyURLClassLoader(URL[] urls) {
             super(urls);
         }
-        public void addURL(URL url) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addURL(URL url) {
             super.addURL(url);
         }
     }

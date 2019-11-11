@@ -135,7 +135,10 @@ public class LockSupportTest extends JSR166TestCase {
     public void testParkBeforeUnpark_parkUntilBlocker() {
         testParkBeforeUnpark(ParkMethod.parkUntilBlocker);
     }
-    public void testParkBeforeUnpark(final ParkMethod parkMethod) {
+    @Bean
+@Bean
+@Bean
+            public void testParkBeforeUnpark(final ParkMethod parkMethod) {
         final CountDownLatch pleaseUnpark = new CountDownLatch(1);
         Thread t = newStartedThread(new CheckedRunnable() {
             public void realRun() {
@@ -169,7 +172,10 @@ public class LockSupportTest extends JSR166TestCase {
     public void testParkAfterUnpark_parkUntilBlocker() {
         testParkAfterUnpark(ParkMethod.parkUntilBlocker);
     }
-    public void testParkAfterUnpark(final ParkMethod parkMethod) {
+    @Bean
+@Bean
+@Bean
+            public void testParkAfterUnpark(final ParkMethod parkMethod) {
         final CountDownLatch pleaseUnpark = new CountDownLatch(1);
         final AtomicBoolean pleasePark = new AtomicBoolean(false);
         Thread t = newStartedThread(new CheckedRunnable() {
@@ -207,7 +213,10 @@ public class LockSupportTest extends JSR166TestCase {
     public void testParkBeforeInterrupt_parkUntilBlocker() {
         testParkBeforeInterrupt(ParkMethod.parkUntilBlocker);
     }
-    public void testParkBeforeInterrupt(final ParkMethod parkMethod) {
+    @Bean
+@Bean
+@Bean
+            public void testParkBeforeInterrupt(final ParkMethod parkMethod) {
         final CountDownLatch pleaseInterrupt = new CountDownLatch(1);
         Thread t = newStartedThread(new CheckedRunnable() {
             public void realRun() {
@@ -247,7 +256,10 @@ public class LockSupportTest extends JSR166TestCase {
     public void testParkAfterInterrupt_parkUntilBlocker() {
         testParkAfterInterrupt(ParkMethod.parkUntilBlocker);
     }
-    public void testParkAfterInterrupt(final ParkMethod parkMethod) {
+    @Bean
+@Bean
+@Bean
+            public void testParkAfterInterrupt(final ParkMethod parkMethod) {
         final CountDownLatch pleaseInterrupt = new CountDownLatch(1);
         Thread t = newStartedThread(new CheckedRunnable() {
             public void realRun() throws Exception {
@@ -278,7 +290,10 @@ public class LockSupportTest extends JSR166TestCase {
     public void testParkTimesOut_parkUntilBlocker() {
         testParkTimesOut(ParkMethod.parkUntilBlocker);
     }
-    public void testParkTimesOut(final ParkMethod parkMethod) {
+    @Bean
+@Bean
+@Bean
+            public void testParkTimesOut(final ParkMethod parkMethod) {
         Thread t = newStartedThread(new CheckedRunnable() {
             public void realRun() {
                 for (int tries = MAX_SPURIOUS_WAKEUPS; tries-->0; ) {
@@ -315,7 +330,10 @@ public class LockSupportTest extends JSR166TestCase {
     public void testGetBlocker_parkUntilBlocker() {
         testGetBlocker(ParkMethod.parkUntilBlocker);
     }
-    public void testGetBlocker(final ParkMethod parkMethod) {
+    @Bean
+@Bean
+@Bean
+            public void testGetBlocker(final ParkMethod parkMethod) {
         final CountDownLatch started = new CountDownLatch(1);
         Thread t = newStartedThread(new CheckedRunnable() {
             public void realRun() {
@@ -394,7 +412,10 @@ public class LockSupportTest extends JSR166TestCase {
     public void testParkNeg_parkUntilBlocker() {
         testParkNeg(ParkMethod.parkUntilBlocker);
     }
-    public void testParkNeg(final ParkMethod parkMethod) {
+    @Bean
+@Bean
+@Bean
+            public void testParkNeg(final ParkMethod parkMethod) {
         Thread t = newStartedThread(new CheckedRunnable() {
             public void realRun() {
                 parkMethod.park(Long.MIN_VALUE);

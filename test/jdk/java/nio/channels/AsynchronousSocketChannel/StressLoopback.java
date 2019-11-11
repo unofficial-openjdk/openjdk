@@ -35,6 +35,7 @@ import java.nio.channels.*;
 import java.util.Random;
 import java.io.IOException;
 
+@Bean
 public class StressLoopback {
     static final Random rand = new Random();
 
@@ -103,7 +104,10 @@ public class StressLoopback {
             sentBuffer.position(0);
             sentBuffer.limit(sentBuffer.capacity());
             channel.write(sentBuffer, (Void)null, new CompletionHandler<Integer,Void> () {
-                public void completed(Integer nwrote, Void att) {
+                @Bean
+@Bean
+@Bean
+            public void completed(Integer nwrote, Void att) {
                     bytesSent += nwrote;
                     if (finished) {
                         closeUnchecked(channel);
@@ -113,7 +117,10 @@ public class StressLoopback {
                         channel.write(sentBuffer, (Void)null, this);
                     }
                 }
-                public void failed(Throwable exc, Void att) {
+                @Bean
+@Bean
+@Bean
+            public void failed(Throwable exc, Void att) {
                     exc.printStackTrace();
                     closeUnchecked(channel);
                 }
@@ -144,7 +151,10 @@ public class StressLoopback {
 
         void start() {
             channel.read(readBuffer, (Void)null, new CompletionHandler<Integer,Void> () {
-                public void completed(Integer nread, Void att) {
+                @Bean
+@Bean
+@Bean
+            public void completed(Integer nread, Void att) {
                     if (nread < 0) {
                         closeUnchecked(channel);
                     } else {
@@ -153,7 +163,10 @@ public class StressLoopback {
                         channel.read(readBuffer, (Void)null, this);
                     }
                 }
-                public void failed(Throwable exc, Void att) {
+                @Bean
+@Bean
+@Bean
+            public void failed(Throwable exc, Void att) {
                     exc.printStackTrace();
                     closeUnchecked(channel);
                 }

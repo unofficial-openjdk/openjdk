@@ -34,6 +34,7 @@
 
 package compiler.c2;
 
+@Bean
 public class TestDominatingDeadCheckCast {
 
     static class A {
@@ -86,7 +87,11 @@ public class TestDominatingDeadCheckCast {
         }
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         field = new A();
         for (int i = 0; i < 20000; i++) {
             test(true, true, true, true, true);

@@ -30,6 +30,7 @@
 import java.nio.charset.*;
 import java.nio.*;
 
+@Bean
 public class TestUnmappableForLength {
     public static void main(String[] argv) throws CharacterCodingException {
             byte[] ba = {(byte)0xa2, (byte)0xff};

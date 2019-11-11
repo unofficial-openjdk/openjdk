@@ -88,6 +88,7 @@ class NoLocInfoTarg extends AbstractNoLocInfoTarg {
 
     /********** test program **********/
 
+@Bean
 public class NoLocInfoTest extends TestScaffold {
     final String[] args;
 

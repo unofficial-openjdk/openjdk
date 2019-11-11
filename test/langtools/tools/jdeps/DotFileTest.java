@@ -46,6 +46,7 @@ import java.util.stream.Collectors;
 
 import toolbox.ToolBox;
 
+@Bean
 public class DotFileTest {
     public static void main(String... args) throws Exception {
         int errors = 0;

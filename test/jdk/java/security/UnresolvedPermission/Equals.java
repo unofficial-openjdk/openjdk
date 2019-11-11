@@ -31,6 +31,7 @@
 import java.security.*;
 import java.util.*;
 
+@Bean
 public class Equals {
     public static void main(String[] args) {
         if (System.getProperty("test.src") == null) {

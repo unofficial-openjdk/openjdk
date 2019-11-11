@@ -42,6 +42,7 @@ import jdk.test.lib.process.ProcessTools;
 
 import org.testng.annotations.Test;
 
+@Bean
 public class FindSpecialTest {
     static final String JAVA_LAUNCHER = JDKToolFinder.getJDKTool("java");
     static final String TEST_CLASSES = System.getProperty("test.classes", ".");

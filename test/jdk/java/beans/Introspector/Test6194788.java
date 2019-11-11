@@ -33,6 +33,7 @@ import java.beans.IntrospectionException;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyDescriptor;
 
+@Bean
 public class Test6194788 {
     public static void main(String[] args) throws IntrospectionException {
         test(Grand.class, new PropertyDescriptor("index", Grand.class));
@@ -64,43 +65,79 @@ public class Test6194788 {
             return 0;
         }
 
-        public void setIndex(int index) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setIndex(int index) {
         }
 
-        public String getName(int index) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String getName(int index) {
             return null;
         }
 
-        public void setName(int index, String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setName(int index, String name) {
         }
     }
 
     public static class Parent {
-        public void addPropertyChangeListener(PropertyChangeListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addPropertyChangeListener(PropertyChangeListener listener) {
         }
 
-        public void removePropertyChangeListener(PropertyChangeListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener listener) {
         }
 
         public int getParentIndex() {
             return 0;
         }
 
-        public void setParentIndex(int index) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setParentIndex(int index) {
         }
 
         public String[] getParentName() {
             return null;
         }
 
-        public String getParentName(int index) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String getParentName(int index) {
             return null;
         }
 
-        public void setParentName(String[] names) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setParentName(String[] names) {
         }
 
-        public void setParentName(int index, String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setParentName(int index, String name) {
         }
     }
 
@@ -109,21 +146,37 @@ public class Test6194788 {
             return 0;
         }
 
-        public void setChildIndex(int index) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setChildIndex(int index) {
         }
 
         public String[] getChildName() {
             return null;
         }
 
-        public String getChildName(int index) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String getChildName(int index) {
             return null;
         }
 
-        public void setChildName(String[] names) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setChildName(String[] names) {
         }
 
-        public void setChildName(int index, String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setChildName(int index, String name) {
         }
     }
 }

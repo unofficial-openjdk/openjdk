@@ -25,6 +25,7 @@ import java.beans.BeanDescriptor;
 import java.beans.SimpleBeanInfo;
 
 // The foo bean is it's own beaninfo
+@Bean
 public class Foo extends SimpleBeanInfo {
     public BeanDescriptor getBeanDescriptor() {
         BeanDescriptor bd = new BeanDescriptor(Foo.class);
@@ -39,7 +40,10 @@ public class Foo extends SimpleBeanInfo {
         return this.x;
     }
 
-    public void setX(int x) {
+    @Bean
+@Bean
+@Bean
+            public void setX(int x) {
         this.x = x;
     }
 }

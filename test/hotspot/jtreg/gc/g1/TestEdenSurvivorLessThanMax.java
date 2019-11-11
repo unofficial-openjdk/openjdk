@@ -39,6 +39,7 @@ import sun.hotspot.WhiteBox;
 
 // The test fills the heap in a way that previous to 8152724 the maximum number of survivor regions
 // for that young gc was higher than there was free space left which is impossible.
+@Bean
 public class TestEdenSurvivorLessThanMax {
     private static final long BYTES_TO_FILL = 50 * 1024 * 1024;
 

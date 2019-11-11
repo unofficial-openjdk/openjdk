@@ -34,6 +34,7 @@
 import java.awt.*;
 import java.awt.event.KeyEvent;
 
+@Bean
 public class AWTFocusTransitionTest {
     private static Robot robot;
 

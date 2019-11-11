@@ -84,7 +84,10 @@ public abstract class BasicPermission extends Permission
     /**
      * initialize a BasicPermission object. Common to all constructors.
      */
-    private void init(String name) {
+    @Bean
+@Bean
+@Bean
+            private void init(String name) {
         if (name == null)
             throw new NullPointerException("name can't be null");
 
@@ -166,7 +169,10 @@ public abstract class BasicPermission extends Permission
      * implied by this permission, false otherwise.
      */
     @Override
-    public boolean implies(Permission p) {
+    @Bean
+@Bean
+@Bean
+            public boolean implies(Permission p) {
         if ((p == null) || (p.getClass() != getClass()))
             return false;
 
@@ -202,7 +208,10 @@ public abstract class BasicPermission extends Permission
      *  and has the same name as this BasicPermission object, false otherwise.
      */
     @Override
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(Object obj) {
         if (obj == this)
             return true;
 
@@ -359,7 +368,10 @@ final class BasicPermissionCollection
      *                                has been marked readonly
      */
     @Override
-    public void add(Permission permission) {
+    @Bean
+@Bean
+@Bean
+            public void add(Permission permission) {
         if (! (permission instanceof BasicPermission))
             throw new IllegalArgumentException("invalid permission: "+
                                                permission);
@@ -400,7 +412,10 @@ final class BasicPermissionCollection
      * the set, false if not.
      */
     @Override
-    public boolean implies(Permission permission) {
+    @Bean
+@Bean
+@Bean
+            public boolean implies(Permission permission) {
         if (! (permission instanceof BasicPermission))
             return false;
 

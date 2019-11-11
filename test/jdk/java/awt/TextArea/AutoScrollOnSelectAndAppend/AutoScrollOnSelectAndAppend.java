@@ -85,6 +85,9 @@ public class AutoScrollOnSelectAndAppend {
 
         textArea.addMouseListener(new MouseAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() % 2 == 0) {
                     if (!(textArea.getSelectedText().contains(selectionText))) {

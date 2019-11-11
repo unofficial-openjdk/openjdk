@@ -28,6 +28,7 @@
  * @author gafter
  */
 
+@Bean
 public class Boxing4 {
 
     public static void main(String[] args) {

@@ -104,7 +104,10 @@ public class bug4987336 extends JApplet {
             super(lafInfo.getName(), lafInfo.getName().equals(UIManager.getLookAndFeel().getName()));
 
             addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                     try {
                         UIManager.setLookAndFeel(lafInfo.getClassName());
 

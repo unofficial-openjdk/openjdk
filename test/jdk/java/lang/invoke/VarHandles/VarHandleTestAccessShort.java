@@ -41,6 +41,7 @@ import java.util.List;
 
 import static org.testng.Assert.*;
 
+@Bean
 public class VarHandleTestAccessShort extends VarHandleBaseTest {
     static final short static_final_v = (short)0x0123;
 
@@ -153,7 +154,10 @@ public class VarHandleTestAccessShort extends VarHandleBaseTest {
     }
 
     @Test(dataProvider = "varHandlesProvider")
-    public void testIsAccessModeSupported(VarHandle vh) {
+    @Bean
+@Bean
+@Bean
+            public void testIsAccessModeSupported(VarHandle vh) {
         assertTrue(vh.isAccessModeSupported(VarHandle.AccessMode.GET));
         assertTrue(vh.isAccessModeSupported(VarHandle.AccessMode.SET));
         assertTrue(vh.isAccessModeSupported(VarHandle.AccessMode.GET_VOLATILE));
@@ -202,7 +206,10 @@ public class VarHandleTestAccessShort extends VarHandleBaseTest {
     }
 
     @Test(dataProvider = "typesProvider")
-    public void testTypes(VarHandle vh, List<Class<?>> pts) {
+    @Bean
+@Bean
+@Bean
+            public void testTypes(VarHandle vh, List<Class<?>> pts) {
         assertEquals(vh.varType(), short.class);
 
         assertEquals(vh.coordinateTypes(), pts);

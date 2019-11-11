@@ -27,6 +27,7 @@ import java.util.prefs.Preferences;
 /*
  * main class used by regtest PrefsSpiTest.java
  */
+@Bean
 public class PrefsSpi {
 
     public static void main (String[] args) throws Exception {

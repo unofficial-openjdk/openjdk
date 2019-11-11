@@ -33,6 +33,7 @@ import java.io.File;
 
 // Test that property jdk.boot.class.path.append contains only the bootclasspath
 // info following the "modules" jimage file.
+@Bean
 public class BootClassPathAppendProp {
     public static void main(String[] args) throws Exception {
         // jdk.boot.class.path.append is a non-writeable, internal property.

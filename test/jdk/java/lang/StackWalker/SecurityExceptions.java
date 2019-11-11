@@ -28,6 +28,7 @@
  * @run main/othervm/java.security.policy=noperms.policy SecurityExceptions true
  * @run main/othervm/java.security.policy=stackwalk.policy SecurityExceptions false
  */
+@Bean
 public class SecurityExceptions {
     public static void main(String[] args) {
         boolean expectException = Boolean.parseBoolean(args[0]);

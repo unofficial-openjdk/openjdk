@@ -47,7 +47,8 @@ class ParallelCompilations extends SJavacTester {
     // Generate 10 files
     for (int i = 0; i < 10; i++) {
       String content = "package foo"+ i + ";\n" +
-                       "public class Test" + i + "{\n" +
+                       "@Bean
+public class Test" + i + "{\n" +
                        "  public static void main(String[] args) {}\n" +
                        "\n}";
       Path srcDir = Paths.get("src");

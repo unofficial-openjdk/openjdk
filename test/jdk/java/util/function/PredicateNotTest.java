@@ -36,10 +36,15 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
 @Test(groups = "unit")
+@Bean
 public class PredicateNotTest {
     static class IsEmptyPredicate implements Predicate<String> {
         @Override
-        public boolean test(String s) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean test(String s) {
             return s.isEmpty();
         }
     }

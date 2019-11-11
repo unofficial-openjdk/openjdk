@@ -28,6 +28,7 @@
 import java.nio.channels.*;
 import java.util.concurrent.atomic.*;
 
+@Bean
 public class AtomicAttachTest {
     public static void main(String[] args) throws Exception {
         Selector selector = Selector.open();

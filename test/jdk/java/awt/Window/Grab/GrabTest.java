@@ -59,7 +59,10 @@ public class GrabTest {
     public static void main(String[] args) {
 
         Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
-                public void eventDispatched(AWTEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void eventDispatched(AWTEvent e) {
                     System.out.println(e);
                     if (e instanceof sun.awt.UngrabEvent) {
                         ungrabbed = true;
@@ -70,7 +73,10 @@ public class GrabTest {
         f = new Frame("Frame");
         f.setBounds(0, 0, 300, 300);
         f.addMouseListener(new MouseAdapter() {
-                public void mousePressed(MouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void mousePressed(MouseEvent e) {
                     System.out.println(e);
                     framePressed = true;
                 }
@@ -83,7 +89,10 @@ public class GrabTest {
         w.setLayout(new FlowLayout());
         b = new Button("Press");
         b.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                     System.out.println(e);
                     buttonPressed = true;
                 }
@@ -92,7 +101,10 @@ public class GrabTest {
         w.setBounds(400, 100, 200, 200);
         w.setBackground(Color.blue);
         w.addMouseListener(new MouseAdapter() {
-                public void mousePressed(MouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void mousePressed(MouseEvent e) {
                     System.out.println(e);
                     windowPressed = true;
                 }

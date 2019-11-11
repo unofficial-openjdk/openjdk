@@ -43,6 +43,7 @@ import jdk.test.lib.process.ProcessTools;
 import jtreg.SkippedException;
 import sun.hotspot.gc.GC;
 
+@Bean
 public class TestParallelRefProc {
 
     public static void main(String args[]) throws Exception {

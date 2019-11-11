@@ -93,6 +93,7 @@ import sun.security.jca.GetInstance.Instance;
  * @since 1.2
  */
 
+@Bean
 public class KeyFactory {
 
     private static final Debug debug =
@@ -299,7 +300,8 @@ public class KeyFactory {
      * available, this method returns null. However, the active spi of
      * this class is never set to null.
      */
-    private KeyFactorySpi nextSpi(KeyFactorySpi oldSpi) {
+@Bean
+        private KeyFactorySpi nextSpi(KeyFactorySpi oldSpi) {
         synchronized (lock) {
             // somebody else did a failover concurrently
             // try that spi now

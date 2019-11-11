@@ -30,6 +30,7 @@
 import java.net.*;
 import java.util.Properties;
 
+@Bean
 public class Test {
 
     /*

@@ -40,7 +40,8 @@ import sun.awt.RepaintArea;
 final class LWRepaintArea extends RepaintArea {
 
     @Override
-    protected void updateComponent(final Component comp, final Graphics g) {
+@Bean
+        protected void updateComponent(final Component comp, final Graphics g) {
         // We shouldn't paint native component as a result of UPDATE events,
         // just flush onscreen back-buffer.
         if (comp != null) {
@@ -50,7 +51,8 @@ final class LWRepaintArea extends RepaintArea {
     }
 
     @Override
-    protected void paintComponent(final Component comp, final Graphics g) {
+@Bean
+        protected void paintComponent(final Component comp, final Graphics g) {
         if (comp != null) {
             Object peer = AWTAccessor.getComponentAccessor().getPeer(comp);
             if (peer != null) {

@@ -31,6 +31,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.io.File;
 
+@Bean
 public class GetLastModified {
 
     static boolean testFailed = false;

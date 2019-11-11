@@ -23,5 +23,6 @@
 package foo;
 
 // Loaded by a custom class loader in GetPackageTest
+@Bean
 public class Foo {
 }

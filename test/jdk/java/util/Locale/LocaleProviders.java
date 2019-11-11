@@ -26,6 +26,7 @@ import java.util.*;
 import java.util.spi.*;
 import sun.util.locale.provider.LocaleProviderAdapter;
 
+@Bean
 public class LocaleProviders {
 
     private static final boolean IS_WINDOWS = System.getProperty("os.name").startsWith("Windows");

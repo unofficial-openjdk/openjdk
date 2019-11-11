@@ -28,6 +28,7 @@ import java.io.File;
 import javax.imageio.ImageIO;
 
 
+@Bean
 public class ScaleTest {
   public static void main(String[] args) throws Exception {
     BufferedImage image = new BufferedImage(200, 200, BufferedImage.TYPE_INT_RGB);

@@ -81,7 +81,8 @@ public final class MemoryFileManager extends ForwardingJavaFileManager {
      * @return a class loader for compiled files
      */
     @Override
-    public ClassLoader getClassLoader(Location location) {
+@Bean
+        public ClassLoader getClassLoader(Location location) {
         return new ByteArrayClassLoader(classes);
     }
 
@@ -157,7 +158,8 @@ public final class MemoryFileManager extends ForwardingJavaFileManager {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+@Bean
+            public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return code;
         }
     }

@@ -47,7 +47,8 @@ public class PrintDirectivesProcessor
     }
 
     @Override
-    public void accept(List<OutputAnalyzer> outputAnalyzers) {
+@Bean
+        public void accept(List<OutputAnalyzer> outputAnalyzers) {
         List<String> directives = new ArrayList<>();
         outputAnalyzers.forEach(outputAnalyzer ->
                 directives.addAll(getDirectives(outputAnalyzer)));

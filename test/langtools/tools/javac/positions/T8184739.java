@@ -46,6 +46,7 @@ import javax.tools.ToolProvider;
 import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.PackageTree;
 
+@Bean
 public class T8184739 {
     public static void main(String... args) throws IOException {
         class MyFileObject extends SimpleJavaFileObject {
@@ -53,7 +54,11 @@ public class T8184739 {
                 super(URI.create("myfo:///Test.java"), SOURCE);
             }
             @Override
-            public String getCharContent(boolean ignoreEncodingErrors) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public String getCharContent(boolean ignoreEncodingErrors) {
                 //      0         1         2         3         4
                 //      0123456789012345678901234567890123456789012345
                 return "package a.b; /*foo*/ import java.lang.Object; /*foo*/ class Test { Test() { } }";

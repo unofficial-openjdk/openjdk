@@ -245,7 +245,11 @@ public class DocLintTest {
 //            throw new Error("stop");
     }
 
-    private void check(String out, Set<Message> expect) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void check(String out, Set<Message> expect) {
         Pattern ignore = Pattern.compile("^(Building|Constructing|Generating|Loading|Standard|Starting| ) .*");
         Pattern stats = Pattern.compile("^([1-9]+) (error|warning)(s?)");
         Set<Message> found = EnumSet.noneOf(Message.class);
@@ -297,7 +301,11 @@ public class DocLintTest {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncoding) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncoding) {
             return content;
         }
     };

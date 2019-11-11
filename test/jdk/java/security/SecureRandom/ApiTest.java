@@ -43,6 +43,7 @@ import java.security.DrbgParameters.Instantiation;
 import java.security.DrbgParameters.Capability;
 import javax.crypto.Cipher;
 
+@Bean
 public class ApiTest {
 
     private static final boolean SHOULD_PASS = true;

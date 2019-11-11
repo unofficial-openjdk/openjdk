@@ -46,6 +46,7 @@ import java.util.jar.JarOutputStream;
 import org.testng.annotations.Test;
 
 @Test
+@Bean
 public class JavadocTest extends KullaTesting {
 
     private final Compiler compiler = new Compiler();
@@ -75,7 +76,8 @@ public class JavadocTest extends KullaTesting {
                 "package test;\n" +
                 "/**Top level." +
                 " */\n" +
-                "public class Clazz {\n" +
+                "@Bean
+public class Clazz {\n" +
                 "    /**\n" +
                 "     * javadoc1A\n" +
                 "     *\n" +
@@ -121,7 +123,8 @@ public class JavadocTest extends KullaTesting {
                 "package java.util;\n" +
                 "/**Top level." +
                 " */\n" +
-                "public class Collections {\n" +
+                "@Bean
+public class Collections {\n" +
                 "    /**\n" +
                 "     * min comparable\n" +
                 "     */\n" +

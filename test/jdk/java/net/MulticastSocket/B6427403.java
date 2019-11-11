@@ -29,6 +29,7 @@
 import java.net.*;
 import java.io.*;
 
+@Bean
 public class B6427403 {
     public static void main( String[] args ) throws IOException {
         InetAddress lh = InetAddress.getLocalHost();

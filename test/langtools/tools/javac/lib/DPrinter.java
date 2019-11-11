@@ -112,6 +112,7 @@ import com.sun.tools.javac.util.Log;
  *  deletion without notice.</b>
  */
 
+@Bean
 public class DPrinter {
     protected final PrintWriter out;
     protected final Trees trees;
@@ -148,43 +149,75 @@ public class DPrinter {
         this.trees = trees;
     }
 
-    public DPrinter emptyItems(boolean showEmptyItems) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public DPrinter emptyItems(boolean showEmptyItems) {
         this.showEmptyItems = showEmptyItems;
         return this;
     }
 
-    public DPrinter nulls(boolean showNulls) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public DPrinter nulls(boolean showNulls) {
         this.showNulls = showNulls;
         return this;
     }
 
-    public DPrinter positions(boolean showPositions) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public DPrinter positions(boolean showPositions) {
         this.showPositions = showPositions;
         return this;
     }
 
-    public DPrinter source(boolean showSrc) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public DPrinter source(boolean showSrc) {
         this.showSrc = showSrc;
         return this;
     }
 
-    public DPrinter source(int maxSrcLength) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public DPrinter source(int maxSrcLength) {
         this.showSrc = true;
         this.maxSrcLength = maxSrcLength;
         return this;
     }
 
-    public DPrinter treeSymbols(boolean showTreeSymbols) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public DPrinter treeSymbols(boolean showTreeSymbols) {
         this.showTreeSymbols = showTreeSymbols;
         return this;
     }
 
-    public DPrinter treeTypes(boolean showTreeTypes) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public DPrinter treeTypes(boolean showTreeTypes) {
         this.showTreeTypes = showTreeTypes;
         return this;
     }
 
-    public DPrinter typeSymbolPrinter(Printer p) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public DPrinter typeSymbolPrinter(Printer p) {
         printer = p;
         return this;
     }
@@ -200,11 +233,19 @@ public class DPrinter {
         FULL
     };
 
-    public void printAnnotations(String label, SymbolMetadata annotations) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void printAnnotations(String label, SymbolMetadata annotations) {
         printAnnotations(label, annotations, Details.FULL);
     }
 
-    protected void printAnnotations(String label, SymbolMetadata annotations, Details details) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void printAnnotations(String label, SymbolMetadata annotations, Details details) {
         if (annotations == null) {
             printNull(label);
         } else {
@@ -244,7 +285,11 @@ public class DPrinter {
         }
     }
 
-    public void printAttribute(String label, Attribute attr) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void printAttribute(String label, Attribute attr) {
         if (attr == null) {
             printNull(label);
         } else {
@@ -256,7 +301,11 @@ public class DPrinter {
         }
     }
 
-    public void printDocTree(String label, DocTree tree) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void printDocTree(String label, DocTree tree) {
         if (tree == null) {
              printNull(label);
         } else {
@@ -270,7 +319,11 @@ public class DPrinter {
         }
     }
 
-    public void printFileObject(String label, FileObject fo) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void printFileObject(String label, FileObject fo) {
         if (fo == null) {
             printNull(label);
         } else {
@@ -283,11 +336,19 @@ public class DPrinter {
             printString("impl", item.getClass().getName());
     }
 
-    public void printInt(String label, int i) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void printInt(String label, int i) {
         printString(label, String.valueOf(i));
     }
 
-    public void printLimitedEscapedString(String label, String text) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void printLimitedEscapedString(String label, String text) {
         String s = Convert.quote(text);
         if (s.length() > maxSrcLength) {
             String trim = "[...]";
@@ -298,7 +359,11 @@ public class DPrinter {
         printString(label, s);
     }
 
-    public void printList(String label, List<?> list) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void printList(String label, List<?> list) {
         if (list == null) {
              printNull(label);
         } else if (!list.isEmpty() || showEmptyItems) {
@@ -313,7 +378,11 @@ public class DPrinter {
         }
     }
 
-    public void printName(String label, Name name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void printName(String label, Name name) {
         if (name == null) {
             printNull(label);
         } else {
@@ -321,12 +390,20 @@ public class DPrinter {
         }
     }
 
-    public void printNull(String label) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void printNull(String label) {
         if (showNulls)
             printString(label, NULL);
     }
 
-    protected void printObject(String label, Object item, Details details) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void printObject(String label, Object item, Details details) {
         if (item == null) {
             printNull(label);
         } else if (item instanceof Attribute) {
@@ -350,11 +427,19 @@ public class DPrinter {
         }
     }
 
-    public void printScope(String label, Scope scope) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void printScope(String label, Scope scope) {
         printScope(label, scope, Details.FULL);
     }
 
-    public void printScope(String label, Scope scope, Details details) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void printScope(String label, Scope scope, Details details) {
         if (scope == null) {
             printNull(label);
         } else {
@@ -453,11 +538,19 @@ public class DPrinter {
         return -1;
     }
 
-    public void printSource(String label, JCTree tree) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void printSource(String label, JCTree tree) {
         printString(label, Pretty.toSimpleString(tree, maxSrcLength));
     }
 
-    public void printString(String label, String text) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void printString(String label, String text) {
         indent();
         out.print(label);
         out.print(": ");
@@ -465,11 +558,19 @@ public class DPrinter {
         out.println();
     }
 
-    public void printSymbol(String label, Symbol symbol) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void printSymbol(String label, Symbol symbol) {
         printSymbol(label, symbol, Details.FULL);
     }
 
-    protected void printSymbol(String label, Symbol sym, Details details) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void printSymbol(String label, Symbol sym, Details details) {
         if (sym == null) {
             printNull(label);
         } else {
@@ -507,11 +608,19 @@ public class DPrinter {
         }
     }
 
-    protected String toString(Symbol sym) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected String toString(Symbol sym) {
         return (printer != null) ? printer.visit(sym, locale) : String.valueOf(sym);
     }
 
-    protected void printTree(String label, JCTree tree) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void printTree(String label, JCTree tree) {
         if (tree == null) {
             printNull(label);
         } else {
@@ -545,11 +654,19 @@ public class DPrinter {
         }
     }
 
-    public void printType(String label, Type type) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void printType(String label, Type type) {
         printType(label, type, Details.FULL);
     }
 
-    protected void printType(String label, Type type, Details details) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void printType(String label, Type type, Details details) {
         if (type == null)
             printNull(label);
         else {
@@ -574,15 +691,27 @@ public class DPrinter {
         }
     }
 
-    protected String toString(Type type) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected String toString(Type type) {
         return (printer != null) ? printer.visit(type, locale) : String.valueOf(type);
     }
 
-    protected String hashString(Object obj) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected String hashString(Object obj) {
         return String.format("#%x", obj.hashCode());
     }
 
-    protected String info(Class<?> clazz, Object internal, Object external) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected String info(Class<?> clazz, Object internal, Object external) {
         return String.format("%s,%s,%s", clazz.getSimpleName(), internal, external);
     }
 
@@ -594,11 +723,19 @@ public class DPrinter {
         }
     }
 
-    protected void indent(int n) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void indent(int n) {
         indent += n;
     }
 
-    protected Object getField(Object o, Class<?> clazz, String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected Object getField(Object o, Class<?> clazz, String name) {
         try {
             Field f = clazz.getDeclaredField(name);
             boolean prev = f.isAccessible();
@@ -615,7 +752,11 @@ public class DPrinter {
         }
     }
 
-    protected Object callMethod(Object o, Class<?> clazz, String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected Object callMethod(Object o, Class<?> clazz, String name) {
         try {
             Method m = clazz.getDeclaredMethod(name);
             boolean prev = m.isAccessible();
@@ -641,25 +782,42 @@ public class DPrinter {
     /**
      * Default visitor class for JCTree (AST) objects.
      */
-    public class TreeVisitor extends JCTree.Visitor {
+    @Bean
+public class TreeVisitor extends JCTree.Visitor {
         @Override
-        public void visitTopLevel(JCCompilationUnit tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitTopLevel(JCCompilationUnit tree) {
             printList("packageAnnotations", tree.getPackageAnnotations());
             printList("defs", tree.defs);
         }
 
         @Override
-        public void visitPackageDef(JCPackageDecl tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitPackageDef(JCPackageDecl tree) {
             printTree("pid", tree.pid);
         }
 
         @Override
-        public void visitImport(JCImport tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitImport(JCImport tree) {
             printTree("qualid", tree.qualid);
         }
 
         @Override
-        public void visitClassDef(JCClassDecl tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitClassDef(JCClassDecl tree) {
             printName("name", tree.name);
             printTree("mods", tree.mods);
             printList("typarams", tree.typarams);
@@ -669,7 +827,11 @@ public class DPrinter {
         }
 
         @Override
-        public void visitMethodDef(JCMethodDecl tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitMethodDef(JCMethodDecl tree) {
             printName("name", tree.name);
             printTree("mods", tree.mods);
             printTree("restype", tree.restype);
@@ -682,7 +844,11 @@ public class DPrinter {
         }
 
         @Override
-        public void visitVarDef(JCVariableDecl tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitVarDef(JCVariableDecl tree) {
             printName("name", tree.name);
             printTree("mods", tree.mods);
             printTree("vartype", tree.vartype);
@@ -690,28 +856,48 @@ public class DPrinter {
         }
 
         @Override
-        public void visitSkip(JCSkip tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitSkip(JCSkip tree) {
         }
 
         @Override
-        public void visitBlock(JCBlock tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitBlock(JCBlock tree) {
             printList("stats", tree.stats);
         }
 
         @Override
-        public void visitDoLoop(JCDoWhileLoop tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitDoLoop(JCDoWhileLoop tree) {
             printTree("body", tree.body);
             printTree("cond", tree.cond);
         }
 
         @Override
-        public void visitWhileLoop(JCWhileLoop tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitWhileLoop(JCWhileLoop tree) {
             printTree("cond", tree.cond);
             printTree("body", tree.body);
         }
 
         @Override
-        public void visitForLoop(JCForLoop tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitForLoop(JCForLoop tree) {
             printList("init", tree.init);
             printTree("cond", tree.cond);
             printList("step", tree.step);
@@ -719,37 +905,61 @@ public class DPrinter {
         }
 
         @Override
-        public void visitForeachLoop(JCEnhancedForLoop tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitForeachLoop(JCEnhancedForLoop tree) {
             printTree("var", tree.var);
             printTree("expr", tree.expr);
             printTree("body", tree.body);
         }
 
         @Override
-        public void visitLabelled(JCLabeledStatement tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitLabelled(JCLabeledStatement tree) {
             printTree("body", tree.body);
         }
 
         @Override
-        public void visitSwitch(JCSwitch tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitSwitch(JCSwitch tree) {
             printTree("selector", tree.selector);
             printList("cases", tree.cases);
         }
 
         @Override
-        public void visitCase(JCCase tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitCase(JCCase tree) {
             printList("pat", tree.pats);
             printList("stats", tree.stats);
         }
 
         @Override
-        public void visitSynchronized(JCSynchronized tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitSynchronized(JCSynchronized tree) {
             printTree("lock", tree.lock);
             printTree("body", tree.body);
         }
 
         @Override
-        public void visitTry(JCTry tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitTry(JCTry tree) {
             printList("resources", tree.resources);
             printTree("body", tree.body);
             printList("catchers", tree.catchers);
@@ -757,70 +967,118 @@ public class DPrinter {
         }
 
         @Override
-        public void visitCatch(JCCatch tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitCatch(JCCatch tree) {
             printTree("param", tree.param);
             printTree("body", tree.body);
         }
 
         @Override
-        public void visitConditional(JCConditional tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitConditional(JCConditional tree) {
             printTree("cond", tree.cond);
             printTree("truepart", tree.truepart);
             printTree("falsepart", tree.falsepart);
         }
 
         @Override
-        public void visitIf(JCIf tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitIf(JCIf tree) {
             printTree("cond", tree.cond);
             printTree("thenpart", tree.thenpart);
             printTree("elsepart", tree.elsepart);
         }
 
         @Override
-        public void visitExec(JCExpressionStatement tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitExec(JCExpressionStatement tree) {
             printTree("expr", tree.expr);
         }
 
         @Override
-        public void visitBreak(JCBreak tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitBreak(JCBreak tree) {
             printName("label", tree.label);
         }
 
         @Override
-        public void visitYield(JCYield tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitYield(JCYield tree) {
             printTree("value", tree.value);
         }
 
         @Override
-        public void visitContinue(JCContinue tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitContinue(JCContinue tree) {
             printName("label", tree.label);
         }
 
         @Override
-        public void visitReturn(JCReturn tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitReturn(JCReturn tree) {
             printTree("expr", tree.expr);
         }
 
         @Override
-        public void visitThrow(JCThrow tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitThrow(JCThrow tree) {
             printTree("expr", tree.expr);
         }
 
         @Override
-        public void visitAssert(JCAssert tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitAssert(JCAssert tree) {
             printTree("cond", tree.cond);
             printTree("detail", tree.detail);
         }
 
         @Override
-        public void visitApply(JCMethodInvocation tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitApply(JCMethodInvocation tree) {
             printList("typeargs", tree.typeargs);
             printTree("meth", tree.meth);
             printList("args", tree.args);
         }
 
         @Override
-        public void visitNewClass(JCNewClass tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitNewClass(JCNewClass tree) {
             printTree("encl", tree.encl);
             printList("typeargs", tree.typeargs);
             printTree("clazz", tree.clazz);
@@ -829,7 +1087,11 @@ public class DPrinter {
         }
 
         @Override
-        public void visitNewArray(JCNewArray tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitNewArray(JCNewArray tree) {
             printList("annotations", tree.annotations);
             printTree("elemtype", tree.elemtype);
             printList("dims", tree.dims);
@@ -838,153 +1100,261 @@ public class DPrinter {
         }
 
         @Override
-        public void visitLambda(JCLambda tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitLambda(JCLambda tree) {
             printTree("body", tree.body);
             printList("params", tree.params);
         }
 
         @Override
-        public void visitParens(JCParens tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitParens(JCParens tree) {
             printTree("expr", tree.expr);
         }
 
         @Override
-        public void visitAssign(JCAssign tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitAssign(JCAssign tree) {
             printTree("lhs", tree.lhs);
             printTree("rhs", tree.rhs);
         }
 
         @Override
-        public void visitAssignop(JCAssignOp tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitAssignop(JCAssignOp tree) {
             printTree("lhs", tree.lhs);
             printTree("rhs", tree.rhs);
         }
 
         @Override
-        public void visitUnary(JCUnary tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitUnary(JCUnary tree) {
             printTree("arg", tree.arg);
         }
 
         @Override
-        public void visitBinary(JCBinary tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitBinary(JCBinary tree) {
             printTree("lhs", tree.lhs);
             printTree("rhs", tree.rhs);
         }
 
         @Override
-        public void visitTypeCast(JCTypeCast tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitTypeCast(JCTypeCast tree) {
             printTree("clazz", tree.clazz);
             printTree("expr", tree.expr);
         }
 
         @Override
-        public void visitTypeTest(JCInstanceOf tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitTypeTest(JCInstanceOf tree) {
             printTree("expr", tree.expr);
             printTree("clazz", tree.clazz);
         }
 
         @Override
-        public void visitIndexed(JCArrayAccess tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitIndexed(JCArrayAccess tree) {
             printTree("indexed", tree.indexed);
             printTree("index", tree.index);
         }
 
         @Override
-        public void visitSelect(JCFieldAccess tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitSelect(JCFieldAccess tree) {
             printTree("selected", tree.selected);
         }
 
         @Override
-        public void visitReference(JCMemberReference tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitReference(JCMemberReference tree) {
             printTree("expr", tree.expr);
             printList("typeargs", tree.typeargs);
         }
 
         @Override
-        public void visitIdent(JCIdent tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitIdent(JCIdent tree) {
             printName("name", tree.name);
         }
 
         @Override
-        public void visitLiteral(JCLiteral tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitLiteral(JCLiteral tree) {
             printString("value", Pretty.toSimpleString(tree, 32));
         }
 
         @Override
-        public void visitTypeIdent(JCPrimitiveTypeTree tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitTypeIdent(JCPrimitiveTypeTree tree) {
             printString("typetag", tree.typetag.name());
         }
 
         @Override
-        public void visitTypeArray(JCArrayTypeTree tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitTypeArray(JCArrayTypeTree tree) {
             printTree("elemtype", tree.elemtype);
         }
 
         @Override
-        public void visitTypeApply(JCTypeApply tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitTypeApply(JCTypeApply tree) {
             printTree("clazz", tree.clazz);
             printList("arguments", tree.arguments);
         }
 
         @Override
-        public void visitTypeUnion(JCTypeUnion tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitTypeUnion(JCTypeUnion tree) {
             printList("alternatives", tree.alternatives);
         }
 
         @Override
-        public void visitTypeIntersection(JCTypeIntersection tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitTypeIntersection(JCTypeIntersection tree) {
             printList("bounds", tree.bounds);
         }
 
         @Override
-        public void visitTypeParameter(JCTypeParameter tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitTypeParameter(JCTypeParameter tree) {
             printName("name", tree.name);
             printList("annotations", tree.annotations);
             printList("bounds", tree.bounds);
         }
 
         @Override
-        public void visitWildcard(JCWildcard tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitWildcard(JCWildcard tree) {
             printTree("kind", tree.kind);
             printTree("inner", tree.inner);
         }
 
         @Override
-        public void visitTypeBoundKind(TypeBoundKind tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitTypeBoundKind(TypeBoundKind tree) {
             printString("kind", tree.kind.name());
         }
 
         @Override
-        public void visitModifiers(JCModifiers tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitModifiers(JCModifiers tree) {
             printList("annotations", tree.annotations);
             printString("flags", String.valueOf(Flags.asFlagSet(tree.flags)));
         }
 
         @Override
-        public void visitAnnotation(JCAnnotation tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitAnnotation(JCAnnotation tree) {
             printTree("annotationType", tree.annotationType);
             printList("args", tree.args);
         }
 
         @Override
-        public void visitAnnotatedType(JCAnnotatedType tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitAnnotatedType(JCAnnotatedType tree) {
             printList("annotations", tree.annotations);
             printTree("underlyingType", tree.underlyingType);
         }
 
         @Override
-        public void visitErroneous(JCErroneous tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitErroneous(JCErroneous tree) {
             printList("errs", tree.errs);
         }
 
         @Override
-        public void visitLetExpr(LetExpr tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitLetExpr(LetExpr tree) {
             printList("defs", tree.defs);
             printTree("expr", tree.expr);
         }
 
         @Override
-        public void visitTree(JCTree tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitTree(JCTree tree) {
             Assert.error();
         }
     }
@@ -1002,212 +1372,364 @@ public class DPrinter {
      */
     class DefaultDocTreeVisitor implements DocTreeVisitor<Void,Void> {
 
-        public Void visitAttribute(AttributeTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitAttribute(AttributeTree node, Void p) {
             printName("name", node.getName());
             printString("vkind", node.getValueKind().name());
             printList("value", node.getValue());
             return visitTree(node, null);
         }
 
-        public Void visitAuthor(AuthorTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitAuthor(AuthorTree node, Void p) {
             printList("name", node.getName());
             return visitBlockTag(node, null);
         }
 
-        public Void visitComment(CommentTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitComment(CommentTree node, Void p) {
             printLimitedEscapedString("body", node.getBody());
             return visitTree(node, null);
         }
 
-        public Void visitDeprecated(DeprecatedTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitDeprecated(DeprecatedTree node, Void p) {
             printList("body", node.getBody());
             return visitBlockTag(node, null);
         }
 
-        public Void visitDocComment(DocCommentTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitDocComment(DocCommentTree node, Void p) {
             printList("firstSentence", node.getFirstSentence());
             printList("body", node.getBody());
             printList("tags", node.getBlockTags());
             return visitTree(node, null);
         }
 
-        public Void visitDocRoot(DocRootTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitDocRoot(DocRootTree node, Void p) {
             return visitInlineTag(node, null);
         }
 
         @Override
-        public Void visitDocType(DocTypeTree node, Void aVoid) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitDocType(DocTypeTree node, Void aVoid) {
             printLimitedEscapedString("body", node.getText());
             return visitTree(node, null);
         }
 
-        public Void visitEndElement(EndElementTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitEndElement(EndElementTree node, Void p) {
             printName("name", node.getName());
             return visitTree(node, null);
         }
 
-        public Void visitEntity(EntityTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitEntity(EntityTree node, Void p) {
             printName("name", node.getName());
             return visitTree(node, null);
         }
 
-        public Void visitErroneous(ErroneousTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitErroneous(ErroneousTree node, Void p) {
             printLimitedEscapedString("body", node.getBody());
             printString("diag", node.getDiagnostic().getMessage(Locale.getDefault()));
             return visitTree(node, null);
         }
 
-        public Void visitHidden(HiddenTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitHidden(HiddenTree node, Void p) {
             printList("body", node.getBody());
             return visitBlockTag(node, null);
         }
 
-        public Void visitIdentifier(IdentifierTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitIdentifier(IdentifierTree node, Void p) {
             printName("name", node.getName());
             return visitTree(node, null);
         }
 
-        public Void visitIndex(IndexTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitIndex(IndexTree node, Void p) {
             printString("kind", node.getKind().name());
             printDocTree("term", node.getSearchTerm());
             printList("desc", node.getDescription());
             return visitInlineTag(node, p);
         }
 
-        public Void visitInheritDoc(InheritDocTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitInheritDoc(InheritDocTree node, Void p) {
             return visitInlineTag(node, null);
         }
 
-        public Void visitLink(LinkTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitLink(LinkTree node, Void p) {
             printString("kind", node.getKind().name());
             printDocTree("ref", node.getReference());
             printList("list", node.getLabel());
             return visitInlineTag(node, null);
         }
 
-        public Void visitLiteral(LiteralTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitLiteral(LiteralTree node, Void p) {
             printString("kind", node.getKind().name());
             printDocTree("body", node.getBody());
             return visitInlineTag(node, null);
         }
 
-        public Void visitParam(ParamTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitParam(ParamTree node, Void p) {
             printString("isTypeParameter", String.valueOf(node.isTypeParameter()));
             printString("kind", node.getKind().name());
             printList("desc", node.getDescription());
             return visitBlockTag(node, null);
         }
 
-        public Void visitProvides(ProvidesTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitProvides(ProvidesTree node, Void p) {
             printString("kind", node.getKind().name());
             printDocTree("serviceType", node.getServiceType());
             printList("description", node.getDescription());
             return visitBlockTag(node, null);
         }
 
-        public Void visitReference(ReferenceTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitReference(ReferenceTree node, Void p) {
             printString("signature", node.getSignature());
             return visitTree(node, null);
         }
 
-        public Void visitReturn(ReturnTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitReturn(ReturnTree node, Void p) {
             printList("desc", node.getDescription());
             return visitBlockTag(node, null);
         }
 
-        public Void visitSee(SeeTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitSee(SeeTree node, Void p) {
             printList("ref", node.getReference());
             return visitBlockTag(node, null);
         }
 
-        public Void visitSerial(SerialTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitSerial(SerialTree node, Void p) {
             printList("desc", node.getDescription());
             return visitBlockTag(node, null);
         }
 
-        public Void visitSerialData(SerialDataTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitSerialData(SerialDataTree node, Void p) {
             printList("desc", node.getDescription());
             return visitBlockTag(node, null);
         }
 
-        public Void visitSerialField(SerialFieldTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitSerialField(SerialFieldTree node, Void p) {
             printDocTree("name", node.getName());
             printDocTree("type", node.getType());
             printList("desc", node.getDescription());
             return visitBlockTag(node, null);
         }
 
-        public Void visitSince(SinceTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitSince(SinceTree node, Void p) {
             printList("body", node.getBody());
             return visitBlockTag(node, null);
         }
 
-        public Void visitStartElement(StartElementTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitStartElement(StartElementTree node, Void p) {
             printName("name", node.getName());
             printList("attrs", node.getAttributes());
             printString("selfClosing", String.valueOf(node.isSelfClosing()));
             return visitBlockTag(node, null);
         }
 
-        public Void visitSummary(SummaryTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitSummary(SummaryTree node, Void p) {
             printString("name", node.getTagName());
             printList("summary", node.getSummary());
             return visitInlineTag(node, null);
         }
 
-        public Void visitText(TextTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitText(TextTree node, Void p) {
             printLimitedEscapedString("body", node.getBody());
             return visitTree(node, null);
         }
 
-        public Void visitThrows(ThrowsTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitThrows(ThrowsTree node, Void p) {
             printDocTree("name", node.getExceptionName());
             printList("desc", node.getDescription());
             return visitBlockTag(node, null);
         }
 
-        public Void visitUnknownBlockTag(UnknownBlockTagTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitUnknownBlockTag(UnknownBlockTagTree node, Void p) {
             printString("name", node.getTagName());
             printList("content", node.getContent());
             return visitBlockTag(node, null);
         }
 
-        public Void visitUnknownInlineTag(UnknownInlineTagTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitUnknownInlineTag(UnknownInlineTagTree node, Void p) {
             printString("name", node.getTagName());
             printList("content", node.getContent());
             return visitInlineTag(node, null);
         }
 
-        public Void visitUses(UsesTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitUses(UsesTree node, Void p) {
             printString("kind", node.getKind().name());
             printDocTree("serviceType", node.getServiceType());
             printList("description", node.getDescription());
             return visitBlockTag(node, null);
         }
 
-        public Void visitValue(ValueTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitValue(ValueTree node, Void p) {
             printDocTree("value", node.getReference());
             return visitInlineTag(node, null);
         }
 
-        public Void visitVersion(VersionTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitVersion(VersionTree node, Void p) {
             printList("body", node.getBody());
             return visitBlockTag(node, null);
         }
 
-        public Void visitOther(DocTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitOther(DocTree node, Void p) {
             return visitTree(node, null);
         }
 
-        public Void visitBlockTag(DocTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitBlockTag(DocTree node, Void p) {
             return visitTree(node, null);
         }
 
-        public Void visitInlineTag(DocTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitInlineTag(DocTree node, Void p) {
             return visitTree(node, null);
         }
 
-        public Void visitTree(DocTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitTree(DocTree node, Void p) {
             return null;
         }
     }
@@ -1225,7 +1747,11 @@ public class DPrinter {
      */
     class SymbolVisitor implements Symbol.Visitor<Void,Void> {
         @Override
-        public Void visitClassSymbol(ClassSymbol sym, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitClassSymbol(ClassSymbol sym, Void ignore) {
             printName("fullname", sym.fullname);
             printName("flatname", sym.flatname);
             printScope("members", sym.members_field);
@@ -1237,14 +1763,22 @@ public class DPrinter {
         }
 
         @Override
-        public Void visitMethodSymbol(MethodSymbol sym, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitMethodSymbol(MethodSymbol sym, Void ignore) {
             // code
             printList("params", sym.params);
             return visitSymbol(sym, null);
         }
 
         @Override
-        public Void visitPackageSymbol(PackageSymbol sym, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitPackageSymbol(PackageSymbol sym, Void ignore) {
             printName("fullname", sym.fullname);
             printScope("members", sym.members_field);
             printSymbol("package-info", sym.package_info, Details.SUMMARY);
@@ -1252,13 +1786,21 @@ public class DPrinter {
         }
 
         @Override
-        public Void visitOperatorSymbol(OperatorSymbol sym, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitOperatorSymbol(OperatorSymbol sym, Void ignore) {
             printInt("opcode", sym.opcode);
             return visitMethodSymbol(sym, null);
         }
 
         @Override
-        public Void visitVarSymbol(VarSymbol sym, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitVarSymbol(VarSymbol sym, Void ignore) {
             printInt("pos", sym.pos);
             printInt("adm", sym.adr);
             // data is a private field, and the standard accessors may
@@ -1269,12 +1811,20 @@ public class DPrinter {
         }
 
         @Override
-        public Void visitTypeSymbol(TypeSymbol sym, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitTypeSymbol(TypeSymbol sym, Void ignore) {
             return visitSymbol(sym, null);
         }
 
         @Override
-        public Void visitSymbol(Symbol sym, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitSymbol(Symbol sym, Void ignore) {
             return null;
         }
     }
@@ -1290,18 +1840,31 @@ public class DPrinter {
      * Note: each visitXYZ method ends by calling the corresponding
      * visit method for its superclass.
      */
-    public class TypeVisitor implements Type.Visitor<Void,Void> {
-        public Void visitArrayType(ArrayType type, Void ignore) {
+    @Bean
+public class TypeVisitor implements Type.Visitor<Void,Void> {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitArrayType(ArrayType type, Void ignore) {
             printType("elemType", type.elemtype, Details.FULL);
             return visitType(type, null);
         }
 
-        public Void visitCapturedType(CapturedType type, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitCapturedType(CapturedType type, Void ignore) {
             printType("wildcard", type.wildcard, Details.FULL);
             return visitTypeVar(type, null);
         }
 
-        public Void visitClassType(ClassType type, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitClassType(ClassType type, Void ignore) {
             printType("outer", type.getEnclosingType(), Details.SUMMARY);
             printList("typarams", type.typarams_field);
             printList("allparams", type.allparams_field);
@@ -1311,17 +1874,29 @@ public class DPrinter {
             return visitType(type, null);
         }
 
-        public Void visitErrorType(ErrorType type, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitErrorType(ErrorType type, Void ignore) {
             printType("originalType", type.getOriginalType(), Details.FULL);
             return visitClassType(type, null);
         }
 
-        public Void visitForAll(ForAll type, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitForAll(ForAll type, Void ignore) {
             printList("tvars", type.tvars);
             return visitDelegatedType(type);
         }
 
-        public Void visitMethodType(MethodType type, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitMethodType(MethodType type, Void ignore) {
             printList("argtypes", type.argtypes);
             printType("restype", type.restype, Details.FULL);
             printList("thrown", type.thrown);
@@ -1329,15 +1904,27 @@ public class DPrinter {
             return visitType(type, null);
         }
 
-        public Void visitModuleType(ModuleType type, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitModuleType(ModuleType type, Void ignore) {
             return visitType(type, null);
         }
 
-        public Void visitPackageType(PackageType type, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitPackageType(PackageType type, Void ignore) {
             return visitType(type, null);
         }
 
-        public Void visitTypeVar(TypeVar type, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitTypeVar(TypeVar type, Void ignore) {
             // For TypeVars (and not subtypes), the bound should always be
             // null or bot. So, only print the bound for subtypes of TypeVar,
             // or if the bound is (erroneously) not null or bot.
@@ -1349,7 +1936,11 @@ public class DPrinter {
             return visitType(type, null);
         }
 
-        public Void visitUndetVar(UndetVar type, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitUndetVar(UndetVar type, Void ignore) {
             for (UndetVar.InferenceBound ib: UndetVar.InferenceBound.values())
                 printList("bounds." + ib, type.getBounds(ib));
             printInt("declaredCount", type.declaredCount);
@@ -1357,19 +1948,31 @@ public class DPrinter {
             return visitDelegatedType(type);
         }
 
-        public Void visitWildcardType(WildcardType type, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitWildcardType(WildcardType type, Void ignore) {
             printType("type", type.type, Details.SUMMARY);
             printString("kind", type.kind.name());
             printType("bound", type.bound, Details.SUMMARY);
             return visitType(type, null);
         }
 
-        protected Void visitDelegatedType(DelegatedType type) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected Void visitDelegatedType(DelegatedType type) {
             printType("qtype", type.qtype, Details.FULL);
             return visitType(type, null);
         }
 
-        public Void visitType(Type type, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitType(Type type, Void ignore) {
             return null;
         }
     }
@@ -1383,19 +1986,32 @@ public class DPrinter {
     /**
      * Default visitor class for Attribute (annotation) objects.
      */
-    public class AttributeVisitor implements Attribute.Visitor {
+    @Bean
+public class AttributeVisitor implements Attribute.Visitor {
 
-        public void visitConstant(Attribute.Constant a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitConstant(Attribute.Constant a) {
             printObject("value", a.value, Details.SUMMARY);
             visitAttribute(a);
         }
 
-        public void visitClass(Attribute.Class a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitClass(Attribute.Class a) {
             printObject("classType", a.classType, Details.SUMMARY);
             visitAttribute(a);
         }
 
-        public void visitCompound(Attribute.Compound a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitCompound(Attribute.Compound a) {
             if (a instanceof Attribute.TypeCompound) {
                 Attribute.TypeCompound ta = (Attribute.TypeCompound) a;
                 // consider a custom printer?
@@ -1406,21 +2022,37 @@ public class DPrinter {
             visitAttribute(a);
         }
 
-        public void visitArray(Attribute.Array a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitArray(Attribute.Array a) {
             printList("values", Arrays.asList(a.values));
             visitAttribute(a);
         }
 
-        public void visitEnum(Attribute.Enum a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitEnum(Attribute.Enum a) {
             printSymbol("value", a.value, Details.SUMMARY);
             visitAttribute(a);
         }
 
-        public void visitError(Attribute.Error a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitError(Attribute.Error a) {
             visitAttribute(a);
         }
 
-        public void visitAttribute(Attribute a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitAttribute(Attribute a) {
             printType("type", a.type, Details.SUMMARY);
         }
 
@@ -1558,16 +2190,28 @@ public class DPrinter {
             }
 
             task.addTaskListener(new TaskListener() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void started(TaskEvent e) {
                     if (before.contains(e.getKind()))
                         handle(e);
                 }
 
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void finished(TaskEvent e) {
                     if (after.contains(e.getKind()))
                         handle(e);
                 }
 
+                @Bean
+@Bean
+@Bean
+@Bean
                 private void handle(TaskEvent e) {
                     JCCompilationUnit unit = (JCCompilationUnit) e.getCompilationUnit();
                      switch (e.getKind()) {
@@ -1626,7 +2270,11 @@ public class DPrinter {
                 @Override
                 void handle(final String name, final JCCompilationUnit unit, JCTree tree, final DPrinter dprinter) {
                     TreeScanner ds = new DeclScanner() {
-                        public void visitDecl(JCTree tree, Symbol sym) {
+                        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitDecl(JCTree tree, Symbol sym) {
                             DocTree dt = unit.docComments.getCommentTree(tree);
                             if (dt != null) {
                                 String label = (sym == null) ? Pretty.toSimpleString(tree) : sym.name.toString();
@@ -1643,7 +2291,11 @@ public class DPrinter {
                 @Override
                 void handle(String name, JCCompilationUnit unit, JCTree tree, final DPrinter dprinter) {
                     TreeScanner ds = new DeclScanner() {
-                        public void visitDecl(JCTree tree, Symbol sym) {
+                        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitDecl(JCTree tree, Symbol sym) {
                             String label = (sym == null) ? Pretty.toSimpleString(tree) : sym.name.toString();
                             dprinter.printSymbol(label, sym);
                             dprinter.out.println();
@@ -1658,7 +2310,11 @@ public class DPrinter {
                 void handle(String name, JCCompilationUnit unit, JCTree tree, final DPrinter dprinter) {
                     TreeScanner ts = new TreeScanner() {
                         @Override
-                        public void scan(JCTree tree) {
+                        @Bean
+@Bean
+@Bean
+@Bean
+                public void scan(JCTree tree) {
                             if (tree == null) {
                                 return;
                             }
@@ -1678,19 +2334,31 @@ public class DPrinter {
 
     protected static abstract class DeclScanner extends TreeScanner {
         @Override
-        public void visitClassDef(JCClassDecl tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitClassDef(JCClassDecl tree) {
             visitDecl(tree, tree.sym);
             super.visitClassDef(tree);
         }
 
         @Override
-        public void visitMethodDef(JCMethodDecl tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitMethodDef(JCMethodDecl tree) {
             visitDecl(tree, tree.sym);
             super.visitMethodDef(tree);
         }
 
         @Override
-        public void visitVarDef(JCVariableDecl tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitVarDef(JCVariableDecl tree) {
             visitDecl(tree, tree.sym);
             super.visitVarDef(tree);
         }

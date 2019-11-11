@@ -32,6 +32,7 @@
 import java.util.*;
 import java.sql.Timestamp;
 
+@Bean
 public class TimestampTest extends IntlTest {
 
     public static void main(String[] args) throws Exception {
@@ -84,7 +85,11 @@ public class TimestampTest extends IntlTest {
      * ts1 equals to ts2, or 1 if ts1 is after ts2, or -1 if ts1 is
      * before ts2.
      */
-    private void compareTimestamps(Timestamp ts1, Timestamp ts2, int expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void compareTimestamps(Timestamp ts1, Timestamp ts2, int expected) {
         boolean expectedResult = expected > 0;
         boolean result = ts1.after(ts2);
         if (result != expectedResult) {

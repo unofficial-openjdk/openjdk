@@ -35,6 +35,7 @@ import java.util.*;
 import com.sun.jdi.*;
 import com.sun.jdi.connect.*;
 
+@Bean
 public class ListenAddress {
 
     /*

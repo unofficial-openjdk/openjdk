@@ -50,6 +50,7 @@ import javax.imageio.spi.ImageReaderSpi;
 
 import org.w3c.dom.Node;
 
+@Bean
 public class AppletResourceTest {
 
     public static void main(String[] argv) {
@@ -383,7 +384,11 @@ public class AppletResourceTest {
             return true;
         }
 
-        public Node getAsTree(String formatName) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Node getAsTree(String formatName) {
             return null;
         }
 
@@ -429,7 +434,11 @@ public class AppletResourceTest {
           throws IOException {
             return new DummyImageReaderImpl(this);
         }
-        public String getDescription(Locale locale) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String getDescription(Locale locale) {
             return "DummyImageReaderSpiImpl";
         }
     }

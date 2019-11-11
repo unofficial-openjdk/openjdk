@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 import jdk.test.lib.NetworkConfiguration;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class CheckJNI {
     public static void main (String[] args) throws Exception {
         /* try to invoke as much java.net native code as possible */

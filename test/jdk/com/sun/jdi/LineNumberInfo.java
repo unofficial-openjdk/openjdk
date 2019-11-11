@@ -39,6 +39,7 @@ import com.sun.jdi.request.*;
 import java.util.List;
 import java.util.Iterator;
 
+@Bean
 public class LineNumberInfo extends TestScaffold {
     /*
      * These two arrays are used to validate the line number

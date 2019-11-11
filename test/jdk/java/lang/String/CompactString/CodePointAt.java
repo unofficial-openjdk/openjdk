@@ -60,7 +60,10 @@ public class CodePointAt extends CompactString {
     }
 
     @Test(dataProvider = "provider")
-    public void testCodePointAt(String str, int[] expected) {
+    @Bean
+@Bean
+@Bean
+            public void testCodePointAt(String str, int[] expected) {
         map.get(str)
                 .forEach(
                         (source, data) -> {

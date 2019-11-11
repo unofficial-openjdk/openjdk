@@ -36,6 +36,7 @@ import java.io.*;
  * 6431651 : No description for addURL(URL url) method of URLClassLoader class in case null url
  */
 
+@Bean
 public class AddURLTest
 {
     public static void main(String[] args) throws Exception {
@@ -70,7 +71,11 @@ public class AddURLTest
         public MyURLClassLoader(URL[] urls) {
             super(urls);
         }
-        public void addURL(URL url) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addURL(URL url) {
             super.addURL(url);
         }
     }

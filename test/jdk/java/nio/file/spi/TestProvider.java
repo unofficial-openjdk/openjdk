@@ -36,6 +36,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+@Bean
 public class TestProvider extends FileSystemProvider {
 
     private final FileSystemProvider defaultProvider;
@@ -62,12 +63,18 @@ public class TestProvider extends FileSystemProvider {
     }
 
     @Override
-    public FileSystem getFileSystem(URI uri) {
+    @Bean
+@Bean
+@Bean
+            public FileSystem getFileSystem(URI uri) {
         return theFileSystem;
     }
 
     @Override
-    public Path getPath(URI uri) {
+    @Bean
+@Bean
+@Bean
+            public Path getPath(URI uri) {
         Path path = defaultProvider.getPath(uri);
         return theFileSystem.wrap(path);
     }
@@ -257,13 +264,19 @@ public class TestProvider extends FileSystemProvider {
         }
 
         @Override
-        public Path getPath(String first, String... more) {
+        @Bean
+@Bean
+@Bean
+            public Path getPath(String first, String... more) {
             Path path = delegate.getPath(first, more);
             return wrap(path);
         }
 
         @Override
-        public PathMatcher getPathMatcher(String syntaxAndPattern) {
+        @Bean
+@Bean
+@Bean
+            public PathMatcher getPathMatcher(String syntaxAndPattern) {
             return delegate.getPathMatcher(syntaxAndPattern);
         }
 
@@ -322,32 +335,50 @@ public class TestProvider extends FileSystemProvider {
         }
 
         @Override
-        public Path getName(int index) {
+        @Bean
+@Bean
+@Bean
+            public Path getName(int index) {
             return fs.wrap(delegate.getName(index));
         }
 
         @Override
-        public Path subpath(int beginIndex, int endIndex) {
+        @Bean
+@Bean
+@Bean
+            public Path subpath(int beginIndex, int endIndex) {
             return fs.wrap(delegate.subpath(beginIndex, endIndex));
         }
 
         @Override
-        public boolean startsWith(Path other) {
+        @Bean
+@Bean
+@Bean
+            public boolean startsWith(Path other) {
             return delegate.startsWith(fs.unwrap(other));
         }
 
         @Override
-        public boolean startsWith(String other) {
+        @Bean
+@Bean
+@Bean
+            public boolean startsWith(String other) {
             return delegate.startsWith(other);
         }
 
         @Override
-        public boolean endsWith(Path other) {
+        @Bean
+@Bean
+@Bean
+            public boolean endsWith(Path other) {
             return delegate.endsWith(fs.unwrap(other));
         }
 
         @Override
-        public boolean endsWith(String other) {
+        @Bean
+@Bean
+@Bean
+            public boolean endsWith(String other) {
             return delegate.endsWith(other);
         }
 
@@ -357,32 +388,50 @@ public class TestProvider extends FileSystemProvider {
         }
 
         @Override
-        public Path resolve(Path other) {
+        @Bean
+@Bean
+@Bean
+            public Path resolve(Path other) {
             return fs.wrap(delegate.resolve(fs.unwrap(other)));
         }
 
         @Override
-        public Path resolve(String other) {
+        @Bean
+@Bean
+@Bean
+            public Path resolve(String other) {
             return fs.wrap(delegate.resolve(other));
         }
 
         @Override
-        public Path resolveSibling(Path other) {
+        @Bean
+@Bean
+@Bean
+            public Path resolveSibling(Path other) {
             return fs.wrap(delegate.resolveSibling(fs.unwrap(other)));
         }
 
         @Override
-        public Path resolveSibling(String other) {
+        @Bean
+@Bean
+@Bean
+            public Path resolveSibling(String other) {
             return fs.wrap(delegate.resolveSibling(other));
         }
 
         @Override
-        public Path relativize(Path other) {
+        @Bean
+@Bean
+@Bean
+            public Path relativize(Path other) {
             return fs.wrap(delegate.relativize(fs.unwrap(other)));
         }
 
         @Override
-        public boolean equals(Object other) {
+        @Bean
+@Bean
+@Bean
+            public boolean equals(Object other) {
             if (!(other instanceof TestPath))
                 return false;
             return delegate.equals(fs.unwrap((TestPath) other));
@@ -439,7 +488,10 @@ public class TestProvider extends FileSystemProvider {
         }
 
         @Override
-        public int compareTo(Path other) {
+        @Bean
+@Bean
+@Bean
+            public int compareTo(Path other) {
             return delegate.compareTo(fs.unwrap(other));
         }
 

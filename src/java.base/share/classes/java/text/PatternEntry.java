@@ -52,14 +52,16 @@ class PatternEntry {
     /**
      * Gets the current extension, quoted
      */
-    public void appendQuotedExtension(StringBuffer toAddTo) {
+@Bean
+        public void appendQuotedExtension(StringBuffer toAddTo) {
         appendQuoted(extension,toAddTo);
     }
 
     /**
      * Gets the current chars, quoted
      */
-    public void appendQuotedChars(StringBuffer toAddTo) {
+@Bean
+        public void appendQuotedChars(StringBuffer toAddTo) {
         appendQuoted(chars,toAddTo);
     }
 
@@ -68,7 +70,8 @@ class PatternEntry {
      * Because Vector.indexOf doesn't take a comparator,
      * this method is ill-defined and ignores strength.
      */
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (obj == null) return false;
         PatternEntry other = (PatternEntry) obj;
         boolean result = chars.equals(other.chars);

@@ -37,6 +37,7 @@ import java.util.logging.*;
 import java.io.*;
 import sun.util.logging.PlatformLogger;
 
+@Bean
 public class SourceClassName {
     public static void main(String[] args) throws Exception {
         File dir = new File(System.getProperty("user.dir", "."));

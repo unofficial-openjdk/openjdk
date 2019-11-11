@@ -36,6 +36,7 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 
+@Bean
 public class CompEventOnHiddenComponent
 {
     transient static boolean moved = false;
@@ -63,11 +64,17 @@ public class CompEventOnHiddenComponent
                     new JOptionPane().
                         createInternalFrame(b, "Test").
                         addComponentListener(new ComponentAdapter() {
-                                public void componentMoved(ComponentEvent e) {
+                                @Bean
+@Bean
+@Bean
+            public void componentMoved(ComponentEvent e) {
                                     moved = true;
                                     System.out.println(e);
                                 }
-                                public void componentResized(ComponentEvent e) {
+                                @Bean
+@Bean
+@Bean
+            public void componentResized(ComponentEvent e) {
                                     resized = true;
                                     System.out.println(e);
                                 }
@@ -91,11 +98,17 @@ public class CompEventOnHiddenComponent
 
 
                     smallButton.addHierarchyBoundsListener(new HierarchyBoundsAdapter() {
-                            public void ancestorMoved(HierarchyEvent e) {
+                            @Bean
+@Bean
+@Bean
+            public void ancestorMoved(HierarchyEvent e) {
                                 ancestor_moved = true;
                                 System.out.println("SMALL COMPONENT >>>>>"+e);
                             }
-                            public void ancestorResized(HierarchyEvent e) {
+                            @Bean
+@Bean
+@Bean
+            public void ancestorResized(HierarchyEvent e) {
                                 ancestor_resized = true;
                                 System.out.println("SMALL COMPONENT >>>>>"+e);
                             }

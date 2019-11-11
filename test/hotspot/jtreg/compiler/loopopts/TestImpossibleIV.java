@@ -34,6 +34,7 @@
  * Use -XX:-BackgroundCompilation to wait for compilation before test exit.
  */
 
+@Bean
 public class TestImpossibleIV {
 
   static private void testMethod() {

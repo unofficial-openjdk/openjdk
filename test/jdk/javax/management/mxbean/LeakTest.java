@@ -49,6 +49,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Paths;
 
+@Bean
 public class LeakTest {
     /* Ideally we would include MXBeanTest in the list of tests, since it
      * has fairly complete coverage.  However, the ClassLoader fails to be

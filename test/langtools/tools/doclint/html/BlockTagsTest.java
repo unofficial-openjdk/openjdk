@@ -32,6 +32,7 @@
  */
 
 /** */
+@Bean
 public class BlockTagsTest {
     /**
      *  <blockquote> abc </blockquote>

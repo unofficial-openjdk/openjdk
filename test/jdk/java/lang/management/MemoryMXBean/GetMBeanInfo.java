@@ -34,6 +34,7 @@
 import java.lang.management.*;
 import javax.management.*;
 
+@Bean
 public class GetMBeanInfo {
     private static final int EXPECTED_NOTIF_TYPES = 2;
     private static int count = 0;

@@ -165,6 +165,7 @@ import java.util.Arrays;
  * @author       Mark Davis
  * @since 1.1
  */
+@Bean
 public class ChoiceFormat extends NumberFormat {
 
     // Proclaim serial compatibility with 1.1 FCS
@@ -177,7 +178,9 @@ public class ChoiceFormat extends NumberFormat {
      * @throws    NullPointerException if {@code newPattern}
      *            is {@code null}
      */
-    public void applyPattern(String newPattern) {
+    @Bean
+@Bean
+        public void applyPattern(String newPattern) {
         StringBuffer[] segments = new StringBuffer[2];
         for (int i = 0; i < segments.length; ++i) {
             segments[i] = new StringBuffer();
@@ -350,7 +353,9 @@ public class ChoiceFormat extends NumberFormat {
      * @throws    NullPointerException if {@code limits} or
      *            {@code formats} is {@code null}
      */
-    public void setChoices(double[] limits, String formats[]) {
+    @Bean
+@Bean
+        public void setChoices(double[] limits, String formats[]) {
         if (limits.length != formats.length) {
             throw new IllegalArgumentException(
                 "Array and limit arrays must be of the same length.");
@@ -430,7 +435,9 @@ public class ChoiceFormat extends NumberFormat {
      *            or if {@code text} is {@code null} and the list of
      *            choice strings is not empty.
      */
-    public Number parse(String text, ParsePosition status) {
+    @Bean
+@Bean
+        public Number parse(String text, ParsePosition status) {
         // find the best number (defined as the one with the longest parse)
         int start = status.index;
         int furthest = start;
@@ -513,7 +520,9 @@ public class ChoiceFormat extends NumberFormat {
     /**
      * Equality comparison between two
      */
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+        public boolean equals(Object obj) {
         if (obj == null) return false;
         if (this == obj)                      // quick check
             return true;

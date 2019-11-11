@@ -59,6 +59,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@Bean
 public class IsCompilableTest {
 
     private static final WhiteBox WB = WhiteBox.getWhiteBox();

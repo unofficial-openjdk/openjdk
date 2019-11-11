@@ -197,7 +197,8 @@ public class ImageReadParam extends IIOParam {
     public ImageReadParam() {}
 
     // Comment inherited
-    public void setDestinationType(ImageTypeSpecifier destinationType) {
+@Bean
+        public void setDestinationType(ImageTypeSpecifier destinationType) {
         super.setDestinationType(destinationType);
         setDestination(null);
     }
@@ -229,7 +230,8 @@ public class ImageReadParam extends IIOParam {
      *
      * @see #getDestination
      */
-    public void setDestination(BufferedImage destination) {
+@Bean
+        public void setDestination(BufferedImage destination) {
         this.destination = destination;
     }
 
@@ -279,7 +281,8 @@ public class ImageReadParam extends IIOParam {
      * @see #getSourceBands
      * @see ImageReader#checkReadParamBandSettings
      */
-    public void setDestinationBands(int[] destinationBands) {
+@Bean
+        public void setDestinationBands(int[] destinationBands) {
         if (destinationBands == null) {
             this.destinationBands = null;
         } else {
@@ -443,7 +446,8 @@ public class ImageReadParam extends IIOParam {
      * @see #getSourceMinProgressivePass
      * @see #getSourceMaxProgressivePass
      */
-    public void setSourceProgressivePasses(int minPass, int numPasses) {
+@Bean
+        public void setSourceProgressivePasses(int minPass, int numPasses) {
         if (minPass < 0) {
             throw new IllegalArgumentException("minPass < 0!");
         }

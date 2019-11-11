@@ -68,7 +68,10 @@ public class IndexOf extends CompactString {
     }
 
     @Test(dataProvider = "provider")
-    public void testIndexOf(String str, int ch, int expected) {
+    @Bean
+@Bean
+@Bean
+            public void testIndexOf(String str, int ch, int expected) {
         map.get(str).forEach(
                 (source, data) -> {
                     assertEquals(data.indexOf(ch), expected, String.format(
@@ -107,7 +110,10 @@ public class IndexOf extends CompactString {
     }
 
     @Test(dataProvider = "provider2")
-    public void testIndexOf(String str, int ch, int fromIndex, int expected) {
+    @Bean
+@Bean
+@Bean
+            public void testIndexOf(String str, int ch, int fromIndex, int expected) {
         map.get(str)
                 .forEach(
                         (source, data) -> {
@@ -162,7 +168,10 @@ public class IndexOf extends CompactString {
     }
 
     @Test(dataProvider = "provider3")
-    public void testIndexOf(String str, String anotherString, int expected) {
+    @Bean
+@Bean
+@Bean
+            public void testIndexOf(String str, String anotherString, int expected) {
         map.get(str)
                 .forEach(
                         (source, data) -> {

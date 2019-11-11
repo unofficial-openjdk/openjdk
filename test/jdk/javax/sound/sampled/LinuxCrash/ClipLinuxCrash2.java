@@ -54,7 +54,10 @@ public class ClipLinuxCrash2 implements LineListener{
     ClipLinuxCrash2() {
     }
 
-    public void update(LineEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void update(LineEvent e) {
         if (e.getType() == LineEvent.Type.STOP) {
             stopOccured++;
             out("  Test program: receives STOP event for clip="+clip.toString()+" no."+stopOccured);

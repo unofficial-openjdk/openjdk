@@ -33,6 +33,7 @@
 
 package compiler.c2;
 
+@Bean
 public class TestUnsignedByteCompare {
 
     static int p, n;
@@ -66,7 +67,11 @@ public class TestUnsignedByteCompare {
         }
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         final int tries = 1_000;
         final int count = 1_000;
 

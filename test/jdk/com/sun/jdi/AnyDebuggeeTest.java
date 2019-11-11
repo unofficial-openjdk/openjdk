@@ -75,6 +75,7 @@ class AnyDebuggeeTarg {
 
     /********** test program **********/
 
+@Bean
 public class AnyDebuggeeTest extends TestScaffold {
     static String targetName = "AnyDebuggeeTarg";
     ReferenceType targetClass;

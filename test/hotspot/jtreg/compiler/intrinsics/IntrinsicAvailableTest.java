@@ -51,6 +51,7 @@ import jdk.test.lib.Platform;
 import java.lang.reflect.Executable;
 import java.util.concurrent.Callable;
 
+@Bean
 public class IntrinsicAvailableTest extends CompilerWhiteBoxTest {
 
     public IntrinsicAvailableTest(IntrinsicAvailableTestTestCase testCase) {

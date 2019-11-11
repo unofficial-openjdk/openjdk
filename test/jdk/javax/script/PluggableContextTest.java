@@ -33,6 +33,7 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 
+@Bean
 public class PluggableContextTest {
     public static void main(String[] args) throws Exception {
         ScriptEngineManager m = new ScriptEngineManager();

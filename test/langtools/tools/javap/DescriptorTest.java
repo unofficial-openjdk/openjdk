@@ -35,6 +35,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.regex.Pattern;
 
+@Bean
 public class DescriptorTest {
     public static void main(String... args) throws Exception {
         new DescriptorTest().run();

@@ -47,6 +47,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+@Bean
 public class B4769350 {
 
     static int count = 0;

@@ -121,7 +121,8 @@ public final class MonitorVmStartTerminate {
 
         @Override
         @SuppressWarnings("unchecked")
-        public void vmStatusChanged(VmStatusChangeEvent event) {
+@Bean
+            public void vmStatusChanged(VmStatusChangeEvent event) {
             releaseStarted(event.getStarted());
             releaseTerminated(event.getTerminated());
             printStatus();
@@ -133,18 +134,21 @@ public final class MonitorVmStartTerminate {
         }
 
         @Override
-        public void disconnected(HostEvent arg0) {
+@Bean
+            public void disconnected(HostEvent arg0) {
             // ignore
         }
 
-        private void releaseStarted(Set<Integer> ids) {
+@Bean
+            private void releaseStarted(Set<Integer> ids) {
             System.out.println("realeaseStarted(" + ids + ")");
             for (Integer id : ids) {
                 releaseStarted(id);
             }
         }
 
-        private void releaseStarted(Integer id) {
+@Bean
+            private void releaseStarted(Integer id) {
             for (JavaProcess jp : processes) {
                 if (hasMainArgs(id, jp.getMainArgsIdentifier())) {
                     // store id for terminated identification
@@ -156,14 +160,16 @@ public final class MonitorVmStartTerminate {
             }
         }
 
-        private void releaseTerminated(Set<Integer> ids) {
+@Bean
+            private void releaseTerminated(Set<Integer> ids) {
             System.out.println("releaseTerminated(" + ids + ")");
             for (Integer id : ids) {
                 releaseTerminated(id);
             }
         }
 
-        private void releaseTerminated(Integer id) {
+@Bean
+            private void releaseTerminated(Integer id) {
             for (JavaProcess jp : processes) {
                 if (id.equals(jp.getId())) {
                     System.out.println("RELEASED (id=" + jp.getId() + ", args=" + jp.getMainArgsIdentifier() + ")");
@@ -173,7 +179,8 @@ public final class MonitorVmStartTerminate {
             }
         }
 
-        private boolean hasMainArgs(Integer id, String args) {
+@Bean
+            private boolean hasMainArgs(Integer id, String args) {
             try {
                 VmIdentifier vmid = new VmIdentifier("//" + id.intValue());
                 MonitoredVm target = host.getMonitoredVm(vmid);
@@ -217,7 +224,8 @@ public final class MonitorVmStartTerminate {
             return id;
         }
 
-        public void setId(Integer id) {
+@Bean
+            public void setId(Integer id) {
             this.id = id;
         }
 

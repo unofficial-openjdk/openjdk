@@ -42,6 +42,7 @@ import static jdk.jshell.Snippet.SubKind.*;
 import static org.testng.Assert.assertTrue;
 
 @Test
+@Bean
 public class ReplaceTest extends KullaTesting {
 
     public void testRedefine() {

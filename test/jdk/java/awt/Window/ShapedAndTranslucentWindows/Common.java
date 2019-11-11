@@ -136,6 +136,9 @@ public abstract class Common {
             private boolean bottom = false;
             private boolean right = false;
 
+            @Bean
+@Bean
+@Bean
             public void mousePressed(MouseEvent e) {
                 dragOrigin = e.getLocationOnScreen();
                 origSize = window.getSize();
@@ -146,7 +149,13 @@ public abstract class Common {
                 top = !bottom && dragOrigin.y - origLoc.y < 5;
             }
 
+            @Bean
+@Bean
+@Bean
             public void mouseReleased(MouseEvent e) { resize(e); }
+            @Bean
+@Bean
+@Bean
             public void mouseDragged(MouseEvent e) { resize(e); }
 
             void resize(MouseEvent e) {
@@ -304,6 +313,9 @@ public abstract class Common {
         if (opacity < 1.0f)
             window.setOpacity(opacity);
         window.addComponentListener(new ComponentAdapter() {
+            @Bean
+@Bean
+@Bean
             public void componentResized(ComponentEvent e) {
                 applyShape();
             }

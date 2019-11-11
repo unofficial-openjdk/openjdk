@@ -40,6 +40,7 @@ import com.sun.tools.javac.api.*;
 import com.sun.source.util.Trees;
 
 @SupportedAnnotationTypes("*")
+@Bean
 public class T6361619 extends AbstractProcessor {
     public static void main(String... args) throws Throwable {
         String testSrcDir = System.getProperty("test.src");
@@ -54,7 +55,11 @@ public class T6361619 extends AbstractProcessor {
                                                "-processor", self,
                                                "-d", ".");
         DiagnosticListener<JavaFileObject> dl = new DiagnosticListener<JavaFileObject>() {
-            public void report(Diagnostic<? extends JavaFileObject> m) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void report(Diagnostic<? extends JavaFileObject> m) {
                 out.println(m);
             }
         };
@@ -73,7 +78,11 @@ public class T6361619 extends AbstractProcessor {
         }
     }
 
-    public boolean process(Set<? extends TypeElement> elems, RoundEnvironment renv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> elems, RoundEnvironment renv) {
         return true;
     }
 
@@ -83,11 +92,19 @@ public class T6361619 extends AbstractProcessor {
             this.task = task;
         }
 
-        public void started(TaskEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void started(TaskEvent e) {
             System.err.println("Started: " + e);
             Trees t = Trees.instance(task);
         }
-        public void finished(TaskEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void finished(TaskEvent e) {
             System.err.println("Finished: " + e);
             Trees t = Trees.instance(task);
         }

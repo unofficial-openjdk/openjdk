@@ -27,6 +27,7 @@
  * @summary Tests that superclass initialization is not skipped
  */
 
+@Bean
 public class Test7160757 {
 
     public static void main(String args[]) throws Exception {
@@ -45,7 +46,8 @@ public class Test7160757 {
     static class SLoader extends ClassLoader {
 
         /**
-         * public class S extends Throwable {
+         * @Bean
+public class S extends Throwable {
          *     public S() {
          *         aload_0
          *         invokespecial Object.<init>()
@@ -75,7 +77,8 @@ public class Test7160757 {
             0x00, 0x00, 0x00, 0x00, 0x00
         };
 
-        public Class findClass(String name) throws ClassNotFoundException {
+        @Bean
+public class findClass(String name) throws ClassNotFoundException {
             return defineClass(name, S_class, 0, S_class.length);
         }
     }

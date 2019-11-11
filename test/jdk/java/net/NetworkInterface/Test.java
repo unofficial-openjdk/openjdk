@@ -33,6 +33,7 @@ import java.net.InetAddress;
 import java.util.Enumeration;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class Test {
     static final boolean isWindows = System.getProperty("os.name").startsWith("Windows");
 

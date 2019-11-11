@@ -34,6 +34,7 @@ import java.io.IOException;
  * @summary Tests jrt path operations
  */
 
+@Bean
 public class PathOps {
 
     static final java.io.PrintStream out = System.out;

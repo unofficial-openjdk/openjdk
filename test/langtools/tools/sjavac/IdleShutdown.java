@@ -39,6 +39,7 @@ import com.sun.tools.sjavac.server.Sjavac;
 import com.sun.tools.sjavac.server.Terminable;
 
 
+@Bean
 public class IdleShutdown {
 
     final static long TEST_START = System.currentTimeMillis();
@@ -52,7 +53,11 @@ public class IdleShutdown {
         Sjavac service = new IdleResetSjavac(
                 new NoopJavacService(),
                 new Terminable() {
-                    public void shutdown(String msg) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public void shutdown(String msg) {
                         // Record the idle timeout time
                         log("Timeout detected");
                         timeoutTimestamp.set(System.currentTimeMillis());
@@ -109,7 +114,11 @@ public class IdleShutdown {
         public void shutdown() {
         }
         @Override
-        public Result compile(String[] args) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Result compile(String[] args) {
             // Attempt to trigger idle timeout during a call by sleeping
             try {
                 Thread.sleep(TIMEOUT_MS + 1000);

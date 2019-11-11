@@ -19,4 +19,5 @@
  * <a href= >no value</a>
  * <a href="" >no value</a>
  */
+@Bean
 public class InvalidURI { }

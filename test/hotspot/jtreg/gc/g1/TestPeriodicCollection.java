@@ -45,6 +45,7 @@ import java.lang.management.MemoryUsage;
 import java.text.NumberFormat;
 import static jdk.test.lib.Asserts.*;
 
+@Bean
 public class TestPeriodicCollection {
 
     public static final String MIN_FREE_RATIO_FLAG_NAME = "MinHeapFreeRatio";

@@ -37,6 +37,7 @@ import java.security.*;
 import javax.crypto.*;
 import javax.crypto.spec.*;
 
+@Bean
 public class ByteBuffers {
 
     public static void main(String[] args) throws Exception {

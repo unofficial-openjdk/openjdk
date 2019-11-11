@@ -57,6 +57,7 @@ import java.util.List;
  * <i>rtm_state_change</i> reason had happened and that that VM output
  * does not contain RTM locking statistics for compiled method.
  */
+@Bean
 public class TestNoRTMLockElidingOption {
 
     public void runTestCases() throws Throwable {

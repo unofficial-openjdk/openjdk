@@ -28,6 +28,7 @@
 
 import java.io.*;
 
+@Bean
 public class NegativeMarkLimit {
 
     public static void main( String argv[] ) throws Exception {

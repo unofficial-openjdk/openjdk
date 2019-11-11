@@ -30,6 +30,7 @@
  */
 
 // Test that an unknown class attribute is ignored and no exception is thrown.
+@Bean
 public class UnknownAttrTest {
     public static void main(String args[]) throws Throwable {
 

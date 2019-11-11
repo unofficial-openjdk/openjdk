@@ -96,6 +96,7 @@ import static javax.swing.JFileChooser.*;
  * @author Jeff Dinkins
  */
 @SuppressWarnings("serial")
+@Bean
 public class FileChooserDemo extends JPanel implements ActionListener {
 
     public static final String NIMBUS_LAF_NAME = "Nimbus";
@@ -420,7 +421,11 @@ public class FileChooserDemo extends JPanel implements ActionListener {
         add(Box.createRigidArea(vpad20));
     }
 
-    public void actionPerformed(ActionEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
         if (customButton.isSelected()) {
             chooser.setApproveButtonText(customField.getText());
         }
@@ -541,7 +546,11 @@ public class FileChooserDemo extends JPanel implements ActionListener {
             setLocationRelativeTo(frame);
         }
 
-        public void actionPerformed(ActionEvent evt) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent evt) {
             Object src = evt.getSource();
             String cmd = evt.getActionCommand();
 
@@ -645,7 +654,11 @@ public class FileChooserDemo extends JPanel implements ActionListener {
     /** An ActionListener that listens to the radio buttons. */
     private class OptionListener implements ActionListener {
 
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             JComponent c = (JComponent) e.getSource();
             boolean selected = false;
             if (c instanceof JToggleButton) {
@@ -749,7 +762,11 @@ public class FileChooserDemo extends JPanel implements ActionListener {
             fc.addPropertyChangeListener(this);
         }
 
-        public void loadImage(File f) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void loadImage(File f) {
             if (f == null) {
                 thumbnail = null;
             } else {
@@ -764,7 +781,11 @@ public class FileChooserDemo extends JPanel implements ActionListener {
             }
         }
 
-        public void propertyChange(PropertyChangeEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void propertyChange(PropertyChangeEvent e) {
             String prop = e.getPropertyName();
             if (SELECTED_FILE_CHANGED_PROPERTY.equals(prop)) {
                 if (isShowing()) {
@@ -775,7 +796,11 @@ public class FileChooserDemo extends JPanel implements ActionListener {
         }
 
         @Override
-        public void paint(Graphics g) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(Graphics g) {
             if (thumbnail != null) {
                 int x = getWidth() / 2 - thumbnail.getIconWidth() / 2;
                 int y = getHeight() / 2 - thumbnail.getIconHeight() / 2;

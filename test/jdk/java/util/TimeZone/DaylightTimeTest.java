@@ -30,6 +30,7 @@
 import java.util.*;
 import static java.util.GregorianCalendar.*;
 
+@Bean
 public class DaylightTimeTest {
     private static final int ONE_HOUR = 60 * 60 * 1000; // one hour
     private static final int INTERVAL = 24 * ONE_HOUR;  // one day

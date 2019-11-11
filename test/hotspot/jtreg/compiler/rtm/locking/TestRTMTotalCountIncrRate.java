@@ -59,6 +59,7 @@ import java.util.List;
  * -XX:RTMRetryCount=0 to avoid issue with retriable aborts. For more details on
  * that issue see {@link TestUseRTMAfterLockInflation}.
  */
+@Bean
 public class TestRTMTotalCountIncrRate {
     protected void runTestCases() throws Throwable {
         verifyLocksCount(1, false);
@@ -120,7 +121,11 @@ public class TestRTMTotalCountIncrRate {
             return new String[] { getMethodWithLockName(), "*.doAbort" };
         }
 
-        public void lock(boolean forceAbort) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void lock(boolean forceAbort) {
             synchronized(monitor) {
                 if (forceAbort) {
                     // We're calling native method in order to force

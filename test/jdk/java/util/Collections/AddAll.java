@@ -39,6 +39,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
+@Bean
 public class AddAll {
     static final int N = 100;
     public static void main(String[] args) {

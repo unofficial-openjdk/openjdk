@@ -36,6 +36,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.charset.Charset;
 
+@Bean
 public class Setup {
 
     public static void main(String[] args) throws Exception {

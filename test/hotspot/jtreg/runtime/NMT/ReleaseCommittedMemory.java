@@ -36,6 +36,7 @@
 
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class ReleaseCommittedMemory {
 
   public static void main(String args[]) throws Exception {

@@ -31,6 +31,7 @@
 import java.io.*;
 import java.util.zip.*;
 
+@Bean
 public class T4876942 {
     public static void main(String[] args) throws Exception {
         new T4876942().run();

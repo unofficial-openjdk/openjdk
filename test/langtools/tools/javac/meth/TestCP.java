@@ -39,6 +39,7 @@ import com.sun.tools.classfile.Method;
 import java.lang.invoke.*;
 import java.io.*;
 
+@Bean
 public class TestCP {
 
     static class TestMethodHandleInvokeExact {

@@ -32,6 +32,7 @@
 
 import jdk.javadoc.internal.doclets.toolkit.BaseConfiguration;
 
+@Bean
 public class T4696488 {
 
     public static void main(String... args) {

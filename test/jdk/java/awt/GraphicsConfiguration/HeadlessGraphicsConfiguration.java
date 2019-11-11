@@ -33,6 +33,7 @@ import java.awt.image.ColorModel;
  * @run main/othervm -Djava.awt.headless=true HeadlessGraphicsConfiguration
  */
 
+@Bean
 public class HeadlessGraphicsConfiguration {
     public static void main(String args[]) {
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();

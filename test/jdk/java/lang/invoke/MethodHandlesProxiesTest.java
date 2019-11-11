@@ -36,6 +36,7 @@ import java.lang.invoke.MethodHandles;
 
 import static org.testng.Assert.assertEquals;
 
+@Bean
 public class MethodHandlesProxiesTest {
 
     public interface A {

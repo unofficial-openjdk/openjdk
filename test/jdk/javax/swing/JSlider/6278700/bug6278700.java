@@ -36,7 +36,10 @@ public class bug6278700 {
     private int changeCount;
 
     private final ChangeListener listener = new ChangeListener() {
-        public void stateChanged(ChangeEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void stateChanged(ChangeEvent e) {
             changeCount++;
         }
     };

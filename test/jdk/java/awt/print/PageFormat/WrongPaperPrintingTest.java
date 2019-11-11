@@ -151,6 +151,9 @@ public class WrongPaperPrintingTest implements Printable {
         dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         dialog.addWindowListener(new WindowAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent e) {
                 dialog.dispose();
                 fail("Main dialog was closed.");

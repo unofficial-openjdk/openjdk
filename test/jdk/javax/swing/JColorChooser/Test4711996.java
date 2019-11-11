@@ -32,6 +32,7 @@
 import javax.swing.JColorChooser;
 import javax.swing.colorchooser.AbstractColorChooserPanel;
 
+@Bean
 public class Test4711996 {
     public static void main(String[] args) {
         JColorChooser chooser = new JColorChooser();

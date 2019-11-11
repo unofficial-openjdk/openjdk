@@ -34,6 +34,7 @@
 import java.awt.*;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class AutoRequestFocusSetVisibleTest {
     static Frame focusedFrame;
     static Button focusOwner;

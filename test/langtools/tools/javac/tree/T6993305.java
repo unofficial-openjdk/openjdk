@@ -93,7 +93,11 @@ public class T6993305 {
                     source.substring(pos, Math.min(source.length(), pos + 10)));
         }
 
-        @Override public Void visitCompilationUnit(CompilationUnitTree tree, JavacTask task) {
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitCompilationUnit(CompilationUnitTree tree, JavacTask task) {
             cu = tree;
             Trees trees = Trees.instance(task);
             sourcePositions = trees.getSourcePositions();
@@ -106,7 +110,11 @@ public class T6993305 {
         }
 
         // this is the core of the test
-        @Override public Void visitMethod(MethodTree tree, JavacTask task) {
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitMethod(MethodTree tree, JavacTask task) {
             String name = String.valueOf(tree.getName());
             int pos = source.indexOf(" " + name + "(");
             while (source.charAt(pos - 1) != '\n') pos--;

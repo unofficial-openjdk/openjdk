@@ -48,6 +48,7 @@ import java.nio.file.Paths;
 
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class JarDirTest extends CtwTest {
     private static final String[] SHOULD_CONTAIN
             = {"# jar_in_dir: jars",

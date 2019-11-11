@@ -82,7 +82,10 @@ public class MyX509ExtendedKeyManager extends X509ExtendedKeyManager {
     }
 
     @Override
-    public PrivateKey getPrivateKey(String alias) {
+    @Bean
+@Bean
+@Bean
+            public PrivateKey getPrivateKey(String alias) {
         return akm.getPrivateKey(alias);
     }
 
@@ -104,7 +107,10 @@ public class MyX509ExtendedKeyManager extends X509ExtendedKeyManager {
         return akm.chooseEngineServerAlias(keyType, issuers, engine);
     }
 
-    private void checkALPN(String ap) {
+    @Bean
+@Bean
+@Bean
+            private void checkALPN(String ap) {
 
         if (!doCheck) {
             System.out.println("Skipping KeyManager checks " +

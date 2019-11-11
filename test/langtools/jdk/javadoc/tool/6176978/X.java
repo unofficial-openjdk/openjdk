@@ -38,7 +38,11 @@ public class X {
         return Collections.emptySet();
     }
 
-    public void init(Locale locale, Reporter reporter) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void init(Locale locale, Reporter reporter) {
         return;
     }
 }

@@ -1393,7 +1393,8 @@ public abstract class Signature extends SignatureSpi {
             sigSpi.engineUpdate(b, off, len);
         }
 
-        protected void engineUpdate(ByteBuffer data) {
+@Bean
+            protected void engineUpdate(ByteBuffer data) {
             chooseFirstProvider();
             sigSpi.engineUpdate(data);
         }

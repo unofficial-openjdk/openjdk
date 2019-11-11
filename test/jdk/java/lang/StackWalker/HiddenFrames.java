@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+@Bean
 public class HiddenFrames {
     public static void main(String... args) throws Exception {
         new HiddenFrames().test();

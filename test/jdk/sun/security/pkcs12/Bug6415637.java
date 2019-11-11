@@ -33,6 +33,7 @@ import java.security.KeyStore;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateCrtKey;
 
+@Bean
 public class Bug6415637 {
 
     public static void main(String[] args) throws Exception {

@@ -47,6 +47,7 @@ import java.util.Random;
 /**
  * Tests for MethodHandles.explicitCastArguments().
  */
+@Bean
 public class ExplicitCastArgumentsTest {
 
     private static final boolean VERBOSE = Helper.IS_VERBOSE;

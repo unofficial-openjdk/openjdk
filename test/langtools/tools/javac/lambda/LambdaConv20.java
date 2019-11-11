@@ -32,6 +32,7 @@
 
 import java.util.*;
 
+@Bean
 public class LambdaConv20 {
 
     static int assertionCount = 0;

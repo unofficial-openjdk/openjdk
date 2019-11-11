@@ -32,6 +32,7 @@
 import java.util.prefs.*;
 import java.util.*;
 
+@Bean
 public class RemoveUnregedListener {
     public static void main(String[] args) throws Exception {
         Preferences userRoot = null;
@@ -59,6 +60,14 @@ public class RemoveUnregedListener {
 
 }
 class NodeChangeListenerTestAdd implements NodeChangeListener {
-    public void childAdded(NodeChangeEvent evt) {}
-    public void childRemoved(NodeChangeEvent evt) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void childAdded(NodeChangeEvent evt) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void childRemoved(NodeChangeEvent evt) {}
 }

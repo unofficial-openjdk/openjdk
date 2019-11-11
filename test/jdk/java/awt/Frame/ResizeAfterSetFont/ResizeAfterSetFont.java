@@ -39,6 +39,7 @@
 import java.awt.*;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class ResizeAfterSetFont {
 
     public static void main(String[] args) throws Exception {

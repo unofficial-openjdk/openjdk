@@ -47,6 +47,7 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.management.StandardMBean;
 
+@Bean
 public class FeatureOrderTest {
     private static boolean failed;
 
@@ -94,14 +95,22 @@ public class FeatureOrderTest {
             return null;
         }
 
-        public void setVenus(String x) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setVenus(String x) {
         }
 
         public BigInteger getEarth() {
             return null;
         }
 
-        public void setEarth(BigInteger x) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setEarth(BigInteger x) {
         }
 
         public boolean isMars() {
@@ -120,7 +129,11 @@ public class FeatureOrderTest {
             return 0;
         }
 
-        public void setUranus(short x) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setUranus(short x) {
         }
 
         public long getNeptune() {
@@ -130,25 +143,45 @@ public class FeatureOrderTest {
         public void neptune() {
         }
 
-        public void uranus(int x) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void uranus(int x) {
         }
 
-        public int saturn(int x, int y) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int saturn(int x, int y) {
             return 0;
         }
 
-        public short jupiter(int x, long y, double z) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public short jupiter(int x, long y, double z) {
             return 0;
         }
 
-        public void mars(boolean x) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void mars(boolean x) {
         }
 
         public BigInteger earth() {
             return null;
         }
 
-        public double earth(double x) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public double earth(double x) {
             return 0;
         }
 

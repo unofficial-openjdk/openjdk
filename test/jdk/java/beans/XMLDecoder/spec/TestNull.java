@@ -40,7 +40,10 @@ public final class TestNull extends AbstractTest {
     }
 
     @Override
-    protected void validate(XMLDecoder decoder) {
+    @Bean
+@Bean
+@Bean
+            protected void validate(XMLDecoder decoder) {
         if (null != decoder.readObject()) {
             throw new Error("null value expected");
         }

@@ -33,6 +33,7 @@
 
 package compiler.arraycopy;
 
+@Bean
 public class TestObjectArrayClone {
 
     public static TestObjectArrayClone[] test(TestObjectArrayClone[] arr) {

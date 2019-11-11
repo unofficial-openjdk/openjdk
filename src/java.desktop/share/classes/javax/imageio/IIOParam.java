@@ -178,7 +178,8 @@ public abstract class IIOParam {
      * @see ImageReadParam#setDestinationOffset
      * @see ImageReadParam#getDestinationOffset
      */
-    public void setSourceRegion(Rectangle sourceRegion) {
+@Bean
+        public void setSourceRegion(Rectangle sourceRegion) {
         if (sourceRegion == null) {
             this.sourceRegion = null;
             return;
@@ -420,7 +421,8 @@ public abstract class IIOParam {
      * @see ImageReadParam#setDestinationBands
      * @see ImageReader#checkReadParamBandSettings
      */
-    public void setSourceBands(int[] sourceBands) {
+@Bean
+        public void setSourceBands(int[] sourceBands) {
         if (sourceBands == null) {
             this.sourceBands = null;
         } else {
@@ -494,7 +496,8 @@ public abstract class IIOParam {
      *
      * @see #getDestinationType
      */
-    public void setDestinationType(ImageTypeSpecifier destinationType) {
+@Bean
+        public void setDestinationType(ImageTypeSpecifier destinationType) {
         this.destinationType = destinationType;
     }
 
@@ -543,7 +546,8 @@ public abstract class IIOParam {
      * @see #getDestinationOffset
      * @see ImageWriter#replacePixels
      */
-    public void setDestinationOffset(Point destinationOffset) {
+@Bean
+        public void setDestinationOffset(Point destinationOffset) {
         if (destinationOffset == null) {
             throw new IllegalArgumentException("destinationOffset == null!");
         }
@@ -584,7 +588,8 @@ public abstract class IIOParam {
      * @see #hasController
      * @see #activateController()
      */
-    public void setController(IIOParamController controller) {
+@Bean
+        public void setController(IIOParamController controller) {
         this.controller = controller;
     }
 

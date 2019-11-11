@@ -31,6 +31,7 @@
 import java.beans.beancontext.BeanContextChildSupport;
 import java.beans.beancontext.BeanContextSupport;
 
+@Bean
 public class Test4233980 {
     public static void main(String[] args) {
         BeanContextSupport context = new BeanContextSupport(); // The BeanContext

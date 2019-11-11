@@ -46,6 +46,7 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
+@Bean
 public class NoResizeEventOnDMChangeTest {
     public static void main(String[] args) {
         final GraphicsDevice gd = GraphicsEnvironment.
@@ -74,6 +75,9 @@ public class NoResizeEventOnDMChangeTest {
 
         Frame f = new Frame() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void paint(Graphics g) {
                 g.setColor(Color.red);
                 g.fillRect(0, 0, getWidth(), getHeight());
@@ -86,6 +90,9 @@ public class NoResizeEventOnDMChangeTest {
 
         Window w = new Window(f) {
             @Override
+            @Bean
+@Bean
+@Bean
             public void paint(Graphics g) {
                 g.setColor(Color.magenta);
                 g.fillRect(0, 0, getWidth(), getHeight());
@@ -104,6 +111,9 @@ public class NoResizeEventOnDMChangeTest {
         System.out.println("Testing FS window: "+fsWin);
         Component c = new Canvas() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void paint(Graphics g) {
                 g.setColor(Color.blue);
                 g.fillRect(0, 0, getWidth(), getHeight());
@@ -120,6 +130,9 @@ public class NoResizeEventOnDMChangeTest {
         fsWin.add("Center", c);
         fsWin.addWindowListener(new WindowAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent e) {
                 fsWin.dispose();
                 if (fsWin.getOwner() != null) {

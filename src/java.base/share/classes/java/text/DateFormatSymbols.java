@@ -56,7 +56,8 @@ import sun.util.locale.provider.ResourceBundleBasedAdapter;
 import sun.util.locale.provider.TimeZoneNameUtility;
 
 /**
- * {@code DateFormatSymbols} is a public class for encapsulating
+ * {@code DateFormatSymbols} is a @Bean
+public class for encapsulating
  * localizable date-time formatting data, such as the names of the
  * months, the names of the days of the week, and the time zone data.
  * {@code SimpleDateFormat} uses
@@ -105,6 +106,7 @@ import sun.util.locale.provider.TimeZoneNameUtility;
  * @author       Chen-Lieh Huang
  * @since 1.1
  */
+@Bean
 public class DateFormatSymbols implements Serializable, Cloneable {
 
     /**
@@ -388,7 +390,9 @@ public class DateFormatSymbols implements Serializable, Cloneable {
      * Sets era strings. For example: "AD" and "BC".
      * @param newEras the new era strings.
      */
-    public void setEras(String[] newEras) {
+    @Bean
+@Bean
+        public void setEras(String[] newEras) {
         eras = Arrays.copyOf(newEras, newEras.length);
         cachedHashCode = 0;
     }
@@ -426,7 +430,9 @@ public class DateFormatSymbols implements Serializable, Cloneable {
      * be indexed by {@link java.util.Calendar#JANUARY Calendar.JANUARY},
      * {@link java.util.Calendar#FEBRUARY Calendar.FEBRUARY}, etc.
      */
-    public void setMonths(String[] newMonths) {
+    @Bean
+@Bean
+        public void setMonths(String[] newMonths) {
         months = Arrays.copyOf(newMonths, newMonths.length);
         cachedHashCode = 0;
     }
@@ -464,7 +470,9 @@ public class DateFormatSymbols implements Serializable, Cloneable {
      * be indexed by {@link java.util.Calendar#JANUARY Calendar.JANUARY},
      * {@link java.util.Calendar#FEBRUARY Calendar.FEBRUARY}, etc.
      */
-    public void setShortMonths(String[] newShortMonths) {
+    @Bean
+@Bean
+        public void setShortMonths(String[] newShortMonths) {
         shortMonths = Arrays.copyOf(newShortMonths, newShortMonths.length);
         cachedHashCode = 0;
     }
@@ -486,7 +494,9 @@ public class DateFormatSymbols implements Serializable, Cloneable {
      * be indexed by {@link java.util.Calendar#SUNDAY Calendar.SUNDAY},
      * {@link java.util.Calendar#MONDAY Calendar.MONDAY}, etc.
      */
-    public void setWeekdays(String[] newWeekdays) {
+    @Bean
+@Bean
+        public void setWeekdays(String[] newWeekdays) {
         weekdays = Arrays.copyOf(newWeekdays, newWeekdays.length);
         cachedHashCode = 0;
     }
@@ -508,7 +518,9 @@ public class DateFormatSymbols implements Serializable, Cloneable {
      * be indexed by {@link java.util.Calendar#SUNDAY Calendar.SUNDAY},
      * {@link java.util.Calendar#MONDAY Calendar.MONDAY}, etc.
      */
-    public void setShortWeekdays(String[] newShortWeekdays) {
+    @Bean
+@Bean
+        public void setShortWeekdays(String[] newShortWeekdays) {
         shortWeekdays = Arrays.copyOf(newShortWeekdays, newShortWeekdays.length);
         cachedHashCode = 0;
     }
@@ -525,7 +537,9 @@ public class DateFormatSymbols implements Serializable, Cloneable {
      * Sets ampm strings. For example: "AM" and "PM".
      * @param newAmpms the new ampm strings.
      */
-    public void setAmPmStrings(String[] newAmpms) {
+    @Bean
+@Bean
+        public void setAmPmStrings(String[] newAmpms) {
         ampms = Arrays.copyOf(newAmpms, newAmpms.length);
         cachedHashCode = 0;
     }
@@ -601,7 +615,9 @@ public class DateFormatSymbols implements Serializable, Cloneable {
      * @throws    NullPointerException if {@code newZoneStrings} is null
      * @see #getZoneStrings()
      */
-    public void setZoneStrings(String[][] newZoneStrings) {
+    @Bean
+@Bean
+        public void setZoneStrings(String[][] newZoneStrings) {
         String[][] aCopy = new String[newZoneStrings.length][];
         for (int i = 0; i < newZoneStrings.length; ++i) {
             int len = newZoneStrings[i].length;
@@ -628,7 +644,9 @@ public class DateFormatSymbols implements Serializable, Cloneable {
      * @param newLocalPatternChars the new localized date-time
      * pattern characters.
      */
-    public void setLocalPatternChars(String newLocalPatternChars) {
+    @Bean
+@Bean
+        public void setLocalPatternChars(String newLocalPatternChars) {
         // Call toString() to throw an NPE in case the argument is null
         localPatternChars = newLocalPatternChars.toString();
         cachedHashCode = 0;
@@ -722,7 +740,9 @@ public class DateFormatSymbols implements Serializable, Cloneable {
      * populates its fields from the resource bundle for the locale, and caches
      * the instance. Note: zoneStrings isn't initialized in this method.
      */
-    private void initializeData(Locale locale) {
+    @Bean
+@Bean
+        private void initializeData(Locale locale) {
         SoftReference<DateFormatSymbols> ref = cachedInstances.get(locale);
         DateFormatSymbols dfs;
         if (ref == null || (dfs = ref.get()) == null) {

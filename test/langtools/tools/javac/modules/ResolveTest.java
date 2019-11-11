@@ -37,6 +37,7 @@ import java.nio.file.*;
 import toolbox.JavacTask;
 import toolbox.Task;
 
+@Bean
 public class ResolveTest extends ModuleTestBase {
     public static void main(String... args) throws Exception {
         ResolveTest t = new ResolveTest();
@@ -84,10 +85,12 @@ public class ResolveTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src.resolve("m1x"),
                 "module m1x { }",
-                "package p1; public class C1 { }");
+                "package p1; @Bean
+public class C1 { }");
         tb.writeJavaFiles(src.resolve("m2x"),
                 "module m2x { }",
-                "package p2; public class C2 { p1.C1 c; }");
+                "package p2; @Bean
+public class C2 { p1.C1 c; }");
         Path modules = base.resolve("modules");
         Files.createDirectories(modules);
 
@@ -108,10 +111,12 @@ public class ResolveTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src.resolve("m1x"),
                 "module m1x { }",
-                "package p1; public class C1 { }");
+                "package p1; @Bean
+public class C1 { }");
         tb.writeJavaFiles(src.resolve("m2x"),
                 "module m2x { requires m1x; }",
-                "package p2; public class C2 { p1.C1 c; }");
+                "package p2; @Bean
+public class C2 { p1.C1 c; }");
         Path modules = base.resolve("modules");
         Files.createDirectories(modules);
 
@@ -132,10 +137,12 @@ public class ResolveTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src.resolve("m1x"),
                 "module m1x { exports p1 to m3x; }",
-                "package p1; public class C1 { }");
+                "package p1; @Bean
+public class C1 { }");
         tb.writeJavaFiles(src.resolve("m2x"),
                 "module m2x { requires m1x; }",
-                "package p2; public class C2 { p1.C1 c; }");
+                "package p2; @Bean
+public class C2 { p1.C1 c; }");
         tb.writeJavaFiles(src.resolve("m3x"),
                 "module m3x { requires m1x; }");
         Path modules = base.resolve("modules");
@@ -158,10 +165,12 @@ public class ResolveTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src.resolve("m1x"),
                 "module m1x { exports p1; }",
-                "package p1; public class C1 { }");
+                "package p1; @Bean
+public class C1 { }");
         tb.writeJavaFiles(src.resolve("m2x"),
                 "module m2x { }",
-                "package p2; public class C2 { p1.C1 c; }");
+                "package p2; @Bean
+public class C2 { p1.C1 c; }");
         Path modules = base.resolve("modules");
         Files.createDirectories(modules);
 
@@ -182,10 +191,12 @@ public class ResolveTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src.resolve("m1x"),
                 "module m1x { exports p1; }",
-                "package p1; public class C1 { }");
+                "package p1; @Bean
+public class C1 { }");
         tb.writeJavaFiles(src.resolve("m2x"),
                 "module m2x { requires m1x; }",
-                "package p2; public class C2 { p1.C1 c; }");
+                "package p2; @Bean
+public class C2 { p1.C1 c; }");
         Path modules = base.resolve("modules");
         Files.createDirectories(modules);
 
@@ -202,10 +213,12 @@ public class ResolveTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src.resolve("m1x"),
                 "module m1x { exports p1 to m2x; }",
-                "package p1; public class C1 { }");
+                "package p1; @Bean
+public class C1 { }");
         tb.writeJavaFiles(src.resolve("m2x"),
                 "module m2x { requires m1x; }",
-                "package p2; public class C2 { p1.C1 c; }");
+                "package p2; @Bean
+public class C2 { p1.C1 c; }");
         Path modules = base.resolve("modules");
         Files.createDirectories(modules);
 

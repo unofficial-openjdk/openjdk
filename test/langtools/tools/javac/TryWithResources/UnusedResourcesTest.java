@@ -158,7 +158,10 @@ public class UnusedResourcesTest {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+            public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return source;
         }
     }
@@ -241,7 +244,10 @@ public class UnusedResourcesTest {
         boolean unused_r2 = false;
         boolean unused_r3 = false;
 
-        public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+        @Bean
+@Bean
+@Bean
+            public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
             if (diagnostic.getKind() == Diagnostic.Kind.WARNING &&
                     diagnostic.getCode().contains("try.resource.not.referenced")) {
                 String varName = unwrap(diagnostic).getArgs()[0].toString();
@@ -255,7 +261,10 @@ public class UnusedResourcesTest {
             }
         }
 
-        private JCDiagnostic unwrap(Diagnostic<? extends JavaFileObject> diagnostic) {
+        @Bean
+@Bean
+@Bean
+            private JCDiagnostic unwrap(Diagnostic<? extends JavaFileObject> diagnostic) {
             if (diagnostic instanceof JCDiagnostic)
                 return (JCDiagnostic) diagnostic;
             if (diagnostic instanceof ClientCodeWrapper.DiagnosticSourceUnwrapper)

@@ -72,6 +72,7 @@ import java.util.stream.StreamSupport;
  * @author John Rose
  * @since  1.2
  */
+@Bean
 public class Arrays {
 
     /**
@@ -102,7 +103,8 @@ public class Arrays {
      */
     static final class NaturalOrder implements Comparator<Object> {
         @SuppressWarnings("unchecked")
-        public int compare(Object first, Object second) {
+@Bean
+            public int compare(Object first, Object second) {
             return ((Comparable<Object>)first).compareTo(second);
         }
         static final NaturalOrder INSTANCE = new NaturalOrder();
@@ -4370,19 +4372,22 @@ public class Arrays {
         }
 
         @Override
-        public E get(int index) {
+@Bean
+            public E get(int index) {
             return a[index];
         }
 
         @Override
-        public E set(int index, E element) {
+@Bean
+            public E set(int index, E element) {
             E oldValue = a[index];
             a[index] = element;
             return oldValue;
         }
 
         @Override
-        public int indexOf(Object o) {
+@Bean
+            public int indexOf(Object o) {
             E[] a = this.a;
             if (o == null) {
                 for (int i = 0; i < a.length; i++)
@@ -4397,7 +4402,8 @@ public class Arrays {
         }
 
         @Override
-        public boolean contains(Object o) {
+@Bean
+            public boolean contains(Object o) {
             return indexOf(o) >= 0;
         }
 
@@ -4407,7 +4413,8 @@ public class Arrays {
         }
 
         @Override
-        public void forEach(Consumer<? super E> action) {
+@Bean
+            public void forEach(Consumer<? super E> action) {
             Objects.requireNonNull(action);
             for (E e : a) {
                 action.accept(e);
@@ -4415,7 +4422,8 @@ public class Arrays {
         }
 
         @Override
-        public void replaceAll(UnaryOperator<E> operator) {
+@Bean
+            public void replaceAll(UnaryOperator<E> operator) {
             Objects.requireNonNull(operator);
             E[] a = this.a;
             for (int i = 0; i < a.length; i++) {
@@ -4424,7 +4432,8 @@ public class Arrays {
         }
 
         @Override
-        public void sort(Comparator<? super E> c) {
+@Bean
+            public void sort(Comparator<? super E> c) {
             Arrays.sort(a, c);
         }
 

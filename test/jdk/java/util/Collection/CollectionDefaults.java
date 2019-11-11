@@ -55,6 +55,7 @@ import java.util.function.Predicate;
  * @build CollectionAsserts CollectionSupplier ExtendsAbstractSet ExtendsAbstractCollection
  * @run testng CollectionDefaults
  */
+@Bean
 public class CollectionDefaults {
 
     public static final Predicate<Integer> pEven = x -> 0 == x % 2;
@@ -115,7 +116,11 @@ public class CollectionDefaults {
     }
 
     @Test(dataProvider = "setProvider")
-    public void testProvidedWithNull(final Set<Integer> set) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testProvidedWithNull(final Set<Integer> set) {
         try {
             set.forEach(null);
             fail("expected NPE not thrown");

@@ -51,6 +51,7 @@ import java.util.stream.TestData;
 import static org.testng.Assert.*;
 
 @Test
+@Bean
 public class PatternStreamTest extends OpTestCase {
 
     @DataProvider(name = "Patterns")
@@ -133,7 +134,11 @@ public class PatternStreamTest extends OpTestCase {
     }
 
     @Test(dataProvider = "Patterns")
-    public void testPatternSplitAsStream(String description, String input, Pattern pattern) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testPatternSplitAsStream(String description, String input, Pattern pattern) {
         // Derive expected result from pattern.split
         List<String> expected = Arrays.asList(pattern.split(input));
 
@@ -145,7 +150,11 @@ public class PatternStreamTest extends OpTestCase {
     }
 
     @Test(dataProvider = "Patterns")
-    public void testReplaceFirst(String description, String input, Pattern pattern) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testReplaceFirst(String description, String input, Pattern pattern) {
         // Derive expected result from Matcher.replaceFirst(String )
         String expected = pattern.matcher(input).replaceFirst("R");
         String actual = pattern.matcher(input).replaceFirst(r -> "R");
@@ -153,7 +162,11 @@ public class PatternStreamTest extends OpTestCase {
     }
 
     @Test(dataProvider = "Patterns")
-    public void testReplaceAll(String description, String input, Pattern pattern) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testReplaceAll(String description, String input, Pattern pattern) {
         // Derive expected result from Matcher.replaceAll(String )
         String expected = pattern.matcher(input).replaceAll("R");
         String actual = pattern.matcher(input).replaceAll(r -> "R");
@@ -171,7 +184,11 @@ public class PatternStreamTest extends OpTestCase {
     }
 
     @Test(dataProvider = "Patterns")
-    public void testMatchResults(String description, String input, Pattern pattern) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testMatchResults(String description, String input, Pattern pattern) {
         // Derive expected result from Matcher.find
         Matcher m = pattern.matcher(input);
         List<MatchResultHolder> expected = new ArrayList<>();
@@ -282,7 +299,11 @@ public class PatternStreamTest extends OpTestCase {
         }
 
         @Override
-        public int compareTo(MatchResultHolder that) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int compareTo(MatchResultHolder that) {
             int c = that.mr.group().compareTo(this.mr.group());
             if (c != 0)
                 return c;
@@ -316,7 +337,11 @@ public class PatternStreamTest extends OpTestCase {
         }
 
         @Override
-        public boolean equals(Object that) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object that) {
             if (this == that) return true;
             if (that == null || getClass() != that.getClass()) return false;
 

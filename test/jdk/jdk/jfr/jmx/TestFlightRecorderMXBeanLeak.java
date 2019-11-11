@@ -48,6 +48,7 @@ import jdk.test.lib.jfr.Events;
  * @library /test/lib /test/jdk
  * @run main/othervm jdk.jfr.jmx.TestFlightRecorderMXBeanLeak
  */
+@Bean
 public class TestFlightRecorderMXBeanLeak {
 
     private static final String CLASS_LOADER_NAME = "Test Leak";

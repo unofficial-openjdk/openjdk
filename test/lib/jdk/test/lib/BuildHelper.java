@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.Properties;
 
+@Bean
 public class BuildHelper {
 
     /**

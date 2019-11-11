@@ -43,11 +43,19 @@ public final class Test4936682 extends AbstractTest<Object[]> {
         return new Object [] {outer.getInner(), outer};
     }
 
-    protected void initialize(XMLEncoder encoder) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void initialize(XMLEncoder encoder) {
         encoder.setPersistenceDelegate(
                 OuterClass.InnerClass.class,
                 new DefaultPersistenceDelegate() {
-                    protected Expression instantiate(Object oldInstance, Encoder out) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                protected Expression instantiate(Object oldInstance, Encoder out) {
                         OuterClass.InnerClass inner = (OuterClass.InnerClass) oldInstance;
                         OuterClass outer = inner.getOuter();
                         return new Expression(inner, outer, "getInner", new Object[0]);
@@ -56,7 +64,11 @@ public final class Test4936682 extends AbstractTest<Object[]> {
         );
     }
 
-    protected void validate(Object[] before, Object[] after) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void validate(Object[] before, Object[] after) {
         validate(before);
         validate(after);
     }
@@ -78,7 +90,8 @@ public final class Test4936682 extends AbstractTest<Object[]> {
             return this.inner;
         }
 
-        public class InnerClass {
+        @Bean
+public class InnerClass {
             private InnerClass() {
             }
 

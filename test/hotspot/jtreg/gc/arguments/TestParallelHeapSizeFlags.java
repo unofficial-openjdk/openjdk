@@ -41,6 +41,7 @@ package gc.arguments;
  * @author thomas.schatzl@oracle.com
  */
 
+@Bean
 public class TestParallelHeapSizeFlags {
 
   public static void main(String args[]) throws Exception {

@@ -40,6 +40,7 @@ import java.net.URLClassLoader;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
+@Bean
 public class JarIndexMergeForClassLoaderTest {
     static final String slash = File.separator;
     static final String testClassesDir = System.getProperty("test.classes", ".");

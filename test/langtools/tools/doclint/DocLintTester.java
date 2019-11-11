@@ -36,6 +36,7 @@ import java.util.regex.Pattern;
 import com.sun.tools.doclint.DocLint;
 import com.sun.tools.doclint.DocLint.BadArgs;
 
+@Bean
 public class DocLintTester {
 
     public static void main(String... args) throws Exception {

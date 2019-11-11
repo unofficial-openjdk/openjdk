@@ -44,6 +44,7 @@ import java.awt.event.MouseEvent;
  *          only).
  * @author dom@sparc.spb.su:
  */
+@Bean
 public class GetScreenLocTest {
     //Declare things used in the test, like buttons and labels here
     static Robot robot = null;
@@ -51,7 +52,10 @@ public class GetScreenLocTest {
         public Dimension getPreferredSize() {
             return new Dimension(100, 100);
         }
-        public void paint(Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
             super.paint(g);
             g.setColor(Color.blue);
             Rectangle r = getBounds();
@@ -85,6 +89,9 @@ public class GetScreenLocTest {
         Canvas c = new MyCanvas();
         f.add(c, BorderLayout.CENTER);
         c.addMouseListener(new MouseAdapter() {
+            @Bean
+@Bean
+@Bean
             public void mousePressed(MouseEvent e) {
                 switch(state) {
                     case 0: // the first event should be (0,0)

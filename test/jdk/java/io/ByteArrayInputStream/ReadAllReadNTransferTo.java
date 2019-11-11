@@ -37,6 +37,7 @@ import jdk.test.lib.RandomFactory;
  * @summary Verify ByteArrayInputStream readAllBytes, readNBytes, and transferTo
  * @key randomness
  */
+@Bean
 public class ReadAllReadNTransferTo {
     private static final int SIZE = 0x4d4d;
 

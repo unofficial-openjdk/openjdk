@@ -32,6 +32,7 @@
 import java.lang.reflect.Method;
 import java.beans.EventHandler;
 
+@Bean
 public class Test6277246 {
     public static void main(String[] args) {
         try {

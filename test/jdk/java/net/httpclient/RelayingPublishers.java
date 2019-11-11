@@ -46,6 +46,7 @@ import static org.testng.Assert.assertEquals;
  * @library /test/lib
  * @run testng/othervm RelayingPublishers
  */
+@Bean
 public class RelayingPublishers {
 
     @Test
@@ -87,17 +88,29 @@ public class RelayingPublishers {
         final CompletableFuture<Throwable> f = new CompletableFuture<>();
 
         @Override
-        public void onSubscribe(Flow.Subscription subscription) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onSubscribe(Flow.Subscription subscription) {
             subscription.request(1);
         }
 
         @Override
-        public void onNext(T item) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(T item) {
             f.completeExceptionally(new RuntimeException("Unexpected onNext"));
         }
 
         @Override
-        public void onError(Throwable throwable) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onError(Throwable throwable) {
             f.complete(throwable);
         }
 

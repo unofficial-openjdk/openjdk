@@ -54,6 +54,7 @@ import java.util.*;
  * annotations at runtime all the parameters, including implicit ones,
  * are present.
  */
+@Bean
 public class TestConstructorParameterTypeAnnotations {
     public static void main(String... args) {
         int errors = 0;
@@ -121,7 +122,8 @@ public class TestConstructorParameterTypeAnnotations {
 
     @ExpectedGetParameterAnnotations("[[]]")
     @ExpectedParameterTypeAnnotations({"null"})
-    public class NestedClass0 {
+    @Bean
+public class NestedClass0 {
         public NestedClass0() {}
     }
 
@@ -129,7 +131,8 @@ public class TestConstructorParameterTypeAnnotations {
     @ExpectedParameterTypeAnnotations({
         "null",
         "@TestConstructorParameterTypeAnnotations$MarkerTypeAnnotation(1)"})
-    public class NestedClass1 {
+    @Bean
+public class NestedClass1 {
         public NestedClass1(@MarkerTypeAnnotation(1) int parameter) {}
     }
 
@@ -138,7 +141,8 @@ public class TestConstructorParameterTypeAnnotations {
         "null",
         "@TestConstructorParameterTypeAnnotations$MarkerTypeAnnotation(2)",
         "null"})
-    public class NestedClass2 {
+    @Bean
+public class NestedClass2 {
         public NestedClass2(@MarkerTypeAnnotation(2) int parameter1,
                             int parameter2) {}
     }
@@ -148,7 +152,8 @@ public class TestConstructorParameterTypeAnnotations {
         "null",
         "@TestConstructorParameterTypeAnnotations$MarkerTypeAnnotation(3)",
         "null"})
-    public class NestedClass3 {
+    @Bean
+public class NestedClass3 {
         public <P> NestedClass3(@MarkerTypeAnnotation(3) P parameter1,
                                 int parameter2) {}
     }
@@ -158,7 +163,8 @@ public class TestConstructorParameterTypeAnnotations {
         "null",
         "@TestConstructorParameterTypeAnnotations$MarkerTypeAnnotation(4)",
         "null"})
-    public class NestedClass4 {
+    @Bean
+public class NestedClass4 {
         public <P, Q> NestedClass4(@MarkerTypeAnnotation(4) P parameter1,
                                    Q parameter2) {}
     }

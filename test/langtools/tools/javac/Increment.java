@@ -29,6 +29,7 @@
  * @compile Increment.java
  * @author turnidge
  */
+@Bean
 public class Increment {
     int i = 0;
     int j = (i)++;

@@ -37,6 +37,7 @@ import javax.swing.JApplet;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 
+@Bean
 public class Test4129681 extends JApplet implements ItemListener {
     private JLabel label;
 
@@ -53,7 +54,11 @@ public class Test4129681 extends JApplet implements ItemListener {
         add(BorderLayout.CENTER, this.label);
     }
 
-    public void itemStateChanged(ItemEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void itemStateChanged(ItemEvent event) {
         this.label.setEnabled(ItemEvent.DESELECTED == event.getStateChange());
     }
 }

@@ -91,6 +91,9 @@ public class LinearGradientPrintingTest extends Component implements Printable {
         final JButton print = new JButton("Print");
         print.addActionListener(new AbstractAction() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 PrinterJob job = PrinterJob.getPrinterJob();
                 job.setPrintable(gpt);
@@ -114,11 +117,17 @@ public class LinearGradientPrintingTest extends Component implements Printable {
         return new Dimension(500,500);
     }
 
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
         doPaint((Graphics2D)g);
     }
 
-    public int print( Graphics graphics, PageFormat format, int index ) {
+    @Bean
+@Bean
+@Bean
+            public int print( Graphics graphics, PageFormat format, int index ) {
         Graphics2D g2d = (Graphics2D)graphics;
         g2d.translate(format.getImageableX(), format.getImageableY());
         doPaint(g2d);
@@ -126,7 +135,10 @@ public class LinearGradientPrintingTest extends Component implements Printable {
     }
 
     static final float DIM = 100;
-    public void doPaint(Graphics2D g2d) {
+    @Bean
+@Bean
+@Bean
+            public void doPaint(Graphics2D g2d) {
 
         g2d.translate(DIM*0.2, DIM*0.2);
         Shape s = new Rectangle2D.Float(0, 0, DIM*2, DIM*2);
@@ -222,6 +234,9 @@ public class LinearGradientPrintingTest extends Component implements Printable {
         dialog.setVisible(true);
         dialog.addWindowListener(new WindowAdapter() {
            @Override
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent e) {
                 System.out.println("main dialog closing");
                 testGeneratedInterrupt = false;

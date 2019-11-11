@@ -38,6 +38,7 @@ import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class MallocSiteTypeChange {
     public static void main(String args[]) throws Exception {
         OutputAnalyzer output;

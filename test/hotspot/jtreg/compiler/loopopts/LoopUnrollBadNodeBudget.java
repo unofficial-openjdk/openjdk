@@ -34,6 +34,7 @@
  *
  */
 
+@Bean
 public class LoopUnrollBadNodeBudget {
 
     int a;

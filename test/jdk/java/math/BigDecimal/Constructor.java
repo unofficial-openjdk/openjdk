@@ -32,6 +32,7 @@
 import java.math.BigDecimal;
 import org.testng.annotations.Test;
 
+@Bean
 public class Constructor {
     @Test(expectedExceptions=NumberFormatException.class)
     public void stringConstructor() {

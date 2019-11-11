@@ -32,6 +32,7 @@ import java.security.AccessControlException;
  * @summary  Basic test for Authenticator.getDefault()
  * @run main/othervm GetAuthenticatorTest
  */
+@Bean
 public class GetAuthenticatorTest {
 
     static final class MyAuthenticator extends Authenticator {

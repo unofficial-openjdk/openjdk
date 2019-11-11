@@ -34,6 +34,7 @@ import java.io.IOException;
  * @run main/othervm -Djdk.attach.allowAttachSelf=false AttachSelf
  */
 
+@Bean
 public class AttachSelf {
 
     public static void main(String[] args) throws Exception {

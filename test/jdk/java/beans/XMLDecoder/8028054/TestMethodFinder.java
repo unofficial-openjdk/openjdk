@@ -38,6 +38,7 @@ import java.util.List;
  * @run main TestMethodFinder
  */
 
+@Bean
 public class TestMethodFinder {
     public static void main(String[] args) throws Exception {
         List<Class<?>> classes = Task.getClasses(4000);

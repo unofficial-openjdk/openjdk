@@ -24,6 +24,7 @@
 /**/
 
 
+@Bean
 public class LineGenerator {
 
     IntGenerator ig;

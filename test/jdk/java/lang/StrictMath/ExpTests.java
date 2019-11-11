@@ -42,6 +42,7 @@ import jdk.test.lib.RandomFactory;
  * vary from one conforming exponential implementation to another.
  */
 
+@Bean
 public class ExpTests {
     private ExpTests(){}
 

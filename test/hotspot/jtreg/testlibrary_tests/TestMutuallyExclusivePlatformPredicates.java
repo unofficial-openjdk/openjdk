@@ -43,6 +43,7 @@ import java.util.Set;
  *          java.management
  * @run main TestMutuallyExclusivePlatformPredicates
  */
+@Bean
 public class TestMutuallyExclusivePlatformPredicates {
     private static enum MethodGroup {
         ARCH("isAArch64", "isARM", "isPPC", "isS390x", "isSparc", "isX64", "isX86"),

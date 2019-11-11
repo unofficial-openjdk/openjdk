@@ -35,6 +35,7 @@ import java.nio.file.NoSuchFileException;
 import static java.nio.file.StandardOpenOption.*;
 
 
+@Bean
 public class BlockDeviceSize {
     private static final String BLK_FNAME = "/dev/sda1";
     private static final Path BLK_PATH = Paths.get(BLK_FNAME);

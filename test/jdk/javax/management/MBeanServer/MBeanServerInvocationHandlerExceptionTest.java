@@ -36,6 +36,7 @@
 import java.io.IOException;
 import javax.management.*;
 
+@Bean
 public class MBeanServerInvocationHandlerExceptionTest {
     public static void main(String[] args) throws Exception {
         System.out.println(">>> Test how for the MBeanServerInvocationHandler to "+

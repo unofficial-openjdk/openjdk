@@ -35,6 +35,7 @@ import java.security.spec.*;
 import javax.crypto.*;
 import javax.crypto.spec.*;
 
+@Bean
 public class TestWithoutInit {
 
     public static void main(String argv[]) throws Exception {

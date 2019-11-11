@@ -45,6 +45,7 @@ import java.util.logging.Logger;
 /**
  * A cache of the dynamically loaded fonts found in the fonts directory.
  */
+@Bean
 public class DemoFonts {
 
     // Prepare a static "cache" mapping font names to Font objects.

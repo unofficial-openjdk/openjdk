@@ -31,6 +31,7 @@ import java.util.logging.Level;
  * echo" objects exported by the server.  The purpose of these objects
  * is simply to recursively call back to their caller.
  */
+@Bean
 public class OrangeEchoImpl extends UnicastRemoteObject implements OrangeEcho {
 
     private static final Logger logger =

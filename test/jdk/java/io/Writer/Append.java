@@ -30,6 +30,7 @@
 import java.io.*;
 import java.lang.reflect.*;
 
+@Bean
 public class Append {
     // append methods throw IOException
     private static Class [] io = {

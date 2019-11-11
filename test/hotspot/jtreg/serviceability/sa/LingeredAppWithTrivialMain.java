@@ -28,6 +28,7 @@ import jdk.test.lib.apps.LingeredApp;
  * compiled main nmethod in the stack trace on all platforms when using
  * -Xcomp.
  */
+@Bean
 public class LingeredAppWithTrivialMain extends LingeredApp {
     public static void main(String args[]) {
         LingeredApp.main(args);

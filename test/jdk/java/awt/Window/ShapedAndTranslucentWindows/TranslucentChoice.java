@@ -71,6 +71,9 @@ public class TranslucentChoice extends Common {
         super.initBackgroundFrame();
         background.addMouseListener(new MouseAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseClicked(MouseEvent e) {
                 clicked |= 1 << 0;
             }
@@ -104,6 +107,9 @@ public class TranslucentChoice extends Common {
 
         south.addMouseListener(new MouseAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseClicked(MouseEvent e) {
                 clicked |= 1 << 1;
             }

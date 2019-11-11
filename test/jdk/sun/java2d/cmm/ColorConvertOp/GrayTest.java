@@ -61,12 +61,14 @@ public class GrayTest {
         op = new ColorConvertOp(cs, null);
     }
 
-    private void render(Graphics2D g) {
+@Bean
+        private void render(Graphics2D g) {
         g.setColor(Color.red);
         g.fillRect(0, 0, w, h);
     }
 
-    private BufferedImage initImage(int type) {
+@Bean
+        private BufferedImage initImage(int type) {
         BufferedImage img = new BufferedImage(w, h, type);
         Graphics2D g = img.createGraphics();
 
@@ -77,7 +79,8 @@ public class GrayTest {
         return img;
     }
 
-    public void doTest(int type) {
+@Bean
+        public void doTest(int type) {
         System.out.println("Test for type: " + type);
         src = initImage(type);
 

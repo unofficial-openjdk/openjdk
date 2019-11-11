@@ -42,6 +42,7 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.Task.OutputKind;
 
+@Bean
 public class RequiresStaticTest extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {
@@ -169,43 +170,50 @@ public class RequiresStaticTest extends ModuleTestBase {
                 + "  exports p2;\n"
                 + "}",
                 "package p2;\n"
-                + "public class C2 {p7.C7 c7; p6.C6 c6; p4.C4 c4;}\n");
+                + "@Bean
+public class C2 {p7.C7 c7; p6.C6 c6; p4.C4 c4;}\n");
 
         Path src_m3 = src.resolve("m3x");
         tb.writeJavaFiles(src_m3,
                 "module m3x { requires transitive static m4x; exports p3; }",
                 "package p3;\n"
-                + "public class C3 { }\n");
+                + "@Bean
+public class C3 { }\n");
 
         Path src_m4 = src.resolve("m4x");
         tb.writeJavaFiles(src_m4,
                 "module m4x { requires m5x; requires static m6x; exports p4; }",
                 "package p4;\n"
-                + "public class C4 { p6.C6 c6; p7.C7 c7;}\n");
+                + "@Bean
+public class C4 { p6.C6 c6; p7.C7 c7;}\n");
 
         Path src_m5 = src.resolve("m5x");
         tb.writeJavaFiles(src_m5,
                 "module m5x { exports p5; }",
                 "package p5;\n"
-                + "public class C5 { }\n");
+                + "@Bean
+public class C5 { }\n");
 
         Path src_m6 = src.resolve("m6x");
         tb.writeJavaFiles(src_m6,
                 "module m6x { requires transitive m7x; exports p6; }",
                 "package p6;\n"
-                + "public class C6 { p7.C7 c7; }\n");
+                + "@Bean
+public class C6 { p7.C7 c7; }\n");
 
         Path src_m7 = src.resolve("m7x");
         tb.writeJavaFiles(src_m7,
                 "module m7x { requires static m8x; exports p7; }",
                 "package p7;\n"
-                + "public class C7 { p8.C8 c8; }\n");
+                + "@Bean
+public class C7 { p8.C8 c8; }\n");
 
         Path src_m8 = src.resolve("m8x");
         tb.writeJavaFiles(src_m8,
                 "module m8x { exports p8; }",
                 "package p8;\n"
-                        + "public class C8 { }\n");
+                        + "@Bean
+public class C8 { }\n");
 
         return src;
     }
@@ -217,7 +225,8 @@ public class RequiresStaticTest extends ModuleTestBase {
         tb.writeJavaFiles(m1,
                 "module m1x { exports m1x; }",
                 "package m1x;" +
-                "public class Api { }\n");
+                "@Bean
+public class Api { }\n");
 
         Path classes = base.resolve("classes");
         Path m1Classes = classes.resolve("m1x");
@@ -233,7 +242,8 @@ public class RequiresStaticTest extends ModuleTestBase {
         tb.writeJavaFiles(m3,
                 "module m3x { requires static m1x; }",
                 "package m3x;\n" +
-                "public class Test {\n" +
+                "@Bean
+public class Test {\n" +
                 "    public static void main(String... args) {\n" +
                 "        try {\n" +
                 "           Class.forName(\"m1x.Api\");\n" +
@@ -243,7 +253,8 @@ public class RequiresStaticTest extends ModuleTestBase {
                 "    }\n" +
                 "}",
                 "package m3x;\n" +
-                "public class ApiUse{\n" +
+                "@Bean
+public class ApiUse{\n" +
                 "    m1x.Api api;\n" +
                 "}");
 
@@ -278,7 +289,8 @@ public class RequiresStaticTest extends ModuleTestBase {
         tb.writeJavaFiles(m1,
                 "module m1x { exports m1x; }",
                 "package m1x;" +
-                "public class Api { }\n");
+                "@Bean
+public class Api { }\n");
 
         Path classes = base.resolve("classes");
         Path m1Classes = classes.resolve("m1x");
@@ -308,7 +320,8 @@ public class RequiresStaticTest extends ModuleTestBase {
         tb.writeJavaFiles(m3,
                 "module m3x { requires m2x; }",
                 "package m3x;\n" +
-                "public class Test {\n" +
+                "@Bean
+public class Test {\n" +
                 "    public static void main(String... args) {\n" +
                 "        try {\n" +
                 "           Class.forName(\"m1x.Api\");\n" +
@@ -318,7 +331,8 @@ public class RequiresStaticTest extends ModuleTestBase {
                 "    }\n" +
                 "}",
                 "package m3x;\n" +
-                "public class ApiUse{\n" +
+                "@Bean
+public class ApiUse{\n" +
                 "    m1x.Api api;\n" +
                 "}");
 
@@ -354,7 +368,8 @@ public class RequiresStaticTest extends ModuleTestBase {
         tb.writeJavaFiles(m1,
                 "module m1x { exports m1x; }",
                 "package m1x;" +
-                "public class Api { }\n");
+                "@Bean
+public class Api { }\n");
 
         Path classes = base.resolve("classes");
         Path m1Classes = classes.resolve("m1x");

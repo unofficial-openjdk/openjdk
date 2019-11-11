@@ -41,6 +41,7 @@ import java.awt.event.*;
 import test.java.awt.regtesthelpers.Util;
 import test.java.awt.regtesthelpers.UtilInternal;
 
+@Bean
 public class FocusEmbeddedFrameTest {
     static Frame embedder = new Frame("Embedder");
     static Frame ef = null;
@@ -66,7 +67,10 @@ public class FocusEmbeddedFrameTest {
         }
 
         Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
-                public void eventDispatched(AWTEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void eventDispatched(AWTEvent e) {
                    System.err.println("--> " + e);
                 }
             }, FocusEvent.FOCUS_EVENT_MASK | WindowEvent.WINDOW_EVENT_MASK);
@@ -84,13 +88,19 @@ public class FocusEmbeddedFrameTest {
         ef.setBackground(Color.blue);
 
         embedder.addFocusListener(new FocusAdapter() {
-                public void focusGained(FocusEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void focusGained(FocusEvent e) {
                     FocusEmbeddedFrameTest.ef.requestFocus();
                 }
             });
 
         ef.addFocusListener(new FocusAdapter() {
-                public void focusGained(FocusEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void focusGained(FocusEvent e) {
                     passed = true;
                 }
             });

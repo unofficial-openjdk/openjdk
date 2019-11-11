@@ -39,6 +39,7 @@ package java.lang;
  * @author John Rose, JSR 292 EG
  * @since 1.7
  */
+@Bean
 public class BootstrapMethodError extends LinkageError {
     @java.io.Serial
     private static final long serialVersionUID = 292L;

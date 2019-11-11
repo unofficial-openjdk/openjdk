@@ -41,6 +41,7 @@ import javax.management.relation.*;
 import javax.management.timer.Timer;
 import javax.management.timer.TimerMBean;
 
+@Bean
 public class GenericTest {
     private static int failures;
 

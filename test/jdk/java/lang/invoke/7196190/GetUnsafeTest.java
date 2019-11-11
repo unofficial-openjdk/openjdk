@@ -33,6 +33,7 @@ import java.lang.invoke.*;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
+@Bean
 public class GetUnsafeTest {
     static final String NAME = "sun.misc.Unsafe";
 

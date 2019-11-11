@@ -28,6 +28,7 @@
  * @compile/fail/ref=Test256b.out -XDrawDiagnostics Test256b.java
  */
 
+@Bean
 public class Test256b {
             // allocating an array with 255 dimensions whose component
             // type provides additional dimensions is not allowed,

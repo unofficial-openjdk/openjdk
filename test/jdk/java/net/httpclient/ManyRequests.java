@@ -65,6 +65,7 @@ import java.util.concurrent.CompletableFuture;
 import javax.net.ssl.SSLContext;
 import jdk.test.lib.net.SimpleSSLContext;
 
+@Bean
 public class ManyRequests {
 
     volatile static int counter = 0;
@@ -275,7 +276,11 @@ public class ManyRequests {
             super(ctx);
         }
 
-        public void configure(HttpsParameters params) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void configure(HttpsParameters params) {
             params.setSSLParameters(getSSLContext().getSupportedSSLParameters());
         }
     }

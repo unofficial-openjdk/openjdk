@@ -42,6 +42,7 @@ import java.util.*;
  * registered for the connectSelector.
  */
 
+@Bean
 public class BasicConnect {
 
     public static void main(String[] args) throws Exception {

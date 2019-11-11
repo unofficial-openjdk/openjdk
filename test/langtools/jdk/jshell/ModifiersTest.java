@@ -38,6 +38,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 @Test
+@Bean
 public class ModifiersTest extends KullaTesting {
 
     @DataProvider(name = "ignoredModifiers")

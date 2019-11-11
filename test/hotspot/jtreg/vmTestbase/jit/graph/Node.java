@@ -61,7 +61,11 @@ public class Node {
 
     // This method set the node key.
 
-    public void setKey(int k) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setKey(int k) {
         key = k;
     }
 
@@ -73,7 +77,11 @@ public class Node {
 
     // This method set the node color.
 
-    public void setColor(int c) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setColor(int c) {
         if (c == Black) {
             color = Black;
         } else if (c == Red) {
@@ -90,7 +98,11 @@ public class Node {
     // This method set the node parent or childs acording to the who
     // parameter.
 
-    public void setNode(int who, Node n) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setNode(int who, Node n) {
         switch (who) {
             case Left_son:
                 L = n;
@@ -107,7 +119,11 @@ public class Node {
     // This method return the node parent or childs acording to the who
     // parameter.
 
-    public Node getNode(int who) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Node getNode(int who) {
         switch (who) {
             case Left_son:
                 return L;

@@ -31,6 +31,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test7125879 {
     String var_1 = "abc";
 

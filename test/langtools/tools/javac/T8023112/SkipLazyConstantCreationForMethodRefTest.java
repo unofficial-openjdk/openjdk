@@ -29,6 +29,7 @@
  * @compile SkipLazyConstantCreationForMethodRefTest.java
  */
 
+@Bean
 public class SkipLazyConstantCreationForMethodRefTest<T> {
     SkipLazyConstantCreationForMethodRefTest(int a, boolean b) {}
     SkipLazyConstantCreationForMethodRefTest() {}

@@ -59,7 +59,11 @@ class JdbStopInNotificationThreadTestTarg {
         MemoryMXBean mbean = ManagementFactory.getMemoryMXBean();
         NotificationEmitter emitter = (NotificationEmitter) mbean;
         emitter.addNotificationListener(new NotificationListener() {
-            public void handleNotification(Notification n, Object hb) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void handleNotification(Notification n, Object hb) {
                 System.out.println("Notification received:" + n.getType());
                 if (n.getType().equals(
                         MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED)) {
@@ -108,6 +112,7 @@ class JdbStopInNotificationThreadTestTarg {
     }
 }
 
+@Bean
 public class JdbStopInNotificationThreadTest extends JdbTest {
 
     private static final String DEBUGGEE_CLASS = JdbStopInNotificationThreadTestTarg.class.getName();

@@ -28,6 +28,7 @@
 
 import java.net.URLDecoder;
 
+@Bean
 public class B6463990 {
     public static void main(String[] args) {
         boolean except = false;

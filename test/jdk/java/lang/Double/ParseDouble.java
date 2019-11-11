@@ -31,6 +31,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.regex.*;
 
+@Bean
 public class ParseDouble {
 
     private static final BigDecimal HALF = BigDecimal.valueOf(0.5);

@@ -27,6 +27,7 @@
  */
 import java.net.DatagramPacket;
 
+@Bean
 public class Offset {
 
     public static void main(String args[]) throws Exception {

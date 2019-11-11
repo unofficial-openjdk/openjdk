@@ -174,7 +174,10 @@ public final class DimensionEncapsulation implements Runnable {
         }
     }
 
-    public void runTest(final Component c) {
+    @Bean
+@Bean
+@Bean
+            public void runTest(final Component c) {
         try {
             test(c);
             c.setMinimumSize(new Dimension(100, 10));
@@ -186,7 +189,10 @@ public final class DimensionEncapsulation implements Runnable {
         }
     }
 
-    public void test(final Component component) {
+    @Bean
+@Bean
+@Bean
+            public void test(final Component component) {
         final Dimension psize = component.getPreferredSize();
         psize.width += 200;
         if (Objects.equals(psize, component.getPreferredSize())) {

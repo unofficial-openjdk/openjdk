@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
+@Bean
 public class CloseRace {
     private static final String BIG_FILE = "bigfile";
 

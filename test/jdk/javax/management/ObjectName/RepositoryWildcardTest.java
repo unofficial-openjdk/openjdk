@@ -43,6 +43,7 @@ import javax.management.MBeanServerFactory;
 import javax.management.ObjectName;
 import javax.management.RuntimeOperationsException;
 
+@Bean
 public class RepositoryWildcardTest {
 
     private static final String classname =

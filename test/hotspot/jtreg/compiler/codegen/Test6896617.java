@@ -46,6 +46,7 @@ import java.nio.charset.CodingErrorAction;
 import java.util.Arrays;
 import java.util.Random;
 
+@Bean
 public class Test6896617 {
     final static int SIZE = 256;
 

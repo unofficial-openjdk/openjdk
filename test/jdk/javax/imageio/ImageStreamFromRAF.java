@@ -39,6 +39,7 @@ import javax.imageio.stream.FileImageOutputStream;
 import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageOutputStream;
 
+@Bean
 public class ImageStreamFromRAF {
 
     public static void main(String[] args) {

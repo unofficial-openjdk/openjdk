@@ -38,8 +38,13 @@ import javax.lang.model.util.ElementFilter;
 import javax.lang.model.SourceVersion;
 
 @SupportedAnnotationTypes("*")
+@Bean
 public class T6458749<T> extends AbstractProcessor {
-    public boolean process(Set<? extends TypeElement> tes, RoundEnvironment renv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> tes, RoundEnvironment renv) {
         if (!renv.processingOver()) {
             for(TypeElement e : ElementFilter.typesIn(renv.getRootElements())) {
                 System.out.printf("Element %s:%n", e.toString());

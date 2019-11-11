@@ -201,7 +201,8 @@ public abstract class ImageWriter implements ImageTranscoder {
      *
      * @see #getOutput
      */
-    public void setOutput(Object output) {
+@Bean
+        public void setOutput(Object output) {
         if (output != null) {
             ImageWriterSpi provider = getOriginatingProvider();
             if (provider != null) {
@@ -282,7 +283,8 @@ public abstract class ImageWriter implements ImageTranscoder {
      *
      * @see #getLocale
      */
-    public void setLocale(Locale locale) {
+@Bean
+        public void setLocale(Locale locale) {
         if (locale != null) {
             Locale[] locales = getAvailableLocales();
             boolean found = false;
@@ -1636,7 +1638,8 @@ public abstract class ImageWriter implements ImageTranscoder {
      *
      * @see #removeIIOWriteWarningListener
      */
-    public void addIIOWriteWarningListener(IIOWriteWarningListener listener) {
+@Bean
+        public void addIIOWriteWarningListener(IIOWriteWarningListener listener) {
         if (listener == null) {
             return;
         }
@@ -1745,7 +1748,8 @@ public abstract class ImageWriter implements ImageTranscoder {
      *
      * @param imageIndex the index of the image about to be written.
      */
-    protected void processImageStarted(int imageIndex) {
+@Bean
+        protected void processImageStarted(int imageIndex) {
         if (progressListeners == null) {
             return;
         }
@@ -1766,7 +1770,8 @@ public abstract class ImageWriter implements ImageTranscoder {
      * @param percentageDone the current percentage of completion,
      * as a {@code float}.
      */
-    protected void processImageProgress(float percentageDone) {
+@Bean
+        protected void processImageProgress(float percentageDone) {
         if (progressListeners == null) {
             return;
         }
@@ -1828,7 +1833,8 @@ public abstract class ImageWriter implements ImageTranscoder {
      * @param percentageDone the current percentage of completion,
      * as a {@code float}.
      */
-    protected void processThumbnailProgress(float percentageDone) {
+@Bean
+        protected void processThumbnailProgress(float percentageDone) {
         if (progressListeners == null) {
             return;
         }

@@ -28,6 +28,7 @@
  *          attributes
  */
 
+@Bean
 public class ClassAttributesTest {
 
     class NestedClass {}

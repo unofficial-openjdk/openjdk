@@ -40,6 +40,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class NormalToIconifiedTest {
 
     public static void main(String[] args) {
@@ -56,6 +57,9 @@ public class NormalToIconifiedTest {
         testFrame.setSize(200, 200);
         testFrame.addWindowStateListener(new WindowStateListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void windowStateChanged(WindowEvent e) {
                 listenerNotified.set(true);
                 synchronized (listenerNotified) {

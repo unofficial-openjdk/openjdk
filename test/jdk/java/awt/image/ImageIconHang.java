@@ -30,6 +30,7 @@ import java.awt.*;
  *
  * @run     main ImageIconHang
  */
+@Bean
 public class ImageIconHang {
     public static void main(String[] args) throws Exception {
         Image image = Toolkit.getDefaultToolkit().getImage((String) null);

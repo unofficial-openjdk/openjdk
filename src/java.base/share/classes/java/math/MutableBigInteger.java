@@ -147,7 +147,11 @@ class MutableBigInteger {
      * @param n number of ints in the {@code value} array
      * @return a number equal to {@code ((1<<(32*n)))-1}
      */
-    private void ones(int n) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void ones(int n) {
         if (n > value.length)
             value = new int[n];
         Arrays.fill(value, -1);
@@ -281,7 +285,11 @@ class MutableBigInteger {
      * Returns a value equal to what {@code b.leftShift(32*ints); return compare(b);}
      * would return, but doesn't change the value of {@code b}.
      */
-    private int compareShifted(MutableBigInteger b, int ints) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int compareShifted(MutableBigInteger b, int ints) {
         int blen = b.intLen;
         int alen = intLen - ints;
         if (alen < blen)
@@ -617,7 +625,11 @@ class MutableBigInteger {
      * divisor a back to the dividend result at a specified offset. It is used
      * when qhat was estimated too large, and must be adjusted.
      */
-    private int divadd(int[] a, int[] result, int offset) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int divadd(int[] a, int[] result, int offset) {
         long carry = 0;
 
         for (int j=a.length-1; j >= 0; j--) {
@@ -634,7 +646,11 @@ class MutableBigInteger {
      * word input x, and subtracts the n word product from q. This is needed
      * when subtracting qhat*divisor from dividend.
      */
-    private int mulsub(int[] q, int[] a, int x, int len, int offset) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int mulsub(int[] q, int[] a, int x, int len, int offset) {
         long xLong = x & LONG_MASK;
         long carry = 0;
         offset += len;
@@ -654,7 +670,11 @@ class MutableBigInteger {
      * The method is the same as mulsun, except the fact that q array is not
      * updated, the only result of the method is borrow flag.
      */
-    private int mulsubBorrow(int[] q, int[] a, int x, int len, int offset) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int mulsubBorrow(int[] q, int[] a, int x, int len, int offset) {
         long xLong = x & LONG_MASK;
         long carry = 0;
         offset += len;
@@ -704,7 +724,11 @@ class MutableBigInteger {
      * Returns a {@code BigInteger} equal to the {@code n}
      * low ints of this number.
      */
-    private BigInteger getLower(int n) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private BigInteger getLower(int n) {
         if (isZero()) {
             return BigInteger.ZERO;
         } else if (intLen < n) {
@@ -722,7 +746,11 @@ class MutableBigInteger {
     /**
      * Discards all ints whose index is greater than {@code n}.
      */
-    private void keepLower(int n) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void keepLower(int n) {
         if (intLen >= n) {
             offset += intLen - n;
             intLen = n;
@@ -962,7 +990,11 @@ class MutableBigInteger {
      * into the larger. Returns 1 if the answer is in a, -1 if in b, 0 if no
      * operation was performed.
      */
-    private int difference(MutableBigInteger b) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int difference(MutableBigInteger b) {
         MutableBigInteger a = this;
         int sign = a.compare(b);
         if (sign == 0)
@@ -1401,7 +1433,11 @@ class MutableBigInteger {
      * @param blockLength length of one block in units of 32 bits
      * @return
      */
-    private MutableBigInteger getBlock(int index, int numBlocks, int blockLength) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private MutableBigInteger getBlock(int index, int numBlocks, int blockLength) {
         int blockStart = index * blockLength;
         if (blockStart >= intLen) {
             return new MutableBigInteger();
@@ -1678,7 +1714,11 @@ class MutableBigInteger {
      * value. The quotient will be placed into the provided quotient object &
      * the remainder object is returned.
      */
-    private MutableBigInteger divideLongMagnitude(long ldivisor, MutableBigInteger quotient) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private MutableBigInteger divideLongMagnitude(long ldivisor, MutableBigInteger quotient) {
         // Remainder starts as dividend with space for a leading zero
         MutableBigInteger rem = new MutableBigInteger(new int[intLen + 1]);
         System.arraycopy(value, offset, rem.value, 1, intLen);
@@ -1789,7 +1829,11 @@ class MutableBigInteger {
      * Specialized version of the method divadd.
      * dh is a high part of the divisor, dl is a low part
      */
-    private int divaddLong(int dh, int dl, int[] result, int offset) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int divaddLong(int dh, int dl, int[] result, int offset) {
         long carry = 0;
 
         long sum = (dl & LONG_MASK) + (result[1+offset] & LONG_MASK);
@@ -1806,7 +1850,11 @@ class MutableBigInteger {
      * Specialized version of the method sulsub.
      * dh is a high part of the divisor, dl is a low part
      */
-    private int mulsubLong(int[] q, int dh, int dl, int x, int offset) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int mulsubLong(int[] q, int dh, int dl, int x, int offset) {
         long xLong = x & LONG_MASK;
         offset += 2;
         long product = (dl & LONG_MASK) * xLong;
@@ -1828,7 +1876,11 @@ class MutableBigInteger {
      * Compare two longs as if they were unsigned.
      * Returns true iff one is bigger than two.
      */
-    private boolean unsignedLongCompare(long one, long two) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean unsignedLongCompare(long one, long two) {
         return (one+Long.MIN_VALUE) > (two+Long.MIN_VALUE);
     }
 
@@ -1980,7 +2032,11 @@ class MutableBigInteger {
      * Calculate GCD of this and v.
      * Assumes that this and v are not zero.
      */
-    private MutableBigInteger binaryGCD(MutableBigInteger v) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private MutableBigInteger binaryGCD(MutableBigInteger v) {
         // Algorithm B from Knuth section 4.5.2
         MutableBigInteger u = this;
         MutableBigInteger r = new MutableBigInteger();
@@ -2186,7 +2242,11 @@ class MutableBigInteger {
      * ("Montgomery Form").  The algorithm is described in an unpublished
      * manuscript entitled "Fast Modular Reciprocals."
      */
-    private MutableBigInteger modInverse(MutableBigInteger mod) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private MutableBigInteger modInverse(MutableBigInteger mod) {
         MutableBigInteger p = new MutableBigInteger(mod);
         MutableBigInteger f = new MutableBigInteger(this);
         MutableBigInteger g = new MutableBigInteger(p);

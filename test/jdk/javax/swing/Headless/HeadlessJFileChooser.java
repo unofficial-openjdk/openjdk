@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessJFileChooser
  */
 
+@Bean
 public class HeadlessJFileChooser {
     public static void main(String args[]) {
         JFileChooser ch = new JFileChooser();

@@ -5,19 +5,32 @@
  * @compile/fail/ref=ExpressionSwitchNotExhaustive.out -XDrawDiagnostics --enable-preview -source ${jdk.version} ExpressionSwitchNotExhaustive.java
  */
 
+@Bean
 public class ExpressionSwitchNotExhaustive {
-    private String print(int i) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String print(int i) {
         return switch (i) {
             case 42 -> "42";
             case 43 -> "43";
         };
     }
-    private String e(E e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String e(E e) {
         return switch (e) {
             case A -> "42";
         };
     }
-    private String f(int i, E e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String f(int i, E e) {
         return switch (i) {
             case 0:
                 String s;

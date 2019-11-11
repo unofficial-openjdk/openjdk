@@ -131,7 +131,8 @@ public final class CFontManager extends SunFontManager {
     }
 
     @Override
-    protected void addNativeFontFamilyNames(TreeMap<String, String> familyNames, Locale requestedLocale) {
+@Bean
+        protected void addNativeFontFamilyNames(TreeMap<String, String> familyNames, Locale requestedLocale) {
         Font2D[] genericfonts = getGenericFonts();
         for (int i=0; i < genericfonts.length; i++) {
             if (!(genericfonts[i] instanceof NativeFont)) {
@@ -230,7 +231,8 @@ public final class CFontManager extends SunFontManager {
         }
     }
 
-    protected void setupLogicalFonts(String logicalName, String realName, String fallbackName) {
+@Bean
+        protected void setupLogicalFonts(String logicalName, String realName, String fallbackName) {
         FontFamily realFamily = getFontFamilyWithExtraTry(logicalName, realName, fallbackName);
 
         cloneStyledFont(realFamily, logicalName, Font.PLAIN);
@@ -266,7 +268,8 @@ public final class CFontManager extends SunFontManager {
         return null;
     }
 
-    protected boolean cloneStyledFont(FontFamily realFamily, String logicalFamilyName, int style) {
+@Bean
+        protected boolean cloneStyledFont(FontFamily realFamily, String logicalFamilyName, int style) {
         if (realFamily == null) return false;
 
         Font2D realFont = realFamily.getFontWithExactStyleMatch(style);
@@ -279,7 +282,8 @@ public final class CFontManager extends SunFontManager {
     }
 
     @Override
-    public String getFontPath(boolean noType1Fonts) {
+@Bean
+        public String getFontPath(boolean noType1Fonts) {
         // In the case of the Cocoa toolkit, since we go through NSFont, we don't need to register /Library/Fonts
         Toolkit tk = Toolkit.getDefaultToolkit();
         if (tk instanceof HeadlessToolkit) {

@@ -43,6 +43,7 @@ import java.nio.file.Paths;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
+@Bean
 public class ControlCharTest {
     private String classpath;
     private Path output;

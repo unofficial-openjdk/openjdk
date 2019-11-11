@@ -30,6 +30,7 @@
 
 import java.security.BasicPermission;
 
+@Bean
 public class Homogeneity {
 
     public static void main(String[] args) {

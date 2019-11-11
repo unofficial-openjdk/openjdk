@@ -45,6 +45,7 @@ import java.util.Arrays;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class TestG1HeapRegionSize {
 
   private static void checkG1HeapRegionSize(String[] flags, int expectedValue, int exitValue) throws Exception {

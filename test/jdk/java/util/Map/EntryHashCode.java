@@ -35,6 +35,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
+@Bean
 public class EntryHashCode {
     private static final int TEST_SIZE = 100;
 
@@ -59,6 +60,10 @@ public class EntryHashCode {
         for (int i = 0; i < entryData[0].length; i++) {
             // key objects need to be Comparable for use in TreeMap
             entryData[0][i] = new Comparable<Object>() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public int compareTo(Object o) {
                     return (hashCode() - o.hashCode());
                 }

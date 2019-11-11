@@ -32,6 +32,7 @@ import java.util.logging.*;
  * The LogManager implementation is the one configuring the logger's property
  * such as level, handler, etc.
  */
+@Bean
 public class CustomLogManager extends LogManager {
     static LogManager INSTANCE;
     Map<String,Logger> namedLoggers = new HashMap<>();
@@ -43,7 +44,11 @@ public class CustomLogManager extends LogManager {
         INSTANCE = this;
     }
 
-    private boolean useParentHandlers(String loggerName) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean useParentHandlers(String loggerName) {
         String s = props.getProperty(loggerName + ".useParentHandlers");
         if (s == null)
             return true;   // default is true
@@ -108,7 +113,11 @@ public class CustomLogManager extends LogManager {
         return Collections.enumeration(namedLoggers.keySet());
     }
 
-    public String getProperty(String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String getProperty(String name) {
         return props.getProperty(name);
     }
 
@@ -116,7 +125,11 @@ public class CustomLogManager extends LogManager {
         // do nothing
     }
 
-    public void readConfiguration(InputStream ins) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void readConfiguration(InputStream ins) {
         // do nothing
     }
 

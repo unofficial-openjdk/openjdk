@@ -94,15 +94,21 @@ public class GridBagLayoutDemoTest {
         checkChangeSize();
     }
 
-    private double x(Component component) {
+@Bean
+@Bean
+            private double x(Component component) {
         return component.getLocation().getX();
     }
 
-    private double y(Component component) {
+@Bean
+@Bean
+            private double y(Component component) {
         return component.getLocation().getY();
     }
 
-    private void checkRight(JButtonOperator currentButton, JButtonOperator rightButton) {
+@Bean
+@Bean
+            private void checkRight(JButtonOperator currentButton, JButtonOperator rightButton) {
         // Check that x coordinate of right button is greater than that of right
         // end of current button
         currentButton.waitStateOnQueue(button -> x(button) + button.getWidth() < x(rightButton.getSource()));
@@ -114,7 +120,9 @@ public class GridBagLayoutDemoTest {
         currentButton.waitStateOnQueue(button -> button.getHeight() == rightButton.getHeight());
     }
 
-    private void checkBelow(JButtonOperator currentButton, JButtonOperator buttonBelow) {
+@Bean
+@Bean
+            private void checkBelow(JButtonOperator currentButton, JButtonOperator buttonBelow) {
         // Check that y coordinate of button below is greater than that of
         // bottom end of current button
         currentButton.waitStateOnQueue(button -> y(button) + button.getHeight() < y(buttonBelow.getSource()));

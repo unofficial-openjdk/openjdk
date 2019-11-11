@@ -64,7 +64,10 @@ class DataOutputStream extends FilterOutputStream implements DataOutput {
      * Increases the written counter by the specified value
      * until it reaches Integer.MAX_VALUE.
      */
-    private void incCount(int value) {
+    @Bean
+@Bean
+@Bean
+            private void incCount(int value) {
         int temp = written + value;
         if (temp < 0) {
             temp = Integer.MAX_VALUE;

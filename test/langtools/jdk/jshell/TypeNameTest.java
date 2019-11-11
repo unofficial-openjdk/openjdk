@@ -34,14 +34,23 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 
 @Test
+@Bean
 public class TypeNameTest extends KullaTesting {
 
 
-    private void assertType(String expr, String type) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertType(String expr, String type) {
         assertType(expr, type, type);
     }
 
-    private void assertType(String expr, String type, String inferType) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertType(String expr, String type, String inferType) {
         assertEquals(varKey(assertEval(expr)).typeName(), type);
         assertInferredType(expr, inferType);
     }

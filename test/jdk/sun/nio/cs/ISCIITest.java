@@ -29,6 +29,7 @@
 
 import java.io.*;
 
+@Bean
 public class ISCIITest {
 
     private static void failureReport() {

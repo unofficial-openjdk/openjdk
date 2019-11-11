@@ -49,6 +49,7 @@ import static java.lang.System.out;
 // of the test.
 // @run main/othervm -Djdk.httpclient.HttpClient.log=all,frames:all SmallTimeout
 
+@Bean
 public class SmallTimeout {
 
     static int[] TIMEOUTS = {2, 1, 3, 2, 100, 1};

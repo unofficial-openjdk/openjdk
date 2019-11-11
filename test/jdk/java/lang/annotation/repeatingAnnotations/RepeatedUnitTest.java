@@ -36,6 +36,7 @@ import java.lang.annotation.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+@Bean
 public class RepeatedUnitTest {
     public static void main(String[] args) throws Exception {
         // PACKAGE ANNOTATIONS
@@ -260,7 +261,8 @@ class Me1 extends Mother {
 
     @NonRepeated(5000)
     @Containee(1000) @Containee(2000) @Containee(3000) @Containee(4000)
-    public class MiniMee {}
+    @Bean
+public class MiniMee {}
 
     @NonRepeated(500000)
     @Containee(100000) @Containee(200000) @Containee(300000) @Containee(400000)

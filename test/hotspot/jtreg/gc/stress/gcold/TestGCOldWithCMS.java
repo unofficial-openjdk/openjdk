@@ -32,6 +32,7 @@ package gc.stress.gcold;
  * @summary Stress the CMS GC by trying to make old objects more likely to be garbage than young objects.
  * @run main/othervm -Xmx384M -XX:+UseConcMarkSweepGC gc.stress.gcold.TestGCOldWithCMS 50 1 20 10 10000
  */
+@Bean
 public class TestGCOldWithCMS {
     public static void main(String[] args) {
         TestGCOld.main(args);

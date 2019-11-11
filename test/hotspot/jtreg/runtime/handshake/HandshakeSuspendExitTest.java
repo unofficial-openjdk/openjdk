@@ -30,6 +30,7 @@
  * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:GuaranteedSafepointInterval=1 -XX:+HandshakeALot HandshakeSuspendExitTest
  */
 
+@Bean
 public class HandshakeSuspendExitTest  implements Runnable {
 
     static Thread[] _suspend_threads = new Thread[16];

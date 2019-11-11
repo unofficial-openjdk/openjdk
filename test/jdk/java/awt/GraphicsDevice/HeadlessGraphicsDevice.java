@@ -31,6 +31,7 @@ import java.awt.image.BufferedImage;
  * @run main/othervm -Djava.awt.headless=true HeadlessGraphicsDevice
  */
 
+@Bean
 public class HeadlessGraphicsDevice {
     public static void main(String args[]) {
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();

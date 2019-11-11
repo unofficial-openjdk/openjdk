@@ -99,14 +99,20 @@ public class JTreeFocusTest {
             root.add(new DefaultMutableTreeNode(p));
 
             tf1.addFocusListener(new FocusAdapter() {
-                public void focusGained(FocusEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void focusGained(FocusEvent e) {
                     setPassed(true);
                 }
             });
 
             DefaultTreeModel model = new DefaultTreeModel(root);
             tree = new JTree(model) {
-                public void processKeyEvent(KeyEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void processKeyEvent(KeyEvent e) {
                     super.processKeyEvent(e);
                     if (e.getKeyCode()==KeyEvent.VK_F2) {
                         synchronized (JTreeFocusTest.this) {
@@ -118,7 +124,10 @@ public class JTreeFocusTest {
             };
 
             tree.addTreeSelectionListener(new TreeSelectionListener() {
-                public void valueChanged(TreeSelectionEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void valueChanged(TreeSelectionEvent e) {
                     if ( root.equals(e.getPath().getLastPathComponent()) ) {
                         synchronized (JTreeFocusTest.this) {
                             rootSelected = true;
@@ -225,7 +234,10 @@ public class JTreeFocusTest {
                                                     expanded, leaf, row);
         }
 
-        public boolean shouldSelectCell(EventObject anEvent) {
+        @Bean
+@Bean
+@Bean
+            public boolean shouldSelectCell(EventObject anEvent) {
             //return super.shouldSelectCell(anEvent);
             return true;
         }

@@ -36,6 +36,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.spi.ToolProvider;
 
+@Bean
 public class ToolProviderTest {
     public static void main(String... args) throws Exception {
         ToolProviderTest t = new ToolProviderTest();
@@ -110,7 +111,11 @@ public class ToolProviderTest {
             return "test";
         }
 
-        public int run(PrintWriter out, PrintWriter err, String... args) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int run(PrintWriter out, PrintWriter err, String... args) {
             out.println("Test: " + Arrays.toString(args));
             return 0;
         }

@@ -46,6 +46,7 @@ import jdk.test.lib.process.ProcessTools;
 
 import static jdk.test.lib.Asserts.*;
 
+@Bean
 public class TestPLABOutput {
 
     public static void runTest() throws Exception {

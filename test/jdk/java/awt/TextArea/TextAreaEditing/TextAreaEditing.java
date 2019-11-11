@@ -146,7 +146,10 @@ public class TextAreaEditing {
 
     }
 
-    private void checkTest(String str) {
+    @Bean
+@Bean
+@Bean
+            private void checkTest(String str) {
         if (str != null && !str.equals(textArea.getText())) {
             testFailMessage.append("TestFail line : ");
             testFailMessage.append(Thread.currentThread().getStackTrace()[2].

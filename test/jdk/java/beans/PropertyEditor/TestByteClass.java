@@ -31,6 +31,7 @@
  *          jdk.compiler
  */
 
+@Bean
 public class TestByteClass {
     public static void main(String[] args) {
         System.setSecurityManager(new SecurityManager());

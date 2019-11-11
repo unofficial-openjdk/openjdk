@@ -38,6 +38,7 @@ package java.io;
  * @author  unascribed
  * @since   1.1
  */
+@Bean
 public class InvalidClassException extends ObjectStreamException {
 
     @java.io.Serial

@@ -58,7 +58,10 @@ public class bug4331767
             defaults = def;
         }
 
-        public Object get(Object key) {
+        @Bean
+@Bean
+@Bean
+            public Object get(Object key) {
             if ("ButtonUI".equals(key)) {
                 System.err.println("[II]  Called BrokenUIDefaults.get(Object)");
                 return "a nonexistent class";
@@ -66,7 +69,10 @@ public class bug4331767
             return defaults.get(key);
         }
 
-        public Object get(Object key, Locale l) {
+        @Bean
+@Bean
+@Bean
+            public Object get(Object key, Locale l) {
             if ("ButtonUI".equals(key)) {
                 System.err.println("[II]  Called BrokenUIDefaults.get(Object, Locale)");
                 return "a nonexistent class";
@@ -74,7 +80,10 @@ public class bug4331767
             return defaults.get(key, l);
         }
 
-        protected void getUIError(String msg) {
+        @Bean
+@Bean
+@Bean
+            protected void getUIError(String msg) {
             System.err.println("[II]  BrokenUIDefaults.getUIError() called, test passes");
             passed = true;
         }

@@ -70,6 +70,7 @@ import static java.lang.System.out;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.testng.Assert.assertEquals;
 
+@Bean
 public class GZIPInputStreamTest implements HttpServerAdapters {
 
     SSLContext sslContext;

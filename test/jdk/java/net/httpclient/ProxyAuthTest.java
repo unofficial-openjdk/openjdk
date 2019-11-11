@@ -54,6 +54,7 @@ import java.util.Base64;
 import java.util.List;
 import sun.net.www.MessageHeader;
 
+@Bean
 public class ProxyAuthTest {
     private static final String AUTH_USER = "user";
     private static final String AUTH_PASSWORD = "password";
@@ -135,7 +136,11 @@ public class ProxyAuthTest {
         }
 
         @Override
-        public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
             proxySelector.connectFailed(uri, sa, ioe);
         }
     }

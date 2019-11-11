@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 /**
  * Builder for module declarations.
  */
+@Bean
 public class ModuleBuilder {
 
     private final ToolBox tb;
@@ -79,7 +80,11 @@ public class ModuleBuilder {
      *  '/**', leading whitespace and asterisks, and the final trailing '&#02a;/'.
      * @return this builder
      */
-    public ModuleBuilder comment(String comment) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public ModuleBuilder comment(String comment) {
         this.comment = comment;
         return this;
     }
@@ -91,7 +96,11 @@ public class ModuleBuilder {
      *    if the declaration is compiled
      * @return this builder
      */
-    public ModuleBuilder requires(String module, Path... modulePath) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public ModuleBuilder requires(String module, Path... modulePath) {
         addDirective(requires, "requires " + module + ";");
         this.modulePath.addAll(Arrays.asList(modulePath));
         return this;
@@ -105,7 +114,11 @@ public class ModuleBuilder {
      *    if the declaration is compiled
      * @return this builder
      */
-    public ModuleBuilder requiresStatic(String module, Path... modulePath) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public ModuleBuilder requiresStatic(String module, Path... modulePath) {
         addDirective(requires, "requires static " + module + ";");
         this.modulePath.addAll(Arrays.asList(modulePath));
         return this;
@@ -118,7 +131,11 @@ public class ModuleBuilder {
      *    if the declaration is compiled
      * @return this builder
      */
-    public ModuleBuilder requiresTransitive(String module, Path... modulePath) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public ModuleBuilder requiresTransitive(String module, Path... modulePath) {
         addDirective(requires, "requires transitive " + module + ";");
         this.modulePath.addAll(Arrays.asList(modulePath));
         return this;
@@ -131,7 +148,11 @@ public class ModuleBuilder {
      *    if the declaration is compiled
      * @return this builder
      */
-    public ModuleBuilder requiresStaticTransitive(String module, Path... modulePath) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public ModuleBuilder requiresStaticTransitive(String module, Path... modulePath) {
         addDirective(requires, "requires static transitive " + module + ";");
         this.modulePath.addAll(Arrays.asList(modulePath));
         return this;
@@ -142,7 +163,11 @@ public class ModuleBuilder {
      * @param pkg the name of the package to be exported
      * @return this builder
      */
-    public ModuleBuilder exports(String pkg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public ModuleBuilder exports(String pkg) {
         return addDirective(exports, "exports " + pkg + ";");
     }
 
@@ -152,7 +177,11 @@ public class ModuleBuilder {
      * @param module the name of the module to which it is to be exported
      * @return this builder
      */
-    public ModuleBuilder exportsTo(String pkg, String module) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public ModuleBuilder exportsTo(String pkg, String module) {
         return addDirective(exports, "exports " + pkg + " to " + module + ";");
     }
 
@@ -161,7 +190,11 @@ public class ModuleBuilder {
      * @param pkg the name of the package to be opened
      * @return this builder
      */
-    public ModuleBuilder opens(String pkg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public ModuleBuilder opens(String pkg) {
         return addDirective(opens, "opens " + pkg + ";");
     }
 
@@ -171,7 +204,11 @@ public class ModuleBuilder {
      * @param module the name of the module to which it is to be opened
      * @return this builder
      */
-    public ModuleBuilder opensTo(String pkg, String module) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public ModuleBuilder opensTo(String pkg, String module) {
         return addDirective(opens, "opens " + pkg + " to " + module + ";");
     }
 
@@ -180,7 +217,11 @@ public class ModuleBuilder {
      * @param service the name of the service type
      * @return this builder
      */
-    public ModuleBuilder uses(String service) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public ModuleBuilder uses(String service) {
         return addDirective(uses, "uses " + service + ";");
     }
 
@@ -190,11 +231,19 @@ public class ModuleBuilder {
      * @param implementation the name of the implementation type
      * @return this builder
      */
-    public ModuleBuilder provides(String service, String implementation) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public ModuleBuilder provides(String service, String implementation) {
         return addDirective(provides, "provides " + service + " with " + implementation + ";");
     }
 
-    private ModuleBuilder addDirective(List<String> directives, String directive) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private ModuleBuilder addDirective(List<String> directives, String directive) {
         directives.add(directive);
         return this;
     }
@@ -205,7 +254,11 @@ public class ModuleBuilder {
      *  a compilation unit to be included with the module
      * @return this builder
      */
-    public ModuleBuilder classes(String... content) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public ModuleBuilder classes(String... content) {
         this.content.addAll(Arrays.asList(content));
         return this;
     }

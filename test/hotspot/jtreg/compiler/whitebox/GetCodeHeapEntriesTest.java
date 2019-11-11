@@ -49,6 +49,7 @@ import sun.hotspot.code.CodeBlob;
 import java.util.Arrays;
 import java.util.EnumSet;
 
+@Bean
 public class GetCodeHeapEntriesTest {
     private static final WhiteBox WHITE_BOX = WhiteBox.getWhiteBox();
     private static final int SIZE = 1024;

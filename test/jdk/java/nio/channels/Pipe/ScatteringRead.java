@@ -31,6 +31,7 @@ import java.nio.channels.*;
 import java.nio.*;
 import java.util.Random;
 
+@Bean
 public class ScatteringRead {
 
     private static Random generator = new Random();

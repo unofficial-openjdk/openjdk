@@ -34,6 +34,7 @@ import java.security.*;
 import java.security.Provider.Service;
 import javax.crypto.*;
 
+@Bean
 public class Turkish {
 
     public static void main(String[] args) throws Exception {

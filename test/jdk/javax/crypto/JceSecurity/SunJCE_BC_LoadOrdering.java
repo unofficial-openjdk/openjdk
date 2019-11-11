@@ -35,6 +35,7 @@ import java.security.*;
 import javax.crypto.*;
 import java.io.*;
 
+@Bean
 public class SunJCE_BC_LoadOrdering {
 
     public static void main(String[] args) throws Exception {

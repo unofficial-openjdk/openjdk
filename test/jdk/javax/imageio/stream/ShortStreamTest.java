@@ -35,6 +35,7 @@ import javax.imageio.stream.ImageInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
+@Bean
 public class ShortStreamTest {
     public static void main(String[] args) throws IOException {
         TestCase[]  tests = createTests();

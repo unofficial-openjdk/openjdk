@@ -48,6 +48,7 @@ import java.util.Locale;
 import java.util.Vector;
 
 
+@Bean
 public class Regression extends CollatorTest {
 
     public static void main(String[] args) throws Exception {
@@ -844,7 +845,11 @@ public class Regression extends CollatorTest {
         checkListOrder(englishList, english);
     }
 
-    private void checkListOrder(String[] sortedList, Collator c) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkListOrder(String[] sortedList, Collator c) {
         // this function uses the specified Collator to make sure the
         // passed-in list is already sorted into ascending order
         for (int i = 0; i < sortedList.length - 1; i++) {
@@ -887,7 +892,11 @@ public class Regression extends CollatorTest {
     //------------------------------------------------------------------------
     // Internal utilities
     //
-    private void compareArray(Collator c, String[] tests) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void compareArray(Collator c, String[] tests) {
         for (int i = 0; i < tests.length; i += 3) {
 
             int expect = 0;

@@ -27,6 +27,7 @@
  * @summary Mixing lambdas with anonymous classes leads to NPE thrown by compiler
  * @run main LambdaConv27
  */
+@Bean
 public class LambdaConv27 {
 
      public static void main(String[] args) {

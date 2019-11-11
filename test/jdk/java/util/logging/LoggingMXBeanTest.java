@@ -37,6 +37,7 @@ import javax.management.*;
 import java.util.logging.*;
 
 
+@Bean
 public class LoggingMXBeanTest
 {
 

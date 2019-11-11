@@ -6,6 +6,7 @@
  * @compile/fail/ref=Private.out -XDrawDiagnostics  Private.java
  */
 
+@Bean
 public class Private {
     private void m() {}
 }

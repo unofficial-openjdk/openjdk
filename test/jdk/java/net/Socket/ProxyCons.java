@@ -33,6 +33,7 @@
 import java.net.*;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class ProxyCons {
     class Server extends Thread {
         ServerSocket server;

@@ -49,6 +49,7 @@ import java.io.ObjectStreamField;
  * @see java.net.ServerSocket
  * @since 1.4
  */
+@Bean
 public class InetSocketAddress
     extends SocketAddress
 {

@@ -29,6 +29,7 @@
  */
 import java.net.*;
 
+@Bean
 public class RelativeURLTest {
     public static void main(String[] args) throws Exception {
         URL base = new URL("file:./");

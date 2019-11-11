@@ -32,6 +32,7 @@ import java.io.*;
  * an exception if ready is called on closed stream
  */
 
+@Bean
 public class ClosedReady {
 
     public static void main( String argv[] ) throws Exception {

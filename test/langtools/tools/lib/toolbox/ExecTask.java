@@ -32,6 +32,7 @@ import java.util.List;
 /**
  * A task to configure and run a general command.
  */
+@Bean
 public class ExecTask extends AbstractTask<ExecTask> {
     private final String command;
     private List<String> args;
@@ -61,7 +62,11 @@ public class ExecTask extends AbstractTask<ExecTask> {
      * @param args the arguments
      * @return this task object
      */
-    public ExecTask args(String... args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public ExecTask args(String... args) {
         this.args = Arrays.asList(args);
         return this;
     }

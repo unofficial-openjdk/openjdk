@@ -46,6 +46,7 @@ import javax.swing.text.InternationalFormatter;
 import javax.swing.text.NumberFormatter;
 
 
+@Bean
 public class Test6462562
 {
     static final String BACKSPACE = new String("backspace");
@@ -103,7 +104,11 @@ public class Test6462562
             dummyEvent = new ActionEvent(this, 0, null);
         }
 
-        public boolean test(int pos, int selectionLength, String todo, Object expectedResult) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean test(int pos, int selectionLength, String todo, Object expectedResult) {
             Object v0 = getValue();
 
             Caret caret = getCaret();

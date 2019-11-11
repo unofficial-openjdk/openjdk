@@ -51,6 +51,7 @@ import toolbox.JavacTask;
 import toolbox.JavapTask;
 import toolbox.Task;
 
+@Bean
 public class AddReadsTest extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {
@@ -63,11 +64,13 @@ public class AddReadsTest extends ModuleTestBase {
         Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
                           "module m1x { exports api; }",
-                          "package api; public class Api { }");
+                          "package api; @Bean
+public class Api { }");
         Path src_m2 = src.resolve("m2x");
         tb.writeJavaFiles(src_m2,
                           "module m2x { }",
-                          "package test; public class Test extends api.Api { }");
+                          "package test; @Bean
+public class Test extends api.Api { }");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
@@ -129,7 +132,11 @@ public class AddReadsTest extends ModuleTestBase {
     public static final class VerifyRequires extends AbstractProcessor {
 
         @Override
-        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             ModuleElement m2Module = processingEnv.getElementUtils().getModuleElement("m2x");
             if (m2Module == null) {
                 throw new AssertionError("Cannot find the m2x module!");
@@ -164,7 +171,8 @@ public class AddReadsTest extends ModuleTestBase {
 
         tb.writeJavaFiles(m1,
                           "module m1x { }",
-                          "package impl; public class Impl { api.Api api; }");
+                          "package impl; @Bean
+public class Impl { api.Api api; }");
 
         new JavacTask(tb)
           .options("--class-path", jar.toString(),
@@ -189,8 +197,10 @@ public class AddReadsTest extends ModuleTestBase {
 
         tb.writeJavaFiles(m1,
                           "module m1x { }",
-                          "package api; public class Api { public static void test() { } }",
-                          "package impl; public class Impl { { api.Api.test(); } }");
+                          "package api; @Bean
+public class Api { public static void test() { } }",
+                          "package impl; @Bean
+public class Impl { { api.Api.test(); } }");
 
         new JavacTask(tb)
           .options("--class-path", jar.toString(),
@@ -212,7 +222,8 @@ public class AddReadsTest extends ModuleTestBase {
         Files.createDirectories(classes);
 
         tb.writeJavaFiles(src,
-                          "package impl; public class Impl { api.Api a; }");
+                          "package impl; @Bean
+public class Impl { api.Api a; }");
 
         new JavacTask(tb)
           .options("--class-path", jar.toString(),
@@ -232,7 +243,8 @@ public class AddReadsTest extends ModuleTestBase {
         Files.createDirectories(classes);
 
         tb.writeJavaFiles(src,
-                          "package impl; public class Impl { javax.swing.JButton b; }");
+                          "package impl; @Bean
+public class Impl { javax.swing.JButton b; }");
 
         new JavacTask(tb)
           .options("--add-modules", "java.desktop",
@@ -283,7 +295,8 @@ public class AddReadsTest extends ModuleTestBase {
         Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
                           "module m1x { provides java.lang.Runnable with impl.Impl; }",
-                          "package impl; public class Impl implements Runnable { public void run() { } }");
+                          "package impl; @Bean
+public class Impl implements Runnable { public void run() { } }");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
@@ -300,7 +313,8 @@ public class AddReadsTest extends ModuleTestBase {
         Files.createDirectories(unnamedClasses);
 
         tb.writeJavaFiles(unnamedSrc,
-                          "package impl; public class Impl { }");
+                          "package impl; @Bean
+public class Impl { }");
 
         new JavacTask(tb)
           .options("--add-reads", "m1x=ALL-UNNAMED",
@@ -318,7 +332,8 @@ public class AddReadsTest extends ModuleTestBase {
         Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
                           "module m1x { exports p1; }",
-                          "package p1; public class C1 { }");
+                          "package p1; @Bean
+public class C1 { }");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
@@ -361,7 +376,8 @@ public class AddReadsTest extends ModuleTestBase {
         Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
                           "module m1x { exports p1; }",
-                          "package p1; public class C1 { }");
+                          "package p1; @Bean
+public class C1 { }");
         Path src_m2 = src.resolve("m2x");
         tb.writeJavaFiles(src_m2,
                           "module m2x { }",
@@ -394,7 +410,8 @@ public class AddReadsTest extends ModuleTestBase {
         Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
                           "module m1x { exports p1; }",
-                          "package p1; public class C1 { }");
+                          "package p1; @Bean
+public class C1 { }");
         Path src_m2 = src.resolve("m2x");
         tb.writeJavaFiles(src_m2,
                           "module m2x { }",
@@ -430,7 +447,8 @@ public class AddReadsTest extends ModuleTestBase {
         Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
                           "module m1x { exports p1; }",
-                          "package p1; public class C1 { }");
+                          "package p1; @Bean
+public class C1 { }");
         Path src_m2 = src.resolve("m2x");
         tb.writeJavaFiles(src_m2,
                           "module m2x { }",
@@ -458,11 +476,13 @@ public class AddReadsTest extends ModuleTestBase {
         Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
                           "module m1x { exports p1; }",
-                          "package p1; public class C1 { }");
+                          "package p1; @Bean
+public class C1 { }");
         Path src_m2 = src.resolve("m2x");
         tb.writeJavaFiles(src_m2,
                           "module m2x { exports p2; }",
-                          "package p2; public class C2 { }");
+                          "package p2; @Bean
+public class C2 { }");
         Path src_m3 = src.resolve("m3x");
         tb.writeJavaFiles(src_m3,
                           "module m3x { }",
@@ -486,7 +506,8 @@ public class AddReadsTest extends ModuleTestBase {
         Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
                           "module m1x { exports p1; }",
-                          "package p1; public class C1 { }");
+                          "package p1; @Bean
+public class C1 { }");
         Path src_m2 = src.resolve("m2x");
         tb.writeJavaFiles(src_m2,
                           "module m2x { exports p2; }",
@@ -509,7 +530,8 @@ public class AddReadsTest extends ModuleTestBase {
         Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
                           "module m1x { exports p1; }",
-                          "package p1; public class C1 { }");
+                          "package p1; @Bean
+public class C1 { }");
         Path src_m2 = src.resolve("m2x");
         tb.writeJavaFiles(src_m2,
                           "module m2x { }",
@@ -533,11 +555,13 @@ public class AddReadsTest extends ModuleTestBase {
         Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
                           "module m1x { exports p1; }",
-                          "package p1; public class C1 { }");
+                          "package p1; @Bean
+public class C1 { }");
         Path src_m2 = src.resolve("m2x");
         tb.writeJavaFiles(src_m2,
                           "module m2x { exports p2; }",
-                          "package p2; public class C2 { }");
+                          "package p2; @Bean
+public class C2 { }");
         Path src_m3 = src.resolve("m3x");
         tb.writeJavaFiles(src_m3,
                           "module m3x { }",
@@ -624,7 +648,8 @@ public class AddReadsTest extends ModuleTestBase {
         Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
                           "module m1x { exports p1; }",
-                          "package p1; public class C1 { }");
+                          "package p1; @Bean
+public class C1 { }");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
@@ -647,7 +672,8 @@ public class AddReadsTest extends ModuleTestBase {
         Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
                           "module m1x { exports p1; }",
-                          "package p1; public class C1 { }");
+                          "package p1; @Bean
+public class C1 { }");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 

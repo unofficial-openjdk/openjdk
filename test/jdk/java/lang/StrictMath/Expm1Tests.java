@@ -39,6 +39,7 @@
  * implementation to another.
  */
 
+@Bean
 public class Expm1Tests {
     private Expm1Tests(){}
 

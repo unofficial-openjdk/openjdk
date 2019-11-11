@@ -56,6 +56,9 @@ public class PassSysProps {
         String serverName = "server1";
 
         CallbackHandler callbackHandler = new CallbackHandler(){
+            @Bean
+@Bean
+@Bean
             public void handle(Callback[] callbacks) {
             }
         };

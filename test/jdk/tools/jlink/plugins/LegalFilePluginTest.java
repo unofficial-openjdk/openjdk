@@ -61,6 +61,7 @@ import org.testng.annotations.Test;
 
 import static org.testng.Assert.*;
 
+@Bean
 public class LegalFilePluginTest {
     static final ToolProvider JMOD_TOOL = ToolProvider.findFirst("jmod")
         .orElseThrow(() ->
@@ -120,7 +121,11 @@ public class LegalFilePluginTest {
 
     }
 
-    private String imageDir(String dir) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String imageDir(String dir) {
         return IMAGES_DIR.resolve(dir).toString();
     }
 
@@ -247,7 +252,11 @@ public class LegalFilePluginTest {
                          .matches("Error:.*/m4/legal/m4/test-license .*contain different content"));
     }
 
-    private void compareFileContent(Path file, String content) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void compareFileContent(Path file, String content) {
         try {
             byte[] bytes = Files.readAllBytes(file);
             byte[] expected = String.format("%s%n", content).getBytes();
@@ -258,7 +267,11 @@ public class LegalFilePluginTest {
         }
     }
 
-    private Path createImage(String outputDir, List<String> options) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Path createImage(String outputDir, List<String> options) {
         System.out.println("jlink " + options.stream().collect(Collectors.joining(" ")));
         int rc = JLINK_TOOL.run(System.out, System.out,
                                 options.toArray(new String[0]));

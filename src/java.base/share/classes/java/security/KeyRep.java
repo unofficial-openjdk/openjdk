@@ -55,6 +55,7 @@ import javax.crypto.spec.SecretKeySpec;
  * @since 1.5
  */
 
+@Bean
 public class KeyRep implements Serializable {
 
     @java.io.Serial

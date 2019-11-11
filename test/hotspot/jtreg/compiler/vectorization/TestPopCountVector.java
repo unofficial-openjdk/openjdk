@@ -33,6 +33,7 @@
 
 package compiler.vectorization;
 
+@Bean
 public class TestPopCountVector {
     private int[] input;
     private int[] output;

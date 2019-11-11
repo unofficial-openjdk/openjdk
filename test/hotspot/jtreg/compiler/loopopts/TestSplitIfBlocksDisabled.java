@@ -32,6 +32,7 @@
 
 package compiler.loopopts;
 
+@Bean
 public class TestSplitIfBlocksDisabled {
 
     public static void main(String[] args) {

@@ -43,6 +43,7 @@ import jdk.tools.jlink.plugin.Plugin;
 import jdk.tools.jlink.plugin.ResourcePool;
 import jdk.tools.jlink.plugin.ResourcePoolEntry;
 
+@Bean
 public class ExcludeVMPluginTest {
 
     private static final String TAG = "# orig in test\n";

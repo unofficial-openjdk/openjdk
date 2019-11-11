@@ -234,7 +234,11 @@ public class RedefineAnnotations {
         verifyMethodTypeAnnotations(c);
     }
 
-    private void verifyClassTypeAnnotations(Class c) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void verifyClassTypeAnnotations(Class c) {
         Annotation anno;
 
         anno = c.getTypeParameters()[0].getAnnotations()[0];

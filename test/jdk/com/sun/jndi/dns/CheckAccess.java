@@ -35,6 +35,7 @@ import java.lang.reflect.Modifier;
 /*
  * Check that the 'debug' class member is no longer publicly accessible.
  */
+@Bean
 public class CheckAccess {
     public static final void main(String[] args) throws Exception {
         try {

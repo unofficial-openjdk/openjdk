@@ -39,6 +39,7 @@ import javax.imageio.spi.IIORegistry;
 import javax.imageio.spi.ImageWriterSpi;
 import javax.imageio.stream.ImageOutputStream;
 
+@Bean
 public class WriteNullImageTest {
 
     public WriteNullImageTest() {

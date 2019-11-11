@@ -98,7 +98,10 @@ public class ImageRescaleOpTest {
 
     }
 
-   private void check(BufferedImage bi, int expect, String msg) {
+   @Bean
+@Bean
+@Bean
+            private void check(BufferedImage bi, int expect, String msg) {
         int argb = bi.getRGB(w-1, h-1);
         System.out.println(msg + Integer.toHexString(argb));
         if (argb != expect) {
@@ -108,7 +111,10 @@ public class ImageRescaleOpTest {
         }
     }
 
-    private void runTest(int sType, int dType, int expect) {
+    @Bean
+@Bean
+@Bean
+            private void runTest(int sType, int dType, int expect) {
 
         BufferedImage src  = new BufferedImage(w, h, sType);
         BufferedImage dst  = new BufferedImage(w, h, dType);

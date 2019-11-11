@@ -47,6 +47,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 @Test
+@Bean
 public class ExceptionMessageTest {
 
     public void testDefaultEC() {
@@ -70,11 +71,19 @@ public class ExceptionMessageTest {
         }, "direct");
     }
 
-    private JShell shell(ExecutionControlProvider ec) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private JShell shell(ExecutionControlProvider ec) {
         return JShell.builder().executionEngine(ec, new HashMap<>()).build();
     }
 
-    private void doTestCases(ExecutionControlProvider ec, String label) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void doTestCases(ExecutionControlProvider ec, String label) {
         JShell jshell = shell(ec);
         doTest(jshell, label, "throw new java.io.IOException();", null);
         doTest(jshell, label, "throw new java.io.IOException((String)null);", null);
@@ -82,7 +91,11 @@ public class ExceptionMessageTest {
         doTest(jshell, label, "throw new java.io.IOException(\"test\");", "test");
     }
 
-    private void doTest(JShell jshell, String label, String code, String expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void doTest(JShell jshell, String label, String code, String expected) {
         List<SnippetEvent> result = jshell.eval(code);
         assertEquals(result.size(), 1, "Expected only one event");
         SnippetEvent evt = result.get(0);

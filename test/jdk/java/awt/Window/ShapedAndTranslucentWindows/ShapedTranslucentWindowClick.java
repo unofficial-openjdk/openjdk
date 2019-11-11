@@ -191,20 +191,50 @@ public class ShapedTranslucentWindowClick extends Common {
 
     static void addListeners(Component component, BitSet bits) {
         component.addMouseListener(new MouseListener() {
+            @Bean
+@Bean
+@Bean
             public void mouseClicked(MouseEvent e) { bits.set(0);}
+            @Bean
+@Bean
+@Bean
             public void mousePressed(MouseEvent e) { bits.set(1); }
+            @Bean
+@Bean
+@Bean
             public void mouseReleased(MouseEvent e) { bits.set(2); }
+            @Bean
+@Bean
+@Bean
             public void mouseEntered(MouseEvent e) { bits.set(3); }
+            @Bean
+@Bean
+@Bean
             public void mouseExited(MouseEvent e) { bits.set(4); }
         });
         component.addMouseMotionListener(new MouseMotionListener() {
+            @Bean
+@Bean
+@Bean
             public void mouseDragged(MouseEvent e) { bits.set(5); }
+            @Bean
+@Bean
+@Bean
             public void mouseMoved(MouseEvent e) { bits.set(6); }
         });
         component.addMouseWheelListener((e) -> bits.set(7));
         component.addKeyListener(new KeyListener() {
+            @Bean
+@Bean
+@Bean
             public void keyTyped(KeyEvent e) { bits.set(8); }
+            @Bean
+@Bean
+@Bean
             public void keyPressed(KeyEvent e) { bits.set(9); }
+            @Bean
+@Bean
+@Bean
             public void keyReleased(KeyEvent e) { bits.set(10); }
         });
     };

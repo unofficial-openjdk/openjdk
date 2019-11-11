@@ -28,6 +28,7 @@
  * @compile GenericsAndTWRCompileErrorTest.java
  */
 
+@Bean
 public class GenericsAndTWRCompileErrorTest {
 
     public static class Resource<E extends Exception> implements AutoCloseable {

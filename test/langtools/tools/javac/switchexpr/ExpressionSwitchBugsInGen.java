@@ -29,6 +29,7 @@
  * @run main/othervm --enable-preview ExpressionSwitchBugsInGen
  */
 
+@Bean
 public class ExpressionSwitchBugsInGen {
     public static void main(String... args) {
         new ExpressionSwitchBugsInGen().test(0, 0, 0, false);
@@ -45,7 +46,11 @@ public class ExpressionSwitchBugsInGen {
         new ExpressionSwitchBugsInGen().testIntBoxing(1, 10, -1);
     }
 
-    private void test(int a, int b, int c, boolean expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void test(int a, int b, int c, boolean expected) {
         if ( !(switch (a) {
                 case 0 -> b == (switch (c) { case 0 -> 0; default -> 1; });
                 default -> b == 12;
@@ -60,7 +65,11 @@ public class ExpressionSwitchBugsInGen {
         }
     }
 
-    private void testCommonSuperType(int a, String s1, StringBuilder s2, String expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testCommonSuperType(int a, String s1, StringBuilder s2, String expected) {
         String r = (switch (a) {
             case 0 -> s1;
             default -> s2;
@@ -70,7 +79,11 @@ public class ExpressionSwitchBugsInGen {
         }
     }
 
-    private void testSwitchExpressionInConditional(int a, Object o, int expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testSwitchExpressionInConditional(int a, Object o, int expected) {
         int v = a == 0 ? -1
                        : switch (o instanceof String ? 0 : 1) {
                              case 0 -> 0;
@@ -81,7 +94,11 @@ public class ExpressionSwitchBugsInGen {
         }
     }
 
-    private void testIntBoxing(int a, Integer res, int expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testIntBoxing(int a, Integer res, int expected) {
         int r = switch (a) {
             case 0 -> res;
             default -> -1;

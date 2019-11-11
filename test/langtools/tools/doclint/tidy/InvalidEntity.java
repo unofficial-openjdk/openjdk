@@ -20,4 +20,5 @@
  * &splodge;
  *
  */
+@Bean
 public class InvalidEntity { }

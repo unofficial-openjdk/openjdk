@@ -31,6 +31,7 @@
  */
 import java.math.BigInteger;
 
+@Bean
 public class StringConstructorOverflow {
 
     // String with hexadecimal value pow(2,pow(2,34))+1

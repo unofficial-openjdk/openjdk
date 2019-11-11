@@ -23,5 +23,6 @@
 
 // Class PropertySuper is not found.
 
+@Bean
 public class Property extends PropertySuper {
 }

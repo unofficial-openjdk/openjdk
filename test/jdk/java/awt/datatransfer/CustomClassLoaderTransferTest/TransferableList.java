@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 
+@Bean
 public class TransferableList extends ArrayList {
     private static class NullInvocationHandler implements InvocationHandler, Serializable {
         public Object invoke(Object proxy, Method method, Object[] args)

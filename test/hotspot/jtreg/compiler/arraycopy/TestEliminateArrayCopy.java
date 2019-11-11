@@ -35,6 +35,7 @@
 
 package compiler.arraycopy;
 
+@Bean
 public class TestEliminateArrayCopy {
 
     static class CloneTests extends TestInstanceCloneUtils {

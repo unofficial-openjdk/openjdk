@@ -29,6 +29,7 @@
 import java.nio.file.*;
 import java.util.regex.PatternSyntaxException;
 
+@Bean
 public class Basic {
     static int failures;
 

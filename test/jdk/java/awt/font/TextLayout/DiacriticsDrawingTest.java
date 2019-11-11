@@ -32,6 +32,7 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 
+@Bean
 public class DiacriticsDrawingTest {
     private static final Font FONT = new Font("Menlo", Font.PLAIN, 12);
     private static final int IMAGE_WIDTH = 20;

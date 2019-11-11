@@ -36,6 +36,7 @@
 import java.io.*;
 import java.util.Arrays;
 
+@Bean
 public class TestISO2022JP {
 
     private final static String US_ASCII =

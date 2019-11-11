@@ -51,6 +51,7 @@ import java.nio.file.Paths;
  * @run main/othervm DoPrivAccompliceTest
  */
 
+@Bean
 public class DoPrivAccompliceTest {
     private static final String ACTION_SOURCE = DoPrivAccomplice.class.getName();
     private static final String TEST_SOURCE = DoPrivTest.class.getName();

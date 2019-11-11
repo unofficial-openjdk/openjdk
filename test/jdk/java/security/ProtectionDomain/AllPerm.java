@@ -33,6 +33,7 @@ import java.net.*;
 import java.security.*;
 import java.lang.reflect.*;
 
+@Bean
 public class AllPerm {
 
     private static final Class[] ARGS = new Class[] { };
@@ -75,7 +76,11 @@ public class AllPerm {
             super(urls, parent);
         }
 
-        protected PermissionCollection getPermissions(CodeSource codesource) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected PermissionCollection getPermissions(CodeSource codesource) {
             Permissions perms = new Permissions();
             perms.add(new AllPermission());
             return perms;
@@ -86,7 +91,11 @@ public class AllPerm {
      * this policy should not be called if domain is allPermClassDomain
      */
     private static class AllPermPolicy extends Policy {
-        public boolean implies(ProtectionDomain domain, Permission permission) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean implies(ProtectionDomain domain, Permission permission) {
             if (domain == allPermClassDomain) {
                 throw new SecurityException
                         ("Unexpected call into AllPermPolicy");
@@ -100,6 +109,7 @@ public class AllPerm {
  * here is the source code for AllPermClass inside AllPerm.jar
  */
 /*
+@Bean
 public class AllPermClass {
     public void doCheck() {
         System.getProperty("user.name");

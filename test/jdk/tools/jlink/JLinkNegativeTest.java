@@ -68,6 +68,7 @@ import tests.JImageGenerator.InMemoryFile;
 import tests.Result;
 
 @Test
+@Bean
 public class JLinkNegativeTest {
 
     private Helper helper;

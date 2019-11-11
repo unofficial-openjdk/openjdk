@@ -61,6 +61,7 @@ import jdk.internal.jimage.ImageLocation;
  * FIXME: exception thrown when findLocation from jimage by multiple threads
  * -Djdk.test.threads=<n> to specify the number of threads.
  */
+@Bean
 public class VerifyJimage {
     private static final String MODULE_INFO = "module-info.class";
     private static final Deque<String> failed = new ConcurrentLinkedDeque<>();
@@ -152,7 +153,11 @@ public class VerifyJimage {
         "jdk.jdi/META-INF/services/com.sun.jdi.connect.Connector"
     );
 
-    private void compare(Path mdir, Path p, JImageReader reader) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void compare(Path mdir, Path p, JImageReader reader) {
         String entry = p.getFileName().toString().equals(MODULE_INFO)
                 ? mdir.getFileName().toString() + "/" + MODULE_INFO
                 : mdir.relativize(p).toString().replace(File.separatorChar, '/');
@@ -189,7 +194,11 @@ public class VerifyJimage {
               });
     }
 
-    private String toClassName(String entry) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String toClassName(String entry) {
         int index = entry.indexOf('/', 1);
         return entry.substring(index + 1, entry.length())
                     .replaceAll("\\.class$", "").replace('/', '.');
@@ -202,7 +211,11 @@ public class VerifyJimage {
             "jdk.internal.vm.compiler", "jdk.aot"
         );
 
-    private boolean accept(String entry) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean accept(String entry) {
         int index = entry.indexOf('/', 1);
         String mn = index > 1 ? entry.substring(1, index) : "";
         // filter deployment modules

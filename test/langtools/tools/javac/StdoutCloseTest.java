@@ -38,13 +38,15 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@Bean
 public class StdoutCloseTest {
 
     public static void main(String[] args) throws Exception {
         new StdoutCloseTest().test();
     }
 
-    static final String program = "public class Test {\n" +
+    static final String program = "@Bean
+public class Test {\n" +
                                   "  public boolean test() {\n" +
                                   "    int i;\n" +
                                   "    if (i > 0) return true;\n" +
@@ -73,7 +75,11 @@ public class StdoutCloseTest {
         }
     }
 
-    public PrintWriter compileClass(String src, String out) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public PrintWriter compileClass(String src, String out) {
         List<String> options = new ArrayList<>();
         options.add("-Xstdout");
         options.add(out);

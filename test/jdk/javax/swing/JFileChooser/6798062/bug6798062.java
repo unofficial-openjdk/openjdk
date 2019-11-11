@@ -97,6 +97,9 @@ public class bug6798062 extends JApplet {
         slider.setValue(10);
 
         btnStart.addActionListener(new ActionListener() {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 setEnabledState(false);
 
@@ -108,6 +111,9 @@ public class bug6798062 extends JApplet {
         btnStop.setEnabled(false);
 
         btnStop.addActionListener(new ActionListener() {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 thread.interrupt();
                 thread = null;
@@ -117,6 +123,9 @@ public class bug6798062 extends JApplet {
         });
 
         btnGC.addActionListener(new ActionListener() {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 System.gc();
             }
@@ -146,7 +155,10 @@ public class bug6798062 extends JApplet {
         return pnContent;
     }
 
-    private void setEnabledState(boolean enabled) {
+    @Bean
+@Bean
+@Bean
+            private void setEnabledState(boolean enabled) {
         slider.setEnabled(enabled);
         btnStart.setEnabled(enabled);
         btnStop.setEnabled(!enabled);

@@ -131,6 +131,7 @@
 import java.util.*;
 import java.util.concurrent.*;
 
+@Bean
 public class TestAllocHumongousFragment {
 
     static final long TARGET_MB = Long.getLong("target", 30_000); // 30 Gb allocations

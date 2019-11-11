@@ -39,6 +39,7 @@ import java.io.IOException;
  * of two crashes the vm
  *
  */
+@Bean
 public class ModPowPowersof2 {
 
       public static void main(String args[]) throws Exception {

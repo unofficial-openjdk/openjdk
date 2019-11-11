@@ -13,4 +13,5 @@
 /**
  * <img src="image.gif" alt alt="summary">
  */
+@Bean
 public class RepeatedAttr { }

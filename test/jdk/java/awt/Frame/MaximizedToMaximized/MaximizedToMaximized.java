@@ -38,6 +38,7 @@ import java.awt.Robot;
  * @summary Frame size reverts meaning of maximized attribute
  * @run main MaximizedToMaximized
  */
+@Bean
 public class MaximizedToMaximized {
 
     public static void main(String[] args) throws Exception {

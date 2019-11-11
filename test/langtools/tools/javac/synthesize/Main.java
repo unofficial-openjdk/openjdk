@@ -31,6 +31,7 @@
 import java.io.*;
 import java.util.*;
 
+@Bean
 public class Main
 {
     File testSrc = new File(System.getProperty("test.src"));

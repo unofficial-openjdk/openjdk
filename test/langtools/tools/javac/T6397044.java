@@ -82,27 +82,47 @@ public abstract class T6397044 {
                 check(tree);
         }
 
-        public Void visitCompilationUnit(CompilationUnitTree tree, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitCompilationUnit(CompilationUnitTree tree, Void ignore) {
             check(tree.getTypeDecls());
             return null;
         }
 
-        public Void visitClass(ClassTree tree, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitClass(ClassTree tree, Void ignore) {
             check(tree.getMembers());
             return null;
         }
 
-        public Void visitMethod(MethodTree tree, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitMethod(MethodTree tree, Void ignore) {
             check(tree.getName(), tree.getModifiers());
             return null;
         }
 
-        public Void visitVariable(VariableTree tree, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitVariable(VariableTree tree, Void ignore) {
             check(tree.getName(), tree.getModifiers());
             return null;
         }
 
-        private void check(CharSequence name, ModifiersTree modifiers) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void check(CharSequence name, ModifiersTree modifiers) {
             long sysflags = ((JCModifiers) modifiers).flags;
             System.err.println(name + ": " + modifiers.getFlags() + " | " + Flags.toString(sysflags));
             if (name.toString().startsWith("x_")) {

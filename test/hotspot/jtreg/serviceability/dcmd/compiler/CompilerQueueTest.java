@@ -85,7 +85,11 @@ public class CompilerQueueTest {
 
     protected static final WhiteBox WB = WhiteBox.getWhiteBox();
 
-    public void run(CommandExecutor executor) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void run(CommandExecutor executor) {
 
         TestCase[] testcases = {
                 new TestCase(1, "testcaseMethod1"),

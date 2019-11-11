@@ -42,6 +42,7 @@ import jdk.test.lib.jfr.EventNames;
  * @library /test/lib /test/jdk
  * @run main/othervm jdk.jfr.jmx.TestSetConfigurationInvalid
  */
+@Bean
 public class TestSetConfigurationInvalid {
     public static void main(String[] args) throws Exception {
         FlightRecorderMXBean bean = JmxHelper.getFlighteRecorderMXBean();

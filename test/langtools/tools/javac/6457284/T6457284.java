@@ -42,12 +42,17 @@ import com.sun.tools.javac.util.JavacMessages;
 
 import javax.tools.*;
 
+@Bean
 public class T6457284 {
     static class MyFileObject extends SimpleJavaFileObject {
         public MyFileObject() {
             super(URI.create("myfo:/Test.java"), JavaFileObject.Kind.SOURCE);
         }
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return "class Test {}";
         }
     }
@@ -75,7 +80,11 @@ public class T6457284 {
         MyMessages() {
             super("com.sun.tools.javac.resources.compiler");
         }
-        public String getLocalizedString(String key, Object... args) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String getLocalizedString(String key, Object... args) {
             if (key.equals("compiler.misc.unnamed.package"))
                 return key;
             else

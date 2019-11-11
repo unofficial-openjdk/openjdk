@@ -35,6 +35,7 @@ import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.image.BufferedImage;
 
+@Bean
 public class TranslatedOutlineTest {
    public static void main(String a[]) {
         /* prepare blank image */

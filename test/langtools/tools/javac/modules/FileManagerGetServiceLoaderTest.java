@@ -30,6 +30,7 @@
 
 import javax.tools.*;
 
+@Bean
 public class FileManagerGetServiceLoaderTest {
 
     public static void main(String... args) throws Exception {

@@ -36,6 +36,7 @@ import java.awt.image.BufferedImage;
 
 import static java.awt.image.BufferedImage.TYPE_INT_ARGB;
 
+@Bean
 public class TestAATMorxFont {
     public static void main(String[] args) {
         String osName = System.getProperty("os.name");

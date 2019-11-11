@@ -38,6 +38,7 @@
 import java.nio.file.Files;
 import java.util.Map;
 
+@Bean
 public class PermittedArtifact extends SJavacTester {
     public static void main(String... args) throws Exception {
         PermittedArtifact pa = new PermittedArtifact();
@@ -51,7 +52,8 @@ public class PermittedArtifact extends SJavacTester {
         Map<String,Long> previous_bin_state = collectState(BIN);
 
         tb.writeFile(GENSRC + "/alfa/omega/A.java",
-                     "package alfa.omega; public class A { }");
+                     "package alfa.omega; @Bean
+public class A { }");
 
         tb.writeFile(BIN + "/alfa/omega/AA.class",
                      "Ugh, a messy build system (tobefixed) wrote this class file, " +

@@ -43,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 import javax.swing.Box;
 import javax.swing.JLabel;
 
+@Bean
 public class TimeChangeButtonClickTest {
 
     public static void main(String args[]) throws Exception {
@@ -151,7 +152,11 @@ class TestUI {
         testButton = new JButton("Test Button");
         testButton.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 buttonPressCount++;
                 buttonPressCountLabel.setText(
                         "Button Press Count : " + buttonPressCount);
@@ -188,7 +193,11 @@ class TestUI {
         failButton.setActionCommand("Fail");
         failButton.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 System.out.println("Fail Button pressed!");
                 testResult = false;
                 latch.countDown();

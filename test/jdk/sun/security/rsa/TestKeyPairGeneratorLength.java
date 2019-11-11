@@ -31,6 +31,7 @@
 import java.security.*;
 import java.security.interfaces.*;
 
+@Bean
 public class TestKeyPairGeneratorLength {
 
     public static void main(String[] args) throws Exception {

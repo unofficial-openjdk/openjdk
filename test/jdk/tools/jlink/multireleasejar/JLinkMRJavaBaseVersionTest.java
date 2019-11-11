@@ -53,6 +53,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+@Bean
 public class JLinkMRJavaBaseVersionTest {
     private static final ToolProvider JAR_TOOL = ToolProvider.findFirst("jar")
             .orElseThrow(() -> new RuntimeException("jar tool not found"));
@@ -150,7 +151,11 @@ public class JLinkMRJavaBaseVersionTest {
         return Runtime.Version.parse(mref.descriptor().version().get().toString());
     }
 
-    private boolean jlink(String jar, String image) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean jlink(String jar, String image) {
         List<String> args = List.of("--output", image,
                                     "--add-modules", "m1",
                                     "--module-path",

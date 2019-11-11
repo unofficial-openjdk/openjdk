@@ -36,6 +36,7 @@ import sun.awt.SunToolkit;
  * @run main/othervm TestMainAppContext
  * @author danielfuchs
  */
+@Bean
 public class TestMainAppContext {
 
     static volatile Throwable thrown = null;

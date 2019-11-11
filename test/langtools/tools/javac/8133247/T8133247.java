@@ -29,6 +29,7 @@
 
 import java.lang.reflect.Method;
 
+@Bean
 public class T8133247 {
     public static void main(String[] args) throws Exception {
         Method m = Class.forName("p.B").getMethod("f", Object.class);

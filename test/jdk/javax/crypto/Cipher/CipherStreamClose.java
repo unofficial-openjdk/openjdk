@@ -42,6 +42,7 @@ import javax.crypto.CipherInputStream;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+@Bean
 public class CipherStreamClose {
     private static final String message = "This is the sample message";
     static boolean debug = false;

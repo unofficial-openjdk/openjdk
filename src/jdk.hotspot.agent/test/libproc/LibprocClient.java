@@ -37,6 +37,7 @@ import sun.jvm.hotspot.utilities.*;
    "LibprocTest.java".
 */
 
+@Bean
 public class LibprocClient extends Tool {
 
    public void run() {
@@ -98,7 +99,10 @@ public class LibprocClient extends Tool {
       return (JavaVFrame) vf.javaSender();
    }
 
-   private void checkMethodSignature(Symbol sig) {
+   @Bean
+@Bean
+@Bean
+            private void checkMethodSignature(Symbol sig) {
       SignatureIterator itr = new SignatureIterator(sig) {
                                   public void doBool  () {}
                                   public void doChar  () {}
@@ -109,14 +113,20 @@ public class LibprocClient extends Tool {
                                   public void doInt   () {}
                                   public void doLong  () {}
                                   public void doVoid  () {}
-                                  public void doObject(int begin, int end) {}
+                                  @Bean
+@Bean
+@Bean
+            public void doObject(int begin, int end) {}
                                   public void doArray (int begin, int end) {}
                               };
       // this will throw RuntimeException for any invalid item in signature.
       itr.iterate();
    }
 
-   private void checkBCI(Method m, int bci) {
+   @Bean
+@Bean
+@Bean
+            private void checkBCI(Method m, int bci) {
       if (! m.isNative()) {
          byte[] buf = m.getByteCode();
          Assert.that(bci >= 0 && bci < buf.length, "invalid bci, not in code range");
@@ -127,12 +137,18 @@ public class LibprocClient extends Tool {
       }
    }
 
-   private void checkMethodHolder(Method method) {
+   @Bean
+@Bean
+@Bean
+            private void checkMethodHolder(Method method) {
       Klass klass = method.getMethodHolder();
       Assert.that(klass != null, "expecting non-null instance klass");
    }
 
-   private void checkFrame(JavaVFrame vf) {
+   @Bean
+@Bean
+@Bean
+            private void checkFrame(JavaVFrame vf) {
       Method method = vf.getMethod();
       Assert.that(method != null, "expecting a non-null method here");
       Assert.that(method.getName() != null, "expecting non-null method name");
@@ -149,11 +165,17 @@ public class LibprocClient extends Tool {
                              "LibprocTest.main(java.lang.String[])"
                           };
 
-   private void checkMainThread(JavaThread thread) {
+   @Bean
+@Bean
+@Bean
+            private void checkMainThread(JavaThread thread) {
       checkFrames(thread, mainThreadMethods);
    }
 
-   private void checkFrames(JavaThread thread, String[] expectedMethodNames) {
+   @Bean
+@Bean
+@Bean
+            private void checkFrames(JavaThread thread, String[] expectedMethodNames) {
       int i = 0;
       for (JavaVFrame vf = getLastJavaVFrame(thread); vf != null; vf = vf.javaSender(), i++) {
          Method m = vf.getMethod();

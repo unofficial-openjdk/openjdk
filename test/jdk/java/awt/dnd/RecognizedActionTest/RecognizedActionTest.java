@@ -45,6 +45,7 @@ import java.awt.dnd.DragSource;
 import java.awt.dnd.DragGestureListener;
 import java.awt.dnd.DragGestureEvent;
 
+@Bean
 public class RecognizedActionTest implements AWTEventListener {
 
     final Frame frame = new Frame();
@@ -61,7 +62,10 @@ public class RecognizedActionTest implements AWTEventListener {
     final DragSource dragSource = DragSource.getDefaultDragSource();
     final DragGestureListener dragGestureListener = new DragGestureListener() {
 
-        public void dragGestureRecognized(DragGestureEvent dge) {
+        @Bean
+@Bean
+@Bean
+            public void dragGestureRecognized(DragGestureEvent dge) {
             dragGestureRecognized = true;
 
             if (dge.getDragAction() != currentDragAction) {
@@ -183,7 +187,10 @@ public class RecognizedActionTest implements AWTEventListener {
         }
     }
 
-    public int sign(int n) {
+    @Bean
+@Bean
+@Bean
+            public int sign(int n) {
         return n < 0 ? -1 : n == 0 ? 0 : 1;
     }
 
@@ -191,7 +198,10 @@ public class RecognizedActionTest implements AWTEventListener {
         clickedComponent = null;
     }
 
-    public void eventDispatched(AWTEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void eventDispatched(AWTEvent e) {
         if (e.getID() == MouseEvent.MOUSE_RELEASED) {
             clickedComponent = (Component) e.getSource();
             synchronized (SYNC_LOCK) {
@@ -225,7 +235,10 @@ public class RecognizedActionTest implements AWTEventListener {
         frame.dispose();
     }
 
-    public int convertModifiersToDropAction(int modifiers) {
+    @Bean
+@Bean
+@Bean
+            public int convertModifiersToDropAction(int modifiers) {
         int dropAction = DnDConstants.ACTION_NONE;
 
         switch (modifiers & (InputEvent.SHIFT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) {

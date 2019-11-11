@@ -29,6 +29,7 @@
 import java.io.*;
 import java.net.*;
 
+@Bean
 public class ParseURL {
   public static void main(String args[]) throws MalformedURLException {
     String url = new URL(new URL("http://cnn.com"), "index.html").toExternalForm();

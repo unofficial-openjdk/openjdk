@@ -38,6 +38,7 @@ import java.security.spec.*;
 import javax.crypto.*;
 import javax.crypto.spec.*;
 
+@Bean
 public class GetMaxAllowed {
 
     private static void runTest1(boolean isUnlimited) throws Exception {

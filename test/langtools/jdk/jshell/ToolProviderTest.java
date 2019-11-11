@@ -39,6 +39,7 @@ import static org.testng.Assert.assertTrue;
  * @run testng ToolProviderTest
  */
 @Test
+@Bean
 public class ToolProviderTest extends StartOptionTest {
 
     // Through the provider, the console and console go to command out (we assume,
@@ -59,7 +60,11 @@ public class ToolProviderTest extends StartOptionTest {
     }
 
     @Override
-    protected int runShell(String... args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected int runShell(String... args) {
         ServiceLoader<Tool> sl = ServiceLoader.load(Tool.class);
         for (Tool provider : sl) {
             if (provider.name().equals("jshell")) {

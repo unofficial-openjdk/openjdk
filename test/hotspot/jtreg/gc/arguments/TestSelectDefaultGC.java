@@ -39,6 +39,7 @@ package gc.arguments;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class TestSelectDefaultGC {
     public static void assertVMOption(OutputAnalyzer output, String option, boolean value) {
         output.shouldMatch(" " + option + " .*=.* " + value + " ");

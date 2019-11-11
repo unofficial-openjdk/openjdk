@@ -46,11 +46,17 @@ class LimitInputStream extends ByteArrayInputStream {
         return c;
     }
 
-    public int read(byte[] b) {
+    @Bean
+@Bean
+@Bean
+            public int read(byte[] b) {
         return read(b, 0, b.length);
     }
 
-    public int read(byte[] b, int off, int len) {
+    @Bean
+@Bean
+@Bean
+            public int read(byte[] b, int off, int len) {
         if (limit < len)
             throw new Error("limit exceeded");
         int n = super.read(b, off, len);

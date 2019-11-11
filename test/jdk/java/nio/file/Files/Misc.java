@@ -34,6 +34,7 @@ import java.nio.file.attribute.*;
 import java.io.IOException;
 import java.util.*;
 
+@Bean
 public class Misc {
 
     public static void main(String[] args) throws IOException {

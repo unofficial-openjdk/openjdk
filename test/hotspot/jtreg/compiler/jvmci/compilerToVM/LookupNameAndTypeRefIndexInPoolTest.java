@@ -65,6 +65,7 @@ import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.CON
 /**
  * Test for {@code jdk.vm.ci.hotspot.CompilerToVM.lookupNameAndTypeRefIndexInPool} method
  */
+@Bean
 public class LookupNameAndTypeRefIndexInPoolTest {
 
     public static void main(String[] args) throws Exception {

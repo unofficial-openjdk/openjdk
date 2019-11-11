@@ -48,6 +48,7 @@ import com.foo.DateFormatSymbolsProviderImpl;
 import sun.util.locale.provider.LocaleProviderAdapter;
 import sun.util.locale.provider.ResourceBundleBasedAdapter;
 
+@Bean
 public class DateFormatSymbolsProviderTest extends ProviderTest {
 
     DateFormatSymbolsProviderImpl dfsp = new DateFormatSymbolsProviderImpl();

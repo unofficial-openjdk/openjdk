@@ -41,6 +41,7 @@ import javax.management.StandardMBean;
  * the preRegister method.  Also test the same thing for Standard MBeans
  * for good measure.
  */
+@Bean
 public class PreRegisterNameTest {
     public static interface SpumeMXBean {}
 
@@ -57,10 +58,18 @@ public class PreRegisterNameTest {
         public void postDeregister() {
         }
 
-        public void postRegister(Boolean registrationDone) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void postRegister(Boolean registrationDone) {
         }
 
-        public ObjectName preRegister(MBeanServer server, ObjectName name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public ObjectName preRegister(MBeanServer server, ObjectName name) {
             return realName;
         }
     }
@@ -76,11 +85,19 @@ public class PreRegisterNameTest {
             this.realName = realName;
         }
 
-        public ObjectName preRegister(MBeanServer mbs, ObjectName name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public ObjectName preRegister(MBeanServer mbs, ObjectName name) {
             return realName;
         }
 
-        public void postRegister(Boolean done) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void postRegister(Boolean done) {}
 
         public void preDeregister() {}
 
@@ -100,7 +117,11 @@ public class PreRegisterNameTest {
         }
 
         @Override
-        public ObjectName preRegister(MBeanServer server, ObjectName name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public ObjectName preRegister(MBeanServer server, ObjectName name) {
             return realName;
         }
 

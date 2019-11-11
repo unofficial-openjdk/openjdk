@@ -45,6 +45,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 @Test
+@Bean
 public class CustomFJPoolTest {
 
     // A Spliterator that counts the number of spliterators created
@@ -71,12 +72,20 @@ public class CustomFJPoolTest {
 
         @Override
 
-        public boolean tryAdvance(Consumer<? super T> action) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean tryAdvance(Consumer<? super T> action) {
             return s.tryAdvance(action);
         }
 
         @Override
-        public void forEachRemaining(Consumer<? super T> action) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void forEachRemaining(Consumer<? super T> action) {
             s.forEachRemaining(action);
         }
 
@@ -108,7 +117,11 @@ public class CustomFJPoolTest {
         }
 
         @Override
-        public boolean hasCharacteristics(int characteristics) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean hasCharacteristics(int characteristics) {
             return s.hasCharacteristics(characteristics);
         }
 

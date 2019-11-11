@@ -33,6 +33,7 @@ import java.beans.VetoableChangeListener;
 import java.beans.VetoableChangeListenerProxy;
 import java.beans.VetoableChangeSupport;
 
+@Bean
 public class Test4994635 implements VetoableChangeListener {
     public static void main(String[] args) {
         Test4994635 test = new Test4994635();
@@ -42,6 +43,10 @@ public class Test4994635 implements VetoableChangeListener {
 
     private final VetoableChangeSupport vcs = new VetoableChangeSupport(this);
 
-    public void vetoableChange(PropertyChangeEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void vetoableChange(PropertyChangeEvent event) {
     }
 }

@@ -92,6 +92,7 @@ import gc.testlibrary.PerfCounters;
  * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:-UseCompressedOops -XX:-UseCompressedClassPointers -XX:+UsePerfData -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC gc.metaspace.TestMetaspacePerfCounters
  * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:+UseCompressedOops -XX:+UseCompressedClassPointers -XX:+UsePerfData -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC gc.metaspace.TestMetaspacePerfCounters
  */
+@Bean
 public class TestMetaspacePerfCounters {
     public static Class<?> fooClass = null;
     private static final String[] counterNames = {"minCapacity", "maxCapacity", "capacity", "used"};
@@ -153,7 +154,8 @@ public class TestMetaspacePerfCounters {
         // classes are unloaded before doing this check.
         System.gc();
         long before = getUsed(ns);
-        fooClass = compileAndLoad("Foo", "public class Foo { }");
+        fooClass = compileAndLoad("Foo", "@Bean
+public class Foo { }");
         System.gc();
         long after = getUsed(ns);
 

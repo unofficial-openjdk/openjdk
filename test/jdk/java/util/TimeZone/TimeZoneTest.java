@@ -36,6 +36,7 @@ import java.text.*;
 import java.util.*;
 import sun.util.resources.LocaleData;
 
+@Bean
 public class TimeZoneTest extends IntlTest
 {
     static final int millisPerHour = 3600000;
@@ -185,7 +186,11 @@ public class TimeZoneTest extends IntlTest
         public String getID() { return id; }
 
         @Override
-        public boolean equals(Object o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) {
             ZoneDescriptor that = (ZoneDescriptor)o;
             return that != null &&
                 id.equals(that.id) &&

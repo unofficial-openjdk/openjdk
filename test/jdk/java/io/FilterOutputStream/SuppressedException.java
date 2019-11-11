@@ -30,6 +30,7 @@ import java.io.OutputStream;
  * @bug 8042377
  * @summary Ensure suppressed exceptions are properly handled in close()
  */
+@Bean
 public class SuppressedException {
     private static final String CLOSE_MESSAGE = "Close exception";
     private static final String FLUSH_MESSAGE = "Flush exception";

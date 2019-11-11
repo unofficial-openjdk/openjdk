@@ -40,18 +40,27 @@ import com.sun.source.tree.*;
 import com.sun.source.util.*;
 
 @SupportedAnnotationTypes("*")
+@Bean
 public class T6855236 extends AbstractProcessor {
 
     private Trees trees;
 
     @Override
-    public void init(ProcessingEnvironment pe) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void init(ProcessingEnvironment pe) {
         super.init(pe);
         trees = Trees.instance(pe);
     }
 
     @Override
-    public boolean process(Set<? extends TypeElement> arg0, RoundEnvironment roundEnvironment) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> arg0, RoundEnvironment roundEnvironment) {
         // Scanner class to scan through various component elements
         CodeVisitor visitor = new CodeVisitor();
 
@@ -71,7 +80,11 @@ public class T6855236 extends AbstractProcessor {
     class CodeVisitor extends TreePathScanner<Object, Trees> {
 
         @Override
-        public Object visitMethodInvocation(MethodInvocationTree node, Trees p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Object visitMethodInvocation(MethodInvocationTree node, Trees p) {
             System.out.println("current path: ");
             for (Tree t : getCurrentPath()) {
                 System.out.println("    " + t.getKind() + ": " + trim(t, 64));
@@ -85,7 +98,11 @@ public class T6855236 extends AbstractProcessor {
         }
 
         @Override
-        public Object visitExpressionStatement(ExpressionStatementTree node, Trees p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Object visitExpressionStatement(ExpressionStatementTree node, Trees p) {
             ExpressionTree t = node.getExpression();
             System.out.println();
             System.out.println("expression statement: " + trim(t, 64));
@@ -94,7 +111,11 @@ public class T6855236 extends AbstractProcessor {
 
     }
 
-    private String trim(Tree t, int len) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String trim(Tree t, int len) {
         String s = t.toString().trim().replaceAll("\\s+", " ");
         if (s.length() > len)
             s = s.substring(0, len) + "...";

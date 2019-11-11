@@ -25,6 +25,7 @@ package compiler.codecache.stress;
 
 import java.util.concurrent.Callable;
 
+@Bean
 public class TestCaseImpl implements Helper.TestCase {
     private static final int RETURN_VALUE = 42;
     private static final int RECURSION_DEPTH = 10;

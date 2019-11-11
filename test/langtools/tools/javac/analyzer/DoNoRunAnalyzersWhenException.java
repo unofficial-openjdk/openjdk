@@ -45,6 +45,7 @@ import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.Context.Factory;
 
+@Bean
 public class DoNoRunAnalyzersWhenException {
 
     public static void main(String... args) throws Exception {
@@ -79,7 +80,11 @@ public class DoNoRunAnalyzersWhenException {
             super(context);
         }
 
-        @Override public void visitVarDef(JCVariableDecl tree) {
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void visitVarDef(JCVariableDecl tree) {
             if (tree.name.contentEquals("STOP"))
                 throw new StopException();
             super.visitVarDef(tree);
@@ -98,7 +103,11 @@ public class DoNoRunAnalyzersWhenException {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return source;
         }
 

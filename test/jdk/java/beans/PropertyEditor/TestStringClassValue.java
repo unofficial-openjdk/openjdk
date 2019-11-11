@@ -33,6 +33,7 @@
  *          jdk.compiler
  */
 
+@Bean
 public class TestStringClassValue {
     public static void main(String[] args) {
         TestEditor test = new TestEditor(String.class);

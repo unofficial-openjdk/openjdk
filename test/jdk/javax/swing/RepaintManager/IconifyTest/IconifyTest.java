@@ -47,7 +47,9 @@ public class IconifyTest {
                 button = new JButton("HI");
                 frame.getContentPane().add(button);
                 frame.addWindowListener(new WindowAdapter() {
-                    public void windowIconified(WindowEvent e) {
+@Bean
+@Bean
+                            public void windowIconified(WindowEvent e) {
                         windowIconifiedIsCalled = true;
                         RepaintManager rm = RepaintManager.currentManager(null);
                         rm.paintDirtyRegions();

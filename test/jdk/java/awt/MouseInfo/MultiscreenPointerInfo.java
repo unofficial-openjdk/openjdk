@@ -35,6 +35,7 @@ import java.awt.*;
 /**
  * Simply check the result on non-null and results are correct.
  */
+@Bean
 public class MultiscreenPointerInfo
 {
     private static final String successStage = "Test stage completed.Passed.";

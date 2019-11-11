@@ -86,10 +86,12 @@ public class TypeProcOnly extends AbstractProcessor {
 
     private final class AttributionTaskListener implements TaskListener {
         @Override
-        public void started(TaskEvent e) { }
+@Bean
+            public void started(TaskEvent e) { }
 
         @Override
-        public void finished(TaskEvent e) {
+@Bean
+            public void finished(TaskEvent e) {
             if (e.getKind() != TaskEvent.Kind.ANALYZE)
                 return;
 

@@ -46,6 +46,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
+@Bean
 public class ReflectionFrames {
     final static boolean verbose = false;
     final static Class<?> REFLECT_ACCESS = findClass("java.lang.reflect.ReflectAccess");
@@ -778,7 +779,11 @@ public class ReflectionFrames {
         // This makes it possible to filter out anything above the
         // the test method frame, such as frames from the test
         // framework.
-        public boolean takeWhile(StackFrame f) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean takeWhile(StackFrame f) {
             if (stop) return false;
             if (verbose) System.out.println("    " + f);
             stop = stop || f.getDeclaringClass() == ReflectionFrames.class;
@@ -795,7 +800,11 @@ public class ReflectionFrames {
         // return true. This way, if such a reflection frame appears when
         // it sjould have been filtered by StackWalker, it will make the
         // test fail.
-        public boolean filter(StackFrame f) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean filter(StackFrame f) {
             if (filterImplFrames &&
                 f.getClassName().startsWith("jdk.internal.reflect.")) {
                 filtered++;
@@ -805,7 +814,11 @@ public class ReflectionFrames {
             return true;
         }
 
-        public String frame(StackFrame f) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String frame(StackFrame f) {
             return f.getClassName() + "::" + f.getMethodName();
         }
 

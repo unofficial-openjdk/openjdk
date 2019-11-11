@@ -38,6 +38,7 @@ import java.util.Arrays;
  * Exercise the fill routine for various short alignments and sizes
  */
 
+@Bean
 public class Test6982370 {
     public static void main(String[] args) {
         test_byte();

@@ -31,6 +31,7 @@ import java.util.*;
 import java.io.*;
 
 // Usage: java Bug4518797 [duration]
+@Bean
 public class Bug4518797 {
     static volatile boolean runrun = true;
     static volatile String message = null;

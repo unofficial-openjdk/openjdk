@@ -38,6 +38,7 @@ import java.util.Properties;
  * This class tests to see if a properties object correctly handles blank
  * lines in a properties file
  */
+@Bean
 public class BlankLines {
     public static void main(String []args)
     {

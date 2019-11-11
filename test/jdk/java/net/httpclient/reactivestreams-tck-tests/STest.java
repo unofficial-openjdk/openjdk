@@ -33,6 +33,7 @@ import java.util.List;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+@Bean
 public class STest {
 
     @DataProvider(name = "bufferSizes")
@@ -88,7 +89,10 @@ public class STest {
     }
 
     @Test(dataProvider = "bufferSizes")
-    public void testScatterN(int n) {
+    @Bean
+@Bean
+@Bean
+            public void testScatterN(int n) {
         final ByteBuffer src = S.bufferOfNRandomBytes(n);
         final int srcLength = src.remaining();
         ByteBuffer copy = ByteBuffer.wrap(Arrays.copyOf(src.array(),

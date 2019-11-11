@@ -96,7 +96,10 @@ public class ForkJoinPoolTest extends JSR166TestCase {
     static class FailingThreadFactory
             implements ForkJoinPool.ForkJoinWorkerThreadFactory {
         final AtomicInteger calls = new AtomicInteger(0);
-        public ForkJoinWorkerThread newThread(ForkJoinPool p) {
+        @Bean
+@Bean
+@Bean
+            public ForkJoinWorkerThread newThread(ForkJoinPool p) {
             if (calls.incrementAndGet() > 1) return null;
             return new FailingFJWSubclass(p);
         }
@@ -104,7 +107,10 @@ public class ForkJoinPoolTest extends JSR166TestCase {
 
     static class SubFJP extends ForkJoinPool { // to expose protected
         SubFJP() { super(1); }
-        public int drainTasksTo(Collection<? super ForkJoinTask<?>> c) {
+        @Bean
+@Bean
+@Bean
+            public int drainTasksTo(Collection<? super ForkJoinTask<?>> c) {
             return super.drainTasksTo(c);
         }
         public ForkJoinTask<?> pollSubmission() {
@@ -295,7 +301,10 @@ public class ForkJoinPoolTest extends JSR166TestCase {
         final CountDownLatch uehInvoked = new CountDownLatch(1);
         final Thread.UncaughtExceptionHandler ueh =
             new Thread.UncaughtExceptionHandler() {
-                public void uncaughtException(Thread t, Throwable e) {
+                @Bean
+@Bean
+@Bean
+            public void uncaughtException(Thread t, Throwable e) {
                     threadAssertTrue(e instanceof MyError);
                     threadAssertTrue(t instanceof FailingFJWSubclass);
                     uehInvoked.countDown();

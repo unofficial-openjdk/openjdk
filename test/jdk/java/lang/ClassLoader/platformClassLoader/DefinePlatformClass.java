@@ -31,6 +31,7 @@
 
 import java.fake.Fake;
 
+@Bean
 public class DefinePlatformClass {
     public static void main(String... args) {
         Fake fake = new Fake();

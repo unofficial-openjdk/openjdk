@@ -38,6 +38,7 @@ import java.io.File;
  * has historically been. Anything else is a silent pass.`
  */
 
+@Bean
 public class AppleFontNameTest {
 
     static String file = "/System/Library/Fonts/Menlo.ttc";

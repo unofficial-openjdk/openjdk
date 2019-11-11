@@ -67,7 +67,10 @@ public final class bug7097771 extends Frame implements ActionListener {
     }
 
     @Override
-    public void actionPerformed(final ActionEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void actionPerformed(final ActionEvent e) {
         action = true;
     }
 

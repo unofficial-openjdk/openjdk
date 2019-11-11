@@ -86,6 +86,7 @@ import java.util.function.LongConsumer;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
+@Bean
 public class SpliteratorTraversingAndSplittingTest extends SpliteratorTestHelper {
 
     private static final List<Integer> SIZES = Arrays.asList(0, 1, 10, 42);
@@ -222,6 +223,10 @@ public class SpliteratorTraversingAndSplittingTest extends SpliteratorTestHelper
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public boolean tryAdvance(Consumer<? super Integer> action) {
                     if (action == null)
                         throw new NullPointerException();
@@ -269,6 +274,10 @@ public class SpliteratorTraversingAndSplittingTest extends SpliteratorTestHelper
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public Integer get(int index) {
                     return l.get(index);
                 }
@@ -390,6 +399,10 @@ public class SpliteratorTraversingAndSplittingTest extends SpliteratorTestHelper
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public Integer get(int index) {
                     return ia[index];
                 }
@@ -411,31 +424,55 @@ public class SpliteratorTraversingAndSplittingTest extends SpliteratorTestHelper
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public Integer get(int index) {
                     return ia[index];
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public Integer set(int index, Integer element) {
                     throw new UnsupportedOperationException();
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void add(int index, Integer element) {
                     throw new UnsupportedOperationException();
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public Integer remove(int index) {
                     throw new UnsupportedOperationException();
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public int indexOf(Object o) {
                     return l.indexOf(o);
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public int lastIndexOf(Object o) {
                     return Arrays.asList(ia).lastIndexOf(o);
                 }
@@ -466,6 +503,10 @@ public class SpliteratorTraversingAndSplittingTest extends SpliteratorTestHelper
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public boolean contains(Object o) {
                     return l.contains(o);
                 }
@@ -486,36 +527,64 @@ public class SpliteratorTraversingAndSplittingTest extends SpliteratorTestHelper
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public boolean add(Integer integer) {
                     throw new UnsupportedOperationException();
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public boolean remove(Object o) {
                     throw new UnsupportedOperationException();
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public boolean containsAll(Collection<?> c) {
                     return l.containsAll(c);
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public boolean addAll(Collection<? extends Integer> c) {
                     throw new UnsupportedOperationException();
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public boolean addAll(int index, Collection<? extends Integer> c) {
                     throw new UnsupportedOperationException();
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public boolean removeAll(Collection<?> c) {
                     throw new UnsupportedOperationException();
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public boolean retainAll(Collection<?> c) {
                     throw new UnsupportedOperationException();
                 }
@@ -665,48 +734,84 @@ public class SpliteratorTraversingAndSplittingTest extends SpliteratorTestHelper
     }
 
     @Test(dataProvider = "Spliterator<Integer>")
-    public void testNullPointerException(String description, Collection<Integer> exp, Supplier<Spliterator<Integer>> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testNullPointerException(String description, Collection<Integer> exp, Supplier<Spliterator<Integer>> s) {
         assertThrowsNPE(() -> s.get().forEachRemaining(null));
         assertThrowsNPE(() -> s.get().tryAdvance(null));
     }
 
     @Test(dataProvider = "Spliterator<Integer>")
-    public void testForEach(String description, Collection<Integer> exp, Supplier<Spliterator<Integer>> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testForEach(String description, Collection<Integer> exp, Supplier<Spliterator<Integer>> s) {
         testForEach(exp, s, UnaryOperator.identity());
     }
 
     @Test(dataProvider = "Spliterator<Integer>")
-    public void testTryAdvance(String description, Collection<Integer> exp, Supplier<Spliterator<Integer>> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testTryAdvance(String description, Collection<Integer> exp, Supplier<Spliterator<Integer>> s) {
         testTryAdvance(exp, s, UnaryOperator.identity());
     }
 
     @Test(dataProvider = "Spliterator<Integer>")
-    public void testMixedTryAdvanceForEach(String description, Collection<Integer> exp, Supplier<Spliterator<Integer>> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testMixedTryAdvanceForEach(String description, Collection<Integer> exp, Supplier<Spliterator<Integer>> s) {
         testMixedTryAdvanceForEach(exp, s, UnaryOperator.identity());
     }
 
     @Test(dataProvider = "Spliterator<Integer>")
-    public void testMixedTraverseAndSplit(String description, Collection<Integer> exp, Supplier<Spliterator<Integer>> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testMixedTraverseAndSplit(String description, Collection<Integer> exp, Supplier<Spliterator<Integer>> s) {
         testMixedTraverseAndSplit(exp, s, UnaryOperator.identity());
     }
 
     @Test(dataProvider = "Spliterator<Integer>")
-    public void testSplitAfterFullTraversal(String description, Collection<Integer> exp, Supplier<Spliterator<Integer>> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testSplitAfterFullTraversal(String description, Collection<Integer> exp, Supplier<Spliterator<Integer>> s) {
         testSplitAfterFullTraversal(s, UnaryOperator.identity());
     }
 
     @Test(dataProvider = "Spliterator<Integer>")
-    public void testSplitOnce(String description, Collection<Integer> exp, Supplier<Spliterator<Integer>> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testSplitOnce(String description, Collection<Integer> exp, Supplier<Spliterator<Integer>> s) {
         testSplitOnce(exp, s, UnaryOperator.identity());
     }
 
     @Test(dataProvider = "Spliterator<Integer>")
-    public void testSplitSixDeep(String description, Collection<Integer> exp, Supplier<Spliterator<Integer>> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testSplitSixDeep(String description, Collection<Integer> exp, Supplier<Spliterator<Integer>> s) {
         testSplitSixDeep(exp, s, UnaryOperator.identity());
     }
 
     @Test(dataProvider = "Spliterator<Integer>")
-    public void testSplitUntilNull(String description, Collection<Integer> exp, Supplier<Spliterator<Integer>> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testSplitUntilNull(String description, Collection<Integer> exp, Supplier<Spliterator<Integer>> s) {
         testSplitUntilNull(exp, s, UnaryOperator.identity());
     }
 
@@ -800,6 +905,10 @@ public class SpliteratorTraversingAndSplittingTest extends SpliteratorTestHelper
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public boolean tryAdvance(IntConsumer action) {
                     if (action == null)
                         throw new NullPointerException();
@@ -830,12 +939,20 @@ public class SpliteratorTraversingAndSplittingTest extends SpliteratorTestHelper
             }
 
             @Override
-            public char charAt(int index) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public char charAt(int index) {
                 return s.charAt(index);
             }
 
             @Override
-            public CharSequence subSequence(int start, int end) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence subSequence(int start, int end) {
                 return s.subSequence(start, end);
             }
 
@@ -865,48 +982,84 @@ public class SpliteratorTraversingAndSplittingTest extends SpliteratorTestHelper
     }
 
     @Test(dataProvider = "Spliterator.OfInt")
-    public void testIntNullPointerException(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testIntNullPointerException(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
         assertThrowsNPE(() -> s.get().forEachRemaining((IntConsumer) null));
         assertThrowsNPE(() -> s.get().tryAdvance((IntConsumer) null));
     }
 
     @Test(dataProvider = "Spliterator.OfInt")
-    public void testIntForEach(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testIntForEach(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
         testForEach(exp, s, intBoxingConsumer());
     }
 
     @Test(dataProvider = "Spliterator.OfInt")
-    public void testIntTryAdvance(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testIntTryAdvance(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
         testTryAdvance(exp, s, intBoxingConsumer());
     }
 
     @Test(dataProvider = "Spliterator.OfInt")
-    public void testIntMixedTryAdvanceForEach(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testIntMixedTryAdvanceForEach(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
         testMixedTryAdvanceForEach(exp, s, intBoxingConsumer());
     }
 
     @Test(dataProvider = "Spliterator.OfInt")
-    public void testIntMixedTraverseAndSplit(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testIntMixedTraverseAndSplit(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
         testMixedTraverseAndSplit(exp, s, intBoxingConsumer());
     }
 
     @Test(dataProvider = "Spliterator.OfInt")
-    public void testIntSplitAfterFullTraversal(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testIntSplitAfterFullTraversal(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
         testSplitAfterFullTraversal(s, intBoxingConsumer());
     }
 
     @Test(dataProvider = "Spliterator.OfInt")
-    public void testIntSplitOnce(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testIntSplitOnce(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
         testSplitOnce(exp, s, intBoxingConsumer());
     }
 
     @Test(dataProvider = "Spliterator.OfInt")
-    public void testIntSplitSixDeep(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testIntSplitSixDeep(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
         testSplitSixDeep(exp, s, intBoxingConsumer());
     }
 
     @Test(dataProvider = "Spliterator.OfInt")
-    public void testIntSplitUntilNull(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testIntSplitUntilNull(String description, Collection<Integer> exp, Supplier<Spliterator.OfInt> s) {
         testSplitUntilNull(exp, s, intBoxingConsumer());
     }
 
@@ -974,6 +1127,10 @@ public class SpliteratorTraversingAndSplittingTest extends SpliteratorTestHelper
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public boolean tryAdvance(LongConsumer action) {
                     if (action == null)
                         throw new NullPointerException();
@@ -1008,48 +1165,84 @@ public class SpliteratorTraversingAndSplittingTest extends SpliteratorTestHelper
     }
 
     @Test(dataProvider = "Spliterator.OfLong")
-    public void testLongNullPointerException(String description, Collection<Long> exp, Supplier<Spliterator.OfLong> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testLongNullPointerException(String description, Collection<Long> exp, Supplier<Spliterator.OfLong> s) {
         assertThrowsNPE(() -> s.get().forEachRemaining((LongConsumer) null));
         assertThrowsNPE(() -> s.get().tryAdvance((LongConsumer) null));
     }
 
     @Test(dataProvider = "Spliterator.OfLong")
-    public void testLongForEach(String description, Collection<Long> exp, Supplier<Spliterator.OfLong> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testLongForEach(String description, Collection<Long> exp, Supplier<Spliterator.OfLong> s) {
         testForEach(exp, s, longBoxingConsumer());
     }
 
     @Test(dataProvider = "Spliterator.OfLong")
-    public void testLongTryAdvance(String description, Collection<Long> exp, Supplier<Spliterator.OfLong> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testLongTryAdvance(String description, Collection<Long> exp, Supplier<Spliterator.OfLong> s) {
         testTryAdvance(exp, s, longBoxingConsumer());
     }
 
     @Test(dataProvider = "Spliterator.OfLong")
-    public void testLongMixedTryAdvanceForEach(String description, Collection<Long> exp, Supplier<Spliterator.OfLong> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testLongMixedTryAdvanceForEach(String description, Collection<Long> exp, Supplier<Spliterator.OfLong> s) {
         testMixedTryAdvanceForEach(exp, s, longBoxingConsumer());
     }
 
     @Test(dataProvider = "Spliterator.OfLong")
-    public void testLongMixedTraverseAndSplit(String description, Collection<Long> exp, Supplier<Spliterator.OfLong> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testLongMixedTraverseAndSplit(String description, Collection<Long> exp, Supplier<Spliterator.OfLong> s) {
         testMixedTraverseAndSplit(exp, s, longBoxingConsumer());
     }
 
     @Test(dataProvider = "Spliterator.OfLong")
-    public void testLongSplitAfterFullTraversal(String description, Collection<Long> exp, Supplier<Spliterator.OfLong> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testLongSplitAfterFullTraversal(String description, Collection<Long> exp, Supplier<Spliterator.OfLong> s) {
         testSplitAfterFullTraversal(s, longBoxingConsumer());
     }
 
     @Test(dataProvider = "Spliterator.OfLong")
-    public void testLongSplitOnce(String description, Collection<Long> exp, Supplier<Spliterator.OfLong> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testLongSplitOnce(String description, Collection<Long> exp, Supplier<Spliterator.OfLong> s) {
         testSplitOnce(exp, s, longBoxingConsumer());
     }
 
     @Test(dataProvider = "Spliterator.OfLong")
-    public void testLongSplitSixDeep(String description, Collection<Long> exp, Supplier<Spliterator.OfLong> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testLongSplitSixDeep(String description, Collection<Long> exp, Supplier<Spliterator.OfLong> s) {
         testSplitSixDeep(exp, s, longBoxingConsumer());
     }
 
     @Test(dataProvider = "Spliterator.OfLong")
-    public void testLongSplitUntilNull(String description, Collection<Long> exp, Supplier<Spliterator.OfLong> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testLongSplitUntilNull(String description, Collection<Long> exp, Supplier<Spliterator.OfLong> s) {
         testSplitUntilNull(exp, s, longBoxingConsumer());
     }
 
@@ -1117,6 +1310,10 @@ public class SpliteratorTraversingAndSplittingTest extends SpliteratorTestHelper
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public boolean tryAdvance(DoubleConsumer action) {
                     if (action == null)
                         throw new NullPointerException();
@@ -1151,48 +1348,84 @@ public class SpliteratorTraversingAndSplittingTest extends SpliteratorTestHelper
     }
 
     @Test(dataProvider = "Spliterator.OfDouble")
-    public void testDoubleNullPointerException(String description, Collection<Double> exp, Supplier<Spliterator.OfDouble> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testDoubleNullPointerException(String description, Collection<Double> exp, Supplier<Spliterator.OfDouble> s) {
         assertThrowsNPE(() -> s.get().forEachRemaining((DoubleConsumer) null));
         assertThrowsNPE(() -> s.get().tryAdvance((DoubleConsumer) null));
     }
 
     @Test(dataProvider = "Spliterator.OfDouble")
-    public void testDoubleForEach(String description, Collection<Double> exp, Supplier<Spliterator.OfDouble> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testDoubleForEach(String description, Collection<Double> exp, Supplier<Spliterator.OfDouble> s) {
         testForEach(exp, s, doubleBoxingConsumer());
     }
 
     @Test(dataProvider = "Spliterator.OfDouble")
-    public void testDoubleTryAdvance(String description, Collection<Double> exp, Supplier<Spliterator.OfDouble> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testDoubleTryAdvance(String description, Collection<Double> exp, Supplier<Spliterator.OfDouble> s) {
         testTryAdvance(exp, s, doubleBoxingConsumer());
     }
 
     @Test(dataProvider = "Spliterator.OfDouble")
-    public void testDoubleMixedTryAdvanceForEach(String description, Collection<Double> exp, Supplier<Spliterator.OfDouble> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testDoubleMixedTryAdvanceForEach(String description, Collection<Double> exp, Supplier<Spliterator.OfDouble> s) {
         testMixedTryAdvanceForEach(exp, s, doubleBoxingConsumer());
     }
 
     @Test(dataProvider = "Spliterator.OfDouble")
-    public void testDoubleMixedTraverseAndSplit(String description, Collection<Double> exp, Supplier<Spliterator.OfDouble> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testDoubleMixedTraverseAndSplit(String description, Collection<Double> exp, Supplier<Spliterator.OfDouble> s) {
         testMixedTraverseAndSplit(exp, s, doubleBoxingConsumer());
     }
 
     @Test(dataProvider = "Spliterator.OfDouble")
-    public void testDoubleSplitAfterFullTraversal(String description, Collection<Double> exp, Supplier<Spliterator.OfDouble> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testDoubleSplitAfterFullTraversal(String description, Collection<Double> exp, Supplier<Spliterator.OfDouble> s) {
         testSplitAfterFullTraversal(s, doubleBoxingConsumer());
     }
 
     @Test(dataProvider = "Spliterator.OfDouble")
-    public void testDoubleSplitOnce(String description, Collection<Double> exp, Supplier<Spliterator.OfDouble> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testDoubleSplitOnce(String description, Collection<Double> exp, Supplier<Spliterator.OfDouble> s) {
         testSplitOnce(exp, s, doubleBoxingConsumer());
     }
 
     @Test(dataProvider = "Spliterator.OfDouble")
-    public void testDoubleSplitSixDeep(String description, Collection<Double> exp, Supplier<Spliterator.OfDouble> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testDoubleSplitSixDeep(String description, Collection<Double> exp, Supplier<Spliterator.OfDouble> s) {
         testSplitSixDeep(exp, s, doubleBoxingConsumer());
     }
 
     @Test(dataProvider = "Spliterator.OfDouble")
-    public void testDoubleSplitUntilNull(String description, Collection<Double> exp, Supplier<Spliterator.OfDouble> s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testDoubleSplitUntilNull(String description, Collection<Double> exp, Supplier<Spliterator.OfDouble> s) {
         testSplitUntilNull(exp, s, doubleBoxingConsumer());
     }
 

@@ -31,6 +31,7 @@
  * @requires os.family == "windows"
  * @run main SignedObjectChain
  */
+@Bean
 public class SignedObjectChain {
 
     private static class Test extends Chain.Test {

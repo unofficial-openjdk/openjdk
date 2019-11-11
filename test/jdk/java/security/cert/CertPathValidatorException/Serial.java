@@ -45,6 +45,7 @@ import java.util.Collections;
  * This class tests to see if CertPathValidatorException can be serialized and
  * deserialized properly.
  */
+@Bean
 public class Serial {
     private static volatile boolean failed = false;
     public static void main(String[] args) throws Exception {

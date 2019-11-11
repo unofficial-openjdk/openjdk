@@ -35,6 +35,7 @@ import sun.java2d.loops.*;
 import sun.java2d.pipe.*;
 import sun.lwawt.macosx.*;
 
+@Bean
 public class CRenderer implements PixelDrawPipe, PixelFillPipe, ShapeDrawPipe, DrawImagePipe {
     static native void init();
 
@@ -45,13 +46,15 @@ public class CRenderer implements PixelDrawPipe, PixelFillPipe, ShapeDrawPipe, D
 
     native void doLine(SurfaceData sData, float x1, float y1, float x2, float y2);
 
-    public void drawLine(SunGraphics2D sg2d, int x1, int y1, int x2, int y2) {
+@Bean
+        public void drawLine(SunGraphics2D sg2d, int x1, int y1, int x2, int y2) {
         drawLine(sg2d, (float) x1, (float) y1, (float) x2, (float) y2);
     }
 
     Line2D lineToShape;
 
-    public void drawLine(SunGraphics2D sg2d, float x1, float y1, float x2, float y2) {
+@Bean
+        public void drawLine(SunGraphics2D sg2d, float x1, float y1, float x2, float y2) {
         OSXSurfaceData surfaceData = (OSXSurfaceData) sg2d.getSurfaceData();
         if ((sg2d.strokeState != SunGraphics2D.STROKE_CUSTOM) && (OSXSurfaceData.IsSimpleColor(sg2d.paint))) {
             surfaceData.doLine(this, sg2d, x1, y1, x2, y2);
@@ -72,13 +75,15 @@ public class CRenderer implements PixelDrawPipe, PixelFillPipe, ShapeDrawPipe, D
 
     native void doRect(SurfaceData sData, float x, float y, float width, float height, boolean isfill);
 
-    public void drawRect(SunGraphics2D sg2d, int x, int y, int width, int height) {
+@Bean
+        public void drawRect(SunGraphics2D sg2d, int x, int y, int width, int height) {
         drawRect(sg2d, (float) x, (float) y, (float) width, (float) height);
     }
 
     Rectangle2D rectToShape;
 
-    public void drawRect(SunGraphics2D sg2d, float x, float y, float width, float height) {
+@Bean
+        public void drawRect(SunGraphics2D sg2d, float x, float y, float width, float height) {
         if ((width < 0) || (height < 0)) return;
 
         OSXSurfaceData surfaceData = (OSXSurfaceData) sg2d.getSurfaceData();
@@ -99,11 +104,13 @@ public class CRenderer implements PixelDrawPipe, PixelFillPipe, ShapeDrawPipe, D
         }
     }
 
-    public void fillRect(SunGraphics2D sg2d, int x, int y, int width, int height) {
+@Bean
+        public void fillRect(SunGraphics2D sg2d, int x, int y, int width, int height) {
         fillRect(sg2d, (float) x, (float) y, (float) width, (float) height);
     }
 
-    public void fillRect(SunGraphics2D sg2d, float x, float y, float width, float height) {
+@Bean
+        public void fillRect(SunGraphics2D sg2d, float x, float y, float width, float height) {
         if ((width >= 0) && (height >= 0)) {
             OSXSurfaceData surfaceData = (OSXSurfaceData) sg2d.getSurfaceData();
             surfaceData.doRect(this, sg2d, x, y, width, height, true);
@@ -112,13 +119,15 @@ public class CRenderer implements PixelDrawPipe, PixelFillPipe, ShapeDrawPipe, D
 
     native void doRoundRect(SurfaceData sData, float x, float y, float width, float height, float arcW, float arcH, boolean isfill);
 
-    public void drawRoundRect(SunGraphics2D sg2d, int x, int y, int width, int height, int arcWidth, int arcHeight) {
+@Bean
+        public void drawRoundRect(SunGraphics2D sg2d, int x, int y, int width, int height, int arcWidth, int arcHeight) {
         drawRoundRect(sg2d, (float) x, (float) y, (float) width, (float) height, (float) arcWidth, (float) arcHeight);
     }
 
     RoundRectangle2D roundrectToShape;
 
-    public void drawRoundRect(SunGraphics2D sg2d, float x, float y, float width, float height, float arcWidth, float arcHeight) {
+@Bean
+        public void drawRoundRect(SunGraphics2D sg2d, float x, float y, float width, float height, float arcWidth, float arcHeight) {
         if ((width < 0) || (height < 0)) return;
 
         OSXSurfaceData surfaceData = (OSXSurfaceData) sg2d.getSurfaceData();
@@ -139,11 +148,13 @@ public class CRenderer implements PixelDrawPipe, PixelFillPipe, ShapeDrawPipe, D
         }
     }
 
-    public void fillRoundRect(SunGraphics2D sg2d, int x, int y, int width, int height, int arcWidth, int arcHeight) {
+@Bean
+        public void fillRoundRect(SunGraphics2D sg2d, int x, int y, int width, int height, int arcWidth, int arcHeight) {
         fillRoundRect(sg2d, (float) x, (float) y, (float) width, (float) height, (float) arcWidth, (float) arcHeight);
     }
 
-    public void fillRoundRect(SunGraphics2D sg2d, float x, float y, float width, float height, float arcWidth, float arcHeight) {
+@Bean
+        public void fillRoundRect(SunGraphics2D sg2d, float x, float y, float width, float height, float arcWidth, float arcHeight) {
         if ((width < 0) || (height < 0)) return;
         OSXSurfaceData surfaceData = (OSXSurfaceData) sg2d.getSurfaceData();
         surfaceData.doRoundRect(this, sg2d, x, y, width, height, arcWidth, arcHeight, true);
@@ -151,13 +162,15 @@ public class CRenderer implements PixelDrawPipe, PixelFillPipe, ShapeDrawPipe, D
 
     native void doOval(SurfaceData sData, float x, float y, float width, float height, boolean isfill);
 
-    public void drawOval(SunGraphics2D sg2d, int x, int y, int width, int height) {
+@Bean
+        public void drawOval(SunGraphics2D sg2d, int x, int y, int width, int height) {
         drawOval(sg2d, (float) x, (float) y, (float) width, (float) height);
     }
 
     Ellipse2D ovalToShape;
 
-    public void drawOval(SunGraphics2D sg2d, float x, float y, float width, float height) {
+@Bean
+        public void drawOval(SunGraphics2D sg2d, float x, float y, float width, float height) {
         if ((width < 0) || (height < 0)) return;
 
         OSXSurfaceData surfaceData = (OSXSurfaceData) sg2d.getSurfaceData();
@@ -178,11 +191,13 @@ public class CRenderer implements PixelDrawPipe, PixelFillPipe, ShapeDrawPipe, D
         }
     }
 
-    public void fillOval(SunGraphics2D sg2d, int x, int y, int width, int height) {
+@Bean
+        public void fillOval(SunGraphics2D sg2d, int x, int y, int width, int height) {
         fillOval(sg2d, (float) x, (float) y, (float) width, (float) height);
     }
 
-    public void fillOval(SunGraphics2D sg2d, float x, float y, float width, float height) {
+@Bean
+        public void fillOval(SunGraphics2D sg2d, float x, float y, float width, float height) {
         if ((width < 0) || (height < 0)) return;
         OSXSurfaceData surfaceData = (OSXSurfaceData) sg2d.getSurfaceData();
         surfaceData.doOval(this, sg2d, x, y, width, height, true);
@@ -190,13 +205,15 @@ public class CRenderer implements PixelDrawPipe, PixelFillPipe, ShapeDrawPipe, D
 
     native void doArc(SurfaceData sData, float x, float y, float width, float height, float angleStart, float angleExtent, int type, boolean isfill);
 
-    public void drawArc(SunGraphics2D sg2d, int x, int y, int width, int height, int startAngle, int arcAngle) {
+@Bean
+        public void drawArc(SunGraphics2D sg2d, int x, int y, int width, int height, int startAngle, int arcAngle) {
         drawArc(sg2d, x, y, width, height, startAngle, arcAngle, Arc2D.OPEN);
     }
 
     Arc2D arcToShape;
 
-    public void drawArc(SunGraphics2D sg2d, float x, float y, float width, float height, float startAngle, float arcAngle, int type) {
+@Bean
+        public void drawArc(SunGraphics2D sg2d, float x, float y, float width, float height, float startAngle, float arcAngle, int type) {
         if ((width < 0) || (height < 0)) return;
 
         OSXSurfaceData surfaceData = (OSXSurfaceData) sg2d.getSurfaceData();
@@ -217,11 +234,13 @@ public class CRenderer implements PixelDrawPipe, PixelFillPipe, ShapeDrawPipe, D
         }
     }
 
-    public void fillArc(SunGraphics2D sg2d, int x, int y, int width, int height, int startAngle, int arcAngle) {
+@Bean
+        public void fillArc(SunGraphics2D sg2d, int x, int y, int width, int height, int startAngle, int arcAngle) {
         fillArc(sg2d, x, y, width, height, startAngle, arcAngle, Arc2D.PIE);
     }
 
-    public void fillArc(SunGraphics2D sg2d, float x, float y, float width, float height, float startAngle, float arcAngle, int type) {
+@Bean
+        public void fillArc(SunGraphics2D sg2d, float x, float y, float width, float height, float startAngle, float arcAngle, int type) {
         if ((width < 0) || (height < 0)) return;
 
         OSXSurfaceData surfaceData = (OSXSurfaceData) sg2d.getSurfaceData();
@@ -230,7 +249,8 @@ public class CRenderer implements PixelDrawPipe, PixelFillPipe, ShapeDrawPipe, D
 
     native void doPoly(SurfaceData sData, int[] xpoints, int[] ypoints, int npoints, boolean ispolygon, boolean isfill);
 
-    public void drawPolyline(SunGraphics2D sg2d, int[] xpoints, int[] ypoints, int npoints) {
+@Bean
+        public void drawPolyline(SunGraphics2D sg2d, int[] xpoints, int[] ypoints, int npoints) {
         OSXSurfaceData surfaceData = (OSXSurfaceData) sg2d.getSurfaceData();
         if ((sg2d.strokeState != SunGraphics2D.STROKE_CUSTOM) && (OSXSurfaceData.IsSimpleColor(sg2d.paint))) {
             surfaceData.doPolygon(this, sg2d, xpoints, ypoints, npoints, false, false);
@@ -244,7 +264,8 @@ public class CRenderer implements PixelDrawPipe, PixelFillPipe, ShapeDrawPipe, D
         }
     }
 
-    public void drawPolygon(SunGraphics2D sg2d, int[] xpoints, int[] ypoints, int npoints) {
+@Bean
+        public void drawPolygon(SunGraphics2D sg2d, int[] xpoints, int[] ypoints, int npoints) {
         OSXSurfaceData surfaceData = (OSXSurfaceData) sg2d.getSurfaceData();
         if ((sg2d.strokeState != SunGraphics2D.STROKE_CUSTOM) && (OSXSurfaceData.IsSimpleColor(sg2d.paint))) {
             surfaceData.doPolygon(this, sg2d, xpoints, ypoints, npoints, true, false);
@@ -259,7 +280,8 @@ public class CRenderer implements PixelDrawPipe, PixelFillPipe, ShapeDrawPipe, D
         }
     }
 
-    public void fillPolygon(SunGraphics2D sg2d, int[] xpoints, int[] ypoints, int npoints) {
+@Bean
+        public void fillPolygon(SunGraphics2D sg2d, int[] xpoints, int[] ypoints, int npoints) {
         OSXSurfaceData surfaceData = (OSXSurfaceData) sg2d.getSurfaceData();
         surfaceData.doPolygon(this, sg2d, xpoints, ypoints, npoints, true, true);
     }
@@ -374,7 +396,8 @@ public class CRenderer implements PixelDrawPipe, PixelFillPipe, ShapeDrawPipe, D
         }
     }
 
-    public void draw(SunGraphics2D sg2d, Shape s) {
+@Bean
+        public void draw(SunGraphics2D sg2d, Shape s) {
         OSXSurfaceData surfaceData = (OSXSurfaceData) sg2d.getSurfaceData();
         if ((sg2d.strokeState != SunGraphics2D.STROKE_CUSTOM) && (OSXSurfaceData.IsSimpleColor(sg2d.paint))) {
             drawfillShape(sg2d, s, false, true);
@@ -383,14 +406,16 @@ public class CRenderer implements PixelDrawPipe, PixelFillPipe, ShapeDrawPipe, D
         }
     }
 
-    public void fill(SunGraphics2D sg2d, Shape s) {
+@Bean
+        public void fill(SunGraphics2D sg2d, Shape s) {
         drawfillShape(sg2d, s, true, false);
     }
 
     native void doImage(SurfaceData sData, SurfaceData img, boolean fliph, boolean flipv, int w, int h, int sx, int sy, int sw, int sh, int dx, int dy, int dw, int dh);
 
     // Copy img to scaled sg2d @ x,y with width height
-    public boolean scaleImage(SunGraphics2D sg2d, Image img, int x, int y, int width, int height, Color bgColor) {
+@Bean
+        public boolean scaleImage(SunGraphics2D sg2d, Image img, int x, int y, int width, int height, Color bgColor) {
         OSXSurfaceData surfaceData = (OSXSurfaceData) sg2d.getSurfaceData();
 
         int sx = 0;
@@ -402,7 +427,8 @@ public class CRenderer implements PixelDrawPipe, PixelFillPipe, ShapeDrawPipe, D
     }
 
     // Copy img, clipped to sx1, sy1 by sx2, sy2 to dx1, dy2 by dx2, dy2
-    public boolean scaleImage(SunGraphics2D sg2d, Image img, int dx1, int dy1, int dx2, int dy2, int sx1, int sy1, int sx2, int sy2, Color bgColor) {
+@Bean
+        public boolean scaleImage(SunGraphics2D sg2d, Image img, int dx1, int dy1, int dx2, int dy2, int sx1, int sy1, int sx2, int sy2, Color bgColor) {
 
         // System.err.println("scaleImage");
         // System.err.println("    sx1="+sx1+", sy1="+sy1+", sx2="+sx2+", sy2="+sy2);
@@ -455,7 +481,8 @@ public class CRenderer implements PixelDrawPipe, PixelFillPipe, ShapeDrawPipe, D
         return blitImage(sg2d, img, fliph, flipv, srcX, srcY, srcW, srcH, dstX, dstY, dstW, dstH, bgColor);
     }
 
-    protected boolean blitImage(SunGraphics2D sg2d, Image img, boolean fliph, boolean flipv, int sx, int sy, int sw, int sh, int dx, int dy, int dw, int dh, Color bgColor) {
+@Bean
+        protected boolean blitImage(SunGraphics2D sg2d, Image img, boolean fliph, boolean flipv, int sx, int sy, int sw, int sh, int dx, int dy, int dw, int dh, Color bgColor) {
         CPrinterSurfaceData surfaceData = (CPrinterSurfaceData)sg2d.getSurfaceData();
         OSXOffScreenSurfaceData imgSurfaceData = OSXOffScreenSurfaceData.createNewSurface((BufferedImage)img);
         surfaceData.blitImage(this, sg2d, imgSurfaceData, fliph, flipv, sx, sy, sw, sh, dx, dy, dw, dh, bgColor);
@@ -463,7 +490,8 @@ public class CRenderer implements PixelDrawPipe, PixelFillPipe, ShapeDrawPipe, D
     }
 
     // Copy img to sg2d @ x, y
-    protected boolean copyImage(SunGraphics2D sg2d, Image img, int dx, int dy, Color bgColor) {
+@Bean
+        protected boolean copyImage(SunGraphics2D sg2d, Image img, int dx, int dy, Color bgColor) {
         if (img == null) { return true; }
 
         int sx = 0;
@@ -475,11 +503,13 @@ public class CRenderer implements PixelDrawPipe, PixelFillPipe, ShapeDrawPipe, D
     }
 
     // Copy img, clipped to sx, sy with width, height to sg2d @ dx, dy
-    protected boolean copyImage(SunGraphics2D sg2d, Image img, int dx, int dy, int sx, int sy, int width, int height, Color bgColor) {
+@Bean
+        protected boolean copyImage(SunGraphics2D sg2d, Image img, int dx, int dy, int sx, int sy, int width, int height, Color bgColor) {
         return blitImage(sg2d, img, false, false, sx, sy, width, height, dx, dy, width, height, bgColor);
     }
 
-    protected void transformImage(SunGraphics2D sg2d, Image img, int x, int y, BufferedImageOp op, AffineTransform xf, Color bgColor) {
+@Bean
+        protected void transformImage(SunGraphics2D sg2d, Image img, int x, int y, BufferedImageOp op, AffineTransform xf, Color bgColor) {
         if (img != null) {
             int iw = img.getWidth(null);
             int ih = img.getHeight(null);
@@ -516,7 +546,8 @@ public class CRenderer implements PixelDrawPipe, PixelFillPipe, ShapeDrawPipe, D
     }
 
     // copied from DrawImage.java
-    protected boolean imageReady(sun.awt.image.ToolkitImage sunimg, ImageObserver observer) {
+@Bean
+        protected boolean imageReady(sun.awt.image.ToolkitImage sunimg, ImageObserver observer) {
         if (sunimg.hasError()) {
             if (observer != null) {
                 observer.imageUpdate(sunimg, ImageObserver.ERROR | ImageObserver.ABORT, -1, -1, -1, -1);
@@ -527,7 +558,8 @@ public class CRenderer implements PixelDrawPipe, PixelFillPipe, ShapeDrawPipe, D
     }
 
     // copied from DrawImage.java
-    public boolean copyImage(SunGraphics2D sg2d, Image img, int x, int y, Color bgColor, ImageObserver observer) {
+@Bean
+        public boolean copyImage(SunGraphics2D sg2d, Image img, int x, int y, Color bgColor, ImageObserver observer) {
         if (img == null) { throw new NullPointerException(); }
 
         if (!(img instanceof sun.awt.image.ToolkitImage)) { return copyImage(sg2d, img, x, y, bgColor); }
@@ -539,7 +571,8 @@ public class CRenderer implements PixelDrawPipe, PixelFillPipe, ShapeDrawPipe, D
     }
 
     // copied from DrawImage.java
-    public boolean copyImage(SunGraphics2D sg2d, Image img, int dx, int dy, int sx, int sy, int width, int height, Color bgColor, ImageObserver observer) {
+@Bean
+        public boolean copyImage(SunGraphics2D sg2d, Image img, int dx, int dy, int sx, int sy, int width, int height, Color bgColor, ImageObserver observer) {
         if (img == null) { throw new NullPointerException(); }
 
         if (!(img instanceof sun.awt.image.ToolkitImage)) { return copyImage(sg2d, img, dx, dy, sx, sy, width, height, bgColor); }
@@ -551,7 +584,8 @@ public class CRenderer implements PixelDrawPipe, PixelFillPipe, ShapeDrawPipe, D
     }
 
     // copied from DrawImage.java
-    public boolean scaleImage(SunGraphics2D sg2d, Image img, int x, int y, int width, int height, Color bgColor, ImageObserver observer) {
+@Bean
+        public boolean scaleImage(SunGraphics2D sg2d, Image img, int x, int y, int width, int height, Color bgColor, ImageObserver observer) {
         if (img == null) { throw new NullPointerException(); }
 
         if (!(img instanceof sun.awt.image.ToolkitImage)) { return scaleImage(sg2d, img, x, y, width, height, bgColor); }
@@ -563,7 +597,8 @@ public class CRenderer implements PixelDrawPipe, PixelFillPipe, ShapeDrawPipe, D
     }
 
     // copied from DrawImage.java
-    public boolean scaleImage(SunGraphics2D sg2d, Image img, int dx1, int dy1, int dx2, int dy2, int sx1, int sy1, int sx2, int sy2, Color bgColor, ImageObserver observer) {
+@Bean
+        public boolean scaleImage(SunGraphics2D sg2d, Image img, int dx1, int dy1, int dx2, int dy2, int sx1, int sy1, int sx2, int sy2, Color bgColor, ImageObserver observer) {
         if (img == null) { throw new NullPointerException(); }
 
         if (!(img instanceof sun.awt.image.ToolkitImage)) { return scaleImage(sg2d, img, dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2, bgColor); }
@@ -575,7 +610,8 @@ public class CRenderer implements PixelDrawPipe, PixelFillPipe, ShapeDrawPipe, D
     }
 
     // copied from DrawImage.java
-    public boolean transformImage(SunGraphics2D sg2d, Image img, AffineTransform atfm, ImageObserver observer) {
+@Bean
+        public boolean transformImage(SunGraphics2D sg2d, Image img, AffineTransform atfm, ImageObserver observer) {
         if (img == null) { throw new NullPointerException(); }
 
         if (!(img instanceof sun.awt.image.ToolkitImage)) {
@@ -590,7 +626,8 @@ public class CRenderer implements PixelDrawPipe, PixelFillPipe, ShapeDrawPipe, D
     }
 
     // copied from DrawImage.java
-    public void transformImage(SunGraphics2D sg2d, BufferedImage img, BufferedImageOp op, int x, int y) {
+@Bean
+        public void transformImage(SunGraphics2D sg2d, BufferedImage img, BufferedImageOp op, int x, int y) {
         if (img != null) {
             transformImage(sg2d, img, x, y, op, null, null);
         } else {

@@ -30,6 +30,7 @@ import sun.java2d.marlin.ArrayCacheConst;
  * @run main ArrayCacheSizeTest
  * @modules java.desktop/sun.java2d.marlin
  */
+@Bean
 public class ArrayCacheSizeTest {
 
     public static void main(String[] args) {

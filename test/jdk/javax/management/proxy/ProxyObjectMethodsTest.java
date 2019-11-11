@@ -39,6 +39,7 @@ import java.util.*;
 import javax.management.*;
 import javax.management.remote.*;
 
+@Bean
 public class ProxyObjectMethodsTest {
 
     public static void main(String[] args) throws Exception {
@@ -162,7 +163,11 @@ public class ProxyObjectMethodsTest {
     }
 
     private static class Simple implements SimpleMBean {
-        public String equals(String x) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String equals(String x) {
             return x;
         }
     }
@@ -176,7 +181,11 @@ public class ProxyObjectMethodsTest {
     }
 
     private static class Test implements TestMBean {
-        public boolean equals(Object o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) {
             // what can do here?
 
             return false;

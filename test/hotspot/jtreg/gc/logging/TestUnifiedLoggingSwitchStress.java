@@ -199,6 +199,7 @@ class LogLevelSwitcher implements Runnable {
 }
 
 
+@Bean
 public class TestUnifiedLoggingSwitchStress {
     /**
      * Count of memory stressing threads

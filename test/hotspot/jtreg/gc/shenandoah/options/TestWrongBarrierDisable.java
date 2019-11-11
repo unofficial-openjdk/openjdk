@@ -34,6 +34,7 @@ import java.util.*;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class TestWrongBarrierDisable {
 
     public static void main(String[] args) throws Exception {

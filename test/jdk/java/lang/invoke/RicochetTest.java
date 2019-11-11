@@ -44,6 +44,7 @@ import static org.junit.Assert.*;
  *
  * @author jrose
  */
+@Bean
 public class RicochetTest {
     private static final Class<?> CLASS = RicochetTest.class;
     private static final int MAX_ARITY = Integer.getInteger(CLASS.getSimpleName()+".MAX_ARITY", 40);
@@ -688,7 +689,11 @@ public class RicochetTest {
     }
     String testOnly;
     String testOnlyTests;
-    private boolean startTest(String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean startTest(String name) {
         if (testOnly != null && !testOnly.contains(name))
             return false;
         verbose(0, "["+name+"]");

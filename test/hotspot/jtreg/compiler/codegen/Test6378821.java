@@ -33,6 +33,7 @@
 
 package compiler.codegen;
 
+@Bean
 public class Test6378821 {
     static final int[]  ia = new int[]  { 0x12345678 };
     static final long[] la = new long[] { 0x12345678abcdefL };

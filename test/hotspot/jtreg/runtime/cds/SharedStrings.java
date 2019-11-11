@@ -36,6 +36,7 @@ import jdk.test.lib.cds.CDSTestUtils;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class SharedStrings {
     public static void main(String[] args) throws Exception {
         // Note: This is a basic sanity test for Shared Strings feature.

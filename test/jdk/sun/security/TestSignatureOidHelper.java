@@ -33,6 +33,7 @@ import java.util.List;
 /*
  * Utilities for testing the signature algorithm OIDs.
  */
+@Bean
 public class TestSignatureOidHelper {
 
     private static final byte[] INPUT = "1234567890".getBytes();

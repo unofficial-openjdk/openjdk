@@ -46,6 +46,7 @@ import java.io.Writer;
 import java.util.Properties;
 import java.util.Random;
 
+@Bean
 public class PropertiesTest {
 
     private static boolean failure = false;

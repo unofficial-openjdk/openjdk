@@ -30,6 +30,7 @@
 
 import java.io.*;
 
+@Bean
 public class T8143268 {
     public static void main(String... args) throws Exception{
         new T8143268().run();
@@ -39,7 +40,8 @@ public class T8143268 {
         File src = new File("src");
         src.mkdirs();
         try (FileWriter out = new FileWriter(new File(src, "Test.java"))) {
-            out.write("public class Test { native void m(); }");
+            out.write("@Bean
+public class Test { native void m(); }");
         }
 
         javac("-d", "classes", "-h", "hdr", "src/Test.java");

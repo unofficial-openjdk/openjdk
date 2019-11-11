@@ -26,6 +26,7 @@
  * @bug 8041663
  */
 
+@Bean
 public class AmbiguityErrorTest {
 
     public interface A { }
@@ -47,11 +48,19 @@ public class AmbiguityErrorTest {
     int count;
 
     class T1Impl implements T1, T2 {
-        public A m(B strategy) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public A m(B strategy) {
             count++;
             return null;
         }
-        public A m(A strategy) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public A m(A strategy) {
             throw new AssertionError("Should not get here.");
         }
     }

@@ -35,6 +35,7 @@ import java.awt.event.*;
 
 import javax.swing.*;
 
+@Bean
 public class RollbackFocusFromAnotherWindowTest extends JFrame
                                                           implements KeyListener
 {
@@ -90,12 +91,18 @@ public class RollbackFocusFromAnotherWindowTest extends JFrame
     }
 
     @Override
-    public void keyTyped(KeyEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void keyTyped(KeyEvent e) {
 
     }
 
     @Override
-    public void keyPressed(KeyEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void keyPressed(KeyEvent e) {
         Frame frame = new Frame();
         frame.setVisible(true);
         try {
@@ -107,7 +114,10 @@ public class RollbackFocusFromAnotherWindowTest extends JFrame
     }
 
     @Override
-    public void keyReleased(KeyEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void keyReleased(KeyEvent e) {
 
     }
 }

@@ -53,6 +53,7 @@ class Host {
     }
 }
 
+@Bean
 public class RedefineMathTesterMethods {
     private static byte[] bytesForHostClass(char replace) throws Throwable {
         return NamedBuffer.bytesForHostClass(replace, "Host$B");

@@ -57,6 +57,7 @@
 // The ResourceBundle code should never find this class, even if the caller looks
 // for "FakeTestResource".  If it does, that's an error.
 
+@Bean
 public class FakeTestResource {
     public FakeTestResource() {
     }

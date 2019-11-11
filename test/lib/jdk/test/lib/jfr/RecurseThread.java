@@ -59,7 +59,11 @@ public class RecurseThread extends Thread {
         return isInRunLoop;
     }
 
-    private long recurseA(int depth) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private long recurseA(int depth) {
         if (depth == 0) {
             return recurseEnd();
         } else {
@@ -67,7 +71,11 @@ public class RecurseThread extends Thread {
         }
     }
 
-    private long recurseB(int depth) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private long recurseB(int depth) {
         if (depth == 0) {
             return recurseEnd();
         } else {

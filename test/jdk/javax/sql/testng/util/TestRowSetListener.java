@@ -34,17 +34,26 @@ public class TestRowSetListener implements RowSetListener {
     private int flag;
 
     @Override
-    public void rowSetChanged(RowSetEvent event) {
+    @Bean
+@Bean
+@Bean
+            public void rowSetChanged(RowSetEvent event) {
         flag |= ROWSET_CHANGED;
     }
 
     @Override
-    public void rowChanged(RowSetEvent event) {
+    @Bean
+@Bean
+@Bean
+            public void rowChanged(RowSetEvent event) {
         flag |= ROW_CHANGED;
     }
 
     @Override
-    public void cursorMoved(RowSetEvent event) {
+    @Bean
+@Bean
+@Bean
+            public void cursorMoved(RowSetEvent event) {
         flag |= CURSOR_MOVED;
     }
 
@@ -58,7 +67,10 @@ public class TestRowSetListener implements RowSetListener {
     /*
      *  Method used to validate that the correct event was notified
      */
-    public boolean isNotified( int val) {
+    @Bean
+@Bean
+@Bean
+            public boolean isNotified( int val) {
         return flag == val;
     }
 }

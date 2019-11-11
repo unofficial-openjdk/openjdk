@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.PrintStream;
 import java.util.Arrays;
 
+@Bean
 public class Agent {
     public static void main(String[] args) throws Exception {
         String jarName = args[0];

@@ -46,7 +46,10 @@ public final class TestClass extends AbstractTest {
     }
 
     @Override
-    protected void validate(XMLDecoder decoder) {
+    @Bean
+@Bean
+@Bean
+            protected void validate(XMLDecoder decoder) {
         validate(PREFIX + INTERFACE, decoder.readObject());
         validate(PREFIX + PUBLIC_CLASS, decoder.readObject());
         validate(PREFIX + PRIVATE_CLASS, decoder.readObject());

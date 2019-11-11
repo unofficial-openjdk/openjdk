@@ -35,6 +35,7 @@
 import java.io.*;
 import java.security.*;
 
+@Bean
 public class SecurityManagerClinit {
     private static class SimplePolicy extends Policy {
         static final Policy DEFAULT_POLICY = Policy.getPolicy();
@@ -47,7 +48,11 @@ public class SecurityManagerClinit {
                 perms.add(permission);
         }
 
-        public boolean implies(ProtectionDomain pd, Permission p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean implies(ProtectionDomain pd, Permission p) {
             return perms.implies(p) || DEFAULT_POLICY.implies(pd, p);
         }
     }

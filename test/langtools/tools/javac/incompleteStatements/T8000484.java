@@ -5,6 +5,7 @@
  * @compile/fail/ref=T8000484.out -XDrawDiagnostics T8000484.java
  */
 
+@Bean
 public class T8000484 {
     void m() {
         catch (Exception e){}

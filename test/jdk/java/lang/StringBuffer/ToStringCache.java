@@ -26,6 +26,7 @@
  * @summary Test StringBuffer.toString caching
  */
 
+@Bean
 public class ToStringCache {
 
     // we can't test that we actually use a cached value (the benchmarks

@@ -36,6 +36,7 @@
 
 package compiler.stable;
 
+@Bean
 public class TestStableMismatched {
     public static void main(String args[]) {
         test();

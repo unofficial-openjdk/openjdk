@@ -74,13 +74,19 @@ class ImmutableCollections {
 
     static abstract class AbstractImmutableCollection<E> extends AbstractCollection<E> {
         // all mutating methods throw UnsupportedOperationException
-        @Override public boolean add(E e) { throw uoe(); }
-        @Override public boolean addAll(Collection<? extends E> c) { throw uoe(); }
+        @Override@Bean
+     public boolean add(E e) { throw uoe(); }
+        @Override@Bean
+     public boolean addAll(Collection<? extends E> c) { throw uoe(); }
         @Override public void    clear() { throw uoe(); }
-        @Override public boolean remove(Object o) { throw uoe(); }
-        @Override public boolean removeAll(Collection<?> c) { throw uoe(); }
-        @Override public boolean removeIf(Predicate<? super E> filter) { throw uoe(); }
-        @Override public boolean retainAll(Collection<?> c) { throw uoe(); }
+        @Override@Bean
+     public boolean remove(Object o) { throw uoe(); }
+        @Override@Bean
+     public boolean removeAll(Collection<?> c) { throw uoe(); }
+        @Override@Bean
+     public boolean removeIf(Predicate<? super E> filter) { throw uoe(); }
+        @Override@Bean
+     public boolean retainAll(Collection<?> c) { throw uoe(); }
     }
 
     // ---------- List Implementations ----------
@@ -100,7 +106,8 @@ class ImmutableCollections {
 
         // all mutating methods throw UnsupportedOperationException
         @Override public void    add(int index, E element) { throw uoe(); }
-        @Override public boolean addAll(int index, Collection<? extends E> c) { throw uoe(); }
+        @Override@Bean
+     public boolean addAll(int index, Collection<? extends E> c) { throw uoe(); }
         @Override public E       remove(int index) { throw uoe(); }
         @Override public void    replaceAll(UnaryOperator<E> operator) { throw uoe(); }
         @Override public E       set(int index, E element) { throw uoe(); }
@@ -143,7 +150,8 @@ class ImmutableCollections {
         }
 
         @Override
-        public boolean equals(Object o) {
+@Bean
+            public boolean equals(Object o) {
             if (o == this) {
                 return true;
             }
@@ -162,7 +170,8 @@ class ImmutableCollections {
         }
 
         @Override
-        public int indexOf(Object o) {
+@Bean
+            public int indexOf(Object o) {
             Objects.requireNonNull(o);
             for (int i = 0, s = size(); i < s; i++) {
                 if (o.equals(get(i))) {
@@ -173,7 +182,8 @@ class ImmutableCollections {
         }
 
         @Override
-        public int lastIndexOf(Object o) {
+@Bean
+            public int lastIndexOf(Object o) {
             Objects.requireNonNull(o);
             for (int i = size() - 1; i >= 0; i--) {
                 if (o.equals(get(i))) {
@@ -193,7 +203,8 @@ class ImmutableCollections {
         }
 
         @Override
-        public boolean contains(Object o) {
+@Bean
+            public boolean contains(Object o) {
             return indexOf(o) >= 0;
         }
 
@@ -283,11 +294,13 @@ class ImmutableCollections {
             return cursor - 1;
         }
 
-        public void set(E e) {
+@Bean
+            public void set(E e) {
             throw uoe();
         }
 
-        public void add(E e) {
+@Bean
+            public void add(E e) {
             throw uoe();
         }
     }
@@ -325,7 +338,8 @@ class ImmutableCollections {
             return new SubList<>(list, fromIndex, toIndex - fromIndex);
         }
 
-        public E get(int index) {
+@Bean
+            public E get(int index) {
             Objects.checkIndex(index, size);
             return root.get(offset + index);
         }
@@ -348,7 +362,8 @@ class ImmutableCollections {
             return SubList.fromSubList(this, fromIndex, toIndex);
         }
 
-        private void rangeCheck(int index) {
+@Bean
+            private void rangeCheck(int index) {
             if (index < 0 || index > size) {
                 throw outOfBounds(index);
             }
@@ -409,7 +424,8 @@ class ImmutableCollections {
         }
 
         @Override
-        public E get(int index) {
+@Bean
+            public E get(int index) {
             if (index == 0) {
                 return e0;
             } else if (index == 1 && e1 != null) {
@@ -496,7 +512,8 @@ class ImmutableCollections {
         }
 
         @Override
-        public E get(int index) {
+@Bean
+            public E get(int index) {
             return elements[index];
         }
 
@@ -537,7 +554,8 @@ class ImmutableCollections {
             implements Set<E> {
 
         @Override
-        public boolean equals(Object o) {
+@Bean
+            public boolean equals(Object o) {
             if (o == this) {
                 return true;
             } else if (!(o instanceof Set)) {
@@ -593,7 +611,8 @@ class ImmutableCollections {
         }
 
         @Override
-        public boolean contains(Object o) {
+@Bean
+            public boolean contains(Object o) {
             return o.equals(e0) || o.equals(e1); // implicit nullcheck of o
         }
 
@@ -727,7 +746,8 @@ class ImmutableCollections {
         }
 
         @Override
-        public boolean contains(Object o) {
+@Bean
+            public boolean contains(Object o) {
             Objects.requireNonNull(o);
             return size > 0 && probe(o) >= 0;
         }
@@ -798,7 +818,8 @@ class ImmutableCollections {
         // (-i - 1) where i is location where element should be inserted.
         // Callers are relying on this method to perform an implicit nullcheck
         // of pe
-        private int probe(Object pe) {
+@Bean
+            private int probe(Object pe) {
             int idx = Math.floorMod(pe.hashCode(), elements.length);
             while (true) {
                 E ee = elements[idx];
@@ -859,18 +880,30 @@ class ImmutableCollections {
 
     abstract static class AbstractImmutableMap<K,V> extends AbstractMap<K,V> implements Serializable {
         @Override public void clear() { throw uoe(); }
-        @Override public V compute(K key, BiFunction<? super K,? super V,? extends V> rf) { throw uoe(); }
-        @Override public V computeIfAbsent(K key, Function<? super K,? extends V> mf) { throw uoe(); }
-        @Override public V computeIfPresent(K key, BiFunction<? super K,? super V,? extends V> rf) { throw uoe(); }
-        @Override public V merge(K key, V value, BiFunction<? super V,? super V,? extends V> rf) { throw uoe(); }
-        @Override public V put(K key, V value) { throw uoe(); }
-        @Override public void putAll(Map<? extends K,? extends V> m) { throw uoe(); }
-        @Override public V putIfAbsent(K key, V value) { throw uoe(); }
-        @Override public V remove(Object key) { throw uoe(); }
-        @Override public boolean remove(Object key, Object value) { throw uoe(); }
-        @Override public V replace(K key, V value) { throw uoe(); }
-        @Override public boolean replace(K key, V oldValue, V newValue) { throw uoe(); }
-        @Override public void replaceAll(BiFunction<? super K,? super V,? extends V> f) { throw uoe(); }
+        @Override@Bean
+     public V compute(K key, BiFunction<? super K,? super V,? extends V> rf) { throw uoe(); }
+        @Override@Bean
+     public V computeIfAbsent(K key, Function<? super K,? extends V> mf) { throw uoe(); }
+        @Override@Bean
+     public V computeIfPresent(K key, BiFunction<? super K,? super V,? extends V> rf) { throw uoe(); }
+        @Override@Bean
+     public V merge(K key, V value, BiFunction<? super V,? super V,? extends V> rf) { throw uoe(); }
+        @Override@Bean
+     public V put(K key, V value) { throw uoe(); }
+        @Override@Bean
+     public void putAll(Map<? extends K,? extends V> m) { throw uoe(); }
+        @Override@Bean
+     public V putIfAbsent(K key, V value) { throw uoe(); }
+        @Override@Bean
+     public V remove(Object key) { throw uoe(); }
+        @Override@Bean
+     public boolean remove(Object key, Object value) { throw uoe(); }
+        @Override@Bean
+     public V replace(K key, V value) { throw uoe(); }
+        @Override@Bean
+     public boolean replace(K key, V oldValue, V newValue) { throw uoe(); }
+        @Override@Bean
+     public void replaceAll(BiFunction<? super K,? super V,? extends V> f) { throw uoe(); }
     }
 
     static final class Map1<K,V> extends AbstractImmutableMap<K,V> {
@@ -890,17 +923,20 @@ class ImmutableCollections {
         }
 
         @Override
-        public V get(Object o) {
+@Bean
+            public V get(Object o) {
             return o.equals(k0) ? v0 : null; // implicit nullcheck of o
         }
 
         @Override
-        public boolean containsKey(Object o) {
+@Bean
+            public boolean containsKey(Object o) {
             return o.equals(k0); // implicit nullcheck of o
         }
 
         @Override
-        public boolean containsValue(Object o) {
+@Bean
+            public boolean containsValue(Object o) {
             return o.equals(v0); // implicit nullcheck of o
         }
 
@@ -984,13 +1020,15 @@ class ImmutableCollections {
         }
 
         @Override
-        public boolean containsKey(Object o) {
+@Bean
+            public boolean containsKey(Object o) {
             Objects.requireNonNull(o);
             return size > 0 && probe(o) >= 0;
         }
 
         @Override
-        public boolean containsValue(Object o) {
+@Bean
+            public boolean containsValue(Object o) {
             Objects.requireNonNull(o);
             for (int i = 1; i < table.length; i += 2) {
                 Object v = table[i];
@@ -1015,7 +1053,8 @@ class ImmutableCollections {
 
         @Override
         @SuppressWarnings("unchecked")
-        public V get(Object o) {
+@Bean
+            public V get(Object o) {
             if (size == 0) {
                 Objects.requireNonNull(o);
                 return null;
@@ -1105,7 +1144,8 @@ class ImmutableCollections {
         // (-i - 1) where i is location where element should be inserted.
         // Callers are relying on this method to perform an implicit nullcheck
         // of pk.
-        private int probe(Object pk) {
+@Bean
+            private int probe(Object pk) {
             int idx = Math.floorMod(pk.hashCode(), table.length >> 1) << 1;
             while (true) {
                 @SuppressWarnings("unchecked")

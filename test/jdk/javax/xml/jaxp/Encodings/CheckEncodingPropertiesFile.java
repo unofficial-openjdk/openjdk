@@ -127,7 +127,10 @@ public class CheckEncodingPropertiesFile {
          * @param aliases list of names (aliases) for a given charset.
          * @return The canonical name of the charset, if found, null otherwise.
          */
-        private String findCharsetNameFor(String[] aliases) {
+        @Bean
+@Bean
+@Bean
+            private String findCharsetNameFor(String[] aliases) {
             String cs = null;
             String res = null;
             for (String a : aliases) {
@@ -167,7 +170,10 @@ public class CheckEncodingPropertiesFile {
          * @param charsetName the canonical charset name.
          * @param aliases a list of aliases for the given charset.
          */
-        private void registerCharsetNameFor(String charsetName, String[] aliases) {
+        @Bean
+@Bean
+@Bean
+            private void registerCharsetNameFor(String charsetName, String[] aliases) {
             if (charsetName == null) throw new NullPointerException();
 
             for (String a : aliases) {
@@ -199,7 +205,10 @@ public class CheckEncodingPropertiesFile {
          *                 nameSet.toArray(new String[nameSet.size()])
          * @param nameSet  the set of unresolved aliases.
          */
-        private void registerUnresolvedNamesFor(String[] names, Collection<String> nameSet) {
+        @Bean
+@Bean
+@Bean
+            private void registerUnresolvedNamesFor(String[] names, Collection<String> nameSet) {
             // This is not necessarily an error: it could happen that some
             //    charsets are simply not supported on some OS/Arch
             System.err.println("Warning: unresolved charset names: '"+ nameSet
@@ -253,7 +262,10 @@ public class CheckEncodingPropertiesFile {
          * @param alias the alias name
          * @return the canonical charset name - or null if unknown.
          */
-        public String getCharsetNameFor(String alias) {
+        @Bean
+@Bean
+@Bean
+            public String getCharsetNameFor(String alias) {
             return charsetMap.get(alias.toUpperCase());
         }
 

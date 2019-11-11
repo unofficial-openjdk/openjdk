@@ -41,6 +41,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+@Bean
 public class GetObjectName {
     private static boolean failed = false;
     public static void main(String[] args) throws Exception {

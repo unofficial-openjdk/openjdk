@@ -63,6 +63,7 @@ import javax.swing.border.EmptyBorder;
  * demo.
  */
 @SuppressWarnings("serial")
+@Bean
 public class RunWindow extends JPanel implements Runnable, ActionListener {
     private final DemoInstVarsAccessor demoInstVars;
     private final JButton runB;
@@ -137,7 +138,11 @@ public class RunWindow extends JPanel implements Runnable, ActionListener {
     }
 
     @Override
-    public void actionPerformed(ActionEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
         if (e.getSource().equals(printCB)) {
             demoInstVars.getPrintCB().setSelected(printCB.isSelected());
         } else if (e.getSource().equals(delayTextField)) {
@@ -192,7 +197,11 @@ public class RunWindow extends JPanel implements Runnable, ActionListener {
         }
     }
 
-    private void printDemo(final DemoGroup dg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void printDemo(final DemoGroup dg) {
         Runnable printDemoRunnable = new Runnable() {
 
             @Override
@@ -381,7 +390,11 @@ public class RunWindow extends JPanel implements Runnable, ActionListener {
             return delay;
         }
 
-        public void setDelay(int delay) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setDelay(int delay) {
             this.delay = delay;
         }
 
@@ -389,7 +402,11 @@ public class RunWindow extends JPanel implements Runnable, ActionListener {
             return numRuns;
         }
 
-        public void setNumRuns(int numRuns) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setNumRuns(int numRuns) {
             this.numRuns = numRuns;
         }
 
@@ -397,7 +414,11 @@ public class RunWindow extends JPanel implements Runnable, ActionListener {
             return exit;
         }
 
-        public void setExit(boolean exit) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setExit(boolean exit) {
             this.exit = exit;
         }
 
@@ -405,7 +426,11 @@ public class RunWindow extends JPanel implements Runnable, ActionListener {
             return zoomCBIsSelected;
         }
 
-        public void setZoomCBSelected(boolean b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setZoomCBSelected(boolean b) {
             zoomCBIsSelected = b;
         }
 
@@ -413,7 +438,11 @@ public class RunWindow extends JPanel implements Runnable, ActionListener {
             return printCBIsSelected;
         }
 
-        public void setPrintCBIsSelected(boolean b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setPrintCBIsSelected(boolean b) {
             printCBIsSelected = b;
         }
 
@@ -421,7 +450,11 @@ public class RunWindow extends JPanel implements Runnable, ActionListener {
             return buffersFlag;
         }
 
-        public void setBuffersFlag(boolean buffersFlag) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setBuffersFlag(boolean buffersFlag) {
             this.buffersFlag = buffersFlag;
         }
 
@@ -429,7 +462,11 @@ public class RunWindow extends JPanel implements Runnable, ActionListener {
             return bufBeg;
         }
 
-        public void setBufBeg(int bufBeg) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setBufBeg(int bufBeg) {
             this.bufBeg = bufBeg;
         }
 
@@ -437,7 +474,11 @@ public class RunWindow extends JPanel implements Runnable, ActionListener {
             return bufEnd;
         }
 
-        public void setBufEnd(int bufEnd) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setBufEnd(int bufEnd) {
             this.bufEnd = bufEnd;
         }
     }

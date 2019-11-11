@@ -42,6 +42,7 @@ import sun.security.jgss.GSSUtil;
 import sun.security.krb5.Config;
 import sun.security.krb5.EncryptedData;
 
+@Bean
 public class KrbCredSubKey {
 
     public static void main(String[] args) throws Exception {

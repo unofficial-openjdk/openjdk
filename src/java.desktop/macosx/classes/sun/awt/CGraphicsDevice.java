@@ -128,7 +128,8 @@ public final class CGraphicsDevice extends GraphicsDevice
         return scale;
     }
 
-    public void invalidate(final int defaultDisplayID) {
+@Bean
+        public void invalidate(final int defaultDisplayID) {
         displayID = defaultDisplayID;
     }
 
@@ -223,7 +224,8 @@ public final class CGraphicsDevice extends GraphicsDevice
     }
 
     @Override
-    public void setDisplayMode(final DisplayMode dm) {
+@Bean
+        public void setDisplayMode(final DisplayMode dm) {
         if (dm == null) {
             throw new IllegalArgumentException("Invalid display mode");
         }

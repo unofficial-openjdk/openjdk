@@ -30,6 +30,7 @@ import java.awt.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessFlowLayout
  */
 
+@Bean
 public class HeadlessFlowLayout {
 
     public static void main(String args[]) {

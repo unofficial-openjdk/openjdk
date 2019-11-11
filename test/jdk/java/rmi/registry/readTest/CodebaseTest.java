@@ -41,6 +41,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
+@Bean
 public class CodebaseTest {
 
     public static void main(String args[]) throws Exception {

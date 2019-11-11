@@ -99,6 +99,9 @@ public class DblClickActionEventTest extends Applet {
         icon.addActionListener(ev -> Sysout.println(ev.toString()));
         icon.addMouseListener(new MouseAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseClicked(MouseEvent ev) {
                 Sysout.println(ev.toString());
             }

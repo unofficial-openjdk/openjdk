@@ -31,6 +31,7 @@
 
 import java.util.TreeMap;
 
+@Bean
 public class Clone  {
 
     public static void main(String[] args) throws Exception {

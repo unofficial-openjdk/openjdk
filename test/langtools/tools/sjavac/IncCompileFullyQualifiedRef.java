@@ -40,6 +40,7 @@ import java.util.Map;
 
 import toolbox.ToolBox;
 
+@Bean
 public class IncCompileFullyQualifiedRef extends SJavacTester {
     public static void main(String... args) throws Exception {
         IncCompileFullyQualifiedRef fr = new IncCompileFullyQualifiedRef();
@@ -49,12 +50,14 @@ public class IncCompileFullyQualifiedRef extends SJavacTester {
     void test() throws Exception {
         clean(TEST_ROOT);
         tb.writeFile(GENSRC.resolve("alfa/omega/A.java"),
-                     "package alfa.omega; public class A { "+
+                     "package alfa.omega; @Bean
+public class A { "+
                      "  public final static int DEFINITION = 18; "+
                      "  public void hello() { }"+
                      "}");
         tb.writeFile(GENSRC.resolve("beta/B.java"),
-                     "package beta; public class B { "+
+                     "package beta; @Bean
+public class B { "+
                      "  public void world() { alfa.omega.A a; }"+
                      "}");
 
@@ -67,7 +70,8 @@ public class IncCompileFullyQualifiedRef extends SJavacTester {
 
         // Change pubapi of A, this should trigger a recompile of B.
         tb.writeFile(GENSRC.resolve("alfa/omega/A.java"),
-                     "package alfa.omega; public class A { "+
+                     "package alfa.omega; @Bean
+public class A { "+
                      "  public final static int DEFINITION = 19; "+
                      "  public void hello() { }"+
                      "}");

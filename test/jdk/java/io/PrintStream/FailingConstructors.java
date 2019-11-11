@@ -38,6 +38,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+@Bean
 public class FailingConstructors {
     static final String fileName = "FailingConstructorsTest";
     static final String UNSUPPORTED_CHARSET = "unknownCharset";

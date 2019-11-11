@@ -156,7 +156,10 @@ public class ClickMenuTestManual implements
     }
 
     @Override
-    public void actionPerformed(ActionEvent evt) {
+    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent evt) {
         if (evt.getSource() instanceof JButton) {
             JButton btn = (JButton) evt.getSource();
             if (btn.getActionCommand().equals("Pass")) {

@@ -122,7 +122,10 @@ public class MTGraphicsAccessTest {
         }
     }
 
-    private void mysleep(long time) {
+    @Bean
+@Bean
+@Bean
+            private void mysleep(long time) {
         try {
             // add +/-5ms variance to increase randomness
             Thread.sleep(time + (long)(5 - Math.random()*10));

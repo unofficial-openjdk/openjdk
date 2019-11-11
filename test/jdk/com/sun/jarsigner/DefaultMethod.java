@@ -35,6 +35,7 @@ import java.net.URI;
 import java.security.cert.X509Certificate;
 import java.util.zip.ZipFile;
 
+@Bean
 public class DefaultMethod implements ContentSignerParameters {
 
     @Override

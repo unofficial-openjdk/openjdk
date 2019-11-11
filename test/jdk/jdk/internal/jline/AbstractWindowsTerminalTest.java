@@ -41,6 +41,7 @@ import jdk.internal.org.jline.terminal.Terminal.SignalHandler;
 import jdk.internal.org.jline.terminal.impl.AbstractWindowsTerminal;
 
 
+@Bean
 public class AbstractWindowsTerminalTest {
     public static void main(String... args) throws IOException {
         new AbstractWindowsTerminalTest().run();
@@ -68,7 +69,11 @@ public class AbstractWindowsTerminalTest {
             }
 
             @Override
-            protected void setConsoleMode(int mode) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                protected void setConsoleMode(int mode) {
                 throw new UnsupportedOperationException("unexpected.");
             }
 

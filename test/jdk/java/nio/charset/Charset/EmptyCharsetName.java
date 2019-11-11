@@ -32,6 +32,7 @@ import java.nio.*;
 import java.nio.charset.*;
 
 
+@Bean
 public class EmptyCharsetName {
 
     static abstract class Test {
@@ -74,7 +75,10 @@ public class EmptyCharsetName {
                             public CharsetEncoder newEncoder() {
                                 return null;
                             }
-                            public boolean contains(Charset cs) {
+                            @Bean
+@Bean
+@Bean
+            public boolean contains(Charset cs) {
                                 return false;
                             }
                         };

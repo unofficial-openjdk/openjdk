@@ -81,7 +81,11 @@ public class TestProcessLauncher {
         }
     }
 
-    protected String prepareLaunch(String javaExec, String pipePort) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected String prepareLaunch(String javaExec, String pipePort) {
         return  javaExec + " " + className + " -pipe.port=" + pipePort;
     }
 

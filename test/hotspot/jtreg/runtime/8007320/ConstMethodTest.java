@@ -73,6 +73,7 @@ class OkException extends RuntimeException {};
 
 
 @MyAnnotation(name="someName", value = "Hello World")
+@Bean
 public class ConstMethodTest {
     public @TypeAnno("constructor") ConstMethodTest() { }
 

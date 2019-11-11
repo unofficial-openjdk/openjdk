@@ -36,6 +36,7 @@ package compiler.arguments;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class CheckCICompilerCount {
     private static final String[][] NON_TIERED_ARGUMENTS = {
         {

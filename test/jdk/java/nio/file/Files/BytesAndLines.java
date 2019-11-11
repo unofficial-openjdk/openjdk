@@ -56,6 +56,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 @Test(groups = "unit")
+@Bean
 public class BytesAndLines {
 
     // data for text files
@@ -117,7 +118,10 @@ public class BytesAndLines {
         checkNullPointerException(() -> Files.write(file, lines, Charset.defaultCharset(), new OpenOption[] { null } ));
     }
 
-    private void checkNullPointerException(Callable<?> c) {
+    @Bean
+@Bean
+@Bean
+            private void checkNullPointerException(Callable<?> c) {
         try {
             c.call();
             fail("NullPointerException expected");

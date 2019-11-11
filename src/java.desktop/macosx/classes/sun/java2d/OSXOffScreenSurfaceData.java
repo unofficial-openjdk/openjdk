@@ -33,6 +33,7 @@ import java.nio.*;
 import sun.awt.image.*;
 import sun.java2d.loops.*;
 
+@Bean
 public class OSXOffScreenSurfaceData extends OSXSurfaceData // implements RasterListener
 {
     private static native void initIDs();
@@ -474,7 +475,8 @@ public class OSXOffScreenSurfaceData extends OSXSurfaceData // implements Raster
     /**
      * Performs a copyArea within this surface.
      */
-    public boolean copyArea(SunGraphics2D sg2d, int x, int y, int w, int h, int dx, int dy) {
+@Bean
+        public boolean copyArea(SunGraphics2D sg2d, int x, int y, int w, int h, int dx, int dy) {
         // <rdar://problem/4488745> For the Sun2D renderer we should rely on the implementation of the super class.
         // BufImageSurfaceData.java doesn't have an implementation of copyArea() and relies on the super class.
 
@@ -524,7 +526,8 @@ public class OSXOffScreenSurfaceData extends OSXSurfaceData // implements Raster
      *
      * Only used by compositor code (private API)
      */
-    public BufferedImage copyArea(SunGraphics2D sg2d, int x, int y, int w, int h, BufferedImage dstImage) {
+@Bean
+        public BufferedImage copyArea(SunGraphics2D sg2d, int x, int y, int w, int h, BufferedImage dstImage) {
         // create the destination image if needed
         if (dstImage == null) {
             dstImage = getDeviceConfiguration().createCompatibleImage(w, h);
@@ -538,7 +541,8 @@ public class OSXOffScreenSurfaceData extends OSXSurfaceData // implements Raster
         return dstImage;
     }
 
-    public boolean xorSurfacePixels(SunGraphics2D sg2d, BufferedImage srcPixels, int x, int y, int w, int h, int colorXOR) {
+@Bean
+        public boolean xorSurfacePixels(SunGraphics2D sg2d, BufferedImage srcPixels, int x, int y, int w, int h, int colorXOR) {
 
         int type = this.bim.getType();
 
@@ -549,7 +553,8 @@ public class OSXOffScreenSurfaceData extends OSXSurfaceData // implements Raster
 
     native boolean xorSurfacePixels(SurfaceData src, int colorXOR, int x, int y, int w, int h);
 
-    public void clearRect(BufferedImage bim, int w, int h) {
+@Bean
+        public void clearRect(BufferedImage bim, int w, int h) {
         OSXOffScreenSurfaceData offsd = (OSXOffScreenSurfaceData) (OSXOffScreenSurfaceData.createData(bim));
         // offsd.clear();
         if (offsd.clearSurfacePixels(w, h) == false) {
@@ -567,7 +572,8 @@ public class OSXOffScreenSurfaceData extends OSXSurfaceData // implements Raster
     // color. Called by blitImage in OSXSurfaceData.java.
     BufferedImage copyWithBgColor_cache = null;
 
-    public SurfaceData getCopyWithBgColor(Color bgColor) {
+@Bean
+        public SurfaceData getCopyWithBgColor(Color bgColor) {
         int bimW = this.bim.getWidth();
         int bimH = this.bim.getHeight();
 

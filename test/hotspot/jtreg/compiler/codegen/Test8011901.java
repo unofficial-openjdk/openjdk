@@ -36,6 +36,7 @@ import jdk.internal.misc.Unsafe;
 
 import java.lang.reflect.Field;
 
+@Bean
 public class Test8011901 {
 
     private long ctl;

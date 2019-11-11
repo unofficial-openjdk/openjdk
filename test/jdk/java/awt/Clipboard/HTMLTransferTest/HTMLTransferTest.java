@@ -34,6 +34,7 @@ import java.awt.*;
 import java.awt.datatransfer.*;
 import java.io.*;
 
+@Bean
 public class HTMLTransferTest {
     public static final int CODE_NOT_RETURNED = 100;
     public static final int CODE_CONSUMER_TEST_FAILED = 101;
@@ -166,7 +167,10 @@ class SyncMessage implements Serializable {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(Object obj) {
         return this.msg.equals(((SyncMessage)obj).msg);
     }
 
@@ -350,7 +354,10 @@ class THTMLProducer extends HTMLTransferer {
         );
     }
 
-    public void lostOwnership(Clipboard cb, Transferable contents) {
+    @Bean
+@Bean
+@Bean
+            public void lostOwnership(Clipboard cb, Transferable contents) {
         System.err.println("{PRODUCER: lost clipboard ownership");
         Transferable t = getClipboardContents(null);
         if (t.isDataFlavorSupported(HTMLTransferTest.SyncFlavor)) {
@@ -426,7 +433,10 @@ class THTMLConsumer extends HTMLTransferer
     private static boolean failed;
     int fi = 0; // next format index
 
-    public void lostOwnership(Clipboard cb, Transferable contents) {
+    @Bean
+@Bean
+@Bean
+            public void lostOwnership(Clipboard cb, Transferable contents) {
         System.err.println("{CONSUMER: lost clipboard ownership");
         Transferable t = getClipboardContents(null);
         boolean bContinue = true;
@@ -606,7 +616,10 @@ class HTMLSelection implements Transferable {
      *   is not one of the above flavors
      * @throws NullPointerException if flavor is <code>null</code>
      */
-    public boolean isDataFlavorSupported(DataFlavor flavor) {
+    @Bean
+@Bean
+@Bean
+            public boolean isDataFlavorSupported(DataFlavor flavor) {
         System.err.println("Have:" + flavor + " Can:" + m_flavor);
         if(flavor.equals(m_flavor))
             return true;

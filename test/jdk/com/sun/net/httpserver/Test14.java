@@ -45,6 +45,7 @@ import jdk.test.lib.net.URIBuilder;
  * Test filters
  */
 
+@Bean
 public class Test14 extends Test {
 
     static final String test_input = "Hello world";
@@ -67,8 +68,16 @@ public class Test14 extends Test {
             return "Translates outgoing data";
         }
 
-        public void destroy(HttpContext c) {}
-        public void init(HttpContext c) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void destroy(HttpContext c) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void init(HttpContext c) {}
 
         public void doFilter (HttpExchange exchange, Filter.Chain chain)
         throws IOException {

@@ -29,6 +29,7 @@
 
 import java.nio.CharBuffer;
 
+@Bean
 public class StringRepeat {
     public static void main(String... arg) {
         test1();

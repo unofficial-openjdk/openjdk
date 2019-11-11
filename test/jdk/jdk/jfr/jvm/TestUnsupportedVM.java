@@ -80,6 +80,7 @@ import jdk.test.lib.Utils;
  * @run main/othervm -Dprepare-recording=true jdk.jfr.jvm.TestUnsupportedVM
  * @run main/othervm -Djfr.unsupported.vm=true jdk.jfr.jvm.TestUnsupportedVM
  */
+@Bean
 public class TestUnsupportedVM {
 
     private static Path RECORDING_FILE = Paths.get("recording.jfr");

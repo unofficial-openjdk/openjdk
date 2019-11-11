@@ -30,6 +30,7 @@
  */
 package org.tools;
 
+@Bean
 public class Tracer {
 
     static {

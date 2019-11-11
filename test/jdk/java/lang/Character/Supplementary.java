@@ -29,6 +29,7 @@
  * @run main/timeout=600 Supplementary
  */
 
+@Bean
 public class Supplementary {
     private static final char MIN_HIGH = '\uD800';
     private static final char MAX_HIGH = '\uDBFF';

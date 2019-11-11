@@ -99,7 +99,11 @@ public abstract class MetaspaceBaseGC {
     }
 
 
-    protected void configure(String args[]) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void configure(String args[]) {
         vmArgs.addAll(ManagementFactory.getRuntimeMXBean().getInputArguments());
         useLargepages = PAGE_SIZE > 1_000_000 && !vmArgs.contains("-XX:-UseLargePagesInMetaspace");
 
@@ -127,7 +131,11 @@ public abstract class MetaspaceBaseGC {
      * @param times how many classes to load
      * @param keepRefs true, if references to created classes should be stored
      */
-    protected void loadNewClasses(int times, boolean keepRefs) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void loadNewClasses(int times, boolean keepRefs) {
         for (int i = 0; i < times; i++) {
             try {
                 String jarUrl = "file:" + counter + ".jar";
@@ -226,11 +234,19 @@ public abstract class MetaspaceBaseGC {
      * Prints amounts of used and committed metaspace preceeded by the message
      * @param mesg a message to printed prior usages
      */
-    protected void printMemoryUsage(String mesg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void printMemoryUsage(String mesg) {
         MemoryUsage mu = pool.getUsage();
         printMemoryUsage(mesg, mu.getUsed(), mu.getCommitted());
     }
-    protected void printMemoryUsage(String mesg, long v1, long v2) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void printMemoryUsage(String mesg, long v1, long v2) {
         System.out.println(mesg + ": " + bytes2k(v1) + "   :   " + bytes2k(v2));
     }
     protected String bytes2k(long v) {

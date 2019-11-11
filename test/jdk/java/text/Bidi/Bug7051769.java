@@ -34,6 +34,7 @@ import java.awt.font.*;
 import java.text.*;
 import java.util.*;
 
+@Bean
 public class Bug7051769 {
 
     static {

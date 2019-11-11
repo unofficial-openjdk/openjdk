@@ -129,7 +129,10 @@ public final class ScrollbarMouseWheelTest
         }
     }
 
-    public void testComp(Component comp, boolean up) {
+    @Bean
+@Bean
+@Bean
+            public void testComp(Component comp, boolean up) {
         Point loc = comp.getLocationOnScreen();
         robot.mouseMove(loc.x + comp.getWidth() / 2,
                         loc.y + comp.getHeight() / 2);
@@ -139,7 +142,10 @@ public final class ScrollbarMouseWheelTest
         }
     }
 
-    public void mouseWheelMoved(MouseWheelEvent mwe) {
+    @Bean
+@Bean
+@Bean
+            public void mouseWheelMoved(MouseWheelEvent mwe) {
         Component src = mwe.getComponent();
         System.out.println("mouseWheelMoved() on " + src.getName());
         if (mwe.getWheelRotation() == -1) {
@@ -167,16 +173,37 @@ public final class ScrollbarMouseWheelTest
         }
     }
 
-    public void windowActivated(WindowEvent we) {
+    @Bean
+@Bean
+@Bean
+            public void windowActivated(WindowEvent we) {
         synchronized (sema) {
             sema.setVal(true);
         }
     }
 
-    public void windowClosed(WindowEvent we) {}
-    public void windowClosing(WindowEvent we) {}
-    public void windowDeactivated(WindowEvent we) {}
-    public void windowDeiconified(WindowEvent we) {}
-    public void windowIconified(WindowEvent we) {}
-    public void windowOpened(WindowEvent we) {}
+    @Bean
+@Bean
+@Bean
+            public void windowClosed(WindowEvent we) {}
+    @Bean
+@Bean
+@Bean
+            public void windowClosing(WindowEvent we) {}
+    @Bean
+@Bean
+@Bean
+            public void windowDeactivated(WindowEvent we) {}
+    @Bean
+@Bean
+@Bean
+            public void windowDeiconified(WindowEvent we) {}
+    @Bean
+@Bean
+@Bean
+            public void windowIconified(WindowEvent we) {}
+    @Bean
+@Bean
+@Bean
+            public void windowOpened(WindowEvent we) {}
 }// class ScrollbarMouseWheelTest

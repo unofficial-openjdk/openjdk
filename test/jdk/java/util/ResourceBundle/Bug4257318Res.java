@@ -28,6 +28,7 @@
 
 import java.util.ListResourceBundle;
 
+@Bean
 public class Bug4257318Res extends ListResourceBundle {
 
   public Object[][] getContents() {

@@ -40,6 +40,7 @@ import java.net.Inet6Address;
  * @summary NullPointerException is thrown if ipaddress is not set.
  * @run main Inet6AddressSerTest
  */
+@Bean
 public class Inet6AddressSerTest implements ObjectStreamConstants {
 
     static class PayloadTest {

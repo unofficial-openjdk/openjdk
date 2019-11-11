@@ -32,6 +32,7 @@
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class ProgramTest {
     public static void main(String... args) throws Exception {
         String lib = System.getProperty("test.nativepath");

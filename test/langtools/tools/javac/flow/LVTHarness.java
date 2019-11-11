@@ -69,6 +69,7 @@ import static javax.tools.StandardLocation.*;
 import static com.sun.tools.classfile.LocalVariableTable_attribute.Entry;
 import static javax.tools.JavaFileObject.Kind.SOURCE;
 
+@Bean
 public class LVTHarness {
 
     static int nerrors = 0;
@@ -206,7 +207,11 @@ public class LVTHarness {
         return sb.toString();
     }
 
-    protected void error(List<String> infoFromLVT, List<String> infoFromRanges, String methodName) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void error(List<String> infoFromLVT, List<String> infoFromRanges, String methodName) {
         nerrors++;
         System.err.printf("Error occurred while checking file: %s\n", jfo.getName());
         System.err.printf("at method: %s\n", methodName);
@@ -224,7 +229,11 @@ public class LVTHarness {
         }
     }
 
-    protected void error(String msg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void error(String msg) {
         nerrors++;
         System.err.printf("Error occurred while checking file: %s\nreason: %s\n",
                 jfo.getName(), msg);
@@ -263,7 +272,11 @@ public class LVTHarness {
         }
 
         @Override
-        public boolean equals(Object obj) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object obj) {
             if (obj instanceof ElementKey) {
                 ElementKey other = (ElementKey)obj;
                 return other.key.equals(key);

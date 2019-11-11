@@ -31,6 +31,7 @@
 import java.math.*;
 import static java.math.BigInteger.*;
 
+@Bean
 public class OperatorNpeTests {
 
     public static void main(String... argv) {

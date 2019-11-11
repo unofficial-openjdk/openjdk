@@ -38,6 +38,7 @@ import javax.management.*;
 import javax.management.remote.*;
 import javax.naming.NoPermissionException;
 
+@Bean
 public class NotificationEmitterProxy {
 
     public static class Counter {
@@ -190,7 +191,11 @@ public class NotificationEmitterProxy {
         public static final String NOTIF_TYPE = "simple.equals";
         private static long seq=0;
         private static synchronized long seq() { return ++seq; };
-        public String equals(String x) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String equals(String x) {
             sendNotification(new Notification(NOTIF_TYPE,this,seq(),x));
             return x;
         }

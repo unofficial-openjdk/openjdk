@@ -12,6 +12,7 @@
  *
  * @uses NotFound
  */
+@Bean
 public class UsesTest {
     /**
      * Invalid use of uses in field documentation
@@ -25,5 +26,6 @@ public class UsesTest {
      *
      * @uses NotFound Test description.
      */
-    public class InvalidParam { }
+    @Bean
+public class InvalidParam { }
 }

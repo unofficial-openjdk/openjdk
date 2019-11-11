@@ -36,6 +36,7 @@ import org.testng.annotations.Test;
  * as the existing method that takes a charset name.
  * @run testng EncodingTest
  */
+@Bean
 public class EncodingTest {
     /*
      * DataProvider for the toString method test. Provides the following fields:

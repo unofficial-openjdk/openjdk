@@ -34,6 +34,7 @@
 
 import javax.management.MBeanPermission;
 
+@Bean
 public class MBeanPermissionTest {
     public static void main(String[] args) {
         int error = 0;

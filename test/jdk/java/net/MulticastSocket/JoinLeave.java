@@ -40,6 +40,7 @@ import jdk.test.lib.net.IPSupport;
  * @run main JoinLeave
  * @run main/othervm -Djava.net.preferIPv4Stack=true JoinLeave
  */
+@Bean
 public class JoinLeave {
 
     public static void main(String args[]) throws IOException {

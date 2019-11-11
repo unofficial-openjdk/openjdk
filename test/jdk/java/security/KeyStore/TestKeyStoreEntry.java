@@ -40,6 +40,7 @@ import javax.crypto.SecretKey;
  * @author Yu-Ching Valerie PENG
  */
 
+@Bean
 public class TestKeyStoreEntry {
     private static final char[] PASSWDK = new char[] {
             't', 'e', 'r', 'c', 'e', 's'

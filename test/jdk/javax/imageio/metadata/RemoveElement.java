@@ -33,6 +33,7 @@ import javax.imageio.metadata.IIOMetadataFormatImpl;
 import javax.imageio.metadata.IIOMetadataFormat;
 import javax.imageio.ImageTypeSpecifier;
 
+@Bean
 public class RemoveElement {
 
     public static void main(String[] args) {
@@ -73,7 +74,11 @@ public class RemoveElement {
             super.addElement(elementName, parentName, childPolicy);
         }
 
-        public void removeElement(String elementName) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removeElement(String elementName) {
             super.removeElement(elementName);
         }
 

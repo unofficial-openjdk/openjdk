@@ -35,6 +35,7 @@
 import java.net.*;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class GetLocalAddress implements Runnable {
     static ServerSocket ss;
     static InetAddress addr;

@@ -53,6 +53,7 @@ import java.util.*;
  * @run main/othervm TestInstanceKlassSize
  */
 
+@Bean
 public class TestInstanceKlassSize {
 
     private static String getJcmdInstanceKlassSize(OutputAnalyzer output,

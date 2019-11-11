@@ -65,6 +65,7 @@ import static java.net.http.HttpClient.Version.HTTP_2;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+@Bean
 public class ContinuationFrameTest {
 
     SSLContext sslContext;

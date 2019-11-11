@@ -59,7 +59,11 @@ public class FileJcmdExecutor extends PidJcmdExecutor {
                 "-f", cmdFile.getAbsolutePath());
     }
 
-    private void writeCommandToTemporaryFile(String cmd, File cmdFile) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void writeCommandToTemporaryFile(String cmd, File cmdFile) {
         try (PrintWriter pw = new PrintWriter(cmdFile)) {
             pw.println(cmd);
         } catch (IOException e) {

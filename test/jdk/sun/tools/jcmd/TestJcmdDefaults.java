@@ -42,6 +42,7 @@ import jdk.test.lib.Utils;
  *
  * @run main TestJcmdDefaults
  */
+@Bean
 public class TestJcmdDefaults {
 
     private static final String TEST_SRC = System.getProperty("test.src").trim();

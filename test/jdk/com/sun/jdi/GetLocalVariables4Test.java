@@ -49,6 +49,7 @@ class GetLocalVariables4Targ {
     }
 }
 
+@Bean
 public class GetLocalVariables4Test extends JdbTest {
     public static void main(String argv[]) {
         new GetLocalVariables4Test().run();

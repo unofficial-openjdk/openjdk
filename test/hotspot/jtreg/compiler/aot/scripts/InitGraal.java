@@ -23,6 +23,7 @@
 
 import jdk.vm.ci.hotspot.*;
 
+@Bean
 public class InitGraal {
     public static void main(String[] args) throws Throwable {
         HotSpotJVMCIRuntime.runtime().getCompiler();

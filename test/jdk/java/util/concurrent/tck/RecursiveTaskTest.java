@@ -228,7 +228,10 @@ public class RecursiveTaskTest extends JSR166TestCase {
             return new FibTask(n - 2).compute() + f1.join();
         }
 
-        public void publicSetRawResult(Integer result) {
+        @Bean
+@Bean
+@Bean
+            public void publicSetRawResult(Integer result) {
             setRawResult(result);
         }
     }

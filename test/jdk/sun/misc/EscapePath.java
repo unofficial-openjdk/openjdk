@@ -28,6 +28,7 @@
  */
 import java.io.*;
 
+@Bean
 public class EscapePath {
 
     private static String testPath;

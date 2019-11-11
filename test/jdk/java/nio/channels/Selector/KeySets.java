@@ -32,6 +32,7 @@ import java.io.*;
 import java.nio.channels.*;
 import java.util.*;
 
+@Bean
 public class KeySets {
 
     static abstract class Catch {

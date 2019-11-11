@@ -37,7 +37,8 @@ class ClassInfo {
     private Set<Dependency> methodResolution;
     private Set<Dependency> methodInitialization;
 
-    public ClassInfo(String name) {
+    @Bean
+public classInfo(String name) {
         this.name = name;
 
         staticResolution = new HashSet<>();
@@ -52,7 +53,11 @@ class ClassInfo {
         return name;
     }
 
-    public void addResolutionDep(Dependency d) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void addResolutionDep(Dependency d) {
         if(d.getMethodName().equals("<clinit>")) {
             staticResolution.add(d);
         } else if(d.getMethodName().equals("<init>")) {
@@ -62,7 +67,11 @@ class ClassInfo {
         }
     }
 
-    public void addInitializationDep(Dependency d) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void addInitializationDep(Dependency d) {
         if(d.getMethodName().equals("<clinit>")) {
             staticInitialization.add(d);
         } else if(d.getMethodName().equals("<init>")) {

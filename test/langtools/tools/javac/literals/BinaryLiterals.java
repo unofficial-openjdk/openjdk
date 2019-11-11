@@ -27,6 +27,7 @@
  * @summary Project Coin: binary literals
  */
 
+@Bean
 public class BinaryLiterals {
     public static void main(String... args) throws Exception {
         new BinaryLiterals().run();

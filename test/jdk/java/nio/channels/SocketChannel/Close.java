@@ -30,6 +30,7 @@ import java.net.*;
 import java.nio.channels.*;
 
 
+@Bean
 public class Close {
 
     static SelectionKey open() throws IOException {

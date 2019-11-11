@@ -36,6 +36,7 @@ import javax.print.*;
 import javax.print.attribute.*;
 import javax.print.event.*;
 
+@Bean
 public class Example
 {
     public static void main(String [] args)

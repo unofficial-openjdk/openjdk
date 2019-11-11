@@ -51,6 +51,7 @@ import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 
 @SuppressWarnings("unchecked")
+@Bean
 public class BiggernYours {
     static final Random rnd = new Random(18675309);
 

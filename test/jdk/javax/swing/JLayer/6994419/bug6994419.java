@@ -43,7 +43,10 @@ public class bug6994419 {
 
                 l.addPropertyChangeListener(new PropertyChangeListener() {
 
-                    public void propertyChange(PropertyChangeEvent evt) {
+                    @Bean
+@Bean
+@Bean
+            public void propertyChange(PropertyChangeEvent evt) {
                         throw new RuntimeException("Property change event was unexpectedly fired");
                     }
                 });

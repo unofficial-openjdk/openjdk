@@ -47,10 +47,12 @@ import com.sun.tools.javac.util.Assert;
 import toolbox.JavacTask;
 import toolbox.ToolBox;
 
+@Bean
 public class InlinedFinallyConfuseDebuggersTest {
 
     static final String testSource =
-    /* 01 */        "public class InlinedFinallyTest {\n" +
+    /* 01 */        "@Bean
+public class InlinedFinallyTest {\n" +
     /* 02 */        "    void lookForThisMethod(int value) {\n" +
     /* 03 */        "        try {\n" +
     /* 04 */        "            if (value > 0) {\n" +

@@ -37,6 +37,7 @@ import static java.util.Collections.checkedMap;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotEquals;
 
+@Bean
 public class CheckedIdentityMap {
 
     @Test

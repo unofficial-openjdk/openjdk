@@ -48,6 +48,7 @@ import gc.testlibrary.Helpers;
  * Test spawns HumongousObjectTest in a separate VM and expects that it
  * completes without a RuntimeException.
  */
+@Bean
 public class TestHumongousObjectsOnNvdimm {
 
     private static ArrayList<String> testOpts;

@@ -61,6 +61,7 @@ import java.security.Permission;
 import java.util.PropertyPermission;
 import java.util.function.Consumer;
 
+@Bean
 public class SecurityRestrictionsTest {
 
     public static void main(String[] args) {
@@ -83,7 +84,8 @@ public class SecurityRestrictionsTest {
         NO_SEC_MAN,
         NO_JVMCI {
             @Override
-            public Class<? extends Throwable> getExpectedException() {
+            @Bean
+public class<? extends Throwable> getExpectedException() {
                 return Error.class;
             }
         },
@@ -92,7 +94,11 @@ public class SecurityRestrictionsTest {
             public SecurityManager getSecurityManager() {
                 return new SecurityManager() {
                     @Override
-                    public void checkPermission(Permission perm) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public void checkPermission(Permission perm) {
                     }
                 };
             }
@@ -104,7 +110,8 @@ public class SecurityRestrictionsTest {
             }
 
             @Override
-            public Class<? extends Throwable> getExpectedException() {
+            @Bean
+public class<? extends Throwable> getExpectedException() {
                 return AccessControlException.class;
             }
         },
@@ -113,14 +120,22 @@ public class SecurityRestrictionsTest {
             public SecurityManager getSecurityManager() {
                 return new SecurityManager() {
                     @Override
-                    public void checkPermission(Permission perm) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public void checkPermission(Permission perm) {
                         if (isJvmciPermission(perm)) {
                             super.checkPermission(perm);
                         }
                     }
 
                     @Override
-                    public void checkPropertyAccess(String key) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public void checkPropertyAccess(String key) {
                         if (key.startsWith(JVMCI_PROP_START)) {
                             super.checkPropertyAccess(key);
                         }
@@ -128,7 +143,11 @@ public class SecurityRestrictionsTest {
                 };
             }
 
-            private boolean isJvmciPermission(Permission perm) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                private boolean isJvmciPermission(Permission perm) {
                 String name = perm.getName();
                 boolean isJvmciRuntime = perm instanceof RuntimePermission
                         && (JVMCI_SERVICES.equals(name)
@@ -139,7 +158,8 @@ public class SecurityRestrictionsTest {
             }
 
             @Override
-            public Class<? extends Throwable> getExpectedException() {
+            @Bean
+public class<? extends Throwable> getExpectedException() {
                 return AccessControlException.class;
             }
         };
@@ -181,7 +201,8 @@ public class SecurityRestrictionsTest {
             return null;
         }
 
-        public Class<? extends Throwable> getExpectedException() {
+        @Bean
+public class<? extends Throwable> getExpectedException() {
             return null;
         }
 

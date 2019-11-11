@@ -30,6 +30,7 @@
  * @run main WhichImplicitThis3
  */
 
+@Bean
 public class WhichImplicitThis3 {
     boolean isCorrect() { return true; }
     void check() {

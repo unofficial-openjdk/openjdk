@@ -29,35 +29,67 @@ public abstract class AbstractGoldChecker {
 
     protected abstract String getGoldenString();
 
-    public void print(boolean b) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void print(boolean b) {
         sb.append(String.valueOf(b));
     }
 
-    public void print(byte b) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void print(byte b) {
         sb.append(String.valueOf(b));
     }
 
-    public void print(char c) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void print(char c) {
         sb.append(String.valueOf(c));
     }
 
-    public void print(int i) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void print(int i) {
         sb.append(String.valueOf(i));
     }
 
-    public void print(long l) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void print(long l) {
         sb.append(String.valueOf(l));
     }
 
-    public void print(float f) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void print(float f) {
         sb.append(String.valueOf(f));
     }
 
-    public void print(double d) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void print(double d) {
         sb.append(String.valueOf(d));
     }
 
-    public void print(String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void print(String s) {
         sb.append(s);
     }
 
@@ -65,42 +97,74 @@ public abstract class AbstractGoldChecker {
         sb.append('\n');
     }
 
-    public void println(boolean b) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void println(boolean b) {
         sb.append(String.valueOf(b));
         sb.append('\n');
     }
 
-    public void println(byte b) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void println(byte b) {
         sb.append(String.valueOf(b));
         sb.append('\n');
     }
 
-    public void println(char c) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void println(char c) {
         sb.append(String.valueOf(c));
         sb.append('\n');
     }
 
-    public void println(int i) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void println(int i) {
         sb.append(String.valueOf(i));
         sb.append('\n');
     }
 
-    public void println(long l) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void println(long l) {
         sb.append(String.valueOf(l));
         sb.append('\n');
     }
 
-    public void println(float f) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void println(float f) {
         sb.append(String.valueOf(f));
         sb.append('\n');
     }
 
-    public void println(double d) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void println(double d) {
         sb.append(String.valueOf(d));
         sb.append('\n');
     }
 
-    public void println(String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void println(String s) {
         sb.append(s);
         sb.append('\n');
     }
@@ -136,7 +200,11 @@ public abstract class AbstractGoldChecker {
         }
     }
 
-    public boolean compare(String src, String dst) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean compare(String src, String dst) {
         int i1 = 0;
         int i2 = 0;
 

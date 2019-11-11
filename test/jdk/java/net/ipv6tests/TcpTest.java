@@ -38,6 +38,7 @@
 import java.net.*;
 import java.io.*;
 
+@Bean
 public class TcpTest extends Tests {
     static ServerSocket server, server1, server2;
     static Socket c1, c2, c3, s1, s2, s3;

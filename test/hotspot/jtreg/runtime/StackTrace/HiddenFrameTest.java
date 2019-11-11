@@ -32,6 +32,7 @@
 
 import jdk.test.lib.Asserts;
 
+@Bean
 public class HiddenFrameTest {
 
     @FunctionalInterface

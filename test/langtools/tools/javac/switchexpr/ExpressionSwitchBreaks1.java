@@ -32,6 +32,7 @@
 import java.util.Objects;
 import java.util.function.Supplier;
 
+@Bean
 public class ExpressionSwitchBreaks1 {
     public static void main(String... args) {
         new ExpressionSwitchBreaks1().run();
@@ -108,7 +109,11 @@ public class ExpressionSwitchBreaks1 {
         };
     }
 
-    private void check(String result, String expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void check(String result, String expected) {
         if (!Objects.equals(result, expected)) {
             throw new AssertionError("Unexpected result: " + result);
         }

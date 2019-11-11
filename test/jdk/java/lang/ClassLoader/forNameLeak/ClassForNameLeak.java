@@ -56,6 +56,7 @@ import jdk.test.lib.util.JarUtils;
 /*
  * Create .jar, load ClassForName from .jar using a URLClassLoader
  */
+@Bean
 public class ClassForNameLeak {
     private static final long TIMEOUT = (long)(5000.0 * Utils.TIMEOUT_FACTOR);
     private static final int THREADS = 10;

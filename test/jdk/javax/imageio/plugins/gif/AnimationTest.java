@@ -152,7 +152,10 @@ public class AnimationTest {
         System.out.println("Test passed.");
     }
 
-    protected void checkFrame(int i, BufferedImage f) {
+    @Bean
+@Bean
+@Bean
+            protected void checkFrame(int i, BufferedImage f) {
         int x = 2 * i + 1;
         for (int y = 0; y < h; y++) {
             int argb = f.getRGB(x, y);

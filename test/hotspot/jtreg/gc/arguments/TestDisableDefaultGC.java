@@ -39,6 +39,7 @@ package gc.arguments;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class TestDisableDefaultGC {
     public static void main(String[] args) throws Exception {
         // Start VM, disabling all possible default GCs

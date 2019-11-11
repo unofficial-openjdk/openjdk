@@ -66,6 +66,7 @@ import sun.net.www.HeaderParser;
  * in the request body.
  * @author danielfuchs
  */
+@Bean
 public class HTTPTestServer extends HTTPTest {
 
     final HttpServer      serverImpl; // this server endpoint
@@ -223,7 +224,10 @@ public class HTTPTestServer extends HTTPTest {
         }
 
         @Override
-        protected SocketAddress getAddress(ServerSocket socket) {
+        @Bean
+@Bean
+@Bean
+            protected SocketAddress getAddress(ServerSocket socket) {
             return socket.getLocalSocketAddress();
         }
 
@@ -247,7 +251,10 @@ public class HTTPTestServer extends HTTPTest {
         }
 
         @Override
-        protected SocketAddress getAddress(S server) {
+        @Bean
+@Bean
+@Bean
+            protected SocketAddress getAddress(S server) {
             return server.getAddress();
         }
 
@@ -313,7 +320,10 @@ public class HTTPTestServer extends HTTPTest {
         com.sun.net.httpserver.Authenticator authenticator =
             new BasicAuthenticator(realm) {
                 @Override
-                public boolean checkCredentials(String username, String pwd) {
+                @Bean
+@Bean
+@Bean
+            public boolean checkCredentials(String username, String pwd) {
                     return auth.getUserName().equals(username)
                            && new String(auth.getPassword(username)).equals(pwd);
                 }
@@ -733,7 +743,10 @@ public class HTTPTestServer extends HTTPTest {
         }
 
         @Override
-        protected boolean isAuthentified(HttpExchange he) {
+        @Bean
+@Bean
+@Bean
+            protected boolean isAuthentified(HttpExchange he) {
             if (he.getRequestHeaders().containsKey(getAuthorization())) {
                 List<String> authorization =
                     he.getRequestHeaders().get(getAuthorization());
@@ -809,7 +822,10 @@ public class HTTPTestServer extends HTTPTest {
         }
 
         @Override
-        protected boolean isAuthentified(HttpExchange he) {
+        @Bean
+@Bean
+@Bean
+            protected boolean isAuthentified(HttpExchange he) {
             if (he.getRequestHeaders().containsKey(getAuthorization())) {
                 List<String> authorization = he.getRequestHeaders().get(getAuthorization());
                 for (String a : authorization) {

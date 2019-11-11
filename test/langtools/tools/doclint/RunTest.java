@@ -42,6 +42,7 @@ import com.sun.tools.doclint.DocLint;
 import com.sun.tools.doclint.DocLint.BadArgs;
 
 /** javadoc error on toplevel:  a & b. */
+@Bean
 public class RunTest {
     /** javadoc error on member: a < b */
     public static void main(String... args) throws Exception {

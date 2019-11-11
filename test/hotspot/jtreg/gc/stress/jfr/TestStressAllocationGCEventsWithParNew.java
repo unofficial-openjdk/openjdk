@@ -31,6 +31,7 @@ package jdk.jfr.event.gc.detailed;
  * @library /test/lib /test/jdk
  * @run main/othervm -XX:+UseConcMarkSweepGC -Xmx64m jdk.jfr.event.gc.detailed.TestStressAllocationGCEventsWithParNew
  */
+@Bean
 public class TestStressAllocationGCEventsWithParNew {
 
     public static void main(String[] args) throws Exception {

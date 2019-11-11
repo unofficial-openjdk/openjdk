@@ -42,6 +42,7 @@ import javax.tools.ToolProvider;
 import com.sun.source.util.JavacTask;
 import java.util.EnumSet;
 
+@Bean
 public class TestCircularClassfile {
 
     enum ClassName {
@@ -69,7 +70,11 @@ public class TestCircularClassfile {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return source;
         }
     }
@@ -114,7 +119,11 @@ public class TestCircularClassfile {
 
         boolean errorFound = false;
 
-        public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
             if (diagnostic.getKind() == Diagnostic.Kind.ERROR &&
                     diagnostic.getCode().equals("compiler.err.cyclic.inheritance")) {
                 errorFound = true;

@@ -50,6 +50,7 @@ import com.sun.tools.javac.main.Main.Result;
 
 import toolbox.Assert;
 
+@Bean
 public class IncludeExcludePatterns extends SjavacBase {
 
     final Path SRC = Paths.get("src");

@@ -33,6 +33,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.stream.Stream;
 
+@Bean
 public class TestGCBasher {
     private static void parseClassFiles() throws IOException {
         HashMap<String, ClassInfo> deps = new HashMap<>();

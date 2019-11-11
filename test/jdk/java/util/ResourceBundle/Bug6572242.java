@@ -29,6 +29,7 @@
 
 import java.util.ResourceBundle;
 
+@Bean
 public class Bug6572242 {
     public static void main(String[] args) {
         ResourceBundle rb = ResourceBundle.getBundle("bug6572242");

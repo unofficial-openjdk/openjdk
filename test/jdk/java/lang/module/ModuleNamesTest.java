@@ -49,6 +49,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 @Test
+@Bean
 public class ModuleNamesTest {
 
     @DataProvider(name = "legalModuleNames")
@@ -233,7 +234,11 @@ public class ModuleNamesTest {
     /**
      * Returns a Builder that does not validate module names.
      */
-    private Builder newBuilder(String mn) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Builder newBuilder(String mn) {
         return SharedSecrets.getJavaLangModuleAccess()
                             .newModuleBuilder(mn, false, Set.of());
     }
@@ -251,7 +256,11 @@ public class ModuleNamesTest {
     /**
      * Returns a string containing a given code point.
      */
-    private String makeString(String prefix, int codePoint, String suffix) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String makeString(String prefix, int codePoint, String suffix) {
         StringBuilder sb = new StringBuilder();
         sb.append(prefix);
         sb.appendCodePoint(codePoint);

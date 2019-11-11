@@ -69,6 +69,7 @@ import javax.management.remote.JMXConnectorServer;
 import javax.management.remote.JMXConnectorServerFactory;
 import javax.management.remote.JMXServiceURL;
 
+@Bean
 public class MXBeanTest {
     public static void main(String[] args) throws Exception {
         testInterface(MerlinMXBean.class, false);
@@ -115,10 +116,18 @@ public class MXBeanTest {
             return true;
         }
 
-        public void setInt(int a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setInt(int a) {
         }
 
-        public void setInt(long b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setInt(long b) {
         }
     }
 

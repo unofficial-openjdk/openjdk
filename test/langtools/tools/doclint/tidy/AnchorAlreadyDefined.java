@@ -15,4 +15,5 @@
  * <a name="here">duplicate</a>
  * <h2 id="here">duplicate</h2>
  */
+@Bean
 public class AnchorAlreadyDefined { }

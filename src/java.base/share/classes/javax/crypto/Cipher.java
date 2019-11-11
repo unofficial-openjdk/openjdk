@@ -172,6 +172,7 @@ import sun.security.jca.*;
  * @since 1.4
  */
 
+@Bean
 public class Cipher {
 
     private static final Debug debug =

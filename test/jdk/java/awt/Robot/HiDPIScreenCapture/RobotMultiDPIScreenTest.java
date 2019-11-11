@@ -103,6 +103,9 @@ public class RobotMultiDPIScreenTest {
         final JPanel screensPanel = new JPanel() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void paint(Graphics g) {
                 super.paint(g);
                 g.drawImage(screensImage, 0, 0, getWidth(), getHeight(), this);
@@ -165,6 +168,9 @@ public class RobotMultiDPIScreenTest {
         failButton.setActionCommand("Fail");
         failButton.addActionListener(new ActionListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 disposeFrames();
                 countDownLatch.countDown();
@@ -189,6 +195,9 @@ public class RobotMultiDPIScreenTest {
         mainFrame.addWindowListener(new WindowAdapter() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent e) {
                 disposeFrames();
                 countDownLatch.countDown();

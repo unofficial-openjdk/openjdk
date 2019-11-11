@@ -31,6 +31,7 @@
 
 package compiler.macronodes;
 
+@Bean
 public class TestEliminateAllocationPhi {
 
     // This will return I when called from m(0 and once optimized will
@@ -79,7 +80,11 @@ public class TestEliminateAllocationPhi {
         }
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         for (int i = 0; i < 5000; i++) {
             m2(null, 1);
         }

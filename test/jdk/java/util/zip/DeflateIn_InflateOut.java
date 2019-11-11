@@ -32,6 +32,7 @@ import java.io.*;
 import java.util.*;
 import java.util.zip.*;
 
+@Bean
 public class DeflateIn_InflateOut {
     private static byte[] data = new byte[1024 * 1024];
 

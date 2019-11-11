@@ -30,6 +30,7 @@ import java.awt.event.WindowEvent;
  * @author Aruna Samji
  */
 
+@Bean
 public class GUIUndFrame extends Frame {
 
     JFrame jframe1, jframe2, jframe3;
@@ -82,7 +83,11 @@ public class GUIUndFrame extends Frame {
         jframe3.getContentPane().setBackground(Color.green);
         jframe3.setUndecorated(true);
         jframe3.addWindowListener( new WindowAdapter() {
-            public void windowActivated(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowActivated(WindowEvent e) {
                 comp = null;
                 comp = e.getComponent();
                 if(e.getComponent() == jframe3){

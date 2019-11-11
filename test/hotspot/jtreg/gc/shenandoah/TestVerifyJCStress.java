@@ -77,6 +77,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.*;
 
+@Bean
 public class TestVerifyJCStress {
 
     public static void main(String[] args) throws Exception {

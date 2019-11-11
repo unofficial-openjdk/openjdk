@@ -33,6 +33,7 @@
 
 package compiler.codegen;
 
+@Bean
 public class LoadWithMask2 {
     static int x;
 

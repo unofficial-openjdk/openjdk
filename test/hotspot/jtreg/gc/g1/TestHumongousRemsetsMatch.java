@@ -37,6 +37,7 @@ package gc.g1;
 
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class TestHumongousRemsetsMatch {
 
     // G1 at the moment uses one thread every this amount of regions.

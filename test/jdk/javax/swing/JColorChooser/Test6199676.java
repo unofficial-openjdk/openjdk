@@ -38,6 +38,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
+@Bean
 public class Test6199676 implements Runnable {
     public static void main(String[] args) throws Exception {
         SwingUtilities.invokeAndWait(new Test6199676());

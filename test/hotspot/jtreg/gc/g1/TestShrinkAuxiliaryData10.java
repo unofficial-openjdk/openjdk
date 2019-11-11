@@ -38,6 +38,7 @@ package gc.g1;
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/timeout=720 gc.g1.TestShrinkAuxiliaryData10
  */
+@Bean
 public class TestShrinkAuxiliaryData10 {
 
     public static void main(String[] args) throws Exception {

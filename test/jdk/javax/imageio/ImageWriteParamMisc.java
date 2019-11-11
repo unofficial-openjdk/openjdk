@@ -31,6 +31,7 @@ import java.awt.Dimension;
 
 import javax.imageio.ImageWriteParam;
 
+@Bean
 public class ImageWriteParamMisc {
 
     public static void main(String[] args) {

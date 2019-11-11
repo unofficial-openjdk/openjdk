@@ -43,6 +43,7 @@ import com.sun.tools.javac.main.Main.Result;
 
 import toolbox.Assert;
 
+@Bean
 public class HiddenFiles extends SjavacBase {
 
     public static void main(String[] ignore) throws Exception {

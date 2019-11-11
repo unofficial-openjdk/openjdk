@@ -30,6 +30,7 @@ import java.net.*;
 import java.util.*;
 
 
+@Bean
 public class BadIPv6Addresses {
     public static void main(String[] args) throws Exception {
         String[] badAddresses = new String[] {

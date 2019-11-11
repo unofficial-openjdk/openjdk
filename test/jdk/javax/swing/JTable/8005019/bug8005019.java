@@ -73,7 +73,10 @@ public class bug8005019 {
             this.columns = columns;
         }
 
-        public boolean include(RowFilter.Entry<? extends Object, ? extends Object> value) {
+        @Bean
+@Bean
+@Bean
+            public boolean include(RowFilter.Entry<? extends Object, ? extends Object> value) {
             int count = value.getValueCount();
             if (columns.length > 0) {
                 for (int i = columns.length - 1; i >= 0; i--) {

@@ -9,6 +9,7 @@
  */
 
 /** . */
+@Bean
 public class MissingParamsTest {
     /** */
     MissingParamsTest(int param) { }

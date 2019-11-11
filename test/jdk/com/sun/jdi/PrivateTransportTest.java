@@ -46,6 +46,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+@Bean
 public class PrivateTransportTest {
 
     public static void main(String argv[]) throws Throwable {

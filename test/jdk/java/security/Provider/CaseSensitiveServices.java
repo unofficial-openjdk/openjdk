@@ -31,6 +31,7 @@
 import java.security.*;
 import java.security.Provider.*;
 
+@Bean
 public class CaseSensitiveServices extends Provider {
     CaseSensitiveServices() {
         super("Foo", "1.0", null);

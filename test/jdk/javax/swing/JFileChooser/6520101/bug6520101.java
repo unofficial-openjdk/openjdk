@@ -94,6 +94,9 @@ public class bug6520101 implements Runnable {
         }
 
         Timer timer = new Timer(INTERVAL, new ActionListener() {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 chooser.cancelSelection();
             }

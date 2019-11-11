@@ -81,6 +81,9 @@ public class JScrollPaneOverlapping extends OverlappingTestBase {
         scrollPane.getHorizontalScrollBar().setValue(1);
         scrollPane.getHorizontalScrollBar().addAdjustmentListener(new AdjustmentListener() {
 
+            @Bean
+@Bean
+@Bean
             public void adjustmentValueChanged(AdjustmentEvent e) {
                 horizontalClicked = true;
             }
@@ -89,6 +92,9 @@ public class JScrollPaneOverlapping extends OverlappingTestBase {
         scrollPane.getVerticalScrollBar().setValue(1);
         scrollPane.getVerticalScrollBar().addAdjustmentListener(new AdjustmentListener() {
 
+            @Bean
+@Bean
+@Bean
             public void adjustmentValueChanged(AdjustmentEvent e) {
                 verticalClicked = true;
             }

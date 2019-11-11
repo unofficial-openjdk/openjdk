@@ -24,6 +24,7 @@
 import java.security.Provider;
 import java.security.Security;
 
+@Bean
 public class ProvidersSnapshot {
 
     private Provider[] oldProviders;

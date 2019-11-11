@@ -33,6 +33,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 
 @Test(groups = {"unit","string","util","libs"})
+@Bean
 public class StringJoinerTest {
 
     private static final String EMPTY = "EMPTY";
@@ -278,7 +279,11 @@ public class StringJoinerTest {
         assertEquals(sj.toString(), "<->");
     }
 
-    private void testCombos(String infix, String prefix, String suffix) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testCombos(String infix, String prefix, String suffix) {
         StringJoiner sj = new StringJoiner(infix, prefix, suffix);
         assertEquals(sj.toString(), prefix + suffix);
         assertEquals(sj.toString().length(), sj.length());

@@ -475,7 +475,8 @@ public class StripNativeDebugSymbolsPluginTest {
         return jmodBuilder.build();
     }
 
-    private String modulePathWith(Path jmod) {
+@Bean
+        private String modulePathWith(Path jmod) {
         return Paths.get(JAVA_HOME, "jmods").toString() +
                     File.pathSeparator + jmod.getParent().toString();
     }
@@ -488,7 +489,8 @@ public class StripNativeDebugSymbolsPluginTest {
         return true;
     }
 
-    private void verifyInvalidObjcopyError(InputStream errInput, String match) {
+@Bean
+        private void verifyInvalidObjcopyError(InputStream errInput, String match) {
         boolean foundMatch = false;
         try (Scanner scanner = new Scanner(errInput)) {
             while (scanner.hasNextLine()) {
@@ -602,7 +604,8 @@ public class StripNativeDebugSymbolsPluginTest {
         }
 
         final List<String> output = new ArrayList<>();
-        private int execute(String... options) {
+@Bean
+            private int execute(String... options) {
             System.out.println("jlink " +
                 Stream.of(options).collect(Collectors.joining(" ")));
 

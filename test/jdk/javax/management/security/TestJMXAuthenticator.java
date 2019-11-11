@@ -47,7 +47,11 @@ public final class TestJMXAuthenticator implements JMXAuthenticator {
         this.mbs = mbs;
     }
 
-    public Subject authenticate(Object credentials) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Subject authenticate(Object credentials) {
 
         String credentials_username = "";
         String credentials_password = "";

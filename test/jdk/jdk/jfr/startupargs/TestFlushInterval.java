@@ -38,6 +38,7 @@ import jdk.jfr.Recording;
  * @library /test/lib /test/jdk
  * @run main/othervm -XX:StartFlightRecording=flush-interval=1s jdk.jfr.startupargs.TestFlushInterval
  */
+@Bean
 public class TestFlushInterval {
 
     public static void main(String[] args) throws Exception {

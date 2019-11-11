@@ -38,6 +38,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.logging.Logger;
 
+@Bean
 public class bug6980209 implements ActionListener {
     private final static Logger log =
             Logger.getLogger("java.awt.event.WaitDispatchSupport");
@@ -188,15 +189,24 @@ public class bug6980209 implements ActionListener {
         button.requestFocus();
         button.addKeyListener(new KeyListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void keyTyped(KeyEvent e) {
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyChar() == '1') dispatchedEvents++;
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void keyReleased(KeyEvent e) {
                 if (e.getKeyChar() == '1') dispatchedEvents++;
             }
@@ -205,7 +215,10 @@ public class bug6980209 implements ActionListener {
 
 
     @Override
-    public void actionPerformed(ActionEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
         if (runInEDT) {
             runSecondaryLoop();
             return;

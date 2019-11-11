@@ -76,6 +76,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import static java.lang.System.out;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+@Bean
 public class ServerCloseTest implements HttpServerAdapters {
 
     SSLContext sslContext;
@@ -110,7 +111,11 @@ public class ServerCloseTest implements HttpServerAdapters {
         }
 
         @Override
-        public void execute(Runnable command) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void execute(Runnable command) {
             long id = tasks.incrementAndGet();
             executor.execute(() -> {
                 try {
@@ -194,7 +199,11 @@ public class ServerCloseTest implements HttpServerAdapters {
     final String ENCODED = "/01%252F03/";
 
     @Test(dataProvider = "servers")
-    public void testServerClose(String uri, boolean sameClient) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testServerClose(String uri, boolean sameClient) {
         HttpClient client = null;
         out.printf("%n%s testServerClose(%s, %b)%n", now(), uri, sameClient);
         uri = uri + ENCODED;

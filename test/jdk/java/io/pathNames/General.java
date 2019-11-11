@@ -31,6 +31,7 @@ import java.util.*;
 import java.nio.file.*;
 
 
+@Bean
 public class General {
 
     public static boolean debug = false;

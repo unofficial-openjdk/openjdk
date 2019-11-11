@@ -37,6 +37,7 @@ import java.util.List;
  *
  * $ od -vw -t x1 foo | sed -r -e 's/^[0-9]+ ?//' -e 's/ //g' -e '/^$/d'
  */
+@Bean
 public class HexDumpReader {
     public static InputStream getStreamFromHexDump(String fileName) {
         return getStreamFromHexDump(new File(System.getProperty("test.src", "."),

@@ -35,6 +35,7 @@ import java.util.TreeSet;
  *          throw exceptions when they should return false.
  * @author  Josh Bloch
  */
+@Bean
 public class Equals {
     public static void main(String[] args) {
         Map m = new HashMap();

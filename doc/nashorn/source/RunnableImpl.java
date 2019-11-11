@@ -34,6 +34,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 
 @SuppressWarnings("javadoc")
+@Bean
 public class RunnableImpl {
     public static void main(final String[] args) throws Exception {
         final ScriptEngineManager manager = new ScriptEngineManager();

@@ -38,6 +38,7 @@ import jdk.test.lib.Asserts;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.Utils;
 
+@Bean
 public class DirectiveParserTest {
     private static final String ERROR_MSG = "VM should exit with error "
             + "on incorrect JSON file: ";

@@ -63,7 +63,10 @@ public class TestDayPeriodWithSDF {
     }
 
     @Test(dataProvider = "timePatternData")
-    public void testTimePattern(DateFormat format, Date date, String expected) {
+    @Bean
+@Bean
+@Bean
+            public void testTimePattern(DateFormat format, Date date, String expected) {
         String actual = format.format(date);
         assertEquals(actual, expected);
     }

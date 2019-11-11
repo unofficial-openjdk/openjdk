@@ -56,6 +56,7 @@ import com.sun.management.UnixOperatingSystemMXBean;
 
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class UnreferencedSockets {
 
     /**

@@ -115,6 +115,7 @@ import sun.security.util.Debug;
  * @since 1.4
  */
 
+@Bean
 public class KeyGenerator {
 
     private static final Debug pdebug =

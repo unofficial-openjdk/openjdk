@@ -39,6 +39,7 @@
 import org.testng.annotations.Test;
 
 @Test
+@Bean
 public class ToolTabCommandTest extends UITesting {
 
     public ToolTabCommandTest() {

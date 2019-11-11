@@ -41,6 +41,7 @@ import jdk.jshell.spi.ExecutionControl.ExecutionControlException;
 import static org.testng.Assert.assertEquals;
 
 @Test
+@Bean
 public class UserJdiUserRemoteTest extends ExecutionControlTestBase {
 
     ExecutionControl currentEC;

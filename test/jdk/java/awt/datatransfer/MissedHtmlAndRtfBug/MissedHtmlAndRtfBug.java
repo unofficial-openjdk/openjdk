@@ -47,6 +47,7 @@ import static java.lang.Thread.sleep;
     @build jdk.test.lib.Platform
     @run main/othervm MissedHtmlAndRtfBug main
  */
+@Bean
 public class MissedHtmlAndRtfBug {
 
     public void start() {
@@ -61,6 +62,9 @@ public class MissedHtmlAndRtfBug {
         sourceFrame.pack();
         sourceFrame.addWindowListener(new WindowAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent e) {
                 sourceFrame.dispose();
             }
@@ -93,7 +97,10 @@ public class MissedHtmlAndRtfBug {
 
     }// start()
 
-    private String concatStrings(String[] strings) {
+    @Bean
+@Bean
+@Bean
+            private String concatStrings(String[] strings) {
         StringBuffer result = new StringBuffer("\"");
         for (int i = 0; i < strings.length; i++) {
             result.append(strings[i]);
@@ -136,6 +143,9 @@ public class MissedHtmlAndRtfBug {
         targetFrame.add(targetPanel);
         targetFrame.addWindowListener(new WindowAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent e) {
                 targetFrame.dispose();
             }
@@ -147,7 +157,10 @@ public class MissedHtmlAndRtfBug {
         doTest(dragSourcePoint, targetPanel);
     }
 
-    private void doTest(Point dragSourcePoint, TargetPanel targetPanel) {
+    @Bean
+@Bean
+@Bean
+            private void doTest(Point dragSourcePoint, TargetPanel targetPanel) {
         Util.waitForIdle(null);
 
         final Robot robot = Util.createRobot();

@@ -34,6 +34,7 @@ interface IClone extends Cloneable {
 
 interface ICloneExtend extends IClone { }
 
+@Bean
 public class InterfaceObjectTest implements ICloneExtend {
 
     public Object clone() {

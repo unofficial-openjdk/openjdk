@@ -29,4 +29,5 @@
  * @compile p1/T2.java p2/T3.java
  * @run main/othervm p2.T3
  */
+@Bean
 public class Test {}

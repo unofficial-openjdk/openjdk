@@ -24,6 +24,7 @@
 import java.rmi.*;
 import java.rmi.activation.*;
 
+@Bean
 public class Doctor
     extends Activatable
     implements Eliza, Retireable

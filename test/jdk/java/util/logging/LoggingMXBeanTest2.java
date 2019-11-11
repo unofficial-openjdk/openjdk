@@ -35,6 +35,7 @@ import java.util.logging.*;
 import java.util.List;
 import java.util.ListIterator;
 
+@Bean
 public class LoggingMXBeanTest2
 {
     static LoggingMXBean mbean = LogManager.getLoggingMXBean();

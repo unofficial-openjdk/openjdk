@@ -45,6 +45,7 @@ import java.nio.file.attribute.FileTime;
 
 import static toolbox.Assert.check;
 
+@Bean
 public class ClasspathDependencies extends SjavacBase {
 
     public static void main(String... args) throws Exception {
@@ -60,7 +61,8 @@ public class ClasspathDependencies extends SjavacBase {
 
         ////////////////////////////////////////////////////////////////////////
         headline("Create a test dependency, Dep.class, and put it in the classpath dir");
-        String depCode = "package dep; public class Dep { public void m1() {} }";
+        String depCode = "package dep; @Bean
+public class Dep { public void m1() {} }";
         toolbox.writeFile(srcDep.resolve("dep/Dep.java"), depCode);
         int rc = compile("-d", classesDep, "--state-dir=" + classesDep, srcDep);
         check(rc == 0, "Compilation failed unexpectedly");
@@ -70,7 +72,8 @@ public class ClasspathDependencies extends SjavacBase {
         toolbox.writeFile(src.resolve("pkg/C.java"),
                           "package pkg;" +
                           "import dep.Dep;" +
-                          "public class C { Dep dep; public void m() { new Dep().m1(); } }");
+                          "@Bean
+public class C { Dep dep; public void m() { new Dep().m1(); } }");
         rc = compile("-d", classes, "--state-dir=" + classes, src, "-cp", classesDep);
         check(rc == 0, "Compilation failed unexpectedly");
         FileTime modTime1 = Files.getLastModifiedTime(classes.resolve("pkg/C.class"));

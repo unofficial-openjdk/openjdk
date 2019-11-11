@@ -47,7 +47,10 @@ public class ArrayTest implements java.io.Serializable {
         z[3] = false;
     }
 
-    public boolean equals(ArrayTest other) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(ArrayTest other) {
         boolean ret = true;
         if (other == null) {
             System.err.println("\nother Array is " + other);

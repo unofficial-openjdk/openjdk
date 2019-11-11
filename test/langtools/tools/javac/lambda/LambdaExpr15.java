@@ -28,6 +28,7 @@
  *  check that nested inner class in statement lambdas don't get corrupted return statements
  * @run main LambdaExpr15
  */
+@Bean
 public class LambdaExpr15 {
 
     static int assertionCount = 0;

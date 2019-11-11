@@ -29,6 +29,7 @@
 
 import java.net.*;
 
+@Bean
 public class TestPort {
     public static void main(String[] args) throws MalformedURLException {
         // URLs are able to have port bigger than TCP-Port 65535 and

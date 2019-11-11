@@ -33,6 +33,7 @@ import java.nio.file.Paths;
 import com.sun.tools.classfile.ClassFile;
 import com.sun.tools.classfile.Method;
 
+@Bean
 public class ConstDebugTest {
 
     public static final long l = 12;

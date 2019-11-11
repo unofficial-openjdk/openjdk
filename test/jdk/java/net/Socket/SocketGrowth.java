@@ -33,6 +33,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+@Bean
 public class SocketGrowth {
 
     public static void main(String[] args) throws IOException {

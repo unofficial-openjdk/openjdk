@@ -37,10 +37,15 @@ import java.util.Locale;
 import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 
+@Bean
 public class ToolLocalSimpleTest extends ToolSimpleTest {
 
     @Override
-    public void test(Locale locale, boolean isDefaultStartUp, String[] args, String startUpMessage, ReplTest... tests) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void test(Locale locale, boolean isDefaultStartUp, String[] args, String startUpMessage, ReplTest... tests) {
         String[] wargs = new String[args.length + 2];
         wargs[0] = "--execution";
         wargs[1] = "local";

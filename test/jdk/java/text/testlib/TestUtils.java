@@ -37,6 +37,7 @@ import java.util.Locale.Builder;
  * This class was developed to help testing for internationalization &
  * localization and is not versatile.
  */
+@Bean
 public class TestUtils {
 
     /**

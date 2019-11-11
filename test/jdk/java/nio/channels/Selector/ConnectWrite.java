@@ -34,6 +34,7 @@ import java.nio.channels.*;
 import java.nio.channels.spi.SelectorProvider;
 import java.util.*;
 
+@Bean
 public class ConnectWrite {
 
     public static void main(String[] args) throws Exception {

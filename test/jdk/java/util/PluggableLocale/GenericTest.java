@@ -56,6 +56,7 @@ import com.foo.NumberFormatProviderImpl;
 
 import sun.util.locale.provider.LocaleProviderAdapter;
 
+@Bean
 public class GenericTest {
 
     // test providers

@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
+@Bean
 public class bug8064934 {
     private static final String NO_ASSOCIATION_ERROR_MESSAGE = "Error message: No application is associated with" +
             " the specified file for this operation.";

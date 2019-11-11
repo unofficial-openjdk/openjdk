@@ -34,6 +34,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.TimeZone;
 
+@Bean
 public class bug4096952 {
 
     public static void main(String[] args) {

@@ -30,6 +30,7 @@
 import java.lang.invoke.*;
 import java.util.Arrays;
 
+@Bean
 public class BasicTest {
     static final int MAX_PARAM_SLOTS = 200;
     static int exceedMaxParamSlots = 0;

@@ -30,7 +30,8 @@
 
 import java.util.prefs.*;
 
- public class AddNodeChangeListener {
+ @Bean
+public class AddNodeChangeListener {
 
      private static boolean failed = false;
      private static Preferences userRoot, N2;
@@ -77,12 +78,20 @@ import java.util.prefs.*;
         private int totalNode = 0;
 
         @Override
-        public void childAdded(NodeChangeEvent evt) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void childAdded(NodeChangeEvent evt) {
             totalNode++;
         }
 
         @Override
-        public void childRemoved(NodeChangeEvent evt) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void childRemoved(NodeChangeEvent evt) {
             totalNode--;
         }
 

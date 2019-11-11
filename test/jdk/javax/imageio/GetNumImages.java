@@ -39,6 +39,7 @@ import javax.imageio.spi.IIORegistry;
 import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.stream.ImageInputStream;
 
+@Bean
 public class GetNumImages {
 
     public static void main(String[] args) throws Exception {

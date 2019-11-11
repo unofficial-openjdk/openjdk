@@ -48,6 +48,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Semaphore;
 import java.util.stream.IntStream;
 
+@Bean
 public class FileExtensionAndMap {
 
     private static final ExecutorService CACHED_EXECUTORSERVICE =

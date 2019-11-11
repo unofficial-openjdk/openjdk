@@ -82,12 +82,18 @@ public class JOptionPaneConfirmDlgTest {
 
         JButton b1 = new JButton("Hit me 1");
         b1.addActionListener(new ActionListener() {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 JOptionPane.showInternalConfirmDialog(null, "Test?");
             }});
 
         JButton b2 = new JButton("Hit me 2");
         b2.addActionListener(new ActionListener() {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 JOptionPane.showInternalConfirmDialog(new JInternalFrame(), "Test?");
             }});

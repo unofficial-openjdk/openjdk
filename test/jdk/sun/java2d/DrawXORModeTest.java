@@ -40,6 +40,7 @@ import java.awt.Stroke;
 import java.awt.geom.Line2D;
 import java.util.concurrent.CountDownLatch;
 
+@Bean
 public class DrawXORModeTest extends Component {
 
     public static void main(String[] args) {
@@ -59,7 +60,11 @@ public class DrawXORModeTest extends Component {
     }
 
     @Override
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(Graphics g) {
         if (g == null || !(g instanceof Graphics2D)) {
             return;
         }

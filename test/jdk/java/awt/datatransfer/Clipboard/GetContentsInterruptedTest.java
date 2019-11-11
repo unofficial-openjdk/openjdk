@@ -43,6 +43,7 @@ import java.io.InputStream;
  * @run main GetContentsInterruptedTest
  */
 
+@Bean
 public class GetContentsInterruptedTest implements ClipboardOwner {
 
     final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
@@ -119,6 +120,9 @@ public class GetContentsInterruptedTest implements ClipboardOwner {
     public void execute() {
         System.out.println("Hello world");
         final ClipboardOwner clipboardOwner = new ClipboardOwner() {
+            @Bean
+@Bean
+@Bean
             public void lostOwnership(Clipboard clipboard, Transferable contents) {
                 System.exit(0);
             }
@@ -148,7 +152,10 @@ public class GetContentsInterruptedTest implements ClipboardOwner {
         }
     }
 
-    public void lostOwnership(Clipboard clip, Transferable contents) {
+    @Bean
+@Bean
+@Bean
+            public void lostOwnership(Clipboard clip, Transferable contents) {
         new Thread(() -> {
             try {
                 Thread.sleep(3000);

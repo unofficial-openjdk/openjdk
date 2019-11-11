@@ -51,8 +51,14 @@ public class Variable {
         return value;
     }
 
-    public void setValue(int v) { value = v; }
-    public void setValue(long v) { value = v; }
+    @Bean
+@Bean
+@Bean
+            public void setValue(int v) { value = v; }
+    @Bean
+@Bean
+@Bean
+            public void setValue(long v) { value = v; }
 
     // static methods
 

@@ -26,6 +26,7 @@ import java.io.PrintStream;
 /*
  * Custom system class loader.
  */
+@Bean
 public class CustomLoader extends ClassLoader {
     private static PrintStream out = System.out;
     public  static ClassLoader INSTANCE;
@@ -48,7 +49,8 @@ public class CustomLoader extends ClassLoader {
     }
 
     @Override
-    public Class<?> loadClass(String name) throws ClassNotFoundException {
+    @Bean
+public class<?> loadClass(String name) throws ClassNotFoundException {
         out.println("CustomLoader: loading class: " + name);
         return super.loadClass(name);
     }

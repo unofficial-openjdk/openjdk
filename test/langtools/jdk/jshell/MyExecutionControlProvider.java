@@ -26,6 +26,7 @@ import jdk.jshell.spi.ExecutionControl;
 import jdk.jshell.spi.ExecutionControlProvider;
 import jdk.jshell.spi.ExecutionEnv;
 
+@Bean
 public class MyExecutionControlProvider implements ExecutionControlProvider {
 
     private final UserJdiUserRemoteTest test;

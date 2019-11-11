@@ -6,6 +6,7 @@
  * @run main DocLintTester -Xmsgs:missing -ref MissingCommentTest.out MissingCommentTest.java
  */
 
+@Bean
 public class MissingCommentTest {
     MissingCommentTest() { }
 

@@ -54,6 +54,7 @@ import java.util.*;
  * annotations at runtime all the parameters, including implicit ones,
  * are present.
  */
+@Bean
 public class TestConstructorParameterAnnotations {
     public static void main(String... args) {
         int errors = 0;
@@ -123,7 +124,8 @@ public class TestConstructorParameterAnnotations {
 
     @ExpectedGetParameterAnnotations("[[]]")
     @ExpectedParameterAnnotations({"null"})
-    public class NestedClass0 {
+    @Bean
+public class NestedClass0 {
         public NestedClass0() {}
     }
 
@@ -133,7 +135,8 @@ public class TestConstructorParameterAnnotations {
     @ExpectedParameterAnnotations({
         "null",
         "@TestConstructorParameterAnnotations$MarkerAnnotation(1)"})
-    public class NestedClass1 {
+    @Bean
+public class NestedClass1 {
         public NestedClass1(@MarkerAnnotation(1) int parameter) {}
     }
 
@@ -145,7 +148,8 @@ public class TestConstructorParameterAnnotations {
         "null",
         "@TestConstructorParameterAnnotations$MarkerAnnotation(2)",
         "null"})
-    public class NestedClass2 {
+    @Bean
+public class NestedClass2 {
         public NestedClass2(@MarkerAnnotation(2) int parameter1,
                             int parameter2) {}
     }
@@ -158,7 +162,8 @@ public class TestConstructorParameterAnnotations {
         "null",
         "@TestConstructorParameterAnnotations$MarkerAnnotation(3)",
             "null"})
-    public class NestedClass3 {
+    @Bean
+public class NestedClass3 {
         public <P> NestedClass3(@MarkerAnnotation(3) P parameter1,
                                 int parameter2) {}
     }
@@ -171,7 +176,8 @@ public class TestConstructorParameterAnnotations {
         "null",
         "@TestConstructorParameterAnnotations$MarkerAnnotation(4)",
         "null"})
-    public class NestedClass4 {
+    @Bean
+public class NestedClass4 {
         public <P, Q> NestedClass4(@MarkerAnnotation(4) P parameter1,
                                    Q parameter2) {}
     }

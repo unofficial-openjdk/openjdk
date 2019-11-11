@@ -38,6 +38,7 @@ import toolbox.TestRunner;
 import toolbox.ToolBox;
 import toolbox.Task;
 
+@Bean
 public class JavapNotPrintingDefaultModifierTest extends TestRunner {
     ToolBox tb = new ToolBox();
 

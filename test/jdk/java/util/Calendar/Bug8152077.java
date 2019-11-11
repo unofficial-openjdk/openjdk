@@ -33,6 +33,7 @@ import java.util.GregorianCalendar;
 import java.util.TimeZone;
 import static java.util.Calendar.*;
 
+@Bean
 public class Bug8152077 {
     private static final TimeZone LA = TimeZone.getTimeZone("America/Los_Angeles");
     private static final TimeZone BR = TimeZone.getTimeZone("America/Sao_Paulo");

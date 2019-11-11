@@ -38,6 +38,7 @@
 import java.util.Set;
 import javax.management.*;
 
+@Bean
 public class PreRegisterTest {
     static final ObjectName oldName, newName;
 
@@ -52,10 +53,18 @@ public class PreRegisterTest {
     }
 
     public static class X implements XMBean, MBeanRegistration {
-        public ObjectName preRegister(MBeanServer mbs, ObjectName name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public ObjectName preRegister(MBeanServer mbs, ObjectName name) {
             return newName;
         }
-        public void postRegister(Boolean done) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void postRegister(Boolean done) {}
         public void preDeregister() {}
         public void postDeregister() {}
     }

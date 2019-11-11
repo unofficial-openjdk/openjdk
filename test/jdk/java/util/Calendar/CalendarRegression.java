@@ -53,6 +53,7 @@ import java.util.TimeZone;
 
 import static java.util.Calendar.*;
 
+@Bean
 public class CalendarRegression extends IntlTest {
 
     public static void main(String[] args) throws Exception {
@@ -2108,7 +2109,11 @@ public class CalendarRegression extends IntlTest {
         testRoll(cal, 1582, DECEMBER, 20);
     }
 
-    private void testRoll(Koyomi cal, int year, int month, int dayOfMonth) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testRoll(Koyomi cal, int year, int month, int dayOfMonth) {
         cal.clear();
         cal.set(year, month, dayOfMonth);
         cal.getTime(); // normalize fields
@@ -2207,7 +2212,11 @@ public class CalendarRegression extends IntlTest {
                 (long) Integer.MIN_VALUE * 60 * 1000);
     }
 
-    private void checkTimeCalculation(Koyomi cal, int field, int value, long expectedDelta) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkTimeCalculation(Koyomi cal, int field, int value, long expectedDelta) {
         long time = cal.getTimeInMillis();
         cal.set(field, value);
         long time2 = cal.getTimeInMillis();

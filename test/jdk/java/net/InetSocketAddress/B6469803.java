@@ -29,6 +29,7 @@
 
 import java.net.*;
 
+@Bean
 public class B6469803 {
     public static void main(String[] args) {
         InetSocketAddress addr = new InetSocketAddress("192.168.1.1", 12345);

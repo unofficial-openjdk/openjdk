@@ -30,6 +30,7 @@
 import java.net.*;
 import java.io.Closeable;
 
+@Bean
 public class B6499348 {
     public static void main(String[] args) throws java.io.IOException {
         Socket s = new Socket();

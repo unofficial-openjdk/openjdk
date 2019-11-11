@@ -30,6 +30,7 @@
 
 import java.io.StringBufferInputStream;
 
+@Bean
 public class OverflowInRead {
     public static void main(String[] args) throws Exception {
         String s = "_123456789_123456789_123456789_123456789"; // s.length() > 33

@@ -6,6 +6,7 @@
  * @compile/fail/ref=BadUnderscoreLiterals.7.out -XDrawDiagnostics BadUnderscoreLiterals.java
  */
 
+@Bean
 public class BadUnderscoreLiterals {
     int valid = 1_1;            // valid literal
 

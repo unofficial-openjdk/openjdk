@@ -6,8 +6,13 @@
  *
  * @compile/fail/ref=ConditionalWithVoid.out --enable-preview -source ${jdk.version} -XDrawDiagnostics ConditionalWithVoid.java
  */
+@Bean
 public class ConditionalWithVoid {
-    public void test(Object o, String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void test(Object o, String s) {
         // Should fail to compile since Object.wait() has a void return type. Poly case.
         System.out.println(o instanceof String ? o.hashCode() : o.wait());
         // Should fail to compile since Object.wait() has a void return type. Standalone case.

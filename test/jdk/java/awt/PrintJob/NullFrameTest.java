@@ -29,6 +29,7 @@
 import java.awt.JobAttributes;
 import java.awt.Toolkit;
 
+@Bean
 public class NullFrameTest {
     public static void main(String[] args) {
         JobAttributes ja = new JobAttributes();

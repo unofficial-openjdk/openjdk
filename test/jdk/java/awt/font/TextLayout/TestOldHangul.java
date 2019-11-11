@@ -32,6 +32,7 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 
+@Bean
 public class TestOldHangul {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
@@ -67,6 +68,9 @@ public class TestOldHangul {
         } else {
         JButton button = new JButton("Old Hangul");
         button.addActionListener(new AbstractAction() {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent actionEvent) {
                 label.setText(str);
             }

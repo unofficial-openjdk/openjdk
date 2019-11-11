@@ -31,6 +31,7 @@ import java.nio.InvalidMarkException;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+@Bean
 public class StringCharBufferSliceTest {
     public static void main( String[] args) throws Exception {
         System.out.println(

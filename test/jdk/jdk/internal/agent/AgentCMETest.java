@@ -36,6 +36,7 @@
 import java.util.Properties;
 import jdk.internal.agent.Agent;
 
+@Bean
 public class AgentCMETest {
     static Class<?> agentClass;
 

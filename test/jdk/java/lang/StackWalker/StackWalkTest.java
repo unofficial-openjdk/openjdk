@@ -47,6 +47,7 @@ import jdk.test.lib.RandomFactory;
  * @author danielfuchs, bchristi
  * @key randomness
  */
+@Bean
 public class StackWalkTest {
     private static boolean random = false;
     private static boolean verbose = false;
@@ -118,7 +119,11 @@ public class StackWalkTest {
         }
         return StackWalker.getInstance(swOptions, estDepth);
     }
-    public void consume(StackFrame sf) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void consume(StackFrame sf) {
         if (count == 0 && swOptions.contains(StackWalker.Option.RETAIN_CLASS_REFERENCE)
                 && isStreamPipeline(sf.getDeclaringClass())) {
             return;
@@ -143,8 +148,13 @@ public class StackWalkTest {
         count++;
     }
 
-    public class Call {
-        public void walk(int total, int markAt) {
+    @Bean
+public class Call {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void walk(int total, int markAt) {
             recorder.add(Call.class, "walk", "StackWalkTest.java");
             long swFrameCount = createStackWalker().walk(s -> s.count());
 
@@ -169,7 +179,11 @@ public class StackWalkTest {
             createStackWalker().forEach(StackWalkTest.this::consume);
             didWalk = true;
         }
-        public void call(int total, int current, int markAt) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void call(int total, int current, int markAt) {
             recorder.add(Call.class, "call", "StackWalkTest.java");
             if (current < total) {
                 testCall.call(total, current+1, markAt);
@@ -179,9 +193,14 @@ public class StackWalkTest {
         }
     }
 
-    public class Marker extends Call {
+    @Bean
+public class Marker extends Call {
         @Override
-        public void call(int total, int current, int markAt) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void call(int total, int current, int markAt) {
             recorder.add(Marker.class, "call", "StackWalkTest.java");
             if (current < total) {
                 testCall.call(total, current+1, markAt);
@@ -192,9 +211,14 @@ public class StackWalkTest {
     }
     private Call markerCall = new Marker();
 
-    public class Test extends Call {
+    @Bean
+public class Test extends Call {
         @Override
-        public void call(int total, int current, int markAt) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void call(int total, int current, int markAt) {
             recorder.add(Test.class, "call", "StackWalkTest.java");
             if (current < total) {
                 int nexti = current + 1;
@@ -224,7 +248,8 @@ public class StackWalkTest {
     private Test testCall = new Test();
 
     /** Inherits call() from Call */
-    public class Test2 extends Call {}
+    @Bean
+public class Test2 extends Call {}
     private Test2 test2Call = new Test2();
 
     public void runTest(Class callerClass, String callerMethod, int stackDepth,

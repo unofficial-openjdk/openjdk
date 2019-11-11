@@ -26,6 +26,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.text.Normalizer;
 
+@Bean
 public class MacPathTest {
 
     public static void main(String args[]) throws Throwable {

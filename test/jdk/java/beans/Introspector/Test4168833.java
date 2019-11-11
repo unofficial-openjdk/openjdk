@@ -41,6 +41,7 @@ import java.beans.PropertyDescriptor;
  * creates both an IndexedPropertyDescriptor which has a conflicting
  * type for getColor.
  */
+@Bean
 public class Test4168833 {
     public static void main(String[] args) throws Exception {
         // When the Sub class is introspected,
@@ -77,21 +78,37 @@ public class Test4168833 {
             return null;
         }
 
-        public Dimension getProp(int i) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Dimension getProp(int i) {
             return null;
         }
     }
 
     public static class Sub extends Base {
-        public void setProp(Color c) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setProp(Color c) {
         }
     }
 
     public static class Base2 {
-        public void setProp(Color c) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setProp(Color c) {
         }
 
-        public void setProp(int i, Dimension d) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setProp(int i, Dimension d) {
         }
     }
 

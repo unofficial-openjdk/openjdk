@@ -33,6 +33,7 @@
 import java.awt.geom.CubicCurve2D;
 import java.awt.geom.Rectangle2D;
 
+@Bean
 public class ContainsTest {
 
     public static void main(String[] args) throws Exception {

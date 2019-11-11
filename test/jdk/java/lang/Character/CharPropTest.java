@@ -35,6 +35,7 @@
 import java.nio.file.Files;
 import java.util.stream.Stream;
 
+@Bean
 public class CharPropTest {
     private static int diffs = 0;
     private static int rangeStart = 0x0000;

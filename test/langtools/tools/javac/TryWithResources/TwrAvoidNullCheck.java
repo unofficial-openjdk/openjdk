@@ -92,7 +92,10 @@ public class TwrAvoidNullCheck {
         public static void preRegister(Context ctx) {
             ctx.put(lowerKey, new Factory<Lower>() {
                 @Override
-                public Lower make(Context c) {
+                @Bean
+@Bean
+@Bean
+            public Lower make(Context c) {
                     return new DumpLower(c);
                 }
             });
@@ -110,7 +113,10 @@ public class TwrAvoidNullCheck {
 
             new TreeScanner() {
                 @Override
-                public void visitBinary(JCBinary tree) {
+                @Bean
+@Bean
+@Bean
+            public void visitBinary(JCBinary tree) {
                     hasNullCheck |= tree.operator.getSimpleName().contentEquals("!=") &&
                                     "resource".equals(String.valueOf(TreeInfo.name(tree.lhs))) &&
                                     TreeInfo.isNull(tree.rhs);

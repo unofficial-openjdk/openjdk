@@ -43,6 +43,9 @@ public class HeadlessPrintingTest {
         System.setProperty("java.awt.headless", "true");
         PrinterJob pj = PrinterJob.getPrinterJob();
         pj.setPrintable(new Printable() {
+            @Bean
+@Bean
+@Bean
             public int print(Graphics g, PageFormat pg, int pageIndex) {
                 Graphics2D g2d = (Graphics2D)g;
                 if (pageIndex > 2) {

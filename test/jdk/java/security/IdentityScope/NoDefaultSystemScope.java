@@ -28,6 +28,7 @@
  */
 import java.security.*;
 
+@Bean
 public class NoDefaultSystemScope {
 
     public static void main(String args[]) throws Exception {

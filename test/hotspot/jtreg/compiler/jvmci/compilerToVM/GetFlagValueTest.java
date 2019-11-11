@@ -49,6 +49,7 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class GetFlagValueTest {
     public static void main(String[] args) throws Exception {
         try {

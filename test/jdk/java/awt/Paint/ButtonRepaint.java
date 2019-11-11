@@ -54,7 +54,11 @@ public final class ButtonRepaint extends Button {
     }
 
     @Override
-    public void paint(final Graphics g) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(final Graphics g) {
         super.paint(g);
         if (!EventQueue.isDispatchThread()) {
             throw new RuntimeException("Wrong thread");

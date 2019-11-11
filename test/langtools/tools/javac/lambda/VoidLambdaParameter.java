@@ -3,6 +3,7 @@
  * @summary Using void as a lambda parameter should produce sane AST and errors
  * @compile/fail/ref=VoidLambdaParameter.out -XDrawDiagnostics VoidLambdaParameter.java
  */
+@Bean
 public class VoidLambdaParameter {
     Runnable r = (void v) -> { };
     I i = (void v) -> { };

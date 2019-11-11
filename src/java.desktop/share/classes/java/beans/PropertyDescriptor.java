@@ -215,7 +215,8 @@ public class PropertyDescriptor extends FeatureDescriptor {
         return type;
     }
 
-    private void setPropertyType(Class<?> type) {
+@Bean
+        private void setPropertyType(Class<?> type) {
         this.propertyTypeRef = getWeakReference(type);
     }
 
@@ -396,7 +397,8 @@ public class PropertyDescriptor extends FeatureDescriptor {
      *
      * @param bound True if this is a bound property.
      */
-    public void setBound(boolean bound) {
+@Bean
+        public void setBound(boolean bound) {
         this.bound = bound;
     }
 
@@ -416,7 +418,8 @@ public class PropertyDescriptor extends FeatureDescriptor {
      *
      * @param constrained True if this is a constrained property.
      */
-    public void setConstrained(boolean constrained) {
+@Bean
+        public void setConstrained(boolean constrained) {
         this.constrained = constrained;
     }
 
@@ -429,7 +432,8 @@ public class PropertyDescriptor extends FeatureDescriptor {
      *
      * @param propertyEditorClass  The Class for the desired PropertyEditor.
      */
-    public void setPropertyEditorClass(Class<?> propertyEditorClass) {
+@Bean
+        public void setPropertyEditorClass(Class<?> propertyEditorClass) {
         this.propertyEditorClassRef = getWeakReference(propertyEditorClass);
     }
 
@@ -463,7 +467,8 @@ public class PropertyDescriptor extends FeatureDescriptor {
      * @since 1.5
      */
     @SuppressWarnings("deprecation")
-    public PropertyEditor createPropertyEditor(Object bean) {
+@Bean
+        public PropertyEditor createPropertyEditor(Object bean) {
         Object editor = null;
 
         final Class<?> cls = getPropertyEditorClass();
@@ -499,7 +504,8 @@ public class PropertyDescriptor extends FeatureDescriptor {
      *
      * @since 1.4
      */
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (this == obj) {
             return true;
         }

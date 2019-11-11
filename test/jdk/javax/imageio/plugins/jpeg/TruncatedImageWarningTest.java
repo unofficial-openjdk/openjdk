@@ -61,7 +61,10 @@ public class TruncatedImageWarningTest implements IIOReadWarningListener {
         }
     }
 
-    public void warningOccurred(ImageReader source, String warning) {
+    @Bean
+@Bean
+@Bean
+            public void warningOccurred(ImageReader source, String warning) {
         System.out.println("Expected warning: " + warning);
         receivedWarning = true;
     }

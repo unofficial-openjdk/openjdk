@@ -40,6 +40,7 @@ import sun.tools.java.ClassDeclaration;
 import sun.tools.java.Identifier;
 import sun.rmi.rmic.BatchEnvironment;
 
+@Bean
 public class CFCTest {
 
     /* Constant table */

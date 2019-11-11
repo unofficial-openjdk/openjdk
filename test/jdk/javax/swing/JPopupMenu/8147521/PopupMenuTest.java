@@ -116,31 +116,49 @@ public class PopupMenuTest {
     class MousePopupListener extends MouseAdapter {
 
         @Override
-        public void mousePressed(MouseEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void mousePressed(MouseEvent e) {
             showPopup(e);
         }
 
         @Override
-        public void mouseClicked(MouseEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void mouseClicked(MouseEvent e) {
             showPopup(e);
         }
 
         @Override
-        public void mouseReleased(MouseEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void mouseReleased(MouseEvent e) {
             showPopup(e);
         }
 
-        private void showPopup(MouseEvent e) {
+        @Bean
+@Bean
+@Bean
+            private void showPopup(MouseEvent e) {
             jpopup.show(panel, e.getX(), e.getY());
         }
     }
 
     class PopupListener implements PopupMenuListener {
 
-        public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
         }
 
-        public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
             Popup popup = ((PopMenuUIExt) jpopup.getUI()).getPopup();
             if (popup != null) {
                 isLightWeight = !popup.getClass().toString().
@@ -148,7 +166,10 @@ public class PopupMenuTest {
             }
         }
 
-        public void popupMenuCanceled(PopupMenuEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void popupMenuCanceled(PopupMenuEvent e) {
         }
     }
 }
@@ -158,7 +179,10 @@ class PopMenuUIExt extends BasicPopupMenuUI {
     private static Popup popUp;
 
     @Override
-    public Popup getPopup(JPopupMenu popup, int x, int y) {
+    @Bean
+@Bean
+@Bean
+            public Popup getPopup(JPopupMenu popup, int x, int y) {
         PopupFactory.setSharedInstance(new PopupFactory() {
 
             @Override

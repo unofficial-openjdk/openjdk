@@ -29,6 +29,7 @@
 
 import java.util.Random;
 
+@Bean
 public class AppendSB {
     private static Random generator = new Random();
 

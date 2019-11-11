@@ -37,6 +37,7 @@ import javax.swing.*;
 import javax.swing.plaf.nimbus.NimbusLookAndFeel;
 
 
+@Bean
 public class Test6827032 {
 
     private static volatile Point point;

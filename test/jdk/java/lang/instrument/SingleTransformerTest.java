@@ -32,6 +32,7 @@
  * @run main/othervm -javaagent:redefineAgent.jar SingleTransformerTest SingleTransformerTest
  * @key randomness
  */
+@Bean
 public class
 SingleTransformerTest
     extends ATransformerManagementTestCase

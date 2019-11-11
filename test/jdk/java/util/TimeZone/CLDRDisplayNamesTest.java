@@ -34,6 +34,7 @@ import java.text.*;
 import java.util.*;
 import static java.util.TimeZone.*;
 
+@Bean
 public class CLDRDisplayNamesTest {
     /*
      * The first element is a language tag. The rest are localized

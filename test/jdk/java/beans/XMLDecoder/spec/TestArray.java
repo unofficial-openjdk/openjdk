@@ -49,7 +49,10 @@ public final class TestArray extends AbstractTest {
     }
 
     @Override
-    protected void validate(XMLDecoder decoder) {
+    @Bean
+@Bean
+@Bean
+            protected void validate(XMLDecoder decoder) {
         Number[] numbers = getArray(Number.class, 2, decoder.readObject());
         if (!numbers[0].equals(Byte.valueOf("-111"))) { // NON-NLS: hardcoded in XML
             throw new Error("unexpected byte value");

@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@Bean
 public class ClassLoadUnloadTest {
     private static OutputAnalyzer out;
     private static ProcessBuilder pb;

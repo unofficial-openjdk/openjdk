@@ -28,6 +28,7 @@
  * @author  Martin Buchholz
  */
 
+@Bean
 public class InterruptedClassLoad {
     public static void main(String[] args) {
         class Empty {}

@@ -42,9 +42,14 @@ import java.util.Locale;
  * by the test.  The ResourceGetter interface is loaded
  * by the system loader to avoid ClassCastsExceptions.
  */
+@Bean
 public class Bug4168625Class implements Bug4168625Getter {
         /** return the specified resource or null if not found */
-    public ResourceBundle getResourceBundle(String resource, Locale locale) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public ResourceBundle getResourceBundle(String resource, Locale locale) {
         try {
             return ResourceBundle.getBundle(resource, locale);
         } catch (MissingResourceException e) {

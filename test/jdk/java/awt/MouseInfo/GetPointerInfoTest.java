@@ -35,6 +35,7 @@ import java.awt.*;
 /**
  * Simply check the result on non-null and results are correct.
  */
+@Bean
 public class GetPointerInfoTest {
     private static final String successStage = "Test stage completed.Passed.";
 

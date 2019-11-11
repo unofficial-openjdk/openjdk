@@ -40,6 +40,7 @@ import java.awt.datatransfer.SystemFlavorMap;
  * @run main InvalidMapArgumentsTest
  */
 
+@Bean
 public class InvalidMapArgumentsTest {
 
     SystemFlavorMap flavorMap;
@@ -101,7 +102,10 @@ public class InvalidMapArgumentsTest {
         test_natives = new String[] {test_nat};
     }
 
-    public void setNativesForFlavorTest(DataFlavor flav, String[] natives, String errmsg) {
+    @Bean
+@Bean
+@Bean
+            public void setNativesForFlavorTest(DataFlavor flav, String[] natives, String errmsg) {
         try{
             flavorMap.setNativesForFlavor(flav, natives);
             throw new RuntimeException("NullPointerException is not thrown for method "+
@@ -110,7 +114,10 @@ public class InvalidMapArgumentsTest {
         }
     }
 
-    public void setFlavorsForNativeTest(String nat, DataFlavor[] flavors, String errmsg) {
+    @Bean
+@Bean
+@Bean
+            public void setFlavorsForNativeTest(String nat, DataFlavor[] flavors, String errmsg) {
         try{
             flavorMap.setFlavorsForNative(nat, flavors);
             throw new RuntimeException("NullPointerException is not thrown for method "+
@@ -119,7 +126,10 @@ public class InvalidMapArgumentsTest {
         }
     }
 
-    public void addFlavorForUnencodedNativeTest(String nat, DataFlavor flav, String errmsg) {
+    @Bean
+@Bean
+@Bean
+            public void addFlavorForUnencodedNativeTest(String nat, DataFlavor flav, String errmsg) {
         try{
             flavorMap.addFlavorForUnencodedNative(nat, flav);
             throw new RuntimeException("NullPointerException is not thrown for method "+
@@ -128,7 +138,10 @@ public class InvalidMapArgumentsTest {
         }
     }
 
-    public void addUnencodedNativeForFlavorTest(DataFlavor flav, String nat, String errmsg) {
+    @Bean
+@Bean
+@Bean
+            public void addUnencodedNativeForFlavorTest(DataFlavor flav, String nat, String errmsg) {
         try{
             flavorMap.addUnencodedNativeForFlavor(flav, nat);
             throw new RuntimeException("NullPointerException is not thrown for method "+

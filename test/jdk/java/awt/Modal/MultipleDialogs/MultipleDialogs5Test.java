@@ -169,7 +169,10 @@ public class MultipleDialogs5Test {
         public ModalDialog(Frame  f) { super(f); }
         public ModalDialog(Dialog d) { super(d); }
 
-        public void setWindowToOpen(Window w) { this.w = w; }
+        @Bean
+@Bean
+@Bean
+            public void setWindowToOpen(Window w) { this.w = w; }
 
         @Override
         public void doCloseAction() { this.dispose(); }

@@ -70,6 +70,7 @@ import org.apache.tools.ant.Task;
  * 2) Setup mode. In this mode, no property names are provided, and the GUI
  * is invoked to allow the user to set or reset values for use in property mode.
  */
+@Bean
 public class SelectToolTask extends Task {
 
     enum ToolChoices {
@@ -102,7 +103,11 @@ public class SelectToolTask extends Task {
      * user preferences for this repository.
      * @param propertyFile the private properties file
      */
-    public void setPropertyFile(File propertyFile) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setPropertyFile(File propertyFile) {
         this.propertyFile = propertyFile;
     }
 
@@ -112,7 +117,11 @@ public class SelectToolTask extends Task {
      * remain unset.
      * @param toolProperty the tool name property
      */
-    public void setToolProperty(String toolProperty) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setToolProperty(String toolProperty) {
         this.toolProperty = toolProperty;
     }
 
@@ -121,7 +130,11 @@ public class SelectToolTask extends Task {
      * selected tool, if any. The args default to an empty string.
      * @param argsProperty the execution args property value
      */
-    public void setArgsProperty(String argsProperty) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setArgsProperty(String argsProperty) {
         this.argsProperty = argsProperty;
     }
 
@@ -130,7 +143,11 @@ public class SelectToolTask extends Task {
      * a default value for a property.
      * @param askIfUnset a boolean flag indicating to prompt the user or not
      */
-    public void setAskIfUnset(boolean askIfUnset) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setAskIfUnset(boolean askIfUnset) {
         this.askIfUnset = askIfUnset;
     }
 
@@ -224,9 +241,17 @@ public class SelectToolTask extends Task {
             body.add(argsField, fc);
             argsField.addFocusListener(new FocusListener() {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void focusGained(FocusEvent e) {
                 }
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void focusLost(FocusEvent e) {
                     String toolName = ((ToolChoices)toolChoice.getSelectedItem()).toolName;
                     if (toolName.length() > 0)

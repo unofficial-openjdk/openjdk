@@ -40,6 +40,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 
+@Bean
 public class Test7190310 {
     private static Object str = new Object() {
         public String toString() {

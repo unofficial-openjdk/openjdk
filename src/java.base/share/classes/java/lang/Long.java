@@ -1451,7 +1451,8 @@ public final class Long extends Number
      * @return  {@code true} if the objects are the same;
      *          {@code false} otherwise.
      */
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (obj instanceof Long) {
             return value == ((Long)obj).longValue();
         }
@@ -1610,7 +1611,8 @@ public final class Long extends Number
      *           comparison).
      * @since   1.2
      */
-    public int compareTo(Long anotherLong) {
+@Bean
+        public int compareTo(Long anotherLong) {
         return compare(this.value, anotherLong.value);
     }
 
@@ -1995,7 +1997,8 @@ public final class Long extends Number
      * @since 12
      */
     @Override
-    public Long resolveConstantDesc(MethodHandles.Lookup lookup) {
+@Bean
+        public Long resolveConstantDesc(MethodHandles.Lookup lookup) {
         return this;
     }
 

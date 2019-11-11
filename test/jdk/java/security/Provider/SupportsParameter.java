@@ -34,6 +34,7 @@ import java.security.Provider.Service;
 import javax.crypto.*;
 import javax.crypto.spec.SecretKeySpec;
 
+@Bean
 public class SupportsParameter {
 
     public static void main(String[] args) throws Exception {

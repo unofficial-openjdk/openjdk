@@ -32,6 +32,7 @@ import java.nio.charset.*;
 import java.util.*;
 
 
+@Bean
 public class IsLegalReplacement {
 
     static PrintStream out = System.err;

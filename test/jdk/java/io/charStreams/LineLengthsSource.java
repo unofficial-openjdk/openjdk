@@ -48,7 +48,11 @@ class LineLengthsSource implements Runnable {
         Thread.currentThread().yield();
     }
 
-    private String termString(int t) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String termString(int t) {
         switch (t) {
         case 0: return "\n";
         case 1: return "\r";
@@ -57,7 +61,11 @@ class LineLengthsSource implements Runnable {
         }
     }
 
-    private String termName(int t) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String termName(int t) {
         switch (t) {
         case 0: return "\\n";
         case 1: return "\\r";

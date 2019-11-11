@@ -186,13 +186,19 @@ public class SSLSocketTemplate {
     /*
      * Configure the client side socket.
      */
-    protected void configureClientSocket(SSLSocket socket) {
+    @Bean
+@Bean
+@Bean
+            protected void configureClientSocket(SSLSocket socket) {
     }
 
     /*
      * Configure the server side socket.
      */
-    protected void configureServerSocket(SSLServerSocket socket) {
+    @Bean
+@Bean
+@Bean
+            protected void configureServerSocket(SSLServerSocket socket) {
     }
 
     /*

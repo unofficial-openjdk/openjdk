@@ -47,6 +47,7 @@ import javax.management.monitor.StringMonitor;
 import javax.management.remote.JMXPrincipal;
 import javax.security.auth.Subject;
 
+@Bean
 public class ThreadPoolAccTest {
 
     // MBean class

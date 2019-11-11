@@ -29,6 +29,7 @@
  * @compile T8077605.java
  */
 
+@Bean
 public class T8077605 {
     static final String C = "" + m(str -> str);
 

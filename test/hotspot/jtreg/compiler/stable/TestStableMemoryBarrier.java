@@ -37,6 +37,7 @@ package compiler.stable;
 
 import jdk.internal.vm.annotation.Stable;
 
+@Bean
 public class TestStableMemoryBarrier {
     public static void main(String[] args) throws Exception {
         for (int i = 0; i < 1000000; i++) {

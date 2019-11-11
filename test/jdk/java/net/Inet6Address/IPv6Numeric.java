@@ -30,6 +30,7 @@
 
 import java.net.InetAddress;
 
+@Bean
 public class IPv6Numeric {
     public static void main(String[] args) {
         try {

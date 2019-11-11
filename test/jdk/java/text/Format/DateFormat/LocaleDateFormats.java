@@ -39,7 +39,10 @@ import org.testng.annotations.Test;
 public class LocaleDateFormats {
 
     @Test(dataProvider = "dateFormats")
-    public void testDateFormat(Locale loc, int style, int year, int month, int date, String expectedString) {
+    @Bean
+@Bean
+@Bean
+            public void testDateFormat(Locale loc, int style, int year, int month, int date, String expectedString) {
         Calendar cal = Calendar.getInstance(loc);
         cal.set(year, month-1, date);
         // Create date formatter based on requested style and test locale

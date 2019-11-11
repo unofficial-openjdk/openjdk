@@ -38,6 +38,7 @@ interface Intf {
     static int i = 0;
 }
 
+@Bean
 public class Test8009222 {
     public static void main(String[] args) throws Exception {
         Objects.requireNonNull(MethodHandles.lookup()

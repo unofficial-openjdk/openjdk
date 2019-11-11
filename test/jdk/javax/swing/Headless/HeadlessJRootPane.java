@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessJRootPane
  */
 
+@Bean
 public class HeadlessJRootPane {
     public static void main(String args[]) {
         JRootPane rp = new JRootPane();

@@ -173,7 +173,11 @@ public class ArgumentParser {
      * @param index index of argument
      * @return value of raw argument
      */
-    public String getRawArgument(int index) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String getRawArgument(int index) {
             return rawArguments[index];
     }
 
@@ -217,7 +221,11 @@ public class ArgumentParser {
      * @param separator Symbol used as separator between argumnets
      * @return Single line with arguments
      */
-    static public String joinArguments(String args[], String quote, String separator) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public String joinArguments(String args[], String quote, String separator) {
         if (args.length <= 0) {
             return "";
         }
@@ -236,7 +244,11 @@ public class ArgumentParser {
      * @param quote Symbol used to quote each argument
      * @return Single line with arguments
      */
-    static public String joinArguments(String args[], String quote) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public String joinArguments(String args[], String quote) {
         return joinArguments(args, quote, " ");
     }
 
@@ -251,7 +263,11 @@ public class ArgumentParser {
      * @see #getRawArguments()
      * @see #getArguments()
      */
-    public void setRawArguments(String args[]) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setRawArguments(String args[]) {
         this.rawArguments = (String[]) args.clone();
         parseArguments();
     }
@@ -263,7 +279,11 @@ public class ArgumentParser {
      * @see #getRawArguments()
      * @see #getOptions()
      */
-    public void setOption(String rawPrefix, String name, String value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setOption(String rawPrefix, String name, String value) {
         String prefix = rawPrefix + name + "=";
         String arg = prefix + value;
 
@@ -441,7 +461,11 @@ public class ArgumentParser {
      * @see #setRawArguments(String[])
      * @see #parseArguments()
      */
-    protected boolean checkOption(String option, String value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected boolean checkOption(String option, String value) {
 
         // accept arguments of nsk.share.test.StressOptions
         if (StressOptions.isValidStressOption(option))

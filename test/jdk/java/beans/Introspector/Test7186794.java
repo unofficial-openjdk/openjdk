@@ -30,6 +30,7 @@
 
 import java.util.List;
 
+@Bean
 public class Test7186794 {
 
     public static void main(String[] args) {
@@ -42,7 +43,11 @@ public class Test7186794 {
 
         protected List<String> value;
 
-        public void setValue(List<String> value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(List<String> value) {
             this.value = value;
         }
     }

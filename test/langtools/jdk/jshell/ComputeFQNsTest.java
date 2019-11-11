@@ -45,13 +45,16 @@ import static org.testng.Assert.*;
 import org.testng.annotations.Test;
 
 @Test
+@Bean
 public class ComputeFQNsTest extends KullaTesting {
 
     private final Compiler compiler = new Compiler();
     private final Path outDir = Paths.get("ComputeFQNsTest");
 
     public void testAddImport() throws Exception {
-        compiler.compile(outDir, "package test1; public class FQNTestClass { }", "package test2; public class FQNTestClass { }");
+        compiler.compile(outDir, "package test1; @Bean
+public class FQNTestClass { }", "package test2; @Bean
+public class FQNTestClass { }");
         String jarName = "test.jar";
         compiler.jar(outDir, jarName, "test1/FQNTestClass.class", "test2/FQNTestClass.class");
         addToClasspath(compiler.getPath(outDir).resolve(jarName));
@@ -79,7 +82,8 @@ public class ComputeFQNsTest extends KullaTesting {
 
     @Test(enabled = false) //TODO 8161165
     public void testSuspendIndexing() throws Throwable {
-        compiler.compile(outDir, "package test; public class FQNTest { }");
+        compiler.compile(outDir, "package test; @Bean
+public class FQNTest { }");
         String jarName = "test.jar";
         compiler.jar(outDir, jarName, "test/FQNTest.class");
         Path continueMarkFile = outDir.resolve("continuemark").toAbsolutePath();

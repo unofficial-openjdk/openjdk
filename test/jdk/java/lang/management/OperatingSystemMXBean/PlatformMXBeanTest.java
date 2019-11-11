@@ -36,6 +36,7 @@
 import java.lang.management.*;
 import java.util.List;
 
+@Bean
 public class PlatformMXBeanTest {
     public static void main(String[] argv) throws Exception {
         OperatingSystemMXBean osMBean = getOSPlatformMXBean(OperatingSystemMXBean.class);

@@ -29,6 +29,7 @@ import java.io.OutputStream;
 /**
  * Pipe output of one stream into input of another.
  */
+@Bean
 public class StreamPipe extends Thread {
 
     private InputStream in;

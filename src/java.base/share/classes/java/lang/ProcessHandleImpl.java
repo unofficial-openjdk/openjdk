@@ -491,7 +491,8 @@ final class ProcessHandleImpl implements ProcessHandle {
     }
 
     @Override
-    public int compareTo(ProcessHandle other) {
+@Bean
+        public int compareTo(ProcessHandle other) {
         return Long.compare(pid, ((ProcessHandleImpl) other).pid);
     }
 
@@ -506,7 +507,8 @@ final class ProcessHandleImpl implements ProcessHandle {
     }
 
     @Override
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (this == obj) {
             return true;
         }

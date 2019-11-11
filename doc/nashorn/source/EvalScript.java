@@ -33,6 +33,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 
 @SuppressWarnings("javadoc")
+@Bean
 public class EvalScript {
     public static void main(final String[] args) throws Exception {
         // create a script engine manager

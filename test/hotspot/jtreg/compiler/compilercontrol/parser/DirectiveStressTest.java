@@ -43,6 +43,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Bean
 public class DirectiveStressTest {
     private static final int AMOUNT = Integer.getInteger(
             "compiler.compilercontrol.parser.DirectiveStressTest.amount",

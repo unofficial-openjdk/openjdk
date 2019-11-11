@@ -26,6 +26,7 @@ import javax.tools.Diagnostic;
 import jdk.jshell.Diag;
 import static org.testng.Assert.assertEquals;
 
+@Bean
 public class ExpectedDiagnostic {
 
     private final String code;
@@ -77,7 +78,11 @@ public class ExpectedDiagnostic {
         return kind;
     }
 
-    public void assertDiagnostic(Diag diagnostic) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertDiagnostic(Diag diagnostic) {
         String code = diagnostic.getCode();
         assertEquals(code, this.code, "Expected error: " + this.code + ", got: " + code);
         assertEquals(diagnostic.isError(), kind == Diagnostic.Kind.ERROR);

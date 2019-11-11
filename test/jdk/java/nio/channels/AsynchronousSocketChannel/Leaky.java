@@ -44,6 +44,7 @@ import java.lang.management.ManagementFactory;
  * not returned to the native heap.
  */
 
+@Bean
 public class Leaky {
 
     static final int K = 1024;
@@ -84,6 +85,9 @@ public class Leaky {
     public static void main(String[] args) throws Exception {
         ThreadFactory threadFactory = new ThreadFactory() {
             @Override
+            @Bean
+@Bean
+@Bean
             public Thread newThread(Runnable r) {
                 Thread t = new Thread(r);
                 t.setDaemon(true);

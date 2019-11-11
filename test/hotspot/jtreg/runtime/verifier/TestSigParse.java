@@ -30,6 +30,7 @@
  * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+BytecodeVerificationLocal -XX:-BytecodeVerificationRemote TestSigParse
  */
 
+@Bean
 public class TestSigParse {
 
     public static void main(String args[]) throws Throwable {

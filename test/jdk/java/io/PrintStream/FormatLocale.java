@@ -36,6 +36,7 @@ import java.util.Locale;
 import java.util.Locale.Category;
 import java.util.stream.IntStream;
 
+@Bean
 public class FormatLocale {
 
     static final float src = 3.14f;

@@ -24,6 +24,7 @@
 import java.util.prefs.Preferences;
 import java.util.prefs.PreferencesFactory;
 
+@Bean
 public class StubPreferencesFactory implements PreferencesFactory {
     public Preferences userRoot()   { return new StubPreferences(); }
     public Preferences systemRoot() { return new StubPreferences(); }

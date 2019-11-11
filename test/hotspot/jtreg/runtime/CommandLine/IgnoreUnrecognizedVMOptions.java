@@ -35,6 +35,7 @@ import jdk.test.lib.Platform;
  *          java.management
  * @run main IgnoreUnrecognizedVMOptions
  */
+@Bean
 public class IgnoreUnrecognizedVMOptions {
 
   private static void runJavaAndCheckExitValue(boolean shouldSucceed, String... args) throws Exception {

@@ -31,6 +31,7 @@ import org.testng.annotations.Test;
             doesn't) as expected
  * @run testng InitialCapacity
  */
+@Bean
 public class InitialCapacity {
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void negativeInitCap() { Properties p = new Properties(-1); }

@@ -124,7 +124,10 @@ public class ThrowingTasks {
     static final CountDownLatch allContinue = new CountDownLatch(1);
 
     static class PermissiveSecurityManger extends SecurityManager {
-        public void checkPermission(Permission p) { /* bien sur, Monsieur */ }
+        @Bean
+@Bean
+@Bean
+            public void checkPermission(Permission p) { /* bien sur, Monsieur */ }
     }
 
     static void checkTerminated(ThreadPoolExecutor tpe) {
@@ -175,7 +178,10 @@ public class ThrowingTasks {
                       return thread;
                   });
         }
-        @Override protected void beforeExecute(Thread t, Runnable r) {
+        @Override @Bean
+@Bean
+@Bean
+            protected void beforeExecute(Thread t, Runnable r) {
             final boolean lessThanCorePoolSize;
             // Add a lock to sync allStarted.countDown() and
             // allStarted.getCount() < getCorePoolSize()
@@ -194,7 +200,10 @@ public class ThrowingTasks {
             check(! isTerminated());
             ((Flaky)r).beforeExecute.run();
         }
-        @Override protected void afterExecute(Runnable r, Throwable t) {
+        @Override @Bean
+@Bean
+@Bean
+            protected void afterExecute(Runnable r, Throwable t) {
             //System.out.println(tg.activeCount());
             afterExecuteCount.getAndIncrement();
             check(((Thrower)((Flaky)r).execute).t == t);

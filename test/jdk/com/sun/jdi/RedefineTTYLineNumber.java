@@ -57,6 +57,7 @@ class RedefineTTYLineNumberTarg {
     }
 }
 
+@Bean
 public class RedefineTTYLineNumber extends JdbTest {
 
     public static void main(String argv[]) {
@@ -81,7 +82,11 @@ public class RedefineTTYLineNumber extends JdbTest {
         return Integer.parseInt(m.group(1));
     }
 
-    private void verifyBPSource(int n, String reply) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void verifyBPSource(int n, String reply) {
         if (!reply.contains("expected statement printed by jdb")) {
             throw new RuntimeException("Breakpoint source (" + n + ") is not correct");
         }

@@ -29,6 +29,7 @@
 import java.io.*;
 
 
+@Bean
 public class DriveRelativePath {
 
     static void fail(String s) {

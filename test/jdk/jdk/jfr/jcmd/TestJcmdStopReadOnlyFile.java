@@ -39,6 +39,7 @@ import jdk.test.lib.process.OutputAnalyzer;
  * @library /test/lib /test/jdk
  * @run main/othervm jdk.jfr.jcmd.TestJcmdStopReadOnlyFile
  */
+@Bean
 public class TestJcmdStopReadOnlyFile {
 
 

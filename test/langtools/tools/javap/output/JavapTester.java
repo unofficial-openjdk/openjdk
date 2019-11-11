@@ -63,7 +63,11 @@ public abstract class JavapTester {
         if (args.length == 0) {
             final String pattern =  ".*\\.class";
             final File classFiles[] = classesdir.listFiles(new FileFilter() {
-                    public boolean accept(File f) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean accept(File f) {
                         return f.getName().matches(pattern);
                     }
                 });
@@ -152,7 +156,11 @@ public abstract class JavapTester {
     /**
      * Set the top-level source template.
      */
-    protected JavapTester setSrc(TestSource src) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected JavapTester setSrc(TestSource src) {
         this.src = src;
         return this;
     }
@@ -160,14 +168,22 @@ public abstract class JavapTester {
     /**
      * Convenience method for calling {@code innerSrc("TESTCASE", ...)}.
      */
-    protected JavapTester setSrc(String... lines) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected JavapTester setSrc(String... lines) {
         return innerSrc("TESTCASE", lines);
     }
 
     /**
      * Convenience method for calling {@code innerSrc(key, new TestSource(...))}.
      */
-    protected JavapTester innerSrc(String key, String... lines) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected JavapTester innerSrc(String key, String... lines) {
         return innerSrc(key, new TestSource(lines));
     }
 
@@ -175,7 +191,11 @@ public abstract class JavapTester {
      * Specialize the testcase template, setting replacement content
      * for the specified key.
      */
-    protected JavapTester innerSrc(String key, TestSource content) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected JavapTester innerSrc(String key, TestSource content) {
         if (src == null) {
             src = new TestSource(key);
         }
@@ -197,7 +217,11 @@ public abstract class JavapTester {
      * Any exception (e.g. bad regular expression syntax) results in
      * a test failure, and aborts the test-case.
      */
-    protected void verify(String... expect) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void verify(String... expect) {
         if (!didExecute) {
             try {
                 execute();
@@ -311,7 +335,11 @@ public abstract class JavapTester {
     private boolean didPrint = false;
 
 
-    protected void error(String msg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void error(String msg) {
         err.println("Error: " + msg);
         errors++;
     }
@@ -331,7 +359,8 @@ public abstract class JavapTester {
      * tests, but presently it's only used with a static template,
      * and one level of specialization.
      */
-    public class TestSource implements Iterable<String> {
+    @Bean
+public class TestSource implements Iterable<String> {
 
         private String[] lines;
         private Hashtable<String, TestSource> innerSrc;
@@ -341,11 +370,19 @@ public abstract class JavapTester {
             innerSrc = new Hashtable<String, TestSource>();
         }
 
-        public void setInner(String key, TestSource inner) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setInner(String key, TestSource inner) {
             innerSrc.put(key, inner);
         }
 
-        public void setInner(String key, String... lines) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setInner(String key, String... lines) {
             innerSrc.put(key, new TestSource(lines));
         }
 

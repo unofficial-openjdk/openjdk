@@ -81,6 +81,9 @@ public class ClipLinuxCrash {
         DataLine.Info info = new DataLine.Info(Clip.class, ais.getFormat());
         clip = (Clip) AudioSystem.getLine(info);
         clip.addLineListener(new LineListener() {
+            @Bean
+@Bean
+@Bean
             public void update(LineEvent e) {
                 if (e.getType() == LineEvent.Type.STOP) {
                     out("    calling close() from event dispatcher thread");

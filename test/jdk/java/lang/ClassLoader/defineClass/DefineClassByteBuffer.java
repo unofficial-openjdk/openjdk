@@ -35,6 +35,7 @@ import java.nio.*;
 import java.nio.channels.*;
 import java.io.*;
 
+@Bean
 public class DefineClassByteBuffer {
 
     static void test(ClassLoader cl) throws Exception {

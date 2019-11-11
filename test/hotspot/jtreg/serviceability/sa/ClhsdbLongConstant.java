@@ -38,6 +38,7 @@ import jdk.test.lib.apps.LingeredApp;
 import jdk.test.lib.Platform;
 import jtreg.SkippedException;
 
+@Bean
 public class ClhsdbLongConstant {
 
     public static void main(String[] args) throws Exception {

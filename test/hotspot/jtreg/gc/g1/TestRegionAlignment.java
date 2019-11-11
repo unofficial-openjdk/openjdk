@@ -34,6 +34,7 @@ package gc.g1;
  * This test tries to get the VM to pick a small and unaligned heap size (by using MaxRAM=555) and a
  * large region size (by using -XX:G1HeapRegionSize=32m). This will fail without the fix for 8013791.
  */
+@Bean
 public class TestRegionAlignment {
     public static void main(String[] args) { }
 }

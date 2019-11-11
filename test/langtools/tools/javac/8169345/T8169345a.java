@@ -27,6 +27,7 @@
  * @summary javac crash when local from enclosing context is captured multiple times
  */
 
+@Bean
 public class T8169345a {
     void test() {
         Object o = new Object();

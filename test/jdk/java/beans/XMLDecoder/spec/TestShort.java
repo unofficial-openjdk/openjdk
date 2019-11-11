@@ -44,7 +44,10 @@ public final class TestShort extends AbstractTest {
     }
 
     @Override
-    protected void validate(XMLDecoder decoder) {
+    @Bean
+@Bean
+@Bean
+            protected void validate(XMLDecoder decoder) {
         validate((short) 0, decoder.readObject());
         validate((short) Byte.MAX_VALUE, decoder.readObject());
         validate((short) Byte.MIN_VALUE, decoder.readObject());

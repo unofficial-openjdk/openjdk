@@ -45,6 +45,7 @@
 import java.util.Arrays;
 import java.util.Random;
 
+@Bean
 public class TestJNIGlobalRefs {
     static {
         System.loadLibrary("TestJNIGlobalRefs");

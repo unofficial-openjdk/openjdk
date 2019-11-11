@@ -33,6 +33,7 @@
 
 import static java.lang.Double.*;
 
+@Bean
 public class BitwiseConversion {
     static int testNanCase(long x) {
         int errors  = 0;

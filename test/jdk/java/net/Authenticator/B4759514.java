@@ -36,6 +36,7 @@ import java.io.*;
 import java.net.*;
 import jdk.test.lib.net.URIBuilder;
 
+@Bean
 public class B4759514 implements HttpCallback {
 
     static int count = 0;

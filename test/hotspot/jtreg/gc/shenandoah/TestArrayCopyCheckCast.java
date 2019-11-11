@@ -28,6 +28,7 @@
  *
  * @run main/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:TieredStopAtLevel=0 -Xmx16m TestArrayCopyCheckCast
  */
+@Bean
 public class TestArrayCopyCheckCast {
 
     static class Foo {}

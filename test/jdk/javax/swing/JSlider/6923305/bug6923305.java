@@ -47,7 +47,10 @@ public class bug6923305 {
 
                 slider.setUI(new SynthSliderUI(slider) {
                     @Override
-                    protected void paintTrack(SynthContext context, Graphics g, Rectangle trackBounds) {
+                    @Bean
+@Bean
+@Bean
+            protected void paintTrack(SynthContext context, Graphics g, Rectangle trackBounds) {
                         throw new RuntimeException("Test failed: the SynthSliderUI.paintTrack was invoked");
                     }
                 });

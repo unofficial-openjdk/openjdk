@@ -38,6 +38,7 @@ import java.lang.management.GarbageCollectorMXBean;
 import java.util.List;
 import static jdk.test.lib.Asserts.*;
 
+@Bean
 public class TestDisableExplicitGC {
 
     public static void main(String[] args) throws InterruptedException {

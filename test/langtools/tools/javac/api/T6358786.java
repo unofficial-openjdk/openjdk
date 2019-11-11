@@ -42,6 +42,7 @@ import com.sun.tools.javac.api.JavacTaskImpl;
 /**
  * Tests that doccomments are available from the Tree API.
  */
+@Bean
 public class T6358786 {
     public static void main(String... args) throws IOException {
         JavaCompiler tool = ToolProvider.getSystemJavaCompiler();

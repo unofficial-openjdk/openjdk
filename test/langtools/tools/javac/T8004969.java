@@ -30,6 +30,7 @@
 
 import java.io.*;
 
+@Bean
 public class T8004969 implements Serializable {
 
     static int assertionCount = 0;
@@ -60,7 +61,11 @@ public class T8004969 implements Serializable {
             write(out, z -> "[" + z + "]" );
             write(out, z -> { String x = z + z; return x + x; } );
             write(out, T8004969::mm );
-            write(out, z -> (new LSI() { public String convert(String x) { return "*"+x; }} ).convert(z) );
+            write(out, z -> (new LSI() { @Bean
+@Bean
+@Bean
+@Bean
+                public String convert(String x) { return "*"+x; }} ).convert(z) );
             write(out, z -> aField + z );
             write(out, z -> aLocal + z );
             write(out, z -> z + anInt );

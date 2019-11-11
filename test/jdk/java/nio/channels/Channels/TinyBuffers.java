@@ -33,6 +33,7 @@ import java.nio.channels.*;
 import java.nio.charset.*;
 
 
+@Bean
 public class TinyBuffers {
 
     private static Charset cs = Charset.forName("UTF-16");

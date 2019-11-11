@@ -33,6 +33,7 @@
 
 package compiler.loopopts;
 
+@Bean
 public class TestCMovWithOpaque {
 
     public static void test(int array[]) {

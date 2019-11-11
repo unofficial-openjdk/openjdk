@@ -43,6 +43,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.SA.SATestUtils;
 import jtreg.SkippedException;
 
+@Bean
 public class TestJmapCore {
     static final String pidSeparator = ":KILLED_PID";
 

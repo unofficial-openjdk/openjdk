@@ -33,6 +33,7 @@ import java.net.*;
 import java.nio.channels.*;
 import java.nio.channels.spi.SelectorProvider;
 
+@Bean
 public class KeysReady {
 
     static void test(TestServers.DayTimeServer dayTimeServer) throws Exception {

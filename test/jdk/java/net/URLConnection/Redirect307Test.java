@@ -101,6 +101,7 @@ class RedirServer extends Thread {
     }
 };
 
+@Bean
 public class Redirect307Test {
     public static void main(String[] args) throws Exception {
         ServerSocket sock = new ServerSocket(0, 0, InetAddress.getLoopbackAddress());

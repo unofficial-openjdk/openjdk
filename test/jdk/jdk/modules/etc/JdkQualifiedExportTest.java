@@ -48,6 +48,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+@Bean
 public class JdkQualifiedExportTest {
     public static void main(String... args) {
         // check all system modules

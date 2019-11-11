@@ -177,7 +177,11 @@ class Utils {
     static FileFilter createFilter(final String extension) {
         return new FileFilter() {
             @Override
-            public boolean accept(File pathname) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public boolean accept(File pathname) {
                 String name = pathname.getName();
                 if (name.endsWith(extension)) {
                     return true;
@@ -219,7 +223,11 @@ class Utils {
     }
 
     static final FileFilter DIR_FILTER = new FileFilter() {
-        public boolean accept(File pathname) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean accept(File pathname) {
             if (pathname.isDirectory()) {
                 return true;
             }
@@ -228,7 +236,11 @@ class Utils {
     };
 
     static final FileFilter FILE_FILTER = new FileFilter() {
-        public boolean accept(File pathname) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean accept(File pathname) {
             if (pathname.isFile()) {
                 return true;
             }

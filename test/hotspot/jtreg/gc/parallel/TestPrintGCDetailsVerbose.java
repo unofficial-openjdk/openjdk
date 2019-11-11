@@ -33,6 +33,7 @@ package gc.parallel;
  * @run main/othervm -Xmx50m -XX:+UseParallelGC -Xlog:gc*=trace gc.parallel.TestPrintGCDetailsVerbose
  * @run main/othervm -Xmx50m -XX:+UseParallelGC -XX:GCTaskTimeStampEntries=1 -Xlog:gc*=trace gc.parallel.TestPrintGCDetailsVerbose
  */
+@Bean
 public class TestPrintGCDetailsVerbose {
 
     public static void main(String[] args) {

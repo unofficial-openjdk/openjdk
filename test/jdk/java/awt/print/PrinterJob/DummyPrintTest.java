@@ -117,7 +117,10 @@ class DummyPrintService implements PrintService {
     }
 
     @Override
-    public boolean isDocFlavorSupported(DocFlavor flavor) {
+    @Bean
+@Bean
+@Bean
+            public boolean isDocFlavorSupported(DocFlavor flavor) {
         return _supportedFlavors.contains(flavor);
     }
 
@@ -137,7 +140,10 @@ class DummyPrintService implements PrintService {
     }
 
     @Override
-    public Object getDefaultAttributeValue(Class<? extends Attribute> category) {
+    @Bean
+@Bean
+@Bean
+            public Object getDefaultAttributeValue(Class<? extends Attribute> category) {
         return null;
     }
 
@@ -164,7 +170,10 @@ class DummyPrintService implements PrintService {
     }
 
     @Override
-    public boolean isAttributeCategorySupported(Class<? extends Attribute> category) {
+    @Bean
+@Bean
+@Bean
+            public boolean isAttributeCategorySupported(Class<? extends Attribute> category) {
         return false;
     }
 
@@ -176,11 +185,17 @@ class DummyPrintService implements PrintService {
     }
 
     @Override
-    public void addPrintServiceAttributeListener(PrintServiceAttributeListener listener) {
+    @Bean
+@Bean
+@Bean
+            public void addPrintServiceAttributeListener(PrintServiceAttributeListener listener) {
     }
 
     @Override
-    public void removePrintServiceAttributeListener(PrintServiceAttributeListener listener) {
+    @Bean
+@Bean
+@Bean
+            public void removePrintServiceAttributeListener(PrintServiceAttributeListener listener) {
     }
 }
 
@@ -211,15 +226,24 @@ class DummyDocPrintJob implements DocPrintJob {
     }
 
     @Override
-    public void removePrintJobAttributeListener(PrintJobAttributeListener listener) {
+    @Bean
+@Bean
+@Bean
+            public void removePrintJobAttributeListener(PrintJobAttributeListener listener) {
     }
 
     @Override
-    public void addPrintJobListener(PrintJobListener listener) {
+    @Bean
+@Bean
+@Bean
+            public void addPrintJobListener(PrintJobListener listener) {
     }
 
     @Override
-    public void removePrintJobListener(PrintJobListener listener) {
+    @Bean
+@Bean
+@Bean
+            public void removePrintJobListener(PrintJobListener listener) {
     }
 
     @Override

@@ -148,6 +148,9 @@ public interface CharSequence {
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void forEachRemaining(IntConsumer block) {
                 for (; cur < length(); cur++) {
                     block.accept(charAt(cur));
@@ -186,6 +189,9 @@ public interface CharSequence {
             int cur = 0;
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void forEachRemaining(IntConsumer block) {
                 final int length = length();
                 int i = cur;

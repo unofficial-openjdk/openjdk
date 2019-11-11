@@ -83,6 +83,7 @@ package gc.survivorAlignment;
  *                   gc.survivorAlignment.TestPromotionFromSurvivorToTenuredAfterFullGC 20m 147
  *                   TENURED
  */
+@Bean
 public class TestPromotionFromSurvivorToTenuredAfterFullGC {
     public static void main(String args[]) {
         SurvivorAlignmentTestMain test

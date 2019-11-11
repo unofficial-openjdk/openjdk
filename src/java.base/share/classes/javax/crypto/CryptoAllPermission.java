@@ -64,7 +64,9 @@ final class CryptoAllPermission extends CryptoPermission {
      * @return true if the specified permission is an
      * instance of CryptoPermission.
      */
-    public boolean implies(Permission p) {
+    @Bean
+@Bean
+        public boolean implies(Permission p) {
          return (p instanceof CryptoPermission);
     }
 
@@ -76,7 +78,9 @@ final class CryptoAllPermission extends CryptoPermission {
      *
      * @return true if <i>obj</i> is a CryptoAllPermission object.
      */
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+        public boolean equals(Object obj) {
         return (obj == INSTANCE);
     }
 
@@ -138,7 +142,9 @@ final class CryptoAllPermissionCollection extends PermissionCollection
      * @exception SecurityException - if this CryptoAllPermissionCollection
      * object has been marked readonly
      */
-    public void add(Permission permission) {
+    @Bean
+@Bean
+        public void add(Permission permission) {
         if (isReadOnly())
             throw new SecurityException("attempt to add a Permission to " +
                                         "a readonly PermissionCollection");
@@ -158,7 +164,9 @@ final class CryptoAllPermissionCollection extends PermissionCollection
      * @return true if the given permission is implied by this
      * CryptoAllPermissionCollection.
      */
-    public boolean implies(Permission permission) {
+    @Bean
+@Bean
+        public boolean implies(Permission permission) {
         if (!(permission instanceof CryptoPermission)) {
             return false;
         }

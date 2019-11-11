@@ -38,6 +38,7 @@ import static jdk.jshell.execution.Util.forwardExecutionControlAndIO;
 /**
  * A custom remote agent to verify aux channel and custom ExecutionControl.
  */
+@Bean
 public class MyRemoteExecutionControl extends DirectExecutionControl implements ExecutionControl {
 
     static PrintStream auxPrint;

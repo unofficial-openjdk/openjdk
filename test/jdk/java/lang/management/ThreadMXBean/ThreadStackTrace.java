@@ -35,6 +35,7 @@
 import java.lang.management.*;
 import java.util.concurrent.Phaser;
 
+@Bean
 public class ThreadStackTrace {
     private static final ThreadMXBean mbean
         = ManagementFactory.getThreadMXBean();
@@ -209,7 +210,10 @@ public class ThreadStackTrace {
             this.phaser = phaser;
         }
 
-        public void setThread(BlockedThread thread) {
+        @Bean
+@Bean
+@Bean
+            public void setThread(BlockedThread thread) {
             blockedThread = thread;
         }
 

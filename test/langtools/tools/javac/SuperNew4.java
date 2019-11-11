@@ -30,6 +30,7 @@
  * @compile SuperNew4.java
  */
 
+@Bean
 public class SuperNew4 {
   void foo() {
     class One {

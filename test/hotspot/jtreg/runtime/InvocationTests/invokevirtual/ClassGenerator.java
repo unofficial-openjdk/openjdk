@@ -42,7 +42,11 @@ class ClassGenerator extends GenericClassGenerator<ClassGenerator> {
     }
 
     // Add target method call site into current class
-    public ClassGenerator addCaller(String targetClass) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public ClassGenerator addCaller(String targetClass) {
         return super.addCaller(targetClass, Opcodes.INVOKEVIRTUAL);
     }
 }

@@ -33,6 +33,7 @@ import java.util.*;
 import java.nio.*;
 import java.nio.charset.*;
 
+@Bean
 public class FindOneCharEncoderBugs {
     final static String[] brokenCharsets = {
         // Delete the following lines when these charsets are fixed!

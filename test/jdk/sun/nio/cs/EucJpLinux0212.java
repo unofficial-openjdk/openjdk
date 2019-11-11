@@ -33,6 +33,7 @@ import java.util.*;
 import java.nio.*;
 import java.nio.charset.*;
 
+@Bean
 public class EucJpLinux0212 {
     private static void equal(CharBuffer b1, CharBuffer b2) {
         equal(b1.position(), b2.position());

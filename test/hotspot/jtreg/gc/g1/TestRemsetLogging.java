@@ -40,6 +40,7 @@ package gc.g1;
  * Test the output of -Xlog:gc+remset*=trace in conjunction with G1SummarizeRSetStatsPeriod.
  */
 
+@Bean
 public class TestRemsetLogging {
 
     public static void main(String[] args) throws Exception {

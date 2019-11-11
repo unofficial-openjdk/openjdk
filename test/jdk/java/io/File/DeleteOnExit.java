@@ -30,6 +30,7 @@
 
 import java.io.File;
 
+@Bean
 public class DeleteOnExit  {
 
     static String tmpdir = System.getProperty("java.io.tmpdir");

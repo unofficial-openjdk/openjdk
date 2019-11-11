@@ -50,12 +50,36 @@ class UncommonParamNames {
                               int wvutsrqponmlkjihgfedcba, int xwvutsrqponmlkjihgfedcba,
                               int yxwvutsrqponmlkjihgfedcba, int zyxwvutsrqponmlkjihgfedcba) { }
 
-    public void foo(int _x) { }
-    public void foo(short $1) { }
-    public void foo(long \u0061) { }
-    public void foo(char zero\u0000zero\u0000) { }
-    public void foo(String zero\u0000zero\u0000seven\u0007) { }
-    public void foo(Object zero\u0000zero\u0000eight\u0008) { }
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void foo(int _x) { }
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void foo(short $1) { }
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void foo(long \u0061) { }
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void foo(char zero\u0000zero\u0000) { }
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void foo(String zero\u0000zero\u0000seven\u0007) { }
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void foo(Object zero\u0000zero\u0000eight\u0008) { }
     public void foo(Object aLoooooooooooooooooooooooooooooooooooooooooooooooooooooooooooongName,
                     Object baLoooooooooooooooooooooooooooooooooooooooooooooooooooooooooooongName,
                     Object cbaLoooooooooooooooooooooooooooooooooooooooooooooooooooooooooooongName) { }

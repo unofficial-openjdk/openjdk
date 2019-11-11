@@ -29,6 +29,7 @@
  * @run main LambdaOuterLocalTest
  */
 
+@Bean
 public class LambdaOuterLocalTest {
     interface F {void f();}
 

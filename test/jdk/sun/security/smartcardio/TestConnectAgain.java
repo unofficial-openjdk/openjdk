@@ -37,6 +37,7 @@ import javax.smartcardio.CardException;
 import javax.smartcardio.CardChannel;
 import javax.smartcardio.CardTerminal;
 
+@Bean
 public class TestConnectAgain extends Utils {
 
     public static void main(String[] args) throws Exception {

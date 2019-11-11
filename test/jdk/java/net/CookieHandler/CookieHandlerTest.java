@@ -38,6 +38,7 @@ import java.util.*;
 import java.io.*;
 import jdk.test.lib.net.URIBuilder;
 
+@Bean
 public class CookieHandlerTest implements Runnable {
     static Map<String,String> cookies;
     ServerSocket ss;

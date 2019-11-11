@@ -338,7 +338,8 @@ public class AccessibleRelation extends AccessibleBundle {
      *
      * @param  target the target object for this relation
      */
-    public void setTarget(Object target) {
+@Bean
+        public void setTarget(Object target) {
         this.target = new Object[1];
         this.target[0] = target;
     }
@@ -348,7 +349,8 @@ public class AccessibleRelation extends AccessibleBundle {
      *
      * @param  target an array containing the target objects for this relation
      */
-    public void setTarget(Object [] target) {
+@Bean
+        public void setTarget(Object [] target) {
         this.target = target;
     }
 }

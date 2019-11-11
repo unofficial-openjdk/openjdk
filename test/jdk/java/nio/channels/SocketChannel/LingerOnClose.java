@@ -36,6 +36,7 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 
+@Bean
 public class LingerOnClose {
 
     private enum TestMode {

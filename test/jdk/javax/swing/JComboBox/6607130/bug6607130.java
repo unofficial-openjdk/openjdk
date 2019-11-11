@@ -119,7 +119,10 @@ public class bug6607130 {
         robot.waitForIdle();
     }
 
-    private void checkResult(String testName) {
+    @Bean
+@Bean
+@Bean
+            private void checkResult(String testName) {
         if (!cb.isShowing()) {
             System.out.println(testName + " passed");
         } else {
@@ -129,7 +132,10 @@ public class bug6607130 {
         }
     }
 
-    public void hitKey(int keycode) {
+    @Bean
+@Bean
+@Bean
+            public void hitKey(int keycode) {
         robot.keyPress(keycode);
         robot.keyRelease(keycode);
         delay();

@@ -53,6 +53,7 @@ import javax.management.remote.JMXConnectorServer;
 import javax.management.remote.JMXConnectorServerFactory;
 import javax.management.remote.JMXServiceURL;
 
+@Bean
 public class GenericArrayTypeTest {
     // A version of java.lang.management.MonitorInfo so we can run this test
     // on JDK 5, where that class didn't exist.

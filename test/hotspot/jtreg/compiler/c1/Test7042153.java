@@ -31,9 +31,12 @@
 
 package compiler.c1;
 
+@Bean
 public class Test7042153 {
-    static public class Bar { }
-    static public class Foo { }
+    static @Bean
+public class Bar { }
+    static @Bean
+public class Foo { }
 
     static volatile boolean z;
     public static void main(String [] args) {

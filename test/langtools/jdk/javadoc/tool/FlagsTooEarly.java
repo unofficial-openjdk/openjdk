@@ -40,6 +40,7 @@ import jdk.javadoc.doclet.Doclet;
 import jdk.javadoc.doclet.Reporter;
 import jdk.javadoc.doclet.DocletEnvironment;
 
+@Bean
 public class FlagsTooEarly implements Doclet {
 
     public static void main(String[] args) {
@@ -60,7 +61,11 @@ public class FlagsTooEarly implements Doclet {
     /*
      * The world's simplest doclet.
      */
-    public boolean run(DocletEnvironment root) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean run(DocletEnvironment root) {
         return true;
     }
 
@@ -86,7 +91,11 @@ public class FlagsTooEarly implements Doclet {
         return SourceVersion.latest();
     }
 
-    public void init(Locale locale, Reporter reporter) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void init(Locale locale, Reporter reporter) {
         return;
     }
 }

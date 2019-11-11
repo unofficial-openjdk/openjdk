@@ -41,6 +41,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+@Bean
 public class RemoveSymbolUnitTest {
 
     Context context;
@@ -111,7 +112,11 @@ public class RemoveSymbolUnitTest {
         assertRemainingSymbols(cs);
     }
 
-    private WriteableScope writeableScope(ClassSymbol classSymbol, Symbol... symbols) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private WriteableScope writeableScope(ClassSymbol classSymbol, Symbol... symbols) {
         WriteableScope cs = WriteableScope.create(classSymbol);
         for (Symbol symbol : symbols) {
             cs.enter(symbol);
@@ -119,7 +124,11 @@ public class RemoveSymbolUnitTest {
         return cs;
     }
 
-    private void assertRemainingSymbols(WriteableScope cs, Symbol... symbols) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertRemainingSymbols(WriteableScope cs, Symbol... symbols) {
       List<Symbol> expectedSymbols = Arrays.asList(symbols);
       List<Symbol> actualSymbols = new ArrayList<>();
       cs.getSymbols().forEach(symbol -> actualSymbols.add(symbol));

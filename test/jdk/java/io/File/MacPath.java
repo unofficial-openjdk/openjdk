@@ -35,6 +35,7 @@ import java.util.Map;
 import jdk.test.lib.Asserts;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class MacPath {
     public static void main(String args[]) throws Exception {
         final ProcessBuilder pb =

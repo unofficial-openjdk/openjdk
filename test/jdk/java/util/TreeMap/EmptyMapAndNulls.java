@@ -33,6 +33,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.lang.reflect.*;
 
+@Bean
 public class EmptyMapAndNulls {
 
     @SuppressWarnings("rawtypes")

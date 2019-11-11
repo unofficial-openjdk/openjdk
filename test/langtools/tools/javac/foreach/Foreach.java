@@ -30,6 +30,7 @@
 
 import java.util.Iterator;
 
+@Bean
 public class Foreach implements Iterable<Integer> {
 
     public Iterator<Integer> iterator() {

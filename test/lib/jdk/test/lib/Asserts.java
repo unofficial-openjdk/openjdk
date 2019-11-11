@@ -43,6 +43,7 @@ import java.util.Objects;
  * understand the failure.
  * </pre>
  */
+@Bean
 public class Asserts {
 
     /**

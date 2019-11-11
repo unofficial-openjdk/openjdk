@@ -35,6 +35,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 
 
 
+@Bean
 public class JcmdAsserts {
 
     private static final String NEW_LINE = System.getProperty("line.separator");

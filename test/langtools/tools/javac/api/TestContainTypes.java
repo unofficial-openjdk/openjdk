@@ -50,6 +50,7 @@ import javax.tools.ToolProvider;
 
 import com.sun.source.util.JavacTask;
 
+@Bean
 public class TestContainTypes {
 
     enum ClassType {
@@ -124,7 +125,11 @@ public class TestContainTypes {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return source;
         }
     }
@@ -177,13 +182,21 @@ public class TestContainTypes {
             return supportedAnnos;
         }
 
-        private void error(String msg) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void error(String msg) {
             System.err.println(source.source);
             throw new AssertionError(msg);
         }
 
         @Override
-        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             if (roundEnv.getRootElements().size() == 0) {
                 return true;
             }

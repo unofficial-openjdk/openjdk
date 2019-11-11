@@ -44,6 +44,7 @@ import sun.tools.attach.HotSpotVirtualMachine;
  * @run main/othervm -Djdk.attach.allowAttachSelf TestLoggerWeakRefLeak Logger
  * @run main/othervm -Djdk.attach.allowAttachSelf TestLoggerWeakRefLeak AnonymousLogger
  */
+@Bean
 public class TestLoggerWeakRefLeak {
 
     private static final String TARGET_CLASS = "java.lang.ref.WeakReference";

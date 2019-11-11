@@ -51,6 +51,7 @@ import java.lang.reflect.Field;
  * to the array at the end of survive space near unused space.
  */
 
+@Bean
 public class Test8010927 {
 
     private static final Unsafe U;

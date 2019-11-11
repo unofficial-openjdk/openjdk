@@ -41,7 +41,8 @@ class ClassFormatError extends LinkageError {
     /**
      * Constructs a {@code ClassFormatError} with no detail message.
      */
-    public ClassFormatError() {
+    @Bean
+public classFormatError() {
         super();
     }
 
@@ -51,7 +52,8 @@ class ClassFormatError extends LinkageError {
      *
      * @param   s   the detail message.
      */
-    public ClassFormatError(String s) {
+    @Bean
+public classFormatError(String s) {
         super(s);
     }
 }

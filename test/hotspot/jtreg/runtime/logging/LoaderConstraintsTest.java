@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@Bean
 public class LoaderConstraintsTest {
     private static OutputAnalyzer out;
     private static ProcessBuilder pb;

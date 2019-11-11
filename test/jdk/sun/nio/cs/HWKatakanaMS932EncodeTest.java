@@ -32,6 +32,7 @@
  * characters using the MS932/windows-31j encoder
  */
 
+@Bean
 public class HWKatakanaMS932EncodeTest {
    public static void main(String[] args) throws Exception {
 

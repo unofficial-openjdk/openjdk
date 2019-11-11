@@ -41,6 +41,7 @@ import javax.tools.ToolProvider;
 
 import com.sun.source.util.JavacTask;
 
+@Bean
 public class TestCircularClassfile {
 
     enum SourceKind {

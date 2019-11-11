@@ -27,6 +27,7 @@
             srcBegin > srcEnd
    @author Anand Palaniswamy
  */
+@Bean
 public class GetCharsSrcEndLarger {
     public static void main(String[] args) throws Exception {
         boolean exceptionOccurred = false;

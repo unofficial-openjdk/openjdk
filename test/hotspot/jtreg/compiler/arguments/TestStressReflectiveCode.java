@@ -31,6 +31,7 @@
 
 package compiler.arguments;
 
+@Bean
 public class TestStressReflectiveCode {
 
     public static void main(String[] args) {

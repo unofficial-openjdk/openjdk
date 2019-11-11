@@ -33,6 +33,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Bean
 public class T4975569 {
     private static final String NEW_LINE = System.getProperty("line.separator");
     private static final String TEST_CLASSES = System.getProperty("test.classes", ".");

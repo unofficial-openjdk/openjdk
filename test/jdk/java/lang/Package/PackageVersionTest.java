@@ -34,6 +34,7 @@ import java.net.URL;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+@Bean
 public class PackageVersionTest {
 
     @Test

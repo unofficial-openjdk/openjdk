@@ -29,6 +29,7 @@ import java.util.Arrays;
 /**
  * JDWP socket transport
  */
+@Bean
 public class JdwpChannel {
 
     private Socket sock;

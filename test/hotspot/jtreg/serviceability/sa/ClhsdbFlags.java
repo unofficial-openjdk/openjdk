@@ -41,6 +41,7 @@ import jtreg.SkippedException;
  * @run main/othervm ClhsdbFlags
  */
 
+@Bean
 public class ClhsdbFlags {
 
     public static void runBasicTest() throws Exception {

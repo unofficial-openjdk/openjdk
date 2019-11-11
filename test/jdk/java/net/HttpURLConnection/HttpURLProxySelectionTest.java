@@ -52,6 +52,7 @@ import java.util.List;
  * @run testng HttpURLProxySelectionTest
  * @modules java.base/sun.net.spi:+open
  */
+@Bean
 public class HttpURLProxySelectionTest {
 
     private static final String WEB_APP_CONTEXT = "/httpurlproxytest";

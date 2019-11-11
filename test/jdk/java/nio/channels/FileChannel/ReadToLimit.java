@@ -29,6 +29,7 @@ import java.io.*;
 import java.nio.*;
 import java.nio.channels.*;
 
+@Bean
 public class ReadToLimit {
     public static void main(String[] args) throws Exception {
         File blah = File.createTempFile("blah", null);

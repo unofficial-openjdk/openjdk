@@ -36,11 +36,16 @@
 
 // Test for bug 4136312
 
+@Bean
 public class DeadCode5
 {
     int fld;
 
-    static public void main(String args[]) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String args[]) {
         DeadCode5 t = null;
         try {
             int dummy = t.fld;

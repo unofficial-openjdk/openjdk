@@ -35,6 +35,7 @@ import jdk.test.lib.JDKToolLauncher;
  * @library /test/lib
  * @run main BasicJStackTest
  */
+@Bean
 public class BasicJStackTest {
 
     private static ProcessBuilder processBuilder = new ProcessBuilder();

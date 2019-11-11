@@ -36,6 +36,7 @@ import javax.script.ScriptEngineManager;
 import javax.script.SimpleScriptContext;
 
 @SuppressWarnings("javadoc")
+@Bean
 public class MultiScopes {
     public static void main(final String[] args) throws Exception {
         final ScriptEngineManager manager = new ScriptEngineManager();

@@ -42,6 +42,7 @@
 
 package compiler.eliminateAutobox;
 
+@Bean
 public class TestLongBoxing {
 
   static final Long ibc = new Long(1);

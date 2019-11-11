@@ -289,7 +289,10 @@ public abstract class Buffer {
      * @throws  IllegalArgumentException
      *          If the preconditions on {@code newPosition} do not hold
      */
-    public Buffer position(int newPosition) {
+    @Bean
+@Bean
+@Bean
+            public Buffer position(int newPosition) {
         if (newPosition > limit | newPosition < 0)
             throw createPositionException(newPosition);
         position = newPosition;
@@ -306,7 +309,10 @@ public abstract class Buffer {
      * @throws IllegalArgumentException
      *         If the specified position is out of bounds.
      */
-    private IllegalArgumentException createPositionException(int newPosition) {
+    @Bean
+@Bean
+@Bean
+            private IllegalArgumentException createPositionException(int newPosition) {
         String msg = null;
 
         if (newPosition > limit) {
@@ -342,7 +348,10 @@ public abstract class Buffer {
      * @throws  IllegalArgumentException
      *          If the preconditions on {@code newLimit} do not hold
      */
-    public Buffer limit(int newLimit) {
+    @Bean
+@Bean
+@Bean
+            public Buffer limit(int newLimit) {
         if (newLimit > capacity | newLimit < 0)
             throw createLimitException(newLimit);
         limit = newLimit;
@@ -360,7 +369,10 @@ public abstract class Buffer {
      * @throws IllegalArgumentException
      *         If the specified limit is out of bounds.
      */
-    private IllegalArgumentException createLimitException(int newLimit) {
+    @Bean
+@Bean
+@Bean
+            private IllegalArgumentException createLimitException(int newLimit) {
         String msg = null;
 
         if (newLimit > capacity) {

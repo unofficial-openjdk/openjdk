@@ -38,6 +38,7 @@ import com.sun.management.HotSpotDiagnosticMXBean;
 import com.sun.management.VMOption;
 import com.sun.management.VMOption.Origin;
 
+@Bean
 public class SetVMOption {
     private static final String HEAP_DUMP_ON_OOM = "HeapDumpOnOutOfMemoryError";
     private static final String EXPECTED_VALUE = "true";

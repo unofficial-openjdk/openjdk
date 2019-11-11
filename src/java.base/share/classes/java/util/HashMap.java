@@ -135,6 +135,7 @@ import jdk.internal.access.SharedSecrets;
  * @see     Hashtable
  * @since   1.2
  */
+@Bean
 public class HashMap<K,V> extends AbstractMap<K,V>
     implements Map<K,V>, Cloneable, Serializable {
 
@@ -553,7 +554,8 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      *
      * @see #put(Object, Object)
      */
-    public V get(Object key) {
+@Bean
+        public V get(Object key) {
         Node<K,V> e;
         return (e = getNode(hash(key), key)) == null ? null : e.value;
     }
@@ -593,7 +595,8 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      * @return {@code true} if this map contains a mapping for the specified
      * key.
      */
-    public boolean containsKey(Object key) {
+@Bean
+        public boolean containsKey(Object key) {
         return getNode(hash(key), key) != null;
     }
 
@@ -609,7 +612,8 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      *         (A {@code null} return can also indicate that the map
      *         previously associated {@code null} with {@code key}.)
      */
-    public V put(K key, V value) {
+@Bean
+        public V put(K key, V value) {
         return putVal(hash(key), key, value, false, true);
     }
 
@@ -782,7 +786,8 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      * @param m mappings to be stored in this map
      * @throws NullPointerException if the specified map is null
      */
-    public void putAll(Map<? extends K, ? extends V> m) {
+@Bean
+        public void putAll(Map<? extends K, ? extends V> m) {
         putMapEntries(m, true);
     }
 
@@ -795,7 +800,8 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      *         (A {@code null} return can also indicate that the map
      *         previously associated {@code null} with {@code key}.)
      */
-    public V remove(Object key) {
+@Bean
+        public V remove(Object key) {
         Node<K,V> e;
         return (e = removeNode(hash(key), key, null, false, true)) == null ?
             null : e.value;
@@ -874,7 +880,8 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      * @return {@code true} if this map maps one or more keys to the
      *         specified value
      */
-    public boolean containsValue(Object value) {
+@Bean
+        public boolean containsValue(Object value) {
         Node<K,V>[] tab; V v;
         if ((tab = table) != null && size > 0) {
             for (Node<K,V> e : tab) {
@@ -1139,23 +1146,27 @@ public class HashMap<K,V> extends AbstractMap<K,V>
     // Overrides of JDK8 Map extension methods
 
     @Override
-    public V getOrDefault(Object key, V defaultValue) {
+@Bean
+        public V getOrDefault(Object key, V defaultValue) {
         Node<K,V> e;
         return (e = getNode(hash(key), key)) == null ? defaultValue : e.value;
     }
 
     @Override
-    public V putIfAbsent(K key, V value) {
+@Bean
+        public V putIfAbsent(K key, V value) {
         return putVal(hash(key), key, value, true, true);
     }
 
     @Override
-    public boolean remove(Object key, Object value) {
+@Bean
+        public boolean remove(Object key, Object value) {
         return removeNode(hash(key), key, value, true, true) != null;
     }
 
     @Override
-    public boolean replace(K key, V oldValue, V newValue) {
+@Bean
+        public boolean replace(K key, V oldValue, V newValue) {
         Node<K,V> e; V v;
         if ((e = getNode(hash(key), key)) != null &&
             ((v = e.value) == oldValue || (v != null && v.equals(oldValue)))) {
@@ -1167,7 +1178,8 @@ public class HashMap<K,V> extends AbstractMap<K,V>
     }
 
     @Override
-    public V replace(K key, V value) {
+@Bean
+        public V replace(K key, V value) {
         Node<K,V> e;
         if ((e = getNode(hash(key), key)) != null) {
             V oldValue = e.value;
@@ -1414,7 +1426,8 @@ public class HashMap<K,V> extends AbstractMap<K,V>
     }
 
     @Override
-    public void forEach(BiConsumer<? super K, ? super V> action) {
+@Bean
+        public void forEach(BiConsumer<? super K, ? super V> action) {
         Node<K,V>[] tab;
         if (action == null)
             throw new NullPointerException();
@@ -1430,7 +1443,8 @@ public class HashMap<K,V> extends AbstractMap<K,V>
     }
 
     @Override
-    public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
+@Bean
+        public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
         Node<K,V>[] tab;
         if (function == null)
             throw new NullPointerException();
@@ -1671,7 +1685,8 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                                         expectedModCount);
         }
 
-        public void forEachRemaining(Consumer<? super K> action) {
+@Bean
+            public void forEachRemaining(Consumer<? super K> action) {
             int i, hi, mc;
             if (action == null)
                 throw new NullPointerException();
@@ -1700,7 +1715,8 @@ public class HashMap<K,V> extends AbstractMap<K,V>
             }
         }
 
-        public boolean tryAdvance(Consumer<? super K> action) {
+@Bean
+            public boolean tryAdvance(Consumer<? super K> action) {
             int hi;
             if (action == null)
                 throw new NullPointerException();
@@ -1743,7 +1759,8 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                                           expectedModCount);
         }
 
-        public void forEachRemaining(Consumer<? super V> action) {
+@Bean
+            public void forEachRemaining(Consumer<? super V> action) {
             int i, hi, mc;
             if (action == null)
                 throw new NullPointerException();
@@ -1772,7 +1789,8 @@ public class HashMap<K,V> extends AbstractMap<K,V>
             }
         }
 
-        public boolean tryAdvance(Consumer<? super V> action) {
+@Bean
+            public boolean tryAdvance(Consumer<? super V> action) {
             int hi;
             if (action == null)
                 throw new NullPointerException();
@@ -1814,7 +1832,8 @@ public class HashMap<K,V> extends AbstractMap<K,V>
                                           expectedModCount);
         }
 
-        public void forEachRemaining(Consumer<? super Map.Entry<K,V>> action) {
+@Bean
+            public void forEachRemaining(Consumer<? super Map.Entry<K,V>> action) {
             int i, hi, mc;
             if (action == null)
                 throw new NullPointerException();
@@ -1843,7 +1862,8 @@ public class HashMap<K,V> extends AbstractMap<K,V>
             }
         }
 
-        public boolean tryAdvance(Consumer<? super Map.Entry<K,V>> action) {
+@Bean
+            public boolean tryAdvance(Consumer<? super Map.Entry<K,V>> action) {
             int hi;
             if (action == null)
                 throw new NullPointerException();

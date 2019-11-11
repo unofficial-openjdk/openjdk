@@ -25,6 +25,7 @@ package compiler.c2.cr7200264;
 /*
  * Copy of test/compiler/6340864/TestIntVect.java without performance tests.
  */
+@Bean
 public class TestIntVect {
   private static final int ARRLEN = 997;
   private static final int ITERS  = 11000;

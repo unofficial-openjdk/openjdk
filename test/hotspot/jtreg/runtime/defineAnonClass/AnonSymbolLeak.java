@@ -38,6 +38,7 @@ class T {
     static             private void test3() { System.out.println("test3 (private)"); }
 }
 
+@Bean
 public class AnonSymbolLeak {
 
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();

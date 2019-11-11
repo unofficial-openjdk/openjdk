@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
  * @modules java.logging
  * @run main/othervm StackStreamTest
  */
+@Bean
 public class StackStreamTest {
     public static void main(String[] argv) throws Exception {
         new StackStreamTest().test();

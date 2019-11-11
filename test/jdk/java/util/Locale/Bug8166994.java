@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
+@Bean
 public class Bug8166994 {
 
     public static void main(String[] args) {

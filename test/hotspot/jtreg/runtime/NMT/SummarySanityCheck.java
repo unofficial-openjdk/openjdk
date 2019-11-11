@@ -42,6 +42,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class SummarySanityCheck {
 
   private static String jcmdout;

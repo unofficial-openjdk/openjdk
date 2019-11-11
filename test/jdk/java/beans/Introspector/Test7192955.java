@@ -34,6 +34,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyDescriptor;
 import java.util.List;
 
+@Bean
 public class Test7192955 {
 
     public static void main(String[] args) throws IntrospectionException {
@@ -62,14 +63,26 @@ public class Test7192955 {
             return this.list;
         }
 
-        public void setList(List<String> list) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setList(List<String> list) {
             this.list = list;
         }
 
-        public void addPropertyChangeListener(PropertyChangeListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addPropertyChangeListener(PropertyChangeListener listener) {
         }
 
-        public void removePropertyChangeListener(PropertyChangeListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener listener) {
         }
 
         public List<String> getReadOnly() {
@@ -85,7 +98,11 @@ public class Test7192955 {
             return this.test;
         }
 
-        public void setTest(String test) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setTest(String test) {
             this.test = test;
         }
     }

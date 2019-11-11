@@ -46,6 +46,7 @@ import javax.management.ObjectName;
  * mirror stored in the backtrace, but the old versions of the redefined method
  * could be freed, since class redefinition didn't know about the backtraces.
  */
+@Bean
 public class RedefineMethodInBacktraceApp {
     static boolean failed = false;
 

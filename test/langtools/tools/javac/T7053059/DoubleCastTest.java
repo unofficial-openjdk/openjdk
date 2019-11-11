@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import com.sun.tools.classfile.*;
 import com.sun.tools.javac.util.Assert;
 
+@Bean
 public class DoubleCastTest {
     class C {
         Object x;

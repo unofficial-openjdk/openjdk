@@ -60,6 +60,7 @@ import jdk.test.lib.util.FileUtils;
  *  - Subclasses finalize overridden - cleaner cleanup
  *  - Subclasses finalize and close overridden - AltFinalizer cleanup
  */
+@Bean
 public class UnreferencedFISClosesFd {
 
     static final String FILE_NAME = "empty.txt";

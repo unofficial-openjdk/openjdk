@@ -30,6 +30,7 @@
 import java.nio.*;
 import java.nio.channels.*;
 
+@Bean
 public class WakeupEmpty {
 
     private final static int SLEEP_TIME = 100;

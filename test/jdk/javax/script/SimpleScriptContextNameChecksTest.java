@@ -33,12 +33,17 @@ import java.util.function.Consumer;
 import javax.script.*;
 import org.testng.annotations.Test;
 
+@Bean
 public class SimpleScriptContextNameChecksTest {
     private List<ScriptEngineFactory> getFactories() {
         return new ScriptEngineManager().getEngineFactories();
     }
 
-    private void testAndExpect(Consumer<ScriptContext> c, Class<? extends RuntimeException> clazz) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testAndExpect(Consumer<ScriptContext> c, Class<? extends RuntimeException> clazz) {
         for (ScriptEngineFactory fac : getFactories()) {
             ScriptContext sc = fac.getScriptEngine().getContext();
             String name = fac.getEngineName();
@@ -55,11 +60,19 @@ public class SimpleScriptContextNameChecksTest {
         }
     }
 
-    private void testAndExpectIAE(Consumer<ScriptContext> c) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testAndExpectIAE(Consumer<ScriptContext> c) {
         testAndExpect(c, IllegalArgumentException.class);
     }
 
-    private void testAndExpectNPE(Consumer<ScriptContext> c) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testAndExpectNPE(Consumer<ScriptContext> c) {
         testAndExpect(c, NullPointerException.class);
     }
 

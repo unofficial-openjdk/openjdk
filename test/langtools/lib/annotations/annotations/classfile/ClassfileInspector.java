@@ -217,7 +217,11 @@ public class ClassfileInspector {
          * @param classname The classname to check.
          * @return Whether or not this template should apply.
          */
-        public boolean matchClassName(String classname) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean matchClassName(String classname) {
             return this.classname == null || this.classname.equals(classname);
         }
 
@@ -329,7 +333,11 @@ public class ClassfileInspector {
          * @param Whether or not the annotation is visible at runtime.
          * @return Whether or not this template matches the visibility.
          */
-        public boolean matchVisibility(boolean visibility) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean matchVisibility(boolean visibility) {
             return this.visibility == visibility;
         }
 
@@ -425,7 +433,11 @@ public class ClassfileInspector {
          * @param methodname The method name to check.
          * @return Whether or not this template should apply.
          */
-        public boolean matchMethodName(String methodname) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean matchMethodName(String methodname) {
             return this.methodname.equals(methodname);
         }
 
@@ -515,7 +527,11 @@ public class ClassfileInspector {
          * @param fieldname The field name to check.
          * @return Whether or not this template should apply.
          */
-        public boolean matchFieldName(String fieldname) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean matchFieldName(String fieldname) {
             return this.fieldname.equals(fieldname);
         }
 
@@ -603,13 +619,21 @@ public class ClassfileInspector {
         public void matchAnnotation(ConstantPool cpool,
                                     Annotation anno) {}
 
-        public void matchAnnotation(TypeAnnotation anno) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void matchAnnotation(TypeAnnotation anno) {
             if (checkMatch(anno)) {
                 count++;
             }
         }
 
-        public boolean checkMatch(TypeAnnotation anno) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean checkMatch(TypeAnnotation anno) {
             boolean matches = checkMatch(anno.constant_pool, anno.annotation);
 
             matches = matches && anno.position.type == targetType;
@@ -688,7 +712,11 @@ public class ClassfileInspector {
              *
              * @param bound_index The bound_index value.
              */
-            public Builder setBoundIndex(int bound_index) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Builder setBoundIndex(int bound_index) {
                 this.bound_index = bound_index;
                 return this;
             }
@@ -698,7 +726,11 @@ public class ClassfileInspector {
              *
              * @param bound_index The parameter_index value.
              */
-            public Builder setParameterIndex(int parameter_index) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Builder setParameterIndex(int parameter_index) {
                 this.parameter_index = parameter_index;
                 return this;
             }
@@ -708,7 +740,11 @@ public class ClassfileInspector {
              *
              * @param type_index The type_index value.
              */
-            public Builder setTypeIndex(int type_index) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Builder setTypeIndex(int type_index) {
                 this.type_index = type_index;
                 return this;
             }
@@ -718,7 +754,11 @@ public class ClassfileInspector {
              *
              * @param exception_index The exception_index value.
              */
-            public Builder setExceptionIndex(int exception_index) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Builder setExceptionIndex(int exception_index) {
                 this.exception_index = exception_index;
                 return this;
             }
@@ -728,7 +768,11 @@ public class ClassfileInspector {
              *
              * @param typePath The type path value.
              */
-            public Builder setTypePath(TypeAnnotation.Position.TypePathEntry[] typePath) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Builder setTypePath(TypeAnnotation.Position.TypePathEntry[] typePath) {
                 this.typePath = typePath;
                 return this;
             }
@@ -810,7 +854,11 @@ public class ClassfileInspector {
          * @param methodname The method name to check.
          * @return Whether or not this template should apply.
          */
-        public boolean matchMethodName(String methodname) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean matchMethodName(String methodname) {
             return this.methodname.equals(methodname);
         }
 
@@ -930,7 +978,11 @@ public class ClassfileInspector {
          * @param fieldname The field name to check.
          * @return Whether or not this template should apply.
          */
-        public boolean matchFieldName(String fieldname) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean matchFieldName(String fieldname) {
             return this.fieldname.equals(fieldname);
         }
 
@@ -1183,182 +1235,326 @@ public class ClassfileInspector {
     private static class AbstractAttributeVisitor<T> implements Attribute.Visitor<Void, T> {
 
         @Override
-        public Void visitDefault(DefaultAttribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitDefault(DefaultAttribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitAnnotationDefault(AnnotationDefault_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitAnnotationDefault(AnnotationDefault_attribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitBootstrapMethods(BootstrapMethods_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitBootstrapMethods(BootstrapMethods_attribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitCharacterRangeTable(CharacterRangeTable_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitCharacterRangeTable(CharacterRangeTable_attribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitCode(Code_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitCode(Code_attribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitCompilationID(CompilationID_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitCompilationID(CompilationID_attribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitConstantValue(ConstantValue_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitConstantValue(ConstantValue_attribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitDeprecated(Deprecated_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitDeprecated(Deprecated_attribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitEnclosingMethod(EnclosingMethod_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitEnclosingMethod(EnclosingMethod_attribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitExceptions(Exceptions_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitExceptions(Exceptions_attribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitInnerClasses(InnerClasses_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitInnerClasses(InnerClasses_attribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitLineNumberTable(LineNumberTable_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitLineNumberTable(LineNumberTable_attribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitLocalVariableTable(LocalVariableTable_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitLocalVariableTable(LocalVariableTable_attribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitLocalVariableTypeTable(LocalVariableTypeTable_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitLocalVariableTypeTable(LocalVariableTypeTable_attribute attr, T p) {
             return null;
         }
 
         @Override
-          public Void visitNestHost(NestHost_attribute attr, T p) {
+          @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitNestHost(NestHost_attribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitMethodParameters(MethodParameters_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitMethodParameters(MethodParameters_attribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitModule(Module_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitModule(Module_attribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitModuleHashes(ModuleHashes_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitModuleHashes(ModuleHashes_attribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitModuleMainClass(ModuleMainClass_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitModuleMainClass(ModuleMainClass_attribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitModulePackages(ModulePackages_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitModulePackages(ModulePackages_attribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitModuleResolution(ModuleResolution_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitModuleResolution(ModuleResolution_attribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitModuleTarget(ModuleTarget_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitModuleTarget(ModuleTarget_attribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitNestMembers(NestMembers_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitNestMembers(NestMembers_attribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitRuntimeInvisibleAnnotations(RuntimeInvisibleAnnotations_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitRuntimeInvisibleAnnotations(RuntimeInvisibleAnnotations_attribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitRuntimeInvisibleParameterAnnotations(RuntimeInvisibleParameterAnnotations_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitRuntimeInvisibleParameterAnnotations(RuntimeInvisibleParameterAnnotations_attribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitRuntimeInvisibleTypeAnnotations(RuntimeInvisibleTypeAnnotations_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitRuntimeInvisibleTypeAnnotations(RuntimeInvisibleTypeAnnotations_attribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitRuntimeVisibleAnnotations(RuntimeVisibleAnnotations_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitRuntimeVisibleAnnotations(RuntimeVisibleAnnotations_attribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitRuntimeVisibleParameterAnnotations(RuntimeVisibleParameterAnnotations_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitRuntimeVisibleParameterAnnotations(RuntimeVisibleParameterAnnotations_attribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitRuntimeVisibleTypeAnnotations(RuntimeVisibleTypeAnnotations_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitRuntimeVisibleTypeAnnotations(RuntimeVisibleTypeAnnotations_attribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitSignature(Signature_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitSignature(Signature_attribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitSourceDebugExtension(SourceDebugExtension_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitSourceDebugExtension(SourceDebugExtension_attribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitSourceFile(SourceFile_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitSourceFile(SourceFile_attribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitSourceID(SourceID_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitSourceID(SourceID_attribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitStackMap(StackMap_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitStackMap(StackMap_attribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitStackMapTable(StackMapTable_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitStackMapTable(StackMapTable_attribute attr, T p) {
             return null;
         }
 
         @Override
-        public Void visitSynthetic(Synthetic_attribute attr, T p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitSynthetic(Synthetic_attribute attr, T p) {
             return null;
         }
     }

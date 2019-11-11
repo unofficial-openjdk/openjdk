@@ -46,6 +46,7 @@ import jdk.test.lib.Utils;
  * @run main/othervm TestRevPtrsForInvokeDynamic
  */
 
+@Bean
 public class TestRevPtrsForInvokeDynamic {
 
     private static LingeredAppWithInvokeDynamic theApp = null;

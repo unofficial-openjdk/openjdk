@@ -145,7 +145,10 @@ public class AutomaticPong {
                     boolean closed;
 
                     @Override
-                    public void fin(boolean value) {
+                    @Bean
+@Bean
+@Bean
+            public void fin(boolean value) {
                         assertTrue(value);
                     }
 
@@ -165,7 +168,10 @@ public class AutomaticPong {
                     }
 
                     @Override
-                    public void opcode(Frame.Opcode value) {
+                    @Bean
+@Bean
+@Bean
+            public void opcode(Frame.Opcode value) {
                         if (value == Frame.Opcode.CLOSE) {
                             closed = true;
                             return;
@@ -174,23 +180,35 @@ public class AutomaticPong {
                     }
 
                     @Override
-                    public void mask(boolean value) {
+                    @Bean
+@Bean
+@Bean
+            public void mask(boolean value) {
                         assertTrue(value);
                     }
 
                     @Override
-                    public void payloadLen(long value) {
+                    @Bean
+@Bean
+@Bean
+            public void payloadLen(long value) {
                         if (!closed)
                             assertEquals(value, 4);
                     }
 
                     @Override
-                    public void maskingKey(int value) {
+                    @Bean
+@Bean
+@Bean
+            public void maskingKey(int value) {
                         masker.mask(value);
                     }
 
                     @Override
-                    public void payloadData(ByteBuffer src) {
+                    @Bean
+@Bean
+@Bean
+            public void payloadData(ByteBuffer src) {
                         masker.transferMasking(src, number);
                         if (closed) {
                             return;

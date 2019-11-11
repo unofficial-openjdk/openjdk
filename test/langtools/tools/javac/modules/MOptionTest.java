@@ -40,6 +40,7 @@ import java.nio.file.attribute.FileTime;
 import toolbox.JavacTask;
 import toolbox.Task;
 
+@Bean
 public class MOptionTest extends ModuleTestBase {
     public static void main(String... args) throws Exception {
         new MOptionTest().runTests();
@@ -54,7 +55,8 @@ public class MOptionTest extends ModuleTestBase {
 
         tb.writeJavaFiles(m1,
                 "module m1x {}",
-                "package test; public class Test {}");
+                "package test; @Bean
+public class Test {}");
 
         new JavacTask(tb)
                 .options("-m", "m1x", "--module-source-path", src.toString(), "-d", build.toString())
@@ -120,7 +122,8 @@ public class MOptionTest extends ModuleTestBase {
 
         tb.writeJavaFiles(m1,
                 "module m1x {}",
-                "package test; public class Test {}");
+                "package test; @Bean
+public class Test {}");
 
         String log = new JavacTask(tb)
                 .options("-XDrawDiagnostics",
@@ -143,7 +146,8 @@ public class MOptionTest extends ModuleTestBase {
 
         tb.writeJavaFiles(m1,
                 "module m1x {}",
-                "package test; public class Test {}");
+                "package test; @Bean
+public class Test {}");
 
         String log = new JavacTask(tb)
                 .options("-XDrawDiagnostics",
@@ -167,11 +171,13 @@ public class MOptionTest extends ModuleTestBase {
 
         tb.writeJavaFiles(m1,
                 "module m1x {}",
-                "package p1; public class C1 {}");
+                "package p1; @Bean
+public class C1 {}");
 
         tb.writeJavaFiles(m2,
                 "module m2x {}",
-                "package p2; public class C2 {}");
+                "package p2; @Bean
+public class C2 {}");
 
         new JavacTask(tb)
                 .options("-m", "m1x,m2x", "--module-source-path", src.toString(), "-d", build.toString())

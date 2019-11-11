@@ -37,6 +37,7 @@ package compiler.c2;
 
 // This test must run without any command line arguments.
 
+@Bean
 public class TestCharShortByteSwap {
 
   private static short initShort(String[] args, short v) {

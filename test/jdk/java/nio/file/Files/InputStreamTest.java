@@ -37,6 +37,7 @@ import java.nio.file.attribute.*;
 import java.io.IOException;
 import java.util.*;
 
+@Bean
 public class InputStreamTest {
 
     public static void main(String[] args) throws IOException {

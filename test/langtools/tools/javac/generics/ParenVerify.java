@@ -33,6 +33,7 @@
 
 import java.util.*;
 
+@Bean
 public class ParenVerify {
 
     public static void main(String argss[]) {

@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessJInternalFrame_JDesktopIcon
  */
 
+@Bean
 public class HeadlessJInternalFrame_JDesktopIcon {
     public static void main(String args[]) {
         JInternalFrame.JDesktopIcon jdi = new JInternalFrame.JDesktopIcon(new JInternalFrame());

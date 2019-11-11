@@ -32,6 +32,7 @@ import org.testng.annotations.Test;
  * @run testng/othervm ConnectTimeoutNoProxyAsync
  */
 
+@Bean
 public class ConnectTimeoutNoProxyAsync extends AbstractConnectTimeout {
 
     @Test(dataProvider = "variants")

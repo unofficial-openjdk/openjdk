@@ -37,7 +37,11 @@ public class test6 {
     private static final int maxEntries = 25;
 
     // flattens the binary tree into an array
-    private void getSortedArray(Node root, int[] dataArray, int[] index) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void getSortedArray(Node root, int[] dataArray, int[] index) {
         if ((root != null) && (root != RBTree.treeNull)) {
             getSortedArray(root.getNode(Node.Left_son), dataArray, index);
             dataArray[index[0]++] = root.getKey();

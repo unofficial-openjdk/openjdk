@@ -42,6 +42,7 @@ import java.util.concurrent.*;
 import javax.management.*;
 import javax.management.remote.*;
 
+@Bean
 public class NotifExecutorTest {
 
     public static void main(String[] args) throws Exception {
@@ -51,6 +52,10 @@ public class NotifExecutorTest {
         final ObjectName mbean = new ObjectName ("Default:name=NotificationEmitter");
         final MyListener myLister = new MyListener();
         final NotificationListener nullListener = new NotificationListener() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void handleNotification(Notification n, Object hb) {
                     // nothing
                 }
@@ -132,7 +137,11 @@ public class NotifExecutorTest {
     // private classes
     //--------------------------
     private static class MyListener implements NotificationListener {
-        public void handleNotification(Notification notif, Object handback) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void handleNotification(Notification notif, Object handback) {
             synchronized(lock) {
                 if(++receivedNotifs >= nb) {
                     lock.notifyAll();
@@ -155,7 +164,11 @@ public class NotifExecutorTest {
          *
          * @param nb The number of notifications to send
          */
-        public void sendNotifications(Integer nb) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void sendNotifications(Integer nb) {
             System.out.println(">>> NotificationEmitter: asked to send " +
                                "notifications: " + nb);
 

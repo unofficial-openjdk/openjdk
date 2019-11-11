@@ -49,6 +49,7 @@ import sun.hotspot.WhiteBox;
 import compiler.whitebox.CompilerWhiteBoxTest;
 import java.lang.reflect.Method;
 
+@Bean
 public class TestTypeProfiling {
 
     public static int[] mParamTypeCheck(Object in) {

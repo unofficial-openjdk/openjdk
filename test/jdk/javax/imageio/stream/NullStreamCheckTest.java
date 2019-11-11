@@ -43,6 +43,7 @@ import javax.imageio.spi.IIORegistry;
 import javax.imageio.spi.ImageInputStreamSpi;
 import javax.imageio.spi.ImageOutputStreamSpi;
 
+@Bean
 public class NullStreamCheckTest {
 
     // get ImageIORegistry default instance.

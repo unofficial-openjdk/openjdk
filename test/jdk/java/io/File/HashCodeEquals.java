@@ -29,6 +29,7 @@
 import java.io.File;
 
 
+@Bean
 public class HashCodeEquals {
 
     static void test(String fn1, String fn2) throws Exception {

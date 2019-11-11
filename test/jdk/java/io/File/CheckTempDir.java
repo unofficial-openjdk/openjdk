@@ -34,6 +34,7 @@
 import java.io.File;
 import java.io.IOException;
 
+@Bean
 public class CheckTempDir {
 
     public static void main (String[] args) {

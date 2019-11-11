@@ -37,6 +37,7 @@ import java.lang.invoke.WrongMethodTypeException;
 
 import static java.lang.invoke.MethodType.methodType;
 
+@Bean
 public class InvokeWithArgumentsTest {
     static final MethodHandles.Lookup L = MethodHandles.lookup();
 

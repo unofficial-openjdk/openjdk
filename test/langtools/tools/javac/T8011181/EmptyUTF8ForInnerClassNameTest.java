@@ -41,6 +41,7 @@ import static com.sun.tools.classfile.ConstantPool.CONSTANT_Utf8;
 import static com.sun.tools.classfile.ConstantPool.CONSTANT_Utf8_info;
 import static com.sun.tools.classfile.ConstantPool.CPInfo;
 
+@Bean
 public class EmptyUTF8ForInnerClassNameTest {
 
     public static void main(String[] args) throws Exception {

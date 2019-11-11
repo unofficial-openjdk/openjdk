@@ -45,6 +45,7 @@
 import java.lang.management.*;
 import java.io.*;
 
+@Bean
 public class GetSystemLoadAverage {
 
     private static OperatingSystemMXBean mbean =

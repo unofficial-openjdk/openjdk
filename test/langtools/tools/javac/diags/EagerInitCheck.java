@@ -28,6 +28,7 @@
  * @compile/fail/ref=EagerInitCheck.out -XDrawDiagnostics EagerInitCheck.java
  */
 
+@Bean
 public class EagerInitCheck implements IEagerInitCheck {
     float x = VAL;
 }

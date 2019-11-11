@@ -49,6 +49,7 @@ import java.awt.dnd.DropTargetDropEvent;
 import java.awt.dnd.DropTargetEvent;
 import java.awt.event.InputEvent;
 
+@Bean
 public class MissedDragExitTest {
 
     private static final int FRAME_SIZE = 100;
@@ -65,14 +66,23 @@ public class MissedDragExitTest {
         final DraggablePanel dragSource = new DraggablePanel();
         dragSource.setBackground(Color.yellow);
         DropTarget dt = new DropTarget(dragSource, new DropTargetAdapter() {
-            @Override public void drop(DropTargetDropEvent dtde) { }
+            @Override @Bean
+@Bean
+@Bean
+            public void drop(DropTargetDropEvent dtde) { }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void dragExit(DropTargetEvent dte) {
                 dragExitCalled = true;
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void dragOver(DropTargetDragEvent dtde) {
                 Panel newDropTarget = new Panel();
                 newDropTarget.setDropTarget(new DropTarget());
@@ -122,7 +132,10 @@ public class MissedDragExitTest {
         }
 
         @Override
-        public void dragGestureRecognized(DragGestureEvent dge) {
+        @Bean
+@Bean
+@Bean
+            public void dragGestureRecognized(DragGestureEvent dge) {
             dge.startDrag(Cursor.getDefaultCursor(), new StringSelection("test"));
         }
     }

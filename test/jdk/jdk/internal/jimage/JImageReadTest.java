@@ -50,6 +50,7 @@ import org.testng.Assert;
 import org.testng.TestNG;
 
 @Test
+@Bean
 public class JImageReadTest {
 
     static String javaHome = System.getProperty("java.home");

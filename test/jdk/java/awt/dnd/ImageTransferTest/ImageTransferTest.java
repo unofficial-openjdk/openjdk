@@ -56,6 +56,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.MemoryImageSource;
 import java.util.stream.Stream;
 
+@Bean
 public class ImageTransferTest {
     public static void main(String[] arg) throws Exception {
         ImageDragSource ids = new ImageDragSource();
@@ -271,6 +272,9 @@ class ImageDragSource extends ImageTransferer {
         formats = retrieveFormatsToTest();
         passedArray = new boolean[formats.length];
         final DragSourceListener dsl = new DragSourceAdapter() {
+            @Bean
+@Bean
+@Bean
             public void dragDropEnd(DragSourceDropEvent e) {
                 System.err.println("Drop was successful=" + e.getDropSuccess());
                 notifyTransferSuccess(e.getDropSuccess());
@@ -308,6 +312,9 @@ class ImageDropTarget extends ImageTransferer {
     ImageDropTarget() throws AWTException {
         DropTargetAdapter dropTargetAdapter = new DropTargetAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void drop(DropTargetDropEvent dtde) {
                 dropCount++;
                 checkImage(dtde);
@@ -480,7 +487,10 @@ class ImageSelection implements Transferable {
     }
 
     @Override
-    public boolean isDataFlavorSupported(DataFlavor flavor) {
+    @Bean
+@Bean
+@Bean
+            public boolean isDataFlavorSupported(DataFlavor flavor) {
         return Stream.of(flavor).anyMatch(flavor::equals);
     }
 

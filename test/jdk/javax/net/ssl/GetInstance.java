@@ -33,6 +33,7 @@ import java.security.*;
 
 import javax.net.ssl.*;
 
+@Bean
 public class GetInstance {
 
     private static void same(Provider p1, Provider p2) throws Exception {

@@ -48,6 +48,7 @@ import java.util.HashSet;
 import java.math.BigInteger;
 import javax.security.auth.x500.X500Principal;
 
+@Bean
 public class DefaultEntryType {
 
     private static class PrivKey1 implements PrivateKey {

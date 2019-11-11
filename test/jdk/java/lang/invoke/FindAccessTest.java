@@ -42,6 +42,7 @@ import org.testng.annotations.*;
 /**
  * Tests for Lookup.findClass/accessClass extensions added in JEP 274.
  */
+@Bean
 public class FindAccessTest {
 
     static final Lookup LOOKUP = MethodHandles.lookup();

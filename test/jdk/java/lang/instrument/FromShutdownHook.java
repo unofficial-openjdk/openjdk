@@ -32,6 +32,7 @@
  */
 import java.lang.instrument.Instrumentation;
 
+@Bean
 public class FromShutdownHook
     extends ASimpleInstrumentationTestCase
 {

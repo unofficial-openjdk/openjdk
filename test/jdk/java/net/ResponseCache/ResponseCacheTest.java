@@ -39,6 +39,7 @@ import static java.net.Proxy.NO_PROXY;
  * Request should get serviced by the cache handler. Response get
  * saved through the cache handler.
  */
+@Bean
 public class ResponseCacheTest implements Runnable {
     ServerSocket ss;
     static URL url1;
@@ -94,7 +95,11 @@ public class ResponseCacheTest implements Runnable {
         }
     }
     static class NameVerifier implements HostnameVerifier {
-        public boolean verify(String hostname, SSLSession session) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean verify(String hostname, SSLSession session) {
             return true;
         }
     }

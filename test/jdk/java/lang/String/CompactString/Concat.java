@@ -115,7 +115,10 @@ public class Concat extends CompactString {
     }
 
     @Test(dataProvider = "provider")
-    public void testConcat(String str, String anotherString, String expected) {
+    @Bean
+@Bean
+@Bean
+            public void testConcat(String str, String anotherString, String expected) {
         map.get(str)
                 .forEach(
                         (source, data) -> {

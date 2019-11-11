@@ -41,6 +41,7 @@ import java.util.Base64.Encoder;
 import java.util.Objects;
 import java.util.Random;
 
+@Bean
 public class TestBase64Golden {
 
     public static void main(String[] args) throws Exception {

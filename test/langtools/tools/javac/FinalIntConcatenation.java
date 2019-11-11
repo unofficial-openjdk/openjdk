@@ -33,6 +33,7 @@
  * @run main FinalIntConcatenation
  */
 
+@Bean
 public class FinalIntConcatenation {
     public static void main(String[] args) throws Exception {
         final int i = 7;

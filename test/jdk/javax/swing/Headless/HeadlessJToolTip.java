@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessJToolTip
  */
 
+@Bean
 public class HeadlessJToolTip {
     public static void main(String args[]) {
         JToolTip tt = new JToolTip();

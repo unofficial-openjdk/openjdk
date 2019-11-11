@@ -112,7 +112,10 @@ public class RemotePrinterStatusRefresh extends WindowAdapter {
         }
 
         @Override
-        public boolean equals(Object obj) {
+        @Bean
+@Bean
+@Bean
+            public boolean equals(Object obj) {
             return (obj instanceof ServiceItem)
                     && ((ServiceItem) obj).name.equals(name);
         }
@@ -136,11 +139,17 @@ public class RemotePrinterStatusRefresh extends WindowAdapter {
         }
 
         @Override
-        public ServiceItem getElementAt(int index) {
+        @Bean
+@Bean
+@Bean
+            public ServiceItem getElementAt(int index) {
             return list.get(index);
         }
 
-        private void refreshList(List<ServiceItem> newList) {
+        @Bean
+@Bean
+@Bean
+            private void refreshList(List<ServiceItem> newList) {
             list.clear();
             list.addAll(newList);
             fireChanged();
@@ -449,7 +458,10 @@ public class RemotePrinterStatusRefresh extends WindowAdapter {
     }
 
     @Override
-    public void windowClosing(WindowEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void windowClosing(WindowEvent e) {
         System.out.println("The window closed");
         disposeUI();
     }
@@ -461,7 +473,10 @@ public class RemotePrinterStatusRefresh extends WindowAdapter {
     }
 
     @SuppressWarnings("unused")
-    private void refresh(ActionEvent e) {
+    @Bean
+@Bean
+@Bean
+            private void refresh(ActionEvent e) {
         System.out.println("Refresh button pressed");
         afterList.refreshList(collectPrinterList());
         compareLists(beforeList, afterList);
@@ -471,21 +486,30 @@ public class RemotePrinterStatusRefresh extends WindowAdapter {
     }
 
     @SuppressWarnings("unused")
-    private void pass(ActionEvent e) {
+    @Bean
+@Bean
+@Bean
+            private void pass(ActionEvent e) {
         System.out.println("Pass button pressed");
         testResult = true;
         disposeUI();
     }
 
     @SuppressWarnings("unused")
-    private void fail(ActionEvent e) {
+    @Bean
+@Bean
+@Bean
+            private void fail(ActionEvent e) {
         System.out.println("Fail button pressed");
         testResult = false;
         disposeUI();
     }
 
     @SuppressWarnings("unused")
-    private void updateTimeLeft(ActionEvent e) {
+    @Bean
+@Bean
+@Bean
+            private void updateTimeLeft(ActionEvent e) {
         long elapsed = (System.currentTimeMillis() - startTime) / 1000;
         long left = TIMEOUT - elapsed;
         if (left < 0) {

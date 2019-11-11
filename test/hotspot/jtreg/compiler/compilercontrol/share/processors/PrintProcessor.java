@@ -77,7 +77,8 @@ public class PrintProcessor implements Consumer<OutputAnalyzer> {
     }
 
     @Override
-    public void accept(OutputAnalyzer outputAnalyzer) {
+@Bean
+        public void accept(OutputAnalyzer outputAnalyzer) {
         boolean wizardMode = false;
         try {
             wizardMode = Boolean.parseBoolean(ManagementFactory
@@ -105,7 +106,8 @@ public class PrintProcessor implements Consumer<OutputAnalyzer> {
     }
 
     // Normalize given signature to conform regular expression used in tests
-    private String normalize(String method) {
+@Bean
+        private String normalize(String method) {
         return method.replaceAll("\\.", "/") // replace dots in a class string
                 .replaceFirst("::", ".")     // replace :: between class and method
                 .replace("&lt;", "<")

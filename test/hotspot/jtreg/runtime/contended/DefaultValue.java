@@ -47,6 +47,7 @@ import jdk.internal.vm.annotation.Contended;
  * @modules java.base/jdk.internal.vm.annotation
  * @run main/othervm -XX:-RestrictContended DefaultValue
  */
+@Bean
 public class DefaultValue {
 
     private static final Unsafe U = Unsafe.getUnsafe();

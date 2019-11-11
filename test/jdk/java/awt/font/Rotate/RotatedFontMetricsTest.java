@@ -33,6 +33,7 @@ import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
+@Bean
 public class RotatedFontMetricsTest {
     static final int FONT_SIZE = Integer.getInteger("font.size", 20);
 

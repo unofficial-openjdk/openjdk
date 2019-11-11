@@ -42,6 +42,7 @@ import static jdk.test.lib.Asserts.assertLessThan;
 import com.sun.management.HotSpotDiagnosticMXBean;
 import gc.testlibrary.Helpers;
 
+@Bean
 public class TestDynShrinkHeap {
 
     public static final String MIN_FREE_RATIO_FLAG_NAME = "MinHeapFreeRatio";

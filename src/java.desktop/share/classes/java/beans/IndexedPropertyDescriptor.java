@@ -339,7 +339,8 @@ public class IndexedPropertyDescriptor extends PropertyDescriptor {
 
     // Private methods which set get/set the Reference objects
 
-    private void setIndexedPropertyType(Class<?> type) {
+@Bean
+        private void setIndexedPropertyType(Class<?> type) {
         this.indexedPropertyTypeRef = getWeakReference(type);
     }
 
@@ -400,7 +401,8 @@ public class IndexedPropertyDescriptor extends PropertyDescriptor {
      *
      * @since 1.4
      */
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         // Note: This would be identical to PropertyDescriptor but they don't
         // share the same fields.
         if (this == obj) {

@@ -30,6 +30,7 @@
 
 import java.util.function.Function;
 
+@Bean
 public class ImplicitEnclosingInstanceTest {
 
     static String cookie = "deadbeef";

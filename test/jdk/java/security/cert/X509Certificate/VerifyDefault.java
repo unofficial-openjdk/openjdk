@@ -49,6 +49,7 @@ import java.util.List;
 import java.util.Set;
 import jdk.test.lib.security.CertUtils;
 
+@Bean
 public class VerifyDefault {
     private static final String TEST_CERT =
         "-----BEGIN CERTIFICATE-----\n" +

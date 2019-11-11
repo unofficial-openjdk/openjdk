@@ -34,10 +34,15 @@ import java.io.*;
 import java.util.Arrays;
 import javax.tools.*;
 
+@Bean
 public class T6258271 {
     public static void main(String... args) throws IOException {
         JavaCompiler javac = ToolProvider.getSystemJavaCompiler();
         DiagnosticListener<JavaFileObject> dl =  new DiagnosticListener<JavaFileObject>() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void report(Diagnostic<? extends JavaFileObject> message) {
                     JavaFileObject fo = message.getSource();
                     if ("__input".equals(fo.toUri().getPath()))

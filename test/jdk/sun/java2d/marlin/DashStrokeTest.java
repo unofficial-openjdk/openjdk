@@ -34,6 +34,7 @@ import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
+@Bean
 public class DashStrokeTest extends Component {
 
     static BufferedImage bi;

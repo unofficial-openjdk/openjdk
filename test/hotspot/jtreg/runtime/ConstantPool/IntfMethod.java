@@ -40,6 +40,7 @@ import java.io.FileOutputStream;
 import java.lang.reflect.InvocationTargetException;
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
+@Bean
 public class IntfMethod {
     static byte[] dumpC() {
         ClassWriter cw = new ClassWriter(0);

@@ -38,6 +38,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.jar.JarFile;
 
+@Bean
 public class NullURLTest {
     JarFile jarFile;
 

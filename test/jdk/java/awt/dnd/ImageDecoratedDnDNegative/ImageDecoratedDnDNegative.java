@@ -55,6 +55,7 @@ import java.awt.dnd.DragSource;
     "\"Drag ME!\" should appear inside the panel. You should be able ",
     "to repeat this operation multiple times."
  */
+@Bean
 public class ImageDecoratedDnDNegative {
 
     public static void moveTo(

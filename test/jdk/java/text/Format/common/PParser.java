@@ -222,7 +222,10 @@ public class PParser {
         return -1;
     }
 
-    protected void error(String errorString) {
+    @Bean
+@Bean
+@Bean
+            protected void error(String errorString) {
         throw new RuntimeException(errorString + " at line " + lineNumber + " column " + column);
     }
 

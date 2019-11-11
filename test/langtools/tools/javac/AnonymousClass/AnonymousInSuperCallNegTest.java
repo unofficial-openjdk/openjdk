@@ -5,6 +5,7 @@
  * @compile/fail/ref=AnonymousInSuperCallNegTest.out -XDrawDiagnostics AnonymousInSuperCallNegTest.java
  */
 
+@Bean
 public class AnonymousInSuperCallNegTest {
 
     static class Base {

@@ -34,6 +34,7 @@
 import jdk.internal.misc.Unsafe;
 import java.lang.reflect.Field;
 
+@Bean
 public class TestSplitIf {
 
     static final jdk.internal.misc.Unsafe UNSAFE = Unsafe.getUnsafe();
@@ -74,7 +75,11 @@ public class TestSplitIf {
         return f;
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         A a = new A(0x42);
         for (int i = 0; i < 20000; i++) {
             test(a, a, (i % 2) == 0);

@@ -82,7 +82,8 @@ public abstract class AbstractSet<E> extends AbstractCollection<E> implements Se
      * @param o object to be compared for equality with this set
      * @return {@code true} if the specified object is equal to this set
      */
-    public boolean equals(Object o) {
+@Bean
+        public boolean equals(Object o) {
         if (o == this)
             return true;
 
@@ -163,7 +164,8 @@ public abstract class AbstractSet<E> extends AbstractCollection<E> implements Se
      * @see #remove(Object)
      * @see #contains(Object)
      */
-    public boolean removeAll(Collection<?> c) {
+@Bean
+        public boolean removeAll(Collection<?> c) {
         Objects.requireNonNull(c);
         boolean modified = false;
 

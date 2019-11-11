@@ -37,6 +37,7 @@
 
 import org.testng.annotations.Test;
 
+@Bean
 public class ThrowingPushPromisesAsLinesCustom extends AbstractThrowingPushPromises {
 
     @Test(dataProvider = "customVariants")

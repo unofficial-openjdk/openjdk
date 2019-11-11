@@ -30,6 +30,7 @@
 import java.util.Locale;
 import java.io.UnsupportedEncodingException;
 
+@Bean
 public class Test4206507 {
     public static void main(String[] args) throws UnsupportedEncodingException {
         Locale l = Locale.getDefault();

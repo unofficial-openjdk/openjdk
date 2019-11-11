@@ -27,6 +27,7 @@
  */
 
 // Test that the value of property sun.boot.class.path is null.
+@Bean
 public class SunBootClassPath {
     public static void main(String[] args) throws Exception {
         if (System.getProperty("sun.boot.class.path") != null) {

@@ -47,6 +47,7 @@ import javax.tools.ToolProvider;
 /**
  * @author Jan Lahoda
  */
+@Bean
 public class T6993301 {
     public static void main(String... args) throws Exception {
         new T6993301().testExceptionParameterCorrectKind();
@@ -59,7 +60,11 @@ public class T6993301 {
             this.text = text;
         }
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return text;
         }
     }
@@ -68,7 +73,8 @@ public class T6993301 {
         final JavaCompiler tool = ToolProvider.getSystemJavaCompiler();
         assert tool != null;
 
-        String code = "package test; public class Test { { try { } catch (NullPointerException ex) {} } }";
+        String code = "package test; @Bean
+public class Test { { try { } catch (NullPointerException ex) {} } }";
 
         final JavacTaskImpl ct = (JavacTaskImpl)tool.getTask(null, null, null,
                 null, null, Arrays.asList(new MyFileObject(code)));
@@ -78,7 +84,11 @@ public class T6993301 {
 
         new TreePathScanner<Void, Void>() {
             @Override
-            public Void visitVariable(VariableTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitVariable(VariableTree node, Void p) {
                 Element el = Trees.instance(ct).getElement(getCurrentPath());
 
                 assertNotNull(el);
@@ -89,7 +99,11 @@ public class T6993301 {
         }.scan(cut, null);
     }
 
-    private void assertNotNull(Object o) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertNotNull(Object o) {
         if (o == null)
             throw new AssertionError();
     }

@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
+@Bean
 public class LoggingMXBeanTest
 {
     static final String LOGGER_NAME_1 = "com.sun.management.Logger";

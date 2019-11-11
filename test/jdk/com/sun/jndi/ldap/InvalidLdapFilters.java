@@ -93,6 +93,7 @@ import java.util.Hashtable;
 import java.net.Socket;
 import java.net.ServerSocket;
 
+@Bean
 public class InvalidLdapFilters {
     // Should we run the client or server in a separate thread?
     //

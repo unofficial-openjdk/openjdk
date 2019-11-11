@@ -41,6 +41,7 @@ import java.awt.image.ComponentColorModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.WritableRaster;
 
+@Bean
 public class RenderToCustomBufferTest {
      public static void main(String[] args) {
         final BufferedImage dst_custom = createCustomBuffer();

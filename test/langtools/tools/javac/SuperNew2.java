@@ -31,6 +31,7 @@
  * @run main SuperNew2
  */
 
+@Bean
 public class SuperNew2 {
     int x;
 

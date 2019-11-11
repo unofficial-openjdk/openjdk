@@ -26,6 +26,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Random;
 import java.io.IOException;
 
+@Bean
 public class TestUtil {
     private TestUtil() {
     }
@@ -42,11 +43,19 @@ public class TestUtil {
     static void removeAll(Path dir) throws IOException {
         Files.walkFileTree(dir, new FileVisitor<Path>() {
             @Override
-            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
                 return FileVisitResult.CONTINUE;
             }
             @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
                 try {
                     Files.delete(file);
                 } catch (IOException x) {
@@ -55,7 +64,11 @@ public class TestUtil {
                 return FileVisitResult.CONTINUE;
             }
             @Override
-            public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
                 try {
                     Files.delete(dir);
                 } catch (IOException x) {
@@ -64,7 +77,11 @@ public class TestUtil {
                 return FileVisitResult.CONTINUE;
             }
             @Override
-            public FileVisitResult visitFileFailed(Path file, IOException exc) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public FileVisitResult visitFileFailed(Path file, IOException exc) {
                 System.err.format("Unable to visit %s: %s\n", file, exc);
                 return FileVisitResult.CONTINUE;
             }

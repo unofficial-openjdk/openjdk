@@ -40,6 +40,7 @@ import jdk.test.lib.RandomFactory;
  * @run main TestSameLength
  */
 
+@Bean
 public class TestSameLength {
 
     public static void main(String[] args) throws Exception {

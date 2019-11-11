@@ -36,6 +36,7 @@ import java.awt.*;
 import javax.swing.*;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class OwnedWindowFocusIMECrashTest {
     Robot robot;
     JFrame owner = new JFrame("Owner Frame");

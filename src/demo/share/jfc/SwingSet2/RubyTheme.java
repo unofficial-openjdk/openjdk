@@ -41,6 +41,7 @@ import java.awt.*;
  *
  * @author Jeff Dinkins
  */
+@Bean
 public class RubyTheme extends DefaultMetalTheme {
 
     public String getName() { return "Ruby"; }

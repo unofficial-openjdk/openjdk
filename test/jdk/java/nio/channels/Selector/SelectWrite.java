@@ -31,6 +31,7 @@ import java.nio.channels.Selector;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 
+@Bean
 public class SelectWrite {
 
     public static void main(String[] argv) throws Exception {

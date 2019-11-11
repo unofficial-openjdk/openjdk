@@ -33,6 +33,7 @@
 
 package compiler.loopopts;
 
+@Bean
 public class TestDeadBackbranchArrayAccess {
     static char[] pattern0 = {0};
     static char[] pattern1 = {1};

@@ -51,6 +51,7 @@ import jdk.test.lib.process.ProcessTools;
  *       java.json module is not a Java SE module.
  */
 
+@Bean
 public class DefaultModules {
     private static final PrintStream out = System.out;
 

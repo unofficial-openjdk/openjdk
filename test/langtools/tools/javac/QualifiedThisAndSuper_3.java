@@ -65,6 +65,7 @@ class CS {
     protected String o() { return "cso"; }
 }
 
+@Bean
 public class QualifiedThisAndSuper_3 extends AS {
 
     void check(String expr, String result, String expected) {
@@ -90,7 +91,8 @@ public class QualifiedThisAndSuper_3 extends AS {
     static private String xn() { return "xan"; }
     static protected String xo() { return "xao"; }
 
-    public class B extends BS {
+    @Bean
+public class B extends BS {
         B() { super(); }
         String s = "bs";
         private String t = "bt";
@@ -98,7 +100,8 @@ public class QualifiedThisAndSuper_3 extends AS {
         String m() { return "bm"; }
         private String n() { return "bn"; }
         protected String o() { return "bo"; }
-        public class C extends CS {
+        @Bean
+public class C extends CS {
             C() { super(); }
             String s = "cs";
             private String t = "ct";

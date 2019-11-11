@@ -55,6 +55,7 @@ import sun.hotspot.WhiteBox;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
+@Bean
 public class GetResolvedJavaMethodTest {
     private static enum TestCase {
         NULL_BASE {
@@ -146,7 +147,11 @@ public class GetResolvedJavaMethodTest {
         return WB.getObjectAddress(base) + UNSAFE.staticFieldOffset(field);
     }
 
-    public void test(TestCase testCase) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void test(TestCase testCase) {
         System.out.println(testCase.name());
         HotSpotResolvedJavaMethod result = testCase.getResolvedJavaMethod();
         Asserts.assertNotNull(result, testCase + " : got null");

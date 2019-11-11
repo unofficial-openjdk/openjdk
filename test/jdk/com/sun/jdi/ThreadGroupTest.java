@@ -50,6 +50,7 @@ class ThreadGroupTarg {
 
     /********** test program **********/
 
+@Bean
 public class ThreadGroupTest extends TestScaffold {
     ReferenceType targetClass;
     ThreadReference mainThread;

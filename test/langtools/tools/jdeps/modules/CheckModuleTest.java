@@ -45,6 +45,7 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.assertEquals;
 
 
+@Bean
 public class CheckModuleTest {
     private static final String TEST_SRC = System.getProperty("test.src");
     private static final String TEST_CLASSES = System.getProperty("test.classes");

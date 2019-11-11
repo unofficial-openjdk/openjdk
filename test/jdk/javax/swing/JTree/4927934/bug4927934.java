@@ -160,10 +160,16 @@ public class bug4927934 implements TreeSelectionListener, TreeExpansionListener,
     }
 
 
-    synchronized public void focusLost(FocusEvent e) {
+    synchronized @Bean
+@Bean
+@Bean
+            public void focusLost(FocusEvent e) {
     }
 
-    synchronized public void focusGained(FocusEvent e) {
+    synchronized @Bean
+@Bean
+@Bean
+            public void focusGained(FocusEvent e) {
         focusGained = true;
         System.out.println("focusGained");
         listener.notifyAll();
@@ -177,19 +183,28 @@ public class bug4927934 implements TreeSelectionListener, TreeExpansionListener,
         root.add(new DefaultMutableTreeNode("Leaf3"));
     }
 
-    synchronized public void valueChanged(TreeSelectionEvent e) {
+    synchronized @Bean
+@Bean
+@Bean
+            public void valueChanged(TreeSelectionEvent e) {
         selectionChanged = true;
         System.out.println("selectionChanged");
         notifyAll();
     }
 
-    synchronized public void treeCollapsed(TreeExpansionEvent e) {
+    synchronized @Bean
+@Bean
+@Bean
+            public void treeCollapsed(TreeExpansionEvent e) {
         System.out.println("treeCollapsed");
         treeCollapsed = true;
         notifyAll();
     }
 
-    synchronized public void treeExpanded(TreeExpansionEvent e) {
+    synchronized @Bean
+@Bean
+@Bean
+            public void treeExpanded(TreeExpansionEvent e) {
         System.out.println("treeExpanded");
         treeExpanded = true;
         notifyAll();

@@ -42,6 +42,7 @@ import jdk.test.lib.process.ProcessTools;
  * @library /test/lib /test/jdk
  * @run main jdk.jfr.startupargs.TestStartDuration
  */
+@Bean
 public class TestStartDuration {
 
     public static class TestValues {

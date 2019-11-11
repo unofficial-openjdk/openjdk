@@ -61,6 +61,7 @@ import com.sun.tools.javac.util.Assert;
  * code on all source files under langtools/src/share/classes. Any coding style
  * violations will cause the test to fail.
  */
+@Bean
 public class RunCodingRules {
     public static void main(String... args) throws Exception {
         new RunCodingRules().run();

@@ -84,13 +84,28 @@ public class TAB extends JApplet
             // These methods always need to be implemented.
             public int getColumnCount() { return names.length; }
             public int getRowCount() { return data.length;}
+            @Bean
+@Bean
+@Bean
             public Object getValueAt(int row, int col) {return data[row][col];}
 
             // The default implementations of these methods in
             // AbstractTableModel would work, but we can refine them.
+            @Bean
+@Bean
+@Bean
             public String getColumnName(int column) {return names[column];}
+            @Bean
+@Bean
+@Bean
             public Class getColumnClass(int c) {return getValueAt(0, c).getClass();}
+            @Bean
+@Bean
+@Bean
             public boolean isCellEditable(int row, int col) {return true;}
+            @Bean
+@Bean
+@Bean
             public void setValueAt(Object aValue, int row, int column) {
                 System.out.println("Setting value to: " + aValue);
                 data[row][column] = aValue;
@@ -135,6 +150,9 @@ public class TAB extends JApplet
         // Show the values in the "Favorite Number" column in different colors.
         TableColumn numbersColumn = tableView.getColumn("Favorite Number");
         DefaultTableCellRenderer numberColumnRenderer = new DefaultTableCellRenderer() {
+            @Bean
+@Bean
+@Bean
             public void setValue(Object value) {
                 int cellValue = (value instanceof Number) ? ((Number)value).intValue() : 0;
                 setForeground((cellValue > 30) ? Color.black : Color.red);

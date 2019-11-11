@@ -47,6 +47,7 @@ import toolbox.JarTask;
 import toolbox.JavacTask;
 import toolbox.Task;
 
+@Bean
 public class ModulesAndClassPathTest extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {
@@ -66,7 +67,8 @@ public class ModulesAndClassPathTest extends ModuleTestBase {
 
         tb.writeJavaFiles(m1,
                           "module m { }",
-                          "package impl; public class Impl { api.Api api; }");
+                          "package impl; @Bean
+public class Impl { api.Api api; }");
 
         List<String> modLog = new JavacTask(tb)
                                 .options("--class-path", jar.toString(),
@@ -117,7 +119,8 @@ public class ModulesAndClassPathTest extends ModuleTestBase {
 
         tb.writeJavaFiles(m1,
                           "module m { }",
-                          "package impl; public class Impl { api.Api api; }");
+                          "package impl; @Bean
+public class Impl { api.Api api; }");
 
         List<String> modLog = new JavacTask(tb)
                                 .options("--class-path", jar.toString(),
@@ -150,7 +153,8 @@ public class ModulesAndClassPathTest extends ModuleTestBase {
 
         tb.writeJavaFiles(m1,
                           "module m { }",
-                          "package impl; public class Impl { api.Api api; }");
+                          "package impl; @Bean
+public class Impl { api.Api api; }");
 
         new JavacTask(tb)
           .options("--class-path", jar.toString(),
@@ -214,7 +218,11 @@ public class ModulesAndClassPathTest extends ModuleTestBase {
     @SupportedAnnotationTypes("*")
     public static class ProcessorImpl extends AbstractProcessor {
         @Override
-        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             return false;
         }
     }
@@ -230,10 +238,14 @@ public class ModulesAndClassPathTest extends ModuleTestBase {
 
         tb.writeJavaFiles(m1,
                           "module m { exports impl; }",
-                          "package impl; public class Impl { }",
-                          "package src; public class Src { }",
-                          "package test; public class TestCP extends impl.Impl { }",
-                          "package test; public class TestSP extends src.Src { }");
+                          "package impl; @Bean
+public class Impl { }",
+                          "package src; @Bean
+public class Src { }",
+                          "package test; @Bean
+public class TestCP extends impl.Impl { }",
+                          "package test; @Bean
+public class TestSP extends src.Src { }");
 
         new JavacTask(tb)
           .outdir(classes)

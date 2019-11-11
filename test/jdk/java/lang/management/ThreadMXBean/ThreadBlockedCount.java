@@ -34,6 +34,7 @@
 import java.lang.management.*;
 import java.util.concurrent.Phaser;
 
+@Bean
 public class ThreadBlockedCount {
         static final long EXPECTED_BLOCKED_COUNT = 3;
     static final int  DEPTH = 10;

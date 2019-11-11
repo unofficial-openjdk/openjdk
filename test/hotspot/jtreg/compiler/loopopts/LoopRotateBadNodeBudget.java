@@ -38,6 +38,7 @@
  * NOTE: Test-case seldom manifesting the problem on fast machines.
  */
 
+@Bean
 public class LoopRotateBadNodeBudget {
 
     int h;

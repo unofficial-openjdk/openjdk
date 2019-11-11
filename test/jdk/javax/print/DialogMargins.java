@@ -40,6 +40,7 @@ import javax.print.*;
 import javax.print.attribute.*;
 import javax.print.attribute.standard.*;
 
+@Bean
 public class DialogMargins extends Frame {
 
   public DialogMargins() {
@@ -89,7 +90,11 @@ class MarginsPrinter implements Printable {
       }
    }
 
-  public int print(Graphics graphics, PageFormat pageFormat, int pageIndex) {
+  @Bean
+@Bean
+@Bean
+@Bean
+                public int print(Graphics graphics, PageFormat pageFormat, int pageIndex) {
 
      if (pageIndex > 0) {
         return Printable.NO_SUCH_PAGE;

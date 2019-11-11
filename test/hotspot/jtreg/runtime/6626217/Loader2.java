@@ -24,9 +24,14 @@
 
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
+@Bean
 public class Loader2 extends ClassLoader {
   int _recur;
-  public void print( String msg ) {
+  @Bean
+@Bean
+@Bean
+@Bean
+                public void print( String msg ) {
     for( int i=0; i<_recur; i++ )
       System.out.print("  ");
     System.out.println(">>Loader2>> "+msg);

@@ -40,6 +40,7 @@ import static java.lang.invoke.MethodType.methodType;
 import org.testng.annotations.*;
 import static org.testng.Assert.*;
 
+@Bean
 public class FilterArgumentsTest {
 
     @Test

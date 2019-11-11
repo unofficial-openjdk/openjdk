@@ -67,7 +67,8 @@ public class OverriddenInsetsTest {
         f.setSize(260,260);
 
         f.addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent e) {
+@Bean
+                public void windowClosing(WindowEvent e) {
                 f.setVisible(false);
                 System.exit(0);
             }
@@ -88,7 +89,8 @@ public class OverriddenInsetsTest {
                 return INSETS2;
             }
 
-            public void paint(Graphics g) {
+@Bean
+                public void paint(Graphics g) {
                 // make sure Vista is done with its effects
                 try {
                     Thread.sleep(2000);

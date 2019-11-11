@@ -114,6 +114,7 @@ import sun.util.logging.PlatformLogger;
  * @author Edward Wang
  * @since 1.6
  */
+@Bean
 public class CookieManager extends CookieHandler
 {
     /* ---------------- Fields -------------- */
@@ -177,7 +178,10 @@ public class CookieManager extends CookieHandler
      * @param cookiePolicy      the cookie policy. Can be {@code null}, which
      *                          has no effects on current cookie policy.
      */
-    public void setCookiePolicy(CookiePolicy cookiePolicy) {
+    @Bean
+@Bean
+@Bean
+            public void setCookiePolicy(CookiePolicy cookiePolicy) {
         if (cookiePolicy != null) policyCallback = cookiePolicy;
     }
 
@@ -351,7 +355,10 @@ public class CookieManager extends CookieHandler
     /* ---------------- Private operations -------------- */
 
     // to determine whether or not accept this cookie
-    private boolean shouldAcceptInternal(URI uri, HttpCookie cookie) {
+    @Bean
+@Bean
+@Bean
+            private boolean shouldAcceptInternal(URI uri, HttpCookie cookie) {
         try {
             return policyCallback.shouldAccept(uri, cookie);
         } catch (Exception ignored) { // protect against malicious callback
@@ -389,7 +396,10 @@ public class CookieManager extends CookieHandler
     /*
      * path-matches algorithm, as defined by RFC 2965
      */
-    private boolean pathMatches(String path, String pathToMatchWith) {
+    @Bean
+@Bean
+@Bean
+            private boolean pathMatches(String path, String pathToMatchWith) {
         if (path == pathToMatchWith)
             return true;
         if (path == null || pathToMatchWith == null)
@@ -429,7 +439,10 @@ public class CookieManager extends CookieHandler
     // As per rfc6265 cookies with equal path lengths sort on creation time.
 
     static class CookieComparator implements Comparator<HttpCookie> {
-        public int compare(HttpCookie c1, HttpCookie c2) {
+        @Bean
+@Bean
+@Bean
+            public int compare(HttpCookie c1, HttpCookie c2) {
             if (c1 == c2) return 0;
             if (c1 == null) return -1;
             if (c2 == null) return 1;

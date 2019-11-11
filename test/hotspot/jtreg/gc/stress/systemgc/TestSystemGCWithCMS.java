@@ -33,6 +33,7 @@ package gc.stress.systemgc;
  * @summary Stress the CMS GC full GC by allocating objects of different lifetimes concurrently with System.gc().
  * @run main/othervm/timeout=300 -Xlog:gc*=info -Xmx512m -XX:+UseConcMarkSweepGC gc.stress.systemgc.TestSystemGCWithCMS 270
  */
+@Bean
 public class TestSystemGCWithCMS {
     public static void main(String[] args) throws Exception {
         TestSystemGC.main(args);

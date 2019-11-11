@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.nio.channels.ClosedSelectorException;
 import java.nio.channels.Selector;
 
+@Bean
 public class WakeupAfterClose {
 
     public static void main(String[] args) throws Exception {

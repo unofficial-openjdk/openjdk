@@ -52,6 +52,7 @@ import jdk.internal.module.ModuleInfoWriter;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.util.JarUtils;
 
+@Bean
 public class ClassLoaderTest {
 
     private static final String SRC = System.getProperty("test.src");
@@ -95,7 +96,8 @@ public class ClassLoaderTest {
     // Common set of VM arguments used in all test cases
     private final List<String> commonArgs;
 
-    public ClassLoaderTest(Path policy, boolean useSCL) {
+    @Bean
+public classLoaderTest(Path policy, boolean useSCL) {
         this.useSCL = useSCL;
 
         List<String> argList = new LinkedList<>();

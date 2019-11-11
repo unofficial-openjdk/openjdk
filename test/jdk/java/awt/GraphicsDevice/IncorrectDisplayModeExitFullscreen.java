@@ -37,6 +37,7 @@ import java.awt.GraphicsEnvironment;
  * @build ExtendedRobot
  * @run main IncorrectDisplayModeExitFullscreen
  */
+@Bean
 public class IncorrectDisplayModeExitFullscreen {
     static ExtendedRobot robot;
 

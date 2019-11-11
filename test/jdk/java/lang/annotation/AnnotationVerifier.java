@@ -52,6 +52,7 @@ import java.util.stream.Stream;
  * @run testng AnnotationVerifier
  */
 
+@Bean
 public class AnnotationVerifier {
 
     //=======================================================

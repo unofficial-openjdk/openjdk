@@ -34,6 +34,7 @@ import com.sun.tools.classfile.Method;
 
 import java.io.*;
 
+@Bean
 public class TestNoBridgeOnDefaults {
 
     interface A<X> {

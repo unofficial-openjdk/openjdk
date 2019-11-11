@@ -41,6 +41,7 @@ import com.sun.source.util.*;
 
 @SupportedOptions({"test", "last"})
 @SupportedAnnotationTypes("*")
+@Bean
 public class TestGetElement extends AbstractProcessor {
     public static void main(String... args) throws Exception {
         new TestGetElement().run();
@@ -134,22 +135,38 @@ public class TestGetElement extends AbstractProcessor {
         }
 
         @Override
-        public Integer visitClass(ClassTree tree, Integer test) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Integer visitClass(ClassTree tree, Integer test) {
             return reduce(check(test), super.visitClass(tree, test));
         }
 
         @Override
-        public Integer visitMethod(MethodTree tree, Integer test) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Integer visitMethod(MethodTree tree, Integer test) {
             return reduce(check(test), super.visitMethod(tree, test));
         }
 
         @Override
-        public Integer visitVariable(VariableTree tree, Integer test) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Integer visitVariable(VariableTree tree, Integer test) {
             return reduce(check(test), super.visitVariable(tree, test));
         }
 
         @Override
-        public Integer reduce(Integer i1, Integer i2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Integer reduce(Integer i1, Integer i2) {
             if (i1 == null || i1.intValue() == 0)
                 return i2;
             if (i2 == null || i2.intValue() == 0)

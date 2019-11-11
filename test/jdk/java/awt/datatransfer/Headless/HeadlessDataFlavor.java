@@ -31,6 +31,7 @@ import java.awt.datatransfer.DataFlavor;
  * @run main/othervm -Djava.awt.headless=true HeadlessDataFlavor
  */
 
+@Bean
 public class HeadlessDataFlavor {
     public static void main(String args[]) throws Exception {
         DataFlavor df;

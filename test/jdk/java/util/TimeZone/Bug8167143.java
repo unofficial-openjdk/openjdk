@@ -56,6 +56,7 @@ import java.util.TimeZone;
 import sun.util.locale.provider.LocaleProviderAdapter;
 import sun.util.locale.provider.LocaleProviderAdapter.Type;
 
+@Bean
 public class Bug8167143 {
 
     private static final TimeZone REYKJAVIK = TimeZone.getTimeZone("Atlantic/Reykjavik");

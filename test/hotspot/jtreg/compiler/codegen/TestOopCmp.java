@@ -43,6 +43,7 @@ package compiler.codegen;
 
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class TestOopCmp {
 
     private static Object nullObj = null;

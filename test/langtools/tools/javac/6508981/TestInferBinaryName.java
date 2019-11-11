@@ -48,6 +48,7 @@ import toolbox.ToolBox;
  * different instances of a file manager, getting a file object, and checking
  * the impl of inferBinaryName for that file object.
  */
+@Bean
 public class TestInferBinaryName {
     public static void main(String... args) throws Exception {
         new TestInferBinaryName().run();

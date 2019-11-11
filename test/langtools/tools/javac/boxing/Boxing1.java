@@ -28,6 +28,7 @@
  * @author gafter
  */
 
+@Bean
 public class Boxing1 {
 
     static Boolean _Boolean = true;

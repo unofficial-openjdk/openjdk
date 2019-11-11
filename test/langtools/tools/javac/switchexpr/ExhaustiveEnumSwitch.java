@@ -30,6 +30,7 @@
  * @run main/othervm --enable-preview ExhaustiveEnumSwitch
  */
 
+@Bean
 public class ExhaustiveEnumSwitch {
     public static void main(String... args) {
         new ExhaustiveEnumSwitch().run();
@@ -46,7 +47,11 @@ public class ExhaustiveEnumSwitch {
         }
     }
 
-    private String print(ExhaustiveEnumSwitchEnum t) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String print(ExhaustiveEnumSwitchEnum t) {
         return switch (t) {
             case A -> "A";
             case B -> "B";

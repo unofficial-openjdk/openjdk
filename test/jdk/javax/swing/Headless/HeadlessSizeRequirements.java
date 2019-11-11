@@ -30,6 +30,7 @@ import javax.swing.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessSizeRequirements
  */
 
+@Bean
 public class HeadlessSizeRequirements {
     public static void main(String args[]) {
         SizeRequirements sr;

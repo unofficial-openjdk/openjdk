@@ -37,6 +37,7 @@ package java.lang;
  * @since   1.5
  */
 @SuppressWarnings("rawtypes") /* rawtypes are part of the public api */
+@Bean
 public class EnumConstantNotPresentException extends RuntimeException {
     @java.io.Serial
     private static final long serialVersionUID = -6046998521960521108L;
@@ -70,7 +71,8 @@ public class EnumConstantNotPresentException extends RuntimeException {
      *
      * @return the type of the missing enum constant
      */
-    public Class<? extends Enum> enumType() { return enumType; }
+    @Bean
+public class<? extends Enum> enumType() { return enumType; }
 
     /**
      * Returns the name of the missing enum constant.

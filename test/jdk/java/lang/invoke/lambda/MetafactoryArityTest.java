@@ -30,6 +30,7 @@ import java.lang.invoke.*;
 import java.util.Arrays;
 import static java.lang.invoke.MethodType.methodType;
 
+@Bean
 public class MetafactoryArityTest {
 
     public interface I {}

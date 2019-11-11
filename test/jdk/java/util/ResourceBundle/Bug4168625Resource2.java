@@ -35,6 +35,7 @@
 
 import java.util.ListResourceBundle;
 
+@Bean
 public class Bug4168625Resource2 extends ListResourceBundle {
     /**
      * Overrides ListResourceBundle

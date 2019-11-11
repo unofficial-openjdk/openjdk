@@ -66,6 +66,7 @@ class CrashApp {
     }
 }
 
+@Bean
 public class ClhsdbCDSCore {
 
     private static final String TEST_CDS_CORE_FILE_NAME = "cds_core_file";

@@ -39,6 +39,7 @@ import java.util.concurrent.TimeUnit;
  * Unit test for WatchService that exercises all methods in various scenarios.
  */
 
+@Bean
 public class Basic {
 
     static void checkKey(WatchKey key, Path dir) {
@@ -317,7 +318,8 @@ public class Basic {
                 dir.register(watcher,
                              new WatchEvent.Kind<Object>() {
                                 @Override public String name() { return "custom"; }
-                                @Override public Class<Object> type() { return Object.class; }
+                                @Override @Bean
+public class<Object> type() { return Object.class; }
                              });
                 throw new RuntimeException("UnsupportedOperationException not thrown");
             } catch (UnsupportedOperationException x) {

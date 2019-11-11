@@ -91,7 +91,10 @@ public class GradientPaints extends Canvas {
         RenderingHints.VALUE_ANTIALIAS_ON,
     };
 
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
         synchronized (this) {
             if (!done) {
                 done = true;
@@ -100,7 +103,10 @@ public class GradientPaints extends Canvas {
         }
     }
 
-    private void testOne(BufferedImage refImg, VolatileImage testImg) {
+    @Bean
+@Bean
+@Bean
+            private void testOne(BufferedImage refImg, VolatileImage testImg) {
         Graphics2D gref  = refImg.createGraphics();
         Graphics2D gtest = testImg.createGraphics();
         Paint paint =
@@ -234,7 +240,10 @@ public class GradientPaints extends Canvas {
         return paint;
     }
 
-    private void renderTest(Graphics2D g2d, Paint p, Object aahint) {
+    @Bean
+@Bean
+@Bean
+            private void renderTest(Graphics2D g2d, Paint p, Object aahint) {
         g2d.setColor(Color.white);
         g2d.fillRect(0, 0, TESTW, TESTH);
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, aahint);

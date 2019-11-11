@@ -32,6 +32,7 @@ import org.ietf.jgss.GSSException;
 import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.GSSName;
 
+@Bean
 public class GssMemoryIssues {
 
     public static void main(String[] argv) throws Exception {

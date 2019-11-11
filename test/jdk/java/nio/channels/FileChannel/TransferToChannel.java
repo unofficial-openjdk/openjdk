@@ -34,6 +34,7 @@ import java.nio.ByteBuffer;
 import java.io.*;
 import java.util.Random;
 
+@Bean
 public class TransferToChannel {
 
     static File file;

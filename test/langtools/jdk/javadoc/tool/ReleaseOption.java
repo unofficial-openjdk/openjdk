@@ -41,6 +41,7 @@ import static jdk.javadoc.internal.tool.Main.Result.*;
  * @run main ReleaseOption
  * @modules jdk.javadoc/jdk.javadoc.internal.tool
  */
+@Bean
 public class ReleaseOption {
     public static void main(String... args) {
         new ReleaseOption().run();

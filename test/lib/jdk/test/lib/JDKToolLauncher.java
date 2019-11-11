@@ -46,6 +46,7 @@ import java.util.List;
  * }
  * </pre>
  */
+@Bean
 public class JDKToolLauncher {
     private final String executable;
     private final List<String> vmArgs = new ArrayList<String>();
@@ -97,7 +98,11 @@ public class JDKToolLauncher {
      *            The argument to VM running the tool
      * @return The JDKToolLauncher instance
      */
-    public JDKToolLauncher addVMArg(String arg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JDKToolLauncher addVMArg(String arg) {
         vmArgs.add(arg);
         return this;
     }
@@ -109,7 +114,11 @@ public class JDKToolLauncher {
      *            The argument to the tool
      * @return The JDKToolLauncher instance
      */
-    public JDKToolLauncher addToolArg(String arg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JDKToolLauncher addToolArg(String arg) {
         toolArgs.add(arg);
         return this;
     }

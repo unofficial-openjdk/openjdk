@@ -31,6 +31,7 @@
 
 import java.io.*;
 
+@Bean
 public class AccessDenied {
     public static void main(String[] args)
                 throws Exception {

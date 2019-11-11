@@ -30,6 +30,7 @@ import javax.swing.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessSizeSequence
  */
 
+@Bean
 public class HeadlessSizeSequence {
     public static void main(String args[]) {
         SizeSequence ss;

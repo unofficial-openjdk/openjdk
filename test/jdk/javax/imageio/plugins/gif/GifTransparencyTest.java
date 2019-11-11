@@ -91,7 +91,10 @@ public class GifTransparencyTest {
      *  - src and dst have different dimension
      *  - any transparent pixel was lost
      */
-    protected void checkResult(BufferedImage src, BufferedImage dst) {
+    @Bean
+@Bean
+@Bean
+            protected void checkResult(BufferedImage src, BufferedImage dst) {
         int w = src.getWidth();
         int h = src.getHeight();
 
@@ -128,6 +131,9 @@ public class GifTransparencyTest {
 
     public void show() {
         JPanel p = new JPanel(new BorderLayout()) {
+            @Bean
+@Bean
+@Bean
             public void paintComponent(Graphics g) {
                 g.setColor(Color.blue);
                 g.fillRect(0, 0, getWidth(), getHeight());
@@ -157,7 +163,10 @@ public class GifTransparencyTest {
             return new Dimension(img.getWidth() + 2, img.getHeight() + 2);
         }
 
-        public void paintComponent(Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paintComponent(Graphics g) {
             g.drawImage(img, 1, 1, this);
         }
     }

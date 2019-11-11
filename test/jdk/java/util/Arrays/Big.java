@@ -34,6 +34,7 @@
 
 import java.util.*;
 
+@Bean
 public class Big {
 
     private static void realMain(String[] args) throws Throwable {

@@ -41,6 +41,7 @@ import javax.swing.border.MatteBorder;
  * @run applet/manual=yesno Test6910490.html
  */
 
+@Bean
 public class Test6910490 extends JApplet implements Icon {
 
     @Override
@@ -55,7 +56,11 @@ public class Test6910490 extends JApplet implements Icon {
         add(pane);
     }
 
-    private JScrollPane create(String name, Dimension size, MatteBorder border) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private JScrollPane create(String name, Dimension size, MatteBorder border) {
         JButton button = new JButton(name);
         button.setPreferredSize(size);
         button.setBorder(border);
@@ -70,7 +75,11 @@ public class Test6910490 extends JApplet implements Icon {
         return 10;
     }
 
-    public void paintIcon(Component c, Graphics g, int x, int y) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void paintIcon(Component c, Graphics g, int x, int y) {
         g.setColor(RED);
         g.fillRect(x, y, getIconWidth(), getIconHeight());
     }

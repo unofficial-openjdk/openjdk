@@ -43,6 +43,7 @@ import java.util.ArrayList;
  * @author  John O'Conner
  */
 
+@Bean
 public class UnicodeSpec {
 
     public UnicodeSpec() {

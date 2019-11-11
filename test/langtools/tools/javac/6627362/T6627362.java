@@ -35,6 +35,7 @@ import java.lang.reflect.*;
 import java.net.*;
 import java.util.*;
 
+@Bean
 public class T6627362 {
     static String testSrc = System.getProperty("test.src", ".");
 

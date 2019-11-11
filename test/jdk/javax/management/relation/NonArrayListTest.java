@@ -37,6 +37,7 @@ import javax.management.*;
 import javax.management.relation.*;
 import javax.management.loading.MLet;
 
+@Bean
 public class NonArrayListTest {
     public static void main(String[] args) throws Exception {
         MBeanServer mbs = MBeanServerFactory.createMBeanServer();

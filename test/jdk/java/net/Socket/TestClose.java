@@ -34,6 +34,7 @@
 import java.net.*;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class TestClose {
 
     public static void main(String[] args) throws Exception {

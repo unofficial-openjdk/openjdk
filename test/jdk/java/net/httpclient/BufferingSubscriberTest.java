@@ -57,6 +57,7 @@ import static org.testng.Assert.*;
  * @run testng/othervm -Djdk.internal.httpclient.debug=true BufferingSubscriberTest
  */
 
+@Bean
 public class BufferingSubscriberTest {
 
     // If we compute that a test will take less that 10s
@@ -86,7 +87,11 @@ public class BufferingSubscriberTest {
     }
 
     @Test(dataProvider = "negatives", expectedExceptions = IllegalArgumentException.class)
-    public void subscriberThrowsIAE(int bufferSize) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void subscriberThrowsIAE(int bufferSize) {
         printStamp(START, "subscriberThrowsIAE(%d)", bufferSize);
         try {
             BodySubscriber<?> bp = BodySubscribers.ofByteArray();
@@ -97,7 +102,11 @@ public class BufferingSubscriberTest {
     }
 
     @Test(dataProvider = "negatives", expectedExceptions = IllegalArgumentException.class)
-    public void handlerThrowsIAE(int bufferSize) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void handlerThrowsIAE(int bufferSize) {
         printStamp(START, "handlerThrowsIAE(%d)", bufferSize);
         try {
             BodyHandler<?> bp = BodyHandlers.ofByteArray();
@@ -252,7 +261,11 @@ public class BufferingSubscriberTest {
         }
 
         @Override
-        public void onSubscribe(Subscription subscription) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onSubscribe(Subscription subscription) {
             assertNull(this.subscription);
             this.subscription = subscription;
             if (delayMillis > 0)
@@ -270,7 +283,11 @@ public class BufferingSubscriberTest {
         volatile long count;
 
         @Override
-        public void onNext(List<ByteBuffer> items) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(List<ByteBuffer> items) {
             try {
                 long sz = accumulatedDataSize(items);
                 boolean printStamp = delayMillis > 0
@@ -320,7 +337,11 @@ public class BufferingSubscriberTest {
         }
 
         @Override
-        public void onError(Throwable throwable) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onError(Throwable throwable) {
             completion.completeExceptionally(throwable);
         }
 

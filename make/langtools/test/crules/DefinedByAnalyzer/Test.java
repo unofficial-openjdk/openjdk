@@ -12,21 +12,41 @@ import com.sun.tools.javac.util.DefinedBy.Api;
 
 public class Test implements SourcePositions, TaskListener {
     @Override @DefinedBy(Api.COMPILER_TREE)
-    public long getStartPosition(CompilationUnitTree file, Tree tree) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public long getStartPosition(CompilationUnitTree file, Tree tree) {
         return 0;
     }
     @Override
-    public long getEndPosition(CompilationUnitTree file, Tree tree) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public long getEndPosition(CompilationUnitTree file, Tree tree) {
         return 0;
     }
     @DefinedBy(Api.COMPILER_TREE)
-    public long getEndPosition(Tree tree) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public long getEndPosition(Tree tree) {
         return 0;
     }
     @Override @DefinedBy(Api.LANGUAGE_MODEL)
-    public void started(TaskEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void started(TaskEvent e) {
     }
     @Override @DefinedBy(Api.COMPILER_TREE)
-    public void finished(TaskEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void finished(TaskEvent e) {
     }
 }

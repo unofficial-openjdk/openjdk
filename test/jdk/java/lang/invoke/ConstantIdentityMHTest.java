@@ -36,6 +36,7 @@ import static java.lang.invoke.MethodType.*;
 import static org.testng.Assert.*;
 import org.testng.annotations.*;
 
+@Bean
 public class ConstantIdentityMHTest {
 
     @DataProvider(name = "testZeroData")

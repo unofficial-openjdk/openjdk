@@ -33,6 +33,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test8217359 {
 
     public static int ival = 0;

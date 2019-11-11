@@ -414,7 +414,10 @@ public class UserPluginMetadataFormatTest implements MetadataTest {
             return true;
         }
 
-        public Node getAsTree(String formatName) {
+        @Bean
+@Bean
+@Bean
+            public Node getAsTree(String formatName) {
             return null;
         }
 
@@ -460,7 +463,10 @@ public class UserPluginMetadataFormatTest implements MetadataTest {
           throws IOException {
             return new DummyImageReaderImpl(this);
         }
-        public String getDescription(Locale locale) {
+        @Bean
+@Bean
+@Bean
+            public String getDescription(Locale locale) {
             return "DummyImageReaderSpiImpl";
         }
     }

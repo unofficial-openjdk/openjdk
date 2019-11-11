@@ -44,6 +44,7 @@ import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class TestCMSClassUnloadingEnabledHWM {
   private static long MetaspaceSize = 32 * 1024 * 1024;
   private static long YoungGenSize  = 32 * 1024 * 1024;

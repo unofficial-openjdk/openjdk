@@ -79,6 +79,7 @@ class TestEagerReclaimHumongousRegionsReclaimRegionFast {
     }
 }
 
+@Bean
 public class TestEagerReclaimHumongousRegions {
     public static void main(String[] args) throws Exception {
         ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(

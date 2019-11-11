@@ -103,7 +103,10 @@ public class PublicMethodsTest {
         // possible variants of class method
         List<String> CLASS_METHODS = List.of(
             "", "public abstract void m();",
-            "public void m() {}", "public static void m() {}"
+            "@Bean
+@Bean
+@Bean
+            public void m() {}", "public static void m() {}"
         );
 
         // template with placeholders parsed with PLACEHOLDER_PATTERN
@@ -304,6 +307,9 @@ public class PublicMethodsTest {
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public CharSequence getCharContent(boolean ignoreEncodingErrors) {
                 return source;
             }
@@ -360,7 +366,10 @@ public class PublicMethodsTest {
         private final List<Diagnostic<?>> errors = new ArrayList<>();
 
         @Override
-        public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+        @Bean
+@Bean
+@Bean
+            public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
             if (diagnostic.getKind() == Diagnostic.Kind.ERROR) {
                 errors.add(diagnostic);
             }

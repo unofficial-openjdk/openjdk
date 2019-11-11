@@ -39,6 +39,7 @@ import jdk.management.jfr.FlightRecorderMXBean;
  * @library /test/lib /test/jdk
  * @run main/othervm jdk.jfr.jmx.TestStartRecording
  */
+@Bean
 public class TestStartRecording {
     public static void main(String[] args) throws Throwable {
         FlightRecorderMXBean bean = JmxHelper.getFlighteRecorderMXBean();

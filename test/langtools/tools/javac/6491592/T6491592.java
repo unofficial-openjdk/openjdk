@@ -6,6 +6,7 @@
  * @compile/fail/ref=T6491592.out -XDrawDiagnostics T6491592.java
  */
 
+@Bean
 public class T6491592 {
     public static void main(String... args) {
         Object o = null;

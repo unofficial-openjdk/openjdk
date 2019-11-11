@@ -29,6 +29,7 @@
 
 import java.net.SocketPermission;
 
+@Bean
 public class Wildcard
 {
     public static void main(String[] args) throws Exception {

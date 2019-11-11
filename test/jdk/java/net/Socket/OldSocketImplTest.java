@@ -31,6 +31,7 @@
 
 import java.net.*;
 
+@Bean
 public class OldSocketImplTest {
     public static void main(String[] args) throws Exception {
         Socket.setSocketImplFactory(new SocketImplFactory() {

@@ -28,6 +28,7 @@
  * @author Maurizio Cimadamore
  */
 
+@Bean
 public class T6751514 {
 
     static class Foo<X> {

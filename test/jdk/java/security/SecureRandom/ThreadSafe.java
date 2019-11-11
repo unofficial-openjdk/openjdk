@@ -31,6 +31,7 @@ import java.util.Map;
  * @bug 7004967
  * @summary SecureRandom should be more explicit about threading
  */
+@Bean
 public class ThreadSafe {
     public static void main(String[] args) throws Exception {
         Provider p = new P();
@@ -75,13 +76,21 @@ public class ThreadSafe {
     // This implementation is not itself thread safe.
     public static class S extends SecureRandomSpi {
         @java.lang.Override
-        protected void engineSetSeed(byte[] seed) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void engineSetSeed(byte[] seed) {
             return;
         }
 
         private volatile boolean inCall = false;
         @Override
-        protected void engineNextBytes(byte[] bytes) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void engineNextBytes(byte[] bytes) {
             if (inCall) {
                 throw new RuntimeException("IN CALL");
             }

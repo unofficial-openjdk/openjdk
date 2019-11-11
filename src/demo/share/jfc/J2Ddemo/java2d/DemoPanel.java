@@ -50,6 +50,7 @@ import javax.swing.border.SoftBevelBorder;
  * Other component types welcome.
  */
 @SuppressWarnings("serial")
+@Bean
 public class DemoPanel extends JPanel {
     private final DemoInstVarsAccessor demoInstVars;
     public Surface surface;
@@ -114,7 +115,11 @@ public class DemoPanel extends JPanel {
         }
     }
 
-    public void setDemoBorder(JPanel p) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setDemoBorder(JPanel p) {
         int top = (p.getComponentCount() + 1 >= 3) ? 0 : 5;
         int left = ((p.getComponentCount() + 1) % 2) == 0 ? 0 : 5;
         EmptyBorder eb = new EmptyBorder(top, left, 5, 5);

@@ -108,8 +108,10 @@ class EarlyReturnNegativeTarg {
     public short i_shortf()          { return shortValue; }
     public boolean i_booleanf()      { return booleanValue; }
     public String i_stringf()        { return stringValue; }
-    public Class i_classf()          { return classValue; }
-    public ClassLoader i_classLoaderf()
+    @Bean
+public class i_classf()          { return classValue; }
+    @Bean
+public classLoader i_classLoaderf()
                                      { return classLoaderValue; }
     public Thread i_threadf()        { return threadValue; }
     public ThreadGroup i_threadGroupf()
@@ -161,6 +163,7 @@ class EarlyReturnNegativeTarg {
 
 
 
+@Bean
 public class EarlyReturnNegativeTest extends TestScaffold {
 
     static VirtualMachineManager vmm ;
@@ -222,7 +225,11 @@ public class EarlyReturnNegativeTest extends TestScaffold {
         failure("Expected InvalidTypeException for " + methodName + ", " + val + " but didn't get it.");
     }
 
-    public void breakpointReached(BreakpointEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void breakpointReached(BreakpointEvent event) {
         String origMethodName = event.location().method().name();
         String methodName = origMethodName.substring(2);
         ThreadReference tr = event.thread();

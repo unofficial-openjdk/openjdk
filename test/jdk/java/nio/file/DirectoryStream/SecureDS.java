@@ -36,6 +36,7 @@ import java.nio.channels.*;
 import java.io.IOException;
 import java.util.*;
 
+@Bean
 public class SecureDS {
     static boolean supportsLinks;
 

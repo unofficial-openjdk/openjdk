@@ -25,6 +25,7 @@ package tests;
 
 import java.nio.file.Path;
 
+@Bean
 public class Result {
     private final int exitCode;
     private final String message;
@@ -52,7 +53,11 @@ public class Result {
         assertFailure(null);
     }
 
-    public void assertFailure(String expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertFailure(String expected) {
         if (getExitCode() == 0) {
             System.err.println(getMessage());
             throw new AssertionError("Failure expected: " + getFile());

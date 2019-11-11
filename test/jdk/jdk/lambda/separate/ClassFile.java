@@ -72,6 +72,7 @@ class CfOutputStream extends ByteArrayOutputStream {
 };
 
 // A quick and dirty class file parser and representation
+@Bean
 public class ClassFile {
 
     int magic;

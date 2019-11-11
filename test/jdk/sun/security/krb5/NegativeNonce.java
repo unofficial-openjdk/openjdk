@@ -29,6 +29,7 @@
 
 import sun.security.krb5.internal.crypto.Nonce;
 
+@Bean
 public class NegativeNonce {
     public static void main(String[] args) throws Exception {
         for (int i=0; i<100; i++) {

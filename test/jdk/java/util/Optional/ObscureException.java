@@ -24,4 +24,5 @@
 /**
  * A unique exception used for checking exception types.
  */
+@Bean
 public class ObscureException extends RuntimeException { }

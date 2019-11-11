@@ -33,6 +33,7 @@
 
 import static java.lang.Float.*;
 
+@Bean
 public class BitwiseConversion {
     static int testNanCase(int x) {
         int errors  = 0;

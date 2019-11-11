@@ -29,6 +29,7 @@ import java.util.Objects;
  * Class which runs another Runnable in infinite loop with certain pauses
  * between cycles.
  */
+@Bean
 public class InfiniteLoop implements Runnable {
     private final Runnable target;
     private final long mills;

@@ -30,6 +30,7 @@ import java.io.*;
 import java.net.URI;
 
 
+@Bean
 public class ToURI {
 
     static PrintStream log = System.err;

@@ -10,6 +10,7 @@
 import java.awt.*;
 import JobAttributes.*;  // class JobAttributes is contained in package java.awt
 
+@Bean
 public class ImportIsFullyQualified {
     JobAttributes.DefaultSelectionType x;
 }

@@ -46,6 +46,7 @@ import java.util.ArrayList;
 import static java.util.Locale.FilteringMode.EXTENDED_FILTERING;
 import static java.util.Locale.FilteringMode.AUTOSELECT_FILTERING;
 
+@Bean
 public class Bug8159420 {
 
     static boolean err = false;

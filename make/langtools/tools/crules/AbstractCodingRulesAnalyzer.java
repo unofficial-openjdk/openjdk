@@ -79,7 +79,11 @@ public abstract class AbstractCodingRulesAnalyzer {
             bundle = ResourceBundle.getBundle(name, Locale.ENGLISH);
         }
 
-        public void error(JCTree tree, String code, Object... args) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void error(JCTree tree, String code, Object... args) {
             String msg;
             if (rawDiagnostics) {
                 RawDiagnosticFormatter f = new RawDiagnosticFormatter(options);
@@ -91,7 +95,11 @@ public abstract class AbstractCodingRulesAnalyzer {
             log.error(tree, "proc.messager", msg.toString());
         }
 
-        private String localize(String code, Object... args) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private String localize(String code, Object... args) {
             String msg = bundle.getString(code);
             if (msg == null) {
                 StringBuilder sb = new StringBuilder();

@@ -29,6 +29,7 @@
 import java.net.*;
 import java.nio.channels.DatagramChannel;
 
+@Bean
 public class ChangingAddress {
 
     // Checks that the given DatagramSocket and DatagramChannel are bound to the

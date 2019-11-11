@@ -177,6 +177,10 @@ public final class TestSerialization implements PropertyChangeListener, Serializ
         return this.index;
     }
 
-    public void propertyChange(PropertyChangeEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void propertyChange(PropertyChangeEvent event) {
     }
 }

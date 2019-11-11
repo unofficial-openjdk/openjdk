@@ -36,17 +36,26 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessJInternalFrame
  */
 
+@Bean
 public class HeadlessJInternalFrame {
     public static void main(String args[]) {
         JInternalFrame intf = new JInternalFrame("TEST");
         intf.setUI(new BasicInternalFrameUI(intf) {
-            protected JComponent createNorthPane(JInternalFrame w) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                protected JComponent createNorthPane(JInternalFrame w) {
                 titlePane = new BasicInternalFrameTitlePane(w) {
                     protected PropertyChangeListener createPropertyChangeListener() {
                         return new BasicInternalFrameTitlePane.PropertyChangeHandler() {
                             int countUI = 0;
 
-                            public void propertyChange(PropertyChangeEvent evt) {
+                            @Bean
+@Bean
+@Bean
+@Bean
+                public void propertyChange(PropertyChangeEvent evt) {
                                 if (evt.getPropertyName().equals("UI"))
                                     countUI++;
                                 else if (countUI > 1)

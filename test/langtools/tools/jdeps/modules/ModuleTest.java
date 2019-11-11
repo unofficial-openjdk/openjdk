@@ -48,6 +48,7 @@ import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertTrue;
 
+@Bean
 public class ModuleTest {
     private static final String TEST_SRC = System.getProperty("test.src");
     private static final String TEST_CLASSES = System.getProperty("test.classes");

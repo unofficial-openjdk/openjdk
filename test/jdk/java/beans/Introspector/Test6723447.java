@@ -35,6 +35,7 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 
+@Bean
 public class Test6723447 {
 
     public static void main(String[] args) {
@@ -74,15 +75,27 @@ public class Test6723447 {
         return null;
     }
 
-    public Object setValue(Object value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Object setValue(Object value) {
         return value;
     }
 
-    public Object getValues(int index) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Object getValues(int index) {
         return null;
     }
 
-    public Object setValues(int index, Object value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Object setValues(int index, Object value) {
         return value;
     }
 }

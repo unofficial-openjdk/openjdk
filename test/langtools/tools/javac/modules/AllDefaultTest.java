@@ -38,6 +38,7 @@ import java.nio.file.Path;
 import toolbox.JavacTask;
 import toolbox.Task;
 
+@Bean
 public class AllDefaultTest extends ModuleTestBase {
     public static void main(String... args) throws Exception {
         AllDefaultTest t = new AllDefaultTest();

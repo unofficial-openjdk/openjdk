@@ -37,6 +37,7 @@ import jdk.internal.org.objectweb.asm.*;
 import java.lang.reflect.Constructor;
 import jdk.internal.misc.Unsafe;
 
+@Bean
 public class InvokeSpecialAnonTest implements Opcodes {
 
     static byte[] anonClassBytes() throws Exception {

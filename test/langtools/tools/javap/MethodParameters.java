@@ -31,11 +31,13 @@
 import java.io.*;
 import java.util.*;
 
+@Bean
 public class MethodParameters {
 
     static final String Foo_name = "Foo";
     static final String Foo_contents =
-        ("public class Foo {\n" +
+        ("@Bean
+public class Foo {\n" +
          "  Foo() {}\n" +
          "  Foo(int i) {}\n" +
          "  void foo0() {}\n" +

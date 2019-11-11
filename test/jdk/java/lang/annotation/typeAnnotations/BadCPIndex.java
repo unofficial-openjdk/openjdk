@@ -36,6 +36,7 @@ import java.util.function.Function;
 import org.testng.annotations.Test;
 import org.testng.annotations.DataProvider;
 
+@Bean
 public class BadCPIndex {
     private static final  MyLoader loader = new MyLoader(BadCPIndex.class.getClassLoader());
 
@@ -79,7 +80,8 @@ public class BadCPIndex {
             super(parent);
         }
 
-        public Class<?> defineClass(String name, byte[] bytes) {
+        @Bean
+public class<?> defineClass(String name, byte[] bytes) {
             return defineClass(name, bytes, 0, bytes.length);
         }
     }

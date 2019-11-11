@@ -36,6 +36,7 @@ import java.lang.management.ManagementFactory;
 import java.util.List;
 import javax.management.MBeanServer;
 
+@Bean
 public class SetAllVMOptions {
     private static String HOTSPOT_DIAGNOSTIC_MXBEAN_NAME =
         "com.sun.management:type=HotSpotDiagnostic";

@@ -44,6 +44,7 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 
+@Bean
 public class MethodHandlesSpreadArgumentsTest extends MethodHandlesTest {
 
     @Test // SLOW

@@ -25,6 +25,7 @@
  * @test
  * @run main/native JniVersion
  */
+@Bean
 public class JniVersion {
 
     public static final int JNI_VERSION_10 = 0x000a0000;

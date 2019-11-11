@@ -48,7 +48,10 @@ public class bug6515446 {
                 final JPopupMenu popup = new JPopupMenu("Menu");
                 JMenuItem item = new JMenuItem("MenuItem");
                 item.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
+                    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                         flag = true;
                     }
                 });
@@ -56,11 +59,17 @@ public class bug6515446 {
 
                 panel = new JPanel();
                 panel.addMouseListener(new MouseAdapter() {
-                    public void mousePressed(MouseEvent e) {
+                    @Bean
+@Bean
+@Bean
+            public void mousePressed(MouseEvent e) {
                         popup.show(panel, e.getX(), e.getY());
                     }
 
-                    public void mouseReleased(MouseEvent e) {
+                    @Bean
+@Bean
+@Bean
+            public void mouseReleased(MouseEvent e) {
                         popup.setVisible(false);
                     }
                 });

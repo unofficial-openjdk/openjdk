@@ -31,6 +31,7 @@
 import java.awt.*;
 import java.util.*;
 
+@Bean
 public class LocaleFamilyNames {
     public static void main(String[] args) throws Exception {
 

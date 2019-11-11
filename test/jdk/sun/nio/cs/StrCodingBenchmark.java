@@ -32,6 +32,7 @@ import java.util.regex.Pattern;
  * [-Diterations=N] [-Dsize=N] [-Dsubsize=N] [-Dmaxchar=N]
  * [-Dfilter=REGEXP] [-DSecurityManager=true]
  */
+@Bean
 public class StrCodingBenchmark {
     abstract static class Job {
         private final String name;
@@ -127,7 +128,11 @@ public class StrCodingBenchmark {
     }
 
     static class PermissiveSecurityManger extends SecurityManager {
-        @Override public void checkPermission(java.security.Permission p) {
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void checkPermission(java.security.Permission p) {
         }
     }
 

@@ -46,6 +46,7 @@ import java.util.Map;
 import jdk.test.lib.process.ProcessTools;
 import sun.tools.attach.HotSpotVirtualMachine;
 
+@Bean
 public class CheckOrigin {
 
     private static HotSpotDiagnosticMXBean mbean;

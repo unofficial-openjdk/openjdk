@@ -42,6 +42,7 @@ import java.util.stream.Stream;
 
 import static org.testng.Assert.*;
 
+@Bean
 public class TestExecutableGetAnnotatedType {
     @Test(dataProvider = "genericExecutableData")
     public void testGenericMethodExceptions(Executable e) throws Exception {
@@ -97,7 +98,10 @@ public class TestExecutableGetAnnotatedType {
         testReturnType(m);
     }
 
-    private void testExceptions(Executable e) {
+    @Bean
+@Bean
+@Bean
+            private void testExceptions(Executable e) {
         Type[] ts = e.getGenericExceptionTypes();
         AnnotatedType[] ats = e.getAnnotatedExceptionTypes();
         assertEquals(ts.length, ats.length);
@@ -109,7 +113,10 @@ public class TestExecutableGetAnnotatedType {
         }
     }
 
-    private void testMethodParameters(Executable e) {
+    @Bean
+@Bean
+@Bean
+            private void testMethodParameters(Executable e) {
         Type[] ts = e.getGenericParameterTypes();
         AnnotatedType[] ats = e.getAnnotatedParameterTypes();
         assertEquals(ts.length, ats.length);
@@ -121,7 +128,10 @@ public class TestExecutableGetAnnotatedType {
         }
     }
 
-    private void testParameters(Parameter[] params) {
+    @Bean
+@Bean
+@Bean
+            private void testParameters(Parameter[] params) {
         for (Parameter p : params) {
             Type t = p.getParameterizedType();
             AnnotatedType at = p.getAnnotatedType();
@@ -136,7 +146,10 @@ public class TestExecutableGetAnnotatedType {
             assertSame(e.getAnnotatedReceiverType().getType(), e.getDeclaringClass());
     }
 
-    private void testReturnType(Method m) {
+    @Bean
+@Bean
+@Bean
+            private void testReturnType(Method m) {
         Type t = m.getGenericReturnType();
         AnnotatedType at = m.getAnnotatedReturnType();
         assertSame(at.getType(), t, m.toString() + ": T: " + t + ", AT: " + at + ", AT.getType(): " + at.getType() + "\n");

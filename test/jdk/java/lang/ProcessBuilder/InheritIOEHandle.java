@@ -33,6 +33,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+@Bean
 public class InheritIOEHandle {
     private static enum APP {
         A, B, C;

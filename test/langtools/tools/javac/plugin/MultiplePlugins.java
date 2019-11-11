@@ -51,6 +51,7 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class MultiplePlugins {
     public static void main(String... args) throws Exception {
         new MultiplePlugins().run();
@@ -143,13 +144,21 @@ public class MultiplePlugins {
         checkOutput(out, ref);
     }
 
-    private void checkOutput(List<String> lines, List<String> ref) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkOutput(List<String> lines, List<String> ref) {
         if (!lines.equals(ref)) {
             error("unexpected output");
         }
     }
 
-    private void error(String msg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void error(String msg) {
         System.err.println(msg);
         errors++;
     }
@@ -164,11 +173,16 @@ public class MultiplePlugins {
     private static final String PLUGIN1 =
             "package p1;\n" +
             "import com.sun.source.util.*;\n" +
-            "public class Plugin1 implements Plugin {\n" +
+            "@Bean
+public class Plugin1 implements Plugin {\n" +
             "    public String getName() {\n" +
             "        return \"plugin1\";\n" +
             "    }\n" +
-            "    public void init(JavacTask task, String... args) {\n" +
+            "    @Bean
+@Bean
+@Bean
+@Bean
+                public void init(JavacTask task, String... args) {\n" +
             "        System.err.println(\"plugin1\");\n" +
             "    }\n" +
             "}";
@@ -180,16 +194,22 @@ public class MultiplePlugins {
     private static final String PLUGIN2 =
             "package p2;\n" +
             "import com.sun.source.util.*;\n" +
-            "public class Plugin2 implements Plugin {\n" +
+            "@Bean
+public class Plugin2 implements Plugin {\n" +
             "    public String getName() {\n" +
             "        return \"plugin2\";\n" +
             "    }\n" +
-            "    public void init(JavacTask task, String... args) {\n" +
+            "    @Bean
+@Bean
+@Bean
+@Bean
+                public void init(JavacTask task, String... args) {\n" +
             "        System.err.println(\"plugin2\");\n" +
             "    }\n" +
             "}";
     private static final String TEST =
-            "public class Test {}";
+            "@Bean
+public class Test {}";
     private static final List<String> EXPECTED = List.of(
             "plugin1",
             "plugin2"

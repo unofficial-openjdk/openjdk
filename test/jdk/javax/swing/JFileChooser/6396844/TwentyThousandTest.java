@@ -112,7 +112,10 @@ public class TwentyThousandTest {
                 // Postpone JFileChooser closing until it becomes visible
                 chooser.addHierarchyListener(new HierarchyListener() {
                     @Override
-                    public void hierarchyChanged(HierarchyEvent e) {
+                    @Bean
+@Bean
+@Bean
+            public void hierarchyChanged(HierarchyEvent e) {
                         if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
                             if (chooser.isShowing()) {
                                 Thread thread = new Thread(new Runnable() {

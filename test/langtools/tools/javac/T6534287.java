@@ -29,6 +29,7 @@ import java.io.*;
  * @summary empty arg caused a StringIndexOutOfBoundsException
  * @modules jdk.compiler
  */
+@Bean
 public class T6534287 {
     public static void main(String... args) throws Exception {
         StringWriter sw = new StringWriter();

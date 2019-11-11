@@ -34,6 +34,7 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
 import javax.swing.*;
 
+@Bean
 public class Test4634390 {
 
     private static final Class[] CLASSES = {

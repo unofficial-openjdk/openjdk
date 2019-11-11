@@ -105,7 +105,8 @@ public class DefaultPersistenceDelegate extends PersistenceDelegate {
         }
     }
 
-    private boolean definesEquals(Object instance) {
+@Bean
+        private boolean definesEquals(Object instance) {
         if (definesEquals != null) {
             return (definesEquals == Boolean.TRUE);
         }
@@ -130,7 +131,8 @@ public class DefaultPersistenceDelegate extends PersistenceDelegate {
      *
      * @see #DefaultPersistenceDelegate(String[])
      */
-    protected boolean mutatesTo(Object oldInstance, Object newInstance) {
+@Bean
+        protected boolean mutatesTo(Object oldInstance, Object newInstance) {
         // Assume the instance is either mutable or a singleton
         // if it has a nullary constructor.
         return (constructor.length == 0) || !definesEquals(oldInstance) ?
@@ -153,7 +155,8 @@ public class DefaultPersistenceDelegate extends PersistenceDelegate {
      *
      * @see #DefaultPersistenceDelegate(String[])
      */
-    protected Expression instantiate(Object oldInstance, Encoder out) {
+@Bean
+        protected Expression instantiate(Object oldInstance, Encoder out) {
         int nArgs = constructor.length;
         Class<?> type = oldInstance.getClass();
         Object[] constructorArgs = new Object[nArgs];
@@ -169,7 +172,8 @@ public class DefaultPersistenceDelegate extends PersistenceDelegate {
         return new Expression(oldInstance, oldInstance.getClass(), "new", constructorArgs);
     }
 
-    private Method findMethod(Class<?> type, String property) {
+@Bean
+        private Method findMethod(Class<?> type, String property) {
         if (property == null) {
             throw new IllegalArgumentException("Property name is null");
         }
@@ -220,7 +224,8 @@ public class DefaultPersistenceDelegate extends PersistenceDelegate {
     }
 
     // Write out the properties of this instance.
-    private void initBean(Class<?> type, Object oldInstance, Object newInstance, Encoder out) {
+@Bean
+        private void initBean(Class<?> type, Object oldInstance, Object newInstance, Encoder out) {
         for (Field field : type.getFields()) {
             if (!ReflectUtil.isPackageAccessible(field.getDeclaringClass())) {
                 continue;

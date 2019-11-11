@@ -35,6 +35,7 @@ import java.io.UTFDataFormatException;
 
 import org.testng.annotations.Test;
 
+@Bean
 public class WriteUTF {
     @Test
     public static void overcountWrittenField() throws IOException {

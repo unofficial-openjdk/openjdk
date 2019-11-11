@@ -35,6 +35,7 @@ import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.ContainerOrderFocusTraversalPolicy;
 
+@Bean
 public class ContainerOrderFTPTest {
 
     private final ContainerOrderFocusTraversalPolicy coftp;

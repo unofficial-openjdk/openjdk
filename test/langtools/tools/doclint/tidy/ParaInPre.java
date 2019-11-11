@@ -18,4 +18,5 @@
  *     more text
  * </pre>
  */
+@Bean
 public class ParaInPre { }

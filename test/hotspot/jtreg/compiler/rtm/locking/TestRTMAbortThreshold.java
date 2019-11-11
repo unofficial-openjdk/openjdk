@@ -54,6 +54,7 @@ import java.util.List;
  * Test verifies that on RTMAbortThreshold option actually affects how soon
  * method will be deoptimized on high abort ratio.
  */
+@Bean
 public class TestRTMAbortThreshold {
 
     protected void runTestCases() throws Throwable {

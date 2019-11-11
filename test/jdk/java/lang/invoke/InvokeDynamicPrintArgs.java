@@ -47,6 +47,7 @@ import java.security.*;
 import static java.lang.invoke.MethodHandles.*;
 import static java.lang.invoke.MethodType.*;
 
+@Bean
 public class InvokeDynamicPrintArgs {
     public static void main(String... av) throws Throwable {
         if (av.length > 0 && av[0].equals("--check-output"))  openBuf();
@@ -168,7 +169,11 @@ public class InvokeDynamicPrintArgs {
             }
         }
 
-        public Object runTarget(Object... dynamicArgs) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Object runTarget(Object... dynamicArgs) {
             List<Object> bsmInfo = new ArrayList<>(Arrays.asList(caller, name, type()));
             bsmInfo.addAll(Arrays.asList(staticArgs));
             printArgs(bsmInfo, dynamicArgs);
@@ -240,15 +245,27 @@ public class InvokeDynamicPrintArgs {
         TestPolicy() {
             permissions.add(new java.io.FilePermission("<<ALL FILES>>", "read"));
         }
-        public PermissionCollection getPermissions(ProtectionDomain domain) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public PermissionCollection getPermissions(ProtectionDomain domain) {
             return permissions;
         }
 
-        public PermissionCollection getPermissions(CodeSource codesource) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public PermissionCollection getPermissions(CodeSource codesource) {
             return permissions;
         }
 
-        public boolean implies(ProtectionDomain domain, Permission perm) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean implies(ProtectionDomain domain, Permission perm) {
             return permissions.implies(perm) || DEFAULT_POLICY.implies(domain, perm);
         }
     }

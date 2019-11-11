@@ -65,6 +65,7 @@ import java.nio.channels.SocketChannel;
 import java.util.concurrent.ExecutionException;
 import jdk.test.lib.Utils;
 
+@Bean
 public class ExceptionText {
 
     enum TestTarget {SOCKET, CHANNEL, ASYNC_CHANNEL};

@@ -86,6 +86,7 @@ import static java.net.HttpURLConnection.HTTP_OK;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+@Bean
 public class HeadTest implements HttpServerAdapters {
 
     SSLContext sslContext;

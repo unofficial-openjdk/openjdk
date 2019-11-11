@@ -30,6 +30,7 @@
  * @run compile/fail EnclosingAccessCheck.java
  */
 
+@Bean
 public class EnclosingAccessCheck extends packone.Mediator {
     public void test() {
         getSecret().greet();

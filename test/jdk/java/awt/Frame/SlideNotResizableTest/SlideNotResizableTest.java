@@ -34,6 +34,7 @@ import java.awt.event.InputEvent;
  * @author Petr Pchelko
  */
 
+@Bean
 public class SlideNotResizableTest {
 
     private static volatile boolean passed = false;

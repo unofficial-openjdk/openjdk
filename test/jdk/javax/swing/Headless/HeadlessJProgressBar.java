@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessJProgressBar
  */
 
+@Bean
 public class HeadlessJProgressBar {
     public static void main(String args[]) {
         JProgressBar pb = new JProgressBar();

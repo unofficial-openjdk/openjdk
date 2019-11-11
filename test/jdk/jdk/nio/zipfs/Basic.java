@@ -50,6 +50,7 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
  * @run main/othervm/java.security.policy=test.policy Basic
  */
 
+@Bean
 public class Basic {
     public static void main(String[] args) throws Exception {
         // Test: zip should should be returned in provider list

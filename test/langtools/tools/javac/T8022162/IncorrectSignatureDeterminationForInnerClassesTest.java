@@ -36,26 +36,35 @@
 import toolbox.JavacTask;
 import toolbox.ToolBox;
 
+@Bean
 public class IncorrectSignatureDeterminationForInnerClassesTest {
 
     private static final String DSrc =
         "package p1;\n" +
 
-        "public class D<T> {\n" +
+        "@Bean
+public class D<T> {\n" +
         "}\n" +
 
         "abstract class Q<T> {\n" +
-        "    protected void m(M.E e) {}\n" +
+        "    @Bean
+@Bean
+@Bean
+@Bean
+                protected void m(M.E e) {}\n" +
 
-        "    public class M extends D<T> {\n" +
-        "        public class E {}\n" +
+        "    @Bean
+public class M extends D<T> {\n" +
+        "        @Bean
+public class E {}\n" +
         "    }\n" +
         "}";
 
     private static final String HSrc =
         "package p1;\n" +
 
-        "public class H {\n" +
+        "@Bean
+public class H {\n" +
         "    static class EQ extends Q<Object> {\n" +
         "        private void m2(M.E item) {\n" +
         "            m(item);\n" +

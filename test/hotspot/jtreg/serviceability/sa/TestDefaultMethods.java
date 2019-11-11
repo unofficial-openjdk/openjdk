@@ -52,6 +52,7 @@ import jdk.test.lib.Asserts;
  * @run main/othervm TestDefaultMethods
  */
 
+@Bean
 public class TestDefaultMethods {
 
     private static LingeredAppWithDefaultMethods theApp = null;

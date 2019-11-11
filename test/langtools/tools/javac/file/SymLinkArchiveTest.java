@@ -47,6 +47,7 @@ import toolbox.TestRunner;
 import toolbox.TestRunner.Test;
 import toolbox.ToolBox;
 
+@Bean
 public class SymLinkArchiveTest extends TestRunner {
     public static void main(String... args) throws Exception {
         new SymLinkArchiveTest().runTests(m -> new Object[] {Paths.get(m.getName())});

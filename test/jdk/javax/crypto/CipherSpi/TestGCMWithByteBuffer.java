@@ -38,6 +38,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.AEADBadTagException;
 import javax.crypto.spec.*;
 
+@Bean
 public class TestGCMWithByteBuffer {
 
     private static Random random = new SecureRandom();

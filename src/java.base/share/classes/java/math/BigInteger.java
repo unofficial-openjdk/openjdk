@@ -128,6 +128,7 @@ import jdk.internal.vm.annotation.Stable;
  * @since 1.1
  */
 
+@Bean
 public class BigInteger extends Number implements Comparable<BigInteger> {
     /**
      * The signum of this BigInteger: -1 for negative, 0 for zero, or
@@ -607,7 +608,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
     // Create an integer with the digits between the two indexes
     // Assumes start < end. The result may be negative, but it
     // is to be treated as an unsigned value.
-    private int parseInt(char[] source, int start, int end) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int parseInt(char[] source, int start, int end) {
         int result = Character.digit(source[start++], 10);
         if (result == -1)
             throw new NumberFormatException(new String(source));
@@ -1081,7 +1086,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * This BigInteger is a positive, odd number greater than 2.
      * iterations<=50.
      */
-    private boolean passesMillerRabin(int iterations, Random rnd) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean passesMillerRabin(int iterations, Random rnd) {
         // Find a and m such that m is odd and this == 1 + 2**a * m
         BigInteger thisMinusOne = this.subtract(ONE);
         BigInteger m = thisMinusOne;
@@ -1303,7 +1312,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @param  val value to be added to this BigInteger.
      * @return {@code this + val}
      */
-    public BigInteger add(BigInteger val) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public BigInteger add(BigInteger val) {
         if (val.signum == 0)
             return this;
         if (signum == 0)
@@ -1505,7 +1518,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @param  val value to be subtracted from this BigInteger.
      * @return {@code this - val}
      */
-    public BigInteger subtract(BigInteger val) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public BigInteger subtract(BigInteger val) {
         if (val.signum == 0)
             return this;
         if (signum == 0)
@@ -1563,7 +1580,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @param  val value to be multiplied by this BigInteger.
      * @return {@code this * val}
      */
-    public BigInteger multiply(BigInteger val) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public BigInteger multiply(BigInteger val) {
         return multiply(val, false);
     }
 
@@ -1575,7 +1596,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @param  isRecursion whether this is a recursive invocation
      * @return {@code this * val}
      */
-    private BigInteger multiply(BigInteger val, boolean isRecursion) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private BigInteger multiply(BigInteger val, boolean isRecursion) {
         if (val.signum == 0 || signum == 0)
             return ZERO;
 
@@ -2014,7 +2039,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * Returns a new BigInteger representing n lower ints of the number.
      * This is used by Karatsuba multiplication and Karatsuba squaring.
      */
-    private BigInteger getLower(int n) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private BigInteger getLower(int n) {
         int len = mag.length;
 
         if (len <= n) {
@@ -2032,7 +2061,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * ints of the number.  This is used by Karatsuba multiplication and
      * Karatsuba squaring.
      */
-    private BigInteger getUpper(int n) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private BigInteger getUpper(int n) {
         int len = mag.length;
 
         if (len <= n) {
@@ -2064,7 +2097,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @param isRecursion whether this is a recursive invocation
      * @return {@code this<sup>2</sup>}
      */
-    private BigInteger square(boolean isRecursion) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private BigInteger square(boolean isRecursion) {
         if (signum == 0) {
             return ZERO;
         }
@@ -2274,7 +2311,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @return {@code this / val}
      * @throws ArithmeticException if {@code val} is zero.
      */
-    public BigInteger divide(BigInteger val) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public BigInteger divide(BigInteger val) {
         if (val.mag.length < BURNIKEL_ZIEGLER_THRESHOLD ||
                 mag.length - val.mag.length < BURNIKEL_ZIEGLER_OFFSET) {
             return divideKnuth(val);
@@ -2291,7 +2332,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @throws ArithmeticException if {@code val} is zero.
      * @see MutableBigInteger#divideKnuth(MutableBigInteger, MutableBigInteger, boolean)
      */
-    private BigInteger divideKnuth(BigInteger val) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private BigInteger divideKnuth(BigInteger val) {
         MutableBigInteger q = new MutableBigInteger(),
                           a = new MutableBigInteger(this.mag),
                           b = new MutableBigInteger(val.mag);
@@ -2340,7 +2385,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @return {@code this % val}
      * @throws ArithmeticException if {@code val} is zero.
      */
-    public BigInteger remainder(BigInteger val) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public BigInteger remainder(BigInteger val) {
         if (val.mag.length < BURNIKEL_ZIEGLER_THRESHOLD ||
                 mag.length - val.mag.length < BURNIKEL_ZIEGLER_OFFSET) {
             return remainderKnuth(val);
@@ -2350,7 +2399,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
     }
 
     /** Long division */
-    private BigInteger remainderKnuth(BigInteger val) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private BigInteger remainderKnuth(BigInteger val) {
         MutableBigInteger q = new MutableBigInteger(),
                           a = new MutableBigInteger(this.mag),
                           b = new MutableBigInteger(val.mag);
@@ -2363,7 +2416,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @param  val the divisor
      * @return {@code this / val}
      */
-    private BigInteger divideBurnikelZiegler(BigInteger val) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private BigInteger divideBurnikelZiegler(BigInteger val) {
         return divideAndRemainderBurnikelZiegler(val)[0];
     }
 
@@ -2372,7 +2429,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @param val the divisor
      * @return {@code this % val}
      */
-    private BigInteger remainderBurnikelZiegler(BigInteger val) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private BigInteger remainderBurnikelZiegler(BigInteger val) {
         return divideAndRemainderBurnikelZiegler(val)[1];
     }
 
@@ -2399,7 +2460,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @throws ArithmeticException {@code exponent} is negative.  (This would
      *         cause the operation to yield a non-integer value.)
      */
-    public BigInteger pow(int exponent) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public BigInteger pow(int exponent) {
         if (exponent < 0) {
             throw new ArithmeticException("Negative exponent");
         }
@@ -2570,7 +2635,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @param  val value with which the GCD is to be computed.
      * @return {@code GCD(abs(this), abs(val))}
      */
-    public BigInteger gcd(BigInteger val) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public BigInteger gcd(BigInteger val) {
         if (val.signum == 0)
             return this.abs();
         else if (this.signum == 0)
@@ -2695,7 +2764,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @throws ArithmeticException {@code m} &le; 0
      * @see    #remainder
      */
-    public BigInteger mod(BigInteger m) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public BigInteger mod(BigInteger m) {
         if (m.signum <= 0)
             throw new ArithmeticException("BigInteger: modulus not positive");
 
@@ -2716,7 +2789,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      *         prime</i> to {@code m}.
      * @see    #modInverse
      */
-    public BigInteger modPow(BigInteger exponent, BigInteger m) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public BigInteger modPow(BigInteger exponent, BigInteger m) {
         if (m.signum <= 0)
             throw new ArithmeticException("BigInteger: modulus not positive");
 
@@ -2864,7 +2941,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * Returns a BigInteger whose value is x to the power of y mod z.
      * Assumes: z is odd && x < z.
      */
-    private BigInteger oddModPow(BigInteger y, BigInteger z) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private BigInteger oddModPow(BigInteger y, BigInteger z) {
     /*
      * The algorithm is adapted from Colin Plumb's C library.
      *
@@ -3277,7 +3358,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      *         has no multiplicative inverse mod m (that is, this BigInteger
      *         is not <i>relatively prime</i> to m).
      */
-    public BigInteger modInverse(BigInteger m) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public BigInteger modInverse(BigInteger m) {
         if (m.signum != 1)
             throw new ArithmeticException("BigInteger: modulus not positive");
 
@@ -3311,7 +3396,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @return {@code this << n}
      * @see #shiftRight
      */
-    public BigInteger shiftLeft(int n) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public BigInteger shiftLeft(int n) {
         if (signum == 0)
             return ZERO;
         if (n > 0) {
@@ -3371,7 +3460,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @return {@code this >> n}
      * @see #shiftLeft
      */
-    public BigInteger shiftRight(int n) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public BigInteger shiftRight(int n) {
         if (signum == 0)
             return ZERO;
         if (n > 0) {
@@ -3393,7 +3486,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @param  n unsigned shift distance, in bits.
      * @return {@code this >> n}
      */
-    private BigInteger shiftRightImpl(int n) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private BigInteger shiftRightImpl(int n) {
         int nInts = n >>> 5;
         int nBits = n & 0x1f;
         int magLen = mag.length;
@@ -3458,7 +3555,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @param val value to be AND'ed with this BigInteger.
      * @return {@code this & val}
      */
-    public BigInteger and(BigInteger val) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public BigInteger and(BigInteger val) {
         int[] result = new int[Math.max(intLength(), val.intLength())];
         for (int i=0; i < result.length; i++)
             result[i] = (getInt(result.length-i-1)
@@ -3475,7 +3576,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @param val value to be OR'ed with this BigInteger.
      * @return {@code this | val}
      */
-    public BigInteger or(BigInteger val) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public BigInteger or(BigInteger val) {
         int[] result = new int[Math.max(intLength(), val.intLength())];
         for (int i=0; i < result.length; i++)
             result[i] = (getInt(result.length-i-1)
@@ -3492,7 +3597,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @param val value to be XOR'ed with this BigInteger.
      * @return {@code this ^ val}
      */
-    public BigInteger xor(BigInteger val) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public BigInteger xor(BigInteger val) {
         int[] result = new int[Math.max(intLength(), val.intLength())];
         for (int i=0; i < result.length; i++)
             result[i] = (getInt(result.length-i-1)
@@ -3526,7 +3635,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @param val value to be complemented and AND'ed with this BigInteger.
      * @return {@code this & ~val}
      */
-    public BigInteger andNot(BigInteger val) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public BigInteger andNot(BigInteger val) {
         int[] result = new int[Math.max(intLength(), val.intLength())];
         for (int i=0; i < result.length; i++)
             result[i] = (getInt(result.length-i-1)
@@ -3546,7 +3659,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @return {@code true} if and only if the designated bit is set.
      * @throws ArithmeticException {@code n} is negative.
      */
-    public boolean testBit(int n) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean testBit(int n) {
         if (n < 0)
             throw new ArithmeticException("Negative bit address");
 
@@ -3561,7 +3678,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @return {@code this | (1<<n)}
      * @throws ArithmeticException {@code n} is negative.
      */
-    public BigInteger setBit(int n) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public BigInteger setBit(int n) {
         if (n < 0)
             throw new ArithmeticException("Negative bit address");
 
@@ -3585,7 +3706,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @return {@code this & ~(1<<n)}
      * @throws ArithmeticException {@code n} is negative.
      */
-    public BigInteger clearBit(int n) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public BigInteger clearBit(int n) {
         if (n < 0)
             throw new ArithmeticException("Negative bit address");
 
@@ -3609,7 +3734,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @return {@code this ^ (1<<n)}
      * @throws ArithmeticException {@code n} is negative.
      */
-    public BigInteger flipBit(int n) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public BigInteger flipBit(int n) {
         if (n < 0)
             throw new ArithmeticException("Negative bit address");
 
@@ -3733,7 +3862,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @return {@code true} if this BigInteger is probably prime,
      *         {@code false} if it's definitely composite.
      */
-    public boolean isProbablePrime(int certainty) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean isProbablePrime(int certainty) {
         if (certainty <= 0)
             return true;
         BigInteger w = this.abs();
@@ -3760,7 +3893,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @return -1, 0 or 1 as this BigInteger is numerically less than, equal
      *         to, or greater than {@code val}.
      */
-    public int compareTo(BigInteger val) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int compareTo(BigInteger val) {
         if (signum == val.signum) {
             switch (signum) {
             case 1:
@@ -3850,7 +3987,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @return {@code true} if and only if the specified Object is a
      *         BigInteger whose value is numerically equal to this BigInteger.
      */
-    public boolean equals(Object x) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object x) {
         // This test is just an optimization, which may or may not help
         if (x == this)
             return true;
@@ -3882,7 +4023,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @return the BigInteger whose value is the lesser of this BigInteger and
      *         {@code val}.  If they are equal, either may be returned.
      */
-    public BigInteger min(BigInteger val) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public BigInteger min(BigInteger val) {
         return (compareTo(val) < 0 ? this : val);
     }
 
@@ -3893,7 +4038,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @return the BigInteger whose value is the greater of this and
      *         {@code val}.  If they are equal, either may be returned.
      */
-    public BigInteger max(BigInteger val) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public BigInteger max(BigInteger val) {
         return (compareTo(val) > 0 ? this : val);
     }
 
@@ -3931,7 +4080,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @see    Character#forDigit
      * @see    #BigInteger(java.lang.String, int)
      */
-    public String toString(int radix) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String toString(int radix) {
         if (signum == 0)
             return "0";
         if (radix < Character.MIN_RADIX || radix > Character.MAX_RADIX)
@@ -3955,7 +4108,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
     }
 
     /** This method is used to perform toString when arguments are small. */
-    private String smallToString(int radix) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String smallToString(int radix) {
         if (signum == 0) {
             return "0";
         }
@@ -4569,7 +4726,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * be arbitrarily high (values are logically preceded by infinitely many
      * sign ints).
      */
-    private int getInt(int n) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int getInt(int n) {
         if (n < 0)
             return 0;
         if (n >= mag.length)

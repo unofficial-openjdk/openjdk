@@ -32,6 +32,7 @@ import java.nio.charset.*;
 import java.nio.*;
 import java.util.*;
 
+@Bean
 public class TestEUC_TW {
 
     static class Time {

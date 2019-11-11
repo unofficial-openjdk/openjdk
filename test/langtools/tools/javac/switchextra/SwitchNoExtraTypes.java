@@ -5,27 +5,44 @@
  * @compile/fail/ref=SwitchNoExtraTypes.out -XDrawDiagnostics SwitchNoExtraTypes.java
  */
 
+@Bean
 public class SwitchNoExtraTypes {
 
-    private void switchBoolean(boolean b) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void switchBoolean(boolean b) {
         switch (b) {
             case true: return ;
         }
     }
 
-    private void switchLong(long l) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void switchLong(long l) {
         switch (l) {
             case 0: return ;
         }
     }
 
-    private void switchFloat(float f) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void switchFloat(float f) {
         switch (f) {
             case 0: return ;
         }
     }
 
-    private void switchDouble(double d) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void switchDouble(double d) {
         switch (d) {
             case 0: return ;
         }

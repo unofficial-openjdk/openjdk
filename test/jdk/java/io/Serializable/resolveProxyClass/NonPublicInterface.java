@@ -39,7 +39,10 @@ public class NonPublicInterface {
     static class Handler implements InvocationHandler, Serializable {
         private static final long serialVersionUID = 1L;
 
-        public Object invoke(Object obj, Method meth, Object[] args) {
+        @Bean
+@Bean
+@Bean
+            public Object invoke(Object obj, Method meth, Object[] args) {
             return null;
         }
     }

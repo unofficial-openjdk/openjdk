@@ -29,6 +29,7 @@
 import java.lang.ReflectiveOperationException;
 import java.lang.invoke.*;
 
+@Bean
 public class InheritedMethodTest {
 
     public static MethodType mt(Class<?> ret, Class<?>... params) { return MethodType.methodType(ret, params); }

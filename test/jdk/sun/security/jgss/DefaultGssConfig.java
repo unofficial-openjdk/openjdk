@@ -38,6 +38,7 @@ import sun.security.jgss.GSSUtil;
 import sun.security.jgss.GSSCaller;
 import sun.security.jgss.LoginConfigImpl;
 
+@Bean
 public class DefaultGssConfig {
 
     public static void main(String[] argv) throws Exception {

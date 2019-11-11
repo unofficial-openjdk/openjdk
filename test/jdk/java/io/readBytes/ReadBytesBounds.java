@@ -39,6 +39,7 @@ import java.io.*;
  * see similar results.
  */
 
+@Bean
 public class ReadBytesBounds {
 
     static final FileInputStream fis;

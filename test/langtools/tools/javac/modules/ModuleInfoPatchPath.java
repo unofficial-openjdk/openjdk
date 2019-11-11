@@ -43,6 +43,7 @@ import java.util.List;
 import toolbox.JavacTask;
 import toolbox.Task.OutputKind;
 
+@Bean
 public class ModuleInfoPatchPath extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {
@@ -54,11 +55,13 @@ public class ModuleInfoPatchPath extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                           "module m { exports api; }",
-                          "package api; public class Api {}");
+                          "package api; @Bean
+public class Api {}");
         Path patch = base.resolve("patch");
         tb.writeJavaFiles(patch,
                           "module m { requires java.compiler; exports api; }",
-                          "package api; public class Api { public static javax.lang.model.element.Element element; }");
+                          "package api; @Bean
+public class Api { public static javax.lang.model.element.Element element; }");
         Path classes = base.resolve("classes");
         Path mClasses = classes.resolve("m");
         tb.createDirectories(mClasses);
@@ -74,7 +77,8 @@ public class ModuleInfoPatchPath extends ModuleTestBase {
         Path test = base.resolve("test");
         tb.writeJavaFiles(test,
                           "module test { requires m; }",
-                          "package test; public class Test { private void test() { api.Api.element = null; } }");
+                          "package test; @Bean
+public class Test { private void test() { api.Api.element = null; } }");
 
         Path testClasses = classes.resolve("test");
         tb.createDirectories(testClasses);
@@ -121,12 +125,15 @@ public class ModuleInfoPatchPath extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                           "module m { exports api; }",
-                          "package api; public class Api {}",
-                          "package test; public class Test { private void test() { api.Api.element = null; } }");
+                          "package api; @Bean
+public class Api {}",
+                          "package test; @Bean
+public class Test { private void test() { api.Api.element = null; } }");
         Path patch = base.resolve("patch");
         tb.writeJavaFiles(patch,
                           "module m { requires java.compiler; exports api; }",
-                          "package api; public class Api { public static javax.lang.model.element.Element element; }");
+                          "package api; @Bean
+public class Api { public static javax.lang.model.element.Element element; }");
         Path classes = base.resolve("classes");
         Path mClasses = classes.resolve("m");
         tb.createDirectories(mClasses);
@@ -233,12 +240,15 @@ public class ModuleInfoPatchPath extends ModuleTestBase {
         Path m = src.resolve("m");
         tb.writeJavaFiles(m,
                           "module m { exports api; }",
-                          "package api; public class Api {}",
-                          "package test; public class Test { private void test() { api.Api.element = null; } }");
+                          "package api; @Bean
+public class Api {}",
+                          "package test; @Bean
+public class Test { private void test() { api.Api.element = null; } }");
         Path patch = base.resolve("patch");
         tb.writeJavaFiles(patch,
                           "module m { requires java.compiler; exports api; }",
-                          "package api; public class Api { public static javax.lang.model.element.Element element; }");
+                          "package api; @Bean
+public class Api { public static javax.lang.model.element.Element element; }");
         Path classes = base.resolve("classes");
         Path mClasses = classes.resolve("m");
         tb.createDirectories(mClasses);

@@ -33,6 +33,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Vector;
 
+@Bean
 public class ReplaceAll {
     static final int SIZE = 20;
 

@@ -30,6 +30,7 @@ import java.net.*;
 import java.util.*;
 
 
+@Bean
 public class SetOutgoingIf {
     private static int PORT = 9001;
     private static String osname;

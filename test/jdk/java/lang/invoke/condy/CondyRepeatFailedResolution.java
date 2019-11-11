@@ -44,6 +44,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 @Test
+@Bean
 public class CondyRepeatFailedResolution {
     // Counter used to determine if a given BSM is invoked more than once
     static int bsm_called = 0;

@@ -31,6 +31,7 @@
 
 package compiler.intrinsics.mathexact;
 
+@Bean
 public class SplitThruPhiTest {
   public static volatile int value = 19;
   public static int store = 0;

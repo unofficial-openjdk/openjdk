@@ -72,6 +72,7 @@ import java.text.*;
  * and logln methods.  These methods will add their arguments to the
  * log only if the test is being run in verbose mode.
  */
+@Bean
 public class RBTestFmwk {
     //------------------------------------------------------------------------
     // Everything below here is boilerplate code that makes it possible
@@ -175,7 +176,11 @@ public class RBTestFmwk {
     /**
      * Adds given string to the log if we are in verbose mode.
      */
-    protected void log( String message ) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void log( String message ) {
         if( verbose ) {
             indent(indentLevel + 1);
             log.print( message );
@@ -183,14 +188,22 @@ public class RBTestFmwk {
         }
     }
 
-    protected void logln( String message ) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void logln( String message ) {
         log(message + System.getProperty("line.separator"));
     }
 
     /**
      * Report an error
      */
-    protected void err( String message ) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void err( String message ) {
         errorCount++;
         indent(indentLevel + 1);
         log.print( message );
@@ -201,19 +214,31 @@ public class RBTestFmwk {
         }
     }
 
-    protected void errln( String message ) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void errln( String message ) {
         err(message + System.getProperty("line.separator"));
     }
 
 
-    protected void writeTestName(String testName) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void writeTestName(String testName) {
         indent(indentLevel);
         log.print(testName);
         log.flush();
         needLineFeed = true;
     }
 
-    protected void writeTestResult(int count) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void writeTestResult(int count) {
         if (!needLineFeed) {
             indent(indentLevel);
             log.print("}");

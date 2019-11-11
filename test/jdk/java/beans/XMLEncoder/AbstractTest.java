@@ -66,7 +66,11 @@ abstract class AbstractTest<T> implements ExceptionListener {
      *
      * @param encoder  the XML encoder to initialize
      */
-    protected void initialize(XMLEncoder encoder) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void initialize(XMLEncoder encoder) {
     }
 
     /**
@@ -75,7 +79,11 @@ abstract class AbstractTest<T> implements ExceptionListener {
      *
      * @param decoder  the XML decoder to initialize
      */
-    protected void initialize(XMLDecoder decoder) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void initialize(XMLDecoder decoder) {
     }
 
     /**
@@ -85,7 +93,11 @@ abstract class AbstractTest<T> implements ExceptionListener {
      * @param before  the object before encoding
      * @param after   the object after decoding
      */
-    protected void validate(T before, T after) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void validate(T before, T after) {
         this.validator.validate(before, after);
     }
 
@@ -120,7 +132,11 @@ abstract class AbstractTest<T> implements ExceptionListener {
         }
     }
 
-    private T testBean(T object) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private T testBean(T object) {
         Bean bean = new Bean();
         bean.setValue(object);
         bean = testObject(bean);
@@ -143,7 +159,11 @@ abstract class AbstractTest<T> implements ExceptionListener {
         return output.toByteArray();
     }
 
-    private Object readObject(byte[] array) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Object readObject(byte[] array) {
         ByteArrayInputStream input = new ByteArrayInputStream(array);
         XMLDecoder decoder = new XMLDecoder(input);
         decoder.setExceptionListener(this);

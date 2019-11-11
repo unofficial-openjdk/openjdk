@@ -106,13 +106,15 @@ public class ClassType extends MethodElementType {
     }
 
     @Override
-    public void setSeparator(MethodDescriptor.Separator separator) {
+@Bean
+        public void setSeparator(MethodDescriptor.Separator separator) {
         this.separator = separator;
         buildElement(setPackage);
     }
 
     @Override
-    public void setPattern(MethodDescriptor.PatternType patternType) {
+@Bean
+        public void setPattern(MethodDescriptor.PatternType patternType) {
         switch (patternType) {
             case EXACT:
                 break;
@@ -145,7 +147,8 @@ public class ClassType extends MethodElementType {
      *
      * @param setPackage shows that element should have a package name
      */
-    private void buildElement(boolean setPackage) {
+@Bean
+        private void buildElement(boolean setPackage) {
         this.setPackage = setPackage;
         StringBuilder elementBuilder = new StringBuilder();
         if (packageDirs != null && setPackage) {

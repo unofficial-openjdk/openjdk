@@ -29,6 +29,7 @@ import java.lang.reflect.Method;
  * @author Sergey Malenkov
  * @library ..
  */
+@Bean
 public class Test7084904 {
     public static void main(String[] args) throws Exception {
         System.setSecurityManager(new SecurityManager());

@@ -47,7 +47,10 @@ class URIListTransferable implements Transferable {
         return new DataFlavor[] { supportedFlavor };
     }
 
-    public boolean isDataFlavorSupported(DataFlavor flavor) {
+    @Bean
+@Bean
+@Bean
+            public boolean isDataFlavorSupported(DataFlavor flavor) {
         return supportedFlavor.equals(flavor);
     }
 

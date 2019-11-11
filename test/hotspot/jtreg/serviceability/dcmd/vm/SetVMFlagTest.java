@@ -42,7 +42,11 @@ public class SetVMFlagTest {
     private static final String IMMUTABLE_PATTERN = "\\s*uintx\\s+(\\S+)\\s+[\\:]?=\\s+" +
                                                     "(.*?)\\s+\\{product\\}";
 
-    public void run(CommandExecutor executor) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void run(CommandExecutor executor) {
         setMutableFlag(executor);
         setMutableFlagWithInvalidValue(executor);
         setImmutableFlag(executor);
@@ -73,7 +77,11 @@ public class SetVMFlagTest {
         assertNotEquals(newFlagVal, val ? "1" : "0");
     }
 
-    private void setMutableFlag(CommandExecutor executor) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void setMutableFlag(CommandExecutor executor) {
         OutputAnalyzer out = getAllFlags(executor);
         String flagName = out.firstMatch(MANAGEABLE_PATTERN, 1);
         String flagVal = out.firstMatch(MANAGEABLE_PATTERN, 2);
@@ -90,7 +98,11 @@ public class SetVMFlagTest {
         setMutableFlagInternal(executor, flagName, blnVal, false);
     }
 
-    private void setMutableFlagWithInvalidValue(CommandExecutor executor) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void setMutableFlagWithInvalidValue(CommandExecutor executor) {
         OutputAnalyzer out = getAllFlags(executor);
         String flagName = out.firstMatch(MANAGEABLE_PATTERN, 1);
         String flagVal = out.firstMatch(MANAGEABLE_PATTERN, 2);
@@ -114,7 +126,11 @@ public class SetVMFlagTest {
         assertEquals(newFlagVal, flagVal);
     }
 
-    private void setImmutableFlag(CommandExecutor executor) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void setImmutableFlag(CommandExecutor executor) {
         OutputAnalyzer out = getAllFlags(executor);
         String flagName = out.firstMatch(IMMUTABLE_PATTERN, 1);
         String flagVal = out.firstMatch(IMMUTABLE_PATTERN, 2);
@@ -139,7 +155,11 @@ public class SetVMFlagTest {
         assertEquals(newFlagVal, flagVal);
     }
 
-    private void setNonExistingFlag(CommandExecutor executor) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void setNonExistingFlag(CommandExecutor executor) {
         String unknownFlag = "ThisIsUnknownFlag";
         System.out.println("### Setting a non-existing flag '" + unknownFlag + "'");
         OutputAnalyzer out = executor.execute("VM.set_flag " + unknownFlag + " 1");
@@ -147,7 +167,11 @@ public class SetVMFlagTest {
         out.stdoutShouldContain("flag " + unknownFlag + " does not exist");
     }
 
-    private OutputAnalyzer getAllFlags(CommandExecutor executor) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private OutputAnalyzer getAllFlags(CommandExecutor executor) {
         return executor.execute("VM.flags -all", true);
     }
 }

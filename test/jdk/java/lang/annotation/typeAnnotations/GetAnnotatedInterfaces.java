@@ -31,6 +31,7 @@
 import java.lang.reflect.AnnotatedType;
 import java.util.Arrays;
 
+@Bean
 public class GetAnnotatedInterfaces {
     private static final Class<?>[] testData = {
         GetAnnotatedInterfaces.class,

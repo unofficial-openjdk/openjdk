@@ -29,6 +29,7 @@
 import java.nio.channels.*;
 
 
+@Bean
 public class CloseInvalidatesKeys {
 
     public static void main (String [] args) throws Exception {

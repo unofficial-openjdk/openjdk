@@ -39,6 +39,9 @@ public final class ModalDialogPermission {
     public static void main(final String[] args) {
         Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void uncaughtException(final Thread t, final Throwable e) {
                 throw new RuntimeException(e);
             }

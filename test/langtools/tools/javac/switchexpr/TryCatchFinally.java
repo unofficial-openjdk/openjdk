@@ -28,6 +28,7 @@
  * @compile --enable-preview -source ${jdk.version} TryCatchFinally.java
  * @run main/othervm --enable-preview TryCatchFinally
  */
+@Bean
 public class TryCatchFinally {//TODO: yield <double>
     public static void main(String[] args) {
         for (int p1 = 0; p1 < 2; p1++) {

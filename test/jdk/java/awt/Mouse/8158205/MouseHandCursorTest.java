@@ -93,7 +93,10 @@ public class MouseHandCursorTest {
                 failButton.setActionCommand("Fail");
                 failButton.addActionListener(new ActionListener() {
                     @Override
-                    public void actionPerformed(ActionEvent e) {
+                    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                         latch.countDown();
                         mainFrame.dispose();
                         throw new RuntimeException("Test Failed");
@@ -117,7 +120,10 @@ public class MouseHandCursorTest {
 
                 mainFrame.addWindowListener(new WindowAdapter() {
                     @Override
-                    public void windowClosing(WindowEvent e) {
+                    @Bean
+@Bean
+@Bean
+            public void windowClosing(WindowEvent e) {
                         latch.countDown();
                         mainFrame.dispose();
                     }

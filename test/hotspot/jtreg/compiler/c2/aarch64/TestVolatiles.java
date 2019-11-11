@@ -65,6 +65,7 @@ import sun.hotspot.WhiteBox;
 // the PrintOptoAssembly output checking that the generated code is
 // correct.
 
+@Bean
 public class TestVolatiles {
     public void runtest(String classname, String testType) throws Throwable {
         // n.b. clients omit the package name for the class

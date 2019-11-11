@@ -30,6 +30,7 @@ import java.lang.reflect.Field;
  * @modules java.base/jdk.internal.misc
  * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:TieredStopAtLevel=1 UnsafeVolatileGuardTest
  */
+@Bean
 public class UnsafeVolatileGuardTest {
     volatile static private int a;
     static private int b;

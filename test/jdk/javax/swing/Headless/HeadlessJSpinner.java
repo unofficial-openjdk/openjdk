@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessJSpinner
  */
 
+@Bean
 public class HeadlessJSpinner {
     public static void main(String args[]) {
         JSpinner s = new JSpinner();

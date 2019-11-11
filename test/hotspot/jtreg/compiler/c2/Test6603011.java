@@ -42,6 +42,7 @@ package compiler.c2;
 
 import jdk.test.lib.Utils;
 
+@Bean
 public class Test6603011 implements Runnable {
   static class s {
     static int  divi(int  dividend, int  divisor) { return dividend / divisor; }

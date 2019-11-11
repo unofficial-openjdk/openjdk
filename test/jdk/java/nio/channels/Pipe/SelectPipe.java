@@ -35,6 +35,7 @@ import java.util.Random;
 /**
  * Testing PipeChannel
  */
+@Bean
 public class SelectPipe {
 
     private static Random generator = new Random();

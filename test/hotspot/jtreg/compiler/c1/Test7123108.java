@@ -31,6 +31,7 @@
 
 package compiler.c1;
 
+@Bean
 public class Test7123108 {
 
     static class Test_Class_0 {

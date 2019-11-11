@@ -37,6 +37,7 @@ import javax.management.*;
 import javax.management.relation.*;
 import static javax.management.relation.RelationNotification.*;
 
+@Bean
 public class RelationNotificationSourceTest {
     public static void main(String[] args) throws Exception {
         ObjectName name1 = new ObjectName("a:n=1");

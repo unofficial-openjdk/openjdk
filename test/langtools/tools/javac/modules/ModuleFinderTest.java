@@ -39,6 +39,7 @@ import toolbox.JarTask;
 import toolbox.JavacTask;
 import toolbox.Task;
 
+@Bean
 public class ModuleFinderTest extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {

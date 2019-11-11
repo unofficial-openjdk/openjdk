@@ -37,6 +37,7 @@ import java.util.List;
 /**
  * Dummy javadoc comment.
  */
+@Bean
 public class QuietOption {
 
     final File javadoc;

@@ -33,6 +33,7 @@
 
 package compiler.escapeAnalysis;
 
+@Bean
 public class TestEABadMergeMem {
 
     static class Box {
@@ -75,7 +76,11 @@ public class TestEABadMergeMem {
         }
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         for (int i = 0; i < 20000; i++) {
             // m(2);
             Box a = new Box();

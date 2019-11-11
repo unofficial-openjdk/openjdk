@@ -37,6 +37,7 @@
 
 import org.testng.annotations.Test;
 
+@Bean
 public class ThrowingSubscribersAsInputStream extends AbstractThrowingSubscribers {
 
     @Test(dataProvider = "variants")

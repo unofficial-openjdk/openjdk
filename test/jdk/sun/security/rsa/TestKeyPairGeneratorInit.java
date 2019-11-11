@@ -30,6 +30,7 @@
 import java.security.*;
 import java.security.interfaces.*;
 
+@Bean
 public class TestKeyPairGeneratorInit {
 
     private static class MySecureRandom extends SecureRandom {
@@ -38,7 +39,11 @@ public class TestKeyPairGeneratorInit {
             super();
         }
 
-        public void nextBytes(byte[] bytes) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void nextBytes(byte[] bytes) {
             isUsed = true;
             super.nextBytes(bytes);
         }

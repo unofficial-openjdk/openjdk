@@ -50,6 +50,7 @@ import sun.hotspot.WhiteBox;
 
 import java.lang.reflect.Method;
 
+@Bean
 public class Test_ia32 {
     private static final int NUM_THREADS
             = Math.min(100, 2 * Runtime.getRuntime().availableProcessors());

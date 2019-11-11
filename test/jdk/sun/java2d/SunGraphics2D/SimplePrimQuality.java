@@ -44,6 +44,7 @@ import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 
+@Bean
 public class SimplePrimQuality extends Canvas {
 
     private static final int SIZE = 300;
@@ -76,11 +77,19 @@ public class SimplePrimQuality extends Canvas {
         {97, 0, 15, 15},
     };
 
-    private void drawLine(Graphics2D g, int x, int y, int dx, int dy) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void drawLine(Graphics2D g, int x, int y, int dx, int dy) {
         g.drawLine(x, y, x + dx, y + dy);
     }
 
-    private void drawLines(Graphics2D g, int s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void drawLines(Graphics2D g, int s) {
         drawLine(g, 2, 0, 0, 0);
         drawLine(g, 12, 0, 0, s);
         drawLine(g, 22, 0, s, 0);
@@ -92,19 +101,31 @@ public class SimplePrimQuality extends Canvas {
         drawLine(g, 82, 0, s, -s);
     }
 
-    private void fillRects(Graphics2D g) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void fillRects(Graphics2D g) {
         for (int i = 0; i < rpts.length; i++) {
             g.fillRect(rpts[i][0], rpts[i][1], rpts[i][2], rpts[i][3]);
         }
     }
 
-    private void drawRects(Graphics2D g) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void drawRects(Graphics2D g) {
         for (int i = 0; i < rpts.length; i++) {
             g.drawRect(rpts[i][0], rpts[i][1], rpts[i][2], rpts[i][3]);
         }
     }
 
-    private void fillOvals(Graphics2D g) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void fillOvals(Graphics2D g) {
         for (int i = 0; i < rpts.length; i++) {
             // use fill() instead of fillOval(), since the former is more
             // likely to be consistent with our software loops when the
@@ -114,7 +135,11 @@ public class SimplePrimQuality extends Canvas {
         }
     }
 
-    private void drawOvals(Graphics2D g) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void drawOvals(Graphics2D g) {
         for (int i = 0; i < rpts.length; i++) {
             // use draw() instead of drawOval(), since the former is more
             // likely to be consistent with our software loops when the
@@ -124,7 +149,11 @@ public class SimplePrimQuality extends Canvas {
         }
     }
 
-    private void renderShapes(Graphics2D g) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void renderShapes(Graphics2D g) {
         // drawLine tests...
         g.translate(0, 5);
         drawLines(g, 1);
@@ -148,7 +177,11 @@ public class SimplePrimQuality extends Canvas {
         drawOvals(g);
     }
 
-    private void renderTest(Graphics2D g, int w, int h) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void renderTest(Graphics2D g, int w, int h) {
         // on the left side, render the shapes in solid mode
         g.setColor(Color.black);
         g.fillRect(0, 0, w, h);
@@ -163,7 +196,11 @@ public class SimplePrimQuality extends Canvas {
         renderShapes(g);
     }
 
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(Graphics g) {
 
         Graphics2D g2d = (Graphics2D)g;
         renderTest(g2d, SIZE, SIZE);

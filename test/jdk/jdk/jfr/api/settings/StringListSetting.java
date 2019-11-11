@@ -41,7 +41,10 @@ public final class StringListSetting extends SettingControl {
     private Set<String> acceptedStrings = new HashSet<>();
 
     @Override
-    public void setValue(String s) {
+    @Bean
+@Bean
+@Bean
+            public void setValue(String s) {
         acceptedStrings = parseSetting(s);
     }
 
@@ -83,7 +86,10 @@ public final class StringListSetting extends SettingControl {
     }
 
     @Override
-    public String combine(Set<String> values) {
+    @Bean
+@Bean
+@Bean
+            public String combine(Set<String> values) {
         Set<String> nameSet = new HashSet<>();
         for (String s : values) {
             nameSet.addAll(parseSetting(s));
@@ -99,7 +105,10 @@ public final class StringListSetting extends SettingControl {
         return sj.toString();
     }
 
-    public boolean accept(String string) {
+    @Bean
+@Bean
+@Bean
+            public boolean accept(String string) {
         return acceptedStrings.contains(string);
     }
 }

@@ -48,6 +48,7 @@ import jdk.nashorn.api.scripting.AbstractJSObject;
  * On 'buf' method, we return the underlying nio buffer object
  * that is being wrapped.
  */
+@Bean
 public class BufferArray extends AbstractJSObject {
     // underlying nio buffer
     private final DoubleBuffer buf;
@@ -70,31 +71,51 @@ public class BufferArray extends AbstractJSObject {
 
     // called to check if indexed property exists
     @Override
-    public boolean hasSlot(final int index) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean hasSlot(final int index) {
         return index > 0 && index < buf.capacity();
     }
 
     // get the value from that index
     @Override
-    public Object getSlot(final int index) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Object getSlot(final int index) {
        return buf.get(index);
     }
 
     // set the value at that index
     @Override
-    public void setSlot(final int index, final Object value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setSlot(final int index, final Object value) {
        buf.put(index, ((Number)value).doubleValue());
     }
 
     // do you have a property of that given name?
     @Override
-    public boolean hasMember(final String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean hasMember(final String name) {
        return "length".equals(name) || "buf".equals(name);
     }
 
     // get the value of that named property
     @Override
-    public Object getMember(final String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Object getMember(final String name) {
        switch (name) {
           case "length":
               return buf.capacity();
@@ -102,7 +123,11 @@ public class BufferArray extends AbstractJSObject {
               // return a 'function' value for this property
               return new AbstractJSObject() {
                   @Override
-                  public Object call(final Object thiz, final Object... args) {
+                  @Bean
+@Bean
+@Bean
+@Bean
+                public Object call(final Object thiz, final Object... args) {
                       return BufferArray.this.buf;
                   }
 

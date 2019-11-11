@@ -70,6 +70,7 @@ import sun.util.locale.provider.ResourceBundleBasedAdapter;
  * @since 1.1
  */
 
+@Bean
 public class DecimalFormatSymbols implements Cloneable, Serializable {
 
     /**
@@ -201,7 +202,8 @@ public class DecimalFormatSymbols implements Cloneable, Serializable {
      *
      * @param zeroDigit the character used for zero
      */
-    public void setZeroDigit(char zeroDigit) {
+@Bean
+        public void setZeroDigit(char zeroDigit) {
         this.zeroDigit = zeroDigit;
     }
 
@@ -219,7 +221,8 @@ public class DecimalFormatSymbols implements Cloneable, Serializable {
      *
      * @param groupingSeparator the grouping separator
      */
-    public void setGroupingSeparator(char groupingSeparator) {
+@Bean
+        public void setGroupingSeparator(char groupingSeparator) {
         this.groupingSeparator = groupingSeparator;
     }
 
@@ -237,7 +240,8 @@ public class DecimalFormatSymbols implements Cloneable, Serializable {
      *
      * @param decimalSeparator the character used for decimal sign
      */
-    public void setDecimalSeparator(char decimalSeparator) {
+@Bean
+        public void setDecimalSeparator(char decimalSeparator) {
         this.decimalSeparator = decimalSeparator;
     }
 
@@ -255,7 +259,8 @@ public class DecimalFormatSymbols implements Cloneable, Serializable {
      *
      * @param perMill the character used for per mille sign
      */
-    public void setPerMill(char perMill) {
+@Bean
+        public void setPerMill(char perMill) {
         this.perMill = perMill;
         this.perMillText = Character.toString(perMill);
     }
@@ -308,7 +313,8 @@ public class DecimalFormatSymbols implements Cloneable, Serializable {
      *
      * @param percent the character used for percent sign
      */
-    public void setPercent(char percent) {
+@Bean
+        public void setPercent(char percent) {
         this.percent = percent;
         this.percentText = Character.toString(percent);
     }
@@ -361,7 +367,8 @@ public class DecimalFormatSymbols implements Cloneable, Serializable {
      *
      * @param digit the character used for a digit in a pattern
      */
-    public void setDigit(char digit) {
+@Bean
+        public void setDigit(char digit) {
         this.digit = digit;
     }
 
@@ -381,7 +388,8 @@ public class DecimalFormatSymbols implements Cloneable, Serializable {
      *
      * @param patternSeparator the pattern separator
      */
-    public void setPatternSeparator(char patternSeparator) {
+@Bean
+        public void setPatternSeparator(char patternSeparator) {
         this.patternSeparator = patternSeparator;
     }
 
@@ -401,7 +409,8 @@ public class DecimalFormatSymbols implements Cloneable, Serializable {
      *
      * @param infinity the string representing infinity
      */
-    public void setInfinity(String infinity) {
+@Bean
+        public void setInfinity(String infinity) {
         this.infinity = infinity;
     }
 
@@ -421,7 +430,8 @@ public class DecimalFormatSymbols implements Cloneable, Serializable {
      *
      * @param NaN the string representing "not a number"
      */
-    public void setNaN(String NaN) {
+@Bean
+        public void setNaN(String NaN) {
         this.NaN = NaN;
     }
 
@@ -443,7 +453,8 @@ public class DecimalFormatSymbols implements Cloneable, Serializable {
      *
      * @param minusSign the character representing minus sign
      */
-    public void setMinusSign(char minusSign) {
+@Bean
+        public void setMinusSign(char minusSign) {
         this.minusSign = minusSign;
         this.minusSignText = Character.toString(minusSign);
     }
@@ -581,7 +592,8 @@ public class DecimalFormatSymbols implements Cloneable, Serializable {
      * @see #setCurrencySymbol
      * @see #setInternationalCurrencySymbol
      */
-    public void setCurrency(Currency currency) {
+@Bean
+        public void setCurrency(Currency currency) {
         if (currency == null) {
             throw new NullPointerException();
         }
@@ -686,7 +698,8 @@ public class DecimalFormatSymbols implements Cloneable, Serializable {
      * Override equals.
      */
     @Override
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (obj == null) return false;
         if (this == obj) return true;
         if (getClass() != obj.getClass()) return false;
@@ -726,7 +739,8 @@ public class DecimalFormatSymbols implements Cloneable, Serializable {
     /**
      * Initializes the symbols from the FormatData resource bundle.
      */
-    private void initialize( Locale locale ) {
+@Bean
+        private void initialize( Locale locale ) {
         this.locale = locale;
 
         // check for region override
@@ -772,7 +786,8 @@ public class DecimalFormatSymbols implements Cloneable, Serializable {
     /**
      * Obtains non-format single character from String
      */
-    private char findNonFormatChar(String src, char defChar) {
+@Bean
+        private char findNonFormatChar(String src, char defChar) {
         return (char)src.chars()
             .filter(c -> Character.getType(c) != Character.FORMAT)
             .findFirst()
@@ -782,7 +797,8 @@ public class DecimalFormatSymbols implements Cloneable, Serializable {
     /**
      * Lazy initialization for currency related fields
      */
-    private void initializeCurrency(Locale locale) {
+@Bean
+        private void initializeCurrency(Locale locale) {
         if (currencyInitialized) {
             return;
         }

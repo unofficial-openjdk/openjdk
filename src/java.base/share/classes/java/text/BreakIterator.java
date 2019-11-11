@@ -347,7 +347,10 @@ public abstract class BreakIterator implements Cloneable
      * the first text boundary or greater than the last text boundary.
      * @since 1.2
      */
-    public int preceding(int offset) {
+    @Bean
+@Bean
+@Bean
+            public int preceding(int offset) {
         // NOTE:  This implementation is here solely because we can't add new
         // abstract methods to an existing class.  There is almost ALWAYS a
         // better, faster way to do this.
@@ -367,7 +370,10 @@ public abstract class BreakIterator implements Cloneable
      * the first text boundary or greater than the last text boundary.
      * @since 1.2
      */
-    public boolean isBoundary(int offset) {
+    @Bean
+@Bean
+@Bean
+            public boolean isBoundary(int offset) {
         // NOTE: This implementation probably is wrong for most situations
         // because it fails to take into account the possibility that a
         // CharacterIterator passed to setText() may not have a begin offset

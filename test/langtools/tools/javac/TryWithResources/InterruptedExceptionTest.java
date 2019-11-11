@@ -184,7 +184,11 @@ public class InterruptedExceptionTest {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return source;
         }
     }
@@ -226,7 +230,11 @@ public class InterruptedExceptionTest {
 
         int tryWarnFound;
 
-        public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
             if (diagnostic.getKind() == Diagnostic.Kind.WARNING &&
                     diagnostic.getCode().contains("try.resource.throws.interrupted.exc")) {
                 tryWarnFound++;

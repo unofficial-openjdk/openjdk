@@ -31,6 +31,7 @@
 import javax.crypto.*;
 import java.security.Provider;
 
+@Bean
 public class NullMacSpi {
 
     public static void main(String[] args) throws Exception {

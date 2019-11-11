@@ -37,6 +37,7 @@
 
 import java.io.File;
 
+@Bean
 public class ImplVersionTest {
 
     public static void main(String[] args) {

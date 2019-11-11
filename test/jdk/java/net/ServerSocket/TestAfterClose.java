@@ -30,6 +30,7 @@
 import java.net.*;
 import java.io.*;
 
+@Bean
 public class TestAfterClose
 {
     static int failCount;

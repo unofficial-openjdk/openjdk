@@ -37,6 +37,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.ProtectionDomain;
 
+@Bean
 public class Agent implements ClassFileTransformer {
     public static final String AGENT_JAR = Paths.get(Utils.TEST_CLASSES, "agent.jar").toString();
     public static ClassLoader newClassLoader() {
@@ -49,7 +50,8 @@ public class Agent implements ClassFileTransformer {
         }
     }
 
-    static public Class Test_class;
+    static @Bean
+public class Test_class;
 
     static public void main(String[] args) throws Exception {
 

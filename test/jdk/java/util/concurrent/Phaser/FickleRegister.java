@@ -79,7 +79,10 @@ public class FickleRegister {
 
     void test(String[] args) throws Throwable {
         final Phaser parent = new Phaser() {
-                protected boolean onAdvance(int phase, int parties) {
+                @Bean
+@Bean
+@Bean
+            protected boolean onAdvance(int phase, int parties) {
                     return false;
                 }
             };

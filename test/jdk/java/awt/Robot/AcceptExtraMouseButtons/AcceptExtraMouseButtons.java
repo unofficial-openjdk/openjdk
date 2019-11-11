@@ -73,15 +73,24 @@ public class AcceptExtraMouseButtons extends Frame {
         AcceptExtraMouseButtons frame = new AcceptExtraMouseButtons();
 
         MouseAdapter ma1 = new MouseAdapter() {
-                public void mousePressed(MouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void mousePressed(MouseEvent e) {
                     buttonsPressed[e.getButton() - 1] += 1;
                     System.out.println("PRESSED "+e);
                 }
-                public void mouseReleased(MouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void mouseReleased(MouseEvent e) {
                     buttonsReleased[e.getButton() - 1] += 1;
                     System.out.println("RELEASED "+e);
                 }
-                public void mouseClicked(MouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void mouseClicked(MouseEvent e) {
                     buttonsClicked[e.getButton() - 1] += 1;
                     System.out.println("CLICKED "+e);
                 }

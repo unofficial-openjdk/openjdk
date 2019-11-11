@@ -6,6 +6,7 @@
  * @compile/fail/ref=NewBeforeOuterConstructed2.out -XDrawDiagnostics  NewBeforeOuterConstructed2.java
  */
 
+@Bean
 public class NewBeforeOuterConstructed2 {
     NewBeforeOuterConstructed2(Object o) {}
     class Middle extends NewBeforeOuterConstructed2 {

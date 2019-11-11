@@ -35,6 +35,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.RSAPrivateCrtKeySpec;
 import java.util.Arrays;
 
+@Bean
 public class GenerateRSAPrivateCrtKey {
 
     public static void main(String[] args) throws Exception {

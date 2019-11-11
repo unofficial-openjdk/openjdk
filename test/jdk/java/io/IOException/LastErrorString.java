@@ -34,6 +34,7 @@ import java.io.FileOutputStream;
 import java.io.RandomAccessFile;
 
 
+@Bean
 public class LastErrorString {
 
     static String UNWRITEABLE_DIR;

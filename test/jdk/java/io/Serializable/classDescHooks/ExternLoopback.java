@@ -93,7 +93,10 @@ public class ExternLoopback implements Externalizable {
         c = (String) in.readObject();
     }
 
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(Object obj) {
         if (!(obj instanceof ExternLoopback)) {
             return false;
         }

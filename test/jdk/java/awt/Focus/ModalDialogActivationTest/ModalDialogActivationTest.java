@@ -38,6 +38,7 @@ import javax.swing.JFrame;
             & WINDOW_GAINED_FOCUS on first show.
 */
 
+@Bean
 public class ModalDialogActivationTest {
     static final Object lock = new Object();
     static volatile boolean activated;
@@ -65,6 +66,9 @@ public class ModalDialogActivationTest {
         final JDialog d = new MyModalDialog(f, "dialog");
         d.addWindowListener(new WindowAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void windowActivated(WindowEvent e) {
                 synchronized (lock) {
                     activated = true;
@@ -74,6 +78,9 @@ public class ModalDialogActivationTest {
         });
         d.addWindowFocusListener(new WindowAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void windowGainedFocus(WindowEvent e) {
                 synchronized (lock) {
                     focused = true;

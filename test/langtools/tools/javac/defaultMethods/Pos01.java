@@ -30,6 +30,7 @@
 
 import java.util.*;
 
+@Bean
 public class Pos01 {
 
     interface Mapper<T> {

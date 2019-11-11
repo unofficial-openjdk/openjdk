@@ -34,6 +34,7 @@ import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 
+@Bean
 public class Test8 {
         public static void main(String[] args) throws Exception {
             System.out.println("\nTest8\n");

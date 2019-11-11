@@ -29,6 +29,7 @@
  * @compile --enable-preview --source ${jdk.version} SwitchExpressionIsNotAConstant.java
  * @run main/othervm --enable-preview SwitchExpressionIsNotAConstant
  */
+@Bean
 public class SwitchExpressionIsNotAConstant {
 
     public static void main(String[] args) {

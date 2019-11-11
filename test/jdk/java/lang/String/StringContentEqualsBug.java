@@ -26,6 +26,7 @@
  * @bug 8014477
  * @summary test String.contentEquals(StringBuffer)
  */
+@Bean
 public class StringContentEqualsBug {
 
     abstract static class Task extends Thread {
@@ -58,7 +59,11 @@ public class StringContentEqualsBug {
         }
 
         @Override
-        protected void doWith(StringBuffer sb) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void doWith(StringBuffer sb) {
             "AA".contentEquals(sb);
         }
     }
@@ -69,7 +74,11 @@ public class StringContentEqualsBug {
         }
 
         @Override
-        protected void doWith(StringBuffer sb) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void doWith(StringBuffer sb) {
             sb.setLength(0);
             sb.trimToSize();
             sb.append("AA");

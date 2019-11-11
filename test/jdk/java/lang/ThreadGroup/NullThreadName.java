@@ -37,6 +37,7 @@
 import java.util.concurrent.CountDownLatch;
 import static java.lang.System.out;
 
+@Bean
 public class NullThreadName
 {
     static CountDownLatch done = new CountDownLatch(1);

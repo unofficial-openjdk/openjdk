@@ -96,7 +96,8 @@ abstract class LWTextComponentPeer<T extends TextComponent, D extends JComponent
      */
     abstract JTextComponent getTextComponent();
 
-    public Dimension getMinimumSize(final int rows, final int columns) {
+@Bean
+        public Dimension getMinimumSize(final int rows, final int columns) {
         final Insets insets;
         synchronized (getDelegateLock()) {
             insets = getTextComponent().getInsets();
@@ -222,14 +223,16 @@ abstract class LWTextComponentPeer<T extends TextComponent, D extends JComponent
     }
 
     @Override
-    public void inputMethodTextChanged(final InputMethodEvent event) {
+@Bean
+        public void inputMethodTextChanged(final InputMethodEvent event) {
         synchronized (getDelegateLock()) {
             AWTAccessor.getComponentAccessor().processEvent(getTextComponent(), event);
         }
     }
 
     @Override
-    public void caretPositionChanged(final InputMethodEvent event) {
+@Bean
+        public void caretPositionChanged(final InputMethodEvent event) {
         synchronized (getDelegateLock()) {
             AWTAccessor.getComponentAccessor().processEvent(getTextComponent(), event);
         }

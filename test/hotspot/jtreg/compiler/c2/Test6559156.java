@@ -31,6 +31,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test6559156 {
 
     static final int N_TESTS = 1000000;

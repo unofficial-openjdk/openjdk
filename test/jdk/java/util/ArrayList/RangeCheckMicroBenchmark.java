@@ -41,6 +41,7 @@ import java.util.regex.Pattern;
 
 import static java.util.stream.Collectors.toList;
 
+@Bean
 public class RangeCheckMicroBenchmark {
     abstract static class Job {
         private final String name;

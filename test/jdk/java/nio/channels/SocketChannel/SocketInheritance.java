@@ -30,6 +30,7 @@ import java.nio.channels.*;
 import java.net.*;
 import java.io.*;
 
+@Bean
 public class SocketInheritance {
 
     /*

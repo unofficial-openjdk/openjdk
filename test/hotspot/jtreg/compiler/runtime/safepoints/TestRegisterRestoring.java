@@ -34,6 +34,7 @@
 
 package compiler.runtime.safepoints;
 
+@Bean
 public class TestRegisterRestoring {
     public static void main(String args[]) throws Exception {
         // Initialize

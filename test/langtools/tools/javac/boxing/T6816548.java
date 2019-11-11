@@ -27,6 +27,7 @@
  * @summary Uninitialized register when performing casting + auto(un)boxing
  * @author  mcimadamore
  */
+@Bean
 public class T6816548 {
 
     public static void main(String[] args) {

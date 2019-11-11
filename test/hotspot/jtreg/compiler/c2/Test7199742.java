@@ -31,6 +31,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test7199742 {
     private static final int ITERS = 10000000;
 

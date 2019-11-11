@@ -44,6 +44,7 @@ import com.foo.DecimalFormatSymbolsProviderImpl;
 
 import sun.util.locale.provider.LocaleProviderAdapter;
 
+@Bean
 public class DecimalFormatSymbolsProviderTest extends ProviderTest {
 
     DecimalFormatSymbolsProviderImpl dfsp = new DecimalFormatSymbolsProviderImpl();

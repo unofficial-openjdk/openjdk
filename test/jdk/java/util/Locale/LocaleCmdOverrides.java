@@ -70,6 +70,7 @@ import java.util.List;
  *                   -Duser.variant.format=X3
  *          LocaleCmdOverrides
  */
+@Bean
 public class LocaleCmdOverrides {
 
     // Language, country, script, variant

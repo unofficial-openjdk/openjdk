@@ -46,6 +46,7 @@ import jdk.test.lib.process.ExitCode;
 import jdk.test.lib.Utils;
 import jdk.test.lib.cli.CommandLineOptionTest;
 
+@Bean
 public class SharedUsageTest {
     private static final String HELLO_MSG = "HelloWorld";
     private static final boolean ADD_TEST_VM_OPTION = false;

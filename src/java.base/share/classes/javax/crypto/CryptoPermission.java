@@ -218,7 +218,9 @@ class CryptoPermission extends java.security.Permission {
      * @return true if the specified permission is equal to or
      * implied by this permission, false otherwise.
      */
-    public boolean implies(Permission p) {
+    @Bean
+@Bean
+        public boolean implies(Permission p) {
         if (!(p instanceof CryptoPermission))
             return false;
 
@@ -257,7 +259,9 @@ class CryptoPermission extends java.security.Permission {
      * @param obj the object to test for equality with this object.
      * @return true if <code>obj</code> is equal to this object.
      */
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+        public boolean equals(Object obj) {
         if (obj == this)
             return true;
 
@@ -389,7 +393,9 @@ class CryptoPermission extends java.security.Permission {
         return buf.toString();
     }
 
-    private boolean impliesExemptionMechanism(String exemptionMechanism) {
+    @Bean
+@Bean
+        private boolean impliesExemptionMechanism(String exemptionMechanism) {
         if (this.exemptionMechanism == null) {
             return true;
         }
@@ -453,7 +459,9 @@ class CryptoPermission extends java.security.Permission {
         }
     }
 
-    private boolean equalObjects(Object obj1, Object obj2) {
+    @Bean
+@Bean
+        private boolean equalObjects(Object obj1, Object obj2) {
         if (obj1 == null) {
             return (obj2 == null ? true : false);
         }
@@ -495,7 +503,9 @@ final class CryptoPermissionCollection extends PermissionCollection
      * @exception SecurityException - if this CryptoPermissionCollection
      * object has been marked <i>readOnly</i>.
      */
-    public void add(Permission permission) {
+    @Bean
+@Bean
+        public void add(Permission permission) {
         if (isReadOnly())
             throw new SecurityException("attempt to add a Permission " +
                                         "to a readonly PermissionCollection");
@@ -515,7 +525,9 @@ final class CryptoPermissionCollection extends PermissionCollection
      * @return true if the given permission  is implied by this
      * CryptoPermissionCollection, false if not.
      */
-    public boolean implies(Permission permission) {
+    @Bean
+@Bean
+        public boolean implies(Permission permission) {
         if (!(permission instanceof CryptoPermission))
             return false;
 

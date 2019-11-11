@@ -46,7 +46,10 @@ public class TestRecorderInitializationCallback {
         private final AtomicInteger count = new AtomicInteger();
 
         @Override
-        public void recorderInitialized(FlightRecorder recorder) {
+        @Bean
+@Bean
+@Bean
+            public void recorderInitialized(FlightRecorder recorder) {
             count.incrementAndGet();
             System.out.println("recorderInitialized: " + recorder + " count=" + count);
             // Get the recorder again, should not trigger listener

@@ -52,6 +52,7 @@ import static java.lang.System.out;
  * @run main/othervm TimeoutBasic
  */
 
+@Bean
 public class TimeoutBasic {
 
     static List<Duration> TIMEOUTS = List.of(Duration.ofSeconds(1),

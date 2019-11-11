@@ -76,7 +76,10 @@ public class DestinationTest extends Frame implements ActionListener {
     }
 
 
-    public void actionPerformed(ActionEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
 
         JobAttributes  ja = new JobAttributes();
         PageAttributes pa = new PageAttributes();
@@ -130,7 +133,10 @@ public class DestinationTest extends Frame implements ActionListener {
 
 class DisplayImages extends Canvas {
 
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
 
         g.setFont(new Font("Helvetica", Font.BOLD, 12));
         g.drawString("PRINTING TEST", 1, 10);

@@ -182,7 +182,10 @@ public class CustomCompositeTest {
             return new Dimension(640, 375);
         }
 
-        public void paintComponent(Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paintComponent(Graphics g) {
 
 
             Graphics2D g2d = (Graphics2D) g;
@@ -224,7 +227,10 @@ public class CustomCompositeTest {
     // A silly custom Composite to demonstrate the problem - just inverts the RGB
     private static class TestComposite implements Composite {
 
-        public CompositeContext createContext(ColorModel srcColorModel, ColorModel dstColorModel, RenderingHints hints) {
+        @Bean
+@Bean
+@Bean
+            public CompositeContext createContext(ColorModel srcColorModel, ColorModel dstColorModel, RenderingHints hints) {
             return new TestCompositeContext();
         }
     }
@@ -234,7 +240,10 @@ public class CustomCompositeTest {
         public void dispose() {
         }
 
-        public void compose(Raster src, Raster dstIn, WritableRaster dstOut) {
+        @Bean
+@Bean
+@Bean
+            public void compose(Raster src, Raster dstIn, WritableRaster dstOut) {
             int w = src.getWidth();
             int h = src.getHeight();
 

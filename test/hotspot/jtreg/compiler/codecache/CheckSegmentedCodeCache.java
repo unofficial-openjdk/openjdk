@@ -44,6 +44,7 @@ import jdk.test.lib.Platform;
 import jdk.test.lib.process.ProcessTools;
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class CheckSegmentedCodeCache {
     private static final WhiteBox WHITE_BOX = WhiteBox.getWhiteBox();
     // Code heap names

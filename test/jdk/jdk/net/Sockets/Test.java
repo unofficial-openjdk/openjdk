@@ -47,6 +47,7 @@ import java.util.concurrent.Future;
 import static java.lang.System.out;
 import static jdk.net.ExtendedSocketOptions.SO_FLOW_SLA;
 
+@Bean
 public class Test {
 
     interface Runner { void run() throws Exception; }

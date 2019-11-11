@@ -31,6 +31,7 @@ import java.io.*;
 import java.util.Map;
 import java.util.HashMap;
 
+@Bean
 public class LambdaLambdaSerialized {
 
     static int assertionCount = 0;

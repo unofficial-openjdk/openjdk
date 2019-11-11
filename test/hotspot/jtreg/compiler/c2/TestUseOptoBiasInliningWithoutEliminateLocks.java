@@ -50,6 +50,7 @@ package compiler.c2;
 
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class TestUseOptoBiasInliningWithoutEliminateLocks {
 
     public static final WhiteBox WB = WhiteBox.getWhiteBox();

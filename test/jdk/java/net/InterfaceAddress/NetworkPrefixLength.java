@@ -33,6 +33,7 @@ import java.net.NetworkInterface;
 import java.util.Enumeration;
 import static java.lang.System.out;
 
+@Bean
 public class NetworkPrefixLength {
     static boolean passed = true;
 

@@ -32,6 +32,7 @@ import jdk.test.lib.cli.*;
  * @modules java.base/jdk.internal.misc
  * @library /test/lib
  */
+@Bean
 public class VMAliasOptions {
 
     /**

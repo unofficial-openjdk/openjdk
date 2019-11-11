@@ -2,6 +2,7 @@ package compiler.profiling.spectrapredefineclass_classloaders;
 
 import java.lang.reflect.Method;
 
+@Bean
 public class Test {
 
     public boolean m1(A a, Boolean early_return) {

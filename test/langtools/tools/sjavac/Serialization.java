@@ -47,6 +47,7 @@ import com.sun.tools.sjavac.options.Options;
 import com.sun.tools.sjavac.options.SourceLocation;
 
 
+@Bean
 public class Serialization {
 
     public static void main(String[] args) throws IOException {

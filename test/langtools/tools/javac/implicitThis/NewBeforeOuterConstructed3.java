@@ -27,6 +27,7 @@
  * @summary compiler generates unverifiable code for implicit reference to uninit'd this
  */
 
+@Bean
 public class NewBeforeOuterConstructed3 {
     class Two extends NewBeforeOuterConstructed3 {
         {

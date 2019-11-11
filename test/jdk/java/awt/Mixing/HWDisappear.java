@@ -44,6 +44,7 @@ import javax.swing.*;
 import javax.swing.plaf.metal.MetalLookAndFeel;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class HWDisappear
 {
 
@@ -73,7 +74,11 @@ public class HWDisappear
         b.setBounds(50, 50, 200, 50);
 
         b.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(java.awt.event.ActionEvent e) {
                 clickPassed = true;
             }
         });

@@ -32,6 +32,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
+@Bean
 public class TestPropertyChangeSupport implements PropertyChangeListener {
     private static final String NAME = "property";
 
@@ -70,6 +71,10 @@ public class TestPropertyChangeSupport implements PropertyChangeListener {
                         + "; Time (ms): " + time1 + "/" + time2);
     }
 
-    public void propertyChange(PropertyChangeEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void propertyChange(PropertyChangeEvent event) {
     }
 }

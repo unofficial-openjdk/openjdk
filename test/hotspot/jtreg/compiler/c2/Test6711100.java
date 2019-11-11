@@ -33,6 +33,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test6711100 {
 
     static byte b;

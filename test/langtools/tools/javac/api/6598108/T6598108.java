@@ -64,7 +64,8 @@ public class T6598108 {
         public MyFileObject() {
             super(URI.create("myfo:/Test.java"), JavaFileObject.Kind.SOURCE);
         }
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+@Bean
+            public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return "public class Test<TTT> { public void test() {TTT ttt;}}";
         }
     }

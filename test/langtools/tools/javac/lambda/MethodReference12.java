@@ -30,6 +30,7 @@
  * @run main MethodReference12
  */
 
+@Bean
 public class MethodReference12 {
 
     interface SAM { void foo(int i); }

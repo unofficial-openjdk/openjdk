@@ -31,6 +31,7 @@
 import java.util.*;
 import java.util.function.BiFunction;
 
+@Bean
 public class CheckedMapReplaceAll {
     public static void main(String[] args) {
         Map<Integer,Double> unwrapped = new HashMap<>();

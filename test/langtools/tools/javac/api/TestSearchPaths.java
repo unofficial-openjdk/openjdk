@@ -68,6 +68,7 @@ import static javax.tools.StandardLocation.*;
  * The operations generate and use unique files to minimize the possibility of false
  * positive results.
  */
+@Bean
 public class TestSearchPaths {
 
     public static void main(String... args) throws Exception {
@@ -343,8 +344,13 @@ public class TestSearchPaths {
                 + "import javax.lang.model.*;\n"
                 + "import javax.lang.model.element.*;\n"
                 + "@SupportedAnnotationTypes(\"*\")\n"
-                + "public class A%d extends AbstractProcessor {\n"
-                + "    public boolean process(Set<? extends TypeElement> annos, RoundEnvironment rEnv) {\n"
+                + "@Bean
+public class A%d extends AbstractProcessor {\n"
+                + "    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annos, RoundEnvironment rEnv) {\n"
                 + "        return true;\n"
                 + "    }\n"
                 + "    public SourceVersion getSupportedSourceVersion() {\n"
@@ -394,9 +400,14 @@ public class TestSearchPaths {
                 + "import javax.tools.*;\n"
                 + "@SupportedOptions(\"name\")\n"
                 + "@SupportedAnnotationTypes(\"*\")\n"
-                + "public class A extends AbstractProcessor {\n"
+                + "@Bean
+public class A extends AbstractProcessor {\n"
                 + "    int round = 0;\n"
-                + "    public boolean process(Set<? extends TypeElement> annos, RoundEnvironment rEnv) {\n"
+                + "    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annos, RoundEnvironment rEnv) {\n"
                 + "        if (round++ == 0) try {\n"
                 + "            String name = processingEnv.getOptions().get(\"name\");\n"
                 + "            JavaFileObject fo = processingEnv.getFiler().createSourceFile(name);\n"
@@ -484,7 +495,11 @@ public class TestSearchPaths {
     JavaFileObject getSource(final String source) {
         return new SimpleJavaFileObject(getURIFromSource(source), JavaFileObject.Kind.SOURCE) {
             @Override
-            public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
                 return source;
             }
         };

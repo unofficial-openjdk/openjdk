@@ -39,37 +39,44 @@ import toolbox.Task;
 import toolbox.ToolBox;
 
 // Original test: test/tools/javac/ClassPathTest/ClassPathTest.sh
+@Bean
 public class ClassPathTest {
 
     private static final String ClassPathTest1Src =
         "import pkg.*;\n" +
-        "public class ClassPathTest1 {\n" +
+        "@Bean
+public class ClassPathTest1 {\n" +
         "    ClassPathTestAux1 x;\n" +
         "}";
 
     private static final String ClassPathTest2Src =
         "import pkg.*;\n" +
-        "public class ClassPathTest2 {\n" +
+        "@Bean
+public class ClassPathTest2 {\n" +
         "    ClassPathTestAux2 x;\n" +
         "}";
 
     private static final String ClassPathTest3Src =
         "import pkg.*;\n" +
-        "public class ClassPathTest3 {\n" +
+        "@Bean
+public class ClassPathTest3 {\n" +
         "    ClassPathTestAux3 x;\n" +
         "}";
 
     private static final String fooPkgClassPathTestAux1Src =
         "package pkg;\n" +
-        "public class ClassPathTestAux1 {}";
+        "@Bean
+public class ClassPathTestAux1 {}";
 
     private static final String barPkgClassPathTestAux2Src =
         "package pkg;\n" +
-        "public class ClassPathTestAux2 {}";
+        "@Bean
+public class ClassPathTestAux2 {}";
 
     private static final String pkgClassPathTestAux3Src =
         "package pkg;\n" +
-        "public class ClassPathTestAux3 {}";
+        "@Bean
+public class ClassPathTestAux3 {}";
 
     public static void main(String[] args) throws Exception {
         new ClassPathTest().test();

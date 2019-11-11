@@ -16,4 +16,5 @@
  * <a name="a.1:2-3_4">valid</a>
  * <a name="foo()">invalid</a>
  */
+@Bean
 public class InvalidName { }

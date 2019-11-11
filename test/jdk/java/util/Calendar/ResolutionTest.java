@@ -33,6 +33,7 @@
 import java.util.*;
 import static java.util.Calendar.*;
 
+@Bean
 public class ResolutionTest {
     static Random rand = new Random();
 

@@ -46,20 +46,30 @@ import javax.management.monitor.GaugeMonitor;
 import javax.management.monitor.MonitorNotification;
 import javax.management.monitor.StringMonitor;
 
+@Bean
 public class RuntimeExceptionTest implements NotificationListener {
 
     // MBean class
-    public class ObservedObject implements ObservedObjectMBean {
+    @Bean
+public class ObservedObject implements ObservedObjectMBean {
         public Integer getIntegerAttribute() {
             return i;
         }
-        public void setIntegerAttribute(Integer i) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setIntegerAttribute(Integer i) {
             this.i = i;
         }
         public String getStringAttribute() {
             return s;
         }
-        public void setStringAttribute(String s) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setStringAttribute(String s) {
             this.s = s;
         }
         private Integer i = 1;
@@ -75,7 +85,11 @@ public class RuntimeExceptionTest implements NotificationListener {
     }
 
     // Notification handler
-    public void handleNotification(Notification notification, Object handback) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void handleNotification(Notification notification, Object handback) {
         echo(">>> Received notification: " + notification);
         if (notification instanceof MonitorNotification) {
             String type = notification.getType();

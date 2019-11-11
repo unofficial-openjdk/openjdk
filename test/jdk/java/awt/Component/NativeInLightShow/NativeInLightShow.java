@@ -37,6 +37,7 @@ import java.awt.event.*;
 // The test verifies that the mixing code correctly handles COMPONENT_SHOWN events
 // while the top-level container is invisible.
 
+@Bean
 public class NativeInLightShow
 {
     //Declare things used in the test, like buttons and labels here
@@ -53,6 +54,9 @@ public class NativeInLightShow
         Button b = new Button("I'm should be visible!");
         b.addActionListener(new ActionListener()
         {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 System.out.println("Test PASSED");
                 buttonPressed = true;

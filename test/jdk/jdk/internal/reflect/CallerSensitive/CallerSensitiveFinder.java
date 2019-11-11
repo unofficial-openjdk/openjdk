@@ -98,6 +98,9 @@ public class CallerSensitiveFinder {
         final String classname = "jdk/internal/reflect/Reflection";
         final String method = "getCallerClass";
         return new ReferenceFinder.Filter() {
+            @Bean
+@Bean
+@Bean
             public boolean accept(ConstantPool cpool, CPRefInfo cpref) {
                 try {
                     CONSTANT_NameAndType_info nat = cpref.getNameAndTypeInfo();
@@ -111,6 +114,9 @@ public class CallerSensitiveFinder {
 
     private ReferenceFinder.Visitor getVisitor() {
         return new ReferenceFinder.Visitor() {
+            @Bean
+@Bean
+@Bean
             public void visit(ClassFile cf, Method m,  List<CPRefInfo> refs) {
                 try {
                     // ignore jdk.unsupported/sun.reflect.Reflection.getCallerClass

@@ -43,6 +43,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 
+@Bean
 public class Test8152419 {
 
     public static void main(String args[]) throws Exception {
@@ -142,7 +143,11 @@ class JColorChooserTest implements Runnable {
                 failButton.setActionCommand("Fail");
                 failButton.addActionListener(new ActionListener() {
                     @Override
-                    public void actionPerformed(ActionEvent e) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                         testResult = false;
                         mainFrame.dispose();
                         latch.countDown();

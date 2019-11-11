@@ -46,6 +46,7 @@ import java.util.TreeMap;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
+@Bean
 public class EmptyNavigableMap {
 
     public static <T> void assertInstance(T actual, Class<? extends T> expected) {
@@ -79,15 +80,27 @@ public class EmptyNavigableMap {
         }
     }
 
-    private void assertThrowsCCE(ThrowingRunnable r, String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertThrowsCCE(ThrowingRunnable r, String s) {
         assertThrows(ClassCastException.class, r, s);
     }
 
-    private void assertThrowsNPE(ThrowingRunnable r, String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertThrowsNPE(ThrowingRunnable r, String s) {
         assertThrows(NullPointerException.class, r, s);
     }
 
-    private void assertThrowsIAE(ThrowingRunnable r, String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertThrowsIAE(ThrowingRunnable r, String s) {
         assertThrows(IllegalArgumentException.class, r, s);
     }
 
@@ -114,7 +127,11 @@ public class EmptyNavigableMap {
      * Tests that the comparator is {@code null}.
      */
     @Test(dataProvider = "NavigableMap<?,?>", dataProviderClass = EmptyNavigableMap.class)
-    public void testComparatorIsNull(String description, NavigableMap<?,?> navigableMap) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testComparatorIsNull(String description, NavigableMap<?,?> navigableMap) {
         Comparator comparator = navigableMap.comparator();
 
         assertTrue(comparator == null || comparator == Collections.reverseOrder(), description + ": Comparator (" + comparator + ") is not null.");
@@ -124,7 +141,11 @@ public class EmptyNavigableMap {
      * Tests that contains requires Comparable
      */
     @Test(dataProvider = "NavigableMap<?,?>", dataProviderClass = EmptyNavigableMap.class)
-    public void testContainsRequiresComparable(String description, NavigableMap<?,?> navigableMap) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testContainsRequiresComparable(String description, NavigableMap<?,?> navigableMap) {
         assertThrowsCCE(
             () -> navigableMap.containsKey(new Object()),
             description + ": Comparable should be required");
@@ -134,7 +155,11 @@ public class EmptyNavigableMap {
      * Tests that the contains method returns {@code false}.
      */
     @Test(dataProvider = "NavigableMap<?,?>", dataProviderClass = EmptyNavigableMap.class)
-    public void testContains(String description, NavigableMap<?,?> navigableMap) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testContains(String description, NavigableMap<?,?> navigableMap) {
         assertFalse(navigableMap.containsKey(new Integer(1)),
             description + ": Should not contain any elements.");
         assertFalse(navigableMap.containsValue(new Integer(1)),
@@ -145,7 +170,11 @@ public class EmptyNavigableMap {
      * Tests that the containsAll method returns {@code false}.
      */
     @Test(dataProvider = "NavigableMap<?,?>", dataProviderClass = EmptyNavigableMap.class)
-    public void testContainsAll(String description, NavigableMap<?,?> navigableMap) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testContainsAll(String description, NavigableMap<?,?> navigableMap) {
         TreeMap treeMap = new TreeMap();
         treeMap.put("1", 1);
         treeMap.put("2", 2);
@@ -158,7 +187,11 @@ public class EmptyNavigableMap {
      * Tests that the iterator is empty.
      */
     @Test(dataProvider = "NavigableMap<?,?>", dataProviderClass = EmptyNavigableMap.class)
-    public void testEmptyIterator(String description, NavigableMap<?,?> navigableMap) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testEmptyIterator(String description, NavigableMap<?,?> navigableMap) {
         assertFalse(navigableMap.keySet().iterator().hasNext(), "The iterator is not empty.");
         assertFalse(navigableMap.values().iterator().hasNext(), "The iterator is not empty.");
         assertFalse(navigableMap.entrySet().iterator().hasNext(), "The iterator is not empty.");
@@ -168,7 +201,11 @@ public class EmptyNavigableMap {
      * Tests that the set is empty.
      */
     @Test(dataProvider = "NavigableMap<?,?>", dataProviderClass = EmptyNavigableMap.class)
-    public void testIsEmpty(String description, NavigableMap<?,?> navigableMap) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testIsEmpty(String description, NavigableMap<?,?> navigableMap) {
         assertTrue(navigableMap.isEmpty(), "The set is not empty.");
     }
 
@@ -176,7 +213,11 @@ public class EmptyNavigableMap {
      * Tests the headMap() method.
      */
     @Test(dataProvider = "NavigableMap<?,?>", dataProviderClass = EmptyNavigableMap.class)
-    public void testHeadMap(String description, NavigableMap navigableMap) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testHeadMap(String description, NavigableMap navigableMap) {
         assertThrowsNPE(
             () -> { NavigableMap ss = navigableMap.headMap(null, false); },
             description + ": Must throw NullPointerException for null element");
@@ -194,7 +235,11 @@ public class EmptyNavigableMap {
      * Tests that the size is 0.
      */
     @Test(dataProvider = "NavigableMap<?,?>", dataProviderClass = EmptyNavigableMap.class)
-    public void testSizeIsZero(String description, NavigableMap<?,?> navigableMap) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testSizeIsZero(String description, NavigableMap<?,?> navigableMap) {
         assertTrue(0 == navigableMap.size(), "The size of the set is not 0.");
     }
 
@@ -202,7 +247,11 @@ public class EmptyNavigableMap {
      * Tests the subMap() method.
      */
     @Test(dataProvider = "NavigableMap<?,?>", dataProviderClass = EmptyNavigableMap.class)
-    public void testSubMap(String description, NavigableMap navigableMap) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testSubMap(String description, NavigableMap navigableMap) {
         assertThrowsNPE(
             () -> {
                 SortedMap ss = navigableMap.subMap(null, BigInteger.TEN);
@@ -259,7 +308,11 @@ public class EmptyNavigableMap {
     }
 
     @Test(dataProvider = "NavigableMap<?,?>", dataProviderClass = EmptyNavigableMap.class)
-    public void testSubMapRanges(String description, NavigableMap navigableMap) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testSubMapRanges(String description, NavigableMap navigableMap) {
         Object first = isDescending(navigableMap) ? BigInteger.TEN : BigInteger.ZERO;
         Object last = (BigInteger.ZERO == first) ? BigInteger.TEN : BigInteger.ZERO;
 
@@ -280,7 +333,11 @@ public class EmptyNavigableMap {
     }
 
     @Test(dataProvider = "NavigableMap<?,?>", dataProviderClass = EmptyNavigableMap.class)
-    public void testheadMapRanges(String description, NavigableMap navigableMap) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testheadMapRanges(String description, NavigableMap navigableMap) {
         NavigableMap subMap = navigableMap.headMap(BigInteger.ONE, true);
 
         // same subset
@@ -299,7 +356,11 @@ public class EmptyNavigableMap {
     }
 
     @Test(dataProvider = "NavigableMap<?,?>", dataProviderClass = EmptyNavigableMap.class)
-    public void testTailMapRanges(String description, NavigableMap navigableMap) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testTailMapRanges(String description, NavigableMap navigableMap) {
         NavigableMap subMap = navigableMap.tailMap(BigInteger.ONE, true);
 
         // same subset
@@ -321,7 +382,11 @@ public class EmptyNavigableMap {
      * Tests the tailMap() method.
      */
     @Test(dataProvider = "NavigableMap<?,?>", dataProviderClass = EmptyNavigableMap.class)
-    public void testTailMap(String description, NavigableMap navigableMap) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testTailMap(String description, NavigableMap navigableMap) {
         assertThrowsNPE(
             () -> navigableMap.tailMap(null),
             description + ": Must throw NullPointerException for null element");

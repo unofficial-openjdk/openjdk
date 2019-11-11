@@ -42,6 +42,7 @@ import java.util.Objects;
 
 import static org.junit.Assert.assertEquals;
 
+@Bean
 public class BigArityTest {
 
     static MethodHandles.Lookup LOOKUP = MethodHandles.lookup();

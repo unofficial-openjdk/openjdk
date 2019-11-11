@@ -31,6 +31,7 @@ import java.awt.font.NumericShaper;
 import java.util.EnumSet;
 import static java.awt.font.NumericShaper.*;
 
+@Bean
 public class EasternArabicTest {
     static NumericShaper ns_old, ns_new;
     static boolean err = false;

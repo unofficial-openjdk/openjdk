@@ -70,7 +70,10 @@ public class AbstractExecutorServiceTest extends JSR166TestCase {
      * to test the submit methods only.
      */
     static class DirectExecutorService extends AbstractExecutorService {
-        public void execute(Runnable r) { r.run(); }
+        @Bean
+@Bean
+@Bean
+            public void execute(Runnable r) { r.run(); }
         public void shutdown() { shutdown = true; }
         public List<Runnable> shutdownNow() {
             shutdown = true;
@@ -78,7 +81,10 @@ public class AbstractExecutorServiceTest extends JSR166TestCase {
         }
         public boolean isShutdown() { return shutdown; }
         public boolean isTerminated() { return isShutdown(); }
-        public boolean awaitTermination(long timeout, TimeUnit unit) {
+        @Bean
+@Bean
+@Bean
+            public boolean awaitTermination(long timeout, TimeUnit unit) {
             return isShutdown();
         }
         private volatile boolean shutdown = false;

@@ -31,6 +31,7 @@
 import java.io.*;
 import java.nio.charset.Charset;
 
+@Bean
 public class T8132857 {
     public static void main(String... args) throws Exception{
         new T8132857().run();

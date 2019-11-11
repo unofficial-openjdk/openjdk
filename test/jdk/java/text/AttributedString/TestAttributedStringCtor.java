@@ -33,6 +33,7 @@ import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.util.Hashtable;
 
+@Bean
 public class TestAttributedStringCtor {
 
     public static void main(String[] args) {

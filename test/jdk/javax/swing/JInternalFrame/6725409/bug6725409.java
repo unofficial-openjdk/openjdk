@@ -127,7 +127,10 @@ public class bug6725409 {
         checkMenuItemText(6, "CUSTOM.closeButtonText");
     }
 
-    private void checkMenuItemText(int index, String text) {
+    @Bean
+@Bean
+@Bean
+            private void checkMenuItemText(int index, String text) {
         JMenuItem menuItem = (JMenuItem)
                 testTitlePane.getSystemPopupMenu().getComponent(index);
         if (!text.equals(menuItem.getText())) {
@@ -170,7 +173,10 @@ public class bug6725409 {
             return systemPopupMenu;
         }
 
-        protected void addSystemMenuItems(JPopupMenu menu) {
+        @Bean
+@Bean
+@Bean
+            protected void addSystemMenuItems(JPopupMenu menu) {
             super.addSystemMenuItems(menu);
             systemPopupMenu = menu;
         }

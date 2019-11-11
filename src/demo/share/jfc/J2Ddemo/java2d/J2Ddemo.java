@@ -84,6 +84,7 @@ import javax.swing.border.EtchedBorder;
  * A demo that shows Java 2D(TM) API features.
  */
 @SuppressWarnings("serial")
+@Bean
 public class J2Ddemo extends JPanel implements ItemListener, ActionListener, DemoInstVarsAccessor {
     private final GlobalControls controls;
     private final MemoryMonitor memorymonitor;
@@ -225,13 +226,21 @@ public class J2Ddemo extends JPanel implements ItemListener, ActionListener, Dem
         WindowListener l = new WindowAdapter() {
 
             @Override
-            public void windowClosing(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosing(WindowEvent e) {
                 runwindow.stop();
                 rf.dispose();
             }
 
             @Override
-            public void windowClosed(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosed(WindowEvent e) {
                 rf = null;
             }
         };
@@ -258,7 +267,11 @@ public class J2Ddemo extends JPanel implements ItemListener, ActionListener, Dem
     }
 
     @Override
-    public void actionPerformed(ActionEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
         if (e.getSource().equals(fileMI)) {
             System.exit(0);
         } else if (e.getSource().equals(runMI)) {
@@ -269,13 +282,21 @@ public class J2Ddemo extends JPanel implements ItemListener, ActionListener, Dem
                 WindowListener l = new WindowAdapter() {
 
                     @Override
-                    public void windowClosing(WindowEvent e) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosing(WindowEvent e) {
                         cloningfeature.stop();
                         cf.dispose();
                     }
 
                     @Override
-                    public void windowClosed(WindowEvent e) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosed(WindowEvent e) {
                         cloningfeature = null;
                     }
                 };
@@ -305,7 +326,11 @@ public class J2Ddemo extends JPanel implements ItemListener, ActionListener, Dem
     }
 
     @Override
-    public void itemStateChanged(ItemEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void itemStateChanged(ItemEvent e) {
         if (e.getSource().equals(controlsCB)) {
             boolean newVisibility = !controls.isVisible();
             controls.setVisible(newVisibility);
@@ -402,7 +427,11 @@ public class J2Ddemo extends JPanel implements ItemListener, ActionListener, Dem
     }
 
     @Override
-    public void setGroupColumns(int columns) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setGroupColumns(int columns) {
         for (DemoGroup dg : group) {
             if (dg != null) {
                 dg.columns = columns;
@@ -481,7 +510,11 @@ public class J2Ddemo extends JPanel implements ItemListener, ActionListener, Dem
         }
 
         @Override
-        public void paintIcon(Component c, Graphics g, int x, int y) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void paintIcon(Component c, Graphics g, int x, int y) {
             Graphics2D g2 = (Graphics2D) g;
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                     RenderingHints.VALUE_ANTIALIAS_ON);
@@ -526,11 +559,19 @@ public class J2Ddemo extends JPanel implements ItemListener, ActionListener, Dem
             this.progressBar = progressBar;
         }
 
-        public void setText(String text) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setText(String text) {
             progressLabel.setText(text);
         }
 
-        public void setMaximum(int n) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setMaximum(int n) {
             progressBar.setMaximum(n);
         }
 
@@ -538,7 +579,11 @@ public class J2Ddemo extends JPanel implements ItemListener, ActionListener, Dem
             return progressBar.getValue();
         }
 
-        public void setValue(int n) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(int n) {
             progressBar.setValue(n);
         }
     }
@@ -558,12 +603,20 @@ public class J2Ddemo extends JPanel implements ItemListener, ActionListener, Dem
         frame.addWindowListener(new WindowAdapter() {
 
             @Override
-            public void windowClosing(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosing(WindowEvent e) {
                 System.exit(0);
             }
 
             @Override
-            public void windowDeiconified(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowDeiconified(WindowEvent e) {
                 J2Ddemo demo = demoOneInstArr[0];
                 if (demo != null) {
                     demo.start();
@@ -571,7 +624,11 @@ public class J2Ddemo extends JPanel implements ItemListener, ActionListener, Dem
             }
 
             @Override
-            public void windowIconified(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowIconified(WindowEvent e) {
                 J2Ddemo demo = demoOneInstArr[0];
                 if (demo != null) {
                     demo.stop();

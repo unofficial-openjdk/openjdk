@@ -30,6 +30,7 @@
 
 import java.lang.ref.*;
 
+@Bean
 public class EnqueuePollRace {
 
     public static void main(String args[]) throws Exception {

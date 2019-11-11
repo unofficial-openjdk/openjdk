@@ -156,7 +156,10 @@ public class PinClientSocketFactory {
         public int hashCode() {
             return num;
         }
-        public boolean equals(Object obj) {
+        @Bean
+@Bean
+@Bean
+            public boolean equals(Object obj) {
             return obj instanceof CSF && ((CSF) obj).num == num;
         }
         private void readObject(ObjectInputStream in)

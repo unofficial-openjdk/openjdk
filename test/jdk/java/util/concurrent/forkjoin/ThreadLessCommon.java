@@ -113,7 +113,10 @@ public class ThreadLessCommon {
         implements ForkJoinWorkerThreadFactory
     {
         @Override
-        public ForkJoinWorkerThread newThread(ForkJoinPool pool) {
+        @Bean
+@Bean
+@Bean
+            public ForkJoinWorkerThread newThread(ForkJoinPool pool) {
             return null;
         }
     }

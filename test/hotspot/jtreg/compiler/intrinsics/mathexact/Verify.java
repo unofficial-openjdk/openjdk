@@ -31,6 +31,7 @@ import java.util.Random;
  * The class depends on Utils class from testlibrary package.
  * It uses factory method that obtains random generator.
  */
+@Bean
 public class Verify {
     public static String throwWord(boolean threw) {
         return (threw ? "threw" : "didn't throw");
@@ -292,17 +293,29 @@ public class Verify {
         }
 
         @Override
-        public int safeMethod(int a, int b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int safeMethod(int a, int b) {
             return method.safeMethod(a);
         }
 
         @Override
-        public int checkMethod(int a, int b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int checkMethod(int a, int b) {
             return method.checkMethod(a);
         }
 
         @Override
-        public int unchecked(int a, int b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int unchecked(int a, int b) {
             return method.unchecked(a);
 
         }
@@ -320,17 +333,29 @@ public class Verify {
         }
 
         @Override
-        public long safeMethod(long a, long b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long safeMethod(long a, long b) {
             return method.safeMethod(a);
         }
 
         @Override
-        public long checkMethod(long a, long b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long checkMethod(long a, long b) {
             return method.checkMethod(a);
         }
 
         @Override
-        public long unchecked(long a, long b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long unchecked(long a, long b) {
             return method.unchecked(a);
 
         }
@@ -344,7 +369,11 @@ public class Verify {
 
     public static class AddExactI implements BinaryMethod {
         @Override
-        public int safeMethod(int x, int y) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int safeMethod(int x, int y) {
             int r = x + y;
             // HD 2-12 Overflow iff both arguments have the opposite sign of the result
             if (((x ^ r) & (y ^ r)) < 0) {
@@ -355,7 +384,11 @@ public class Verify {
         }
 
         @Override
-        public int checkMethod(int a, int b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int checkMethod(int a, int b) {
             return Math.addExact(a, b);
         }
 
@@ -365,14 +398,22 @@ public class Verify {
         }
 
         @Override
-        public int unchecked(int a, int b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int unchecked(int a, int b) {
             return a + b;
         }
     }
 
     public static class AddExactL implements BinaryLongMethod {
         @Override
-        public long safeMethod(long x, long y) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long safeMethod(long x, long y) {
             long r = x + y;
             // HD 2-12 Overflow iff both arguments have the opposite sign of the result
             if (((x ^ r) & (y ^ r)) < 0) {
@@ -383,7 +424,11 @@ public class Verify {
         }
 
         @Override
-        public long checkMethod(long a, long b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long checkMethod(long a, long b) {
             return Math.addExact(a, b);
         }
 
@@ -393,14 +438,22 @@ public class Verify {
         }
 
         @Override
-        public long unchecked(long a, long b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long unchecked(long a, long b) {
             return a + b;
         }
     }
 
     public static class MulExactI implements BinaryMethod {
         @Override
-        public int safeMethod(int x, int y) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int safeMethod(int x, int y) {
             long r = (long)x * (long)y;
             if ((int)r != r) {
                 throw new ArithmeticException("integer overflow");
@@ -410,12 +463,20 @@ public class Verify {
         }
 
         @Override
-        public int checkMethod(int a, int b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int checkMethod(int a, int b) {
             return Math.multiplyExact(a, b);
         }
 
         @Override
-        public int unchecked(int a, int b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int unchecked(int a, int b) {
             return a * b;
         }
 
@@ -427,7 +488,11 @@ public class Verify {
 
     public static class MulExactL implements BinaryLongMethod {
         @Override
-        public long safeMethod(long x, long y) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long safeMethod(long x, long y) {
             long r = x * y;
             long ax = Math.abs(x);
             long ay = Math.abs(y);
@@ -444,12 +509,20 @@ public class Verify {
         }
 
         @Override
-        public long checkMethod(long a, long b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long checkMethod(long a, long b) {
             return Math.multiplyExact(a, b);
         }
 
         @Override
-        public long unchecked(long a, long b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long unchecked(long a, long b) {
             return a * b;
         }
 
@@ -461,7 +534,11 @@ public class Verify {
 
     public static class NegExactL implements UnaryLongMethod {
         @Override
-        public long safeMethod(long a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long safeMethod(long a) {
             if (a == Long.MIN_VALUE) {
                 throw new ArithmeticException("long overflow");
             }
@@ -471,12 +548,20 @@ public class Verify {
         }
 
         @Override
-        public long checkMethod(long value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long checkMethod(long value) {
             return Math.negateExact(value);
         }
 
         @Override
-        public long unchecked(long value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long unchecked(long value) {
             return -value;
         }
 
@@ -488,7 +573,11 @@ public class Verify {
 
     public static class NegExactI implements UnaryMethod {
         @Override
-        public int safeMethod(int a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int safeMethod(int a) {
             if (a == Integer.MIN_VALUE) {
                 throw new ArithmeticException("integer overflow");
             }
@@ -498,12 +587,20 @@ public class Verify {
         }
 
         @Override
-        public int checkMethod(int value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int checkMethod(int value) {
             return Math.negateExact(value);
         }
 
         @Override
-        public int unchecked(int value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int unchecked(int value) {
             return -value;
         }
 
@@ -515,7 +612,11 @@ public class Verify {
 
     public static class SubExactI implements BinaryMethod {
         @Override
-        public int safeMethod(int x, int y) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int safeMethod(int x, int y) {
             int r = x - y;
             // HD 2-12 Overflow iff the arguments have different signs and
             // the sign of the result is different than the sign of x
@@ -526,12 +627,20 @@ public class Verify {
         }
 
         @Override
-        public int checkMethod(int a, int b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int checkMethod(int a, int b) {
             return Math.subtractExact(a, b);
         }
 
         @Override
-        public int unchecked(int a, int b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int unchecked(int a, int b) {
             return a - b;
         }
 
@@ -543,7 +652,11 @@ public class Verify {
 
     public static class SubExactL implements BinaryLongMethod {
         @Override
-        public long safeMethod(long x, long y) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long safeMethod(long x, long y) {
             long r = x - y;
             // HD 2-12 Overflow iff the arguments have different signs and
             // the sign of the result is different than the sign of x
@@ -554,12 +667,20 @@ public class Verify {
         }
 
         @Override
-        public long checkMethod(long a, long b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long checkMethod(long a, long b) {
             return Math.subtractExact(a, b);
         }
 
         @Override
-        public long unchecked(long a, long b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long unchecked(long a, long b) {
             return a - b;
         }
 
@@ -571,7 +692,11 @@ public class Verify {
 
     static class IncExactL implements UnaryLongMethod {
         @Override
-        public long safeMethod(long a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long safeMethod(long a) {
             if (a == Long.MAX_VALUE) {
                 throw new ArithmeticException("long overflow");
             }
@@ -581,12 +706,20 @@ public class Verify {
         }
 
         @Override
-        public long checkMethod(long value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long checkMethod(long value) {
             return Math.incrementExact(value);
         }
 
         @Override
-        public long unchecked(long value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long unchecked(long value) {
             return value + 1;
         }
 
@@ -598,7 +731,11 @@ public class Verify {
 
     static class IncExactI implements UnaryMethod {
         @Override
-        public int safeMethod(int a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int safeMethod(int a) {
             if (a == Integer.MAX_VALUE) {
                 throw new ArithmeticException("integer overflow");
             }
@@ -607,12 +744,20 @@ public class Verify {
         }
 
         @Override
-        public int checkMethod(int value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int checkMethod(int value) {
             return Math.incrementExact(value);
         }
 
         @Override
-        public int unchecked(int value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int unchecked(int value) {
             return value + 1;
         }
 
@@ -624,7 +769,11 @@ public class Verify {
 
     static class DecExactL implements UnaryLongMethod {
         @Override
-        public long safeMethod(long a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long safeMethod(long a) {
             if (a == Long.MIN_VALUE) {
                 throw new ArithmeticException("long overflow");
             }
@@ -633,12 +782,20 @@ public class Verify {
         }
 
         @Override
-        public long checkMethod(long value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long checkMethod(long value) {
             return Math.decrementExact(value);
         }
 
         @Override
-        public long unchecked(long value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long unchecked(long value) {
             return value - 1;
         }
 
@@ -650,7 +807,11 @@ public class Verify {
 
     static class DecExactI implements UnaryMethod {
         @Override
-        public int safeMethod(int a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int safeMethod(int a) {
             if (a == Integer.MIN_VALUE) {
                 throw new ArithmeticException("integer overflow");
             }
@@ -659,12 +820,20 @@ public class Verify {
         }
 
         @Override
-        public int checkMethod(int value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int checkMethod(int value) {
             return Math.decrementExact(value);
         }
 
         @Override
-        public int unchecked(int value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int unchecked(int value) {
             return value - 1;
         }
 

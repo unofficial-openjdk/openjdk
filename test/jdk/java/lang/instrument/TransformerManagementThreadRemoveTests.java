@@ -33,6 +33,7 @@
  */
 import java.util.*;
 
+@Bean
 public class TransformerManagementThreadRemoveTests
     extends TransformerManagementThreadAddTests
 {

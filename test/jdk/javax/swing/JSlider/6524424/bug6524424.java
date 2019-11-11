@@ -77,7 +77,10 @@ public class bug6524424 extends JApplet {
             addComponent(this, slider3);
         }
 
-        private JSlider createSlider(int tickMinor, int tickMajor) {
+        @Bean
+@Bean
+@Bean
+            private JSlider createSlider(int tickMinor, int tickMajor) {
             JSlider result = new JSlider();
 
             result.setPaintLabels(true);

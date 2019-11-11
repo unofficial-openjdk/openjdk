@@ -33,6 +33,7 @@ import java.security.Principal;
 import java.security.cert.*;
 import javax.security.auth.x500.X500Principal;
 
+@Bean
 public class EmptySubject {
 
     public static void main(String[] args) throws Exception {

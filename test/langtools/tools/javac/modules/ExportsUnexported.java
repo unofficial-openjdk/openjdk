@@ -44,6 +44,7 @@ import toolbox.JarTask;
 import toolbox.JavacTask;
 import toolbox.Task;
 
+@Bean
 public class ExportsUnexported extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {
@@ -129,8 +130,10 @@ public class ExportsUnexported extends ModuleTestBase {
                 tb.writeJavaFiles(src_m1,
                                   "module m1x { exports api; }",
                                   testCode.toString(),
-                                  "package impl.impl; public class Cls { }",
-                                  "package impl.impl; public class Exc extends Exception { }",
+                                  "package impl.impl; @Bean
+public class Cls { }",
+                                  "package impl.impl; @Bean
+public class Exc extends Exception { }",
                                   "package impl.impl; public interface Intf { }",
                                   "package impl.impl; @java.lang.annotation.Documented public @interface DocAnn { }",
                                   "package impl.impl; public @interface NonDocAnn { }");
@@ -164,11 +167,13 @@ public class ExportsUnexported extends ModuleTestBase {
         Path src_lib1 = src.resolve("lib1x");
         tb.writeJavaFiles(src_lib1,
                           "module lib1x { exports lib1; }",
-                          "package lib1; public class Lib1 {}");
+                          "package lib1; @Bean
+public class Lib1 {}");
         Path src_lib2 = src.resolve("lib2x");
         tb.writeJavaFiles(src_lib2,
                           "module lib2x { exports lib2; }",
-                          "package lib2; public class Lib2 {}");
+                          "package lib2; @Bean
+public class Lib2 {}");
         Path src_api = src.resolve("api");
         tb.writeJavaFiles(src_api,
                           "module api {\n" +
@@ -179,22 +184,26 @@ public class ExportsUnexported extends ModuleTestBase {
                           "    requires lib2x;\n" +
                           "}\n",
                           "package api;\n" +
-                          "public class Api {\n" +
+                          "@Bean
+public class Api {\n" +
                           "    public lib1.Lib1 lib1;\n" +
                           "    public lib2.Lib2 lib2;\n" +
                           "    public qapi1.QApi1 qapi1;\n" +
                           "    public impl.Impl impl;\n" +
                           "}",
                           "package qapi1;\n" +
-                          "public class QApi1 {\n" +
+                          "@Bean
+public class QApi1 {\n" +
                           "    public qapi2.QApi2 qapi2;\n" +
                           "}",
                           "package qapi2;\n" +
-                          "public class QApi2 {\n" +
+                          "@Bean
+public class QApi2 {\n" +
                           "    public qapi1.QApi1 qapi1;\n" +
                           "}",
                           "package impl;\n" +
-                          "public class Impl {\n" +
+                          "@Bean
+public class Impl {\n" +
                           "}");
         Path src_qual1 = src.resolve("qual1x");
         tb.writeJavaFiles(src_qual1, "module qual1x { }");
@@ -237,13 +246,15 @@ public class ExportsUnexported extends ModuleTestBase {
                           "}\n",
                           "package api;\n" +
                           "import impl.Impl.Nested;\n" +
-                          "public class Api {\n" +
+                          "@Bean
+public class Api {\n" +
                           "    public impl.Impl impl1;\n" +
                           "    public impl.Impl.Nested impl2;\n" +
                           "    public Nested impl3;\n" +
                           "}",
                           "package impl;\n" +
-                          "public class Impl {\n" +
+                          "@Bean
+public class Impl {\n" +
                           "    public static class Nested {\n" +
                           "    }\n" +
                           "}");
@@ -283,7 +294,8 @@ public class ExportsUnexported extends ModuleTestBase {
                           "    exports api;\n" +
                           "}\n",
                           "package api;\n" +
-                          "public class Api extends PackagePrivateClass<PackagePrivateInterface> implements PackagePrivateInterface<PackagePrivateClass> {\n" +
+                          "@Bean
+public class Api extends PackagePrivateClass<PackagePrivateInterface> implements PackagePrivateInterface<PackagePrivateClass> {\n" +
                           "    protected PackagePrivateClass<?> f1;\n" +
                           "    protected PackagePrivateInterface<?> f2;\n" +
                           "    protected Inner f3;\n" +
@@ -296,7 +308,8 @@ public class ExportsUnexported extends ModuleTestBase {
                           "class PackagePrivateClass<T> {}\n" +
                           "interface PackagePrivateInterface<T> {}",
                           "package impl;\n" +
-                          "public class Impl {\n" +
+                          "@Bean
+public class Impl {\n" +
                           "}");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
@@ -337,7 +350,8 @@ public class ExportsUnexported extends ModuleTestBase {
                           "    exports api;\n" +
                           "}\n",
                           "package api;\n" +
-                          "public class Api {\n" +
+                          "@Bean
+public class Api {\n" +
                           "    @SuppressWarnings(\"exports\")\n" +
                           "    public PackagePrivateClass f1;\n" +
                           "    public PackagePrivateClass f2;\n" +
@@ -403,7 +417,8 @@ public class ExportsUnexported extends ModuleTestBase {
                           "    exports api;\n" +
                           "}\n",
                           "package api;\n" +
-                          "public class Api extends dep.Dep implements api2.Api2 {}\n");
+                          "@Bean
+public class Api extends dep.Dep implements api2.Api2 {}\n");
         Path src_dep = src.resolve("dep");
         tb.writeJavaFiles(src_dep,
                           "module dep {\n" +
@@ -411,7 +426,8 @@ public class ExportsUnexported extends ModuleTestBase {
                           "    exports dep;\n" +
                           "}\n",
                           "package dep;\n" +
-                          "public class Dep {}\n");
+                          "@Bean
+public class Dep {}\n");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 

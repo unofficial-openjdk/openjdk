@@ -38,6 +38,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 
+@Bean
 public class TestMethodHandleInvokesIntrinsic {
 
     static final MethodHandle mh_nanoTime;
@@ -79,7 +80,11 @@ public class TestMethodHandleInvokesIntrinsic {
         return (Class)mh_getClass.invokeExact(o);
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         try {
             for (int i = 0; i < 20000; i++) {
                 m1();

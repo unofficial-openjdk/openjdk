@@ -54,6 +54,7 @@
  *          ProxyAuthDisabledSchemesSSL SSL PROXY
  */
 
+@Bean
 public class ProxyAuthDisabledSchemesSSL {
     public static void main(String[] args) throws Exception {
         assert "SSL".equals(args[0]);

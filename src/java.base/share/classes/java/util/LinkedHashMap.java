@@ -160,6 +160,7 @@ import java.io.IOException;
  * @see     Hashtable
  * @since   1.4
  */
+@Bean
 public class LinkedHashMap<K,V>
     extends HashMap<K,V>
     implements Map<K,V>
@@ -220,7 +221,8 @@ public class LinkedHashMap<K,V>
     // internal utilities
 
     // link at the end of list
-    private void linkNodeLast(LinkedHashMap.Entry<K,V> p) {
+@Bean
+        private void linkNodeLast(LinkedHashMap.Entry<K,V> p) {
         LinkedHashMap.Entry<K,V> last = tail;
         tail = p;
         if (last == null)
@@ -412,7 +414,8 @@ public class LinkedHashMap<K,V>
      * @return {@code true} if this map maps one or more keys to the
      *         specified value
      */
-    public boolean containsValue(Object value) {
+@Bean
+        public boolean containsValue(Object value) {
         for (LinkedHashMap.Entry<K,V> e = head; e != null; e = e.after) {
             V v = e.value;
             if (v == value || (value != null && value.equals(v)))
@@ -436,7 +439,8 @@ public class LinkedHashMap<K,V>
      * The {@link #containsKey containsKey} operation may be used to
      * distinguish these two cases.
      */
-    public V get(Object key) {
+@Bean
+        public V get(Object key) {
         Node<K,V> e;
         if ((e = getNode(hash(key), key)) == null)
             return null;
@@ -448,7 +452,8 @@ public class LinkedHashMap<K,V>
     /**
      * {@inheritDoc}
      */
-    public V getOrDefault(Object key, V defaultValue) {
+@Bean
+        public V getOrDefault(Object key, V defaultValue) {
        Node<K,V> e;
        if ((e = getNode(hash(key), key)) == null)
            return defaultValue;
@@ -479,7 +484,8 @@ public class LinkedHashMap<K,V>
      * <pre>
      *     private static final int MAX_ENTRIES = 100;
      *
-     *     protected boolean removeEldestEntry(Map.Entry eldest) {
+     *@Bean
+         protected boolean removeEldestEntry(Map.Entry eldest) {
      *        return size() &gt; MAX_ENTRIES;
      *     }
      * </pre>
@@ -506,7 +512,8 @@ public class LinkedHashMap<K,V>
      * @return   {@code true} if the eldest entry should be removed
      *           from the map; {@code false} if it should be retained.
      */
-    protected boolean removeEldestEntry(Map.Entry<K,V> eldest) {
+@Bean
+        protected boolean removeEldestEntry(Map.Entry<K,V> eldest) {
         return false;
     }
 
@@ -715,7 +722,8 @@ public class LinkedHashMap<K,V>
 
     // Map overrides
 
-    public void forEach(BiConsumer<? super K, ? super V> action) {
+@Bean
+        public void forEach(BiConsumer<? super K, ? super V> action) {
         if (action == null)
             throw new NullPointerException();
         int mc = modCount;
@@ -725,7 +733,8 @@ public class LinkedHashMap<K,V>
             throw new ConcurrentModificationException();
     }
 
-    public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
+@Bean
+        public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
         if (function == null)
             throw new NullPointerException();
         int mc = modCount;

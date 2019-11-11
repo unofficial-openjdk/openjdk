@@ -37,6 +37,7 @@ import static org.testng.Assert.*;
  * @key randomness
  */
 @Test
+@Bean
 public class RandomTest {
 
     // Note: this test was adapted from the 166 TCK ThreadLocalRandomTest test
@@ -217,7 +218,11 @@ public class RandomTest {
         assertThrowsIAE(() -> bi.accept(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY));
     }
 
-    private void assertThrowsIAE(ThrowingRunnable r) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertThrowsIAE(ThrowingRunnable r) {
         assertThrows(IllegalArgumentException.class, r);
     }
 

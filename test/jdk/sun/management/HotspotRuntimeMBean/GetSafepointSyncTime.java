@@ -36,6 +36,7 @@
 
 import sun.management.*;
 
+@Bean
 public class GetSafepointSyncTime {
 
     private static HotspotRuntimeMBean mbean =

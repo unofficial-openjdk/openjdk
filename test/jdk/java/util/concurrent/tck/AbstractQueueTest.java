@@ -50,7 +50,10 @@ public class AbstractQueueTest extends JSR166TestCase {
     }
 
     static class Succeed extends AbstractQueue<Integer> {
-        public boolean offer(Integer x) {
+        @Bean
+@Bean
+@Bean
+            public boolean offer(Integer x) {
             if (x == null) throw new NullPointerException();
             return true;
         }
@@ -61,7 +64,10 @@ public class AbstractQueueTest extends JSR166TestCase {
     }
 
     static class Fail extends AbstractQueue<Integer> {
-        public boolean offer(Integer x) {
+        @Bean
+@Bean
+@Bean
+            public boolean offer(Integer x) {
             if (x == null) throw new NullPointerException();
             return false;
         }

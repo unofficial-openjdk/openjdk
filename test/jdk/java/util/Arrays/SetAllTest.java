@@ -43,6 +43,7 @@ import static org.testng.Assert.assertSame;
 import static org.testng.Assert.fail;
 
 @Test
+@Bean
 public class SetAllTest {
     private static final IntFunction<String> toString = i -> "N" + Integer.valueOf(i);
     private static final IntFunction<String> fillString = i -> "X";
@@ -106,7 +107,11 @@ public class SetAllTest {
     public Object[][] doubleTests() { return doubleData; }
 
     @Test(dataProvider = "string")
-    public void testSetAllString(String name, int size, IntFunction<String> generator, String[] expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testSetAllString(String name, int size, IntFunction<String> generator, String[] expected) {
         String[] result = new String[size];
         Arrays.setAll(result, generator);
         assertEquals(result, expected, "setAll(String[], IntFunction<String>) case " + name + " failed.");
@@ -118,7 +123,11 @@ public class SetAllTest {
     }
 
     @Test(dataProvider = "int")
-    public void testSetAllInt(String name, int size, IntUnaryOperator generator, int[] expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testSetAllInt(String name, int size, IntUnaryOperator generator, int[] expected) {
         int[] result = new int[size];
         Arrays.setAll(result, generator);
         assertEquals(result, expected, "setAll(int[], IntUnaryOperator) case " + name + " failed.");
@@ -130,7 +139,11 @@ public class SetAllTest {
     }
 
     @Test(dataProvider = "long")
-    public void testSetAllLong(String name, int size, IntToLongFunction generator, long[] expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testSetAllLong(String name, int size, IntToLongFunction generator, long[] expected) {
         long[] result = new long[size];
         Arrays.setAll(result, generator);
         assertEquals(result, expected, "setAll(long[], IntToLongFunction) case " + name + " failed.");
@@ -141,7 +154,11 @@ public class SetAllTest {
         assertEquals(result, expected, "parallelSetAll(long[], IntToLongFunction) case " + name + " failed.");
     }
 
-    private void assertDoubleArrayEquals(double[] actual, double[] expected, double delta, String msg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertDoubleArrayEquals(double[] actual, double[] expected, double delta, String msg) {
         if (actual.length != expected.length) {
             fail(msg + ": length mismatch, expected " + expected.length + ", got " + actual.length);
         }
@@ -152,7 +169,11 @@ public class SetAllTest {
     }
 
     @Test(dataProvider = "double")
-    public void testSetAllDouble(String name, int size, IntToDoubleFunction generator, double[] expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testSetAllDouble(String name, int size, IntToDoubleFunction generator, double[] expected) {
         double[] result = new double[size];
         Arrays.setAll(result, generator);
         assertDoubleArrayEquals(result, expected, 0.05, "setAll(double[], IntToDoubleFunction) case " + name + " failed.");

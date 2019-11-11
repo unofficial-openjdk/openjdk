@@ -36,6 +36,7 @@ import org.testng.annotations.*;
 /**
  * @author jrose
  */
+@Bean
 public class ClassValueTest {
     static String nameForCV1(Class<?> type) {
         return "CV1:" + type.getName();
@@ -43,7 +44,11 @@ public class ClassValueTest {
     int countForCV1;
     final ClassValue<String> CV1 = new CV1();
     private class CV1 extends ClassValue<String> {
-        protected String computeValue(Class<?> type) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected String computeValue(Class<?> type) {
             countForCV1++;
             return nameForCV1(type);
         }
@@ -95,7 +100,11 @@ public class ClassValueTest {
     class CVN extends ClassValue<String> {
         final int n;
         CVN(int n) { this.n = n; }
-        protected String computeValue(Class<?> type) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected String computeValue(Class<?> type) {
             countForCVN++;
             return nameForCVN(type, n);
         }

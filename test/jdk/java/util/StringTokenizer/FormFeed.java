@@ -33,6 +33,7 @@ import java.util.StringTokenizer;
  * This class tests to see if the StringTokenizer recognizes
  * backslash f as a whitespace character (it should)
  */
+@Bean
 public class FormFeed {
 
    public static void main(String[] argv) {

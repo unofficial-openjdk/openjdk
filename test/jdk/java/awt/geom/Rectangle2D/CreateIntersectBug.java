@@ -38,6 +38,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Rectangle2D;
 
+@Bean
 public class CreateIntersectBug extends Canvas {
     public static boolean showresults = false;
 
@@ -95,6 +96,9 @@ public class CreateIntersectBug extends Canvas {
         Frame f = new Frame();
         f.add(this);
         f.addWindowListener(new WindowAdapter() {
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent e) {System.exit(0);}
         });
         f.pack();

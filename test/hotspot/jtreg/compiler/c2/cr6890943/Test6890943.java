@@ -39,6 +39,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
+@Bean
 public class Test6890943 {
     public static final boolean AIR = true, ROCK = false;
     private static final Path PATH = Paths.get(System.getProperty("test.src", "."));
@@ -162,13 +163,21 @@ public class Test6890943 {
         return result;
     }
 
-    private void addToM(int q, int i) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void addToM(int q, int i) {
         Integer original = M.get(q);
         if (original == null) M.put(q, i);
         else M.put(q, Math.min(original, i));
     }
 
-    private int fall(int row, int column) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int fall(int row, int column) {
         int res = 0;
         for (int p = row + 1; p < r; p++) {
             if (grid[p][column] == AIR) res++;
@@ -177,27 +186,51 @@ public class Test6890943 {
         return res;
     }
 
-    private boolean stuck(int q) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean stuck(int q) {
         return start(q) == end(q);
     }
 
-    private int depth(int q) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int depth(int q) {
         return q % 50;
     }
 
-    private int start(int q) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int start(int q) {
         return q / (50 * 50);
     }
 
-    private int end(int q) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int end(int q) {
         return (q / 50) % 50;
     }
 
-    private int calcWalkingRange(int depth, int pos) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int calcWalkingRange(int depth, int pos) {
         return calcWalkingRange(depth, pos, Integer.MAX_VALUE, Integer.MIN_VALUE);
     }
 
-    private int calcWalkingRange(int depth, int pos, int airOverrideStart, int airOverrideEnd) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int calcWalkingRange(int depth, int pos, int airOverrideStart, int airOverrideEnd) {
         int left = pos, right = pos;
         if (depth >= r) return (c - 1) * 50 + depth;
 

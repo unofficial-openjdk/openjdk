@@ -65,6 +65,7 @@ import static org.testng.Assert.assertEquals;
  *         <p/>
  *         Using TestNG framework.
  */
+@Bean
 public class PacketTest {
 
     final int MAGIC = 0xC0FFEE42;

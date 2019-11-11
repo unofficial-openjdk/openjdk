@@ -34,6 +34,7 @@
 
 import jdk.test.lib.RandomFactory;
 
+@Bean
 public class Log1pTests {
     private Log1pTests(){}
 

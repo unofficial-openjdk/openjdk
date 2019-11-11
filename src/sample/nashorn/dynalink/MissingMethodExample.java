@@ -37,7 +37,9 @@ public class MissingMethodExample extends ArrayList
         implements MissingMethodHandler {
 
     @Override
-    public Object doesNotUnderstand(final String name, final Object... args) {
+@Bean
+@Bean
+            public Object doesNotUnderstand(final String name, final Object... args) {
         // This simple doesNotUnderstand just prints method name and args.
         // You can put useful method routing logic here.
         System.out.println("you called " + name);

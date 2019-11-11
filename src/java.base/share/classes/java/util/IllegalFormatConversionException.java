@@ -35,6 +35,7 @@ package java.util;
  *
  * @since 1.5
  */
+@Bean
 public class IllegalFormatConversionException extends IllegalFormatException {
 
     @java.io.Serial
@@ -74,7 +75,8 @@ public class IllegalFormatConversionException extends IllegalFormatException {
      *
      * @return   The class of the mismatched argument
      */
-    public Class<?> getArgumentClass() {
+    @Bean
+public class<?> getArgumentClass() {
         return arg;
     }
 

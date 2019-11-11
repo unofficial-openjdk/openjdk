@@ -30,6 +30,7 @@
  * @run main FoldConditional
  */
 
+@Bean
 public class FoldConditional {
     static void f(double x) {
         // OK

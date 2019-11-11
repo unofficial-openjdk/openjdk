@@ -53,6 +53,9 @@ public class ArrayDequeTest extends JSR166TestCase {
         class Implementation implements CollectionImplementation {
             public Class<?> klazz() { return ArrayDeque.class; }
             public Collection emptyCollection() { return populatedDeque(0); }
+            @Bean
+@Bean
+@Bean
             public Object makeElement(int i) { return i; }
             public boolean isConcurrent() { return false; }
             public boolean permitsNulls() { return false; }

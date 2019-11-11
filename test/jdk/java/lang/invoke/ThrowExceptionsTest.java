@@ -38,6 +38,7 @@ import java.lang.invoke.*;
 import static java.lang.invoke.MethodHandles.*;
 import static java.lang.invoke.MethodType.*;
 
+@Bean
 public class ThrowExceptionsTest {
     private static final Class<?> CLASS = ThrowExceptionsTest.class;
     private static final Lookup LOOKUP = lookup();
@@ -168,7 +169,11 @@ public class ThrowExceptionsTest {
     }
 
     int testWMTCallee;
-    private int testWMTCallee(String x) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int testWMTCallee(String x) {
         return testWMTCallee++;
     }
     private static MethodHandle testWMTCallee() {

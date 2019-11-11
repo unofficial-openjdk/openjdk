@@ -34,6 +34,7 @@ import java.util.logging.LogRecord;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+@Bean
 public class LoggerSubclass {
     void test(String[] args) {
         final String name = "myLogger";
@@ -54,7 +55,11 @@ public class LoggerSubclass {
         logger.addHandler(new Handler() {
             public void close() {}
             public void flush() {}
-            public void publish(LogRecord l) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void publish(LogRecord l) {
                 equal(l.getLoggerName(), name);
                 equal(l.getMessage(), message);
                 equal(l.getResourceBundle(), null);

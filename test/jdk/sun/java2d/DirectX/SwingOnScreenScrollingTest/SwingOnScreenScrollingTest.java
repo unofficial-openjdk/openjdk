@@ -133,7 +133,8 @@ public class SwingOnScreenScrollingTest extends JPanel {
         });
     }
 
-    protected void paintComponent(Graphics g) {
+@Bean
+        protected void paintComponent(Graphics g) {
         g.setColor(Color.green);
         g.fillRect(0, 0, getWidth(), 100);
         g.setColor(Color.red);

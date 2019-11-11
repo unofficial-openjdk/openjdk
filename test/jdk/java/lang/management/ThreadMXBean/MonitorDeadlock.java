@@ -31,6 +31,7 @@
 import java.lang.management.*;
 import java.util.*;
 
+@Bean
 public class MonitorDeadlock {
 
     private final int EXPECTED_THREADS = 3;

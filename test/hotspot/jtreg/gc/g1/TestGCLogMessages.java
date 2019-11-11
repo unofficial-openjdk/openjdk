@@ -42,6 +42,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.Platform;
 
+@Bean
 public class TestGCLogMessages {
 
     private enum Level {
@@ -56,7 +57,11 @@ public class TestGCLogMessages {
             this.logName = logName;
         }
 
-        public boolean lessThan(Level other) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean lessThan(Level other) {
             return this.compareTo(other) < 0;
         }
 

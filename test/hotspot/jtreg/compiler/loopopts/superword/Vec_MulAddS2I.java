@@ -75,6 +75,7 @@
 package compiler.loopopts.superword;
 import java.util.Random;
 
+@Bean
 public class Vec_MulAddS2I {
         static final int NUM = 1024;
         static int[] out =  new int[NUM];

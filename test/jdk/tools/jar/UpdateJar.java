@@ -34,6 +34,7 @@ import java.nio.file.attribute.*;
 import java.util.Set;
 import java.util.spi.ToolProvider;
 
+@Bean
 public class UpdateJar {
     private static final ToolProvider JAR_TOOL = ToolProvider.findFirst("jar")
         .orElseThrow(() ->

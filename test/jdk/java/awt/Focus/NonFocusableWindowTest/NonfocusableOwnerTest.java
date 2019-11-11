@@ -35,6 +35,7 @@ import java.awt.*;
 import java.awt.event.*;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class NonfocusableOwnerTest {
     Robot robot = Util.createRobot();
     Frame frame;
@@ -50,7 +51,10 @@ public class NonfocusableOwnerTest {
 
     public void start() {
         Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
-                public void eventDispatched(AWTEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void eventDispatched(AWTEvent e) {
                     System.out.println(e.toString());
                 }
             }, FocusEvent.FOCUS_EVENT_MASK | WindowEvent.WINDOW_FOCUS_EVENT_MASK | WindowEvent.WINDOW_EVENT_MASK);

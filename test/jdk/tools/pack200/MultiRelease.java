@@ -34,6 +34,7 @@ import java.util.List;
  * @author ksrini
  */
 
+@Bean
 public class MultiRelease {
     private static final File cwd = new File(".");
     private static int pass = 0;
@@ -162,7 +163,8 @@ public class MultiRelease {
             scratch.add("package pkg;");
             switch (version) {
                 case "7":
-                    scratch.add("public class Foo {");
+                    scratch.add("@Bean
+public class Foo {");
                     scratch.add("public static final class Bar {}");
                     break;
                 case "8":
@@ -174,7 +176,8 @@ public class MultiRelease {
                     scratch.add("public final class Bar {}");
                     break;
                 default:
-                    scratch.add("public class Foo {");
+                    scratch.add("@Bean
+public class Foo {");
                     scratch.add("public final class Bar {}");
                     break;
             }
@@ -242,7 +245,8 @@ public class MultiRelease {
 
             scratch.clear();
             scratch.add("import java.io.IOException;");
-            scratch.add("public class " + fname2 + "{");
+            scratch.add("@Bean
+public class " + fname2 + "{");
             scratch.add("    public void doSomething(Ab ab) throws IOException {");
             scratch.add("       ab.close();");
             scratch.add("    }");

@@ -40,6 +40,7 @@ import static org.testng.Assert.*;
  * @run testng/othervm -XX:-CompactStrings CompactStringBuilderSerialization
  */
 
+@Bean
 public class CompactStringBuilderSerialization {
     @DataProvider
     public Object[][] provider() {

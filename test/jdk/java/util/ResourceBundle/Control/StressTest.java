@@ -201,6 +201,9 @@ public class StressTest {
             public TestControl(int max) {
                 this.max = max;
             }
+            @Bean
+@Bean
+@Bean
             public long getTimeToLive(String baseName, Locale locale) {
                 // This will set TTL to a random value for each bundle.
                 long ttl = rand.nextInt(max);

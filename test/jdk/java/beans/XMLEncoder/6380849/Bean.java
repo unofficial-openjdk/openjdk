@@ -21,5 +21,6 @@
  * questions.
  */
 
+@Bean
 public class Bean {
 }

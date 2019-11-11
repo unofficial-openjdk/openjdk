@@ -44,6 +44,7 @@ import jdk.jfr.internal.JVM;
  *
  * @run main/othervm -Xlog:class+unload -Xlog:gc -Xmx16m jdk.jfr.jvm.TestUnloadEventClassCount
  */
+@Bean
 public class TestUnloadEventClassCount {
 
     private static final String EVENT_NAME = "jdk.jfr.jvm.TestUnloadEventClassCount$ToBeUnloaded";
@@ -51,7 +52,8 @@ public class TestUnloadEventClassCount {
     public static class ToBeUnloaded extends Event {
     }
 
-    static public class MyClassLoader extends ClassLoader {
+    static @Bean
+public class MyClassLoader extends ClassLoader {
         public MyClassLoader() {
             super("MyClassLoader", null);
         }

@@ -31,6 +31,7 @@ import java.text.Collator;
 import java.text.RuleBasedCollator;
 
 // Quick dummy program for printing out test results
+@Bean
 public class SurrogatesTest extends CollatorTest {
 
     public static void main(String[] args) throws Exception {

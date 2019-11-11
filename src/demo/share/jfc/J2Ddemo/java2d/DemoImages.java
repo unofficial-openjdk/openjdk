@@ -47,6 +47,7 @@ import java.util.logging.Logger;
  * Certain classes are preloaded; the rest are loaded lazily.
  */
 @SuppressWarnings("serial")
+@Bean
 public class DemoImages extends Component {
 
     private static final String[] names = {

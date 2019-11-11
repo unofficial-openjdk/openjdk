@@ -57,6 +57,7 @@ import java.util.HashSet;
 import java.util.Arrays;
 import java.rmi.activation.*;
 
+@Bean
 public class SetChildEnv
 {
     public static void main(String argv[]) throws Exception {

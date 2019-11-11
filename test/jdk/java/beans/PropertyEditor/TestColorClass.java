@@ -34,6 +34,7 @@
 
 import java.awt.Color;
 
+@Bean
 public class TestColorClass {
     public static void main(String[] args) {
         System.setSecurityManager(new SecurityManager());

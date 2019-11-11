@@ -31,6 +31,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.Properties;
 
+@Bean
 public class CloseXMLStream {
     public static void main(String[] args) throws Throwable {
         class ExpectedClosingException extends RuntimeException {};

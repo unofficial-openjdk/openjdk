@@ -36,7 +36,11 @@ class Dependency {
     }
 
     @Override
-    public boolean equals(Object o) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) {
         if (!(o instanceof Dependency)) {
             return false;
         }

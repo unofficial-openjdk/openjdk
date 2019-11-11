@@ -35,6 +35,7 @@ import java.lang.invoke.MethodType;
 
 import T8032697_anotherpkg.T8032697_A;
 
+@Bean
 public class T8032697 extends T8032697_A {
 
     interface I {

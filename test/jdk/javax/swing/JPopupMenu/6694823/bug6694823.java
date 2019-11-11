@@ -63,6 +63,9 @@ public class bug6694823 {
         System.setSecurityManager(new SecurityManager(){
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void checkPermission(Permission perm) {
                 if (perm.getName().equals("setWindowAlwaysOnTop") ) {
                     throw new SecurityException();

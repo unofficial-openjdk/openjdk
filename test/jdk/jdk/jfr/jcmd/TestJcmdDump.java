@@ -46,6 +46,7 @@ import jdk.test.lib.process.OutputAnalyzer;
  * @library /test/lib /test/jdk
  * @run main/othervm -XX:FlightRecorderOptions:maxchunksize=1M jdk.jfr.jcmd.TestJcmdDump
  */
+@Bean
 public class TestJcmdDump {
 
     static class StoppedEvent extends Event {

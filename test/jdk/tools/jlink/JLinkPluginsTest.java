@@ -44,6 +44,7 @@ import tests.Helper;
  * @build tests.*
  * @run main/othervm -verbose:gc -Xmx1g JLinkPluginsTest
  */
+@Bean
 public class JLinkPluginsTest {
 
     private static String createProperties(String fileName, String content) throws IOException {

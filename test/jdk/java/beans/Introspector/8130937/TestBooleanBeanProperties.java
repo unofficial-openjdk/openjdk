@@ -94,7 +94,10 @@ public final class TestBooleanBeanProperties {
             return value;
         }
 
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
     }
@@ -112,15 +115,24 @@ public final class TestBooleanBeanProperties {
         @BeanProperty(bound = true, expert = true, hidden = true,
                       preferred = true, required = true, visualUpdate = true,
                       enumerationValues = {})
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
 
-        public void addPropertyChangeListener(PropertyChangeListener l) {
+        @Bean
+@Bean
+@Bean
+            public void addPropertyChangeListener(PropertyChangeListener l) {
             pcs.addPropertyChangeListener(l);
         }
 
-        public void removePropertyChangeListener(PropertyChangeListener l) {
+        @Bean
+@Bean
+@Bean
+            public void removePropertyChangeListener(PropertyChangeListener l) {
             pcs.removePropertyChangeListener(l);
         }
     }
@@ -137,7 +149,10 @@ public final class TestBooleanBeanProperties {
         }
 
         @BeanProperty(bound = true)
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
     }
@@ -151,7 +166,10 @@ public final class TestBooleanBeanProperties {
         }
 
         @BeanProperty(bound = false)
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
     }
@@ -166,15 +184,24 @@ public final class TestBooleanBeanProperties {
             return value;
         }
 
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
 
-        public void addPropertyChangeListener(PropertyChangeListener l) {
+        @Bean
+@Bean
+@Bean
+            public void addPropertyChangeListener(PropertyChangeListener l) {
             pcs.addPropertyChangeListener(l);
         }
 
-        public void removePropertyChangeListener(PropertyChangeListener l) {
+        @Bean
+@Bean
+@Bean
+            public void removePropertyChangeListener(PropertyChangeListener l) {
             pcs.removePropertyChangeListener(l);
         }
     }
@@ -190,15 +217,24 @@ public final class TestBooleanBeanProperties {
         }
 
         @BeanProperty(bound = false)
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
 
-        public void addPropertyChangeListener(PropertyChangeListener l) {
+        @Bean
+@Bean
+@Bean
+            public void addPropertyChangeListener(PropertyChangeListener l) {
             pcs.addPropertyChangeListener(l);
         }
 
-        public void removePropertyChangeListener(PropertyChangeListener l) {
+        @Bean
+@Bean
+@Bean
+            public void removePropertyChangeListener(PropertyChangeListener l) {
             pcs.removePropertyChangeListener(l);
         }
     }
@@ -214,15 +250,24 @@ public final class TestBooleanBeanProperties {
         }
 
         @BeanProperty(bound = true)
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
 
-        public void addPropertyChangeListener(PropertyChangeListener l) {
+        @Bean
+@Bean
+@Bean
+            public void addPropertyChangeListener(PropertyChangeListener l) {
             pcs.addPropertyChangeListener(l);
         }
 
-        public void removePropertyChangeListener(PropertyChangeListener l) {
+        @Bean
+@Bean
+@Bean
+            public void removePropertyChangeListener(PropertyChangeListener l) {
             pcs.removePropertyChangeListener(l);
         }
     }
@@ -239,7 +284,10 @@ public final class TestBooleanBeanProperties {
         }
 
         @BeanProperty(expert = true)
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
     }
@@ -253,7 +301,10 @@ public final class TestBooleanBeanProperties {
         }
 
         @BeanProperty(expert = false)
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
     }
@@ -270,7 +321,10 @@ public final class TestBooleanBeanProperties {
         }
 
         @BeanProperty(hidden = true)
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
     }
@@ -284,7 +338,10 @@ public final class TestBooleanBeanProperties {
         }
 
         @BeanProperty(hidden = false)
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
     }
@@ -301,7 +358,10 @@ public final class TestBooleanBeanProperties {
         }
 
         @BeanProperty(preferred = true)
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
     }
@@ -315,7 +375,10 @@ public final class TestBooleanBeanProperties {
         }
 
         @BeanProperty(preferred = false)
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
     }
@@ -332,7 +395,10 @@ public final class TestBooleanBeanProperties {
         }
 
         @BeanProperty(required = true)
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
     }
@@ -346,7 +412,10 @@ public final class TestBooleanBeanProperties {
         }
 
         @BeanProperty(required = false)
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
     }
@@ -363,7 +432,10 @@ public final class TestBooleanBeanProperties {
         }
 
         @BeanProperty(visualUpdate = true)
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
     }
@@ -377,7 +449,10 @@ public final class TestBooleanBeanProperties {
         }
 
         @BeanProperty(visualUpdate = false)
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
     }

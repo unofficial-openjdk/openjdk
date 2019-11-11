@@ -37,6 +37,7 @@ import java.util.*;
 import java.nio.*;
 import java.util.regex.Pattern;
 
+@Bean
 public class SwapMicroBenchmark {
     abstract static class Job {
         private final String name;

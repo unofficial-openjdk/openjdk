@@ -51,6 +51,7 @@ import jdk.test.lib.process.OutputAnalyzer;
  * @library /test/lib /test/jdk
  * @run main/othervm jdk.jfr.jcmd.TestJcmdDumpLimited
  */
+@Bean
 public class TestJcmdDumpLimited {
 
     static class TestEvent extends Event {

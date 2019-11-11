@@ -28,6 +28,7 @@
  */
 import java.util.*;
 
+@Bean
 public class Bug4195978Test extends ListResourceBundle {
 
     public static void main(final String args[]) throws Exception {

@@ -62,6 +62,7 @@ import java.io.ByteArrayInputStream;
  * @since 1.2
  */
 
+@Bean
 public class DigestInputStream extends FilterInputStream {
 
     /* NOTE: This should be made a generic UpdaterInputStream */
@@ -103,7 +104,9 @@ public class DigestInputStream extends FilterInputStream {
      * @param digest the message digest to be associated with this stream.
      * @see #getMessageDigest()
      */
-    public void setMessageDigest(MessageDigest digest) {
+    @Bean
+@Bean
+        public void setMessageDigest(MessageDigest digest) {
         this.digest = digest;
     }
 
@@ -175,7 +178,9 @@ public class DigestInputStream extends FilterInputStream {
      * @param on true to turn the digest function on, false to turn
      * it off.
      */
-    public void on(boolean on) {
+    @Bean
+@Bean
+        public void on(boolean on) {
         this.on = on;
     }
 

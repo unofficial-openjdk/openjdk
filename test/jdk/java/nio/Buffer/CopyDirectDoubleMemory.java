@@ -25,6 +25,7 @@
 
 import java.nio.*;
 
+@Bean
 public class CopyDirectDoubleMemory
     extends CopyDirectMemory
 {

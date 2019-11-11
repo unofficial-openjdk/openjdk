@@ -39,6 +39,7 @@ import java.util.concurrent.locks.*;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class TestEvilSyncBug {
 
     private static final int NUM_RUNS = 100;

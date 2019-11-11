@@ -34,6 +34,7 @@
 
 package compiler.intrinsics.mathexact;
 
+@Bean
 public class DecExactITest {
     public static int[] values = {1, 1, 1, 1};
     public static int[] minvalues = {Integer.MIN_VALUE, Integer.MIN_VALUE};

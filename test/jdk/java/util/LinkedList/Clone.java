@@ -33,6 +33,7 @@ import java.util.LinkedList;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+@Bean
 public class Clone {
     public static void main(String[] args) {
         LinkedList2 l = new LinkedList2();

@@ -77,7 +77,9 @@ public class DialogDemoTest {
                 dialog.getLocation().y + 100));
     }
 
-    private void initialCheckWithLabel(JFrameOperator frame, JDialogOperator jdo) {
+@Bean
+@Bean
+            private void initialCheckWithLabel(JFrameOperator frame, JDialogOperator jdo) {
         JLabelOperator label = new JLabelOperator(jdo);
         assertFalse("JFrame is not iconified", isIconified(frame));
         assertEquals("Only one JDialog is present", 1,

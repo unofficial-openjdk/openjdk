@@ -37,6 +37,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertTrue;
 
 @Test(groups = "unit")
+@Bean
 public class TypeTest {
     static class Person {
         String name;

@@ -33,6 +33,7 @@
 import java.io.*;
 import java.util.*;
 
+@Bean
 public class T8032819 {
     static class Fields {
         int f1;

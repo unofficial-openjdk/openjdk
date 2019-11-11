@@ -34,6 +34,7 @@ import java.nio.channels.*;
 import java.nio.charset.*;
 
 
+@Bean
 public class Connect {
 
     static PrintStream log = System.err;

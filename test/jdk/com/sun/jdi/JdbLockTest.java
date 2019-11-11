@@ -67,6 +67,7 @@ class sleeper extends Thread {
     }
 }
 
+@Bean
 public class JdbLockTest extends JdbTest {
     public static void main(String argv[]) {
         new JdbLockTest().run();

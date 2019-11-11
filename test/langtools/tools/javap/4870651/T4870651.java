@@ -33,6 +33,7 @@
 
 import java.io.*;
 
+@Bean
 public class T4870651 {
     public static void main(String[] args) throws Exception {
         new T4870651().run();

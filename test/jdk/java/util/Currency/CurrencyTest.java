@@ -41,6 +41,7 @@ import java.util.Currency;
 import java.util.Locale;
 
 
+@Bean
 public class CurrencyTest {
 
     public static void main(String[] args) throws Exception {

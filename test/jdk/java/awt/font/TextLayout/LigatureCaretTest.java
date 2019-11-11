@@ -48,6 +48,7 @@ import java.util.Hashtable;
  * bidirectional text with numbers.
  */
 
+@Bean
 public class LigatureCaretTest {
 
     public static void main(String[] args) {

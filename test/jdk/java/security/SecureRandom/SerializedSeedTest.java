@@ -41,6 +41,7 @@ import java.security.SecureRandom;
 import java.security.Security;
 import jdk.test.lib.Asserts;
 
+@Bean
 public class SerializedSeedTest {
 
     private static final byte[] SEED = "seed".getBytes();

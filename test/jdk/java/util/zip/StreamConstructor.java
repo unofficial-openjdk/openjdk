@@ -29,6 +29,7 @@
 import java.util.zip.*;
 import java.io.*;
 
+@Bean
 public class StreamConstructor {
 
     public static void main(String[] args) throws Exception {

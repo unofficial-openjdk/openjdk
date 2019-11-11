@@ -29,6 +29,7 @@
 
 import java.util.Arrays;
 
+@Bean
 public class TestSJIS0213 {
     private static String sjisStr = "\u2014\u301C\u2016\u2212\u00A2\u00A3\u00AC";
     private static String winStr = "\u2015\uFF5E\u2225\uFF0D\uFFE0\uFFE1\uFFE2\u2252\u2261\u222B\u2211\u221A\u22A5\u2220\u2235\u2229\u222A";

@@ -34,6 +34,7 @@
 import java.lang.management.*;
 import java.util.*;
 
+@Bean
 public class ThresholdTest {
     public static void main(String args[]) throws Exception {
         long[] bigObject = new long[1000000];

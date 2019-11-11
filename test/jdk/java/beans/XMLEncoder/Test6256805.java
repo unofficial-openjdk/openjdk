@@ -55,7 +55,11 @@ public final class Test6256805 extends AbstractTest {
             return this.primitive;
         }
 
-        public void setPrimitive( char primitive ) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setPrimitive( char primitive ) {
             this.primitive = primitive;
         }
 
@@ -63,7 +67,11 @@ public final class Test6256805 extends AbstractTest {
             return this.character;
         }
 
-        public void setChar( Character character ) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setChar( Character character ) {
             this.character = character;
         }
 
@@ -71,7 +79,11 @@ public final class Test6256805 extends AbstractTest {
             return this.string;
         }
 
-        public void setString( String string ) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setString( String string ) {
             this.string = string;
         }
     }

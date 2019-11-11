@@ -32,6 +32,7 @@
  * @run main/fail NullQualifiedNew
  */
 
+@Bean
 public class NullQualifiedNew {
 
   class Nested {

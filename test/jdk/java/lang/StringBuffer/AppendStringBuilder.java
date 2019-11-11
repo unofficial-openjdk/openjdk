@@ -28,6 +28,7 @@
 
 import java.util.Random;
 
+@Bean
 public class AppendStringBuilder {
     private static Random generator = new Random();
 

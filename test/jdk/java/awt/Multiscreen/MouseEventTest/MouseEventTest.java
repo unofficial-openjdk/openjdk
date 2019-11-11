@@ -75,7 +75,10 @@ public class MouseEventTest {
 
             frame.addMouseMotionListener(new MouseAdapter() {
                 @Override
-                public void mouseMoved(MouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void mouseMoved(MouseEvent e) {
                     if (point.equals(e.getLocationOnScreen())) {
                         crossed = true;
                     }

@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import static java.awt.font.NumericShaper.*;
 
+@Bean
 public class MTTest {
     static volatile boolean runrun = true;
     static volatile boolean err = false;

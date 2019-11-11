@@ -44,6 +44,7 @@ import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Test
+@Bean
 public class CondyReturnPrimitiveTest {
     // Counter for number of BSM calls
     // Use of an AtomicInteger is not strictly necessary in this test

@@ -38,6 +38,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 
 
 // This class is intended to run inside a container
+@Bean
 public class JfrNetwork {
     // use a unique hostname for container
     public static final String HOST_NAME = "container-unique-8221711";

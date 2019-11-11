@@ -46,6 +46,7 @@ import java.util.function.BiFunction;
 import java.util.function.LongFunction;
 import java.util.stream.IntStream;
 
+@Bean
 public class ArraysEqCmpTest {
 
     // Maximum width in bits
@@ -662,7 +663,11 @@ public class ArraysEqCmpTest {
     // Equality and comparison tests
 
     @Test(dataProvider = "arrayTypesProvider")
-    public void testArray(ArrayType<?> arrayType) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testArray(ArrayType<?> arrayType) {
         BiFunction<ArrayType<?>, Integer, Object> constructor = (at, s) -> {
             Object a = at.construct(s);
             for (int x = 0; x < s; x++) {
@@ -723,7 +728,11 @@ public class ArraysEqCmpTest {
     }
 
     @Test(dataProvider = "objectArrayTypesProvider")
-    public void testNullElementsInObjectArray(ArrayType<?> arrayType) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testNullElementsInObjectArray(ArrayType<?> arrayType) {
         BiFunction<ArrayType<?>, Object, Object> cloner = ArrayType::copyOf;
 
         // All nulls
@@ -757,7 +766,11 @@ public class ArraysEqCmpTest {
     }
 
     @Test(dataProvider = "objectArrayTypesProvider")
-    public void testSameRefElementsInObjectArray(ArrayType<?> arrayType) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testSameRefElementsInObjectArray(ArrayType<?> arrayType) {
         BiFunction<ArrayType<?>, Object, Object> cloner = ArrayType::copyOf;
 
         // One ref
@@ -797,7 +810,11 @@ public class ArraysEqCmpTest {
     }
 
     @Test(dataProvider = "signedUnsignedArrayTypes")
-    public void testSignedUnsignedArray(ArrayType<?> sat, ArrayType<?> uat) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testSignedUnsignedArray(ArrayType<?> sat, ArrayType<?> uat) {
         BiFunction<ArrayType<?>, Integer, Object> constructor = (at, s) -> {
             Object a = at.construct(s);
             for (int x = 0; x < s; x++) {
@@ -987,7 +1004,11 @@ public class ArraysEqCmpTest {
     // Null array reference tests
 
     @Test(dataProvider = "arrayTypesProvider")
-    public void testNullArrayRefs(ArrayType<?> arrayType) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testNullArrayRefs(ArrayType<?> arrayType) {
         Object n = null;
         Object a = arrayType.construct(0);
 
@@ -1004,7 +1025,11 @@ public class ArraysEqCmpTest {
     // Exception throwing tests
 
     @Test(dataProvider = "arrayTypesProvider")
-    public void testNPEs(ArrayType<?> arrayType) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testNPEs(ArrayType<?> arrayType) {
         Object[] values = new Object[]{null, arrayType.construct(0)};
 
         for (Object o1 : values) {
@@ -1047,7 +1072,11 @@ public class ArraysEqCmpTest {
     }
 
     @Test(dataProvider = "arrayTypesProvider")
-    public void testIAEs(ArrayType<?> arrayType) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testIAEs(ArrayType<?> arrayType) {
         List<Integer> values = Arrays.asList(0, 1);
 
         for (int s : values) {
@@ -1066,7 +1095,11 @@ public class ArraysEqCmpTest {
     }
 
     @Test(dataProvider = "arrayTypesProvider")
-    public void testAIOBEs(ArrayType<?> arrayType) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testAIOBEs(ArrayType<?> arrayType) {
         List<Integer> froms = Arrays.asList(-1, 0);
 
         for (int s : Arrays.asList(0, 1)) {

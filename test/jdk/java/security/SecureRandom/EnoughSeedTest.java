@@ -33,6 +33,7 @@ import java.security.SecureRandom;
 import java.security.Security;
 import static java.lang.Math.*;
 
+@Bean
 public class EnoughSeedTest {
 
     private static final String DRBG_CONFIG = "securerandom.drbg.config";

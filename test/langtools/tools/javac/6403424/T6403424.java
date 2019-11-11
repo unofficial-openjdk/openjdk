@@ -32,6 +32,7 @@ import java.io.*;
 import java.util.*;
 import com.sun.tools.javac.api.*;
 
+@Bean
 public class T6403424 {
     public static void main(String[] args) {
         File testSrc = new File(System.getProperty("test.src", "."));

@@ -50,6 +50,7 @@ import jdk.test.lib.Asserts;
 /* Idea of this test is to check if ideal graph has CountedLoopEnd->SafePoint edge in case
    of UseCountedLoopSafepoint enabled and has no such edge in case it's disabled. Restricting
    compilation to testMethod only will leave only one counted loop (the one in testedMethod) */
+@Bean
 public class UseCountedLoopSafepointsTest {
 
     public static void main (String args[]) {

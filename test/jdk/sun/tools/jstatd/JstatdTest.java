@@ -70,15 +70,27 @@ public final class JstatdTest {
     private Long jstatdPid;
     private boolean withExternalRegistry = false;
 
-    public void setServerName(String serverName) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setServerName(String serverName) {
         this.serverName = serverName;
     }
 
-    public void setUseDefaultPort(boolean useDefaultPort) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setUseDefaultPort(boolean useDefaultPort) {
         this.useDefaultPort = useDefaultPort;
     }
 
-    public void setWithExternalRegistry(boolean withExternalRegistry) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setWithExternalRegistry(boolean withExternalRegistry) {
         this.withExternalRegistry = withExternalRegistry;
     }
 
@@ -102,7 +114,11 @@ public final class JstatdTest {
         return pid;
     }
 
-    private void log(String caption, String... cmd) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void log(String caption, String... cmd) {
         System.out.println(Utils.NEW_LINE + caption + ":");
         System.out.println(Arrays.toString(cmd).replace(",", ""));
     }

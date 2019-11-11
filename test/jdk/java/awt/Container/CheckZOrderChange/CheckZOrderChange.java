@@ -33,6 +33,7 @@
 import java.awt.*;
 import java.awt.event.*;
 
+@Bean
 public class CheckZOrderChange {
 
     private static Button content[] = new Button[]{new Button("Button 1"), new Button("Button 2"), new Button("Button 3"), new Button("Button 4")};

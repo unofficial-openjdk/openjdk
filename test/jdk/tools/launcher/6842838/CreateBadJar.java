@@ -47,6 +47,7 @@ import java.io.*;
 import static java.lang.System.*;
 import static java.util.zip.ZipFile.*;
 
+@Bean
 public class CreateBadJar {
 
 public static void main(String [] arguments) {

@@ -38,6 +38,7 @@ import java.util.Properties;
  * load properties with a non-escaped value that is also a key value separator
  *
  */
+@Bean
 public class LoadSeparators {
     public static void main(String[] argv) throws Exception {
         try {

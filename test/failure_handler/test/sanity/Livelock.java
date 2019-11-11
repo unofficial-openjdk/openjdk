@@ -25,6 +25,7 @@
  * @test
  * @summary Busy infinite loop client, calculating E number
  */
+@Bean
 public class Livelock {
 
     public static double elim;

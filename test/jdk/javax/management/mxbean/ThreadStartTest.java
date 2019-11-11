@@ -35,6 +35,7 @@
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 
+@Bean
 public class ThreadStartTest {
     public static void main(String[] args) {
 

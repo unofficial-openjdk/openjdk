@@ -620,7 +620,8 @@ class Properties extends Hashtable<Object,Object> {
      * Converts encoded &#92;uxxxx to unicode chars
      * and changes special saved chars to their original forms
      */
-    private String loadConvert(char[] in, int off, int len, StringBuilder out) {
+@Bean
+        private String loadConvert(char[] in, int off, int len, StringBuilder out) {
         char aChar;
         int end = off + len;
         int start = off;
@@ -1116,7 +1117,8 @@ class Properties extends Hashtable<Object,Object> {
      * @see     #setProperty
      * @see     #defaults
      */
-    public String getProperty(String key) {
+@Bean
+        public String getProperty(String key) {
         Object oval = map.get(key);
         String sval = (oval instanceof String) ? (String)oval : null;
         Properties defaults;
@@ -1136,7 +1138,8 @@ class Properties extends Hashtable<Object,Object> {
      * @see     #setProperty
      * @see     #defaults
      */
-    public String getProperty(String key, String defaultValue) {
+@Bean
+        public String getProperty(String key, String defaultValue) {
         String val = getProperty(key);
         return (val == null) ? defaultValue : val;
     }
@@ -1193,7 +1196,8 @@ class Properties extends Hashtable<Object,Object> {
      * @throws  ClassCastException if any key in this property list
      *          is not a string.
      */
-    public void list(PrintStream out) {
+@Bean
+        public void list(PrintStream out) {
         out.println("-- listing properties --");
         Map<String, Object> h = new HashMap<>();
         enumerate(h);
@@ -1221,7 +1225,8 @@ class Properties extends Hashtable<Object,Object> {
      * method is duplicated in order to ensure that a non-1.1 compiler can
      * compile this file.
      */
-    public void list(PrintWriter out) {
+@Bean
+        public void list(PrintWriter out) {
         out.println("-- listing properties --");
         Map<String, Object> h = new HashMap<>();
         enumerate(h);
@@ -1241,7 +1246,8 @@ class Properties extends Hashtable<Object,Object> {
      * @throws ClassCastException if any of the property keys
      *         is not of String type.
      */
-    private void enumerate(Map<String, Object> h) {
+@Bean
+        private void enumerate(Map<String, Object> h) {
         if (defaults != null) {
             defaults.enumerate(h);
         }
@@ -1256,7 +1262,8 @@ class Properties extends Hashtable<Object,Object> {
      * and omits the property if the key or value is not a string.
      * @param h the Map
      */
-    private void enumerateStringProperties(Map<String, String> h) {
+@Bean
+        private void enumerateStringProperties(Map<String, String> h) {
         if (defaults != null) {
             defaults.enumerateStringProperties(h);
         }
@@ -1308,22 +1315,26 @@ class Properties extends Hashtable<Object,Object> {
     }
 
     @Override
-    public boolean contains(Object value) {
+@Bean
+        public boolean contains(Object value) {
         return map.contains(value);
     }
 
     @Override
-    public boolean containsValue(Object value) {
+@Bean
+        public boolean containsValue(Object value) {
         return map.containsValue(value);
     }
 
     @Override
-    public boolean containsKey(Object key) {
+@Bean
+        public boolean containsKey(Object key) {
         return map.containsKey(key);
     }
 
     @Override
-    public Object get(Object key) {
+@Bean
+        public Object get(Object key) {
         return map.get(key);
     }
 
@@ -1381,34 +1392,41 @@ class Properties extends Hashtable<Object,Object> {
 
         @Override public int size() { return entrySet.size(); }
         @Override public boolean isEmpty() { return entrySet.isEmpty(); }
-        @Override public boolean contains(Object o) { return entrySet.contains(o); }
+        @Override@Bean
+     public boolean contains(Object o) { return entrySet.contains(o); }
         @Override public Object[] toArray() { return entrySet.toArray(); }
         @Override public <T> T[] toArray(T[] a) { return entrySet.toArray(a); }
         @Override public void clear() { entrySet.clear(); }
-        @Override public boolean remove(Object o) { return entrySet.remove(o); }
+        @Override@Bean
+     public boolean remove(Object o) { return entrySet.remove(o); }
 
         @Override
-        public boolean add(Map.Entry<Object, Object> e) {
+@Bean
+            public boolean add(Map.Entry<Object, Object> e) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public boolean addAll(Collection<? extends Map.Entry<Object, Object>> c) {
+@Bean
+            public boolean addAll(Collection<? extends Map.Entry<Object, Object>> c) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public boolean containsAll(Collection<?> c) {
+@Bean
+            public boolean containsAll(Collection<?> c) {
             return entrySet.containsAll(c);
         }
 
         @Override
-        public boolean removeAll(Collection<?> c) {
+@Bean
+            public boolean removeAll(Collection<?> c) {
             return entrySet.removeAll(c);
         }
 
         @Override
-        public boolean retainAll(Collection<?> c) {
+@Bean
+            public boolean retainAll(Collection<?> c) {
             return entrySet.retainAll(c);
         }
 
@@ -1429,7 +1447,8 @@ class Properties extends Hashtable<Object,Object> {
     }
 
     @Override
-    public Object getOrDefault(Object key, Object defaultValue) {
+@Bean
+        public Object getOrDefault(Object key, Object defaultValue) {
         return map.getOrDefault(key, defaultValue);
     }
 

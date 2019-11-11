@@ -40,6 +40,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 
+@Bean
 public class setComponentZOrder
 {
 

@@ -55,6 +55,7 @@ import jdk.test.lib.util.OptimalCapacity;
 // a power of two size, so it will end up 1024 (and thus succeed) in
 // cases, such as 638, 667, and 676.
 
+@Bean
 public class OptimalMapSize {
     public static void main(String[] args) throws Throwable {
         // The initial size of Character.UnicodeBlock.map.

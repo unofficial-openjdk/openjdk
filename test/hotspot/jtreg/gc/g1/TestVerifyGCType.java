@@ -42,6 +42,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class TestVerifyGCType {
     public static final String VERIFY_TAG    = "[gc,verify]";
     public static final String VERIFY_BEFORE = "Verifying Before GC";
@@ -193,12 +194,20 @@ public class TestVerifyGCType {
             return name;
         }
 
-        public void addVerification(String verify) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addVerification(String verify) {
             System.out.println("Adding: " + verify);
             verification.add(verify);
         }
 
-        public boolean containsVerification(String contains) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean containsVerification(String contains) {
             for (String entry : verification) {
                 if (entry.contains(contains)) {
                     return true;

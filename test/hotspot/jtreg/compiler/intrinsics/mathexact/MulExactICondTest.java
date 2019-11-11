@@ -31,6 +31,7 @@
 
 package compiler.intrinsics.mathexact;
 
+@Bean
 public class MulExactICondTest {
     public static int result = 0;
 

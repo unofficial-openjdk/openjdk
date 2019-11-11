@@ -36,13 +36,22 @@ import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.Platform;
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class PlainRead {
 
-    static public void match(OutputAnalyzer oa, String what, String value) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void match(OutputAnalyzer oa, String what, String value) {
        oa.shouldMatch("^.*" + what + " *" + value + ".*$");
     }
 
-    static public void noMatch(OutputAnalyzer oa, String what, String value) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void noMatch(OutputAnalyzer oa, String what, String value) {
        oa.shouldNotMatch("^.*" + what + " *" + value + ".*$");
     }
 
@@ -51,7 +60,11 @@ public class PlainRead {
 
     static final String[] variables = {"Memory Limit is:", "CPU Shares is:", "CPU Quota is:", "CPU Period is:", "active_processor_count:"};
 
-    static public void isContainer(OutputAnalyzer oa) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void isContainer(OutputAnalyzer oa) {
         for (String v: variables) {
             match(oa, v, good_value);
         }
@@ -60,7 +73,11 @@ public class PlainRead {
         }
     }
 
-    static public void isNotContainer(OutputAnalyzer oa) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void isNotContainer(OutputAnalyzer oa) {
        oa.shouldMatch("^.*Can't open /proc/self/mountinfo.*$");
     }
 

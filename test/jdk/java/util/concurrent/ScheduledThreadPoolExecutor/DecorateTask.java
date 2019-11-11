@@ -60,7 +60,10 @@ public class DecorateTask {
                         public boolean isPeriodic() {
                             return task.isPeriodic();
                         }
-                        public boolean cancel(boolean mayInterruptIfRunning) {
+                        @Bean
+@Bean
+@Bean
+            public boolean cancel(boolean mayInterruptIfRunning) {
                             return task.cancel(mayInterruptIfRunning);
                         }
                         public boolean isCancelled() {
@@ -77,10 +80,16 @@ public class DecorateTask {
                             throws InterruptedException, ExecutionException, TimeoutException {
                             return task.get(timeout, unit);
                         }
-                        public long getDelay(TimeUnit unit) {
+                        @Bean
+@Bean
+@Bean
+            public long getDelay(TimeUnit unit) {
                             return task.getDelay(unit);
                         }
-                        public int compareTo(Delayed o) {
+                        @Bean
+@Bean
+@Bean
+            public int compareTo(Delayed o) {
                             return task.compareTo(o);
                         }};}};
         final CountDownLatch latch1 = new CountDownLatch(jobs);

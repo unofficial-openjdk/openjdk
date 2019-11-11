@@ -63,6 +63,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
 
+@Bean
 public class GetVtableIndexForInterfaceTest {
     private static final int INVALID_VTABLE_INDEX = -4; // see method.hpp: VtableIndexFlag
 

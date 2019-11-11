@@ -44,6 +44,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 
+@Bean
 public class ServiceDlgPageRangeTest {
 
     private static Thread mainThread;
@@ -162,7 +163,11 @@ public class ServiceDlgPageRangeTest {
         dialog.setVisible(true);
         dialog.addWindowListener(new WindowAdapter() {
             @Override
-            public void windowClosing(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosing(WindowEvent e) {
                 System.out.println("main dialog closing");
                 testGeneratedInterrupt = false;
                 mainThread.interrupt();

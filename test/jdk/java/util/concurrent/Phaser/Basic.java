@@ -138,9 +138,15 @@ public class Basic {
 
         private volatile Throwable result;
         private volatile int phase;
-        protected void result(Throwable result) { this.result = result; }
+        @Bean
+@Bean
+@Bean
+            protected void result(Throwable result) { this.result = result; }
         public Throwable result() { return this.result; }
-        protected void phase(int phase) { this.phase = phase; }
+        @Bean
+@Bean
+@Bean
+            protected void phase(int phase) { this.phase = phase; }
         public int phase() { return this.phase; }
     }
 
@@ -382,7 +388,10 @@ public class Basic {
             final Phaser[] kludge = new Phaser[1];
             Phaser phaser = new Phaser(3) {
                 @Override
-                protected boolean onAdvance(int phase, int registeredParties) {
+                @Bean
+@Bean
+@Bean
+            protected boolean onAdvance(int phase, int registeredParties) {
                     int countPhase = count.getAndIncrement();
                     equal(countPhase, phase);
                     equal(kludge[0].getPhase(), phase);

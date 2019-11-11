@@ -52,6 +52,7 @@ import java.util.concurrent.Executors;
  * @build HelloWorld JdwpAttachTest
  * @run main/othervm JdwpAttachTest
  */
+@Bean
 public class JdwpAttachTest {
 
     private static final boolean IsWindows = System.getProperty("os.name").toLowerCase().contains("windows");

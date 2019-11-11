@@ -43,6 +43,7 @@ import static org.testng.Assert.assertFalse;
  * @summary Unit test for Files.setLastModifiedTime
  */
 
+@Bean
 public class SetLastModifiedTime {
 
     static Path testDir;

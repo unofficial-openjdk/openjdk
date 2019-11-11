@@ -34,6 +34,7 @@ package gc.stress.gcold;
  * @run main/othervm -Xms64m -Xmx128m -XX:+UseG1GC -XX:+UseDynamicNumberOfGCThreads -Xlog:gc,gc+task=trace gc.stress.gcold.TestGCOldWithG1 50 5 20 1 5000
  * @run main/othervm -Xms64m -Xmx128m -XX:+UseG1GC -XX:+UseDynamicNumberOfGCThreads  -XX:+UnlockDiagnosticVMOptions -XX:+InjectGCWorkerCreationFailure -Xlog:gc,gc+task=trace gc.stress.gcold.TestGCOldWithG1 50 5 20 1 5000
  */
+@Bean
 public class TestGCOldWithG1 {
     public static void main(String[] args) {
         TestGCOld.main(args);

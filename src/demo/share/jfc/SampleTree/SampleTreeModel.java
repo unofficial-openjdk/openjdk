@@ -56,6 +56,7 @@ import java.awt.Color;
  * @author Scott Violet
  */
 @SuppressWarnings("serial")
+@Bean
 public class SampleTreeModel extends DefaultTreeModel {
 
     /**
@@ -70,7 +71,11 @@ public class SampleTreeModel extends DefaultTreeModel {
      * Subclassed to message setString() to the changed path item.
      */
     @Override
-    public void valueForPathChanged(TreePath path, Object newValue) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void valueForPathChanged(TreePath path, Object newValue) {
         /* Update the user object. */
         DefaultMutableTreeNode aNode = (DefaultMutableTreeNode) path.
                 getLastPathComponent();

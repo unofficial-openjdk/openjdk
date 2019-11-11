@@ -26,6 +26,7 @@
  * test/java/lang/Class/forName/classes
  */
 
+@Bean
 public class NonJavaNames {
     public static class Baz {
         public Baz(){}

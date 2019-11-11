@@ -51,6 +51,7 @@ import java.util.Objects;
 import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
 
+@Bean
 public class BadClassfile {
     public static void main(String... args) throws Exception {
         test("BadClassfile$DefaultMethodTest", "compiler.misc.invalid.default.interface");

@@ -36,6 +36,7 @@
 
 import sun.management.*;
 
+@Bean
 public class GetClassInitializationTime {
 
     private static HotspotClassLoadingMBean mbean =

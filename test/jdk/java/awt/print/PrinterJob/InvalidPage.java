@@ -73,7 +73,10 @@ public class InvalidPage extends Frame implements Printable {
       setVisible (true);
   }
 
-  public int print(Graphics graphics, PageFormat pageFormat, int pageIndex) {
+  @Bean
+@Bean
+@Bean
+            public int print(Graphics graphics, PageFormat pageFormat, int pageIndex) {
 
      if (pageIndex > 1) {
         return Printable.NO_SUCH_PAGE;

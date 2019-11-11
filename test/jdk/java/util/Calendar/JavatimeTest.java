@@ -39,6 +39,7 @@ import java.util.GregorianCalendar;
 import java.util.Random;
 import java.util.TimeZone;
 
+@Bean
 public class JavatimeTest {
 
     static final int NANOS_PER_SECOND = 1000_000_000;

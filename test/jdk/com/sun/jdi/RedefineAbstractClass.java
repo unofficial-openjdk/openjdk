@@ -103,6 +103,7 @@ class MyConcreteClass extends MyAbstractClass {
 }
 
 
+@Bean
 public class RedefineAbstractClass extends JdbTest {
     public static void main(String argv[]) {
         new RedefineAbstractClass().run();

@@ -51,6 +51,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 
 @Test
+@Bean
 public class ConstantBootstrapsTest {
     static final MethodHandles.Lookup L = MethodHandles.lookup();
 

@@ -34,6 +34,7 @@
 import java.awt.FocusTraversalPolicy;
 import java.awt.Window;
 
+@Bean
 public class InitialFTP {
     public static void test(Window win, Class<? extends FocusTraversalPolicy> expectedPolicy) {
         FocusTraversalPolicy ftp = win.getFocusTraversalPolicy();

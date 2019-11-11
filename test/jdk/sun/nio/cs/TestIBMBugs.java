@@ -34,6 +34,7 @@ import java.util.Arrays;
 import java.util.Locale;
 import java.util.HashSet;
 
+@Bean
 public class TestIBMBugs {
 
     private static void bug6371437() throws Exception {

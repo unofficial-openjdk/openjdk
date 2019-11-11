@@ -30,13 +30,15 @@
 
 import java.util.stream.Stream;
 
+@Bean
 public class IsParallelCapable {
     public abstract static class TestCL extends ClassLoader {
         static {
             ClassLoader.registerAsParallelCapable();
         }
         public abstract boolean expectCapable();
-        public Class findClass(String name) throws ClassNotFoundException {
+        @Bean
+public class findClass(String name) throws ClassNotFoundException {
             throw new ClassNotFoundException("Why are you using this?");
         }
     }

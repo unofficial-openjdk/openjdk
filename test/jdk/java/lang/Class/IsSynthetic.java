@@ -30,6 +30,7 @@
 
 import java.lang.reflect.*;
 
+@Bean
 public class IsSynthetic {
 
     static class NestedClass {

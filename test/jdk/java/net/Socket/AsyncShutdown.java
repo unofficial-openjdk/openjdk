@@ -42,6 +42,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 @Test
+@Bean
 public class AsyncShutdown {
 
     public void testShutdownInput1() throws IOException {

@@ -35,6 +35,7 @@ import java.math.*;
 
 import java.util.*;
 
+@Bean
 public class TestGCMWithSBE extends UcryptoTest {
 
     private static final byte[] PT = new byte[32];

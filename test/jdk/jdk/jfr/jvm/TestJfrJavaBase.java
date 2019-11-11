@@ -41,6 +41,7 @@ import jdk.test.lib.dcmd.PidJcmdExecutor;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class TestJfrJavaBase {
 
     private static void checkOutput(OutputAnalyzer output) {

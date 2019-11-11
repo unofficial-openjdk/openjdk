@@ -35,6 +35,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SocketChannel;
 
+@Bean
 public class AsyncCloseChannel {
     static volatile boolean failed = false;
     static volatile boolean keepGoing = true;

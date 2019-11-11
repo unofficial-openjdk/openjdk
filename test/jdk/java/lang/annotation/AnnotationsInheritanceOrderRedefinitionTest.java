@@ -45,6 +45,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.StringJoiner;
 
+@Bean
 public class AnnotationsInheritanceOrderRedefinitionTest {
 
     @Retention(RetentionPolicy.RUNTIME)

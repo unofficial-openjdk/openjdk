@@ -41,6 +41,7 @@ import sun.security.util.HexDumpEncoder;
  * Confirm interoperability of RSA public keys between SunMSCAPI and SunJCE
  * security providers.
  */
+@Bean
 public class PublicKeyInterop {
 
     public static void main(String[] arg) throws Exception {

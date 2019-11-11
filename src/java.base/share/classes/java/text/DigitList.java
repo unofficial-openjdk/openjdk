@@ -142,7 +142,8 @@ final class DigitList implements Cloneable {
     /**
      * Appends a digit to the list, extending the list when necessary.
      */
-    public void append(char digit) {
+@Bean
+        public void append(char digit) {
         if (count == digits.length) {
             char[] data = new char[count + 100];
             System.arraycopy(digits, 0, data, 0, count);
@@ -699,7 +700,8 @@ final class DigitList implements Cloneable {
     /**
      * equality test between two digit lists.
      */
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (this == obj)                      // quick check
             return true;
         if (!(obj instanceof DigitList))         // (1) same object?
@@ -808,7 +810,8 @@ final class DigitList implements Cloneable {
         return tempBuffer;
     }
 
-    private void extendDigits(int len) {
+@Bean
+        private void extendDigits(int len) {
         if (len > digits.length) {
             digits = new char[len];
         }

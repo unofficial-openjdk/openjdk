@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 
+@Bean
 public class ReaderForUnicodeText {
 
    public static void main(String[] args) throws Exception {
@@ -64,7 +65,10 @@ class TextTransferable implements Transferable {
     }
 
     @Override
-    public boolean isDataFlavorSupported(DataFlavor flavor) {
+    @Bean
+@Bean
+@Bean
+            public boolean isDataFlavorSupported(DataFlavor flavor) {
         if (flavor.match(DataFlavor.plainTextFlavor)) {
             return true;
         }

@@ -31,6 +31,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.io.PrintStream;
 
+@Bean
 public class UriImportExport {
 
     static final PrintStream log = System.out;

@@ -32,6 +32,7 @@ import jdk.test.lib.Utils;
 
 import java.lang.reflect.Executable;
 
+@Bean
 public class SingleCommand extends AbstractTestBase {
     private final Command command;
     private final Scenario.Type type;

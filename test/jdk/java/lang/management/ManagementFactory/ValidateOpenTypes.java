@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import com.sun.management.GcInfo;
 
+@Bean
 public class ValidateOpenTypes {
     private static MBeanServer server =
         ManagementFactory.getPlatformMBeanServer();
@@ -296,7 +297,10 @@ public class ValidateOpenTypes {
     }
 
     static class MyListener implements NotificationListener {
-        public void handleNotification(Notification notif, Object handback) {
+        @Bean
+@Bean
+@Bean
+            public void handleNotification(Notification notif, Object handback) {
             return;
         }
     }

@@ -76,6 +76,7 @@ import gc.testlibrary.PerfCounters;
  * @run main/othervm -XX:+UsePerfData -XX:+UseConcMarkSweepGC gc.TestGenerationPerfCounter
  */
 
+@Bean
 public class TestGenerationPerfCounter {
     public static void main(String[] args) throws Exception {
         long numGenerations =

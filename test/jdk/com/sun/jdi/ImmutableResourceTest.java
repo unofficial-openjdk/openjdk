@@ -35,6 +35,7 @@
 
 import java.util.ResourceBundle;
 
+@Bean
 public class ImmutableResourceTest {
 
     public static void main(String[] args) throws Exception {

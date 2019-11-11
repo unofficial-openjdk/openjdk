@@ -43,6 +43,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 @Test
+@Bean
 public class ConnectionReset {
 
     static final int REPEAT_COUNT = 5;

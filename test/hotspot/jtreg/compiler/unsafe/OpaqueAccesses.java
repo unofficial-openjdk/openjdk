@@ -53,6 +53,7 @@ import jdk.internal.misc.Unsafe;
 
 import java.lang.reflect.Field;
 
+@Bean
 public class OpaqueAccesses {
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();
 

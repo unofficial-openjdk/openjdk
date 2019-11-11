@@ -38,6 +38,7 @@
 import java.util.*;
 import java.nio.file.*;
 
+@Bean
 public class IncCompileDropClasses extends SJavacTester {
     public static void main(String... args) throws Exception {
         IncCompileDropClasses dc = new IncCompileDropClasses();

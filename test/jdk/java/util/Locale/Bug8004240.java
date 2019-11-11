@@ -33,6 +33,7 @@
 import java.util.List;
 import sun.util.locale.provider.LocaleProviderAdapter;
 
+@Bean
 public class Bug8004240 {
 
     public static void main(String[] args) {

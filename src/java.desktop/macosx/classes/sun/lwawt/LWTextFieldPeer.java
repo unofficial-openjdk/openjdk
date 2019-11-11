@@ -70,7 +70,8 @@ final class LWTextFieldPeer
     }
 
     @Override
-    public void setEchoChar(final char echoChar) {
+@Bean
+        public void setEchoChar(final char echoChar) {
         synchronized (getDelegateLock()) {
             getDelegate().setEchoChar(echoChar);
             final boolean cutCopyAllowed;
@@ -89,17 +90,20 @@ final class LWTextFieldPeer
     }
 
     @Override
-    public Dimension getPreferredSize(final int columns) {
+@Bean
+        public Dimension getPreferredSize(final int columns) {
         return getMinimumSize(columns);
     }
 
     @Override
-    public Dimension getMinimumSize(final int columns) {
+@Bean
+        public Dimension getMinimumSize(final int columns) {
         return getMinimumSize(1, columns);
     }
 
     @Override
-    public void actionPerformed(final ActionEvent e) {
+@Bean
+        public void actionPerformed(final ActionEvent e) {
         postEvent(new ActionEvent(getTarget(), ActionEvent.ACTION_PERFORMED,
                 getText(), e.getWhen(), e.getModifiers()));
     }
@@ -123,7 +127,8 @@ final class LWTextFieldPeer
     private final class JPasswordFieldDelegate extends JPasswordField {
 
         @Override
-        public void replaceSelection(String content) {
+@Bean
+            public void replaceSelection(String content) {
             getDocument().removeDocumentListener(LWTextFieldPeer.this);
             super.replaceSelection(content);
             // post only one text event in this case

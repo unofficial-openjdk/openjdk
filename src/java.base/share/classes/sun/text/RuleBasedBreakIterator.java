@@ -213,6 +213,7 @@ import sun.text.SupplementaryCharacterData;
  *
  * @author Richard Gillam
  */
+@Bean
 public class RuleBasedBreakIterator extends BreakIterator {
 
     /**
@@ -374,7 +375,8 @@ public class RuleBasedBreakIterator extends BreakIterator {
      * @throws BufferUnderflowException if the end-of-data is reached before
      *                                  setting up all the tables
      */
-    private void setupTables(String ruleFile, ByteBuffer bb) {
+@Bean
+        private void setupTables(String ruleFile, ByteBuffer bb) {
         /* Read header_info. */
         int stateTableLength = bb.getInt();
         int backwardsStateTableLength = bb.getInt();
@@ -497,7 +499,8 @@ public class RuleBasedBreakIterator extends BreakIterator {
      * rules, and iterate over the same text.
      */
     @Override
-    public boolean equals(Object that) {
+@Bean
+        public boolean equals(Object that) {
         try {
             if (that == null) {
                 return false;
@@ -577,7 +580,8 @@ public class RuleBasedBreakIterator extends BreakIterator {
      * the current one.
      */
     @Override
-    public int next(int n) {
+@Bean
+        public int next(int n) {
         int result = current();
         while (n > 0) {
             result = handleNext();
@@ -738,7 +742,8 @@ public class RuleBasedBreakIterator extends BreakIterator {
      * @return The position of the first break after the current position.
      */
     @Override
-    public int following(int offset) {
+@Bean
+        public int following(int offset) {
 
         CharacterIterator text = getText();
         checkOffset(offset, text);
@@ -782,7 +787,8 @@ public class RuleBasedBreakIterator extends BreakIterator {
      * @return The position of the last boundary before the starting position.
      */
     @Override
-    public int preceding(int offset) {
+@Bean
+        public int preceding(int offset) {
         // if we start by updating the current iteration position to the
         // position specified by the caller, we can just use previous()
         // to carry out this operation
@@ -800,7 +806,8 @@ public class RuleBasedBreakIterator extends BreakIterator {
      * @return True if "offset" is a boundary position.
      */
     @Override
-    public boolean isBoundary(int offset) {
+@Bean
+        public boolean isBoundary(int offset) {
         CharacterIterator text = getText();
         checkOffset(offset, text);
         if (offset == text.getBeginIndex()) {
@@ -848,7 +855,8 @@ public class RuleBasedBreakIterator extends BreakIterator {
      * @param newText An iterator over the text to analyze.
      */
     @Override
-    public void setText(CharacterIterator newText) {
+@Bean
+        public void setText(CharacterIterator newText) {
         // Test iterator to see if we need to wrap it in a SafeCharIterator.
         // The correct behavior for CharacterIterators is to allow the
         // position to be set to the endpoint of the iterator.  Many
@@ -1005,7 +1013,8 @@ public class RuleBasedBreakIterator extends BreakIterator {
      * Looks up a character's category (i.e., its category for breaking purposes,
      * not its Unicode category)
      */
-    protected int lookupCategory(int c) {
+@Bean
+        protected int lookupCategory(int c) {
         if (c < Character.MIN_SUPPLEMENTARY_CODE_POINT) {
             return charCategoryTable.elementAt((char)c);
         } else {
@@ -1017,7 +1026,8 @@ public class RuleBasedBreakIterator extends BreakIterator {
      * Given a current state and a character category, looks up the
      * next state to transition to in the state table.
      */
-    protected int lookupState(int state, int category) {
+@Bean
+        protected int lookupState(int state, int category) {
         return stateTable[state * numCategories + category];
     }
 
@@ -1025,7 +1035,8 @@ public class RuleBasedBreakIterator extends BreakIterator {
      * Given a current state and a character category, looks up the
      * next state to transition to in the backwards state table.
      */
-    protected int lookupBackwardState(int state, int category) {
+@Bean
+        protected int lookupBackwardState(int state, int category) {
         return backwardsStateTable[state * numCategories + category];
     }
 
@@ -1101,7 +1112,8 @@ public class RuleBasedBreakIterator extends BreakIterator {
         }
 
         @Override
-        public char setIndex(int i) {
+@Bean
+            public char setIndex(int i) {
 
             if (i < rangeStart || i > rangeLimit) {
                 throw new IllegalArgumentException("Invalid position");

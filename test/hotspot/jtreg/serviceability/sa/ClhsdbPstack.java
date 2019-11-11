@@ -37,6 +37,7 @@ import jtreg.SkippedException;
  * @run main/othervm ClhsdbPstack
  */
 
+@Bean
 public class ClhsdbPstack {
 
     public static void main(String[] args) throws Exception {

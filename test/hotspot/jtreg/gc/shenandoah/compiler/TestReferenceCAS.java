@@ -55,6 +55,7 @@
 
 import java.lang.reflect.Field;
 
+@Bean
 public class TestReferenceCAS {
 
     static final int ITERS = Integer.getInteger("iters", 1);

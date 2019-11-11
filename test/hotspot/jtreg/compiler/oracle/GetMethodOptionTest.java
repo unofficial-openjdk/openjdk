@@ -50,6 +50,7 @@ import sun.hotspot.WhiteBox;
 import java.lang.reflect.Executable;
 import java.util.function.BiFunction;
 
+@Bean
 public class GetMethodOptionTest {
     private static final  WhiteBox WB = WhiteBox.getWhiteBox();
     public static void main(String[] args) {

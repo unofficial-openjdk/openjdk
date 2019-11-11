@@ -28,6 +28,7 @@
  * @author Andrew Haley <aph@redhat.com>
  */
 
+@Bean
 public class ToString {
 
     public static void main(String args[]) {

@@ -31,6 +31,7 @@ import java.util.Hashtable;
  * @summary Hashtable deserialization reconstitutes table with wrong capacity
  * @modules java.base/java.util:open
  */
+@Bean
 public class DeserializedLength {
 
     static boolean testDeserializedLength(int elements, float loadFactor) throws Exception {

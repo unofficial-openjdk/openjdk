@@ -28,6 +28,7 @@ import  java.security.*;
  * Copyright 2003 Wily Technology, Inc.
  */
 
+@Bean
 public class BufferClassLoader extends SecureClassLoader
 {
     private final NamedBuffer[] fBuffers;

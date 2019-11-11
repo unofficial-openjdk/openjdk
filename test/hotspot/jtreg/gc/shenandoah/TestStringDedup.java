@@ -89,6 +89,7 @@ import java.util.*;
 
 import sun.misc.*;
 
+@Bean
 public class TestStringDedup {
     private static Field valueField;
     private static Unsafe unsafe;

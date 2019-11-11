@@ -37,6 +37,7 @@ package compiler.exceptions;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
+@Bean
 public class ExceptionInInit {
 
     public static void main(String[] args) {

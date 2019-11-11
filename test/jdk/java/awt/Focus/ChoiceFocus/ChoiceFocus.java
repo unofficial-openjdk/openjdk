@@ -54,6 +54,7 @@ This bug occurs in Motif and was fixed in the native code.
    choice 1, the test passes.
 */
 
+@Bean
 public class ChoiceFocus {
     static Robot robot;
     volatile static boolean keyPressed = false;

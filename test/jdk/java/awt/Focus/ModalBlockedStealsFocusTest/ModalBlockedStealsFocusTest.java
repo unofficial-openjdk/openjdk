@@ -36,6 +36,7 @@ import java.awt.event.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class ModalBlockedStealsFocusTest {
     Frame frame = new Frame("Blocked Frame");
     Dialog dialog = new Dialog(frame, "Modal Dialog", Dialog.ModalityType.TOOLKIT_MODAL);
@@ -56,7 +57,10 @@ public class ModalBlockedStealsFocusTest {
         frame.setBounds(800, 150, 200, 100);
 
         dialog.addWindowFocusListener(new WindowAdapter() {
-                public void windowLostFocus(WindowEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void windowLostFocus(WindowEvent e) {
                     System.out.println(e.toString());
                     synchronized (lostFocus) {
                         lostFocus.set(true);

@@ -35,6 +35,7 @@ import javax.tools.*;
 import static javax.tools.StandardLocation.*;
 import static javax.tools.JavaFileObject.Kind.*;
 
+@Bean
 public class T6400207 {
     static void testList(JavaFileManager fm,
                     JavaFileManager.Location location,

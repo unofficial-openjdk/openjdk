@@ -115,6 +115,7 @@ import javax.management.remote.JMXServiceURL;
  * calls is incorrect in detail.
  */
 
+@Bean
 public class OldMBeanServerTest {
     private static MBeanServerConnection mbsc;
     private static String failure;
@@ -235,7 +236,11 @@ public class OldMBeanServerTest {
             return "Jessica";
         }
 
-        public int add(int x, int y) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int add(int x, int y) {
             return x + y;
         }
     }
@@ -272,7 +277,11 @@ public class OldMBeanServerTest {
 
     private static class CountListener implements NotificationListener {
         volatile int count;
-        public void handleNotification(Notification n, Object h) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void handleNotification(Notification n, Object h) {
             if (h == null)
                 h = 1;
             count += (Integer) h;
@@ -311,7 +320,11 @@ public class OldMBeanServerTest {
         countListener.waitForCount(3);
         CountListener boringListener = new CountListener();
         class AlwaysNotificationFilter implements NotificationFilter {
-            public boolean isNotificationEnabled(Notification notification) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public boolean isNotificationEnabled(Notification notification) {
                 return true;
             }
         }
@@ -464,7 +477,11 @@ public class OldMBeanServerTest {
             return registerMBean(mbean, name);
         }
 
-        private void forbidJMImpl(ObjectName name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void forbidJMImpl(ObjectName name) {
             if (name.getDomain().equals("JMImplementation") &&
                     mbeans.containsKey(MBeanServerDelegate.DELEGATE_NAME))
                 throw new IllegalArgumentException("JMImplementation reserved");
@@ -552,11 +569,19 @@ public class OldMBeanServerTest {
         }
 
         private static class TrueQueryExp implements QueryExp {
-            public boolean apply(ObjectName name) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public boolean apply(ObjectName name) {
                 return true;
             }
 
-            public void setMBeanServer(MBeanServer s) {}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setMBeanServer(MBeanServer s) {}
         }
         private static final QueryExp trueQuery = new TrueQueryExp();
 
@@ -593,7 +618,11 @@ public class OldMBeanServerTest {
             return names;
         }
 
-        public boolean isRegistered(ObjectName name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean isRegistered(ObjectName name) {
             return mbeans.containsKey(name);
         }
 
@@ -810,32 +839,38 @@ public class OldMBeanServerTest {
             throw new UnsupportedOperationException();
         }
 
-        public ClassLoader getClassLoaderFor(ObjectName mbeanName)
+        @Bean
+public classLoader getClassLoaderFor(ObjectName mbeanName)
         throws InstanceNotFoundException {
             DynamicMBean mbean = getMBean(mbeanName);
             Object userMBean = getUserMBean(mbean);
             return userMBean.getClass().getClassLoader();
         }
 
-        public ClassLoader getClassLoader(ObjectName loaderName)
+        @Bean
+public classLoader getClassLoader(ObjectName loaderName)
         throws InstanceNotFoundException {
             return (ClassLoader) getMBean(loaderName);
         }
 
-        public ClassLoaderRepository getClassLoaderRepository() {
+        @Bean
+public classLoaderRepository getClassLoaderRepository() {
             return new ClassLoaderRepository() {
-                public Class<?> loadClass(String className)
+                @Bean
+public class<?> loadClass(String className)
                 throws ClassNotFoundException {
                     return clr.loadClass(className);
                 }
 
-                public Class<?> loadClassWithout(
+                @Bean
+public class<?> loadClassWithout(
                         ClassLoader exclude, String className)
                 throws ClassNotFoundException {
                     return clr.loadClassWithout(exclude, className);
                 }
 
-                public Class<?> loadClassBefore(
+                @Bean
+public class<?> loadClassBefore(
                         ClassLoader stop, String className)
                 throws ClassNotFoundException {
                     return clr.loadClassBefore(stop, className);
@@ -863,13 +898,15 @@ public class OldMBeanServerTest {
                     throw new RuntimeException("Loader was not in CLR!");
             }
 
-            public Class<?> loadClassWithout(
+            @Bean
+public class<?> loadClassWithout(
                     ClassLoader exclude, String className)
                     throws ClassNotFoundException {
                 return loadClassWithoutBefore(exclude, null, className);
             }
 
-            public Class<?> loadClassBefore(ClassLoader stop, String className)
+            @Bean
+public class<?> loadClassBefore(ClassLoader stop, String className)
             throws ClassNotFoundException {
                 return loadClassWithoutBefore(null, stop, className);
             }
@@ -943,7 +980,11 @@ public class OldMBeanServerTest {
             }
 
             @Override
-            public boolean equals(Object o) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) {
                 return (this == o);
             }
 
@@ -1136,7 +1177,11 @@ public class OldMBeanServerTest {
                 invokeMethod(am.setter, attribute.getValue());
             }
 
-            public AttributeList getAttributes(String[] attributes) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public AttributeList getAttributes(String[] attributes) {
                 AttributeList list = new AttributeList();
                 for (String attr : attributes) {
                     try {
@@ -1148,7 +1193,11 @@ public class OldMBeanServerTest {
                 return list;
             }
 
-            public AttributeList setAttributes(AttributeList attributes) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public AttributeList setAttributes(AttributeList attributes) {
                 AttributeList list = new AttributeList();
                 // We carefully avoid using any new stuff from AttributeList here!
                 for (Iterator<?> it = attributes.iterator(); it.hasNext(); ) {
@@ -1249,7 +1298,11 @@ public class OldMBeanServerTest {
                 return mbeanRegistration(std).preRegister(server, name);
             }
 
-            public void postRegister(Boolean registrationDone) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void postRegister(Boolean registrationDone) {
                 mbeanRegistration(std).postRegister(registrationDone);
             }
 
@@ -1290,11 +1343,19 @@ public class OldMBeanServerTest {
 //                mbean.setAttribute(attribute);
 //            }
 //
-//            public AttributeList getAttributes(String[] attributes) {
+//            @Bean
+@Bean
+@Bean
+@Bean
+                public AttributeList getAttributes(String[] attributes) {
 //                return mbean.getAttributes(attributes);
 //            }
 //
-//            public AttributeList setAttributes(AttributeList attributes) {
+//            @Bean
+@Bean
+@Bean
+@Bean
+                public AttributeList setAttributes(AttributeList attributes) {
 //                return mbean.setAttributes(attributes);
 //            }
 //
@@ -1375,11 +1436,19 @@ public class OldMBeanServerTest {
 
         private static final MBeanRegistration noRegistration =
                 new MBeanRegistration() {
-            public ObjectName preRegister(MBeanServer server, ObjectName name) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public ObjectName preRegister(MBeanServer server, ObjectName name) {
                 return name;
             }
 
-            public void postRegister(Boolean registrationDone) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void postRegister(Boolean registrationDone) {
             }
 
             public void preDeregister() throws Exception {

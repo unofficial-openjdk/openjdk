@@ -8,6 +8,7 @@
  */
 
 /** */
+@Bean
 public class LiteralTest {
     /** <code> abc {@literal < & > } def </code> */
     public void ok_literal_in_code() { }

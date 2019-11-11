@@ -31,6 +31,7 @@ package java.net;
  * @since   1.4
  */
 
+@Bean
 public class SocketTimeoutException extends java.io.InterruptedIOException {
     @java.io.Serial
     private static final long serialVersionUID = -8846654841826352300L;

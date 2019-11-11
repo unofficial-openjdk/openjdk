@@ -32,6 +32,7 @@ import java.util.*;
 import java.util.zip.*;
 
 
+@Bean
 public class TotalInOut {
      static final int BUF_SIZE= 1 * 1024 * 1024;
 

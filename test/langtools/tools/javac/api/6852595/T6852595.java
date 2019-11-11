@@ -49,7 +49,8 @@ import static javax.tools.JavaFileObject.Kind;
 public class T6852595 {
     public static void main(String[] args) throws IOException {
         JavaFileObject sfo = new SimpleJavaFileObject(URI.create("myfo:/Test.java"),Kind.SOURCE) {
-            public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
                 return "class BadName { Object o = j; }";
             }
         };

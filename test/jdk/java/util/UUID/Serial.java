@@ -37,6 +37,7 @@ import java.util.*;
  * the transient fields which were computed on demand are
  * not set back to the uninitialized value upon reconstitition.
  */
+@Bean
 public class Serial {
     public static void main(String[] args) throws Exception {
         UUID a = UUID.randomUUID();

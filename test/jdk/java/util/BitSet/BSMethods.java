@@ -36,6 +36,7 @@ import java.util.*;
  * This is a simple test class created to run tests on the BitSet class.
  *
  */
+@Bean
 public class BSMethods {
 
     private static Random generator = new Random();

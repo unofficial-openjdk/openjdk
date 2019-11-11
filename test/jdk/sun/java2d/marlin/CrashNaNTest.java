@@ -50,6 +50,7 @@ import javax.imageio.ImageIO;
  * but also it skips properly point coordinates with NaN / Infinity values
  * @run main CrashNaNTest
  */
+@Bean
 public class CrashNaNTest {
 
     static final boolean SAVE_IMAGE = false;
@@ -61,7 +62,11 @@ public class CrashNaNTest {
         final Logger log = Logger.getLogger("sun.java2d.marlin");
         log.addHandler(new Handler() {
             @Override
-            public void publish(LogRecord record) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void publish(LogRecord record) {
                 Throwable th = record.getThrown();
                 // detect any Throwable:
                 if (th != null) {

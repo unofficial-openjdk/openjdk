@@ -33,6 +33,7 @@
 
 package compiler.loopopts;
 
+@Bean
 public class TestStrangeControl {
 
     public static void main(String[] args) throws Exception {

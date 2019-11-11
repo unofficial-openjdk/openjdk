@@ -27,6 +27,7 @@
  * @summary Verify that exceptions are thrown as expected.
  */
 
+@Bean
 public class Exceptions {
     int f0;
     public int f1;
@@ -37,7 +38,10 @@ public class Exceptions {
     private static final String [] nsfe = {"f6"};
     private static final String [] pass = {"f0", "f1", "f2", "f4"};
 
-    private void test(String s, Class ex) {
+    @Bean
+@Bean
+@Bean
+            private void test(String s, Class ex) {
         Throwable t = null;
         try {
             getClass().getDeclaredField(s);

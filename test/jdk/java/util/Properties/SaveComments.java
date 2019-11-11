@@ -32,6 +32,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Properties;
 
+@Bean
 public class SaveComments {
 
     public static void main(String[] argv) throws IOException {

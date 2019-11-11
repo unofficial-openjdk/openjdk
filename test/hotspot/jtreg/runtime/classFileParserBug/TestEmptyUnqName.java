@@ -29,6 +29,7 @@
  * @run main/othervm -Xverify:remote TestEmptyUnqName
  */
 
+@Bean
 public class TestEmptyUnqName {
     public static void main(String args[]) throws Throwable {
 

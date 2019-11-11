@@ -73,7 +73,10 @@ public class CopyCommon {
      * @return the verification data, only the least significant
      * elemSize*8 bits are set, zero extended
      */
-    private long getVerificationDataForOffset(long offset, long elemSize) {
+    @Bean
+@Bean
+@Bean
+            private long getVerificationDataForOffset(long offset, long elemSize) {
         byte[] bytes = new byte[(int)elemSize];
 
         for (long i = 0; i < elemSize; i++) {
@@ -104,7 +107,10 @@ public class CopyCommon {
      *
      * @throws RuntimeException if an error is found
      */
-    private void verifySwappedData(GenericPointer ptr, long srcOffset, long dstOffset, long size, long elemSize) {
+    @Bean
+@Bean
+@Bean
+            private void verifySwappedData(GenericPointer ptr, long srcOffset, long dstOffset, long size, long elemSize) {
         for (long offset = 0; offset < size; offset += elemSize) {
             long expectedUnswapped = getVerificationDataForOffset(srcOffset + offset, elemSize);
             long expected = byteSwap(expectedUnswapped, elemSize);
@@ -130,7 +136,10 @@ public class CopyCommon {
      * @param size size (in bytes) of the data
      * @param elemSize size (in bytes) of the individual elements
      */
-    private void initVerificationData(GenericPointer ptr, long size, long elemSize) {
+    @Bean
+@Bean
+@Bean
+            private void initVerificationData(GenericPointer ptr, long size, long elemSize) {
         for (long offset = 0; offset < size; offset++) {
             byte data = (byte)getVerificationDataForOffset(offset, 1);
 
@@ -171,7 +180,10 @@ public class CopyCommon {
      *
      * @return the array element, as an unsigned long
      */
-    private long getArrayElem(GenericPointer ptr, long offset, long elemSize) {
+    @Bean
+@Bean
+@Bean
+            private long getArrayElem(GenericPointer ptr, long offset, long elemSize) {
         if (ptr.isOnHeap()) {
             Object o = ptr.getObject();
             int index = (int)(offset / elemSize);
@@ -201,7 +213,10 @@ public class CopyCommon {
         }
     }
 
-    private void putValue(long addr, long elemSize, long value) {
+    @Bean
+@Bean
+@Bean
+            private void putValue(long addr, long elemSize, long value) {
         switch ((int)elemSize) {
         case 1: UNSAFE.putByte(addr, (byte)value); break;
         case 2: UNSAFE.putShortUnaligned(null, addr, (short)value); break;
@@ -218,7 +233,10 @@ public class CopyCommon {
      *
      * @return the size (in bytes) of the individual array elements
      */
-    private long getArrayElemSize(Object o) {
+    @Bean
+@Bean
+@Bean
+            private long getArrayElemSize(Object o) {
         if (o instanceof short[]) {
             return 2;
         } else if (o instanceof int[]) {
@@ -238,7 +256,10 @@ public class CopyCommon {
      *
      * @return the byte swapped value in the bytes*8 least significant bits
      */
-    private long byteSwap(long value, long size) {
+    @Bean
+@Bean
+@Bean
+            private long byteSwap(long value, long size) {
         switch ((int)size) {
         case 2: return Short.toUnsignedLong(Short.reverseBytes((short)value));
         case 4: return Integer.toUnsignedLong(Integer.reverseBytes((int)value));
@@ -256,7 +277,10 @@ public class CopyCommon {
      *
      * @throws RuntimeException if an error is found
      */
-    private void verifyUnswappedData(GenericPointer ptr, long startOffset, long srcOffset, long size) {
+    @Bean
+@Bean
+@Bean
+            private void verifyUnswappedData(GenericPointer ptr, long startOffset, long srcOffset, long size) {
         for (long i = 0; i < size; i++) {
             byte expected = (byte)getVerificationDataForOffset(srcOffset + i, 1);
 
@@ -408,7 +432,10 @@ public class CopyCommon {
      *
      * @throws RuntimeException if an error is found
      */
-    public void testBufferPair(GenericPointer src, GenericPointer dst, long size, long elemSize, boolean swap) {
+    @Bean
+@Bean
+@Bean
+            public void testBufferPair(GenericPointer src, GenericPointer dst, long size, long elemSize, boolean swap) {
         // offset in source from which to start reading data
         for (long srcOffset = 0; srcOffset < size; srcOffset += (src.isOnHeap() ? elemSize : 1)) {
 
@@ -446,7 +473,10 @@ public class CopyCommon {
      *
      * @throws RuntimeException if an error is found
      */
-    public void testPermuteBuffers(GenericPointer[] buffers, long size, long elemSize, boolean swap) {
+    @Bean
+@Bean
+@Bean
+            public void testPermuteBuffers(GenericPointer[] buffers, long size, long elemSize, boolean swap) {
         System.out.println("testPermuteBuffers(buffers, " + size + ", " + elemSize + ", " + swap + ")");
         for (int srcIndex = 0; srcIndex < buffers.length; srcIndex++) {
             for (int dstIndex = 0; dstIndex < buffers.length; dstIndex++) {
@@ -463,7 +493,10 @@ public class CopyCommon {
      *
      * @throws RuntimeException if an error is found
      */
-    private void testElemSize(long size, long elemSize, boolean swap) {
+    @Bean
+@Bean
+@Bean
+            private void testElemSize(long size, long elemSize, boolean swap) {
         long buf1Raw = 0;
         long buf2Raw = 0;
 
@@ -563,7 +596,10 @@ public class CopyCommon {
             return "GenericPointer(o={" + o + "}, offset=0x" + Long.toHexString(offset) + ")";
         }
 
-        public boolean equals(Object other) {
+        @Bean
+@Bean
+@Bean
+            public boolean equals(Object other) {
             if (!(other instanceof GenericPointer)) {
                 return false;
             }

@@ -32,6 +32,7 @@
 import java.io.*;
 import java.util.*;
 
+@Bean
 public class T6868539
 
 {

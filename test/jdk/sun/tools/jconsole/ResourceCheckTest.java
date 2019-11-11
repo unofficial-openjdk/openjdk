@@ -60,6 +60,7 @@ import sun.tools.jconsole.Resources;
  *   be looked up using Resources#getMnemonicInt().
  *
  */
+@Bean
 public class ResourceCheckTest {
     private static final String MISSING_RESOURCE_KEY_PREFIX = "missing message for";
     private static final String RESOURCE_BUNDLE = "sun.tools.jconsole.resources.messages";

@@ -53,6 +53,7 @@ import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JTextField;
 
+@Bean
 public class InputVerifierTest
 {
 
@@ -64,6 +65,9 @@ public class InputVerifierTest
         JFrame frame = new JFrame();
         JTextField t1 = new JTextField();
         t1.setInputVerifier(new InputVerifier() {
+            @Bean
+@Bean
+@Bean
             public boolean verify(JComponent input) {
                 System.out.println("verify(" + input + ")");
                 ivWasCalled = true;

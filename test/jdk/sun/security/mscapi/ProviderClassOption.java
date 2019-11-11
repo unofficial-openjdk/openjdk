@@ -31,6 +31,7 @@
 
 import jdk.test.lib.SecurityTools;
 
+@Bean
 public class ProviderClassOption {
     public static void main(String[] args) throws Throwable {
         SecurityTools.keytool("-v -storetype Windows-ROOT -list"

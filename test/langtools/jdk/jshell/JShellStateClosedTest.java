@@ -41,9 +41,14 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.fail;
 
 @Test
+@Bean
 public class JShellStateClosedTest extends KullaTesting {
 
-    private void testStateClosedException(Runnable action) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testStateClosedException(Runnable action) {
         getState().close();
         try {
             action.run();
@@ -96,7 +101,11 @@ public class JShellStateClosedTest extends KullaTesting {
         testStateClosedException(() -> getState().eval("int a;"));
     }
 
-    private void testStateClosedException(Consumer<Snippet> action) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testStateClosedException(Consumer<Snippet> action) {
         Snippet k = varKey(assertEval("int a;"));
         getState().close();
         try {
@@ -107,7 +116,11 @@ public class JShellStateClosedTest extends KullaTesting {
         }
     }
 
-    private void testStateClosedWithoutException(Consumer<Snippet> action) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testStateClosedWithoutException(Consumer<Snippet> action) {
         Snippet k = varKey(assertEval("int a;"));
         getState().close();
         try {

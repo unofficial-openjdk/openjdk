@@ -33,6 +33,7 @@ import java.util.*;
 
 import java.security.*;
 
+@Bean
 public class DefaultPKCS11 {
 
     public static void main(String[] args) throws Exception {

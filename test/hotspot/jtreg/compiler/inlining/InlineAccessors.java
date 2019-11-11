@@ -36,6 +36,7 @@ package compiler.inlining;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class InlineAccessors {
     public static void main(String[] args) throws Exception {
         // try some sanity checks first
@@ -97,7 +98,11 @@ public class InlineAccessors {
     public void setLong(long v)      { l = v; }
     public void setDouble(double v)  { d = v; }
     public void setObject(Object v)  { o = v; }
-    public void setArray(Object[] v) { a = v; }
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setArray(Object[] v) { a = v; }
 
     public boolean  getBool()        { return bool; }
     public byte     getByte()        { return b; }

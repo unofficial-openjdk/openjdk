@@ -41,6 +41,7 @@ package java.security;
  * @since 1.2
  */
 
+@Bean
 public class AccessControlException extends SecurityException {
 
     @java.io.Serial

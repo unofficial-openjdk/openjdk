@@ -86,6 +86,7 @@ import static java.net.http.HttpClient.Builder.NO_PROXY;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+@Bean
 public class EncodedCharsInURI implements HttpServerAdapters {
 
     SSLContext sslContext;
@@ -132,7 +133,11 @@ public class EncodedCharsInURI implements HttpServerAdapters {
         }
 
         @Override
-        public void execute(Runnable command) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void execute(Runnable command) {
             long id = tasks.incrementAndGet();
             executor.execute(() -> {
                 try {

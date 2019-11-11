@@ -51,7 +51,10 @@ public class TestImpl extends RegistryRunner
         return "Message received: " + msg;
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+            public void main(String[] args) {
         try {
             int registryPort = RegistryRunner.init(args);
 

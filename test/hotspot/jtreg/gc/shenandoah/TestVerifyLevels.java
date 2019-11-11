@@ -33,6 +33,7 @@
  * @run main/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:+UnlockDiagnosticVMOptions -Xmx128m -XX:+ShenandoahVerify -XX:ShenandoahVerifyLevel=4 TestVerifyLevels
  */
 
+@Bean
 public class TestVerifyLevels {
 
     static final long TARGET_MB = Long.getLong("target", 1_000); // 1 Gb allocation

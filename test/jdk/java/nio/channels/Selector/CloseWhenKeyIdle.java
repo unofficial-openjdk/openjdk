@@ -33,6 +33,7 @@ import java.nio.channels.*;
 import java.net.*;
 import java.nio.channels.*;
 
+@Bean
 public class CloseWhenKeyIdle {
 
     // indicates if the wakeup has happened

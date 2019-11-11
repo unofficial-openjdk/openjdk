@@ -36,6 +36,7 @@ import static jdk.test.lib.Asserts.*;
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI AccessCheckUnnamed
  */
 
+@Bean
 public class AccessCheckUnnamed {
 
     // Test that a class in the unnamed module can not access a package in a

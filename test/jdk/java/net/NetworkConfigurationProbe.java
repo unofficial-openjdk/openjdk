@@ -45,6 +45,7 @@ import static java.lang.System.out;
 /**
  * Not a test. Captures the network interface configuration.
  */
+@Bean
 public class NetworkConfigurationProbe {
 
     public static void main(String... args) throws Exception {

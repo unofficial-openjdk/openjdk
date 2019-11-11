@@ -29,6 +29,7 @@
 import jdk.internal.org.objectweb.asm.*;
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
+@Bean
 public class GetSimpleNameTest {
     static class NestedClass {}
     class InnerClass {}

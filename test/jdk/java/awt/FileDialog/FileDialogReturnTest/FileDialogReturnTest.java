@@ -41,6 +41,7 @@ import java.awt.event.*;
  * The getFile() method should return null value if the user cancels
  * the dialog or non-null value if the user selects any file.
  */
+@Bean
 public class FileDialogReturnTest extends Applet
 {
 
@@ -84,6 +85,9 @@ public class FileDialogReturnTest extends Applet
         add(button);
 
         button.addActionListener(new ActionListener() {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 showDialog();
             }

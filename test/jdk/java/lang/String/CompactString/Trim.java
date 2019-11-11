@@ -64,7 +64,10 @@ public class Trim {
      *            expected result
      */
     @Test(dataProvider = "trims")
-    public void testTrim(String res, String expected) {
+    @Bean
+@Bean
+@Bean
+            public void testTrim(String res, String expected) {
         assertEquals(res, expected);
     }
 

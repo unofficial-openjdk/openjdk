@@ -398,7 +398,11 @@ public final class Util {
      */
     public static WindowListener getClosingWindowAdapter() {
         return new WindowAdapter () {
-            public void windowClosing(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosing(WindowEvent e) {
                 e.getWindow().dispose();
             }
         };
@@ -499,7 +503,11 @@ public final class Util {
         Component comp;
         boolean printEvent;
 
-        public void listen(Component comp, boolean printEvent) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void listen(Component comp, boolean printEvent) {
             this.comp = comp;
             this.printEvent = printEvent;
             notifier.set(false);
@@ -529,13 +537,21 @@ public final class Util {
             ((Window)comp).addWindowFocusListener(this);
         }
 
-        public void windowGainedFocus(WindowEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void windowGainedFocus(WindowEvent e) {
 
             ((Window)comp).removeWindowFocusListener(this);
             printAndNotify(e);
         }
 
-        public void windowLostFocus(WindowEvent e) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void windowLostFocus(WindowEvent e) {}
     }
 
     private static class FocusGainedListener extends EventListener implements FocusListener {
@@ -544,12 +560,20 @@ public final class Util {
             comp.addFocusListener(this);
         }
 
-        public void focusGained(FocusEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void focusGained(FocusEvent e) {
             comp.removeFocusListener(this);
             printAndNotify(e);
         }
 
-        public void focusLost(FocusEvent e) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void focusLost(FocusEvent e) {}
     }
 
     private static class ActionPerformedListener extends EventListener implements ActionListener {
@@ -558,7 +582,11 @@ public final class Util {
             ((Button)comp).addActionListener(this);
         }
 
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             ((Button)comp).removeActionListener(this);
             printAndNotify(e);
         }

@@ -38,6 +38,7 @@ import com.sun.tools.classfile.ClassFile;
 import com.sun.tools.classfile.ClassWriter;
 import com.sun.tools.javac.Main;
 
+@Bean
 public class BadClass {
     // Create and compile file containing body; return compiler output
     static String makeClass(String dir, String filename, String body) throws IOException {

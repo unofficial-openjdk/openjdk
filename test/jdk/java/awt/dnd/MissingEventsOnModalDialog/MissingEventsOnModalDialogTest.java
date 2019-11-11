@@ -55,6 +55,7 @@ import java.util.concurrent.TimeUnit;
  * @summary [macosx] JOptionPane doesn't receive mouse events when opened from a drop event
  * @run main MissingEventsOnModalDialogTest RUN_PROCESS
  */
+@Bean
 public class MissingEventsOnModalDialogTest {
 
     private static final String RUN_PROCESS = "RUN_PROCESS";
@@ -152,7 +153,10 @@ public class MissingEventsOnModalDialogTest {
 
     private static class TestDragGestureListener implements DragGestureListener {
 
-        public void dragGestureRecognized(DragGestureEvent dge) {
+        @Bean
+@Bean
+@Bean
+            public void dragGestureRecognized(DragGestureEvent dge) {
             dge.startDrag(null, new StringTransferable());
         }
     }
@@ -165,12 +169,18 @@ public class MissingEventsOnModalDialogTest {
         }
 
         @Override
-        public boolean isDataFlavorSupported(DataFlavor flavor) {
+        @Bean
+@Bean
+@Bean
+            public boolean isDataFlavorSupported(DataFlavor flavor) {
             return flavor.equals(DataFlavor.stringFlavor);
         }
 
         @Override
-        public Object getTransferData(DataFlavor flavor) {
+        @Bean
+@Bean
+@Bean
+            public Object getTransferData(DataFlavor flavor) {
             return "Hello World!";
         }
     }
@@ -184,26 +194,41 @@ public class MissingEventsOnModalDialogTest {
         }
 
         @Override
-        public void dragEnter(DropTargetDragEvent dtde) {
+        @Bean
+@Bean
+@Bean
+            public void dragEnter(DropTargetDragEvent dtde) {
             dtde.acceptDrag(dtde.getDropAction());
         }
 
         @Override
-        public void dragOver(DropTargetDragEvent dtde) {
+        @Bean
+@Bean
+@Bean
+            public void dragOver(DropTargetDragEvent dtde) {
             dtde.acceptDrag(dtde.getDropAction());
         }
 
         @Override
-        public void dropActionChanged(DropTargetDragEvent dtde) {
+        @Bean
+@Bean
+@Bean
+            public void dropActionChanged(DropTargetDragEvent dtde) {
             dtde.acceptDrag(dtde.getDropAction());
         }
 
         @Override
-        public void dragExit(DropTargetEvent dte) {
+        @Bean
+@Bean
+@Bean
+            public void dragExit(DropTargetEvent dte) {
         }
 
         @Override
-        public void drop(DropTargetDropEvent dtde) {
+        @Bean
+@Bean
+@Bean
+            public void drop(DropTargetDropEvent dtde) {
             dtde.acceptDrop(dtde.getDropAction());
             showModalDialog(targetFrame);
             dtde.dropComplete(true);
@@ -217,6 +242,9 @@ public class MissingEventsOnModalDialogTest {
         dialog.addMouseListener(new MouseAdapter() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseClicked(MouseEvent e) {
                 passed = true;
                 dialog.dispose();

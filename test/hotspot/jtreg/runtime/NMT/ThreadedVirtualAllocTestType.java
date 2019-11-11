@@ -38,6 +38,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.JDKToolFinder;
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class ThreadedVirtualAllocTestType {
   public static long addr;
   public static final WhiteBox wb = WhiteBox.getWhiteBox();

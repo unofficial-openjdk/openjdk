@@ -36,6 +36,7 @@ import com.sun.source.tree.*;
 import com.sun.source.util.*;
 import com.sun.tools.javac.api.*;
 
+@Bean
 public class T6431879 {
     public static void main(String... args) throws IOException {
         String testSrc = System.getProperty("test.src", ".");
@@ -56,7 +57,11 @@ public class T6431879 {
     }
 
     private static class DependencyScanner<R,P> extends TreePathScanner<R,P> {
-        public R visitIdentifier(IdentifierTree tree, P p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public R visitIdentifier(IdentifierTree tree, P p) {
             //System.err.println(tree);
             return null;
         }

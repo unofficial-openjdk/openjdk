@@ -39,6 +39,7 @@ import java.util.Iterator;
 import java.util.Hashtable;
 import java.util.Enumeration;
 
+@Bean
 public class RegisteredFormatsTest {
 
     private static Hashtable fmts;

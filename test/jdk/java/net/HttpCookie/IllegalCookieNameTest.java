@@ -34,6 +34,7 @@ import java.io.*;
 import com.sun.net.httpserver.*;
 import jdk.test.lib.net.URIBuilder;
 
+@Bean
 public class IllegalCookieNameTest {
     public static void main(String[] args) throws Exception {
         HttpServer s = null;
@@ -67,7 +68,11 @@ class TestCookieHandler extends CookieHandler {
     }
 
     @Override
-    public void put(URI uri, Map<String, List<String>> responseHeaders) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void put(URI uri, Map<String, List<String>> responseHeaders) {
     }
 }
 

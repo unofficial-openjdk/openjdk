@@ -192,7 +192,8 @@ public final class PKCS12Attribute implements KeyStore.Entry.Attribute {
      * their DER encodings are equal.
      */
     @Override
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (this == obj) {
             return true;
         }

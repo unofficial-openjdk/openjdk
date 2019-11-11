@@ -219,7 +219,10 @@ public class SimpleDateFormatPatternTest {
 
     @Test(dataProvider = "validPatternObj")
     //check Constructors for valid pattern
-    public void testValidPattern(String pattern, Locale loc) {
+    @Bean
+@Bean
+@Bean
+            public void testValidPattern(String pattern, Locale loc) {
         Locale.setDefault(loc);
         new SimpleDateFormat(pattern);
         new SimpleDateFormat(pattern, new DateFormatSymbols());

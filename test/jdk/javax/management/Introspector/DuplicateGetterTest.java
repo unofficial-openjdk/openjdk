@@ -33,6 +33,7 @@ import java.util.*;
 import java.lang.reflect.*;
 import javax.management.*;
 
+@Bean
 public class DuplicateGetterTest {
     public static interface FooMBean {
         public MBeanNotificationInfo[] getNotificationInfo();

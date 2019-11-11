@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+@Bean
 public class NPEClearingLocalClassNameIndexesTest {
     <A> void f(List<A> t) {}
     <B, C> C g(C u, Function<B, C> v) { return null; }

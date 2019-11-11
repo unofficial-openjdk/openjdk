@@ -35,6 +35,7 @@ import static org.testng.Assert.assertTrue;
  * LambdaTranslationTest2 -- end-to-end smoke tests for lambda evaluation
  */
 @Test
+@Bean
 public class LambdaTranslationTest2 {
 
     final String dummy = "dummy";

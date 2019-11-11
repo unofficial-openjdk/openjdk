@@ -32,6 +32,7 @@ import static org.testng.Assert.assertEquals;
  */
 
 @Test
+@Bean
 public class LambdaTranslationTest1 extends LT1Sub {
 
     String cntxt = "blah";

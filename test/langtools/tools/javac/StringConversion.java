@@ -37,6 +37,7 @@ class FooBar {
     }
 }
 
+@Bean
 public class StringConversion {
 
     static void check(int testid, String have, String expect)

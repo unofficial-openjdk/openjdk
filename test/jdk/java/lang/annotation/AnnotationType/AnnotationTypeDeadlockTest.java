@@ -37,6 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+@Bean
 public class AnnotationTypeDeadlockTest {
 
     @Retention(RUNTIME)

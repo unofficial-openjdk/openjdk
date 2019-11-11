@@ -76,6 +76,7 @@ import javax.swing.text.TextAction;
  * @author Timothy Prinzing
  */
 @SuppressWarnings("serial")
+@Bean
 public class Stylepad extends Notepad {
 
     private static ResourceBundle resources;
@@ -158,7 +159,11 @@ public class Stylepad extends Notepad {
      * the superclass resource file.
      */
     @Override
-    protected String getResourceString(String nm) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected String getResourceString(String nm) {
         String str;
         try {
             str = Stylepad.resources.getString(nm);
@@ -189,7 +194,11 @@ public class Stylepad extends Notepad {
      * a couple of special entries for now.
      */
     @Override
-    protected JMenu createMenu(String key) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected JMenu createMenu(String key) {
         if (key.equals("color")) {
             return createColorMenu();
         }
@@ -277,7 +286,11 @@ public class Stylepad extends Notepad {
         }
 
         @Override
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             Frame frame = getFrame();
             if (fileDialog == null) {
                 fileDialog = new FileDialog(frame);
@@ -330,7 +343,11 @@ public class Stylepad extends Notepad {
         }
 
         @Override
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             Frame frame = getFrame();
             if (fileDialog == null) {
                 fileDialog = new FileDialog(frame);
@@ -367,7 +384,11 @@ public class Stylepad extends Notepad {
         }
 
         @Override
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             if (getEditor().getDocument() != null) {
                 getEditor().getDocument().removeUndoableEditListener(undoHandler);
             }
@@ -389,7 +410,11 @@ public class Stylepad extends Notepad {
         }
 
         @Override
-        public void paintIcon(Component c, Graphics g, int x, int y) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void paintIcon(Component c, Graphics g, int x, int y) {
             Color oldColor = g.getColor();
             g.setColor(color);
             g.fill3DRect(x, y, getIconWidth(), getIconHeight(), true);

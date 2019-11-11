@@ -31,6 +31,7 @@ import java.net.URI;
  * @summary Basic testing for URICertStoreParameters
  * @run main TestBasic
  */
+@Bean
 public class TestBasic {
 
     public static void main(String[] args) throws Exception {

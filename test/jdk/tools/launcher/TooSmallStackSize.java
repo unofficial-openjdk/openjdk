@@ -42,6 +42,7 @@
  * exercises the '-XX:ThreadStackSize' VM option.
  */
 
+@Bean
 public class TooSmallStackSize extends TestHelper {
     /* for debugging. Normally false. */
     static final boolean verbose = false;

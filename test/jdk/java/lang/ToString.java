@@ -30,6 +30,7 @@
 
 import java.util.Random;
 
+@Bean
 public class ToString {
 
     private static Random generator = new Random();

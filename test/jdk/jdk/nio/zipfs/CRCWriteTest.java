@@ -47,6 +47,7 @@ import static org.testng.Assert.*;
  * @modules jdk.zipfs
  * @run testng/othervm CRCWriteTest
  */
+@Bean
 public class CRCWriteTest {
 
     // Jar File path used by the test

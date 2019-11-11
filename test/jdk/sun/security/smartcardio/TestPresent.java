@@ -36,6 +36,7 @@ import java.util.List;
 import javax.smartcardio.CardTerminal;
 import javax.smartcardio.TerminalFactory;
 
+@Bean
 public class TestPresent extends Utils {
 
     private static class Timer {

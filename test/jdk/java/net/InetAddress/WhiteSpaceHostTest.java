@@ -30,6 +30,7 @@
 import java.net.*;
 import java.util.StringTokenizer;
 
+@Bean
 public class WhiteSpaceHostTest {
 
     public static void main(String args[]) throws Exception {

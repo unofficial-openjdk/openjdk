@@ -36,6 +36,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import static com.sun.nio.file.ExtendedWatchEventModifier.*;
 
+@Bean
 public class FileTreeModifier {
 
     static void checkExpectedEvent(WatchService watcher,

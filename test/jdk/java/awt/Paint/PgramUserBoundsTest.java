@@ -41,6 +41,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 
+@Bean
 public class PgramUserBoundsTest {
     static final int MinX = 10;
     static final int MinY = 20;

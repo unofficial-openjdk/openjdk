@@ -26,6 +26,7 @@
  * @bug 4827312 6850113
  * @summary verify that argument validity check is not fooled by overflow
  */
+@Bean
 public class BidiBug {
   public static void main(String[] args) {
     try {

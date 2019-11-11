@@ -67,7 +67,11 @@ class InvokeHangTarg extends Thread {
         yield();
         return longMethod(2);
     }
-    public double longMethod(int n) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public double longMethod(int n) {
         double a = 0;
         double s = 0;
         for (int i = 0; i < n; i++) {
@@ -128,6 +132,7 @@ class InvokeHangTarg extends Thread {
 
 /********** test program **********/
 
+@Bean
 public class InvokeHangTest extends TestScaffold {
     ReferenceType targetClass;
     ThreadReference mainThread;
@@ -159,7 +164,11 @@ public class InvokeHangTest extends TestScaffold {
     }
 
     // BreakpointEvent handler
-    public void breakpointReached(BreakpointEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void breakpointReached(BreakpointEvent event) {
         if (bkpts == 0) {
             /*
              * This thread will watch for n secs to go by with no

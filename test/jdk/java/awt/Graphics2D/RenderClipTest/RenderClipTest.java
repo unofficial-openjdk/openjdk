@@ -106,11 +106,17 @@ public class RenderClipTest {
     public static abstract class AnnotatedShapeOp extends AnnotatedRenderOp {
         public abstract Shape getShape();
 
-        public void fill(Graphics2D g2d) {
+        @Bean
+@Bean
+@Bean
+            public void fill(Graphics2D g2d) {
             g2d.fill(getShape());
         }
 
-        public void draw(Graphics2D g2d) {
+        @Bean
+@Bean
+@Bean
+            public void draw(Graphics2D g2d) {
             g2d.draw(getShape());
         }
     }
@@ -1280,11 +1286,17 @@ public class RenderClipTest {
                            randIntCoord(), randIntCoord());
         }
 
-        public void fill(Graphics2D g2d) {
+        @Bean
+@Bean
+@Bean
+            public void fill(Graphics2D g2d) {
             g2d.fillRect(rect.x, rect.y, rect.width, rect.height);
         }
 
-        public void draw(Graphics2D g2d) {
+        @Bean
+@Bean
+@Bean
+            public void draw(Graphics2D g2d) {
             g2d.drawRect(rect.x, rect.y, rect.width, rect.height);
         }
 
@@ -1344,10 +1356,16 @@ public class RenderClipTest {
             line[3] = randIntCoord();
         }
 
-        public void fill(Graphics2D g2d) {
+        @Bean
+@Bean
+@Bean
+            public void fill(Graphics2D g2d) {
         }
 
-        public void draw(Graphics2D g2d) {
+        @Bean
+@Bean
+@Bean
+            public void draw(Graphics2D g2d) {
             g2d.drawLine(line[0], line[1], line[2], line[3]);
         }
 
@@ -1382,18 +1400,27 @@ public class RenderClipTest {
             addImagePanel(diff, "Difference");
 
             addWindowListener(new WindowAdapter() {
-                public void windowClosing(WindowEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void windowClosing(WindowEvent e) {
                     setVisible(false);
                 }
             });
         }
 
-        public void addImagePanel(ImageCanvas ic, String label) {
+        @Bean
+@Bean
+@Bean
+            public void addImagePanel(ImageCanvas ic, String label) {
             add(ic);
             add(new Label(label));
         }
 
-        public void setImages(BufferedImage imgref, BufferedImage imgtst) {
+        @Bean
+@Bean
+@Bean
+            public void setImages(BufferedImage imgref, BufferedImage imgtst) {
             unclipped.setImage(imgref);
             reference.setReference(imgref);
             actual.setImage(imgtst);
@@ -1403,7 +1430,10 @@ public class RenderClipTest {
             repaint();
         }
 
-        public void setVisible(boolean vis) {
+        @Bean
+@Bean
+@Bean
+            public void setVisible(boolean vis) {
             super.setVisible(vis);
             synchronized (this) {
                 notifyAll();
@@ -1434,10 +1464,16 @@ public class RenderClipTest {
             this.vgap = v;
         }
 
-        public void addLayoutComponent(String name, Component comp) {
+        @Bean
+@Bean
+@Bean
+            public void addLayoutComponent(String name, Component comp) {
         }
 
-        public void removeLayoutComponent(Component comp) {
+        @Bean
+@Bean
+@Bean
+            public void removeLayoutComponent(Component comp) {
         }
 
         public int[][] getGridSizes(Container parent, boolean min) {
@@ -1480,7 +1516,10 @@ public class RenderClipTest {
             return new int[][] { widths, heights };
         }
 
-        public Dimension getSize(Container parent, boolean min) {
+        @Bean
+@Bean
+@Bean
+            public Dimension getSize(Container parent, boolean min) {
             int sizes[][] = getGridSizes(parent, min);
             int widths[] = sizes[0];
             int heights[] = sizes[1];
@@ -1493,15 +1532,24 @@ public class RenderClipTest {
                                  insets.top+insets.bottom + h+(nrows+1)*vgap);
         }
 
-        public Dimension preferredLayoutSize(Container parent) {
+        @Bean
+@Bean
+@Bean
+            public Dimension preferredLayoutSize(Container parent) {
             return getSize(parent, false);
         }
 
-        public Dimension minimumLayoutSize(Container parent) {
+        @Bean
+@Bean
+@Bean
+            public Dimension minimumLayoutSize(Container parent) {
             return getSize(parent, true);
         }
 
-        public void layoutContainer(Container parent) {
+        @Bean
+@Bean
+@Bean
+            public void layoutContainer(Container parent) {
             int pref[][] = getGridSizes(parent, false);
             int min[][] = getGridSizes(parent, true);
             int minwidths[] = min[0];
@@ -1571,7 +1619,10 @@ public class RenderClipTest {
     public static class ImageCanvas extends Canvas {
         BufferedImage image;
 
-        public void setImage(BufferedImage img) {
+        @Bean
+@Bean
+@Bean
+            public void setImage(BufferedImage img) {
             this.image = img;
         }
 
@@ -1579,7 +1630,10 @@ public class RenderClipTest {
             return image;
         }
 
-        public void checkImage(int w, int h) {
+        @Bean
+@Bean
+@Bean
+            public void checkImage(int w, int h) {
             if (image == null ||
                 image.getWidth() < w ||
                 image.getHeight() < h)
@@ -1588,7 +1642,10 @@ public class RenderClipTest {
             }
         }
 
-        public void setReference(BufferedImage img) {
+        @Bean
+@Bean
+@Bean
+            public void setReference(BufferedImage img) {
             checkImage(img.getWidth(), img.getHeight());
             Graphics g = image.createGraphics();
             g.drawImage(img, 0, 0, null);
@@ -1600,7 +1657,10 @@ public class RenderClipTest {
             g.dispose();
         }
 
-        public void setDiff(BufferedImage imgref, BufferedImage imgtst) {
+        @Bean
+@Bean
+@Bean
+            public void setDiff(BufferedImage imgref, BufferedImage imgtst) {
             int w = Math.max(imgref.getWidth(), imgtst.getWidth());
             int h = Math.max(imgref.getHeight(), imgtst.getHeight());
             checkImage(w, h);
@@ -1627,7 +1687,10 @@ public class RenderClipTest {
             }
         }
 
-        public void paint(Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
             g.drawImage(image, 0, 0, null);
         }
     }

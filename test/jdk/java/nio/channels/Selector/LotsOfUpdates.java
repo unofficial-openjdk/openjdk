@@ -26,6 +26,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 
+@Bean
 public class LotsOfUpdates {
     public static void main(String[] args) throws IOException {
         Selector sel = Selector.open();

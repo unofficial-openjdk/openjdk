@@ -33,6 +33,7 @@
 package compiler.c1;
 
 // WARNING: This test will not fail but time out in C1's ComputeLinearScanOrder phase
+@Bean
 public class TestLinearScanOrderMain {
     public static void main(String[] args) {
         if (TestLinearScanOrder.test() != 42) {

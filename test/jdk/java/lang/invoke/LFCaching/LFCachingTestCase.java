@@ -48,7 +48,10 @@ public abstract class LFCachingTestCase extends LambdaFormTestCase {
      * @param adapter1 First method handle.
      * @param adapter2 Second method handle.
      */
-    public void checkLFCaching(MethodHandle adapter1, MethodHandle adapter2) {
+    @Bean
+@Bean
+@Bean
+            public void checkLFCaching(MethodHandle adapter1, MethodHandle adapter2) {
         try {
 
             if (!adapter1.type().equals(adapter2.type())) {

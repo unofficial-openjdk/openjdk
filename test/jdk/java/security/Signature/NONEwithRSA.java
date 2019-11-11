@@ -35,6 +35,7 @@ import java.security.*;
 
 import javax.crypto.*;
 
+@Bean
 public class NONEwithRSA {
 
     public static void main(String[] args) throws Exception {

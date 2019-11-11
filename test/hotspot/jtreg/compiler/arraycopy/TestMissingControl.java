@@ -33,6 +33,7 @@
 
 package compiler.arraycopy;
 
+@Bean
 public class TestMissingControl {
 
     static int[] m1(int[] a2) {
@@ -104,7 +105,11 @@ public class TestMissingControl {
         } catch(NullPointerException npe) {}
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         test1();
         test2();
     }

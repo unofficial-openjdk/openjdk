@@ -35,6 +35,7 @@ import java.lang.ref.WeakReference;
 import java.net.URL;
 import java.net.URLClassLoader;
 
+@Bean
 public class Test7064279 {
 
     public static void main(String[] args) throws Exception {

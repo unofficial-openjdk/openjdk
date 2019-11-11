@@ -47,6 +47,7 @@ import jdk.internal.vm.annotation.Contended;
  * @modules java.base/jdk.internal.vm.annotation
  * @run main/othervm -XX:-RestrictContended HasNonStatic
  */
+@Bean
 public class HasNonStatic {
 
     public static void main(String[] args) throws Exception {

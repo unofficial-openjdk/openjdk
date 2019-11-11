@@ -44,6 +44,7 @@ import static com.sun.tools.javac.code.Flags.SYNTHETIC;
 import static com.sun.tools.javac.code.Kinds.Kind.*;
 
 /**This analyzer guards against non-final static fields.*/
+@Bean
 public class MutableFieldsAnalyzer extends AbstractCodingRulesAnalyzer {
 
     public MutableFieldsAnalyzer(JavacTask task) {
@@ -52,7 +53,11 @@ public class MutableFieldsAnalyzer extends AbstractCodingRulesAnalyzer {
         eventKind = Kind.ANALYZE;
     }
 
-    private boolean ignoreField(String className, String field) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean ignoreField(String className, String field) {
         Set<String> fieldsToIgnore = classFieldsToIgnoreMap.get(className);
         return (fieldsToIgnore) != null && fieldsToIgnore.contains(field);
     }
@@ -60,7 +65,11 @@ public class MutableFieldsAnalyzer extends AbstractCodingRulesAnalyzer {
     class MutableFieldsVisitor extends TreeScanner {
 
         @Override
-        public void visitVarDef(JCVariableDecl tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitVarDef(JCVariableDecl tree) {
             boolean isJavacPack = tree.sym.outermostClass().fullname.toString()
                     .contains(packageToCheck);
             if (isJavacPack &&

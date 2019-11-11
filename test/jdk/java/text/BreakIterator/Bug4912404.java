@@ -29,6 +29,7 @@
 
 import java.text.BreakIterator;
 
+@Bean
 public class Bug4912404 {
 
     public static void main(String[] args) {

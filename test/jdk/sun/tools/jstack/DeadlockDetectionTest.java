@@ -43,6 +43,7 @@ import jdk.test.lib.JDKToolLauncher;
  * @build DeadlockDetectionTest
  * @run main DeadlockDetectionTest
  */
+@Bean
 public class DeadlockDetectionTest {
 
     private static LingeredAppWithDeadlock theApp = null;

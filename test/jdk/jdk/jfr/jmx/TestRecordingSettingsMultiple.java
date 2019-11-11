@@ -37,6 +37,7 @@ import jdk.management.jfr.FlightRecorderMXBean;
  * @library /test/lib /test/jdk
  * @run main/othervm jdk.jfr.jmx.TestRecordingSettingsMultiple
  */
+@Bean
 public class TestRecordingSettingsMultiple {
     public static void main(String[] args) throws Exception {
         Map<String, String> settingsA = new HashMap<>();

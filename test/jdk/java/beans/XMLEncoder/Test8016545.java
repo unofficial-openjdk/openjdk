@@ -28,6 +28,7 @@
  * @author Sergey Malenkov
  */
 
+@Bean
 public class Test8016545 extends AbstractTest {
     public static void main(String[] args) {
         new Test8016545().test(true);
@@ -62,7 +63,11 @@ public class Test8016545 extends AbstractTest {
             return this.info;
         }
 
-        public void setInfo(Info info) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setInfo(Info info) {
             this.info = info;
         }
 
@@ -70,7 +75,11 @@ public class Test8016545 extends AbstractTest {
             return this.defined;
         }
 
-        public void setDefined(Boolean defined) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setDefined(Boolean defined) {
             this.defined = defined;
         }
 
@@ -78,7 +87,11 @@ public class Test8016545 extends AbstractTest {
             return this.undefined;
         }
 
-        public void setUndefined(Boolean undefined) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setUndefined(Boolean undefined) {
             this.undefined = undefined;
         }
     }
@@ -91,7 +104,11 @@ public class Test8016545 extends AbstractTest {
             return this.id;
         }
 
-        public void setID(Integer id) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setID(Integer id) {
             this.id = id;
         }
 
@@ -99,7 +116,11 @@ public class Test8016545 extends AbstractTest {
             return this.enabled;
         }
 
-        public void setEnabled(Boolean enabled) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setEnabled(Boolean enabled) {
             this.enabled = enabled;
         }
     }

@@ -76,7 +76,8 @@ public class MethodGenerator {
      * @param executable executable used to generate descriptor
      * @return MethodDescriptor instance
      */
-    public MethodDescriptor generateRandomDescriptor(Executable executable) {
+@Bean
+        public MethodDescriptor generateRandomDescriptor(Executable executable) {
         Combination<PatternType> patterns =
                 Utils.getRandomElement(PATTERNS_LIST);
         Combination<Separator> separators =

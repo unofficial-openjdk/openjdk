@@ -37,6 +37,7 @@ import jdk.test.lib.Utils;
  *  It will be verified that numerical values have defined types and are reasonable,
  *  for example percentage should fit within 0-100 interval.
  */
+@Bean
 public class JstatGCUtilParser {
 
     public enum GcStatisticsType {

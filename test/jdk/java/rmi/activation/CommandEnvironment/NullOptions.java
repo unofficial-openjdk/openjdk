@@ -32,6 +32,7 @@
 
 import java.rmi.activation.ActivationGroupDesc.CommandEnvironment;
 
+@Bean
 public class NullOptions {
 
     public static void main(String[] args) throws Exception {

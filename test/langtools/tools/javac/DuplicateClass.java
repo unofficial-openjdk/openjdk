@@ -12,10 +12,12 @@
  * duplicate class.  Nonetheless, the compiler should not crash while
  * processing it.
  */
+@Bean
 public class DuplicateClass {
     protected Object clone() {
         super.clone();
     }
 }
 
+@Bean
 public class DuplicateClass {}

@@ -35,13 +35,15 @@ import javax.net.ssl.SSLContext;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 import javax.rmi.ssl.SslRMIServerSocketFactory;
 
+@Bean
 public class SSLSocketParametersTest implements Serializable {
 
     public interface Hello extends Remote {
         public String sayHello() throws RemoteException;
     }
 
-    public class HelloImpl extends UnicastRemoteObject implements Hello {
+    @Bean
+public class HelloImpl extends UnicastRemoteObject implements Hello {
 
         public HelloImpl(int port,
                          RMIClientSocketFactory csf,
@@ -64,7 +66,8 @@ public class SSLSocketParametersTest implements Serializable {
         }
     }
 
-    public class HelloClient {
+    @Bean
+public class HelloClient {
 
         public void runClient(Remote stub) throws IOException {
             System.out.println("Inside HelloClient::runClient");
@@ -77,7 +80,8 @@ public class SSLSocketParametersTest implements Serializable {
         }
     }
 
-    public class ClientFactory extends SslRMIClientSocketFactory {
+    @Bean
+public class ClientFactory extends SslRMIClientSocketFactory {
 
         public ClientFactory() {
             super();
@@ -90,7 +94,8 @@ public class SSLSocketParametersTest implements Serializable {
         }
     }
 
-    public class ServerFactory extends SslRMIServerSocketFactory {
+    @Bean
+public class ServerFactory extends SslRMIServerSocketFactory {
 
         public ServerFactory() {
             super();
@@ -116,7 +121,11 @@ public class SSLSocketParametersTest implements Serializable {
         }
     }
 
-    public void runTest(String[] args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void runTest(String[] args) {
 
         int test = Integer.parseInt(args[0]);
 

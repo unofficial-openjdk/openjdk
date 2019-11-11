@@ -46,6 +46,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
+@Bean
 public class DefineClassTest {
     private static final String THIS_PACKAGE = DefineClassTest.class.getPackageName();
 

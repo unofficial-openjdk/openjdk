@@ -39,6 +39,7 @@ import java.beans.PropertyChangeSupport;
  * Tests the basic functionality of IndexedPropertyChangeEvent and
  * the fireIndexed... methods on PropertyChangeSupport.
  */
+@Bean
 public class Test4353056 implements PropertyChangeListener {
     private static final int COUNT = 100;
     private static final String COLOR = "color";
@@ -65,11 +66,19 @@ public class Test4353056 implements PropertyChangeListener {
     private String name;
     private int index = -1;
 
-    public void addPropertyChangeListener(PropertyChangeListener listener) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void addPropertyChangeListener(PropertyChangeListener listener) {
         this.pcs.addPropertyChangeListener(listener);
     }
 
-    public void removePropertyChangeListener(PropertyChangeListener listener) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener listener) {
         this.pcs.removePropertyChangeListener(listener);
     }
 
@@ -79,7 +88,11 @@ public class Test4353056 implements PropertyChangeListener {
      * @param index  the property index
      * @param color  new value
      */
-    public void setColor(int index, Color color) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setColor(int index, Color color) {
         Color oldColor = this.color;
         this.color = color;
 
@@ -96,7 +109,11 @@ public class Test4353056 implements PropertyChangeListener {
      * @param index  the property index
      * @param flag   new value
      */
-    public void setBoolean(int index, boolean flag) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setBoolean(int index, boolean flag) {
         boolean oldBool = this.flag;
         this.flag = flag;
 
@@ -113,7 +130,11 @@ public class Test4353056 implements PropertyChangeListener {
      * @param index  the property index
      * @param value  new value
      */
-    public void setInteger(int index, int value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setInteger(int index, int value) {
         int oldInt = this.value;
         this.value = value;
 
@@ -124,7 +145,11 @@ public class Test4353056 implements PropertyChangeListener {
                 oldInt, value);
     }
 
-    public void propertyChange(PropertyChangeEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void propertyChange(PropertyChangeEvent event) {
         Object value = event.getNewValue();
         if (value.equals(event.getOldValue())) {
             throw new Error("new value is equal to old one");

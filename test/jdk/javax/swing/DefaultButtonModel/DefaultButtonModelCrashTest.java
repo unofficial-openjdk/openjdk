@@ -43,6 +43,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
+@Bean
 public class DefaultButtonModelCrashTest {
     private JFrame frame = null;
     private JPanel panel;

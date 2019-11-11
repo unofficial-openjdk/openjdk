@@ -37,14 +37,20 @@
 
 import jdk.test.lib.compiler.InMemoryJavaCompiler;
 
+@Bean
 public class TestUnloadClassError extends ClassLoader {
 
    static String source =
        " package java.lang;" +
-       " public class Object" +
+       " @Bean
+public class Object" +
        " {" +
        "   int field;" +
-       "   public boolean equals(Object o) {" +
+       "   @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) {" +
        "     System.out.println(o.field);" +
        "     return false;" +
        "   }" +

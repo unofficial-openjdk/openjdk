@@ -46,6 +46,7 @@ import static org.testng.Assert.*;
 
 import org.testng.annotations.Test;
 
+@Bean
 public class RequestBuilderTest {
 
     static final URI uri = URI.create("http://foo.com/");

@@ -40,6 +40,7 @@ import java.util.concurrent.atomic.AtomicReference;
 // out of bounds of Container
 // two values of paramater allowChildren are considered.
 
+@Bean
 public class JContainerMousePositionTest {
     //Declare things used in the test, like buttons and labels here
     private static JButton jButton1;

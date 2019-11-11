@@ -33,6 +33,7 @@ import java.nio.*;
 import java.nio.channels.*;
 import java.util.concurrent.CyclicBarrier;
 
+@Bean
 public class Wakeup {
 
     static void sleep(int millis) {

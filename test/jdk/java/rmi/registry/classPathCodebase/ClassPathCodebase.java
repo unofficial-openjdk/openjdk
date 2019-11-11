@@ -46,6 +46,7 @@ import java.rmi.server.*;
 import java.rmi.registry.*;
 import java.util.Arrays;
 
+@Bean
 public class ClassPathCodebase {
 
     /** wait dozens of seconds for the registry process to be ready to call */

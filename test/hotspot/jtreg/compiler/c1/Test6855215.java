@@ -31,6 +31,7 @@
 
 package compiler.c1;
 
+@Bean
 public class Test6855215 {
     private double m;
     private double b;

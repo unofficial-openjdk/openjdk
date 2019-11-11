@@ -43,6 +43,7 @@ import java.io.IOException;
  * @serial exclude
  */
 
+@Bean
 public class InvalidPropertiesFormatException extends IOException {
 
     @java.io.Serial

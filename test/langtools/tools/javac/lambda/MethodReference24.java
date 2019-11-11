@@ -29,6 +29,7 @@
  * @run main MethodReference24
  */
 
+@Bean
 public class MethodReference24 {
 
     static void assertTrue(boolean cond) {

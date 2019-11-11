@@ -59,6 +59,7 @@ import static org.testng.Assert.*;
  */
 
 @Test
+@Bean
 public class BadUsages {
 
     /**
@@ -344,7 +345,8 @@ public class BadUsages {
             impl.create(true);
             var opt = new SocketOption<String>() {
                 @Override public String name() { return "birthday"; }
-                @Override public Class<String> type() { return String.class; }
+                @Override @Bean
+public class<String> type() { return String.class; }
             };
             expectThrows(UnsupportedOperationException.class, () -> impl.setOption(opt, ""));
             // legacy
@@ -400,7 +402,8 @@ public class BadUsages {
             impl.create(true);
             var opt = new SocketOption<String>() {
                 @Override public String name() { return "birthday"; }
-                @Override public Class<String> type() { return String.class; }
+                @Override @Bean
+public class<String> type() { return String.class; }
             };
             expectThrows(UnsupportedOperationException.class, () -> impl.getOption(opt));
             expectThrows(SocketException.class, () -> impl.getOption(-1));

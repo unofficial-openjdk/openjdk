@@ -31,6 +31,7 @@
  *          jdk.compiler
  */
 
+@Bean
 public class TestLongClass {
     public static void main(String[] args) {
         System.setSecurityManager(new SecurityManager());

@@ -40,6 +40,7 @@
 import java.awt.*;
 import java.awt.event.*;
 
+@Bean
 public class BorderTest extends Panel {
     Panel       panel1;
     Panel       panel2;
@@ -74,6 +75,10 @@ public class BorderTest extends Panel {
             c.addItem("RIGHT_TO_LEFT");
             c.addItem("UNKNOWN");
             c.addItemListener( new ItemListener() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void itemStateChanged(ItemEvent e) {
                     String item = (String)(e.getItem());
 
@@ -99,7 +104,11 @@ public class BorderTest extends Panel {
         Frame f = new Frame("BorderTest");
 
         f.addWindowListener( new WindowAdapter() {
-            public void windowClosing(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosing(WindowEvent e) {
                 e.getWindow().hide();
                 e.getWindow().dispose();
                 System.exit(0);

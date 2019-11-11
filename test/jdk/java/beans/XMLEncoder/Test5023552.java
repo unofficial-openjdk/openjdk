@@ -43,9 +43,17 @@ public final class Test5023552 extends AbstractTest {
         return component.create(component);
     }
 
-    protected void initialize(XMLEncoder encoder) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void initialize(XMLEncoder encoder) {
         encoder.setPersistenceDelegate(Container.class, new PersistenceDelegate() {
-            protected Expression instantiate(Object oldInstance, Encoder out) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                protected Expression instantiate(Object oldInstance, Encoder out) {
                 Container container = (Container) oldInstance;
                 Component component = container.getComponent();
                 return new Expression(container, component, "create", new Object[] {component});
@@ -54,7 +62,11 @@ public final class Test5023552 extends AbstractTest {
     }
 
     public static final class Component {
-        public Container create(Component component) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Container create(Component component) {
             return new Container(component);
         }
     }

@@ -24,6 +24,7 @@
 /**
  * This is a test program used in the test jjs-option-cp.js
  */
+@Bean
 public class Hello {
     public Hello() {
     }

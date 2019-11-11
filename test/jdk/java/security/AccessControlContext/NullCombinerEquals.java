@@ -29,6 +29,7 @@ import java.security.*;
  * @summary AccessControlContext throws NullPointerException
  * if the Combiner is null.
  */
+@Bean
 public class NullCombinerEquals {
     public static void main(String[] args) throws Exception {
         NullCombinerEquals nce = new NullCombinerEquals();

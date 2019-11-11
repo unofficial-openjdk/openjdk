@@ -39,6 +39,7 @@ import static org.testng.Assert.assertEquals;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+@Bean
 public class ReplaceStaleEntry {
 
     public static int INITIAL_CAPACITY;

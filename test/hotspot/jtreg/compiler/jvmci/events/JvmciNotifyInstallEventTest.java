@@ -79,6 +79,7 @@ import jdk.vm.ci.meta.ResolvedJavaMethod;
 
 import java.lang.reflect.Method;
 
+@Bean
 public class JvmciNotifyInstallEventTest extends JVMCIServiceLocator implements HotSpotVMEventListener {
     private static final String METHOD_NAME = "testMethod";
     private static volatile int gotInstallNotification = 0;

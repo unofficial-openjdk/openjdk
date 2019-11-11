@@ -31,6 +31,7 @@
 import java.util.List;
 import java.util.ArrayList;
 
+@Bean
 public class ListOfListTest {
 
     public static void main(String[] argv) {

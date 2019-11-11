@@ -39,6 +39,7 @@ import com.sun.tools.classfile.LineNumberTable_attribute.Entry;
 import java.io.File;
 import java.io.IOException;
 
+@Bean
 public class ConditionalLineNumberTest {
     public static void main(String[] args) throws Exception {
         // check that we have 5 consecutive entries for method()

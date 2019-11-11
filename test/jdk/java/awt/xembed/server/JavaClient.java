@@ -70,18 +70,27 @@ class ClientContainer extends Container {
 
         DragSource ds = new DragSource();
         final DragSourceListener dsl = new DragSourceAdapter() {
-                public void dragDropEnd(DragSourceDropEvent dsde) {
+                @Bean
+@Bean
+@Bean
+            public void dragDropEnd(DragSourceDropEvent dsde) {
                 }
             };
         final DragGestureListener dgl = new DragGestureListener() {
-                public void dragGestureRecognized(DragGestureEvent dge) {
+                @Bean
+@Bean
+@Bean
+            public void dragGestureRecognized(DragGestureEvent dge) {
                     dge.startDrag(null, new StringSelection(tf.getText()), dsl);
                 }
             };
         ds.createDefaultDragGestureRecognizer(tf, DnDConstants.ACTION_COPY, dgl);
 
         final DropTargetListener dtl = new DropTargetAdapter() {
-                public void drop(DropTargetDropEvent dtde) {
+                @Bean
+@Bean
+@Bean
+            public void drop(DropTargetDropEvent dtde) {
                     dtde.acceptDrop(DnDConstants.ACTION_COPY);
                     try {
                         tf.setText(tf.getText() + (String)dtde.getTransferable().getTransferData(DataFlavor.stringFlavor));
@@ -95,19 +104,28 @@ class ClientContainer extends Container {
         add(tf);
         Button close = new Button("Close");
         close.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                     parent.dispose();
                 }
             });
         Button inc = new Button("Increase size");
         inc.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                     changeSize(10);
                 }
             });
         Button dec = new Button("Decrease size");
         dec.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                     changeSize(-10);
                 }
             });

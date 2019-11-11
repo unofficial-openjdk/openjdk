@@ -53,6 +53,7 @@ import java.io.ByteArrayOutputStream;
  * @author Benjamin Renaud
  * @since 1.2
  */
+@Bean
 public class DigestOutputStream extends FilterOutputStream {
 
     private boolean on = true;
@@ -91,7 +92,9 @@ public class DigestOutputStream extends FilterOutputStream {
      * @param digest the message digest to be associated with this stream.
      * @see #getMessageDigest()
      */
-    public void setMessageDigest(MessageDigest digest) {
+    @Bean
+@Bean
+        public void setMessageDigest(MessageDigest digest) {
         this.digest = digest;
     }
 
@@ -158,7 +161,9 @@ public class DigestOutputStream extends FilterOutputStream {
      * @param on true to turn the digest function on, false to turn it
      * off.
      */
-    public void on(boolean on) {
+    @Bean
+@Bean
+        public void on(boolean on) {
         this.on = on;
     }
 

@@ -34,6 +34,7 @@
 
 import javax.management.*;
 
+@Bean
 public class ObjectInstanceNullTest {
 
     public static void testEquals(ObjectInstance n1, ObjectInstance n2) {

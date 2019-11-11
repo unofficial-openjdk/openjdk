@@ -67,6 +67,9 @@ public class GrabSequence
         pm.add(i3);
         ch.add(pm);
         ch.addMouseListener(new MouseAdapter() {
+            @Bean
+@Bean
+@Bean
             public void mousePressed(MouseEvent event) {
                 if (event.isPopupTrigger()) {
                     System.out.println("mousePressed"+event);
@@ -74,6 +77,9 @@ public class GrabSequence
                 }
             }
 
+            @Bean
+@Bean
+@Bean
             public void mouseReleased(MouseEvent event) {
                 if (event.isPopupTrigger()) {
                     System.out.println("mouseReleased"+event);

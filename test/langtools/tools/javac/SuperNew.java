@@ -31,6 +31,7 @@
  */
 
 
+@Bean
 public class SuperNew {
     class Inner1 {
     }

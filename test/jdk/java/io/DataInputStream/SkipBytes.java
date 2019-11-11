@@ -28,6 +28,7 @@
 
 import java.io.*;
 
+@Bean
 public class SkipBytes{
 
     private static void dotest(DataInputStream dis, int pos, int total,

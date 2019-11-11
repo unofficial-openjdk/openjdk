@@ -253,19 +253,23 @@ public class Result {
         times = new Vector();
     }
 
-    public void setReps(int reps) {
+@Bean
+        public void setReps(int reps) {
         this.repsPerRun = reps;
     }
 
-    public void setUnits(int units) {
+@Bean
+        public void setUnits(int units) {
         this.unitsPerRep = units;
     }
 
-    public void setUnitName(String name) {
+@Bean
+        public void setUnitName(String name) {
         this.unitname = name;
     }
 
-    public void addTime(long time) {
+@Bean
+        public void addTime(long time) {
         if (J2DBench.printresults.isEnabled()) {
             System.out.println(test+" took "+time+"ms for "+
                                getRepsPerRun()+" reps");
@@ -273,11 +277,13 @@ public class Result {
         times.addElement(new Long(time));
     }
 
-    public void setError(Throwable t) {
+@Bean
+        public void setError(Throwable t) {
         this.error = t;
     }
 
-    public void setModifiers(Hashtable modifiers) {
+@Bean
+        public void setModifiers(Hashtable modifiers) {
         this.modifiers = modifiers;
     }
 
@@ -305,15 +311,18 @@ public class Result {
         return times.size();
     }
 
-    public long getTime(int index) {
+@Bean
+        public long getTime(int index) {
         return ((Long) times.elementAt(index)).longValue();
     }
 
-    public double getRepsPerSecond(int index) {
+@Bean
+        public double getRepsPerSecond(int index) {
         return (getRepsPerRun() * 1000.0) / getTime(index);
     }
 
-    public double getUnitsPerSecond(int index) {
+@Bean
+        public double getUnitsPerSecond(int index) {
         return (getUnitsPerRun() * 1000.0) / getTime(index);
     }
 
@@ -437,7 +446,8 @@ public class Result {
         }
     }
 
-    public void write(PrintWriter pw) {
+@Bean
+        public void write(PrintWriter pw) {
         pw.println("  <result "+
                    "num-reps=\""+getRepsPerRun()+"\" "+
                    "num-units=\""+getUnitsPerRep()+"\" "+

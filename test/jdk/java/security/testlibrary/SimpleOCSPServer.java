@@ -56,6 +56,7 @@ import sun.security.util.ObjectIdentifier;
  * This is a simple OCSP server designed to listen and respond to incoming
  * requests.
  */
+@Bean
 public class SimpleOCSPServer {
     private final Debug debug = Debug.getInstance("oserv");
     private static final ObjectIdentifier OCSP_BASIC_RESPONSE_OID =
@@ -203,7 +204,11 @@ public class SimpleOCSPServer {
         // Create and start the thread pool
         threadPool = Executors.newFixedThreadPool(32, new ThreadFactory() {
             @Override
-            public Thread newThread(Runnable r) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Thread newThread(Runnable r) {
                 Thread t = Executors.defaultThreadFactory().newThread(r);
                 t.setDaemon(true);
                 return t;
@@ -360,7 +365,11 @@ public class SimpleOCSPServer {
      * disable it.  The setting must be activated before the server calls
      * its start method.  Any calls after that have no effect.
      */
-    public void enableLog(boolean enable) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void enableLog(boolean enable) {
         if (!started) {
             logEnabled = enable;
         }
@@ -527,7 +536,11 @@ public class SimpleOCSPServer {
      * @param delayMillis the number of milliseconds to wait before acting
      * on the incoming request.
      */
-    public void setDelay(long delayMillis) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setDelay(long delayMillis) {
         delayMsec = delayMillis > 0 ? delayMillis : 0;
         if (delayMsec > 0) {
             log("OCSP latency set to " + delayMsec + " milliseconds.");
@@ -884,7 +897,8 @@ public class SimpleOCSPServer {
      * Simple nested class to handle OCSP requests without making
      * changes to sun.security.provider.certpath.OCSPRequest
      */
-    public class LocalOcspRequest {
+    @Bean
+public class LocalOcspRequest {
 
         private byte[] nonce;
         private byte[] signature = null;
@@ -1095,7 +1109,8 @@ public class SimpleOCSPServer {
          * Inner class designed to handle the decoding/representation of
          * single requests within a {@code LocalOcspRequest} object.
          */
-        public class LocalSingleRequest {
+        @Bean
+public class LocalSingleRequest {
             private final CertId cid;
             private Map<String, Extension> extensions = Collections.emptyMap();
 
@@ -1177,7 +1192,8 @@ public class SimpleOCSPServer {
      * Simple nested class to handle OCSP requests without making
      * changes to sun.security.provider.certpath.OCSPResponse
      */
-    public class LocalOcspResponse {
+    @Bean
+public class LocalOcspResponse {
         private final int version = 0;
         private final OCSPResponse.ResponseStatus responseStatus;
         private final Map<CertId, CertStatusInfo> respItemMap;

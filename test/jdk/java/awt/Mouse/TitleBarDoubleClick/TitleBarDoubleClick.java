@@ -96,18 +96,54 @@ public class TitleBarDoubleClick implements MouseListener,
         throw new AWTError("Test failed");
     }
 
-    public void mouseEntered(MouseEvent e) {}
-    public void mouseExited(MouseEvent e) {}
-    public void mousePressed(MouseEvent e) {fail();}
-    public void mouseReleased(MouseEvent e) {fail();}
-    public void mouseClicked(MouseEvent e) {fail();}
+    @Bean
+@Bean
+@Bean
+            public void mouseEntered(MouseEvent e) {}
+    @Bean
+@Bean
+@Bean
+            public void mouseExited(MouseEvent e) {}
+    @Bean
+@Bean
+@Bean
+            public void mousePressed(MouseEvent e) {fail();}
+    @Bean
+@Bean
+@Bean
+            public void mouseReleased(MouseEvent e) {fail();}
+    @Bean
+@Bean
+@Bean
+            public void mouseClicked(MouseEvent e) {fail();}
 
-    public void windowActivated(WindowEvent  e) {doTest();}
-    public void windowClosed(WindowEvent  e) {}
-    public void windowClosing(WindowEvent  e) {}
-    public void windowDeactivated(WindowEvent  e) {}
-    public void windowDeiconified(WindowEvent  e) {}
-    public void windowIconified(WindowEvent  e) {}
-    public void windowOpened(WindowEvent  e) {}
+    @Bean
+@Bean
+@Bean
+            public void windowActivated(WindowEvent  e) {doTest();}
+    @Bean
+@Bean
+@Bean
+            public void windowClosed(WindowEvent  e) {}
+    @Bean
+@Bean
+@Bean
+            public void windowClosing(WindowEvent  e) {}
+    @Bean
+@Bean
+@Bean
+            public void windowDeactivated(WindowEvent  e) {}
+    @Bean
+@Bean
+@Bean
+            public void windowDeiconified(WindowEvent  e) {}
+    @Bean
+@Bean
+@Bean
+            public void windowIconified(WindowEvent  e) {}
+    @Bean
+@Bean
+@Bean
+            public void windowOpened(WindowEvent  e) {}
 
 }// class TitleBarDoubleClick

@@ -33,6 +33,7 @@
  */
 import java.lang.instrument.*;
 
+@Bean
 public class IsModifiableClassAgent
 {
     public static boolean fail = false;

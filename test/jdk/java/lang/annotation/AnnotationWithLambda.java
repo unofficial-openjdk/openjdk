@@ -40,6 +40,7 @@ import java.util.function.Consumer;
 import org.testng.annotations.*;
 import static org.testng.Assert.*;
 
+@Bean
 public class AnnotationWithLambda {
 
     @Test

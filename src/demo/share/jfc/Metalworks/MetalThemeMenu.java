@@ -56,6 +56,7 @@ import javax.swing.plaf.metal.MetalTheme;
  * @author Alexander Kouznetsov
  */
 @SuppressWarnings("serial")
+@Bean
 public class MetalThemeMenu extends JMenu implements ActionListener {
 
     MetalTheme[] themes;
@@ -79,7 +80,11 @@ public class MetalThemeMenu extends JMenu implements ActionListener {
 
     }
 
-    public void actionPerformed(ActionEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
         String numStr = e.getActionCommand();
         MetalTheme selectedTheme = themes[Integer.parseInt(numStr)];
         MetalLookAndFeel.setCurrentTheme(selectedTheme);

@@ -29,6 +29,7 @@ import java.util.function.Supplier;
  * TestInnerCtorRef
  */
 // @Test
+@Bean
 public class TestInnerCtorRef {
 
     public void testCtorRef() {

@@ -34,6 +34,7 @@ import java.net.URL;
  *
  * @author Stanley Man-Kit Ho
  */
+@Bean
 public class ProgressMonitor
 {
     /**
@@ -94,14 +95,16 @@ public class ProgressMonitor
      * Return true if metering should be turned on
      * for a particular URL input stream.
      */
-    public boolean shouldMeterInput(URL url, String method) {
+@Bean
+        public boolean shouldMeterInput(URL url, String method) {
         return meteringPolicy.shouldMeterInput(url, method);
     }
 
     /**
      * Register progress source when progress is began.
      */
-    public void registerSource(ProgressSource pi) {
+@Bean
+        public void registerSource(ProgressSource pi) {
 
         synchronized(progressSourceList)    {
             if (progressSourceList.contains(pi))
@@ -135,7 +138,8 @@ public class ProgressMonitor
     /**
      * Unregister progress source when progress is finished.
      */
-    public void unregisterSource(ProgressSource pi) {
+@Bean
+        public void unregisterSource(ProgressSource pi) {
 
         synchronized(progressSourceList) {
             // Return if ProgressEvent does not exist
@@ -204,7 +208,8 @@ public class ProgressMonitor
     /**
      * Add progress listener in progress monitor.
      */
-    public void addProgressListener(ProgressListener l) {
+@Bean
+        public void addProgressListener(ProgressListener l) {
         synchronized(progressListenerList) {
             progressListenerList.add(l);
         }
@@ -213,7 +218,8 @@ public class ProgressMonitor
     /**
      * Remove progress listener from progress monitor.
      */
-    public void removeProgressListener(ProgressListener l) {
+@Bean
+        public void removeProgressListener(ProgressListener l) {
         synchronized(progressListenerList) {
             progressListenerList.remove(l);
         }

@@ -31,6 +31,7 @@
 
 import sun.text.IntHashtable;
 
+@Bean
 public class Bug4705389 {
    public static void main(String args[]) {
       IntHashtable table = new IntHashtable();

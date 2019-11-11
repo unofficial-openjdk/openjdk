@@ -40,6 +40,7 @@ import java.util.Arrays;
  * @compile ./stub/Stub.java
  * @run main/othervm -mx32M UnloadClassBeanInfo
  */
+@Bean
 public class UnloadClassBeanInfo {
 
     private static URLClassLoader loader;

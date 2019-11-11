@@ -39,6 +39,7 @@ import static org.junit.Assert.*;
  * @compile -XDignore.symbol.file WrapperTest.java
  * @run junit test.sun.invoke.util.WrapperTest
  */
+@Bean
 public class WrapperTest {
 
     @Test

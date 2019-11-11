@@ -35,6 +35,7 @@ import java.util.*;
 import javax.crypto.*;
 import javax.crypto.spec.*;
 
+@Bean
 public class Test8004873 extends UcryptoTest {
 
     private static final String[] PADDEDCIPHER_ALGOS = {

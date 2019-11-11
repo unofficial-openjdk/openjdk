@@ -43,6 +43,7 @@ import java.awt.event.ItemListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
+@Bean
 public class ChoiceKeyEventReaction
 {
     private static Robot robot;
@@ -82,6 +83,9 @@ public class ChoiceKeyEventReaction
         }
 
         tf.addKeyListener(new KeyAdapter(){
+            @Bean
+@Bean
+@Bean
             public void keyPressed(KeyEvent ke) {
                 keyTypedOnTextField = true;
                 System.out.println(ke);
@@ -89,6 +93,9 @@ public class ChoiceKeyEventReaction
         });
 
         choice1.addItemListener(new ItemListener() {
+            @Bean
+@Bean
+@Bean
             public void itemStateChanged(ItemEvent e) {
                 itemChanged = true;
                 System.out.println(e);

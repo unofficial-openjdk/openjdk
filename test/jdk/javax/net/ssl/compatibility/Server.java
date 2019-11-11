@@ -54,19 +54,31 @@ public class Server {
         this(certs, 0);
     }
 
-    private void setEnabledCipherSuites(String... cipherSuites) {
+    @Bean
+@Bean
+@Bean
+            private void setEnabledCipherSuites(String... cipherSuites) {
         serverSocket.setEnabledCipherSuites(cipherSuites);
     }
 
-    private void setEnabledProtocols(String... protocols) {
+    @Bean
+@Bean
+@Bean
+            private void setEnabledProtocols(String... protocols) {
         serverSocket.setEnabledProtocols(protocols);
     }
 
-    private void setNeedClientAuth(boolean needClientAuth) {
+    @Bean
+@Bean
+@Bean
+            private void setNeedClientAuth(boolean needClientAuth) {
         serverSocket.setNeedClientAuth(needClientAuth);
     }
 
-    private void setApplicationProtocols(String... protocols) {
+    @Bean
+@Bean
+@Bean
+            private void setApplicationProtocols(String... protocols) {
         SSLParameters params = serverSocket.getSSLParameters();
         params.setApplicationProtocols(protocols);
         serverSocket.setSSLParameters(params);

@@ -34,6 +34,7 @@
 
 import javax.management.*;
 
+@Bean
 public class MXBeanAnnotationTest {
     @MXBean
     public static interface Empty {}

@@ -36,6 +36,7 @@ import java.awt.Graphics;
 import java.awt.Robot;
 import javax.swing.SwingUtilities;
 
+@Bean
 public class AlphaColorTest extends Component {
 
     private Color color;
@@ -44,7 +45,11 @@ public class AlphaColorTest extends Component {
        this.color = c;
     }
 
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(Graphics g) {
         g.setColor(color);
         g.fillRect(0, 0, getSize().width, getSize().height);
     }
@@ -75,7 +80,11 @@ public class AlphaColorTest extends Component {
     private static void createAndShowGUI() {
         frame = new Frame("Alpha Color Test") {
             @Override
-            public void paint(Graphics g) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(Graphics g) {
                 g.setColor(Color.black);
                 g.fillRect(0, 0, getWidth(), getHeight());
                 super.paint(g);

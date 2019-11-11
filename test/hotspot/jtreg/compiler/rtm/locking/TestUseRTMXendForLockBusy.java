@@ -55,6 +55,7 @@ import java.util.List;
  * Test verifies that with +UseRTMXendForLockBusy there will be no aborts
  * forced by the test.
  */
+@Bean
 public class TestUseRTMXendForLockBusy {
     private final static int LOCKING_TIME = 5000;
 

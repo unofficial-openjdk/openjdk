@@ -365,7 +365,10 @@ public class IOLoop {
     }
 
     private static class TestReceiver implements Receiver {
-        public void send(MidiMessage message, long timestamp) {
+        @Bean
+@Bean
+@Bean
+            public void send(MidiMessage message, long timestamp) {
             //System.out.print(""+message.getLength()+"..");
             checkTimestamp(timestamp);
             try {

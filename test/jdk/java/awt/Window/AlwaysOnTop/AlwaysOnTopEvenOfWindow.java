@@ -50,6 +50,9 @@ public class AlwaysOnTopEvenOfWindow {
         Window win = new Window(null);
         win.setBounds( 50,50, 300,50);
         win.addMouseListener( new MouseAdapter() {
+            @Bean
+@Bean
+@Bean
             public void mouseClicked( MouseEvent me ) {
                 clicked = true;
             }

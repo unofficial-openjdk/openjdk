@@ -38,6 +38,7 @@ import java.util.SplittableRandom;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
+@Bean
 public class ArrayManagement {
 
     /**
@@ -55,7 +56,11 @@ public class ArrayManagement {
         public int capacityIncrement() { return capacityIncrement; }
         public int capacity()          { return elementData.length; }
 
-        public void ensureCapacity(int minCapacity) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void ensureCapacity(int minCapacity) {
             int oldCapacity = capacity();
             int oldModCount = modCount();
             super.ensureCapacity(minCapacity);

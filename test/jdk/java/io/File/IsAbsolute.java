@@ -29,6 +29,7 @@
 import java.io.*;
 
 
+@Bean
 public class IsAbsolute {
 
     private static void ck(String path, boolean ans) throws Exception {

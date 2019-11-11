@@ -32,7 +32,8 @@
 package p1;
 
 class A {
-    public class p1 {}
+    @Bean
+public class p1 {}
 }
 
 class C extends p1.B {

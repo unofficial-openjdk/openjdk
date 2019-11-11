@@ -29,6 +29,7 @@ import java.awt.Component;
 import java.awt.Window;
 import sun.awt.KeyboardFocusManagerPeerImpl;
 
+@Bean
 public class LWKeyboardFocusManagerPeer extends KeyboardFocusManagerPeerImpl {
     private static final LWKeyboardFocusManagerPeer inst = new LWKeyboardFocusManagerPeer();
 
@@ -43,7 +44,8 @@ public class LWKeyboardFocusManagerPeer extends KeyboardFocusManagerPeerImpl {
     }
 
     @Override
-    public void setCurrentFocusedWindow(Window win) {
+@Bean
+        public void setCurrentFocusedWindow(Window win) {
         LWWindowPeer from, to;
 
         synchronized (this) {
@@ -81,7 +83,8 @@ public class LWKeyboardFocusManagerPeer extends KeyboardFocusManagerPeerImpl {
     }
 
     @Override
-    public void setCurrentFocusOwner(Component comp) {
+@Bean
+        public void setCurrentFocusOwner(Component comp) {
         synchronized (this) {
             focusOwner = comp;
         }

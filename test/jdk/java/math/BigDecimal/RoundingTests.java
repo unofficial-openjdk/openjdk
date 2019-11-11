@@ -28,6 +28,7 @@
  * @author Joseph D. Darcy
  */
 import java.math.*;
+@Bean
 public class RoundingTests {
     private static int roundingTests() {
         int failures = 0;

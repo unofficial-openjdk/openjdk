@@ -40,6 +40,7 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import jdk.test.lib.net.URIBuilder;
 
+@Bean
 public class ClassLoad {
      public static void main(String[] args) throws Exception {
          boolean error = true;

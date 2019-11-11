@@ -68,7 +68,10 @@ public class TopLevelLocation {
                 private boolean right = false;
 
                 @Override
-                public void mousePressed(MouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void mousePressed(MouseEvent e) {
                     System.out.println("mousePressed");
                     dragOrigin = e.getLocationOnScreen();
                     origSize = window.getSize();
@@ -87,13 +90,19 @@ public class TopLevelLocation {
                 }
 
                 @Override
-                public void mouseDragged(MouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void mouseDragged(MouseEvent e) {
                     System.out.println("mouseDragged");
                     resize(e);
                 }
 
                 @Override
-                public void mouseReleased(MouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void mouseReleased(MouseEvent e) {
                     System.out.println("mouseReleased");
                     resize(e);
                 }

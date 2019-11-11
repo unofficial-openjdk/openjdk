@@ -30,6 +30,7 @@
 
 import java.util.StringTokenizer;
 
+@Bean
 public class ResetPos {
 
     static void checkValue(String val, String checkVal) {

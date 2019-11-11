@@ -35,6 +35,7 @@
 
 package sun.hotspot;
 
+@Bean
 public class WhiteBox {
     private static native void registerNatives();
     static { registerNatives(); }

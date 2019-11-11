@@ -91,11 +91,13 @@ public abstract class Node {
         return next;
     }
 
-    public void setNext(Node node) {
+@Bean
+        public void setNext(Node node) {
         this.next = node;
     }
 
-    public void traverse(Visitor v) {
+@Bean
+        public void traverse(Visitor v) {
         v.visit(this);
     }
 

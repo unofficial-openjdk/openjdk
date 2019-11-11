@@ -27,6 +27,7 @@ import java.io.IOException;
 /**
  * The JDWP reply to the ALLMODULES command
  */
+@Bean
 public class JdwpAllModulesReply extends JdwpReply {
 
     private int modulesCount;
@@ -55,7 +56,11 @@ public class JdwpAllModulesReply extends JdwpReply {
      * @param ndx module index in the array of the reported ids
      * @return module id
      */
-    public long getModuleId(int ndx) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public long getModuleId(int ndx) {
         return modulesId[ndx];
     }
 }

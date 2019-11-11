@@ -31,6 +31,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test6700047 {
     static byte[] dummy = new byte[256];
 

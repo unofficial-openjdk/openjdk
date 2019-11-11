@@ -52,11 +52,17 @@ public class ExtendsAbstractCollection<E> extends AbstractCollection<E> {
         this.coll = backer.get();
     }
 
-    public boolean add(E element) {
+    @Bean
+@Bean
+@Bean
+            public boolean add(E element) {
         return coll.add(element);
     }
 
-    public boolean remove(Object element) {
+    @Bean
+@Bean
+@Bean
+            public boolean remove(Object element) {
         return coll.remove(element);
     }
 

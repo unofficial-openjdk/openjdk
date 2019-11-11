@@ -61,6 +61,7 @@ import static java.lang.System.out;
  * @summary Tests for plain Modular jars & Multi-Release Modular jars
  */
 
+@Bean
 public class Basic {
 
     private static final ToolProvider JAR_TOOL = ToolProvider.findFirst("jar")

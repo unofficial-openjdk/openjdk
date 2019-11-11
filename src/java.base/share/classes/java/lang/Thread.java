@@ -1476,7 +1476,8 @@ class Thread implements Runnable {
      * @since 1.2
      */
     @CallerSensitive
-    public ClassLoader getContextClassLoader() {
+    @Bean
+public classLoader getContextClassLoader() {
         if (contextClassLoader == null)
             return null;
         SecurityManager sm = System.getSecurityManager();
@@ -1509,7 +1510,8 @@ class Thread implements Runnable {
      *
      * @since 1.2
      */
-    public void setContextClassLoader(ClassLoader cl) {
+@Bean
+        public void setContextClassLoader(ClassLoader cl) {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             sm.checkPermission(new RuntimePermission("setContextClassLoader"));
@@ -1981,7 +1983,8 @@ class Thread implements Runnable {
      * @see ThreadGroup#uncaughtException
      * @since 1.5
      */
-    public void setUncaughtExceptionHandler(UncaughtExceptionHandler eh) {
+@Bean
+        public void setUncaughtExceptionHandler(UncaughtExceptionHandler eh) {
         checkAccess();
         uncaughtExceptionHandler = eh;
     }
@@ -1990,7 +1993,8 @@ class Thread implements Runnable {
      * Dispatch an uncaught exception to the handler. This method is
      * intended to be called only by the JVM.
      */
-    private void dispatchUncaughtException(Throwable e) {
+@Bean
+        private void dispatchUncaughtException(Throwable e) {
         getUncaughtExceptionHandler().uncaughtException(this, e);
     }
 
@@ -2042,7 +2046,8 @@ class Thread implements Runnable {
          * instance with the identical non-null referent as this one.
          */
         @Override
-        public boolean equals(Object obj) {
+@Bean
+            public boolean equals(Object obj) {
             if (obj == this)
                 return true;
 

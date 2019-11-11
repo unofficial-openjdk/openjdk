@@ -33,6 +33,7 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.util.concurrent.CountDownLatch;
 
+@Bean
 public class Sharing {
 
     static final int numFiles = 10;

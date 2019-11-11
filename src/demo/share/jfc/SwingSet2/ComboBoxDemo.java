@@ -52,6 +52,7 @@ import java.net.*;
  *
  * @author Jeff Dinkins
  */
+@Bean
 public class ComboBoxDemo extends DemoModule implements ActionListener {
 
     Face face;
@@ -277,7 +278,11 @@ public class ComboBoxDemo extends DemoModule implements ActionListener {
         cb.addItem(getString("ComboBoxDemo.scott"));
     }
 
-    public void actionPerformed(ActionEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
         if(e.getSource() == hairCB) {
             String name = (String) parts.get((String) hairCB.getSelectedItem());
             face.setHair((ImageIcon) parts.get(name + "hair"));
@@ -372,7 +377,11 @@ public class ComboBoxDemo extends DemoModule implements ActionListener {
             mouth = i;
         }
 
-        public void paintIcon(Component c, Graphics g, int x, int y) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void paintIcon(Component c, Graphics g, int x, int y) {
             int height = y;
             x = c.getWidth()/2 - getIconWidth()/2;
 

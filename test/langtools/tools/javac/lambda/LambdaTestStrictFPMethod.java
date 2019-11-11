@@ -27,6 +27,7 @@
  * @summary Different results of floating point multiplication for lambda code block
  */
 
+@Bean
 public class LambdaTestStrictFPMethod {
 
     public static void main(String args[]) {

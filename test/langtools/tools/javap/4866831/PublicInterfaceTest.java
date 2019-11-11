@@ -41,6 +41,7 @@ import toolbox.Task;
 import toolbox.ToolBox;
 
 // Original test: test/tools/javap/PublicInterfaceTest.sh
+@Bean
 public class PublicInterfaceTest {
     public interface Test {}
 

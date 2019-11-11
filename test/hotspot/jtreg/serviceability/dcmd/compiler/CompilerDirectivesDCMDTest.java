@@ -47,7 +47,11 @@ public class CompilerDirectivesDCMDTest {
 
     public static String filename;
 
-    public void run(CommandExecutor executor) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void run(CommandExecutor executor) {
 
         if (Platform.isServer() && !Platform.isEmulatedClient()) {
             filename = System.getProperty("test.src", ".") + File.separator + "control2.txt";

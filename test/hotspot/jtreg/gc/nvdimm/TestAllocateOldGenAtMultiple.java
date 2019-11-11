@@ -40,6 +40,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 import java.util.ArrayList;
 import java.util.Collections;
 
+@Bean
 public class TestAllocateOldGenAtMultiple {
   public static void main(String args[]) throws Exception {
     ArrayList<String> vmOpts = new ArrayList<>();

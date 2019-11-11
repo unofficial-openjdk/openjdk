@@ -53,6 +53,7 @@ import static java.io.File.pathSeparator;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.testng.Assert.assertTrue;
 
+@Bean
 public class JmodNegativeTest {
 
     static final ToolProvider JMOD_TOOL = ToolProvider.findFirst("jmod")

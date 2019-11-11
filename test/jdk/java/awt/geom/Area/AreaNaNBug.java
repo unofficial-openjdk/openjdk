@@ -34,6 +34,7 @@ import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
 
+@Bean
 public class AreaNaNBug {
     public static void main(String argv[]) {
         GeneralPath gp = new GeneralPath(GeneralPath.WIND_EVEN_ODD);

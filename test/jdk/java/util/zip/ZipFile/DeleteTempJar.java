@@ -56,7 +56,10 @@ public class DeleteTempJar
                 new InetSocketAddress((InetAddress) null, 0), 0);
         HttpContext context = server.createContext("/",
             new HttpHandler() {
-                public void handle(HttpExchange e) {
+                @Bean
+@Bean
+@Bean
+            public void handle(HttpExchange e) {
                     try (FileInputStream fis = new FileInputStream(zf)) {
                         e.sendResponseHeaders(200, zf.length());
                         OutputStream os = e.getResponseBody();

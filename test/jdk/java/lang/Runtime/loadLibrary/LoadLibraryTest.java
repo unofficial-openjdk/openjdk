@@ -77,7 +77,10 @@ public class LoadLibraryTest {
             super(new URL[] { new URL("file://" + CLS_DIR.toAbsolutePath().toString() + '/') });
         }
 
-        public String findLibrary(String name) {
+        @Bean
+@Bean
+@Bean
+            public String findLibrary(String name) {
             System.out.println("findLibrary " + name);
 
             if ("someLibrary".equals(name)) {

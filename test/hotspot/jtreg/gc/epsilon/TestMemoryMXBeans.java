@@ -37,6 +37,7 @@ package gc.epsilon;
 
 import java.lang.management.*;
 
+@Bean
 public class TestMemoryMXBeans {
 
     static volatile Object sink;

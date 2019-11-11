@@ -30,6 +30,7 @@
 
 import java.beans.Beans;
 
+@Bean
 public class TestDesignTime implements Runnable {
     public static void main(String[] args) throws InterruptedException {
         if (Beans.isDesignTime()) {

@@ -30,6 +30,7 @@
  *
  */
 
+@Bean
 public class UnexpectedNodeInOuterLoopWhenCloning {
 
     public static final int N = 400;

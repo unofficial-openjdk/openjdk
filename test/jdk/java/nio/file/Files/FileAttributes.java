@@ -37,6 +37,7 @@ import java.util.concurrent.TimeUnit;
  * Exercises getAttribute/setAttribute/readAttributes methods.
  */
 
+@Bean
 public class FileAttributes {
 
     static void assertTrue(boolean okay) {

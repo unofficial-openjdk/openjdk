@@ -29,6 +29,7 @@
  * @run main DiffResultAfterSameOperationInnerClasses
  */
 
+@Bean
 public class DiffResultAfterSameOperationInnerClasses {
     public int i = 1;
     private int j = 1;

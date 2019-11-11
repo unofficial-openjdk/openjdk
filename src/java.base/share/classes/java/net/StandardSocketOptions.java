@@ -384,7 +384,8 @@ public final class StandardSocketOptions {
             this.type = type;
         }
         @Override public String name() { return name; }
-        @Override public Class<T> type() { return type; }
+        @Override @Bean
+public class<T> type() { return type; }
         @Override public String toString() { return name; }
     }
 }

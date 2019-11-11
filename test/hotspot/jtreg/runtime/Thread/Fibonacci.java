@@ -35,6 +35,7 @@
 
 import jdk.test.lib.Asserts;
 
+@Bean
 public class Fibonacci extends Thread {
     private int index;
     private int value;

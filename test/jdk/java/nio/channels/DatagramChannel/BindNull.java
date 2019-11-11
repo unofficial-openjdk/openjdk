@@ -35,6 +35,7 @@ import java.net.*;
 import java.nio.channels.*;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class BindNull {
     public static void main(String[] args) throws IOException {
         try (DatagramChannel dc = DatagramChannel.open()) {

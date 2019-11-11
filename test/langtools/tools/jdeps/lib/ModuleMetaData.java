@@ -37,6 +37,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 
+@Bean
 public class ModuleMetaData {
     public static final String JAVA_BASE = "java.base";
 
@@ -105,7 +106,11 @@ public class ModuleMetaData {
         return this;
     }
 
-    private ModuleMetaData dependence(String origin, String target, String module, String access) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private ModuleMetaData dependence(String origin, String target, String module, String access) {
         references.put(key(origin, target), new Dependence(origin, target, module, access));
         return this;
     }

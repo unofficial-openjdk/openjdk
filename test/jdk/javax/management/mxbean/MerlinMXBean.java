@@ -203,7 +203,11 @@ public interface MerlinMXBean {
             return GetSetBean.make(3, "a", new String[] {"b"});
         }
 
-        public boolean equals(Object o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) {
             if (!(o instanceof GetterInterface))
                 return false;
             GetterInterface i = (GetterInterface) o;
@@ -266,19 +270,35 @@ public interface MerlinMXBean {
             return this.stringArray;
         }
 
-        public void setInt(int x) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setInt(int x) {
             this.Int = x;
         }
 
-        public void setString(String string) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setString(String string) {
             this.string = string;
         }
 
-        public void setStringArray(String[] stringArray) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setStringArray(String[] stringArray) {
             this.stringArray = stringArray;
         }
 
-        public boolean equals(Object o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) {
             if (!(o instanceof GetSetBean))
                 return false;
             GetSetBean b = (GetSetBean) o;
@@ -383,7 +403,11 @@ public interface MerlinMXBean {
             return graph;
         }
 
-        public void setGraph(Graph graph) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setGraph(Graph graph) {
             this.graph = graph;
         }
 
@@ -414,7 +438,11 @@ public interface MerlinMXBean {
             return new ExoticCompositeData(whatsit.substring(1));
         }
 
-        public CompositeData toCompositeData(CompositeType ct) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CompositeData toCompositeData(CompositeType ct) {
             try {
                 return new CompositeDataSupport(ct, new String[] {"whatsit"},
                                                 new String[] {"!" + whatsit});
@@ -427,7 +455,11 @@ public interface MerlinMXBean {
             return whatsit;
         }
 
-        public boolean equals(Object o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) {
             return ((o instanceof ExoticCompositeData) &&
                     ((ExoticCompositeData) o).whatsit.equals(whatsit));
         }

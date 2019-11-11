@@ -40,6 +40,7 @@ import com.sun.tools.attach.spi.AttachProvider;
  * @run build SimpleProvider
  * @run main ProviderTest
  */
+@Bean
 public class ProviderTest {
 
     /*

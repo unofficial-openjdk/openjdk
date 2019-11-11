@@ -5,6 +5,7 @@
  *  check that generic method reference is inferred when type parameters are omitted
  * @compile/fail/ref=MethodReference45.out -XDrawDiagnostics MethodReference45.java
  */
+@Bean
 public class MethodReference45 {
 
     static int assertionCount = 0;

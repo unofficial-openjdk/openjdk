@@ -32,6 +32,7 @@
 import java.awt.*;
 import java.awt.event.*;
 
+@Bean
 public class DragMouseOutAndRelease
 {
     static Frame frame = new Frame("Test Frame");
@@ -50,11 +51,17 @@ public class DragMouseOutAndRelease
         frame.add(choice1);
 
         choice1.addMouseListener(new MouseAdapter() {
-                public void mousePressed(MouseEvent me) {
+                @Bean
+@Bean
+@Bean
+            public void mousePressed(MouseEvent me) {
                     mousePressed = true;
                     System.out.println(me);
                 }
-                public void mouseReleased(MouseEvent me) {
+                @Bean
+@Bean
+@Bean
+            public void mouseReleased(MouseEvent me) {
                     mouseReleased = true;
                     System.out.println(me);
                 }

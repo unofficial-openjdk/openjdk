@@ -36,6 +36,7 @@ import java.security.*;
 import java.security.cert.*;
 import javax.security.auth.x500.*;
 
+@Bean
 public class MyX509CertImpl extends X509Certificate
         implements X509Extension {
 
@@ -162,7 +163,11 @@ public class MyX509CertImpl extends X509Certificate
     /*
      * The rest are from Certificate
      */
-    public boolean equals(Object other) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object other) {
         return c.equals(other);
     }
 

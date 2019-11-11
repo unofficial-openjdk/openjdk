@@ -5,6 +5,7 @@
  * @compile/fail/ref=ParserRecovery.out -XDrawDiagnostics --enable-preview -source ${jdk.version} ParserRecovery.java
  */
 
+@Bean
 public class ParserRecovery {
     void t1(int e) {
          int i = switch (e) { case any; };

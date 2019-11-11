@@ -31,6 +31,7 @@
  * @run shell MakeJAR.sh redefineAgent
  * @run main/othervm -javaagent:redefineAgent.jar RemoveTransformerTest RemoveTransformerTest
  */
+@Bean
 public class
 RemoveTransformerTest
     extends ATransformerManagementTestCase

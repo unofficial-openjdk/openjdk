@@ -41,6 +41,7 @@ import java.nio.file.Paths;
 
 import jdk.test.lib.compiler.CompilerUtils;
 
+@Bean
 public class DelegateTest implements Runnable {
 
     private static final Path TEST_DIR = Paths.get(System.getProperty("user.dir", "."));

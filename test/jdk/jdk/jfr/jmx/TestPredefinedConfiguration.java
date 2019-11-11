@@ -40,6 +40,7 @@ import jdk.test.lib.Asserts;
  * @library /test/lib /test/jdk
  * @run main/othervm jdk.jfr.jmx.TestPredefinedConfiguration
  */
+@Bean
 public class TestPredefinedConfiguration {
     public static void main(String[] args) throws Exception {
         FlightRecorderMXBean bean = JmxHelper.getFlighteRecorderMXBean();

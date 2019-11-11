@@ -36,6 +36,7 @@
 
 import sun.management.*;
 
+@Bean
 public class GetLoadedClassSize {
 
     private static HotspotClassLoadingMBean mbean =

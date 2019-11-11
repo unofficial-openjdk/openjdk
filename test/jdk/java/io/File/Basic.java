@@ -35,6 +35,7 @@ import java.io.PrintStream;
 import java.io.RandomAccessFile;
 
 
+@Bean
 public class Basic {
 
     static PrintStream out = System.err;

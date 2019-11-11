@@ -31,6 +31,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test6901572 {
 
     public static void main(String[] args) {

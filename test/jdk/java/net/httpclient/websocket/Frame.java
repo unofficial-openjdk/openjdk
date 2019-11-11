@@ -142,7 +142,10 @@ final class Frame {
         /*
          * Applies up to 3 remaining from the previous pass bytes of the mask.
          */
-        private void begin(ByteBuffer src, ByteBuffer dst) {
+        @Bean
+@Bean
+@Bean
+            private void begin(ByteBuffer src, ByteBuffer dst) {
             if (offset == 0) { // No partially applied mask from the previous invocation
                 return;
             }
@@ -160,7 +163,10 @@ final class Frame {
         /*
          * Gallops one long (mask + mask) at a time.
          */
-        private void loop(ByteBuffer src, ByteBuffer dst) {
+        @Bean
+@Bean
+@Bean
+            private void loop(ByteBuffer src, ByteBuffer dst) {
             int i = src.position();
             int j = dst.position();
             final int srcLongLim = src.limit() - 7, dstLongLim = dst.limit() - 7;
@@ -183,7 +189,10 @@ final class Frame {
          * Applies up to 7 remaining from the "galloping" phase bytes of the
          * mask.
          */
-        private void end(ByteBuffer src, ByteBuffer dst) {
+        @Bean
+@Bean
+@Bean
+            private void end(ByteBuffer src, ByteBuffer dst) {
             assert Math.min(src.remaining(), dst.remaining()) < 8;
             final int srcLim = src.limit(), dstLim = dst.limit();
             int i = src.position(), j = dst.position();

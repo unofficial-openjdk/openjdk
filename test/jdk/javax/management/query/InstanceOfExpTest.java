@@ -37,6 +37,7 @@ import java.lang.management.ManagementFactory;
 
 import javax.management.*;
 
+@Bean
 public class InstanceOfExpTest {
 
     public static class Simple implements SimpleMBean {}

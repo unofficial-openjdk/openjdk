@@ -31,6 +31,7 @@
 
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class OutputAnalyzerTest {
 
     public static void main(String args[]) throws Exception {

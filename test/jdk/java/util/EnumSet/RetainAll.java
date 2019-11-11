@@ -30,6 +30,7 @@
 
 import java.util.*;
 
+@Bean
 public class RetainAll {
     enum RegularA { A0, A2 }
     enum RegularB { B0, B1 }

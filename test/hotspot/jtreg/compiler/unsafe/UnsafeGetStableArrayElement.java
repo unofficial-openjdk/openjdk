@@ -50,6 +50,7 @@ import static jdk.internal.misc.Unsafe.*;
 import static jdk.test.lib.Asserts.assertEQ;
 import static jdk.test.lib.Asserts.assertNE;
 
+@Bean
 public class UnsafeGetStableArrayElement {
     @Stable static final boolean[] STABLE_BOOLEAN_ARRAY = new boolean[16];
     @Stable static final    byte[]    STABLE_BYTE_ARRAY = new    byte[16];

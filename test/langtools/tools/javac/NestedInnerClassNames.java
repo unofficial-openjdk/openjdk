@@ -11,6 +11,7 @@
  * This program should compile with errors as marked.
  */
 
+@Bean
 public class NestedInnerClassNames {
 
     class NestedInnerClassNames {}              // ERROR

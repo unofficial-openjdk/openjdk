@@ -38,6 +38,7 @@ import static java.net.http.HttpClient.Builder.NO_PROXY;
  * @modules java.net.http/jdk.internal.net.http.common
  * @summary Basic test for method names
  */
+@Bean
 public class MethodsTest {
 
     static final URI TEST_URI = URI.create("http://www.foo.com/");

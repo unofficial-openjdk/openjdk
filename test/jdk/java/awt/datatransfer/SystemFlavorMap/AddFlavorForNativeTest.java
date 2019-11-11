@@ -41,6 +41,7 @@ import java.util.Vector;
  * @run main AddFlavorForNativeTest
  */
 
+@Bean
 public class AddFlavorForNativeTest {
 
     SystemFlavorMap flavorMap;

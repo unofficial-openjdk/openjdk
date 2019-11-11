@@ -40,6 +40,7 @@ import java.util.Random;
  * Testing FileChannel's position method.
  */
 
+@Bean
 public class Position {
 
     private static final Charset ISO8859_1 = Charset.forName("8859_1");

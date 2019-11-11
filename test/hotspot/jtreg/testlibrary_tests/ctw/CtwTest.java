@@ -120,7 +120,11 @@ public abstract class CtwTest {
         return new OutputAnalyzer(builder.toString(), "");
     }
 
-    protected void dump(OutputAnalyzer output, String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void dump(OutputAnalyzer output, String name) {
         try (Writer w = new FileWriter(name + ".out")) {
             String s = output.getStdout();
             w.write(s, s.length(), 0);

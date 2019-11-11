@@ -28,6 +28,7 @@
  * @author Joseph D. Darcy
  */
 
+@Bean
 public class Extrema {
     public static void main(String[] args) throws Exception {
         if (Double.MIN_VALUE != Double.longBitsToDouble(0x1L))

@@ -37,6 +37,7 @@ import java.net.*;
 import java.util.*;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class OptionsTest {
 
     static class Test<T> {

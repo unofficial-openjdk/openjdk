@@ -43,6 +43,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
+@Bean
 public class StyledFontLayoutTest extends JPanel {
 
     static final int W=600, H=400;
@@ -68,7 +69,10 @@ public class StyledFontLayoutTest extends JPanel {
     }
 
     @Override
-    protected void paintComponent(Graphics g) {
+    @Bean
+@Bean
+@Bean
+            protected void paintComponent(Graphics g) {
         g.drawImage(im, 0, 0, null);
     }
 

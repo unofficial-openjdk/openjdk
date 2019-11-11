@@ -47,6 +47,7 @@ import java.nio.charset.StandardCharsets;
 import static java.net.http.HttpRequest.BodyPublisher;
 import static java.net.http.HttpRequest.BodyPublishers;
 
+@Bean
 public class ByteArrayPublishers {
     private static final BodyPublisher BODY_PUBLISHER =
         BodyPublishers.ofByteArray("abcdefghijklmnopqrstuvwxyz".getBytes());

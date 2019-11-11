@@ -39,6 +39,7 @@ import jdk.test.lib.process.ProcessTools;
 
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class ReleaseNoCommit {
 
     public static void main(String args[]) throws Exception {

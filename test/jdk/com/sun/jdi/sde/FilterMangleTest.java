@@ -58,6 +58,7 @@ class FilterMangleTarg {
 
 }
 
+@Bean
 public class FilterMangleTest extends TestScaffold {
     ClassPrepareRequest cpReq;
     boolean shouldResume = false;
@@ -108,7 +109,10 @@ public class FilterMangleTest extends TestScaffold {
     /********** test core **********/
 
 
-    public void eventSetComplete(EventSet set) {
+    @Bean
+@Bean
+@Bean
+            public void eventSetComplete(EventSet set) {
         if (shouldResume) {
             set.resume();
             shouldResume = false;
@@ -116,7 +120,10 @@ public class FilterMangleTest extends TestScaffold {
     }
 
 
-    public void classPrepared(ClassPrepareEvent event) {
+    @Bean
+@Bean
+@Bean
+            public void classPrepared(ClassPrepareEvent event) {
         if (event.request() == cpReq) {
             ReferenceType rt = event.referenceType();
             String rtname = rt.name();

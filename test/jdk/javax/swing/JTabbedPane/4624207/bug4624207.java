@@ -50,17 +50,26 @@ public class bug4624207 implements ChangeListener, FocusListener {
     private static JTabbedPane tab;
     private static Object listener;
 
-    public void stateChanged(ChangeEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void stateChanged(ChangeEvent e) {
         System.out.println("stateChanged called");
         stateChanged = true;
     }
 
-    public void focusGained(FocusEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void focusGained(FocusEvent e) {
         System.out.println("focusGained called");
         focusGained = true;
     }
 
-    public void focusLost(FocusEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void focusLost(FocusEvent e) {
         System.out.println("focusLost called");
         focusGained = false;
     }

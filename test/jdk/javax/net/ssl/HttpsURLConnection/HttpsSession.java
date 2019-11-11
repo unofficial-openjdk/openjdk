@@ -95,6 +95,9 @@ public class HttpsSession {
 
         urlc.setSSLSocketFactory(sslContext.getSocketFactory());
         urlc.setHostnameVerifier(new HostnameVerifier() {
+            @Bean
+@Bean
+@Bean
             public boolean verify(String s, SSLSession s1) {
                 return true;
             }

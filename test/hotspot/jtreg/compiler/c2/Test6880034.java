@@ -64,6 +64,7 @@ package compiler.c2;
 //
 // Author: Volker H. Simonis
 
+@Bean
 public class Test6880034 {
   static class A {
     public int doSomething() {

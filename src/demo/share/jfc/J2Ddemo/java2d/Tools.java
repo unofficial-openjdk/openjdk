@@ -120,13 +120,21 @@ public final class Tools extends JPanel implements ActionListener,
         toggleB.addMouseListener(new MouseAdapter() {
 
             @Override
-            public void mouseEntered(MouseEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void mouseEntered(MouseEvent e) {
                 focus = true;
                 bumpyIcon.start();
             }
 
             @Override
-            public void mouseExited(MouseEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void mouseExited(MouseEvent e) {
                 focus = false;
                 bumpyIcon.stop();
             }
@@ -197,6 +205,10 @@ public final class Tools extends JPanel implements ActionListener,
             addMouseListener(new MouseAdapter() {
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void mouseClicked(MouseEvent e) {
                     if (toolbarPanel.isVisible()) {
                         invalidate();
@@ -282,7 +294,11 @@ public final class Tools extends JPanel implements ActionListener,
     }
 
     @Override
-    public void actionPerformed(ActionEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
         Object obj = e.getSource();
         if (obj instanceof JButton) {
             JButton b = (JButton) obj;
@@ -367,7 +383,11 @@ public final class Tools extends JPanel implements ActionListener,
     }
 
     @Override
-    public void stateChanged(ChangeEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void stateChanged(ChangeEvent e) {
         int value = slider.getValue();
         label.setText(" Sleep = " + decimalFormat.format(value) + " ms");
         label.repaint();
@@ -441,7 +461,11 @@ public final class Tools extends JPanel implements ActionListener,
         }
 
         @Override
-        public void paintIcon(Component c, Graphics g, int x, int y) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void paintIcon(Component c, Graphics g, int x, int y) {
             int w = getIconWidth();
             int h = getIconHeight();
             g.setColor(fillColor);

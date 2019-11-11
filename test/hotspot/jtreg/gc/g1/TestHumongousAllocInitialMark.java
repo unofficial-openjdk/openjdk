@@ -37,6 +37,7 @@ package gc.g1;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class TestHumongousAllocInitialMark {
     // Heap sizes < 224 MB are increased to 224 MB if vm_page_size == 64K to
     // fulfill alignment constraints.

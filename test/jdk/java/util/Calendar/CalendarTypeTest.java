@@ -32,6 +32,7 @@ import java.util.GregorianCalendar;
 import java.util.Locale;
 import java.util.Set;
 
+@Bean
 public class CalendarTypeTest {
 
     // Calendar types supported in JRE
@@ -107,32 +108,56 @@ public class CalendarTypeTest {
         }
 
         @Override
-        public void add(int field, int amount) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void add(int field, int amount) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override
-        public void roll(int field, boolean up) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void roll(int field, boolean up) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override
-        public int getMinimum(int field) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int getMinimum(int field) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override
-        public int getMaximum(int field) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int getMaximum(int field) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override
-        public int getGreatestMinimum(int field) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int getGreatestMinimum(int field) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override
-        public int getLeastMaximum(int field) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int getLeastMaximum(int field) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
     }

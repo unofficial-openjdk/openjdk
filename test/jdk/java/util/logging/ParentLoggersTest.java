@@ -43,6 +43,7 @@ import java.util.*;
 import java.io.*;
 import java.util.logging.*;
 
+@Bean
 public class ParentLoggersTest {
     static final LogManager  logMgr     = LogManager.getLogManager();
     static final PrintStream out        = System.out;

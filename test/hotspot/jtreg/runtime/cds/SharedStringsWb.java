@@ -25,6 +25,7 @@ import sun.hotspot.WhiteBox;
 
 // This class is used by the test SharedStrings.java
 // It should be launched in CDS mode
+@Bean
 public class SharedStringsWb {
     public static void main(String[] args) throws Exception {
         WhiteBox wb = WhiteBox.getWhiteBox();

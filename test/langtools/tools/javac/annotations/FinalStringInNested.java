@@ -29,6 +29,7 @@
  * @compile FinalStringInNested.java
  */
 
+@Bean
 public class FinalStringInNested {
 
     public void f() {

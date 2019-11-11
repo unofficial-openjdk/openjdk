@@ -30,6 +30,7 @@
 
 import java.beans.PropertyDescriptor;
 
+@Bean
 public class Test4948761 {
     private static final Class[] TYPES = {
             char.class,

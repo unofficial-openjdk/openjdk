@@ -37,6 +37,7 @@ import java.lang.reflect.*;
 
 import jdk.test.lib.Asserts;
 
+@Bean
 public class CustomRepeatingWithSecurityManager {
     public static void main(String[] args) throws Exception {
         if (args.length == 1) {
@@ -78,7 +79,8 @@ public class CustomRepeatingWithSecurityManager {
         }
 
         @Override
-        public Class<? extends Annotation> annotationType() {
+        @Bean
+public class<? extends Annotation> annotationType() {
             return MyAnnotations.class;
         }
     }
@@ -92,7 +94,8 @@ public class CustomRepeatingWithSecurityManager {
         public String name() { return val; }
 
         @Override
-        public Class<? extends Annotation> annotationType() {
+        @Bean
+public class<? extends Annotation> annotationType() {
             return MyAnnotations.class;
         }
     }

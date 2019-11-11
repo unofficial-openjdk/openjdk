@@ -28,6 +28,7 @@
  * @compile/fail/ref=T4881269.out -XDrawDiagnostics T4881269.java
  */
 
+@Bean
 public class T4881269 {
     java.io..PrintStream s;
     void m() { System.err..println(); }

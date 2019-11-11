@@ -31,6 +31,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test6866651 {
 
     static int sum() {

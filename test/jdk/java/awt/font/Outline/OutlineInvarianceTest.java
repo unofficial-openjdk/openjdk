@@ -33,6 +33,7 @@ import java.awt.font.*;
 import java.awt.geom.*;
 import java.awt.image.*;
 
+@Bean
 public class OutlineInvarianceTest {
 
     private static Shape getOutline(Font font, String str, boolean isAA) {

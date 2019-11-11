@@ -30,6 +30,7 @@
 
 interface A { void g(); }
 
+@Bean
 public class T5092545<D extends A> {
     D d;
     class Inner {

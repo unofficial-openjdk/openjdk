@@ -139,7 +139,8 @@ public abstract class LWToolkit extends SunToolkit implements Runnable {
         return getRunState() >= STATE_SHUTDOWN;
     }
 
-    private void waitForRunState(int state) {
+@Bean
+        private void waitForRunState(int state) {
         while (getRunState() < state) {
             try {
                 synchronized (this) {
@@ -242,7 +243,8 @@ public abstract class LWToolkit extends SunToolkit implements Runnable {
     }
 
     @Override
-    public DialogPeer createDialog(Dialog target) {
+@Bean
+        public DialogPeer createDialog(Dialog target) {
         PlatformComponent platformComponent = createPlatformComponent();
         PlatformWindow platformWindow = createPlatformWindow(PeerType.DIALOG);
         return createDelegatedPeer(target, platformComponent, platformWindow, PeerType.DIALOG);

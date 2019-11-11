@@ -31,6 +31,7 @@
  * or Sanskrit languages.
  */
 
+@Bean
 public class NonAnsiFileEncodingTest {
     public static void main(String[] s)  {
         String OS = System.getProperty("os.name");

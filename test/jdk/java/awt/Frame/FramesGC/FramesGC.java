@@ -39,6 +39,7 @@ import java.util.Vector;
  */
 
 
+@Bean
 public class FramesGC {
 
     ExtendedRobot robot;

@@ -41,6 +41,7 @@ import java.util.Map;
  * @author mcimadamore
  */
 
+@Bean
 public class PropertiesParser {
 
     public Logger logger;
@@ -65,11 +66,19 @@ public class PropertiesParser {
         void info(String msg);
     }
 
-    public void info(String msg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void info(String msg) {
         logger.info(msg);
     }
 
-    public boolean run(String[] args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean run(String[] args) {
         Map<String, String> optionsMap = parseOptions(args);
         if (optionsMap.isEmpty()) {
             usage();
@@ -84,7 +93,11 @@ public class PropertiesParser {
         }
     }
 
-    private void compilePropertyFile(String propertyPath, String outPath) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void compilePropertyFile(String propertyPath, String outPath) {
         try {
             File propertyFile = new File(propertyPath);
             String prefix = propertyFile.getName().split("\\.")[0];

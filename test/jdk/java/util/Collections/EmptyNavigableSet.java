@@ -49,6 +49,7 @@ import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertSame;
 import static org.testng.Assert.assertTrue;
 
+@Bean
 public class EmptyNavigableSet {
 
     public static <T> void assertInstance(T actual, Class<? extends T> expected) {
@@ -82,19 +83,35 @@ public class EmptyNavigableSet {
         }
     }
 
-    private void assertThrowsCCE(ThrowingRunnable r, String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertThrowsCCE(ThrowingRunnable r, String s) {
         assertThrows(ClassCastException.class, r, s);
     }
 
-    private void assertThrowsNPE(ThrowingRunnable r, String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertThrowsNPE(ThrowingRunnable r, String s) {
         assertThrows(NullPointerException.class, r, s);
     }
 
-    private void assertThrowsIAE(ThrowingRunnable r, String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertThrowsIAE(ThrowingRunnable r, String s) {
         assertThrows(IllegalArgumentException.class, r, s);
     }
 
-    private void assertThrowsNSEE(ThrowingRunnable r, String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertThrowsNSEE(ThrowingRunnable r, String s) {
         assertThrows(NoSuchElementException.class, r, s);
     }
 
@@ -121,7 +138,11 @@ public class EmptyNavigableSet {
      * Tests that the comparator is {@code null}.
      */
     @Test(dataProvider = "NavigableSet<?>", dataProviderClass = EmptyNavigableSet.class)
-    public void testComparatorIsNull(String description, NavigableSet<?> navigableSet) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testComparatorIsNull(String description, NavigableSet<?> navigableSet) {
         Comparator comparator = navigableSet.comparator();
 
         assertTrue(comparator == null || comparator == Collections.reverseOrder(), description + ": Comparator (" + comparator + ") is not null.");
@@ -131,7 +152,11 @@ public class EmptyNavigableSet {
      * Tests that contains requires Comparable
      */
     @Test(dataProvider = "NavigableSet<?>", dataProviderClass = EmptyNavigableSet.class)
-    public void testContainsRequiresComparable(String description, NavigableSet<?> navigableSet) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testContainsRequiresComparable(String description, NavigableSet<?> navigableSet) {
         assertThrowsCCE(
             () -> navigableSet.contains(new Object()),
             description + ": Comparable should be required");
@@ -141,7 +166,11 @@ public class EmptyNavigableSet {
      * Tests that the contains method returns {@code false}.
      */
     @Test(dataProvider = "NavigableSet<?>", dataProviderClass = EmptyNavigableSet.class)
-    public void testContains(String description, NavigableSet<?> navigableSet) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testContains(String description, NavigableSet<?> navigableSet) {
         assertFalse(navigableSet.contains(new Integer(1)),
             description + ": Should not contain any elements.");
     }
@@ -150,7 +179,11 @@ public class EmptyNavigableSet {
      * Tests that the containsAll method returns {@code false}.
      */
     @Test(dataProvider = "NavigableSet<?>", dataProviderClass = EmptyNavigableSet.class)
-    public void testContainsAll(String description, NavigableSet<?> navigableSet) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testContainsAll(String description, NavigableSet<?> navigableSet) {
         TreeSet treeSet = new TreeSet();
         treeSet.add("1");
         treeSet.add("2");
@@ -163,7 +196,11 @@ public class EmptyNavigableSet {
      * Tests that the iterator is empty.
      */
     @Test(dataProvider = "NavigableSet<?>", dataProviderClass = EmptyNavigableSet.class)
-    public void testEmptyIterator(String description, NavigableSet<?> navigableSet) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testEmptyIterator(String description, NavigableSet<?> navigableSet) {
         assertFalse(navigableSet.iterator().hasNext(), "The iterator is not empty.");
     }
 
@@ -171,7 +208,11 @@ public class EmptyNavigableSet {
      * Tests that the set is empty.
      */
     @Test(dataProvider = "NavigableSet<?>", dataProviderClass = EmptyNavigableSet.class)
-    public void testIsEmpty(String description, NavigableSet<?> navigableSet) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testIsEmpty(String description, NavigableSet<?> navigableSet) {
         assertTrue(navigableSet.isEmpty(), "The set is not empty.");
     }
 
@@ -179,7 +220,11 @@ public class EmptyNavigableSet {
      * Tests that the first() method throws NoSuchElementException
      */
     @Test(dataProvider = "NavigableSet<?>", dataProviderClass = EmptyNavigableSet.class)
-    public void testFirst(String description, NavigableSet<?> navigableSet) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testFirst(String description, NavigableSet<?> navigableSet) {
         assertThrowsNSEE(navigableSet::first, description);
     }
 
@@ -187,7 +232,11 @@ public class EmptyNavigableSet {
      * Tests the headSet() method.
      */
     @Test(dataProvider = "NavigableSet<?>", dataProviderClass = EmptyNavigableSet.class)
-    public void testHeadSet(String description, NavigableSet navigableSet) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testHeadSet(String description, NavigableSet navigableSet) {
         assertThrowsNPE(
             () -> { NavigableSet ns = navigableSet.headSet(null, false); },
             description + ": Must throw NullPointerException for null element");
@@ -205,7 +254,11 @@ public class EmptyNavigableSet {
      * Tests that the last() method throws NoSuchElementException
      */
     @Test(dataProvider = "NavigableSet<?>", dataProviderClass = EmptyNavigableSet.class)
-    public void testLast(String description, NavigableSet<?> navigableSet) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testLast(String description, NavigableSet<?> navigableSet) {
         assertThrowsNSEE(navigableSet::last, description);
     }
 
@@ -213,7 +266,11 @@ public class EmptyNavigableSet {
      * Tests that the size is 0.
      */
     @Test(dataProvider = "NavigableSet<?>", dataProviderClass = EmptyNavigableSet.class)
-    public void testSizeIsZero(String description, NavigableSet<?> navigableSet) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testSizeIsZero(String description, NavigableSet<?> navigableSet) {
         assertTrue(0 == navigableSet.size(), "The size of the set is not 0.");
     }
 
@@ -221,7 +278,11 @@ public class EmptyNavigableSet {
      * Tests the subSet() method.
      */
     @Test(dataProvider = "NavigableSet<?>", dataProviderClass = EmptyNavigableSet.class)
-    public void testSubSet(String description, NavigableSet navigableSet) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testSubSet(String description, NavigableSet navigableSet) {
         assertThrowsNPE(
             () -> {
                 SortedSet ss = navigableSet.subSet(null, BigInteger.TEN);
@@ -279,7 +340,11 @@ public class EmptyNavigableSet {
     }
 
     @Test(dataProvider = "NavigableSet<?>", dataProviderClass = EmptyNavigableSet.class)
-    public void testSubSetRanges(String description, NavigableSet navigableSet) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testSubSetRanges(String description, NavigableSet navigableSet) {
         Object first = isDescending(navigableSet) ? BigInteger.TEN : BigInteger.ZERO;
         Object last = (BigInteger.ZERO == first) ? BigInteger.TEN : BigInteger.ZERO;
 
@@ -300,7 +365,11 @@ public class EmptyNavigableSet {
     }
 
     @Test(dataProvider = "NavigableSet<?>", dataProviderClass = EmptyNavigableSet.class)
-    public void testheadSetRanges(String description, NavigableSet navigableSet) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testheadSetRanges(String description, NavigableSet navigableSet) {
         NavigableSet subSet = navigableSet.headSet(BigInteger.ONE, true);
 
         // same subset
@@ -319,7 +388,11 @@ public class EmptyNavigableSet {
     }
 
     @Test(dataProvider = "NavigableSet<?>", dataProviderClass = EmptyNavigableSet.class)
-    public void testTailSetRanges(String description, NavigableSet navigableSet) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testTailSetRanges(String description, NavigableSet navigableSet) {
         NavigableSet subSet = navigableSet.tailSet(BigInteger.ONE, true);
 
         // same subset
@@ -341,7 +414,11 @@ public class EmptyNavigableSet {
      * Tests the tailSet() method.
      */
     @Test(dataProvider = "NavigableSet<?>", dataProviderClass = EmptyNavigableSet.class)
-    public void testTailSet(String description, NavigableSet navigableSet) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testTailSet(String description, NavigableSet navigableSet) {
         assertThrowsNPE(
             () -> navigableSet.tailSet(null),
             description + ": Must throw NullPointerException for null element");
@@ -359,7 +436,11 @@ public class EmptyNavigableSet {
      * Tests that the array has a size of 0.
      */
     @Test(dataProvider = "NavigableSet<?>", dataProviderClass = EmptyNavigableSet.class)
-    public void testToArray(String description, NavigableSet<?> navigableSet) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testToArray(String description, NavigableSet<?> navigableSet) {
         Object[] emptyNavigableSetArray = navigableSet.toArray();
 
         assertTrue(emptyNavigableSetArray.length == 0, "Returned non-empty Array.");

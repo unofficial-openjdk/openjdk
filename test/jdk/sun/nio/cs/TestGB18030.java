@@ -31,6 +31,7 @@ import java.io.*;
 import java.nio.*;
 import java.nio.charset.*;
 
+@Bean
 public class TestGB18030 {
     public static void gb18030_1(boolean useDirect) throws Exception {
         for(char ch : new char[]{'\uFFFE', '\uFFFF'}) {

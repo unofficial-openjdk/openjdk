@@ -58,7 +58,8 @@ final class LWScrollPanePeer extends LWContainerPeer<ScrollPane, JScrollPane>
     }
 
     @Override
-    public void handleEvent(AWTEvent e) {
+@Bean
+        public void handleEvent(AWTEvent e) {
         if (e instanceof MouseWheelEvent) {
             MouseWheelEvent wheelEvent = (MouseWheelEvent) e;
             //java.awt.ScrollPane consumes the event
@@ -73,7 +74,8 @@ final class LWScrollPanePeer extends LWContainerPeer<ScrollPane, JScrollPane>
     }
 
     @Override
-    public void stateChanged(final ChangeEvent e) {
+@Bean
+        public void stateChanged(final ChangeEvent e) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -130,7 +132,8 @@ final class LWScrollPanePeer extends LWContainerPeer<ScrollPane, JScrollPane>
     }
 
     @Override
-    public void setScrollPosition(int x, int y) {
+@Bean
+        public void setScrollPosition(int x, int y) {
     }
 
     @Override
@@ -148,7 +151,8 @@ final class LWScrollPanePeer extends LWContainerPeer<ScrollPane, JScrollPane>
     }
 
     @Override
-    public void childResized(int w, int h) {
+@Bean
+        public void childResized(int w, int h) {
         synchronized (getDelegateLock()) {
             getDelegate().invalidate();
             getDelegate().validate();
@@ -156,11 +160,13 @@ final class LWScrollPanePeer extends LWContainerPeer<ScrollPane, JScrollPane>
     }
 
     @Override
-    public void setUnitIncrement(Adjustable adj, int u) {
+@Bean
+        public void setUnitIncrement(Adjustable adj, int u) {
     }
 
     @Override
-    public void setValue(Adjustable adj, int v) {
+@Bean
+        public void setValue(Adjustable adj, int v) {
     }
 
     private static int convertHPolicy(final int policy) {

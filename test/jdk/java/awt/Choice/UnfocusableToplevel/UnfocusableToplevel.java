@@ -44,6 +44,7 @@ import test.java.awt.regtesthelpers.AbstractTest;
 import test.java.awt.regtesthelpers.Sysout;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class UnfocusableToplevel {
 
     final static Robot robot = Util.createRobot();

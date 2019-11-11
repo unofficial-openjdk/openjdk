@@ -35,6 +35,7 @@ import javax.print.*;
 import javax.print.attribute.*;
 import javax.print.attribute.standard.*;
 
+@Bean
 public class Chroma {
 
    public static void main(String args[]) {

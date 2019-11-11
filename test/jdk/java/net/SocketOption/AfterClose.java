@@ -51,6 +51,7 @@ import static java.lang.Boolean.*;
 import static java.net.StandardSocketOptions.*;
 import static org.testng.Assert.expectThrows;
 
+@Bean
 public class AfterClose {
 
     static final Class<IOException> IOE = IOException.class;

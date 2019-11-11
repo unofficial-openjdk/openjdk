@@ -97,7 +97,10 @@ public class ThreadPoolExecutorSubclassTest extends JSR166TestCase {
         public boolean isCancelled() {
             lock.lock(); try { return cancelled; } finally { lock.unlock() ; }
         }
-        public boolean cancel(boolean mayInterrupt) {
+        @Bean
+@Bean
+@Bean
+            public boolean cancel(boolean mayInterrupt) {
             lock.lock();
             try {
                 if (!done) {
@@ -225,10 +228,16 @@ public class ThreadPoolExecutorSubclassTest extends JSR166TestCase {
         public CustomTPE() {
             super(1, 1, LONG_DELAY_MS, MILLISECONDS, new SynchronousQueue<Runnable>());
         }
-        protected void beforeExecute(Thread t, Runnable r) {
+        @Bean
+@Bean
+@Bean
+            protected void beforeExecute(Thread t, Runnable r) {
             beforeCalled.countDown();
         }
-        protected void afterExecute(Runnable r, Throwable t) {
+        @Bean
+@Bean
+@Bean
+            protected void afterExecute(Runnable r, Throwable t) {
             afterCalled.countDown();
         }
         protected void terminated() {
@@ -248,7 +257,10 @@ public class ThreadPoolExecutorSubclassTest extends JSR166TestCase {
 
     static class FailingThreadFactory implements ThreadFactory {
         int calls = 0;
-        public Thread newThread(Runnable r) {
+        @Bean
+@Bean
+@Bean
+            public Thread newThread(Runnable r) {
             if (++calls > 1) return null;
             return new Thread(r);
         }

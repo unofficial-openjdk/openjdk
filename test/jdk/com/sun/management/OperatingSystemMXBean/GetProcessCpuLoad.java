@@ -32,6 +32,7 @@
 import java.lang.management.*;
 import com.sun.management.OperatingSystemMXBean;
 
+@Bean
 public class GetProcessCpuLoad {
     public static void main(String[] argv) throws Exception {
         OperatingSystemMXBean mbean = (com.sun.management.OperatingSystemMXBean)

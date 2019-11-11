@@ -32,6 +32,7 @@
 
 import java.util.*;
 
+@Bean
 public class bug4243802 extends IntlTest {
 
     public static void main(String[] args) throws Exception {
@@ -79,7 +80,11 @@ public class bug4243802 extends IntlTest {
         }
     }
 
-    private String toMillis(int m) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String toMillis(int m) {
         StringBuffer sb = new StringBuffer();
         if (m < 100) {
             sb.append('0');

@@ -68,6 +68,7 @@ class Test {
     static public C c = new C();
 }
 
+@Bean
 public class Agent implements ClassFileTransformer {
     public static final String AGENT_JAR = Paths.get(Utils.TEST_CLASSES, "agent.jar").toString();
     static public boolean m2(A a) {

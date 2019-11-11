@@ -51,6 +51,7 @@ import javax.swing.WindowConstants;
 import javax.swing.event.MenuDragMouseEvent;
 import javax.swing.event.MenuDragMouseListener;
 
+@Bean
 public class MenuDragEvents
 {
     //Declare things used in the test, like buttons and labels here
@@ -67,7 +68,10 @@ public class MenuDragEvents
     public void doTest ()
     {
         Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
-                public void eventDispatched(AWTEvent event) {
+                @Bean
+@Bean
+@Bean
+            public void eventDispatched(AWTEvent event) {
                     int id = event.getID();
                     if (id == MouseEvent.MOUSE_ENTERED || id == MouseEvent.MOUSE_EXITED) {
                         System.err.println(event);
@@ -87,27 +91,42 @@ public class MenuDragEvents
         i = new JMenuItem("Yet another menu item",KeyEvent.VK_Y);
         m.add(i);
         i.addMenuDragMouseListener(new MenuDragMouseListener() {
-                public void menuDragMouseDragged(MenuDragMouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void menuDragMouseDragged(MenuDragMouseEvent e) {
                     System.err.println(e);
                     mouseDragged = true;
                 }
-                public void menuDragMouseEntered(MenuDragMouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void menuDragMouseEntered(MenuDragMouseEvent e) {
                     System.err.println(e);
                     mouseEntered = true;
                 }
-                public void menuDragMouseReleased(MenuDragMouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void menuDragMouseReleased(MenuDragMouseEvent e) {
                     System.err.println(e);
                     mouseReleased = true;
                 }
                 // perhaps we need to test mouse exited too
                 // but this doesn't work even with tiger
-                public void menuDragMouseExited(MenuDragMouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void menuDragMouseExited(MenuDragMouseEvent e) {
                     System.err.println(e);
                 }
             });
 
         i.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent ae) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent ae) {
                     System.err.println(ae);
                     actionReceived = true;
                 }

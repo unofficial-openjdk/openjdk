@@ -51,6 +51,7 @@ import toolbox.*;
  * various conditions that force a fall back to the old javadoc
  * tool.
  */
+@Bean
 public class EnsureNewOldDoclet extends TestRunner {
 
     final ToolBox tb;
@@ -94,7 +95,8 @@ public class EnsureNewOldDoclet extends TestRunner {
             "/**",
             " * A test class to test javadoc. Nothing more nothing less.",
             " */",
-            " public class Foo{}").stream().collect(Collectors.joining(nl));
+            " @Bean
+public class Foo{}").stream().collect(Collectors.joining(nl));
         tb.writeFile(testSrc.getPath(), src);
     }
 
@@ -171,7 +173,11 @@ public class EnsureNewOldDoclet extends TestRunner {
         }
 
         @Override
-        public String toString(List<? extends DocTree> tags, Element element) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String toString(List<? extends DocTree> tags, Element element) {
             return tags.toString();
         }
 

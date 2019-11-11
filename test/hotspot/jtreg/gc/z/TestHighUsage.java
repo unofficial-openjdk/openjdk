@@ -34,6 +34,7 @@ package gc.z;
 import java.util.LinkedList;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class TestHighUsage {
     static class Test {
         private static final int K = 1024;

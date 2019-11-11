@@ -33,6 +33,7 @@ import java.util.*;
 import java.nio.charset.*;
 import java.nio.*;
 
+@Bean
 public class ISO8859x {
     final static byte[] lowBytes = new byte[0xa0];
     final static char[] lowChars = new char[0xa0];

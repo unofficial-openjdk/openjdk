@@ -29,6 +29,7 @@
  * @run main/othervm StaticFieldsOnInterface Y
  */
 
+@Bean
 public class StaticFieldsOnInterface {
     /*
             A

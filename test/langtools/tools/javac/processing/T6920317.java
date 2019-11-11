@@ -43,6 +43,7 @@ import javax.tools.*;
  * case, the test verifies that the annotation with the correct argument is
  * found by the compiler.
  */
+@Bean
 public class T6920317 {
     public static void main(String... args) throws Exception {
         new T6920317().run(args);
@@ -354,7 +355,11 @@ public class T6920317 {
         package annotations found by javac. */
     @SupportedOptions({ "gen", "expect" })
     public static class Processor extends JavacTestingAbstractProcessor {
-        public boolean process(Set<? extends TypeElement> annots, RoundEnvironment renv) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annots, RoundEnvironment renv) {
             round++;
             System.err.println("Round " + round + " annots:" + annots + " rootElems:" + renv.getRootElements());
 
@@ -444,7 +449,11 @@ public class T6920317 {
         }
 
         /** Check two strings are equal, and report an error if they are not. */
-        private void checkEqual(String label, String actual, String expect) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void checkEqual(String label, String actual, String expect) {
             if (!actual.equals(expect)) {
                 error("Unexpected value for " + label + "; actual=" + actual + ", expected=" + expect);
             }

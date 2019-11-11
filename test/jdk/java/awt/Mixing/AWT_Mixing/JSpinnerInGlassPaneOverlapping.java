@@ -58,6 +58,9 @@ public class JSpinnerInGlassPaneOverlapping extends GlassPaneOverlappingTestBase
         ch.setPreferredSize(new Dimension(30, 50));
         ch.addChangeListener(new ChangeListener() {
 
+            @Bean
+@Bean
+@Bean
             public void stateChanged(ChangeEvent e) {
                 wasLWClicked = true;
             }

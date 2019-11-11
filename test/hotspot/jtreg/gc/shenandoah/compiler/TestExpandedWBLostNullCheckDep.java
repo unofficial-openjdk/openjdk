@@ -32,6 +32,7 @@
  *                   -XX:+StressGCM -XX:+StressLCM TestExpandedWBLostNullCheckDep
  */
 
+@Bean
 public class TestExpandedWBLostNullCheckDep {
 
     static void test(int i, int[] arr) {
@@ -44,7 +45,11 @@ public class TestExpandedWBLostNullCheckDep {
         arr[i] = 0x42;
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         int[] int_arr = new int[10];
         for (int i = 0; i < 20000; i++) {
             test(0, int_arr);

@@ -86,8 +86,10 @@ public class OnScreenRenderingResizeTest {
         g.fillRect(0, 0, output.getWidth(), output.getHeight());
 
         final Frame frame = new Frame("OnScreenRenderingResizeTest") {
-            public void paint(Graphics g) {}
-            public void update(Graphics g) {}
+@Bean
+                public void paint(Graphics g) {}
+@Bean
+                public void update(Graphics g) {}
         };
         frame.setBackground(bgColor);
         frame.setUndecorated(true);
@@ -98,7 +100,8 @@ public class OnScreenRenderingResizeTest {
         frame.setBounds(gcBounds.width / 4, gcBounds.height / 4, FRAME_W, FRAME_H);
 
         frame.addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent e) {
+@Bean
+                public void windowClosing(WindowEvent e) {
                 done = true;
             }
         });

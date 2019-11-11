@@ -39,6 +39,7 @@ import toolbox.Task;
 import toolbox.Task.Expect;
 import toolbox.Task.OutputKind;
 
+@Bean
 public class AddExportsTest extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {
@@ -74,7 +75,8 @@ public class AddExportsTest extends ModuleTestBase {
         Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
                           "module m1x { }",
-                          "package p1; public class C1 { }");
+                          "package p1; @Bean
+public class C1 { }");
         Path src_m2 = src.resolve("m2x");
         tb.writeJavaFiles(src_m2,
                           "module m2x { requires m1x; }",
@@ -107,7 +109,8 @@ public class AddExportsTest extends ModuleTestBase {
         Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
                           "module m1x { exports p1; }",
-                          "package p1; public class C1 { }");
+                          "package p1; @Bean
+public class C1 { }");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
@@ -135,7 +138,8 @@ public class AddExportsTest extends ModuleTestBase {
         Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
                           "module m1x { exports p1; }",
-                          "package p1; public class C1 { }");
+                          "package p1; @Bean
+public class C1 { }");
         Path src_m2 = src.resolve("m2x");
         tb.writeJavaFiles(src_m2,
                           "module m2x { }",
@@ -170,7 +174,8 @@ public class AddExportsTest extends ModuleTestBase {
         Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
                           "module m1x { exports p1; }",
-                          "package p1; public class C1 { }");
+                          "package p1; @Bean
+public class C1 { }");
         Path src_m2 = src.resolve("m2x");
         tb.writeJavaFiles(src_m2,
                           "module m2x { }",
@@ -204,7 +209,8 @@ public class AddExportsTest extends ModuleTestBase {
         Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
                           "module m1x { exports p1; }",
-                          "package p1; public class C1 { }");
+                          "package p1; @Bean
+public class C1 { }");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
@@ -275,7 +281,8 @@ public class AddExportsTest extends ModuleTestBase {
         Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
                           "module m1x { }",
-                          "package p1; public class C1 { }");
+                          "package p1; @Bean
+public class C1 { }");
         Path src_m2 = src.resolve("m2x");
         tb.writeJavaFiles(src_m2,
                           "module m2x { requires m1x; }",
@@ -298,7 +305,8 @@ public class AddExportsTest extends ModuleTestBase {
         Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
                           "module m1x { }",
-                          "package p1; public class C1 { }");
+                          "package p1; @Bean
+public class C1 { }");
         Path src_m2 = src.resolve("m2x");
         tb.writeJavaFiles(src_m2,
                           "module m2x { requires m1x; }",
@@ -322,7 +330,8 @@ public class AddExportsTest extends ModuleTestBase {
         Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
                           "module m1x { }",
-                          "package p1; public class C1 { }");
+                          "package p1; @Bean
+public class C1 { }");
         Path src_m2 = src.resolve("m2x");
         tb.writeJavaFiles(src_m2,
                           "module m2x { requires m1x; }",
@@ -350,7 +359,8 @@ public class AddExportsTest extends ModuleTestBase {
         Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
                           "module m1x { }",
-                          "package p1; public class C1 { }");
+                          "package p1; @Bean
+public class C1 { }");
         Path src_m2 = src.resolve("m2x");
         tb.writeJavaFiles(src_m2,
                           "module m2x { }",

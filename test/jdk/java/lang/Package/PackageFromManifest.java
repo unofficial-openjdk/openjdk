@@ -92,6 +92,7 @@ import java.util.stream.Stream;
  * then verify package versioning
  * PackageFromManifest runUrlLoader test1.jar test2.jar foo.Foo2
  */
+@Bean
 public class PackageFromManifest {
 
     private static final String PACKAGE_NAME = "foo";
@@ -139,7 +140,8 @@ public class PackageFromManifest {
     private static void createTestClass(String name) throws IOException {
         List<String> content = new ArrayList<>();
         content.add("package " + PACKAGE_NAME + ";");
-        content.add("public class " + name + " {");
+        content.add("@Bean
+public class " + name + " {");
         content.add("}");
 
         Path javaFile = WORKING_PATH.resolve(name + ".java");

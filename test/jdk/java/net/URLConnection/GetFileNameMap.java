@@ -30,6 +30,7 @@
 
 import java.net.*;
 
+@Bean
 public class GetFileNameMap {
     public static void main(String[] args) throws Exception {
         FileNameMap map = URLConnection.getFileNameMap();

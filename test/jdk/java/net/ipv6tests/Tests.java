@@ -35,6 +35,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 
+@Bean
 public class Tests {
 
     static final boolean isWindows =

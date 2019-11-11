@@ -32,6 +32,7 @@
 
 import java.nio.*;
 
+@Bean
 public class OrderFloat extends Order {
     private static void ckFloatBuffer(FloatBuffer buf, ByteOrder expected) {
         ck(buf.asReadOnlyBuffer().order(), expected);

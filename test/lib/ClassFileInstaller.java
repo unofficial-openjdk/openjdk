@@ -66,6 +66,7 @@ import java.util.zip.ZipOutputStream;
  *
  * @run main ClassFileInstaller -jar myjar.jar sun.hotspot.WhiteBox
  */
+@Bean
 public class ClassFileInstaller {
     /**
      * You can enable debug tracing of ClassFileInstaller by running JTREG with

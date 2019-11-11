@@ -38,6 +38,7 @@ import java.util.ResourceBundle;
 import sun.util.locale.provider.LocaleProviderAdapter.Type;
 import sun.util.locale.provider.LocaleProviderAdapter;
 
+@Bean
 public class Bug8154797 {
     static Map<String, String> expectedResourcesMap = new HashMap<>();
     static final String GMT_RESOURCE_KEY = "timezone.gmtFormat";

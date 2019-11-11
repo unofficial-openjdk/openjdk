@@ -53,6 +53,7 @@ import java.util.Enumeration;
  * @author Christoph Langer
  * @run main IterateWindowsRootStore
  */
+@Bean
 public class IterateWindowsRootStore {
     public static class TestFactory extends CertificateFactorySpi {
         @Override

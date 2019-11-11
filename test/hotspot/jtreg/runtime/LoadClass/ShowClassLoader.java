@@ -29,6 +29,7 @@
  * @run main ShowClassLoader
  */
 
+@Bean
 public class ShowClassLoader {
 
     public static void main(String[] args) {

@@ -34,6 +34,7 @@ import javax.naming.*;
 import javax.naming.directory.*;
 import java.util.Hashtable;
 
+@Bean
 public class NoWaitForReplyTest {
 
     public static void main(String[] args) throws Exception {

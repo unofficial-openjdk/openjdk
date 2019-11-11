@@ -44,6 +44,7 @@ import com.sun.management.HotSpotDiagnosticMXBean;
  * @build jdk.test.lib.hprof.util.*
  * @run main DumpHeap
  */
+@Bean
 public class DumpHeap {
 
     public static void main(String[] args) throws Exception {

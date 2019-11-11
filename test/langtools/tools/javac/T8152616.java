@@ -42,6 +42,7 @@ import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.Pretty;
 import java.io.IOException;
 
+@Bean
 public class T8152616 {
 
     public String PrettyPrint(JCTree tree){

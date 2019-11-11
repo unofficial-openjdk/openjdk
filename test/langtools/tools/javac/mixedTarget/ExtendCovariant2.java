@@ -40,6 +40,7 @@
  * With JDK 1.5, a Covariant Return is allowed so check that is the case.
  *
  */
+@Bean
 public class ExtendCovariant2 extends java.io.PrintStream {
     ExtendCovariant2() throws java.io.IOException {
         super("");

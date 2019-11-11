@@ -34,6 +34,7 @@ import java.io.FileReader;
 import java.io.InputStream;
 import java.io.Reader;
 
+@Bean
 public class ExceptionsInLambda {
 
     public static void main(Runnable p, File f) {

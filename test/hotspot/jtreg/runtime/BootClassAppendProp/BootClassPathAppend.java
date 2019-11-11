@@ -34,6 +34,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 
 // Test that system property jdk.boot.class.path.append is initialized.  Otherwise,
 // -XX:+PrintCompilation does causes a SIGSEGV.
+@Bean
 public class BootClassPathAppend {
   public static void main(String[] args) throws Exception {
 

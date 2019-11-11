@@ -56,7 +56,11 @@ import static jdk.javadoc.internal.tool.Main.execute;
 
 public class T4994049 implements Doclet {
 
-    public boolean run(DocletEnvironment root) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean run(DocletEnvironment root) {
         DocTrees trees = root.getDocTrees();
 
         SourcePositions sourcePositions = trees.getSourcePositions();
@@ -157,7 +161,11 @@ public class T4994049 implements Doclet {
     }
 
     @Override
-    public void init(Locale locale, Reporter reporter) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void init(Locale locale, Reporter reporter) {
         return;
     }
 }

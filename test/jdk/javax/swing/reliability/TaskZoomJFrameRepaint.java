@@ -34,6 +34,7 @@ import java.awt.*;
  * @run main TaskZoomJFrameRepaint
  */
 
+@Bean
 public class TaskZoomJFrameRepaint extends Task<GUIZoomFrame> {
 
     public static void main (String[] args) throws Exception {

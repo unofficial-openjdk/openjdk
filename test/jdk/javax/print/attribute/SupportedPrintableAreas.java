@@ -35,6 +35,7 @@ import javax.print.event.*;
 import javax.print.attribute.*;
 import javax.print.attribute.standard.*;
 
+@Bean
 public class SupportedPrintableAreas {
 
   public static void main(String[] args) {

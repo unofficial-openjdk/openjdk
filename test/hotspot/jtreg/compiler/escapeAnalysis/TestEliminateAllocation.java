@@ -31,6 +31,7 @@
 
 package compiler.escapeAnalysis;
 
+@Bean
 public class TestEliminateAllocation {
 
     public static int a = 20;

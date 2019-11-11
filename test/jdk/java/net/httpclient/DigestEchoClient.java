@@ -78,6 +78,7 @@ import static java.lang.String.format;
  *                   DigestEchoClient
  */
 
+@Bean
 public class DigestEchoClient {
 
     static final String data[] = {
@@ -190,7 +191,11 @@ public class DigestEchoClient {
 
     static final AtomicLong clientCount = new AtomicLong();
     static final ReferenceTracker TRACKER = ReferenceTracker.INSTANCE;
-    public HttpClient newHttpClient(DigestEchoServer server) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public HttpClient newHttpClient(DigestEchoServer server) {
         clientCount.incrementAndGet();
         HttpClient.Builder builder = HttpClient.newBuilder();
         builder = builder.proxy(ProxySelector.of(null));

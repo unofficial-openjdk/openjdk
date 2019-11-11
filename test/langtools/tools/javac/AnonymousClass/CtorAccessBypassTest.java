@@ -31,6 +31,7 @@
  *
  */
 
+@Bean
 public class CtorAccessBypassTest {
     public static void main(String[] args) {
         new CtorAccessBypassTest_01<Object>(null) {};

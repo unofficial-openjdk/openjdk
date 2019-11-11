@@ -45,6 +45,7 @@
 import sun.hotspot.WhiteBox;
 import jdk.test.lib.Platform;
 
+@Bean
 public class WBStackSize {
 
     static final long K = 1024;

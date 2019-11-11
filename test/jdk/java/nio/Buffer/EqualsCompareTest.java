@@ -50,6 +50,7 @@ import java.util.stream.IntStream;
  * @run testng EqualsCompareTest
  */
 
+@Bean
 public class EqualsCompareTest {
 
     // Maximum width in bits
@@ -598,7 +599,11 @@ public class EqualsCompareTest {
 
     // Tests CharBuffer for region sources and CharSequence sources
     @Test(dataProvider = "charBufferTypesProvider")
-    public void testCharBuffers(BufferType.Chars charBufferType) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testCharBuffers(BufferType.Chars charBufferType) {
 
         BiFunction<BufferType.Chars, Integer, CharBuffer> constructor = (at, s) -> {
             CharBuffer a = at.construct(s);

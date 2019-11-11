@@ -48,6 +48,7 @@ import static org.testng.Assert.*;
  * @run testng/othervm BufferingSubscriberCancelTest
  */
 
+@Bean
 public class BufferingSubscriberCancelTest {
 
     @DataProvider(name = "bufferSizes")
@@ -166,7 +167,11 @@ public class BufferingSubscriberCancelTest {
         }
 
         @Override
-        public void onSubscribe(Subscription subscription) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onSubscribe(Subscription subscription) {
             //out.println("onSubscribe " + subscription);
             this.subscription = subscription;
             gate.countDown();
@@ -174,14 +179,22 @@ public class BufferingSubscriberCancelTest {
         }
 
         @Override
-        public void onNext(List<ByteBuffer> item) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(List<ByteBuffer> item) {
             //out.println("onNext " + item);
             onNextInvocations++;
             gate.countDown();
         }
 
         @Override
-        public void onError(Throwable throwable) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onError(Throwable throwable) {
             out.println("onError " + throwable);
         }
 

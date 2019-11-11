@@ -39,7 +39,11 @@ import jdk.test.lib.process.ProcessTools;
 public final class GCArguments {
 
     // Avoid excessive execution time.
-    static private void disableZapUnusedHeapArea(List<String> arguments) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                private void disableZapUnusedHeapArea(List<String> arguments) {
         // Develop option, only available in debug builds.
         if (Platform.isDebugBuild()) {
             arguments.add("-XX:-ZapUnusedHeapArea");
@@ -47,14 +51,22 @@ public final class GCArguments {
     }
 
     // Avoid excessive execution time.
-    static private void disableVerifyBeforeExit(List<String> arguments) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                private void disableVerifyBeforeExit(List<String> arguments) {
         // Diagnostic option, default enabled in debug builds.
         if (Platform.isDebugBuild()) {
             arguments.add("-XX:-VerifyBeforeExit");
         }
     }
 
-    static private void addDefaults(List<String> arguments) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                private void addDefaults(List<String> arguments) {
         disableZapUnusedHeapArea(arguments);
         disableVerifyBeforeExit(arguments);
     }
@@ -66,7 +78,11 @@ public final class GCArguments {
         return augmented.toArray(new String[augmented.size()]);
     }
 
-    static public ProcessBuilder createJavaProcessBuilder(String... arguments) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public ProcessBuilder createJavaProcessBuilder(String... arguments) {
         return createJavaProcessBuilder(false, arguments);
     }
 

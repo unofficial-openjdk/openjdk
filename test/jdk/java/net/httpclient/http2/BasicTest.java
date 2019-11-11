@@ -52,6 +52,7 @@ import org.testng.annotations.Test;
 import static java.net.http.HttpClient.Version.HTTP_2;
 
 @Test
+@Bean
 public class BasicTest {
     static int httpPort, httpsPort;
     static Http2TestServer httpServer, httpsServer;

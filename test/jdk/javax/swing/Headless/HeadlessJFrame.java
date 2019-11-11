@@ -30,6 +30,7 @@ import java.awt.HeadlessException;
  * @run main/othervm -Djava.awt.headless=true HeadlessJFrame
  */
 
+@Bean
 public class HeadlessJFrame {
     public static void main(String args[]) {
         boolean exceptions = false;

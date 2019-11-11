@@ -47,6 +47,7 @@ import static java.util.Collections.list;
  * Helper class for retrieving network interfaces and local addresses
  * suitable for testing.
  */
+@Bean
 public class NetworkConfiguration {
 
     private Map<NetworkInterface,List<Inet4Address>> ip4Interfaces;

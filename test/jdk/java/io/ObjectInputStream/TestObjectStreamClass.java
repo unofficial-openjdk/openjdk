@@ -35,6 +35,7 @@ import java.io.ObjectOutputStream;
 import java.io.ObjectStreamClass;
 import java.io.Serializable;
 
+@Bean
 public class TestObjectStreamClass {
 
     public static void main(String[] args) throws Exception {

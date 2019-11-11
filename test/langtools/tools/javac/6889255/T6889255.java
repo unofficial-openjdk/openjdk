@@ -48,6 +48,7 @@ import com.sun.tools.javac.util.Names;
 
 import static com.sun.tools.javac.code.Scope.LookupKind.NON_RECURSIVE;
 
+@Bean
 public class T6889255 {
     boolean testInterfaces = true;
     boolean testSyntheticMethods = true;

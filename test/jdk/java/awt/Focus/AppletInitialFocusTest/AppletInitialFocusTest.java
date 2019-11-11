@@ -37,6 +37,7 @@ import java.awt.Frame;
 import java.awt.Robot;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class AppletInitialFocusTest extends Frame {
 
     Robot robot = Util.createRobot();

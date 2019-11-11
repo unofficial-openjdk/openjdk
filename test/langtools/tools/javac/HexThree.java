@@ -28,6 +28,7 @@
  * @author darcy
  */
 
+@Bean
 public class HexThree {
 
     public static void main(String argv[]) {

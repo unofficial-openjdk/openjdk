@@ -38,6 +38,7 @@ import java.util.*;
 import javax.tools.*;
 
 // Each run should output the 'could not find class file' message, and not throw an AssertError.
+@Bean
 public class Bug {
     public static void main(String... arg) throws Throwable {
         String name = arg[0];
@@ -50,7 +51,11 @@ public class Bug {
 
         DiagnosticListener<? super javax.tools.JavaFileObject> dl =
             new DiagnosticListener<javax.tools.JavaFileObject>() {
-            public void report(Diagnostic message) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void report(Diagnostic message) {
                 pw.print("Diagnostic:\n"+ message.toString()+"\n");
                 if (!message.toString().equals(expectedMsg)){
                     System.err.println("Diagnostic:\n"+ message.toString()+"\n");

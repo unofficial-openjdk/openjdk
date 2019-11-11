@@ -34,6 +34,7 @@
  */
 import java.lang.instrument.*;
 
+@Bean
 public class
 TransformMethodTest
     extends ATransformerManagementTestCase

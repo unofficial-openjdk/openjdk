@@ -29,6 +29,7 @@
 
 import java.net.*;
 
+@Bean
 public class B6246242 {
     public static void main(String[] args) {
         InetAddress a;

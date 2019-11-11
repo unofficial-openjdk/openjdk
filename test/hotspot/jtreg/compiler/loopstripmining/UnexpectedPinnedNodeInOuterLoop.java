@@ -30,6 +30,7 @@
  *
  */
 
+@Bean
 public class UnexpectedPinnedNodeInOuterLoop {
 
     public static final int N = 400;

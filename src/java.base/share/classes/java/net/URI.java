@@ -1064,7 +1064,8 @@ public final class URI
      * @throws  NullPointerException
      *          If {@code uri} is {@code null}
      */
-    public URI resolve(URI uri) {
+@Bean
+        public URI resolve(URI uri) {
         return resolve(this, uri);
     }
 
@@ -1085,7 +1086,8 @@ public final class URI
      * @throws  IllegalArgumentException
      *          If the given string violates RFC&nbsp;2396
      */
-    public URI resolve(String str) {
+@Bean
+        public URI resolve(String str) {
         return resolve(URI.create(str));
     }
 
@@ -1115,7 +1117,8 @@ public final class URI
      * @throws  NullPointerException
      *          If {@code uri} is {@code null}
      */
-    public URI relativize(URI uri) {
+@Bean
+        public URI relativize(URI uri) {
         return relativize(this, uri);
     }
 
@@ -1498,7 +1501,8 @@ public final class URI
      * @return  {@code true} if, and only if, the given object is a URI that
      *          is identical to this URI
      */
-    public boolean equals(Object ob) {
+@Bean
+        public boolean equals(Object ob) {
         if (ob == this)
             return true;
         if (!(ob instanceof URI))
@@ -1633,7 +1637,8 @@ public final class URI
      * @throws  ClassCastException
      *          If the given object is not a URI
      */
-    public int compareTo(URI that) {
+@Bean
+        public int compareTo(URI that) {
         int c;
 
         if ((c = compareIgnoringCase(this.scheme, that.scheme)) != 0)
@@ -2057,7 +2062,8 @@ public final class URI
         }
     }
 
-    private void appendFragment(StringBuilder sb, String fragment) {
+@Bean
+        private void appendFragment(StringBuilder sb, String fragment) {
         if (fragment != null) {
             sb.append('#');
             sb.append(quote(fragment, L_URIC, H_URIC));
@@ -2949,14 +2955,16 @@ public final class URI
 
         // Tells whether start < end and, if so, whether charAt(start) == c
         //
-        private boolean at(int start, int end, char c) {
+@Bean
+            private boolean at(int start, int end, char c) {
             return (start < end) && (input.charAt(start) == c);
         }
 
         // Tells whether start + s.length() < end and, if so,
         // whether the chars at the start position match s exactly
         //
-        private boolean at(int start, int end, String s) {
+@Bean
+            private boolean at(int start, int end, String s) {
             int p = start;
             int sn = s.length();
             if (sn > end - p)
@@ -3002,7 +3010,8 @@ public final class URI
         // equal to c, return the index of the next char; otherwise, return the
         // start position.
         //
-        private int scan(int start, int end, char c) {
+@Bean
+            private int scan(int start, int end, char c) {
             if ((start < end) && (input.charAt(start) == c))
                 return start + 1;
             return start;
@@ -3015,7 +3024,8 @@ public final class URI
         // of the input string is returned).  May return the start position if
         // nothing matches.
         //
-        private int scan(int start, int end, String err, String stop) {
+@Bean
+            private int scan(int start, int end, String err, String stop) {
             int p = start;
             while (p < end) {
                 char c = input.charAt(p);
@@ -3034,7 +3044,8 @@ public final class URI
         // of the input string is returned).  May return the start position if
         // nothing matches.
         //
-        private int scan(int start, int end, String stop) {
+@Bean
+            private int scan(int start, int end, String stop) {
             int p = start;
             while (p < end) {
                 char c = input.charAt(p);
@@ -3630,7 +3641,8 @@ public final class URI
     static {
         SharedSecrets.setJavaNetUriAccess(
             new JavaNetUriAccess() {
-                public URI create(String scheme, String path) {
+@Bean
+                    public URI create(String scheme, String path) {
                     return new URI(scheme, path);
                 }
             }

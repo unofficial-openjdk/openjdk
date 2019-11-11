@@ -31,6 +31,7 @@
  * @run main UnreachableVar
  */
 
+@Bean
 public class UnreachableVar {
     static String result = "";
     public static void main(String[] args) {

@@ -45,6 +45,7 @@ import java.text.RuleBasedCollator;
 import java.text.CollationKey;
 import java.text.CollationElementIterator;
 
+@Bean
 public class APITest extends CollatorTest {
 
     public static void main(String[] args) throws Exception {

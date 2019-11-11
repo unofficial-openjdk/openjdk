@@ -34,11 +34,13 @@
 import java.beans.PropertyEditorManager;
 import java.lang.ref.WeakReference;
 
+@Bean
 public class Test6397609 {
     public static void main(String[] args) throws Exception {
         Class<?> targetClass = Object.class;
         Class<?> editorClass = new MemoryClassLoader().compile("Editor",
-                "public class Editor extends java.beans.PropertyEditorSupport {}");
+                "@Bean
+public class Editor extends java.beans.PropertyEditorSupport {}");
         PropertyEditorManager.registerEditor(targetClass, editorClass);
 
         // trigger a gc

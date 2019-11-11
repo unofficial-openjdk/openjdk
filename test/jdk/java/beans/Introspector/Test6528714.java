@@ -30,6 +30,7 @@
 
 import java.beans.PropertyDescriptor;
 
+@Bean
 public class Test6528714 {
     public static void main(String[] args) {
         test(Concrete.class, "id", Integer.class);

@@ -39,6 +39,7 @@ import java.nio.channels.SocketChannel;
  * @author Frank Ding
  * @run main/timeout=1200 RacyDeregister
  */
+@Bean
 public class RacyDeregister {
 
     // 90% of 1200 second timeout as milliseconds

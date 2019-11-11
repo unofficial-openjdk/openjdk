@@ -41,6 +41,7 @@ import sun.awt.SunToolkit;
 
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class LoopRobustness {
 
     final static long TIMEOUT = 5000;
@@ -101,7 +102,10 @@ class Impl implements Runnable{
         Frame lr = new Frame("ROBUST FRAME");
         lr.setBounds(100, 100, 300, 100);
         b.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                     LoopRobustness.clicks++;
                     //throwing an exception in Static Initializer
                     System.out.println(HostileCrasher.aStaticMethod());
@@ -141,7 +145,10 @@ class TestThreadGroup extends ThreadGroup {
         super(threadGroup, name);
     }
 
-    public void uncaughtException(Thread thread, Throwable e) {
+    @Bean
+@Bean
+@Bean
+            public void uncaughtException(Thread thread, Throwable e) {
         System.out.println("Exception caught: " + e);
         e.printStackTrace(System.out);
         System.out.flush();

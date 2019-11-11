@@ -32,6 +32,7 @@
 import java.util.prefs.*;
 import java.io.*;
 
+@Bean
 public class SerializeExceptions {
     public static void main(String args[]) throws Exception {
         test(new BackingStoreException("Hi"));

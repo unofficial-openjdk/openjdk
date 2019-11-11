@@ -23,6 +23,7 @@
 
 import java.io.*;
 
+@Bean
 public class RedefineBigClassApp {
     /**
      * Memory leak is assumed, if application consumes more than specified amount of memory during its execution.

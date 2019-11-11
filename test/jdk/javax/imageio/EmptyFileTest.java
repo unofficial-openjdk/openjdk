@@ -35,6 +35,7 @@ import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 
+@Bean
 public class EmptyFileTest {
     public static void main(String[] args) throws IOException {
         String format = "MY_IMG";

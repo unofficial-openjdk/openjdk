@@ -34,6 +34,7 @@ package java.security;
  * @since 1.2
  */
 
+@Bean
 public class KeyStoreException extends GeneralSecurityException {
 
     @java.io.Serial

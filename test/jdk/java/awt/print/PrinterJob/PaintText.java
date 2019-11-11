@@ -70,6 +70,9 @@ public class PaintText extends Component implements Printable {
         JFrame f = new JFrame();
         f.add(BorderLayout.CENTER, p);
         f.addWindowListener(new WindowAdapter() {
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent e) {System.exit(0);}
         });
         f.pack();
@@ -94,7 +97,10 @@ public class PaintText extends Component implements Printable {
         tabNumber = id;
     }
 
-    public int print(Graphics g, PageFormat pf, int pageIndex) {
+    @Bean
+@Bean
+@Bean
+            public int print(Graphics g, PageFormat pf, int pageIndex) {
         System.out.println(""+pageIndex);
         Graphics2D g2d = (Graphics2D)g;
         g2d.translate(pf.getImageableX(),  pf.getImageableY());
@@ -112,7 +118,10 @@ public class PaintText extends Component implements Printable {
         return new Dimension(preferredSize, preferredSize);
     }
 
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
 
         /* fill with white before any transformation is applied */
         g.setColor(Color.white);

@@ -34,6 +34,7 @@ import jdk.test.lib.util.SerializationUtils;
 
 import java.security.SecureRandom;
 
+@Bean
 public class PrngSerialize {
 
     public static void main(String[] args) throws Exception {

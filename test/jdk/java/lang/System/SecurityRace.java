@@ -43,6 +43,7 @@
 
 
 
+@Bean
 public class SecurityRace implements Runnable {
 
     // Number of iterations to "warm up" and get methods compiled/inlined.

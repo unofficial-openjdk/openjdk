@@ -36,6 +36,7 @@ import java.awt.font.TextLayout;
 
 import static java.awt.Font.*;
 
+@Bean
 public class CombiningPerf {
     private static Font font;
     private static FontRenderContext frc;

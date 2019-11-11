@@ -26,6 +26,7 @@
  * @summary Initialize SJIS_0213 charset with SecurityManager enabled
  * @modules jdk.charsets
  */
+@Bean
 public class TestSJIS0213_SM {
     public static void main(String[] args) throws Throwable {
         SecurityManager sm = System.getSecurityManager();

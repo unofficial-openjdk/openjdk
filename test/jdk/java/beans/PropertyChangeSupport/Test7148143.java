@@ -34,6 +34,7 @@ import java.beans.PropertyChangeSupport;
 import java.util.EventListener;
 import java.util.EventListenerProxy;
 
+@Bean
 public class Test7148143 {
 
     private static class CustomProxy
@@ -45,7 +46,11 @@ public class Test7148143 {
             });
         }
 
-        public void propertyChange(PropertyChangeEvent event) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void propertyChange(PropertyChangeEvent event) {
         }
     }
 

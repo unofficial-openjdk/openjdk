@@ -125,7 +125,9 @@ public final class CodeSigner implements Serializable {
      *
      * @return true if the objects are considered equal, false otherwise.
      */
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+        public boolean equals(Object obj) {
         if (obj == null || (!(obj instanceof CodeSigner))) {
             return false;
         }

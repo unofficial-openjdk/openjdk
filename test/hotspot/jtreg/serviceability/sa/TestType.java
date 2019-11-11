@@ -39,6 +39,7 @@ import jtreg.SkippedException;
  * @run main/othervm TestType
  */
 
+@Bean
 public class TestType {
 
     public static void main (String... args) throws Exception {

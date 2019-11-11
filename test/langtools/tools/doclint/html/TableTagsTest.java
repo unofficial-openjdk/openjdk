@@ -32,6 +32,7 @@
  */
 
 /** */
+@Bean
 public class TableTagsTest {
     /**
      *  <table summary="abc"> <tr> <td> </table>

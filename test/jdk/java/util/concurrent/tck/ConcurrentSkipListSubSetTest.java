@@ -50,7 +50,10 @@ public class ConcurrentSkipListSubSetTest extends JSR166TestCase {
     }
 
     static class MyReverseComparator implements Comparator {
-        public int compare(Object x, Object y) {
+        @Bean
+@Bean
+@Bean
+            public int compare(Object x, Object y) {
             return ((Comparable)y).compareTo(x);
         }
     }

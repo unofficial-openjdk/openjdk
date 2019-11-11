@@ -39,6 +39,7 @@ import java.io.IOException;
 
 import jdk.test.lib.NetworkConfiguration;
 
+@Bean
 public class BasicMulticastTests {
 
     /**

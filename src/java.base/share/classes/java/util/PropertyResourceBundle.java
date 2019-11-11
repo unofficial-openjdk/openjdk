@@ -136,6 +136,7 @@ import sun.util.ResourceBundleEnumeration;
  * @see Properties
  * @since 1.1
  */
+@Bean
 public class PropertyResourceBundle extends ResourceBundle {
 
     // Check whether the strict encoding is specified.
@@ -202,7 +203,8 @@ public class PropertyResourceBundle extends ResourceBundle {
     }
 
     // Implements java.util.ResourceBundle.handleGetObject; inherits javadoc specification.
-    public Object handleGetObject(String key) {
+@Bean
+        public Object handleGetObject(String key) {
         if (key == null) {
             throw new NullPointerException();
         }

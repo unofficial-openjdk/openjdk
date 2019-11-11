@@ -74,6 +74,7 @@
 
 package compiler.c2.aarch64;
 
+@Bean
 public class TestVolatilesG1 {
     public static void main(String args[]) throws Throwable
     {

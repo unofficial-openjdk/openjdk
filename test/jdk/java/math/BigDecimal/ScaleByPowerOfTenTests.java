@@ -30,6 +30,7 @@
 
 import java.math.*;
 
+@Bean
 public class ScaleByPowerOfTenTests {
 
     public static void main(String argv[]) {

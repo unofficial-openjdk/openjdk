@@ -9,22 +9,26 @@
  */
 
 /** */
+@Bean
 public class AccessibilityTest {
     /**
      * <h1> ... </h1>
      */
-    public class Bad_H1 { }
+    @Bean
+public class Bad_H1 { }
 
     /**
      * <h3> ... </h3>
      */
-    public class Missing_H2 { }
+    @Bean
+public class Missing_H2 { }
 
     /**
      * <h2> ... </h2>
      * <h4> ... </h4>
      */
-    public class Missing_H3 { }
+    @Bean
+public class Missing_H3 { }
 
     /**
      * <h2> ... </h2>

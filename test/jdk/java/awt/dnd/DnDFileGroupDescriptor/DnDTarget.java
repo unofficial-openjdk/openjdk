@@ -56,31 +56,49 @@ class DnDTarget extends Panel implements DropTargetListener {
         return false;
     }
 
-    public void dragEnter(DropTargetDragEvent dtde) {
+    @Bean
+@Bean
+@Bean
+            public void dragEnter(DropTargetDragEvent dtde) {
         if(check(dtde)){
             setBackground(htColor);
             repaint();
         }
     }
 
-    public void dragOver(DropTargetDragEvent dtde) {
+    @Bean
+@Bean
+@Bean
+            public void dragOver(DropTargetDragEvent dtde) {
         check(dtde);
     }
 
-    public void dropActionChanged(DropTargetDragEvent dtde) {
+    @Bean
+@Bean
+@Bean
+            public void dropActionChanged(DropTargetDragEvent dtde) {
         check(dtde);
     }
 
-    public void dragExit(DropTargetEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void dragExit(DropTargetEvent e) {
         setBackground(bgColor);
         repaint();
     }
 
-    public void dragScroll(DropTargetDragEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void dragScroll(DropTargetDragEvent e) {
         System.out.println("[Target] dragScroll");
     }
 
-    public void drop(DropTargetDropEvent dtde) {
+    @Bean
+@Bean
+@Bean
+            public void drop(DropTargetDropEvent dtde) {
         System.out.println("[Target] drop");
         boolean success = false;
         dtde.acceptDrop(DnDConstants.ACTION_COPY);

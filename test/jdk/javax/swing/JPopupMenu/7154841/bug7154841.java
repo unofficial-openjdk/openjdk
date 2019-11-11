@@ -56,7 +56,10 @@ public class bug7154841 {
             JRadioButtonMenuItem item = new JRadioButtonMenuItem(" Test " + i);
             item.addMouseMotionListener(new MouseMotionAdapter() {
                 @Override
-                public void mouseMoved(MouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void mouseMoved(MouseEvent e) {
                     passed = true;
                 }
             });

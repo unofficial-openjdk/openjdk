@@ -32,6 +32,7 @@ import java.util.*;
 import javax.tools.*;
 import com.sun.source.util.*;
 
+@Bean
 public class T6357331
 {
     public static void main(String... args) throws IOException {
@@ -46,11 +47,19 @@ public class T6357331
             // set a listener to verify that IllegalStateException is not thrown
             // during the compilation
             task.setTaskListener(new TaskListener() {
-                    public void started(TaskEvent e) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public void started(TaskEvent e) {
                         task.getElements();
                         task.getTypes();
                     }
-                    public void finished(TaskEvent e) { }
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public void finished(TaskEvent e) { }
                 });
 
             task.call();

@@ -43,6 +43,7 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class GetSystemPackage {
 
     static final String testClassesDir = System.getProperty("test.classes", ".");

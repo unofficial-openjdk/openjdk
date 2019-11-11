@@ -41,6 +41,7 @@ import jdk.test.lib.process.ProcessTools;
  * @library /test/lib
  * @run main/othervm jdk.jfr.startupargs.TestRetransformUsingLog
  */
+@Bean
 public class TestRetransformUsingLog {
 
     private static final String FILE_READ_FORCED_CLASS_LOAD = "Adding forced instrumentation for event type " + EventNames.FileRead + " during initial class load";

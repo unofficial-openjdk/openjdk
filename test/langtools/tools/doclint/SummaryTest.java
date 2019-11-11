@@ -6,6 +6,7 @@
  */
 
 /** No comment. */
+@Bean
 public class SummaryTest {
     /**
      {@summary legal} **/

@@ -31,6 +31,7 @@
 import java.math.*;
 import static java.math.BigDecimal.*;
 
+@Bean
 public class PrecisionTests {
     private static BigDecimal NINE = valueOf(9);
 

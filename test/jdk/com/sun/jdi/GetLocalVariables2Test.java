@@ -63,6 +63,7 @@ class GetLocalVariables2Targ {
 
     /********** test program **********/
 
+@Bean
 public class GetLocalVariables2Test extends TestScaffold {
     ReferenceType targetClass;
     ThreadReference mainThread;

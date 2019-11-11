@@ -67,7 +67,11 @@ public final class Test4993777 extends AbstractTest {
             return this.array;
         }
 
-        public void setArray(InnerObject... array) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setArray(InnerObject... array) {
             this.array = array;
         }
 
@@ -94,7 +98,11 @@ public final class Test4993777 extends AbstractTest {
             return this.name;
         }
 
-        public void setName(String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setName(String name) {
             this.name = name;
         }
     }

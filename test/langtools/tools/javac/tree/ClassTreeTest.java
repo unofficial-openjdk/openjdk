@@ -70,7 +70,11 @@ public class ClassTreeTest {
 
         TreeScanner<ClassTree,String> s = new TreeScanner<ClassTree,String>() {
             @Override
-            public ClassTree visitClass(ClassTree c, String name) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public ClassTree visitClass(ClassTree c, String name) {
                 if (c.getSimpleName().toString().equals(name))
                     return c;
                 else
@@ -78,7 +82,11 @@ public class ClassTreeTest {
             }
 
             @Override
-            public ClassTree reduce(ClassTree t1, ClassTree t2) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public ClassTree reduce(ClassTree t1, ClassTree t2) {
                 return (t1 != null ? t1 : t2);
             }
         };

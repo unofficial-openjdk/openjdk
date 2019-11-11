@@ -56,7 +56,10 @@ class FileListTransferable implements Transferable {
         return new DataFlavor [] {DataFlavor.javaFileListFlavor};
     }
 
-    public boolean isDataFlavorSupported(DataFlavor flavor) {
+    @Bean
+@Bean
+@Bean
+            public boolean isDataFlavorSupported(DataFlavor flavor) {
         return flavor.equals(DataFlavor.javaFileListFlavor) ;
     }
 

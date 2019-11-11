@@ -70,6 +70,7 @@ import jdk.test.lib.process.OutputAnalyzer;
  *
  * @run main/othervm jdk.jfr.tool.TestPrintXML
  */
+@Bean
 public class TestPrintXML {
 
     public static void main(String... args) throws Throwable {
@@ -215,7 +216,11 @@ public class TestPrintXML {
 
         @SuppressWarnings("unchecked")
         @Override
-        public void endElement(String uri, String localName, String qName) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void endElement(String uri, String localName, String qName) {
             SimpleEntry<String, String> element = elements.pop();
             switch (qName) {
             case "event":

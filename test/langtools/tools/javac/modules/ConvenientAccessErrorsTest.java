@@ -46,6 +46,7 @@ import toolbox.JarTask;
 import toolbox.JavacTask;
 import toolbox.Task;
 
+@Bean
 public class ConvenientAccessErrorsTest extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {
@@ -58,11 +59,13 @@ public class ConvenientAccessErrorsTest extends ModuleTestBase {
         Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
                           "module m1x { exports api; }",
-                          "package api; public class Api { public void call() { } }");
+                          "package api; @Bean
+public class Api { public void call() { } }");
         Path src_m2 = src.resolve("m2x");
         tb.writeJavaFiles(src_m2,
                           "module m2x { }",
-                          "package test; public class Test { api.Api api; }");
+                          "package test; @Bean
+public class Test { api.Api api; }");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
@@ -89,11 +92,13 @@ public class ConvenientAccessErrorsTest extends ModuleTestBase {
         Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
                           "module m1x { exports api; }",
-                          "package api; public class Api { public static class Nested {} }");
+                          "package api; @Bean
+public class Api { public static class Nested {} }");
         Path src_m2 = src.resolve("m2x");
         tb.writeJavaFiles(src_m2,
                           "module m2x { }",
-                          "package test; public class Test { api.Api.Nested nested; }");
+                          "package test; @Bean
+public class Test { api.Api.Nested nested; }");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
@@ -120,12 +125,15 @@ public class ConvenientAccessErrorsTest extends ModuleTestBase {
         Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
                           "module m1x { exports api; }",
-                          "package api; public class Api { }",
-                          "package impl; public class Impl { }");
+                          "package api; @Bean
+public class Api { }",
+                          "package impl; @Bean
+public class Impl { }");
         Path src_m2 = src.resolve("m2x");
         tb.writeJavaFiles(src_m2,
                           "module m2x { requires m1x; }",
-                          "package test; public class Test { impl.Impl api; }");
+                          "package test; @Bean
+public class Test { impl.Impl api; }");
         Path src_m3 = src.resolve("m3x");
         tb.writeJavaFiles(src_m3,
                           "module m3x { requires m1x; }");
@@ -178,7 +186,8 @@ public class ConvenientAccessErrorsTest extends ModuleTestBase {
         Path src_m2 = src.resolve("m2x");
         tb.writeJavaFiles(src_m2,
                           "module m2x { requires m1x; }",
-                          "package test; public class Test { api.Api api; }");
+                          "package test; @Bean
+public class Test { api.Api api; }");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
@@ -212,7 +221,8 @@ public class ConvenientAccessErrorsTest extends ModuleTestBase {
 
         tb.writeJavaFiles(m1x,
                           "module m1x { }",
-                          "package test; public class Test { api.Api api; api.Api.Foo api; }");
+                          "package test; @Bean
+public class Test { api.Api api; api.Api.Foo api; }");
 
         List<String> log = new JavacTask(tb)
                 .options("-classpath", jar.toString(),
@@ -234,7 +244,8 @@ public class ConvenientAccessErrorsTest extends ModuleTestBase {
 
     @Test
     public void testIndirectReferenceToUnnamedModule(Path base) throws Exception {
-        Path jar = prepareTestJar(base, "package api; public class Api { public void test() {} }");
+        Path jar = prepareTestJar(base, "package api; @Bean
+public class Api { public void test() {} }");
 
         Path moduleSrc = base.resolve("module-src");
         Path m1x = moduleSrc.resolve("m1x");
@@ -246,11 +257,13 @@ public class ConvenientAccessErrorsTest extends ModuleTestBase {
 
         tb.writeJavaFiles(m1x,
                           "module m1x { requires auxiliary; }",
-                          "package test; public class Test { { auxiliary.Auxiliary.get().test(); } }");
+                          "package test; @Bean
+public class Test { { auxiliary.Auxiliary.get().test(); } }");
 
         tb.writeJavaFiles(auxiliary,
                           "module auxiliary { exports auxiliary; }",
-                          "package auxiliary; public class Auxiliary { public static api.Api get() { return null; } }");
+                          "package auxiliary; @Bean
+public class Auxiliary { public static api.Api get() { return null; } }");
 
         List<String> log = new JavacTask(tb)
                 .options("-classpath", jar.toString(),
@@ -326,7 +339,8 @@ public class ConvenientAccessErrorsTest extends ModuleTestBase {
 
         Path unnamedSrc = base.resolve("unnamedSrc");
         tb.writeJavaFiles(unnamedSrc,
-                          "public class Test { api.Api api; impl.Impl impl; }");
+                          "@Bean
+public class Test { api.Api api; impl.Impl impl; }");
         Path unnamedClasses = base.resolve("unnamed-classes");
         Files.createDirectories(unnamedClasses);
 
@@ -376,11 +390,13 @@ public class ConvenientAccessErrorsTest extends ModuleTestBase {
         Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
                           "module m1x { }",
-                          "package api; public class Api { public String test() { return null; } }");
+                          "package api; @Bean
+public class Api { public String test() { return null; } }");
         Path src_m2 = src.resolve("m2x");
         tb.writeJavaFiles(src_m2,
                           "module m2x { requires m1x; }",
-                          "package test; import api.Api; public class Test { Api api; { api.test().length(); } }");
+                          "package test; import api.Api; @Bean
+public class Test { Api api; { api.test().length(); } }");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
@@ -407,11 +423,13 @@ public class ConvenientAccessErrorsTest extends ModuleTestBase {
         Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
                           "module m1x { }",
-                          "package api; public class Api { public String test() { return null; } }");
+                          "package api; @Bean
+public class Api { public String test() { return null; } }");
         Path src_m2 = src.resolve("m2x");
         tb.writeJavaFiles(src_m2,
                           "module m2x { requires m1x; }",
-                          "package test; import api.*; public class Test { Api api; { api.test().length(); } }");
+                          "package test; import api.*; @Bean
+public class Test { Api api; { api.test().length(); } }");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
@@ -438,11 +456,13 @@ public class ConvenientAccessErrorsTest extends ModuleTestBase {
         Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
                           "module m1x { }",
-                          "package api; public class Api { }");
+                          "package api; @Bean
+public class Api { }");
         Path src_m2 = src.resolve("m2x");
         tb.writeJavaFiles(src_m2,
                           "module m2x { requires m1x; }",
-                          "package test; import api.*; public class Test { }");
+                          "package test; import api.*; @Bean
+public class Test { }");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
@@ -467,7 +487,8 @@ public class ConvenientAccessErrorsTest extends ModuleTestBase {
     public void testClassPackageConflict(Path base) throws Exception {
         Path libSrc = base.resolve("libSrc");
         tb.writeJavaFiles(libSrc,
-                          "package test.desktop; public class Any { }");
+                          "package test.desktop; @Bean
+public class Any { }");
         Path libClasses = base.resolve("libClasses");
         tb.createDirectories(libClasses);
 
@@ -480,8 +501,10 @@ public class ConvenientAccessErrorsTest extends ModuleTestBase {
 
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
-                          "package test; public class desktop { public static class Action { } }",
-                          "package use; import test.desktop.*; public class Use { test.desktop.Action a; }");
+                          "package test; @Bean
+public class desktop { public static class Action { } }",
+                          "package use; import test.desktop.*; @Bean
+public class Use { test.desktop.Action a; }");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
@@ -498,7 +521,8 @@ public class ConvenientAccessErrorsTest extends ModuleTestBase {
     public void testClassPackageConflictInUnnamed(Path base) throws Exception {
         Path libSrc = base.resolve("libSrc");
         tb.writeJavaFiles(libSrc,
-                          "package desktop; public class Any { }");
+                          "package desktop; @Bean
+public class Any { }");
         Path libClasses = base.resolve("libClasses");
         tb.createDirectories(libClasses);
 
@@ -511,8 +535,10 @@ public class ConvenientAccessErrorsTest extends ModuleTestBase {
 
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
-                          "public class desktop { public static class Action { } }",
-                          "import desktop.*; public class Use { desktop.Action a; }");
+                          "@Bean
+public class desktop { public static class Action { } }",
+                          "import desktop.*; @Bean
+public class Use { desktop.Action a; }");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
@@ -531,7 +557,8 @@ public class ConvenientAccessErrorsTest extends ModuleTestBase {
         Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
                           "module m1x { }",
-                          "package api; import can.not.resolve; public class Api { }");
+                          "package api; import can.not.resolve; @Bean
+public class Api { }");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
@@ -558,8 +585,10 @@ public class ConvenientAccessErrorsTest extends ModuleTestBase {
         Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
                           "module m1x { exports api; }",
-                          "package api; public class Base { }",
-                          "package api; public class Sub extends Base { }");
+                          "package api; @Bean
+public class Base { }",
+                          "package api; @Bean
+public class Sub extends Base { }");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
         Path m1xClasses = classes.resolve("m1x");
@@ -580,7 +609,8 @@ public class ConvenientAccessErrorsTest extends ModuleTestBase {
                           "package test;\n" +
                           "import api.Sub;\n" +
                           "import api.Base;\n" +
-                          "public class Test {\n" +
+                          "@Bean
+public class Test {\n" +
                           "    Sub a2;\n" +
                           "    Base a;\n" +
                           "}\n");
@@ -640,7 +670,8 @@ public class ConvenientAccessErrorsTest extends ModuleTestBase {
         Path src_m4 = src.resolve("m4x");
         tb.writeJavaFiles(src_m4,
                           "module m4x { }",
-                          "package m4x; public class Test extends api.Api { }");
+                          "package m4x; @Bean
+public class Test extends api.Api { }");
 
         List<String> log = new JavacTask(tb)
                 .options("-XDrawDiagnostics",
@@ -701,7 +732,8 @@ public class ConvenientAccessErrorsTest extends ModuleTestBase {
         Path src_mb = src.resolve("mb");
         tb.writeJavaFiles(src_mb,
                           "module mb { requires ma; }",
-                          "package mb.a; public class Test { ma.NotApi.Inner i1; mb.b.NotApi.Inner i2; }",
+                          "package mb.a; @Bean
+public class Test { ma.NotApi.Inner i1; mb.b.NotApi.Inner i2; }",
                           "package mb.b; class NotApi { public static class Inner { } }");
 
         List<String> log = new JavacTask(tb)
@@ -728,11 +760,13 @@ public class ConvenientAccessErrorsTest extends ModuleTestBase {
         Path src_ma = src.resolve("ma");
         tb.writeJavaFiles(src_ma,
                           "module ma { exports ma; }",
-                          "package ma; public class Api { }");
+                          "package ma; @Bean
+public class Api { }");
         Path src_mb = src.resolve("mb");
         tb.writeJavaFiles(src_mb,
                           "module mb { exports ma.mb; }",
-                          "package ma.mb; public class Api { }");
+                          "package ma.mb; @Bean
+public class Api { }");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
@@ -746,7 +780,8 @@ public class ConvenientAccessErrorsTest extends ModuleTestBase {
         Path test = src.resolve("test");
         tb.writeJavaFiles(test,
                           "module test { requires mb; }",
-                          "package test; import ma.*; public class Test { }");
+                          "package test; import ma.*; @Bean
+public class Test { }");
 
         List<String> log = new JavacTask(tb)
                 .options("-XDrawDiagnostics",
@@ -771,7 +806,8 @@ public class ConvenientAccessErrorsTest extends ModuleTestBase {
         Path src_mb = src.resolve("mb");
         tb.writeJavaFiles(src_mb,
                           "module mb { exports ma.mb; }",
-                          "package ma.mb; public class Api { }");
+                          "package ma.mb; @Bean
+public class Api { }");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
@@ -785,7 +821,8 @@ public class ConvenientAccessErrorsTest extends ModuleTestBase {
         Path test = src.resolve("test");
         tb.writeJavaFiles(test,
                           "module test { requires mb; }",
-                          "package test; import ma.mb.*; import ma.*; public class Test { }");
+                          "package test; import ma.mb.*; import ma.*; @Bean
+public class Test { }");
 
         List<String> log = new JavacTask(tb)
                 .options("-XDrawDiagnostics",
@@ -810,8 +847,10 @@ public class ConvenientAccessErrorsTest extends ModuleTestBase {
         Path test = src.resolve("test");
         tb.writeJavaFiles(test,
                           "module test { }",
-                          "package ma.mb; public class Impl { }",
-                          "package test; import ma.*; public class Test { }");
+                          "package ma.mb; @Bean
+public class Impl { }",
+                          "package test; import ma.*; @Bean
+public class Test { }");
 
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
@@ -844,8 +883,10 @@ public class ConvenientAccessErrorsTest extends ModuleTestBase {
         Path src = base.resolve("src");
         Path test = src.resolve("test");
         tb.writeJavaFiles(test,
-                          "package ma.mb; public class Impl { }",
-                          "package test; import ma.*; public class Test { }");
+                          "package ma.mb; @Bean
+public class Impl { }",
+                          "package test; import ma.*; @Bean
+public class Test { }");
 
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);

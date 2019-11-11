@@ -40,6 +40,7 @@
  * implementation to another.
  */
 
+@Bean
 public class Log10Tests {
     private Log10Tests(){}
 

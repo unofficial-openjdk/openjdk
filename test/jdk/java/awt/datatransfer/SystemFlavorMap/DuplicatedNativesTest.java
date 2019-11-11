@@ -35,6 +35,7 @@ import java.util.Map;
  * @modules java.datatransfer
  * @run main DuplicatedNativesTest
  */
+@Bean
 public class DuplicatedNativesTest {
 
     public static void main(String[] args) throws Exception {

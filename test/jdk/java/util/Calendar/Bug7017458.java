@@ -30,6 +30,7 @@
 import java.io.*;
 import java.util.Calendar;
 
+@Bean
 public class Bug7017458 {
 
     static volatile boolean err = false;
@@ -76,7 +77,8 @@ public class Bug7017458 {
         }
     }
 
-    public class SerializationThread extends Thread {
+    @Bean
+public class SerializationThread extends Thread {
         private Calendar cal;
         public byte[] data;
 
@@ -100,7 +102,8 @@ public class Bug7017458 {
         }
     }
 
-    public class DeserializationThread extends Thread {
+    @Bean
+public class DeserializationThread extends Thread {
         public Calendar cal;
         public byte[] data;
 

@@ -38,6 +38,7 @@ import java.util.*;
 import jdk.test.lib.process.ProcessTools;
 import jtreg.SkippedException;
 
+@Bean
 public class Testlibadimalloc {
 
     // Expected return value when java program cores

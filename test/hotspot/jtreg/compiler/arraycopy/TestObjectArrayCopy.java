@@ -33,6 +33,7 @@
 
 package compiler.arraycopy;
 
+@Bean
 public class TestObjectArrayCopy {
 
     public static boolean crash(Object src) {

@@ -69,6 +69,7 @@ import java.nio.file.Paths;
  *
  */
 
+@Bean
 public class TestHumongousClassLoader {
 
     private static final WhiteBox WB = WhiteBox.getWhiteBox();
@@ -79,7 +80,8 @@ public class TestHumongousClassLoader {
 
     public static final String LOAD_CLASS_METHOD_PROTOTYPE =
             "    @Override\n"
-                    + "    public Class loadClass(String fileName) throws ClassNotFoundException {\n"
+                    + "    @Bean
+public class loadClass(String fileName) throws ClassNotFoundException {\n"
                     + "        if (${ClassLoadFilter}) {\n"
                     + "            System.out.println(\"Loading class \" + fileName);\n"
                     + "            byte[] b = null;\n"
@@ -104,7 +106,8 @@ public class TestHumongousClassLoader {
             + "import java.nio.file.Paths;\n";
 
     public static final String GENERIC_PROTOTYPE = "${ClassHeader}\n"
-            + "public class ${ClassName} extends ${BaseClass}{\n"
+            + "@Bean
+public class ${ClassName} extends ${BaseClass}{\n"
             + "    ${ConstructorClause}\n"
             + "    ${Methods}\n"
             + "    ${Fields}\n"

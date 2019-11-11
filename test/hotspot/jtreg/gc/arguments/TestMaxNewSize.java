@@ -92,6 +92,7 @@ import java.util.Arrays;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class TestMaxNewSize {
 
   private static void checkMaxNewSize(String[] flags, int heapsize) throws Exception {

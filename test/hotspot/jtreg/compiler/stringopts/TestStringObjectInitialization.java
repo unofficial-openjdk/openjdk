@@ -42,6 +42,7 @@ package compiler.stringopts;
 
 import java.util.Arrays;
 
+@Bean
 public class TestStringObjectInitialization {
 
     String myString;
@@ -57,12 +58,20 @@ public class TestStringObjectInitialization {
         last.join();
     }
 
-    private void add(String message) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void add(String message) {
         // String escapes to other threads here
         myString += message;
     }
 
-    public void run(String s, String[] sArray) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void run(String s, String[] sArray) {
         // Trigger C2's string concatenation optimization
         add(s + Arrays.toString(sArray) + " const ");
     }

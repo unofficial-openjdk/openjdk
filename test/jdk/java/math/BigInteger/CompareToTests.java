@@ -30,6 +30,7 @@
 import java.math.*;
 import static java.math.BigInteger.*;
 
+@Bean
 public class CompareToTests {
     private static int compareToTests() {
         int failures = 0;

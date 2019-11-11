@@ -34,6 +34,7 @@ import java.security.SecureClassLoader;
  *
  * @see InMemoryCompiler
  */
+@Bean
 public class ByteCodeLoader extends SecureClassLoader {
     private final String className;
     private final byte[] byteCode;
@@ -52,7 +53,8 @@ public class ByteCodeLoader extends SecureClassLoader {
     }
 
     @Override
-    public Class<?> loadClass(String name) throws ClassNotFoundException {
+    @Bean
+public class<?> loadClass(String name) throws ClassNotFoundException {
         if (!name.equals(className)) {
             return super.loadClass(name);
         }

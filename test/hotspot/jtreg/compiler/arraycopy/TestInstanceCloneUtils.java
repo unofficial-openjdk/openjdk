@@ -96,7 +96,11 @@ abstract class TestInstanceCloneUtils {
             return true;
         }
 
-        public boolean equals(Object obj) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object obj) {
             return fields_equal(getClass(), (Base)obj);
         }
 

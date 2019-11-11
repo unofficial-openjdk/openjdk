@@ -63,6 +63,7 @@ class FieldWatchpointsDebugee {
     }
 }
 
+@Bean
 public class FieldWatchpoints extends TestScaffold {
     boolean fieldModifyReported = false;
     boolean fieldAccessReported = false;
@@ -104,15 +105,27 @@ public class FieldWatchpoints extends TestScaffold {
             addListener (new TargetAdapter() {
                     EventSet lastSet = null;
 
-                    public void eventSetReceived(EventSet set) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public void eventSetReceived(EventSet set) {
                         lastSet = set;
                     }
-                    public void fieldModified(ModificationWatchpointEvent event) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public void fieldModified(ModificationWatchpointEvent event) {
                         System.out.println("Field modified: " + event);
                         fieldModifyReported = true;
                         lastSet.resume();
                     }
-                    public void fieldAccessed(AccessWatchpointEvent event) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public void fieldAccessed(AccessWatchpointEvent event) {
                         System.out.println("Field accessed: " + event);
                         fieldAccessReported = true;
                         lastSet.resume();

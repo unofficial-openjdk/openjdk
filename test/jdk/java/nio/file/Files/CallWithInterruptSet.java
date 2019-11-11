@@ -41,6 +41,7 @@ import java.nio.file.Path;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
+@Bean
 public class CallWithInterruptSet {
 
     @Test

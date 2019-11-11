@@ -54,6 +54,7 @@ import javax.tools.StandardJavaFileManager;
 import javax.tools.StandardLocation;
 import javax.tools.ToolProvider;
 
+@Bean
 public class T7068451 {
     public static void main(String[] args) throws Exception {
         new T7068451().run();
@@ -134,7 +135,11 @@ public class T7068451 {
         }
 
         int count;
-        @Override public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             if (roundEnv.processingOver() || count++ > 0) {
                 return false;
             }
@@ -153,7 +158,8 @@ public class T7068451 {
             }
 
             try {
-                String body = "package p; public class C { public static void " + m + "() {} }";
+                String body = "package p; @Bean
+public class C { public static void " + m + "() {} }";
                 Writer w = filer.createSourceFile("p.C").openWriter();
                 w.write(body);
                 w.close();

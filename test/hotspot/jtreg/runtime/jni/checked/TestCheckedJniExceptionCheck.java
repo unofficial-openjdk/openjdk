@@ -138,7 +138,11 @@ public class TestCheckedJniExceptionCheck {
         callableMethodInvokeCount++;
     }
 
-    public void callableNestedMethod(int nofCalls, boolean withExceptionChecks) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void callableNestedMethod(int nofCalls, boolean withExceptionChecks) {
         callJavaFromNative(nofCalls, withExceptionChecks);
     }
 

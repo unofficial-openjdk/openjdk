@@ -30,6 +30,7 @@
 import java.util.Arrays;
 import java.util.Random;
 
+@Bean
 public class Chars {
 
     public static void main(String[] args) {

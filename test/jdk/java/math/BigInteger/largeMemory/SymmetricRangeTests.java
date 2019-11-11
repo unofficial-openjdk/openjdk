@@ -41,6 +41,7 @@ import java.math.BigInteger;
 import java.util.Random;
 import jdk.test.lib.RandomFactory;
 
+@Bean
 public class SymmetricRangeTests {
 
     private static final BigInteger MAX_VALUE = makeMaxValue();

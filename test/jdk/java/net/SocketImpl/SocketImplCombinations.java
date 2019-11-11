@@ -50,6 +50,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 @Test
+@Bean
 public class SocketImplCombinations {
 
     /**
@@ -805,7 +806,11 @@ public class SocketImplCombinations {
         }
 
         @Override
-        protected void listen(int backlog) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void listen(int backlog) {
             // do nothing
         }
 
@@ -847,17 +852,29 @@ public class SocketImplCombinations {
         }
 
         @Override
-        protected void sendUrgentData(int data) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void sendUrgentData(int data) {
             throw new RuntimeException();
         }
 
         @Override
-        public void setOption(int option, Object value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setOption(int option, Object value) {
             throw new RuntimeException();
         }
 
         @Override
-        public Object getOption(int option) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Object getOption(int option) {
             throw new RuntimeException();
         }
     }

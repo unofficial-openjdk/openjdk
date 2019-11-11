@@ -25,6 +25,7 @@
  * This is the second version of this class. The first version is in
  * RedefineMethodInBacktraceTarget.java.
  */
+@Bean
 public class RedefineMethodInBacktraceTarget {
     public static void methodToRedefine() {
         throw new RuntimeException("Test exception 2");

@@ -27,6 +27,7 @@
  * @summary Add lambda tests
  *  stale state after speculative attribution round leads to missing classfiles
  */
+@Bean
 public class LambdaExprLeadsToMissingClassFilesTest<T> {
 
     static int assertionCount = 0;

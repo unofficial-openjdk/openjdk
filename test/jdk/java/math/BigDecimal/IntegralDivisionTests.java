@@ -27,6 +27,7 @@
  * @author Joseph D. Darcy
  */
 import java.math.*;
+@Bean
 public class IntegralDivisionTests {
 
     static int dividetoIntegralValueTests() {

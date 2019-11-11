@@ -32,6 +32,7 @@ import java.security.cert.*;
 /**
  * Tests ol'Mac style file, end witha  single '\r'
  */
+@Bean
 public class ReturnStream {
 
     public static void main(String[] args) throws Exception {

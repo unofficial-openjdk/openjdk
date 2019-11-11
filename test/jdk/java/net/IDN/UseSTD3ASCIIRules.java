@@ -30,6 +30,7 @@
 
 import java.net.*;
 
+@Bean
 public class UseSTD3ASCIIRules {
 
     public static void main(String[] args) throws Exception {

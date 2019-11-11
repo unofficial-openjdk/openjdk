@@ -41,6 +41,7 @@ class NotAFieldTarg {
     }
 }
 
+@Bean
 public class NotAField extends JdbTest {
     public static void main(String argv[]) {
         new NotAField().run();

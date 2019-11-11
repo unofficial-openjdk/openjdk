@@ -60,6 +60,7 @@
 
 import java.util.*;
 
+@Bean
 public class TestResource_fr_CH extends ListResourceBundle {
     public Object[][] getContents() {
         return contents;

@@ -43,6 +43,7 @@
  * However, of these only decode has a nontrivial implementation
  * in that class.
  */
+@Bean
 public class Decode {
 
     private static void check(String val, byte expected) {

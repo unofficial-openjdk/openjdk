@@ -39,6 +39,7 @@ import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+@Bean
 public class AllFramesMaximize {
     private static JButton passButton;
     private static JButton failButton;
@@ -75,6 +76,9 @@ public class AllFramesMaximize {
 
         passButton.addActionListener(new ActionListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent ae) {
                 dispose();
                 isProgInterruption = true;
@@ -84,6 +88,9 @@ public class AllFramesMaximize {
 
         failButton.addActionListener(new ActionListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent ae) {
                 dispose();
                 isProgInterruption = true;
@@ -97,7 +104,10 @@ public class AllFramesMaximize {
         mainFrame.getContentPane().add(button);
         button.addActionListener(
                 new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
+                    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                         JFrame f = new JFrame();
                         f.setSize(400, 400);
                         f.setVisible(true);

@@ -43,6 +43,7 @@ class SlytherinSpeak extends ParselTongue {
     }
 }
 
+@Bean
 public class LingeredAppWithDefaultMethods extends LingeredApp {
 
     public static void main(String args[]) {

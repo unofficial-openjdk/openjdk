@@ -59,7 +59,10 @@ public class IOEvent {
     }
 
     @Override
-    public boolean equals(Object object) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(Object object) {
         if (object == null || !(object instanceof IOEvent)) {
             return false;
         }

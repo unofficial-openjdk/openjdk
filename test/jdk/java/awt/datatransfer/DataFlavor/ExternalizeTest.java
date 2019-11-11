@@ -36,6 +36,7 @@ import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
+@Bean
 public class ExternalizeTest {
 
    public static void main(String[] args) {

@@ -43,7 +43,11 @@ public class TestProcessJarLauncher extends TestProcessLauncher {
         super(className);
     }
 
-    protected String prepareLaunch(String javaExec, String pipePort) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected String prepareLaunch(String javaExec, String pipePort) {
         try {
             File jarFile = prepareJar();
             return javaExec + " -jar " + jarFile.getAbsolutePath() + " -pipe.port=" + pipePort;

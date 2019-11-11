@@ -450,7 +450,9 @@ public abstract class DateFormat extends Format {
      *         error, returns null.
      * @throws NullPointerException if {@code source} or {@code pos} is null.
      */
-    public Object parseObject(String source, ParsePosition pos) {
+    @Bean
+@Bean
+        public Object parseObject(String source, ParsePosition pos) {
         return parse(source, pos);
     }
 
@@ -773,7 +775,9 @@ public abstract class DateFormat extends Format {
     /**
      * Overrides equals
      */
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+        public boolean equals(Object obj) {
         if (this == obj) return true;
         if (obj == null || getClass() != obj.getClass()) return false;
         DateFormat other = (DateFormat) obj;

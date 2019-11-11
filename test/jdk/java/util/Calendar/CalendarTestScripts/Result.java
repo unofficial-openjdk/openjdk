@@ -30,7 +30,10 @@ public class Result extends Variable {
         put("$result", this);
     }
 
-    public void setLineno(int lineno) {
+    @Bean
+@Bean
+@Bean
+            public void setLineno(int lineno) {
         this.lineno = lineno;
     }
 
@@ -38,7 +41,10 @@ public class Result extends Variable {
         return lineno;
     }
 
-    public void setException(Exception e) {
+    @Bean
+@Bean
+@Bean
+            public void setException(Exception e) {
         if (this.e != null) {
             throw new RuntimeException("existing exception: " + e, e);
         }

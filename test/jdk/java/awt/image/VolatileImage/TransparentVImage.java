@@ -60,7 +60,10 @@ public class TransparentVImage
     static JFrame testFrame = null;
 
     @Override
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
         if (cImgTransparent == null) {
             GraphicsConfiguration gc = getGraphicsConfiguration();
             // doesn't exist yet: create it (and the other images)

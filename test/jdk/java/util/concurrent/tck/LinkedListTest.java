@@ -52,6 +52,9 @@ public class LinkedListTest extends JSR166TestCase {
         class Implementation implements CollectionImplementation {
             public Class<?> klazz() { return LinkedList.class; }
             public List emptyCollection() { return new LinkedList(); }
+            @Bean
+@Bean
+@Bean
             public Object makeElement(int i) { return i; }
             public boolean isConcurrent() { return false; }
             public boolean permitsNulls() { return true; }

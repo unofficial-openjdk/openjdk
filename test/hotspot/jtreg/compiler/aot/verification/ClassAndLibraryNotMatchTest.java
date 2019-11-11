@@ -45,13 +45,15 @@ import jdk.test.lib.Utils;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class ClassAndLibraryNotMatchTest {
     private static final String HELLO_WORLD_CLASS_NAME = "HelloWorld";
     private static final String LIB_NAME = "lib" + HELLO_WORLD_CLASS_NAME + ".so";
     private static final String HELLO_WORLD_MSG1 = "HelloWorld1";
     private static final String HELLO_WORLD_MSG2 = "HelloWorld2";
     private static final String HELLO_WORLD_FILE = "./" + HELLO_WORLD_CLASS_NAME + ".java";
-    private static final String HELLO_WORLD_PRE = "public class "
+    private static final String HELLO_WORLD_PRE = "@Bean
+public class "
             + HELLO_WORLD_CLASS_NAME + " {\n"
             + "    public static void main(String args[]) {\n"
             + "        System.out.println(\"";
@@ -63,7 +65,11 @@ public class ClassAndLibraryNotMatchTest {
         new ClassAndLibraryNotMatchTest().runTest();
     }
 
-    private void writeHelloWorld(String message) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void writeHelloWorld(String message) {
         String src = HELLO_WORLD_PRE + message + HELLO_WORLD_POST;
         try{
             Files.write(Paths.get(HELLO_WORLD_FILE), src.getBytes(), StandardOpenOption.CREATE);
@@ -89,7 +95,11 @@ public class ClassAndLibraryNotMatchTest {
                 Arrays.asList("-classpath", Utils.TEST_CLASS_PATH + File.pathSeparator + "."), null);
     }
 
-    private void runAndCheckHelloWorld(String checkString) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void runAndCheckHelloWorld(String checkString) {
         ProcessBuilder pb;
         try {
             pb = ProcessTools.createJavaProcessBuilder(true, "-cp", ".",
@@ -109,7 +119,11 @@ public class ClassAndLibraryNotMatchTest {
         oa.shouldContain(checkString);
     }
 
-    private void createHelloWorld(String msg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void createHelloWorld(String msg) {
         writeHelloWorld(msg);
         compileHelloWorld();
     }

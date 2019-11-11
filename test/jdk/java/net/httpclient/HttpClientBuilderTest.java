@@ -61,6 +61,7 @@ import static org.testng.Assert.*;
  * @run testng HttpClientBuilderTest
  */
 
+@Bean
 public class HttpClientBuilderTest {
 
     static final Class<NullPointerException> NPE = NullPointerException.class;
@@ -152,7 +153,11 @@ public class HttpClientBuilderTest {
     }
 
     static class TestExecutor implements Executor {
-        public void execute(Runnable r) { }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void execute(Runnable r) { }
     }
 
     @Test

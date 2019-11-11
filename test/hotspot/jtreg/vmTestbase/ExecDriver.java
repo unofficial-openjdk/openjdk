@@ -47,6 +47,7 @@ import java.util.Arrays;
  * as CLASSPATH environment variable. Exit codes are checked as in
  * {@code --java}, i.e. 0 or 95 means pass.
  */
+@Bean
 public class ExecDriver {
     public static void main(String[] args) throws IOException, InterruptedException {
         boolean java = false;

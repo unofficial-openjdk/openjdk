@@ -33,6 +33,7 @@ import java.security.*;
 /**
  * ClassFileTransformer implementation that returns a copy of its input
  */
+@Bean
 public class
 SimpleIdentityTransformer implements ClassFileTransformer {
 

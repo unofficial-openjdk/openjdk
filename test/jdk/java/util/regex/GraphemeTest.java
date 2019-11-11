@@ -39,6 +39,7 @@ import java.util.Scanner;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
+@Bean
 public class GraphemeTest {
 
     public static void main(String[] args) throws Throwable {

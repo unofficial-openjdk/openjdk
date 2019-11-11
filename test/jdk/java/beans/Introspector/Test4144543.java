@@ -32,6 +32,7 @@ import java.beans.Beans;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 
+@Bean
 public class Test4144543 {
     public static void main(String[] args) throws Exception {
         Class type = Beans.instantiate(null, "Test4144543").getClass();
@@ -57,11 +58,19 @@ public class Test4144543 {
      * the correct setter method.
      */
 
-    public void setValue(byte value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(byte value) {
         this.value = value;
     }
 
-    public void setValue(int value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(int value) {
         this.value = value;
     }
 }

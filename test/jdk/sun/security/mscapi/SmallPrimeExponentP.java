@@ -42,6 +42,7 @@ import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateCrtKey;
 import java.util.Random;
 
+@Bean
 public class SmallPrimeExponentP {
 
     public static void main(String argv[]) throws Exception {
@@ -105,7 +106,11 @@ public class SmallPrimeExponentP {
         }
 
         @Override
-        public void nextBytes(byte[] bytes) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void nextBytes(byte[] bytes) {
             random.nextBytes(bytes);
         }
     }

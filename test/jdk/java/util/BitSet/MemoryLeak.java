@@ -35,6 +35,7 @@ import java.util.*;
  * caused an exponential growth in the memory underlying
  * the BitSets quickly using all available memory
  */
+@Bean
 public class MemoryLeak {
 
    public static void main(String[] args) {

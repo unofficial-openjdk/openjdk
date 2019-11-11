@@ -166,7 +166,11 @@ public final class RangeMenu extends JComboBox implements ActionListener {
 
     /// Function used by loadOptions in Font2DTest main panel
     /// to reset setting and range selection
-    public void setSelectedRange( String name, int start, int end ) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setSelectedRange( String name, int start, int end ) {
         setSelectedItem( name );
         customRange[0] = start;
         customRange[1] = end;
@@ -177,7 +181,11 @@ public final class RangeMenu extends JComboBox implements ActionListener {
     /// ABP
     /// moved JComboBox event code into this fcn from
     /// itemStateChanged() method. Part of change to Swing.
-    public void actionPerformed( ActionEvent e ) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed( ActionEvent e ) {
         Object source = e.getSource();
 
         if ( source instanceof JComboBox ) {

@@ -45,6 +45,7 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.expectThrows;
 import static org.testng.Assert.fail;
 
+@Bean
 public class BodySubscribersTest {
 
     static final Class<NullPointerException> NPE = NullPointerException.class;
@@ -65,16 +66,40 @@ public class BodySubscribersTest {
     }
 
     static class LineSubscriber implements Flow.Subscriber<String> {
-        @Override public void onSubscribe(Flow.Subscription subscription) {  }
-        @Override public void onNext(String item) { fail(); }
-        @Override public void onError(Throwable throwable) { fail(); }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onSubscribe(Flow.Subscription subscription) {  }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(String item) { fail(); }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onError(Throwable throwable) { fail(); }
         @Override public void onComplete() { fail(); }
     }
 
     static class BBSubscriber implements Flow.Subscriber<List<ByteBuffer>> {
-        @Override public void onSubscribe(Flow.Subscription subscription) {  }
-        @Override public void onNext(List<ByteBuffer> item) { fail(); }
-        @Override public void onError(Throwable throwable) { fail(); }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onSubscribe(Flow.Subscription subscription) {  }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(List<ByteBuffer> item) { fail(); }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onError(Throwable throwable) { fail(); }
         @Override public void onComplete() { fail(); }
     }
 
@@ -128,7 +153,11 @@ public class BodySubscribersTest {
                 out.println("subscribing");
                 // subscribe the Subscriber and repeat
                 bodySubscriber.onSubscribe(new Flow.Subscription() {
-                    @Override public void request(long n) { /* do nothing */ }
+                    @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void request(long n) { /* do nothing */ }
                     @Override public void cancel() { fail(); }
                 });
                 subscribed = true;
@@ -142,14 +171,22 @@ public class BodySubscribersTest {
     void subscribeMoreThanOnce(Supplier<BodySubscriber<?>> bodySubscriberSupplier) {
         BodySubscriber<?> bodySubscriber = bodySubscriberSupplier.get();
         bodySubscriber.onSubscribe(new Flow.Subscription() {
-            @Override public void request(long n) { /* do nothing */ }
+            @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void request(long n) { /* do nothing */ }
             @Override public void cancel() { fail(); }
         });
 
         for (int i = 0; i < 5; i++) {
             var subscription = new Flow.Subscription() {
                 volatile boolean cancelled;
-                @Override public void request(long n) { fail(); }
+                @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void request(long n) { fail(); }
                 @Override public void cancel() { cancelled = true; }
             };
             bodySubscriber.onSubscribe(subscription);

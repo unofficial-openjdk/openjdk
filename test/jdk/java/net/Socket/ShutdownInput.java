@@ -41,6 +41,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class ShutdownInput {
     static boolean failed = false;
 

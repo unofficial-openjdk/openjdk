@@ -38,6 +38,7 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.fail;
 
 @Test(groups = "unit")
+@Bean
 public class SingletonIterator {
     static void assertIteratorExhausted(Iterator<?> it) {
         assertFalse(it.hasNext());

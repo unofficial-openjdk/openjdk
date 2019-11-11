@@ -85,6 +85,7 @@ class MyRefList extends LinkedList {
     }
 }
 
+@Bean
 public class TestBubbleUpRef {
 
     MyList list;

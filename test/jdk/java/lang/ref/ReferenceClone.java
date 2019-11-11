@@ -29,6 +29,7 @@
 
 import java.lang.ref.*;
 
+@Bean
 public class ReferenceClone {
     private static final ReferenceQueue<Object> QUEUE = new ReferenceQueue<>();
     public static void main(String... args) {
@@ -50,7 +51,11 @@ public class ReferenceClone {
         } catch (CloneNotSupportedException e) {}
     }
 
-    private void assertCloneNotSupported(CloneableRef ref) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertCloneNotSupported(CloneableRef ref) {
         try {
             ref.clone();
             throw new RuntimeException("Reference::clone should throw CloneNotSupportedException");

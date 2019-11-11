@@ -32,6 +32,7 @@
 
 import java.awt.datatransfer.DataFlavor;
 
+@Bean
 public class SelectBestFlavorNPETest {
 
     public static void main(String[] args) {

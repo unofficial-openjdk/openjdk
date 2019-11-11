@@ -30,6 +30,7 @@
 import java.nio.*;
 import java.nio.charset.*;
 
+@Bean
 public class TestISO2022JPSubBytes {
     /* \U2460 is not valid character in ISO2022JP and will be substituted
      * with replacement character. If the replacement character is not the

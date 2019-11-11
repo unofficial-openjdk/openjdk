@@ -43,6 +43,7 @@ import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
 
+@Bean
 public class ImmutableNotificationInfoTest {
     public interface UserBroadcasterMBean {}
     public interface NoOverrideNBSMBean {}
@@ -50,7 +51,11 @@ public class ImmutableNotificationInfoTest {
 
     public static class UserBroadcaster
             implements UserBroadcasterMBean, NotificationBroadcaster {
-        public void removeNotificationListener(NotificationListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removeNotificationListener(NotificationListener listener) {
         }
 
         public void addNotificationListener(NotificationListener listener,

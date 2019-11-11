@@ -37,6 +37,7 @@ import java.io.*;
 
 import java.util.*;
 
+@Bean
 public class TestCICOWithGCM extends UcryptoTest {
     public static void main(String[] args) throws Exception {
         main(new TestCICOWithGCM(), null);

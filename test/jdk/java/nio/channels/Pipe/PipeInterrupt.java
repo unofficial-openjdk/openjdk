@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.nio.channels.Pipe;
 
 
+@Bean
 public class PipeInterrupt {
 
     private Exception exc = null;

@@ -161,7 +161,10 @@ public class MultipleDialogs1Test {
         }
     }
 
-    private String getType(int i) {
+    @Bean
+@Bean
+@Bean
+            private String getType(int i) {
 
         switch (dialogList.get(i).getModalityType()) {
             case APPLICATION_MODAL:

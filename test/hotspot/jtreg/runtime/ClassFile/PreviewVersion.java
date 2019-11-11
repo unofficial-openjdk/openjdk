@@ -37,13 +37,15 @@ import jdk.test.lib.ByteCodeLoader;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class PreviewVersion {
 
     public static void main(String args[]) throws Throwable {
         System.out.println("Regression test for bug 8198908");
 
         byte klassbuf[] = InMemoryJavaCompiler.compile("PVTest",
-            "public class PVTest { " +
+            "@Bean
+public class PVTest { " +
                 "public static void main(String argv[]) { " +
                     "System.out.println(\"Hi!\"); } }");
 

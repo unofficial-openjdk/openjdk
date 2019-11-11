@@ -44,6 +44,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
+@Bean
 public class ClassesListTest extends CtwTest {
     private static final String[] SHOULD_CONTAIN
             = {"# list: classes.lst", "Done (4 classes, "};

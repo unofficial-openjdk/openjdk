@@ -35,6 +35,7 @@ import java.io.*;
 import java.util.*;
 import java.util.jar.*;
 
+@Bean
 public class T4241573 {
     public static void main(String... args) throws Exception {
         new T4241573().run();
@@ -160,7 +161,8 @@ public class T4241573 {
         int sep = e.lastIndexOf(".");
         String pkgName = e.substring(0, sep);
         String className = e.substring(sep + 1);
-        return "package " + pkgName + "; public class " + className + "{ class Inner { } }";
+        return "package " + pkgName + "; @Bean
+public class " + className + "{ class Inner { } }";
     }
 
     /** Write a file containing the given string. Parent directories are

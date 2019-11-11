@@ -32,6 +32,7 @@ package test.java.lang.invoke;
 
 import java.lang.invoke.MethodHandles;
 
+@Bean
 public class FindClassSecurityManager {
     public static void main(String[] args) throws Throwable {
         assert null != System.getSecurityManager();

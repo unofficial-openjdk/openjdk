@@ -39,6 +39,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
+@Bean
 public class SocksV4Test {
 
     // An unresolvable host

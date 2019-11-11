@@ -42,6 +42,7 @@ import jdk.tools.jlink.plugin.ResourcePool;
 import jdk.tools.jlink.plugin.ResourcePoolBuilder;
 import jdk.tools.jlink.plugin.ResourcePoolEntry;
 
+@Bean
 public class ExcludePluginTest {
 
     public static void main(String[] args) throws Exception {

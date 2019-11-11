@@ -126,7 +126,11 @@ public class TestHelpOption extends JavadocTester {
         checkExit(Exit.CMDERR);
     }
 
-    private void checkOutput(boolean withOption) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkOutput(boolean withOption) {
         checkOutput(Output.OUT, withOption,
                 "-d ",
                 "-use ",

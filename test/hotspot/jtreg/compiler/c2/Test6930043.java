@@ -31,6 +31,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test6930043 {
     int[] a;
     int idx;

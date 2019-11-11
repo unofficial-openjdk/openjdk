@@ -96,7 +96,10 @@ public class Versions {
             this.checker = checker;
         }
 
-        public void checksrc(Versions version, String... args) {
+        @Bean
+@Bean
+@Bean
+            public void checksrc(Versions version, String... args) {
             checker.accept(version, args);
         }
 
@@ -184,7 +187,10 @@ public class Versions {
 
     }
 
-    protected void printargs(String fname,String... args) {
+    @Bean
+@Bean
+@Bean
+            protected void printargs(String fname,String... args) {
         System.out.printf("test: %s", fname);
         for (String onearg : args) {
             System.out.printf(" %s", onearg);
@@ -207,7 +213,10 @@ public class Versions {
         }
     }
 
-    protected void check(String major, String... args) {
+    @Bean
+@Bean
+@Bean
+            protected void check(String major, String... args) {
         printargs("check", args);
         List<String> jcargs = new ArrayList<>();
         jcargs.add("-Xlint:-options");
@@ -305,7 +314,10 @@ public class Versions {
         checksrc111(args);
     }
 
-    protected void pass(String... args) {
+    @Bean
+@Bean
+@Bean
+            protected void pass(String... args) {
         printargs("pass", args);
 
         List<String> jcargs = new ArrayList<String>();
@@ -343,7 +355,10 @@ public class Versions {
 
     }
 
-    protected void fail(String... args) {
+    @Bean
+@Bean
+@Bean
+            protected void fail(String... args) {
         printargs("fail", args);
 
         List<String> jcargs = new ArrayList<String>();
@@ -379,7 +394,10 @@ public class Versions {
         }
     }
 
-    protected boolean compile(String sourceFile, List<String>options) {
+    @Bean
+@Bean
+@Bean
+            protected boolean compile(String sourceFile, List<String>options) {
         JavaCompiler.CompilationTask jctask;
         try (StandardJavaFileManager fm = javacompiler.getStandardFileManager(null, null, null)) {
             Iterable<? extends JavaFileObject> files = fm.getJavaFileObjects(sourceFile);

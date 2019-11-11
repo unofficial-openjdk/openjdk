@@ -40,6 +40,7 @@ import java.util.List;
 import toolbox.JavacTask;
 import toolbox.Task;
 
+@Bean
 public class PackageMultipleModules extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {
@@ -53,12 +54,16 @@ public class PackageMultipleModules extends ModuleTestBase {
         Path m2 = base.resolve("m2x");
         tb.writeJavaFiles(m1,
                           "module m1x {}",
-                          "package test; import test.B; public class A {}",
-                          "package test; public class A1 extends A {}");
+                          "package test; import test.B; @Bean
+public class A {}",
+                          "package test; @Bean
+public class A1 extends A {}");
         tb.writeJavaFiles(m2,
                           "module m2x {}",
-                          "package test; import test.A; public class B {}",
-                          "package test; public class B1 extends B {}");
+                          "package test; import test.A; @Bean
+public class B {}",
+                          "package test; @Bean
+public class B1 extends B {}");
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
 

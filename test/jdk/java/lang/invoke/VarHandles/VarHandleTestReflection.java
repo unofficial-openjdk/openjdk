@@ -36,6 +36,7 @@ import java.lang.invoke.VarHandle;
 import java.lang.reflect.Method;
 import java.util.stream.Stream;
 
+@Bean
 public class VarHandleTestReflection extends VarHandleBaseTest {
     String string;
 

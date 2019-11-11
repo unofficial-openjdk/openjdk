@@ -33,6 +33,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.*;
 import static java.nio.file.LinkOption.*;
 
+@Bean
 public class SymLinks {
     static final PrintStream out = System.out;
 

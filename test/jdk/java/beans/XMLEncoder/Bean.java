@@ -30,7 +30,11 @@ public final class Bean {
         return this.value;
     }
 
-    public void setValue(Object value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(Object value) {
         this.value = value;
     }
 }

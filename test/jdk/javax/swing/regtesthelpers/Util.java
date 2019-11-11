@@ -40,6 +40,7 @@ import java.util.concurrent.Callable;
  * </pre>
  */
 
+@Bean
 public class Util {
 
     /**
@@ -287,12 +288,20 @@ public class Util {
         JButton  failButton = new JButton("Fail");
 
         passButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent ae) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent ae) {
                 retDialog.dispose();
             }
         });
         failButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent ae) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent ae) {
                 retDialog.dispose();
                 throw new RuntimeException("Test failed. " + failString);
             }

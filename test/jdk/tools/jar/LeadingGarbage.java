@@ -50,6 +50,7 @@ import org.testng.annotations.Test;
  * @run testng LeadingGarbage
  */
 @Test
+@Bean
 public class LeadingGarbage {
 
     final File[] files = { new File("a"), new File("b") };

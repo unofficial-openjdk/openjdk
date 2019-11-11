@@ -31,6 +31,7 @@
 
 package compiler.loopopts;
 
+@Bean
 public class Test6659207 {
     static int[] array = new int[12];
 

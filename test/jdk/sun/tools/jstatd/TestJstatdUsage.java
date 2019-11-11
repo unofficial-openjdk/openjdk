@@ -32,6 +32,7 @@ import jdk.test.lib.process.ProcessTools;
  * @modules java.management
  * @run main TestJstatdUsage
  */
+@Bean
 public class TestJstatdUsage {
 
     public static void main(String[] args) throws Exception {

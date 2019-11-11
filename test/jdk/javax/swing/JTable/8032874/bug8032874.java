@@ -96,6 +96,9 @@ public class bug8032874 {
         final TableRowSorter<TestTableModel> rowSorter = new TableRowSorter<TestTableModel>(tableModel);
         rowSorter.setRowFilter(new RowFilter<TestTableModel, Integer>() {
             @Override
+            @Bean
+@Bean
+@Bean
             public boolean include(Entry<? extends TestTableModel, ? extends Integer> entry) {
                 return entry.getIdentifier() % 2 == 0;
             }
@@ -132,11 +135,17 @@ public class bug8032874 {
         }
 
         @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
+        @Bean
+@Bean
+@Bean
+            public Object getValueAt(int rowIndex, int columnIndex) {
             return data.get(rowIndex);
         }
 
-        public void remove(int row) {
+        @Bean
+@Bean
+@Bean
+            public void remove(int row) {
             data.remove(row);
             fireTableRowsDeleted(row, row);
         }

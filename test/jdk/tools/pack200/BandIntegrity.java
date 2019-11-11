@@ -39,6 +39,7 @@ import java.util.List;
  * the java unpacker, therefore it will work only with --repack such that
  * the java packer and unpacker must be called in the same java instance.
  */
+@Bean
 public class BandIntegrity {
     public static void main(String... args) throws IOException {
         File testFile = new File("test.jar");

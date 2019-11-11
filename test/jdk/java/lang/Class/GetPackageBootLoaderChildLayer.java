@@ -33,6 +33,7 @@
 
 import com.sun.tools.attach.VirtualMachine;
 
+@Bean
 public class GetPackageBootLoaderChildLayer {
     public static void main(String[] args) throws Exception {
         // ensure that the java.management module is not in the boot layer

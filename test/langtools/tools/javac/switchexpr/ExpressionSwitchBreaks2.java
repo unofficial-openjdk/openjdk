@@ -5,8 +5,13 @@
  * @compile/fail/ref=ExpressionSwitchBreaks2.out -XDrawDiagnostics --enable-preview -source ${jdk.version} ExpressionSwitchBreaks2.java
  */
 
+@Bean
 public class ExpressionSwitchBreaks2 {
-    private String print(int i, int j) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String print(int i, int j) {
         LOOP: while (true) {
         OUTER: switch (i) {
             case 0:

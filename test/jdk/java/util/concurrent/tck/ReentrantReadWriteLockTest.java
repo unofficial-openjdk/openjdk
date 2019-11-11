@@ -236,7 +236,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testLock()      { testLock(false); }
     public void testLock_fair() { testLock(true); }
-    public void testLock(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testLock(boolean fair) {
         PublicReentrantReadWriteLock lock =
             new PublicReentrantReadWriteLock(fair);
         assertNotWriteLocked(lock);
@@ -258,7 +261,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testGetWriteHoldCount()      { testGetWriteHoldCount(false); }
     public void testGetWriteHoldCount_fair() { testGetWriteHoldCount(true); }
-    public void testGetWriteHoldCount(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testGetWriteHoldCount(boolean fair) {
         final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(fair);
         for (int i = 1; i <= SIZE; i++) {
             lock.writeLock().lock();
@@ -275,7 +281,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testGetHoldCount()      { testGetHoldCount(false); }
     public void testGetHoldCount_fair() { testGetHoldCount(true); }
-    public void testGetHoldCount(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testGetHoldCount(boolean fair) {
         final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(fair);
         for (int i = 1; i <= SIZE; i++) {
             lock.writeLock().lock();
@@ -292,7 +301,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testGetReadHoldCount()      { testGetReadHoldCount(false); }
     public void testGetReadHoldCount_fair() { testGetReadHoldCount(true); }
-    public void testGetReadHoldCount(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testGetReadHoldCount(boolean fair) {
         final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(fair);
         for (int i = 1; i <= SIZE; i++) {
             lock.readLock().lock();
@@ -415,7 +427,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testWriteTryLock()      { testWriteTryLock(false); }
     public void testWriteTryLock_fair() { testWriteTryLock(true); }
-    public void testWriteTryLock(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testWriteTryLock(boolean fair) {
         final PublicReentrantReadWriteLock lock =
             new PublicReentrantReadWriteLock(fair);
         assertTrue(lock.writeLock().tryLock());
@@ -431,7 +446,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testWriteTryLockWhenLocked()      { testWriteTryLockWhenLocked(false); }
     public void testWriteTryLockWhenLocked_fair() { testWriteTryLockWhenLocked(true); }
-    public void testWriteTryLockWhenLocked(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testWriteTryLockWhenLocked(boolean fair) {
         final PublicReentrantReadWriteLock lock =
             new PublicReentrantReadWriteLock(fair);
         lock.writeLock().lock();
@@ -449,7 +467,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testReadTryLockWhenLocked()      { testReadTryLockWhenLocked(false); }
     public void testReadTryLockWhenLocked_fair() { testReadTryLockWhenLocked(true); }
-    public void testReadTryLockWhenLocked(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testReadTryLockWhenLocked(boolean fair) {
         final PublicReentrantReadWriteLock lock =
             new PublicReentrantReadWriteLock(fair);
         lock.writeLock().lock();
@@ -467,7 +488,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testMultipleReadLocks()      { testMultipleReadLocks(false); }
     public void testMultipleReadLocks_fair() { testMultipleReadLocks(true); }
-    public void testMultipleReadLocks(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testMultipleReadLocks(boolean fair) {
         final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(fair);
         lock.readLock().lock();
         Thread t = newStartedThread(new CheckedRunnable() {
@@ -489,7 +513,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testWriteAfterReadLock()      { testWriteAfterReadLock(false); }
     public void testWriteAfterReadLock_fair() { testWriteAfterReadLock(true); }
-    public void testWriteAfterReadLock(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testWriteAfterReadLock(boolean fair) {
         final PublicReentrantReadWriteLock lock =
             new PublicReentrantReadWriteLock(fair);
         lock.readLock().lock();
@@ -514,7 +541,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testWriteAfterMultipleReadLocks()      { testWriteAfterMultipleReadLocks(false); }
     public void testWriteAfterMultipleReadLocks_fair() { testWriteAfterMultipleReadLocks(true); }
-    public void testWriteAfterMultipleReadLocks(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testWriteAfterMultipleReadLocks(boolean fair) {
         final PublicReentrantReadWriteLock lock =
             new PublicReentrantReadWriteLock(fair);
         lock.readLock().lock();
@@ -587,7 +617,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testReadAfterWriteLock()      { testReadAfterWriteLock(false); }
     public void testReadAfterWriteLock_fair() { testReadAfterWriteLock(true); }
-    public void testReadAfterWriteLock(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testReadAfterWriteLock(boolean fair) {
         final PublicReentrantReadWriteLock lock =
             new PublicReentrantReadWriteLock(fair);
         lock.writeLock().lock();
@@ -614,7 +647,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testReadHoldingWriteLock()      { testReadHoldingWriteLock(false); }
     public void testReadHoldingWriteLock_fair() { testReadHoldingWriteLock(true); }
-    public void testReadHoldingWriteLock(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testReadHoldingWriteLock(boolean fair) {
         final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(fair);
         lock.writeLock().lock();
         assertTrue(lock.readLock().tryLock());
@@ -628,7 +664,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testReadTryLockBarging()      { testReadTryLockBarging(false); }
     public void testReadTryLockBarging_fair() { testReadTryLockBarging(true); }
-    public void testReadTryLockBarging(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testReadTryLockBarging(boolean fair) {
         final PublicReentrantReadWriteLock lock =
             new PublicReentrantReadWriteLock(fair);
         lock.readLock().lock();
@@ -778,7 +817,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testTryLockWhenReadLocked()      { testTryLockWhenReadLocked(false); }
     public void testTryLockWhenReadLocked_fair() { testTryLockWhenReadLocked(true); }
-    public void testTryLockWhenReadLocked(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testTryLockWhenReadLocked(boolean fair) {
         final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(fair);
         lock.readLock().lock();
         Thread t = newStartedThread(new CheckedRunnable() {
@@ -796,7 +838,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testWriteTryLockWhenReadLocked()      { testWriteTryLockWhenReadLocked(false); }
     public void testWriteTryLockWhenReadLocked_fair() { testWriteTryLockWhenReadLocked(true); }
-    public void testWriteTryLockWhenReadLocked(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testWriteTryLockWhenReadLocked(boolean fair) {
         final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(fair);
         lock.readLock().lock();
         Thread t = newStartedThread(new CheckedRunnable() {
@@ -855,7 +900,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testWriteLockInterruptibly()      { testWriteLockInterruptibly(false); }
     public void testWriteLockInterruptibly_fair() { testWriteLockInterruptibly(true); }
-    public void testWriteLockInterruptibly(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testWriteLockInterruptibly(boolean fair) {
         final PublicReentrantReadWriteLock lock =
             new PublicReentrantReadWriteLock(fair);
         try {
@@ -878,7 +926,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testReadLockInterruptibly()      { testReadLockInterruptibly(false); }
     public void testReadLockInterruptibly_fair() { testReadLockInterruptibly(true); }
-    public void testReadLockInterruptibly(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testReadLockInterruptibly(boolean fair) {
         final PublicReentrantReadWriteLock lock =
             new PublicReentrantReadWriteLock(fair);
         try {
@@ -1008,7 +1059,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testAwait()      { testAwait(false); }
     public void testAwait_fair() { testAwait(true); }
-    public void testAwait(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testAwait(boolean fair) {
         final PublicReentrantReadWriteLock lock =
             new PublicReentrantReadWriteLock(fair);
         final Condition c = lock.writeLock().newCondition();
@@ -1036,7 +1090,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testAwaitUninterruptibly()      { testAwaitUninterruptibly(false); }
     public void testAwaitUninterruptibly_fair() { testAwaitUninterruptibly(true); }
-    public void testAwaitUninterruptibly(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testAwaitUninterruptibly(boolean fair) {
         final Lock lock = new ReentrantReadWriteLock(fair).writeLock();
         final Condition condition = lock.newCondition();
         final CountDownLatch pleaseInterrupt = new CountDownLatch(2);
@@ -1088,7 +1145,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
     public void testInterruptible_awaitNanos_fair() { testInterruptible(true,  AwaitMethod.awaitNanos); }
     public void testInterruptible_awaitUntil()      { testInterruptible(false, AwaitMethod.awaitUntil); }
     public void testInterruptible_awaitUntil_fair() { testInterruptible(true,  AwaitMethod.awaitUntil); }
-    public void testInterruptible(boolean fair, final AwaitMethod awaitMethod) {
+    @Bean
+@Bean
+@Bean
+            public void testInterruptible(boolean fair, final AwaitMethod awaitMethod) {
         final PublicReentrantReadWriteLock lock =
             new PublicReentrantReadWriteLock(fair);
         final Condition c = lock.writeLock().newCondition();
@@ -1127,7 +1187,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
     public void testSignalAll_awaitNanos_fair() { testSignalAll(true,  AwaitMethod.awaitNanos); }
     public void testSignalAll_awaitUntil()      { testSignalAll(false, AwaitMethod.awaitUntil); }
     public void testSignalAll_awaitUntil_fair() { testSignalAll(true,  AwaitMethod.awaitUntil); }
-    public void testSignalAll(boolean fair, final AwaitMethod awaitMethod) {
+    @Bean
+@Bean
+@Bean
+            public void testSignalAll(boolean fair, final AwaitMethod awaitMethod) {
         final PublicReentrantReadWriteLock lock =
             new PublicReentrantReadWriteLock(fair);
         final Condition c = lock.writeLock().newCondition();
@@ -1160,7 +1223,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testSignalWakesFifo()      { testSignalWakesFifo(false); }
     public void testSignalWakesFifo_fair() { testSignalWakesFifo(true); }
-    public void testSignalWakesFifo(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testSignalWakesFifo(boolean fair) {
         final PublicReentrantReadWriteLock lock =
             new PublicReentrantReadWriteLock(fair);
         final Condition c = lock.writeLock().newCondition();
@@ -1208,7 +1274,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testAwaitLockCount()      { testAwaitLockCount(false); }
     public void testAwaitLockCount_fair() { testAwaitLockCount(true); }
-    public void testAwaitLockCount(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testAwaitLockCount(boolean fair) {
         final PublicReentrantReadWriteLock lock =
             new PublicReentrantReadWriteLock(fair);
         final Condition c = lock.writeLock().newCondition();
@@ -1254,7 +1323,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testSerialization()      { testSerialization(false); }
     public void testSerialization_fair() { testSerialization(true); }
-    public void testSerialization(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testSerialization(boolean fair) {
         final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(fair);
         lock.writeLock().lock();
         lock.readLock().lock();
@@ -1281,7 +1353,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testHasQueuedThreads()      { testHasQueuedThreads(false); }
     public void testHasQueuedThreads_fair() { testHasQueuedThreads(true); }
-    public void testHasQueuedThreads(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testHasQueuedThreads(boolean fair) {
         final PublicReentrantReadWriteLock lock =
             new PublicReentrantReadWriteLock(fair);
         Thread t1 = new Thread(new InterruptedLockRunnable(lock));
@@ -1308,7 +1383,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testHasQueuedThreadNPE()      { testHasQueuedThreadNPE(false); }
     public void testHasQueuedThreadNPE_fair() { testHasQueuedThreadNPE(true); }
-    public void testHasQueuedThreadNPE(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testHasQueuedThreadNPE(boolean fair) {
         final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(fair);
         try {
             lock.hasQueuedThread(null);
@@ -1321,7 +1399,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testHasQueuedThread()      { testHasQueuedThread(false); }
     public void testHasQueuedThread_fair() { testHasQueuedThread(true); }
-    public void testHasQueuedThread(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testHasQueuedThread(boolean fair) {
         final PublicReentrantReadWriteLock lock =
             new PublicReentrantReadWriteLock(fair);
         Thread t1 = new Thread(new InterruptedLockRunnable(lock));
@@ -1352,7 +1433,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testGetQueueLength()      { testGetQueueLength(false); }
     public void testGetQueueLength_fair() { testGetQueueLength(true); }
-    public void testGetQueueLength(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testGetQueueLength(boolean fair) {
         final PublicReentrantReadWriteLock lock =
             new PublicReentrantReadWriteLock(fair);
         Thread t1 = new Thread(new InterruptedLockRunnable(lock));
@@ -1378,7 +1462,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testGetQueuedThreads()      { testGetQueuedThreads(false); }
     public void testGetQueuedThreads_fair() { testGetQueuedThreads(true); }
-    public void testGetQueuedThreads(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testGetQueuedThreads(boolean fair) {
         final PublicReentrantReadWriteLock lock =
             new PublicReentrantReadWriteLock(fair);
         Thread t1 = new Thread(new InterruptedLockRunnable(lock));
@@ -1410,7 +1497,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testHasWaitersNPE()      { testHasWaitersNPE(false); }
     public void testHasWaitersNPE_fair() { testHasWaitersNPE(true); }
-    public void testHasWaitersNPE(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testHasWaitersNPE(boolean fair) {
         final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(fair);
         try {
             lock.hasWaiters(null);
@@ -1423,7 +1513,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testGetWaitQueueLengthNPE()      { testGetWaitQueueLengthNPE(false); }
     public void testGetWaitQueueLengthNPE_fair() { testGetWaitQueueLengthNPE(true); }
-    public void testGetWaitQueueLengthNPE(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testGetWaitQueueLengthNPE(boolean fair) {
         final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(fair);
         try {
             lock.getWaitQueueLength(null);
@@ -1436,7 +1529,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testGetWaitingThreadsNPE()      { testGetWaitingThreadsNPE(false); }
     public void testGetWaitingThreadsNPE_fair() { testGetWaitingThreadsNPE(true); }
-    public void testGetWaitingThreadsNPE(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testGetWaitingThreadsNPE(boolean fair) {
         final PublicReentrantReadWriteLock lock = new PublicReentrantReadWriteLock(fair);
         try {
             lock.getWaitingThreads(null);
@@ -1449,7 +1545,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testHasWaitersIAE()      { testHasWaitersIAE(false); }
     public void testHasWaitersIAE_fair() { testHasWaitersIAE(true); }
-    public void testHasWaitersIAE(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testHasWaitersIAE(boolean fair) {
         final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(fair);
         final Condition c = lock.writeLock().newCondition();
         final ReentrantReadWriteLock lock2 = new ReentrantReadWriteLock(fair);
@@ -1464,7 +1563,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testHasWaitersIMSE()      { testHasWaitersIMSE(false); }
     public void testHasWaitersIMSE_fair() { testHasWaitersIMSE(true); }
-    public void testHasWaitersIMSE(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testHasWaitersIMSE(boolean fair) {
         final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(fair);
         final Condition c = lock.writeLock().newCondition();
         try {
@@ -1478,7 +1580,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testGetWaitQueueLengthIAE()      { testGetWaitQueueLengthIAE(false); }
     public void testGetWaitQueueLengthIAE_fair() { testGetWaitQueueLengthIAE(true); }
-    public void testGetWaitQueueLengthIAE(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testGetWaitQueueLengthIAE(boolean fair) {
         final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(fair);
         final Condition c = lock.writeLock().newCondition();
         final ReentrantReadWriteLock lock2 = new ReentrantReadWriteLock(fair);
@@ -1493,7 +1598,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testGetWaitQueueLengthIMSE()      { testGetWaitQueueLengthIMSE(false); }
     public void testGetWaitQueueLengthIMSE_fair() { testGetWaitQueueLengthIMSE(true); }
-    public void testGetWaitQueueLengthIMSE(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testGetWaitQueueLengthIMSE(boolean fair) {
         final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(fair);
         final Condition c = lock.writeLock().newCondition();
         try {
@@ -1507,7 +1615,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testGetWaitingThreadsIAE()      { testGetWaitingThreadsIAE(false); }
     public void testGetWaitingThreadsIAE_fair() { testGetWaitingThreadsIAE(true); }
-    public void testGetWaitingThreadsIAE(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testGetWaitingThreadsIAE(boolean fair) {
         final PublicReentrantReadWriteLock lock =
             new PublicReentrantReadWriteLock(fair);
         final Condition c = lock.writeLock().newCondition();
@@ -1524,7 +1635,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testGetWaitingThreadsIMSE()      { testGetWaitingThreadsIMSE(false); }
     public void testGetWaitingThreadsIMSE_fair() { testGetWaitingThreadsIMSE(true); }
-    public void testGetWaitingThreadsIMSE(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testGetWaitingThreadsIMSE(boolean fair) {
         final PublicReentrantReadWriteLock lock =
             new PublicReentrantReadWriteLock(fair);
         final Condition c = lock.writeLock().newCondition();
@@ -1539,7 +1653,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testHasWaiters()      { testHasWaiters(false); }
     public void testHasWaiters_fair() { testHasWaiters(true); }
-    public void testHasWaiters(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testHasWaiters(boolean fair) {
         final PublicReentrantReadWriteLock lock =
             new PublicReentrantReadWriteLock(fair);
         final Condition c = lock.writeLock().newCondition();
@@ -1573,7 +1690,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testGetWaitQueueLength()      { testGetWaitQueueLength(false); }
     public void testGetWaitQueueLength_fair() { testGetWaitQueueLength(true); }
-    public void testGetWaitQueueLength(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testGetWaitQueueLength(boolean fair) {
         final PublicReentrantReadWriteLock lock =
             new PublicReentrantReadWriteLock(fair);
         final Condition c = lock.writeLock().newCondition();
@@ -1603,7 +1723,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testGetWaitingThreads()      { testGetWaitingThreads(false); }
     public void testGetWaitingThreads_fair() { testGetWaitingThreads(true); }
-    public void testGetWaitingThreads(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testGetWaitingThreads(boolean fair) {
         final PublicReentrantReadWriteLock lock =
             new PublicReentrantReadWriteLock(fair);
         final Condition c = lock.writeLock().newCondition();
@@ -1656,7 +1779,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testToString()      { testToString(false); }
     public void testToString_fair() { testToString(true); }
-    public void testToString(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testToString(boolean fair) {
         final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(fair);
         assertTrue(lock.toString().contains("Write locks = 0"));
         assertTrue(lock.toString().contains("Read locks = 0"));
@@ -1681,7 +1807,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testReadLockToString()      { testReadLockToString(false); }
     public void testReadLockToString_fair() { testReadLockToString(true); }
-    public void testReadLockToString(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testReadLockToString(boolean fair) {
         final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(fair);
         assertTrue(lock.readLock().toString().contains("Read locks = 0"));
         lock.readLock().lock();
@@ -1699,7 +1828,10 @@ public class ReentrantReadWriteLockTest extends JSR166TestCase {
      */
     public void testWriteLockToString()      { testWriteLockToString(false); }
     public void testWriteLockToString_fair() { testWriteLockToString(true); }
-    public void testWriteLockToString(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testWriteLockToString(boolean fair) {
         final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(fair);
         assertTrue(lock.writeLock().toString().contains("Unlocked"));
         lock.writeLock().lock();

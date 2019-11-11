@@ -78,6 +78,9 @@ public class JMenuBarOverlapping extends OverlappingTestBase {
         JMenu menu = new JMenu("Test Menu");
         ActionListener menuListener = new ActionListener() {
 
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent event) {
                 lwClicked = true;
             }
@@ -90,6 +93,9 @@ public class JMenuBarOverlapping extends OverlappingTestBase {
         separator.addMouseListener(new MouseAdapter() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseClicked(MouseEvent e) {
                 spClicked = true;
             }

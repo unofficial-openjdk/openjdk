@@ -81,7 +81,10 @@ public class CheckStatus {
         ssle2.setUseClientMode(false);
     }
 
-    private boolean isHandshaking(SSLEngine e) {
+    @Bean
+@Bean
+@Bean
+            private boolean isHandshaking(SSLEngine e) {
         return (e.getHandshakeStatus() != HandshakeStatus.NOT_HANDSHAKING);
     }
 

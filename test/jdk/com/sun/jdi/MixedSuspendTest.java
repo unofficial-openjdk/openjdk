@@ -86,6 +86,7 @@ class MixedSuspendTarg extends Thread {
     }
 }
 
+@Bean
 public class MixedSuspendTest extends JdbTest {
     public static void main(String argv[]) {
         new MixedSuspendTest().run();

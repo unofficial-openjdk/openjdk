@@ -45,6 +45,7 @@ import jtreg.SkippedException;
 import java.lang.reflect.Executable;
 import java.util.concurrent.Callable;
 
+@Bean
 public class ConstantGettersTransitionsTest extends LevelTransitionTest {
     public static void main(String[] args) {
         if (CompilerWhiteBoxTest.skipOnTieredCompilation(false)) {

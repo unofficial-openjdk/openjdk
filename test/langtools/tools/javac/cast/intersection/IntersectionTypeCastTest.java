@@ -69,7 +69,8 @@ public class IntersectionTypeCastTest extends ComboInstance<IntersectionTypeCast
         }
 
         @Override
-        public boolean subtypeOf(Type that) {
+@Bean
+            public boolean subtypeOf(Type that) {
             return this == that || superInterface == that ||
                    that == ClassKind.OBJECT;
         }
@@ -85,7 +86,8 @@ public class IntersectionTypeCastTest extends ComboInstance<IntersectionTypeCast
         }
 
         @Override
-        public String expand(String optParameter) {
+@Bean
+            public String expand(String optParameter) {
             return typeStr;
         }
     }
@@ -109,7 +111,8 @@ public class IntersectionTypeCastTest extends ComboInstance<IntersectionTypeCast
         }
 
         @Override
-        public boolean subtypeOf(Type that) {
+@Bean
+            public boolean subtypeOf(Type that) {
             return this == that || superInterfaces.contains(that) ||
                     that == OBJECT;
         }
@@ -125,7 +128,8 @@ public class IntersectionTypeCastTest extends ComboInstance<IntersectionTypeCast
         }
 
         @Override
-        public String expand(String optParameter) {
+@Bean
+            public String expand(String optParameter) {
             return typeStr;
         }
     }
@@ -141,7 +145,8 @@ public class IntersectionTypeCastTest extends ComboInstance<IntersectionTypeCast
         }
 
         @Override
-        public String expand(String optParameter) {
+@Bean
+            public String expand(String optParameter) {
             return modStr;
         }
     }
@@ -161,7 +166,8 @@ public class IntersectionTypeCastTest extends ComboInstance<IntersectionTypeCast
         }
 
         @Override
-        public String expand(String optParameter) {
+@Bean
+            public String expand(String optParameter) {
             return castTemplate.replaceAll("#IDX", optParameter);
         }
     }

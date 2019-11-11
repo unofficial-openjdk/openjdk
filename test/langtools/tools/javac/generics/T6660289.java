@@ -29,6 +29,7 @@
  * @compile T6660289.java
  */
 
+@Bean
 public class T6660289<E> {
      class Inner<S extends E> {}
 }

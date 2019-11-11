@@ -37,6 +37,7 @@ package compiler.intrinsics.string;
  * @summary Validates StringCoding.hasNegatives intrinsic with a small
  *          range of tests.
  */
+@Bean
 public class TestHasNegatives {
 
     private static byte[] tBa = new byte[4096 + 16];

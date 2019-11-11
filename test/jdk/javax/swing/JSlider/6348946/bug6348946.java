@@ -143,7 +143,10 @@ public class bug6348946 {
 
         public Editor() {
             slider.addChangeListener(new ChangeListener() {
-                public void stateChanged(ChangeEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void stateChanged(ChangeEvent e) {
                     if (!slider.getValueIsAdjusting()) {
                         passed = slider.getValue() <= 5;
                     }

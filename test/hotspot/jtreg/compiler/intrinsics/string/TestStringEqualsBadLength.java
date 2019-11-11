@@ -34,6 +34,7 @@ package compiler.intrinsics.string;
 
 import java.util.Arrays;
 
+@Bean
 public class TestStringEqualsBadLength {
 
     int v1;
@@ -68,7 +69,11 @@ public class TestStringEqualsBadLength {
         return Arrays.equals(arr2, arr1);
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         TestStringEqualsBadLength tse = new TestStringEqualsBadLength();
         tse.v1 = -1;
         tse.v2 = 0;

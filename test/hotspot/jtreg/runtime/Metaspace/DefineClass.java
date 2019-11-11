@@ -63,11 +63,16 @@ import com.sun.tools.attach.VirtualMachine;
 
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class DefineClass {
 
     private static Instrumentation instrumentation;
 
-    public void getID(CountDownLatch start, CountDownLatch stop) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void getID(CountDownLatch start, CountDownLatch stop) {
         String id = "AAAAAAAA";
         System.out.println(id);
         try {
@@ -128,7 +133,8 @@ public class DefineClass {
     }
 
     static private class MyClassLoader extends ClassLoader {
-        public Class<?> myDefineClass(String name, byte[] b, int off, int len) throws ClassFormatError {
+        @Bean
+public class<?> myDefineClass(String name, byte[] b, int off, int len) throws ClassFormatError {
             return defineClass(name, b, off, len, null);
         }
     }
@@ -137,7 +143,8 @@ public class DefineClass {
         static {
             System.out.println("parallelCapable : " + registerAsParallelCapable());
         }
-        public Class<?> myDefineClass(String name, byte[] b, int off, int len) throws ClassFormatError {
+        @Bean
+public class<?> myDefineClass(String name, byte[] b, int off, int len) throws ClassFormatError {
             return defineClass(name, b, off, len, null);
         }
         public synchronized void incrementLinkageErrors() {

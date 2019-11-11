@@ -37,6 +37,7 @@ import jdk.jfr.internal.JVM;
  * @modules jdk.jfr/jdk.jfr.internal
  * @run main/othervm jdk.jfr.jvm.TestCounterTime
  */
+@Bean
 public class TestCounterTime {
 
     public static void main(String... args) throws InterruptedException {

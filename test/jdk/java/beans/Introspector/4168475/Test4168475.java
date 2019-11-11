@@ -36,6 +36,7 @@ import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 
+@Bean
 public class Test4168475 {
     private static final Class CLASS = ComponentBeanInfo.class;
     private static final String[] PATH = {"infos"};

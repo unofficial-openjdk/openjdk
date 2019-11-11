@@ -34,6 +34,7 @@ import org.testng.annotations.DataProvider;
 import static org.testng.Assert.*;
 
 @Test
+@Bean
 public class VersionTest {
 
     // valid version strings
@@ -75,7 +76,11 @@ public class VersionTest {
 
     // Test parsing valid version strings
     @Test(dataProvider = "validVersions")
-    public void testParseValidVersions(String vs, String ignore) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testParseValidVersions(String vs, String ignore) {
         Version v = Version.parse(vs);
         assertEquals(v.toString(), vs);
     }
@@ -83,13 +88,21 @@ public class VersionTest {
     // Test parsing an invalid version strings
     @Test(dataProvider = "invalidVersions",
           expectedExceptions = IllegalArgumentException.class )
-    public void testParseInvalidVersions(String vs, String ignore) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testParseInvalidVersions(String vs, String ignore) {
         Version.parse(vs);
     }
 
     // Test equals and hashCode
     @Test(dataProvider = "validVersions")
-    public void testEqualsAndHashCode(String vs, String ignore) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testEqualsAndHashCode(String vs, String ignore) {
 
         Version v1 = Version.parse(vs);
         Version v2 = Version.parse(vs);
@@ -126,7 +139,11 @@ public class VersionTest {
      * Test compareTo with ordered versions.
      */
     @Test(dataProvider = "orderedVersions")
-    public void testCompareOrderedVersions(String vs1, String vs2) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testCompareOrderedVersions(String vs1, String vs2) {
 
         Version v1 = Version.parse(vs1);
         assertTrue(v1.compareTo(v1) == 0);
@@ -156,7 +173,11 @@ public class VersionTest {
      * Test compareTo with equal versions.
      */
     @Test(dataProvider = "equalVersions")
-    public void testCompareEqualsVersions(String vs1, String vs2) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testCompareEqualsVersions(String vs1, String vs2) {
 
         Version v1 = Version.parse(vs1);
         assertTrue(v1.compareTo(v1) == 0);

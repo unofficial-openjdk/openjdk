@@ -29,6 +29,7 @@
 import java.io.*;
 import java.nio.channels.*;
 
+@Bean
 public class Release {
     public static void main(String[] args) throws Exception {
         FileOutputStream fos = new FileOutputStream("testFile.tmp");

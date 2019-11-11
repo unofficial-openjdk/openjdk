@@ -164,6 +164,9 @@ public class TestMediaTraySelection implements Printable {
         dialog.setVisible(true);
         dialog.addWindowListener(new WindowAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent e) {
                 System.out.println("main dialog closing");
                 testGeneratedInterrupt = false;
@@ -173,7 +176,10 @@ public class TestMediaTraySelection implements Printable {
     }
 
     @Override
-    public int print(Graphics g, PageFormat pf, int pi) {
+    @Bean
+@Bean
+@Bean
+            public int print(Graphics g, PageFormat pf, int pi) {
         System.out.println("pi = " + pi);
         if (pi > 0) {
             return NO_SUCH_PAGE;

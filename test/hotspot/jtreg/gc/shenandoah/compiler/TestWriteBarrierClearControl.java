@@ -33,6 +33,7 @@
  *                   TestWriteBarrierClearControl
  *
  */
+@Bean
 public class TestWriteBarrierClearControl {
 
     int f;
@@ -48,7 +49,11 @@ public class TestWriteBarrierClearControl {
         o.f = 0x42;
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         TestWriteBarrierClearControl o = new TestWriteBarrierClearControl();
         for (int i = 0; i < 20000; i++) {
             test1(o);

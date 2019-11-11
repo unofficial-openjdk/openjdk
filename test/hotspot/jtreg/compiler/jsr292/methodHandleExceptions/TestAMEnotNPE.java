@@ -67,6 +67,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.LLOAD;
 import static jdk.internal.org.objectweb.asm.Opcodes.RETURN;
 import static jdk.internal.org.objectweb.asm.Opcodes.V1_8;
 
+@Bean
 public class TestAMEnotNPE {
 
     static boolean writeJarFiles = false;

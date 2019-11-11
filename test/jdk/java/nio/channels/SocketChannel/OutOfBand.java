@@ -33,6 +33,7 @@ import java.nio.channels.*;
 import java.io.IOException;
 import java.util.Random;
 
+@Bean
 public class OutOfBand {
 
     private static final Random rand = new Random();

@@ -34,6 +34,7 @@
 
 import java.util.ArrayList;
 
+@Bean
 public class ImplicitToString {
     public static void main(String[] args) {
         String s = "";

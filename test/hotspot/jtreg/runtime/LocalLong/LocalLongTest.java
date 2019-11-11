@@ -35,6 +35,7 @@ import jdk.test.lib.Platform;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class LocalLongTest {
     public static void main(String... args) throws Exception {
         if (Platform.is64bit()) {

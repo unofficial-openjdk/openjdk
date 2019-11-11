@@ -86,6 +86,7 @@ import static com.sun.tools.javac.util.List.*;
  * @author mcimadamore
  * @author vromero
  */
+@Bean
 public class TypeHarness {
 
     protected Types types;
@@ -114,12 +115,20 @@ public class TypeHarness {
     // <editor-fold defaultstate="collapsed" desc="type assertions">
 
     /** assert that 's' is a subtype of 't' */
-    public void assertSubtype(Type s, Type t) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertSubtype(Type s, Type t) {
         assertSubtype(s, t, true);
     }
 
     /** assert that 's' is/is not a subtype of 't' */
-    public void assertSubtype(Type s, Type t, boolean expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertSubtype(Type s, Type t, boolean expected) {
         if (types.isSubtype(s, t) != expected) {
             String msg = expected ?
                 " is not a subtype of " :
@@ -129,12 +138,20 @@ public class TypeHarness {
     }
 
     /** assert that 's' is the same type as 't' */
-    public void assertSameType(Type s, Type t) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertSameType(Type s, Type t) {
         assertSameType(s, t, true);
     }
 
     /** assert that 's' is/is not the same type as 't' */
-    public void assertSameType(Type s, Type t, boolean expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertSameType(Type s, Type t, boolean expected) {
         if (types.isSameType(s, t) != expected) {
             String msg = expected ?
                 " is not the same type as " :
@@ -144,12 +161,20 @@ public class TypeHarness {
     }
 
     /** assert that 's' is castable to 't' */
-    public void assertCastable(Type s, Type t) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertCastable(Type s, Type t) {
         assertCastable(s, t, true);
     }
 
     /** assert that 's' is/is not castable to 't' */
-    public void assertCastable(Type s, Type t, boolean expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertCastable(Type s, Type t, boolean expected) {
         if (types.isCastable(s, t) != expected) {
             String msg = expected ?
                 " is not castable to " :
@@ -159,12 +184,20 @@ public class TypeHarness {
     }
 
     /** assert that 's' is convertible (method invocation conversion) to 't' */
-    public void assertConvertible(Type s, Type t) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertConvertible(Type s, Type t) {
         assertCastable(s, t, true);
     }
 
     /** assert that 's' is/is not convertible (method invocation conversion) to 't' */
-    public void assertConvertible(Type s, Type t, boolean expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertConvertible(Type s, Type t, boolean expected) {
         if (types.isConvertible(s, t) != expected) {
             String msg = expected ?
                 " is not convertible to " :
@@ -174,12 +207,20 @@ public class TypeHarness {
     }
 
     /** assert that 's' is assignable to 't' */
-    public void assertAssignable(Type s, Type t) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertAssignable(Type s, Type t) {
         assertCastable(s, t, true);
     }
 
     /** assert that 's' is/is not assignable to 't' */
-    public void assertAssignable(Type s, Type t, boolean expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertAssignable(Type s, Type t, boolean expected) {
         if (types.isAssignable(s, t) != expected) {
             String msg = expected ?
                 " is not assignable to " :
@@ -189,12 +230,20 @@ public class TypeHarness {
     }
 
     /** assert that generic type 't' is well-formed */
-    public void assertValidGenericType(Type t) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertValidGenericType(Type t) {
         assertValidGenericType(t, true);
     }
 
     /** assert that 's' is/is not assignable to 't' */
-    public void assertValidGenericType(Type t, boolean expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertValidGenericType(Type t, boolean expected) {
         if (chk.checkValidGenericType(t) != expected) {
             String msg = expected ?
                 " is not a valid generic type" :
@@ -209,7 +258,11 @@ public class TypeHarness {
      *  @param typeVars  a list of type variables to create the inference context from
      *  @param consumer  the action to be performed on the inference context
      */
-    protected void withInferenceContext(List<Type> typeVars, Consumer<InferenceContext> consumer) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void withInferenceContext(List<Type> typeVars, Consumer<InferenceContext> consumer) {
         Assert.check(!typeVars.isEmpty(), "invalid parameter, empty type variables list");
         ListBuffer undetVarsBuffer = new ListBuffer();
         typeVars.stream().map((tv) -> new UndetVar((TypeVar)tv, null, types)).forEach((undetVar) -> {
@@ -221,24 +274,40 @@ public class TypeHarness {
         consumer.accept(inferenceContext);
     }
 
-    private void error(String msg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void error(String msg) {
         throw new AssertionError("Unexpected result: " + msg);
     }
 
     // <editor-fold defaultstate="collapsed" desc="type functions">
 
     /** compute the erasure of a type 't' */
-    public Type erasure(Type t) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Type erasure(Type t) {
         return types.erasure(t);
     }
 
     /** compute the capture of a type 't' */
-    public Type capture(Type t) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Type capture(Type t) {
         return types.capture(t);
     }
 
     /** compute the boxed type associated with 't' */
-    public Type box(Type t) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Type box(Type t) {
         if (!t.isPrimitive()) {
             throw new AssertionError("Cannot box non-primitive type: " + t);
         }
@@ -246,7 +315,11 @@ public class TypeHarness {
     }
 
     /** compute the unboxed type associated with 't' */
-    public Type unbox(Type t) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Type unbox(Type t) {
         Type u = types.unboxedType(t);
         if (t == null) {
             throw new AssertionError("Cannot unbox reference type: " + t);
@@ -256,7 +329,11 @@ public class TypeHarness {
     }
 
     /** compute a type substitution on 't' given a list of type mappings */
-    public Type subst(Type t, Mapping... maps) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Type subst(Type t, Mapping... maps) {
         ListBuffer<Type> from = new ListBuffer<>();
         ListBuffer<Type> to = new ListBuffer<>();
         for (Mapping tm : maps) {
@@ -267,7 +344,11 @@ public class TypeHarness {
     }
 
     /** create a fresh type mapping from a type to another */
-    public Mapping Mapping(Type from, Type to) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Mapping Mapping(Type from, Type to) {
         return new Mapping(from, to);
     }
 
@@ -289,7 +370,8 @@ public class TypeHarness {
      * factory also supports creation of constant types (used by the compiler
      * to represent the type of a literal).
      */
-    public class Factory {
+    @Bean
+public class Factory {
 
         private int synthNameCount = 0;
 
@@ -297,54 +379,106 @@ public class TypeHarness {
             return names.fromString("A$" + synthNameCount++);
         }
 
-        public ClassType Class(long flags, Type... typeArgs) {
+        @Bean
+@Bean
+@Bean
+@Bean
+@Bean
+                public classType Class(long flags, Type... typeArgs) {
             ClassSymbol csym = new ClassSymbol(flags, syntheticName(), predef.noSymbol);
             csym.type = new ClassType(Type.noType, List.from(typeArgs), csym);
             ((ClassType)csym.type).supertype_field = predef.objectType;
             return (ClassType)csym.type;
         }
 
-        public ClassType Class(Type... typeArgs) {
+        @Bean
+@Bean
+@Bean
+@Bean
+@Bean
+                public classType Class(Type... typeArgs) {
             return Class(0, typeArgs);
         }
 
-        public ClassType Interface(Type... typeArgs) {
+        @Bean
+@Bean
+@Bean
+@Bean
+@Bean
+                public classType Interface(Type... typeArgs) {
             return Class(Flags.INTERFACE, typeArgs);
         }
 
-        public ClassType Interface(long flags, Type... typeArgs) {
+        @Bean
+@Bean
+@Bean
+@Bean
+@Bean
+                public classType Interface(long flags, Type... typeArgs) {
             return Class(Flags.INTERFACE | flags, typeArgs);
         }
 
-        public Type Constant(byte b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Type Constant(byte b) {
             return predef.byteType.constType(b);
         }
 
-        public Type Constant(short s) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Type Constant(short s) {
             return predef.shortType.constType(s);
         }
 
-        public Type Constant(int i) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Type Constant(int i) {
             return predef.intType.constType(i);
         }
 
-        public Type Constant(long l) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Type Constant(long l) {
             return predef.longType.constType(l);
         }
 
-        public Type Constant(float f) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Type Constant(float f) {
             return predef.floatType.constType(f);
         }
 
-        public Type Constant(double d) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Type Constant(double d) {
             return predef.doubleType.constType(d);
         }
 
-        public Type Constant(char c) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Type Constant(char c) {
             return predef.charType.constType(c + 0);
         }
 
-        public ArrayType Array(Type elemType) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public ArrayType Array(Type elemType) {
             return new ArrayType(elemType, predef.arrayClass);
         }
 
@@ -352,21 +486,38 @@ public class TypeHarness {
             return TypeVariable(predef.objectType);
         }
 
-        public TypeVar TypeVariable(Type bound) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public TypeVar TypeVariable(Type bound) {
             TypeSymbol tvsym = new TypeVariableSymbol(0, syntheticName(), null, predef.noSymbol);
             tvsym.type = new TypeVar(tvsym, bound, Type.noType);
             return (TypeVar)tvsym.type;
         }
 
-        public WildcardType Wildcard(BoundKind bk, Type bound) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public WildcardType Wildcard(BoundKind bk, Type bound) {
             return new WildcardType(bound, bk, predef.boundClass);
         }
 
-        public CapturedType CapturedVariable(Type upper, Type lower) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CapturedType CapturedVariable(Type upper, Type lower) {
             return new CapturedType(syntheticName(), predef.noSymbol, upper, lower, null);
         }
 
-        public ClassType Intersection(Type classBound, Type... intfBounds) {
+        @Bean
+@Bean
+@Bean
+@Bean
+@Bean
+                public classType Intersection(Type classBound, Type... intfBounds) {
             ClassType ct = Class(Flags.COMPOUND);
             ct.supertype_field = classBound;
             ct.interfaces_field = List.from(intfBounds);
@@ -405,7 +556,8 @@ public class TypeHarness {
      * });
      * </pre>
      */
-    public class StrToTypeFactory {
+    @Bean
+public class StrToTypeFactory {
         int id = 0;
         String pkg;
         java.util.List<String> imports;
@@ -477,7 +629,11 @@ public class TypeHarness {
             }
 
             @Override
-            public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
                 String impStmts = imports.size() > 0 ?
                         imports.stream().map(i -> "import " + i + ";").collect(Collectors.joining("\n")) : "";
                 String tvars = !typeVarDecls.isEmpty() ?
@@ -508,13 +664,21 @@ public class TypeHarness {
         }
 
         @Override
-        public void visitVarDef(JCVariableDecl tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitVarDef(JCVariableDecl tree) {
             super.visitVarDef(tree);
             theType = tree.type;
         }
 
         @Override
-        public void attribClass(DiagnosticPosition pos, ClassSymbol c) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void attribClass(DiagnosticPosition pos, ClassSymbol c) {
             super.attribClass(pos, c);
             ClassType ct = (ClassType)c.type;
             typeParameters = ct.typarams_field;

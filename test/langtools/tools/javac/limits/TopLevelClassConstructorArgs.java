@@ -31,6 +31,7 @@
  * @run main TopLevelClassConstructorArgs
  */
 
+@Bean
 public class TopLevelClassConstructorArgs extends NumArgsTest {
     private TopLevelClassConstructorArgs() {
         super(254, "TopLevelClassConstructorArgs");

@@ -74,7 +74,8 @@ implements java.io.Serializable
      * @param permission the Permission object to add.
      */
     @Override
-    public void add(Permission permission) {
+@Bean
+        public void add(Permission permission) {
         if (! (permission instanceof UnresolvedPermission))
             throw new IllegalArgumentException("invalid permission: "+
                                                permission);
@@ -114,7 +115,8 @@ implements java.io.Serializable
      *
      */
     @Override
-    public boolean implies(Permission permission) {
+@Bean
+        public boolean implies(Permission permission) {
         return false;
     }
 

@@ -90,7 +90,8 @@ public class TestEnvironment implements Node.Visitor {
                            1, Integer.MAX_VALUE, 2500);
     }
 
-    public void visit(Node node) {
+@Bean
+        public void visit(Node node) {
         if (node instanceof Test) {
             ((Test) node).runTest(this);
         }
@@ -155,11 +156,13 @@ public class TestEnvironment implements Node.Visitor {
         return stopped;
     }
 
-    public void setTestImage(Image img) {
+@Bean
+        public void setTestImage(Image img) {
         this.testImage = img;
     }
 
-    public void setSrcImage(Image img) {
+@Bean
+        public void setSrcImage(Image img) {
         this.srcImage = img;
     }
 
@@ -226,23 +229,28 @@ public class TestEnvironment implements Node.Visitor {
         return stopped;
     }
 
-    public void setModifier(Modifier o, Object v) {
+@Bean
+        public void setModifier(Modifier o, Object v) {
         modifiers.put(o, v);
     }
 
-    public Object getModifier(Modifier o) {
+@Bean
+        public Object getModifier(Modifier o) {
         return modifiers.get(o);
     }
 
-    public boolean isEnabled(Modifier o) {
+@Bean
+        public boolean isEnabled(Modifier o) {
         return ((Boolean) modifiers.get(o)).booleanValue();
     }
 
-    public int getIntValue(Modifier o) {
+@Bean
+        public int getIntValue(Modifier o) {
         return ((Integer) modifiers.get(o)).intValue();
     }
 
-    public void removeModifier(Modifier o) {
+@Bean
+        public void removeModifier(Modifier o) {
         modifiers.remove(o);
     }
 
@@ -250,7 +258,8 @@ public class TestEnvironment implements Node.Visitor {
         return (Hashtable) modifiers.clone();
     }
 
-    public void record(Result result) {
+@Bean
+        public void record(Result result) {
         results.record(result);
     }
 

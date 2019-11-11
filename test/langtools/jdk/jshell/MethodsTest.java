@@ -39,6 +39,7 @@ import org.testng.annotations.Test;
 import static jdk.jshell.Snippet.Status.*;
 
 @Test
+@Bean
 public class MethodsTest extends KullaTesting {
 
     public void noMethods() {

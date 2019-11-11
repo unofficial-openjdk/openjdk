@@ -55,7 +55,8 @@ public class T6557752 {
         public MyFileObject() {
             super(URI.create("myfo:/Test.java"), JavaFileObject.Kind.SOURCE);
         }
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+@Bean
+            public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return "import java.util.*;\n"
                 + "public class Test {\n"
                 + "    void foobar() {\n"
@@ -90,7 +91,8 @@ public class T6557752 {
         CompilationUnitTree compilationUnit = null;
         int i = 0;
         @Override
-        public Void visitMethodInvocation(MethodInvocationTree node, Void ignored) {
+@Bean
+            public Void visitMethodInvocation(MethodInvocationTree node, Void ignored) {
             TreePath path = TreePath.getPath(compilationUnit, node);
             TypeMirror typeMirror = trees.getTypeMirror(path);
             if (typeMirror.getKind() == TypeKind.ERROR) {

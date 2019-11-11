@@ -29,6 +29,7 @@
  * @run main/othervm --enable-preview BlockExpression
  */
 
+@Bean
 public class BlockExpression {
 
     public static void main(String... args) {

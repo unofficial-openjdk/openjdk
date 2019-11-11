@@ -33,6 +33,7 @@ import java.beans.PropertyDescriptor;
  * @run main/othervm -Xmx128m Test7172865
  */
 
+@Bean
 public class Test7172865 {
     public static void main(String[] args) throws Exception {
         int errors = 0;
@@ -135,21 +136,37 @@ public class Test7172865 {
         return null;
     }
 
-    public String getGood(int index) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String getGood(int index) {
         return null;
     }
 
-    public void setGood(String[] good) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setGood(String[] good) {
     }
 
-    public void setGood(int index, String value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setGood(int index, String value) {
     }
 
     public String[] getBad() {
         return null;
     }
 
-    public String getBad(int index) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String getBad(int index) {
         return null;
     }
 

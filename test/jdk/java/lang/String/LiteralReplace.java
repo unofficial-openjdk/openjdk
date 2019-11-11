@@ -43,6 +43,7 @@ import org.testng.annotations.Test;
 import org.testng.annotations.DataProvider;
 import static org.testng.Assert.fail;
 
+@Bean
 public class LiteralReplace {
 
     @Test(dataProvider="sourceTargetReplacementExpected")
@@ -75,7 +76,11 @@ public class LiteralReplace {
 
     @Test(dataProvider="sourceTargetReplacementWithNull",
             expectedExceptions = {NullPointerException.class})
-    public void testNPE(String source, String target, String replacement) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testNPE(String source, String target, String replacement) {
         source.replace(target, replacement);
     }
 

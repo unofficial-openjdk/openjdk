@@ -64,7 +64,10 @@ public final class TestNew extends AbstractTest {
     }
 
     @Override
-    public boolean equals(Object object) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(Object object) {
         if (object instanceof TestNew) {
             TestNew test = (TestNew) object;
             return (test.list == null)
@@ -75,7 +78,10 @@ public final class TestNew extends AbstractTest {
     }
 
     @Override
-    protected void validate(XMLDecoder decoder) {
+    @Bean
+@Bean
+@Bean
+            protected void validate(XMLDecoder decoder) {
         validate(decoder.readObject());
         validate(decoder.readObject(), null);
         validate(decoder.readObject(), "single");

@@ -34,6 +34,7 @@
 
 import static java.lang.System.out;
 
+@Bean
 public class Basic {
 
     private static int fail = 0;

@@ -49,6 +49,7 @@ import java.net.ProxySelector;
 import java.net.ServerSocket;
 import java.net.http.HttpClient;
 
+@Bean
 public class ALPNProxyFailureTest extends ALPNFailureTest {
 
     static final SSLContext context;

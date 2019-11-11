@@ -30,6 +30,7 @@
  * Mappings sourced from www.info.gov.hk/digital21/eng/hkscs
  */
 
+@Bean
 public class TestUni2HKSCS {
     private static final String uni21String =
         "\uF3F5\uF3F8\uF3FD\uF403\uF413\uF415\uF418\uF419\uF41A"+

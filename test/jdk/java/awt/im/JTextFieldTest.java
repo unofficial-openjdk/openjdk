@@ -36,6 +36,7 @@ import java.awt.event.*;
 import java.applet.*;
 import javax.swing.*;
 
+@Bean
 public class JTextFieldTest extends Applet implements ActionListener {
 
     TextField  tf1;
@@ -50,7 +51,11 @@ public class JTextFieldTest extends Applet implements ActionListener {
         add(tf2);
     }
 
-    public void actionPerformed(ActionEvent ae) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent ae) {
 
     }
 

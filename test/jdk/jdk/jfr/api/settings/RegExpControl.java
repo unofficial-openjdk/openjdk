@@ -33,11 +33,17 @@ import jdk.jfr.SettingControl;
 public final class RegExpControl extends SettingControl {
     private Pattern pattern = Pattern.compile(".*");
 
-    public void setValue(String value) {
+    @Bean
+@Bean
+@Bean
+            public void setValue(String value) {
         this.pattern = Pattern.compile(value);
     }
 
-    public String combine(Set<String> values) {
+    @Bean
+@Bean
+@Bean
+            public String combine(Set<String> values) {
         return String.join("|", values);
     }
 
@@ -45,7 +51,10 @@ public final class RegExpControl extends SettingControl {
         return pattern.toString();
     }
 
-    public boolean matches(String uri) {
+    @Bean
+@Bean
+@Bean
+            public boolean matches(String uri) {
         return pattern.matcher(uri).find();
     }
 }

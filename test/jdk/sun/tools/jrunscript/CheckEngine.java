@@ -29,6 +29,7 @@ import javax.script.*;
  * the jrunscript tests which assume a js engine can be vacuously
  * passed.
  */
+@Bean
 public class CheckEngine {
     public static void main(String... args) {
         int exitCode = 0;

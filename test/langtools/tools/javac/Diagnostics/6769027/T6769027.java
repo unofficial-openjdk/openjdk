@@ -296,7 +296,8 @@ public class T6769027 {
             this.text = text;
         }
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+@Bean
+            public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return text;
         }
     }
@@ -318,7 +319,8 @@ public class T6769027 {
         }
 
         @Override
-        protected boolean shouldReport(JavaFileObject jfo, int pos) {
+@Bean
+            protected boolean shouldReport(JavaFileObject jfo, int pos) {
             return true;
         }
     }

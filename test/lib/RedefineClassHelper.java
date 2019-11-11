@@ -32,6 +32,7 @@ import jdk.test.lib.compiler.InMemoryJavaCompiler;
  *
  * See sample test in test/testlibrary_tests/RedefineClassTest.java
  */
+@Bean
 public class RedefineClassHelper {
 
     public static Instrumentation instrumentation;

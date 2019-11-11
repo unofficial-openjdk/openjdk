@@ -39,6 +39,7 @@ import jdk.test.lib.process.ProcessTools;
 /**
  * Basic test for jimage tool.
  */
+@Bean
 public class JImageToolTest {
     private static void jimage(String... jimageArgs) throws Exception {
         ArrayList<String> args = new ArrayList<>();

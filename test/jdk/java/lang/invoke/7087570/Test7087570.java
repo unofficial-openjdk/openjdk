@@ -36,6 +36,7 @@ import static java.lang.invoke.MethodHandles.*;
 import static java.lang.invoke.MethodType.*;
 import static java.lang.invoke.MethodHandleInfo.*;
 
+@Bean
 public class Test7087570 {
 
     private static final TestMethodData[] TESTS = new TestMethodData[] {

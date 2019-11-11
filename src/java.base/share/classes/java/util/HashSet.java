@@ -87,6 +87,7 @@ import jdk.internal.access.SharedSecrets;
  * @since   1.2
  */
 
+@Bean
 public class HashSet<E>
     extends AbstractSet<E>
     implements Set<E>, Cloneable, java.io.Serializable
@@ -201,7 +202,8 @@ public class HashSet<E>
      * @param o element whose presence in this set is to be tested
      * @return {@code true} if this set contains the specified element
      */
-    public boolean contains(Object o) {
+@Bean
+        public boolean contains(Object o) {
         return map.containsKey(o);
     }
 
@@ -217,7 +219,8 @@ public class HashSet<E>
      * @return {@code true} if this set did not already contain the specified
      * element
      */
-    public boolean add(E e) {
+@Bean
+        public boolean add(E e) {
         return map.put(e, PRESENT)==null;
     }
 
@@ -233,7 +236,8 @@ public class HashSet<E>
      * @param o object to be removed from this set, if present
      * @return {@code true} if the set contained the specified element
      */
-    public boolean remove(Object o) {
+@Bean
+        public boolean remove(Object o) {
         return map.remove(o)==PRESENT;
     }
 

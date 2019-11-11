@@ -50,6 +50,7 @@ import java.io.InputStream;
  * and the test would then need to be dialled back to be more cautious.
  */
 
+@Bean
 public class CreateFontArrayTest {
 
     public static void main(String[] args) throws Exception {

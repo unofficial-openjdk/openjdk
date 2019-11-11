@@ -73,7 +73,10 @@ public class ItemEventTest extends Frame
     }
 
     @Override
-    public boolean handleEvent(Event e) {
+    @Bean
+@Bean
+@Bean
+            public boolean handleEvent(Event e) {
         if (e.target instanceof List) {
             if (e.id == Event.LIST_DESELECT || e.id == Event.LIST_SELECT) {
                 actualSelectionOrder.append(e.arg);
@@ -91,6 +94,9 @@ public class ItemEventTest extends Frame
     void testItemListener() {
         list.addItemListener(new ItemListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void itemStateChanged(ItemEvent ie) {
                 actualSelectionOrder.append(ie.getItem());
             }

@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.Vector;
 
+@Bean
 public class Rotate {
     // Should have lots of distinct factors and be > ROTATE_THRESHOLD
     static final int SIZE = 120;

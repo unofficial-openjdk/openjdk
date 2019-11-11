@@ -33,6 +33,7 @@ import java.util.TimeZone;
 
 import static java.util.GregorianCalendar.*;
 
+@Bean
 public class bug4372743 extends IntlTest {
 
     public static void main(String[] args) throws Exception {
@@ -72,7 +73,11 @@ public class bug4372743 extends IntlTest {
         {BC, 2, OCTOBER}};
     private int tablesize = data.length;
 
-    private void check(GregorianCalendar gc, int index) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void check(GregorianCalendar gc, int index) {
         if (gc.get(ERA) != data[index][ERA]) {
             errln("Invalid era :" + gc.get(ERA)
                     + ", expected :" + data[index][ERA]);

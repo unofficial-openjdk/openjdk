@@ -44,6 +44,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * When {@link AnnA_v1 AnnA_v1} annotation is looked-up on {@link AnnB AnnB}
  * it still appears to have {@link RetentionPolicy#RUNTIME RUNTIME} retention.
  */
+@Bean
 public class AnnotationTypeRuntimeAssumptionTest {
 
     @Retention(RUNTIME)

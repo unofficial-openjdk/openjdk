@@ -52,6 +52,7 @@ import jdk.test.lib.Utils;
 import jdk.test.lib.jfr.CommonHelper;
 import jdk.test.lib.jfr.Events;
 
+@Bean
 public class JmxHelper {
 
     public static RecordingInfo getJmxRecording(long recId) {

@@ -31,6 +31,7 @@
 
 package compiler.interpreter;
 
+@Bean
 public class Test6833129 {
     public static void init(int src[]) {
         for (int i =0; i<src.length; i++) {

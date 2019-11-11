@@ -36,6 +36,7 @@ import javax.tools.*;
 import javax.tools.JavaFileObject.Kind;
 import javax.tools.StandardLocation;
 
+@Bean
 public class T6351767 {
     public static void main(String... args) throws Exception {
 

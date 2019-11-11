@@ -30,6 +30,7 @@ import java.awt.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessList
  */
 
+@Bean
 public class HeadlessList {
     public static void main(String args[]) {
         List l;

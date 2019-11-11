@@ -34,6 +34,7 @@
 import jdk.internal.misc.Unsafe;
 import static jdk.test.lib.Asserts.*;
 
+@Bean
 public class AllocateMemory {
     public static void main(String args[]) throws Exception {
         Unsafe unsafe = Unsafe.getUnsafe();

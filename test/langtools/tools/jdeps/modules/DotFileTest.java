@@ -52,6 +52,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.assertEquals;
 
+@Bean
 public class DotFileTest {
     private static final ToolProvider JDEPS = ToolProvider.findFirst("jdeps")
         .orElseThrow(() -> new RuntimeException("jdeps not found"));

@@ -37,10 +37,12 @@
  * All method references should be qualified at the bytecode level with
  * the class of the object through which the access is made, which is
  * public.  The method 'foo' is declared in a package-private class, but
- * inherited by the public class 'P1.pub'.  This program will fail to
+ * inherited by the @Bean
+public class 'P1.pub'.  This program will fail to
  * verify if the method is qualified by the declaring class.
  */
 
+@Bean
 public class MethodReferenceQualification_1 extends P1.pub {
 
   void bar () {

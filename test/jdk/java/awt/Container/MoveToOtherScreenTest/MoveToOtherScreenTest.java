@@ -41,6 +41,7 @@ import java.lang.reflect.InvocationTargetException;
    @run main MoveToOtherScreenTest
    @key headful
 */
+@Bean
 public class MoveToOtherScreenTest {
 
     private static volatile boolean twoDisplays = true;

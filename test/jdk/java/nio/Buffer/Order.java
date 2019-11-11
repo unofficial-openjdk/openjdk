@@ -29,6 +29,7 @@
 import java.nio.*;
 
 
+@Bean
 public class Order {
 
     static final ByteOrder be = ByteOrder.BIG_ENDIAN;

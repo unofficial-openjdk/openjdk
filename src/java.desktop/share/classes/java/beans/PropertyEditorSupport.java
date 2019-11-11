@@ -82,7 +82,8 @@ public class PropertyEditorSupport implements PropertyEditor {
      * @param source source object to be used for events
      * @since 1.5
      */
-    public void setSource(Object source) {
+@Bean
+        public void setSource(Object source) {
         this.source = source;
     }
 
@@ -94,7 +95,8 @@ public class PropertyEditorSupport implements PropertyEditor {
      *     the PropertyEditor should create a new object to hold any
      *     modified value.
      */
-    public void setValue(Object value) {
+@Bean
+        public void setValue(Object value) {
         this.value = value;
         firePropertyChange();
     }
@@ -131,7 +133,8 @@ public class PropertyEditorSupport implements PropertyEditor {
      * @param gfx  Graphics object to paint into.
      * @param box  Rectangle within graphics object into which we should paint.
      */
-    public void paintValue(java.awt.Graphics gfx, java.awt.Rectangle box) {
+@Bean
+        public void paintValue(java.awt.Graphics gfx, java.awt.Rectangle box) {
     }
 
     //----------------------------------------------------------------------

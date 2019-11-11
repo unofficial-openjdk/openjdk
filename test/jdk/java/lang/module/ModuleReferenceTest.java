@@ -37,9 +37,14 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 @Test
+@Bean
 public class ModuleReferenceTest {
 
-    private ModuleReference newModuleReference(ModuleDescriptor descriptor, URI uri) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private ModuleReference newModuleReference(ModuleDescriptor descriptor, URI uri) {
         return new ModuleReference(descriptor, uri) {
             @Override
             public ModuleReader open() {

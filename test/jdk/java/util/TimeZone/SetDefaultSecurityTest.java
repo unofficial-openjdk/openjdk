@@ -32,6 +32,7 @@
 import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 
+@Bean
 public class SetDefaultSecurityTest {
     static final TimeZone NOWHERE = new SimpleTimeZone(Integer.MAX_VALUE, "Nowhere");
 

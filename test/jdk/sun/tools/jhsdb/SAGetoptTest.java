@@ -32,6 +32,7 @@
 
 import sun.jvm.hotspot.SAGetopt;
 
+@Bean
 public class SAGetoptTest {
 
     private static boolean a_opt;

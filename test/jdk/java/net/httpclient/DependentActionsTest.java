@@ -93,6 +93,7 @@ import static java.util.stream.Collectors.toList;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+@Bean
 public class DependentActionsTest implements HttpServerAdapters {
 
     SSLContext sslContext;
@@ -138,7 +139,11 @@ public class DependentActionsTest implements HttpServerAdapters {
         }
 
         @Override
-        public void execute(Runnable command) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void execute(Runnable command) {
             long id = tasks.incrementAndGet();
             executor.execute(() -> {
                 try {
@@ -358,6 +363,10 @@ public class DependentActionsTest implements HttpServerAdapters {
         public Consumer<Where> select(Consumer<Where> consumer) {
             return new Consumer<Where>() {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void accept(Where where) {
                     if (Where.this == where) {
                         consumer.accept(where);
@@ -462,7 +471,11 @@ public class DependentActionsTest implements HttpServerAdapters {
     static final class SemaphoreStaller implements Staller {
         final Semaphore sem = new Semaphore(1);
         @Override
-        public void accept(Where where) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void accept(Where where) {
             System.out.println("Acquiring semaphore in "
                     + where + " permits=" + sem.availablePermits());
             sem.acquireUninterruptibly();
@@ -528,7 +541,11 @@ public class DependentActionsTest implements HttpServerAdapters {
         }
 
         @Override
-        public void onSubscribe(Flow.Subscription subscription) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onSubscribe(Flow.Subscription subscription) {
             //out.println("onSubscribe ");
             onSubscribeCalled = true;
             stalling.accept(Where.ON_SUBSCRIBE);
@@ -536,7 +553,11 @@ public class DependentActionsTest implements HttpServerAdapters {
         }
 
         @Override
-        public void onNext(List<ByteBuffer> item) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(List<ByteBuffer> item) {
             // out.println("onNext " + item);
             assertTrue(onSubscribeCalled);
             stalling.accept(Where.ON_NEXT);
@@ -544,7 +565,11 @@ public class DependentActionsTest implements HttpServerAdapters {
         }
 
         @Override
-        public void onError(Throwable throwable) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onError(Throwable throwable) {
             //out.println("onError");
             assertTrue(onSubscribeCalled);
             stalling.accept(Where.ON_ERROR);

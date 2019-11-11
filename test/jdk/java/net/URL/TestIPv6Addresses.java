@@ -31,6 +31,7 @@
 
 import java.net.*;
 
+@Bean
 public class TestIPv6Addresses {
     public static void main(String[] args) {
         try {

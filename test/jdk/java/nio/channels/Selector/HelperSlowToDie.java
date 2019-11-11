@@ -31,6 +31,7 @@
 import java.nio.channels.*;
 import java.io.IOException;
 
+@Bean
 public class HelperSlowToDie {
     private static final int CHANNELS_PER_THREAD = 1023;
     private static final int TEST_ITERATIONS = 200;

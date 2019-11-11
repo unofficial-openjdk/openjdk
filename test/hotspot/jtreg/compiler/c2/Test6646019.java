@@ -33,6 +33,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test6646019 {
     final static int i = 2076285318;
     long l = 2;

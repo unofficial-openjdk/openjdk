@@ -10,6 +10,7 @@
 import java.util.List;
 import java.util.ArrayList;
 
+@Bean
 public class CaptureInSubtype {
 
     static class SuperOfFlaw<S>{

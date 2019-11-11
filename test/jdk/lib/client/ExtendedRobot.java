@@ -51,6 +51,7 @@ import java.awt.event.KeyEvent;
  * @since       9
  */
 
+@Bean
 public class ExtendedRobot extends Robot {
 
     private static int DEFAULT_SPEED = 20;       // Speed for mouse glide and click
@@ -141,7 +142,11 @@ public class ExtendedRobot extends Robot {
      * @see     Toolkit#areExtraMouseButtonsEnabled()
      * @see     java.awt.event.MouseEvent
      */
-    public void click(int buttons) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void click(int buttons) {
         mousePress(buttons);
         waitForIdle(DEFAULT_SPEED);
         mouseRelease(buttons);
@@ -204,7 +209,11 @@ public class ExtendedRobot extends Robot {
      *
      * @see     #glide(int, int, int, int)
      */
-    public void glide(int x, int y) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void glide(int x, int y) {
         Point p = MouseInfo.getPointerInfo().getLocation();
         glide(p.x, p.y, x, y);
     }
@@ -217,7 +226,11 @@ public class ExtendedRobot extends Robot {
      *
      * @see     #glide(int, int)
      */
-    public void glide(Point dest) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void glide(Point dest) {
         glide(dest.x, dest.y);
     }
 
@@ -232,7 +245,11 @@ public class ExtendedRobot extends Robot {
      *
      * @see     #glide(int, int, int, int, int, int)
      */
-    public void glide(int fromX, int fromY, int toX, int toY) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void glide(int fromX, int fromY, int toX, int toY) {
         glide(fromX, fromY, toX, toY, DEFAULT_STEP_LENGTH, DEFAULT_SPEED);
     }
 
@@ -245,7 +262,11 @@ public class ExtendedRobot extends Robot {
      *
      * @see     #glide(int, int, int, int, int, int)
      */
-    public void glide(Point src, Point dest) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void glide(Point src, Point dest) {
         glide(src.x, src.y, dest.x, dest.y, DEFAULT_STEP_LENGTH, DEFAULT_SPEED);
     }
 
@@ -263,7 +284,11 @@ public class ExtendedRobot extends Robot {
      * @see     #mouseMove(int, int)
      * @see     #delay(int)
      */
-     public void glide(int srcX, int srcY, int destX, int destY, int stepLength, int speed) {
+     @Bean
+@Bean
+@Bean
+@Bean
+                public void glide(int srcX, int srcY, int destX, int destY, int stepLength, int speed) {
         int stepNum;
         double tDx, tDy;
         double dx, dy, ds;
@@ -363,7 +388,11 @@ public class ExtendedRobot extends Robot {
      * @see     java.awt.Robot#keyRelease(int)
      * @see     java.awt.event.KeyEvent
      */
-    public void type(int keycode) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void type(int keycode) {
         keyPress(keycode);
         waitForIdle(DEFAULT_SPEED);
         keyRelease(keycode);
@@ -378,7 +407,11 @@ public class ExtendedRobot extends Robot {
      * @see     #type(int)
      * @see     java.awt.event.KeyEvent
      */
-    public void type(char c) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void type(char c) {
         type(KeyEvent.getExtendedKeyCodeForChar(c));
     }
 
@@ -389,7 +422,11 @@ public class ExtendedRobot extends Robot {
      *
      * @see     #type(char)
      */
-    public void type(char[] symbols) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void type(char[] symbols) {
         for (int i = 0; i < symbols.length; i++) {
             type(symbols[i]);
         }
@@ -402,7 +439,11 @@ public class ExtendedRobot extends Robot {
      *
      * @see     #type(char[])
      */
-    public void type(String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void type(String s) {
         type(s.toCharArray());
     }
 }

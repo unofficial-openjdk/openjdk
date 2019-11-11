@@ -23,6 +23,7 @@
 
 import java.util.Arrays;
 
+@Bean
 public class Checker {
 
     static void checkEq(String what, Object v, Object ref) throws Exception {

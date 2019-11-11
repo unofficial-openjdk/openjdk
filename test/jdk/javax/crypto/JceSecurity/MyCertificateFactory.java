@@ -34,6 +34,7 @@ import java.util.*;
 import java.security.cert.*;
 import java.security.cert.CertificateException;
 
+@Bean
 public class MyCertificateFactory extends CertificateFactorySpi {
 
     CertificateFactory cf;

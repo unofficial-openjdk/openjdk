@@ -28,6 +28,7 @@
 
 import java.lang.reflect.Method;
 
+@Bean
 public class TestAll {
 
     private static final Class[] CLASSES = {

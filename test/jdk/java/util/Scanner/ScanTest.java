@@ -41,6 +41,7 @@ import java.util.function.Consumer;
 import java.util.regex.*;
 import java.util.stream.*;
 
+@Bean
 public class ScanTest {
 
     private static boolean failure = false;
@@ -387,7 +388,11 @@ public class ScanTest {
         public void reset() {
             index = 0;
         }
-        public String wordInIndex(int index) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String wordInIndex(int index) {
             if (index < 7)  return null;
             if (index < 14) return "brummer";
             if (index < 19) return "hisser";
@@ -396,7 +401,11 @@ public class ScanTest {
             if (index < 48) return "rantrant";
             return "caimagator";
         }
-        public String wordBeyondIndex(int index) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String wordBeyondIndex(int index) {
             if (index < 7)  return "brummer";
             if (index < 14) return "hisser";
             if (index < 19) return "tort";

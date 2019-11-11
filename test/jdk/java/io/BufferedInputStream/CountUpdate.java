@@ -37,6 +37,7 @@ import java.io.*;
  *
  */
 
+@Bean
 public class CountUpdate {
 
     public static void main(String[] args) throws Exception {
@@ -93,7 +94,11 @@ class BufferBreaker extends InputStream {
         return len;
     }
 
-    public long skip(long n) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public long skip(long n) {
         return 0;
     }
 

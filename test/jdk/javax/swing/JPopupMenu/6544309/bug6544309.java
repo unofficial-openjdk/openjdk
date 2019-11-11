@@ -77,6 +77,9 @@ public class bug6544309 {
         popup.add(new JMenuItem("one"));
         JMenuItem two = new JMenuItem("two");
         two.addActionListener(new ActionListener() {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 passed = true;
             }

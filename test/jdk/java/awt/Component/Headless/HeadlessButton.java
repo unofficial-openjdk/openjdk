@@ -30,6 +30,7 @@ import java.awt.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessButton
  */
 
+@Bean
 public class HeadlessButton {
 
     public static void main(String args[]) {

@@ -30,6 +30,7 @@ import java.awt.Font;
 import java.awt.GraphicsEnvironment;
 import java.util.Locale;
 
+@Bean
 public class PhoneticExtensionsGlyphTest {
     private static final String[] logicalFonts = {"dialog", "dialoginput", "serif", "sansserif", "monospaced"};
 

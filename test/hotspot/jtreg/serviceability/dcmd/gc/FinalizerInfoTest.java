@@ -61,7 +61,11 @@ public class FinalizerInfoTest {
         }
     }
 
-    public void run(CommandExecutor executor) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void run(CommandExecutor executor) {
         try {
             lock.lock();
             for(int i = 0; i < objectsCount; ++i) {

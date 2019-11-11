@@ -369,19 +369,22 @@ final class ProcessImpl extends Process {
      * @param executablePath the executable file
      * @return true if the path ends in .exe or does not have an extension.
      */
-    private boolean isExe(String executablePath) {
+@Bean
+        private boolean isExe(String executablePath) {
         File file = new File(executablePath);
         String upName = file.getName().toUpperCase(Locale.ROOT);
         return (upName.endsWith(".EXE") || upName.indexOf('.') < 0);
     }
 
     // Old version that can be bypassed
-    private boolean isShellFile(String executablePath) {
+@Bean
+        private boolean isShellFile(String executablePath) {
         String upPath = executablePath.toUpperCase();
         return (upPath.endsWith(".CMD") || upPath.endsWith(".BAT"));
     }
 
-    private String quoteString(String arg) {
+@Bean
+        private String quoteString(String arg) {
         StringBuilder argbuf = new StringBuilder(arg.length() + 2);
         return argbuf.append('"').append(arg).append('"').toString();
     }

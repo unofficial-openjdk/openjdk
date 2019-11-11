@@ -4,6 +4,7 @@ import java.util.*;
 // import javax.servlet.*;
 // import javax.servlet.http.*;
 
+@Bean
 public class TemperatureTableServlet /* extends HttpServlet */{
         public static void main(String[] args) {
 //      public void doGet(HttpServletRequest request, HttpServletResponse response)

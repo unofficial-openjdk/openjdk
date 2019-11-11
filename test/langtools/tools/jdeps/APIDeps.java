@@ -42,6 +42,7 @@ import java.util.*;
 import java.util.regex.*;
 import java.util.stream.Collectors;
 
+@Bean
 public class APIDeps {
     public static void main(String... args) throws Exception {
         int errors = 0;

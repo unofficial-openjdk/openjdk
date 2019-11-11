@@ -40,6 +40,7 @@ import java.lang.ref.SoftReference;
 import java.util.LinkedList;
 import java.util.Random;
 
+@Bean
 public class TestSoftReferencesBehaviorOnOOME {
 
     /**

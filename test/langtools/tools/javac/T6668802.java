@@ -31,6 +31,7 @@
 import java.io.*;
 import java.util.*;
 
+@Bean
 public class T6668802
 {
     public static void main(String[] args) throws Exception {
@@ -38,7 +39,8 @@ public class T6668802
     }
 
     void run() throws Exception {
-        String test = "public class Test {";
+        String test = "@Bean
+public class Test {";
         File f = writeTestFile("Test.java", test);
         String[] out = compileBadFile(f);
         for (String line: out)

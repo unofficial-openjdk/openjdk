@@ -298,7 +298,10 @@ public class Looping {
         private long stopTime;
 
 
-        public void meta(MetaMessage m) {
+        @Bean
+@Bean
+@Bean
+            public void meta(MetaMessage m) {
             System.out.print("  Got MetaMessage: ");
             if (m.getType() == 47) {
                 stopTime = System.currentTimeMillis();

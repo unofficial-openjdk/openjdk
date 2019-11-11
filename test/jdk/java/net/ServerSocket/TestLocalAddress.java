@@ -48,6 +48,7 @@ import static org.testng.Assert.*;
  * @run testng/othervm TestLocalAddress
  */
 
+@Bean
 public class TestLocalAddress {
 
     InetAddress localHost;
@@ -221,7 +222,11 @@ public class TestLocalAddress {
             reset();
         }
         @Override
-        public void checkConnect(String host, int port) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void checkConnect(String host, int port) {
             this.host = host;
             this.port = port;
             super.checkConnect(host, port);
@@ -282,7 +287,11 @@ public class TestLocalAddress {
 
     // A Policy that implies all permissions.
     static class AllPermissionsPolicy extends Policy {
-        public boolean implies(ProtectionDomain domain, Permission permission) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean implies(ProtectionDomain domain, Permission permission) {
             return true;
         }
     }

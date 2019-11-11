@@ -37,6 +37,7 @@ package gc.g1;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class TestPeriodicLogMessages {
 
     public static void main(String[] args) throws Exception {

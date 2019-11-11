@@ -55,7 +55,10 @@ public class PrinterJobDialogBugDemo extends JFrame implements Printable {
     JButton btnPrint = new JButton("Print...");
     btnPrint.addActionListener(new ActionListener()
       {
-        public void actionPerformed(ActionEvent ae) {
+        @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent ae) {
           showPrintDialog();
         }
       });

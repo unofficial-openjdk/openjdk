@@ -52,6 +52,7 @@ import java.util.stream.Collectors;
 
 import static java.lang.StackWalker.Option.RETAIN_CLASS_REFERENCE;
 
+@Bean
 public class TestBCI {
     public static void main(String... args) throws Exception {
         TestBCI test = new TestBCI(Walker.class);

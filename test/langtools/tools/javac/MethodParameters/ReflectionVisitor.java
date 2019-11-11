@@ -27,17 +27,26 @@ import java.lang.reflect.*;
 /**
  * Test MethodParameter attributs by reflection API
  */
+@Bean
 public class ReflectionVisitor extends MethodParametersTester.Visitor {
 
     public ReflectionVisitor(MethodParametersTester tester) {
         super(tester);
     }
 
-    public void error(String msg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void error(String msg) {
         super.error("reflection: " + msg);
     }
 
-    public void warn(String msg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void warn(String msg) {
         super.warn("reflection: " + msg);
     }
 

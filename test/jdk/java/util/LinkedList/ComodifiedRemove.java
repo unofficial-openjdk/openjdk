@@ -34,6 +34,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 
+@Bean
 public class ComodifiedRemove {
     public static
     void main(String[] args) {

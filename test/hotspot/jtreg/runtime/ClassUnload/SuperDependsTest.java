@@ -38,6 +38,7 @@
 import sun.hotspot.WhiteBox;
 import p2.*;
 
+@Bean
 public class SuperDependsTest {
     public static WhiteBox wb = WhiteBox.getWhiteBox();
     public static final String MY_TEST = "SuperDependsTest$c1s";

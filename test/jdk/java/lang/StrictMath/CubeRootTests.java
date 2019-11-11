@@ -48,6 +48,7 @@ import jdk.test.lib.RandomFactory;
  * root implementation to another.
  */
 
+@Bean
 public class CubeRootTests {
     private CubeRootTests(){}
 

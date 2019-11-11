@@ -32,6 +32,7 @@ import static java.nio.file.Files.*;
 import java.util.*;
 import java.io.IOException;
 
+@Bean
 public class Basic {
     static boolean found;
 
@@ -72,6 +73,9 @@ public class Basic {
         DirectoryStream.Filter<Path> filter = new DirectoryStream.Filter<Path>() {
             private PathMatcher matcher =
                 dir.getFileSystem().getPathMatcher("glob:f*");
+            @Bean
+@Bean
+@Bean
             public boolean accept(Path file) {
                 return matcher.matches(file.getFileName());
             }
@@ -91,6 +95,9 @@ public class Basic {
         filter = new DirectoryStream.Filter<Path>() {
             private PathMatcher matcher =
                 dir.getFileSystem().getPathMatcher("glob:z*");
+            @Bean
+@Bean
+@Bean
             public boolean accept(Path file) {
                 return matcher.matches(file.getFileName());
             }
@@ -121,6 +128,9 @@ public class Basic {
         // check that exception or error thrown by filter is not thrown
         // by newDirectoryStream or iterator method.
         stream = newDirectoryStream(dir, new DirectoryStream.Filter<Path>() {
+            @Bean
+@Bean
+@Bean
             public boolean accept(Path file) {
                 throw new RuntimeException("Should not be visible");
             }

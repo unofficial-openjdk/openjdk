@@ -57,6 +57,7 @@ import java.text.MessageFormat;
  * @author Philip Milne
  * @author Steve Wilson
  */
+@Bean
 public class TableDemo extends DemoModule {
     JTable      tableView;
     JScrollPane scrollpane;
@@ -132,7 +133,11 @@ public class TableDemo extends DemoModule {
         // check box panel
         isColumnReorderingAllowedCheckBox = new JCheckBox(getString("TableDemo.reordering_allowed"), true);
         isColumnReorderingAllowedCheckBox.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 boolean flag = ((JCheckBox)e.getSource()).isSelected();
                 tableView.getTableHeader().setReorderingAllowed(flag);
                 tableView.repaint();
@@ -141,7 +146,11 @@ public class TableDemo extends DemoModule {
 
         showHorizontalLinesCheckBox = new JCheckBox(getString("TableDemo.horz_lines"), true);
         showHorizontalLinesCheckBox.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 boolean flag = ((JCheckBox)e.getSource()).isSelected();
                 tableView.setShowHorizontalLines(flag); ;
                 tableView.repaint();
@@ -150,7 +159,11 @@ public class TableDemo extends DemoModule {
 
         showVerticalLinesCheckBox = new JCheckBox(getString("TableDemo.vert_lines"), true);
         showVerticalLinesCheckBox.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 boolean flag = ((JCheckBox)e.getSource()).isSelected();
                 tableView.setShowVerticalLines(flag); ;
                 tableView.repaint();
@@ -165,7 +178,11 @@ public class TableDemo extends DemoModule {
 
         isRowSelectionAllowedCheckBox = new JCheckBox(getString("TableDemo.row_selection"), true);
         isRowSelectionAllowedCheckBox.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 boolean flag = ((JCheckBox)e.getSource()).isSelected();
                 tableView.setRowSelectionAllowed(flag); ;
                 tableView.repaint();
@@ -174,7 +191,11 @@ public class TableDemo extends DemoModule {
 
         isColumnSelectionAllowedCheckBox = new JCheckBox(getString("TableDemo.column_selection"), false);
         isColumnSelectionAllowedCheckBox.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 boolean flag = ((JCheckBox)e.getSource()).isSelected();
                 tableView.setColumnSelectionAllowed(flag); ;
                 tableView.repaint();
@@ -208,7 +229,11 @@ public class TableDemo extends DemoModule {
         interCellSpacingLabel.setLabelFor(interCellSpacingSlider);
         sliderPanel.add(interCellSpacingSlider);
         interCellSpacingSlider.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void stateChanged(ChangeEvent e) {
                 int spacing = ((JSlider)e.getSource()).getValue();
                 tableView.setIntercellSpacing(new Dimension(spacing, spacing));
                 tableView.repaint();
@@ -220,7 +245,11 @@ public class TableDemo extends DemoModule {
         rowHeightLabel.setLabelFor(rowHeightSlider);
         sliderPanel.add(rowHeightSlider);
         rowHeightSlider.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void stateChanged(ChangeEvent e) {
                 int height = ((JSlider)e.getSource()).getValue();
                 tableView.setRowHeight(height);
                 tableView.repaint();
@@ -255,7 +284,11 @@ public class TableDemo extends DemoModule {
         selectionModeComboBox.addItem(getString("TableDemo.multiple_ranges"));
         selectionModeComboBox.setSelectedIndex(tableView.getSelectionModel().getSelectionMode());
         selectionModeComboBox.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void itemStateChanged(ItemEvent e) {
                 JComboBox source = (JComboBox)e.getSource();
                 tableView.setSelectionMode(source.getSelectedIndex());
             }
@@ -284,7 +317,11 @@ public class TableDemo extends DemoModule {
         resizeModeComboBox.addItem(getString("TableDemo.all_columns"));
         resizeModeComboBox.setSelectedIndex(tableView.getAutoResizeMode());
         resizeModeComboBox.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void itemStateChanged(ItemEvent e) {
                 JComboBox source = (JComboBox)e.getSource();
                 tableView.setAutoResizeMode(source.getSelectedIndex());
             }
@@ -304,7 +341,11 @@ public class TableDemo extends DemoModule {
         fitWidth = new JCheckBox(getString("TableDemo.fitWidth"), true);
         printButton = new JButton(getString("TableDemo.print"));
         printButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent ae) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent ae) {
                 printTable();
             }
         });
@@ -352,7 +393,11 @@ public class TableDemo extends DemoModule {
             .put(KeyStroke.getKeyStroke("ctrl P"), "print");
 
         getDemoPanel().getActionMap().put("print", new AbstractAction() {
-            public void actionPerformed(ActionEvent ae) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent ae) {
                 printTable();
             }
         });
@@ -547,11 +592,32 @@ public class TableDemo extends DemoModule {
         TableModel dataModel = new AbstractTableModel() {
             public int getColumnCount() { return names.length; }
             public int getRowCount() { return data.length;}
-            public Object getValueAt(int row, int col) {return data[row][col];}
-            public String getColumnName(int column) {return names[column];}
-            public Class getColumnClass(int c) {return getValueAt(0, c).getClass();}
-            public boolean isCellEditable(int row, int col) {return col != 5;}
-            public void setValueAt(Object aValue, int row, int column) { data[row][column] = aValue; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Object getValueAt(int row, int col) {return data[row][col];}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public String getColumnName(int column) {return names[column];}
+            @Bean
+@Bean
+@Bean
+@Bean
+@Bean
+                public class getColumnClass(int c) {return getValueAt(0, c).getClass();}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public boolean isCellEditable(int row, int col) {return col != 5;}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setValueAt(Object aValue, int row, int column) { data[row][column] = aValue; }
          };
 
 
@@ -562,7 +628,11 @@ public class TableDemo extends DemoModule {
 
         // Show colors by rendering them in their own color.
         DefaultTableCellRenderer colorRenderer = new DefaultTableCellRenderer() {
-            public void setValue(Object value) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(Object value) {
                 if (value instanceof NamedColor) {
                     NamedColor c = (NamedColor) value;
                     setBackground(c);
@@ -692,9 +762,17 @@ public class TableDemo extends DemoModule {
         int yInset = 5;
         int yGap = 2;
 
-        public void addLayoutComponent(String s, Component c) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addLayoutComponent(String s, Component c) {}
 
-        public void layoutContainer(Container c) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void layoutContainer(Container c) {
             Insets insets = c.getInsets();
             int height = yInset + insets.top;
 
@@ -709,7 +787,11 @@ public class TableDemo extends DemoModule {
 
         }
 
-        public Dimension minimumLayoutSize(Container c) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Dimension minimumLayoutSize(Container c) {
             Insets insets = c.getInsets();
             int height = yInset + insets.top;
             int width = 0 + insets.left + insets.right;
@@ -725,11 +807,19 @@ public class TableDemo extends DemoModule {
             return new Dimension( width, height);
         }
 
-        public Dimension preferredLayoutSize(Container c) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Dimension preferredLayoutSize(Container c) {
             return minimumLayoutSize(c);
         }
 
-        public void removeLayoutComponent(Component c) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removeLayoutComponent(Component c) {}
     }
 
     void updateDragEnabled(boolean dragEnabled) {

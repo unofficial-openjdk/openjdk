@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.net.URL;
 
+@Bean
 public class LingeredAppForJps extends LingeredApp {
 
     // Copy runApp logic here to be able to run an app from JarFile

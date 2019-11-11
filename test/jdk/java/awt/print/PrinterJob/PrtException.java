@@ -62,7 +62,10 @@ public class PrtException implements Printable {
     }
 
 
-    public int print(Graphics g,PageFormat pf,int pageIndex) {
+    @Bean
+@Bean
+@Bean
+            public int print(Graphics g,PageFormat pf,int pageIndex) {
         Graphics2D g2= (Graphics2D)g;
         if(pageIndex>=1){
             return Printable.NO_SUCH_PAGE;

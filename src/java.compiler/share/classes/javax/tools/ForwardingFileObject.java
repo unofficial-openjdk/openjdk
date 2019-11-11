@@ -42,6 +42,7 @@ import java.util.Objects;
  * @author Peter von der Ah&eacute;
  * @since 1.6
  */
+@Bean
 public class ForwardingFileObject<F extends FileObject> implements FileObject {
 
     /**

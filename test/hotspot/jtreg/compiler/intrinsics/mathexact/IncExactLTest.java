@@ -34,6 +34,7 @@
 
 package compiler.intrinsics.mathexact;
 
+@Bean
 public class IncExactLTest {
     public static long[] values = {1, 1, 1, 1};
     public static void main(String[] args) {

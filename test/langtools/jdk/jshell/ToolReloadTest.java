@@ -44,6 +44,7 @@ import static org.testng.Assert.assertTrue;
 
 
 @Test
+@Bean
 public class ToolReloadTest extends ReplToolTesting {
 
     public void testReloadSnippets() {
@@ -65,7 +66,8 @@ public class ToolReloadTest extends ReplToolTesting {
 
     public void testReloadClasspath() {
         Function<String,String> prog = (s) -> String.format(
-                "package pkg; public class A { public String toString() { return \"%s\"; } }\n", s);
+                "package pkg; @Bean
+public class A { public String toString() { return \"%s\"; } }\n", s);
         Compiler compiler = new Compiler();
         Path outDir = Paths.get("testClasspathDirectory");
         compiler.compile(outDir, prog.apply("A"));

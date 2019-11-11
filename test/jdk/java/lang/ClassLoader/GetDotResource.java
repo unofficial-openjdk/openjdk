@@ -38,6 +38,7 @@ import java.util.jar.JarOutputStream;
 
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class GetDotResource {
 
     private static final String JAR_FILENAME = "resource.jar";

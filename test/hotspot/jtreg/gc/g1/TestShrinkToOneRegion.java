@@ -33,6 +33,7 @@ package gc.g1;
  * Doing a System.gc() without having allocated many objects will shrink the heap.
  * With a large region size we will shrink the heap to one region.
  */
+@Bean
 public class TestShrinkToOneRegion {
     public static void main(String[] args) {
         System.gc();

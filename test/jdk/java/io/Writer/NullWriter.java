@@ -36,6 +36,7 @@ import static org.testng.Assert.*;
  * @run testng NullWriter
  * @summary Check for expected behavior of Writer.nullWriter().
  */
+@Bean
 public class NullWriter {
     private static Writer openWriter;
     private static Writer closedWriter;

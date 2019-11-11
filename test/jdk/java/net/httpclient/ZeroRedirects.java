@@ -44,6 +44,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
+@Bean
 public class ZeroRedirects {
     static HttpServer s1 ;
     static ExecutorService executor;

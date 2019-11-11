@@ -28,6 +28,7 @@
  * @author  Steve Bohne
  */
 
+@Bean
 public class ClassToLoad0 {
     // empty
 }

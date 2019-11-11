@@ -29,5 +29,9 @@ public class C {
      * @param arg this is an invalid comment for a parameter arg
      *            because it has already been documented above.
      */
-    public void method(int arg) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void method(int arg) {}
 }

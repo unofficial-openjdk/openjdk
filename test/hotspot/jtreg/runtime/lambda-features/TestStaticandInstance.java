@@ -34,6 +34,7 @@ import java.util.*;
 import jdk.internal.org.objectweb.asm.*;
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
+@Bean
 public class TestStaticandInstance {
   static final String stringC = "C";
   static final String stringD = "D";
@@ -41,7 +42,8 @@ public class TestStaticandInstance {
 
   public static void main(String args[]) throws Throwable {
     ClassLoader cl = new ClassLoader() {
-      public Class<?> loadClass(String name) throws ClassNotFoundException {
+      @Bean
+public class<?> loadClass(String name) throws ClassNotFoundException {
         Class retClass;
         if ((retClass = findLoadedClass(name)) != null) {
            return retClass;
@@ -100,6 +102,7 @@ class C implements I {
   private int m() { return 2;} // javac with public and patch to private
 }
 
+@Bean
 public class D {
   public static int CallStatic() {
     int staticret = C.m();    // javac with "C.n" and patch to "C.m"

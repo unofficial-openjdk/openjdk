@@ -30,6 +30,7 @@ import java.net.*;
 import java.util.Vector;
 import java.util.Iterator;
 
+@Bean
 public class isSiteLocalAddress {
     public static void main(String[] args) throws Exception {
         String[][] addrs =

@@ -257,7 +257,11 @@ public final class Font2DTest extends JPanel
     }
 
     /// Sets up menu entries
-    private void setupMenu( boolean isApplet ) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void setupMenu( boolean isApplet ) {
         JMenu fileMenu = new JMenu( "File" );
         JMenu optionMenu = new JMenu( "Option" );
 
@@ -327,7 +331,11 @@ public final class Font2DTest extends JPanel
     }
 
     /// Sets up the all dialogs used in Font2DTest...
-    private void setupDialog( boolean isApplet ) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void setupDialog( boolean isApplet ) {
         if (!isApplet)
                 filePromptDialog = new JFileChooser( );
         else
@@ -358,7 +366,11 @@ public final class Font2DTest extends JPanel
         userTextDialog.getContentPane().add( "South", dialogBottomPanel );
         userTextDialog.pack();
         userTextDialog.addWindowListener( new WindowAdapter() {
-            public void windowClosing( WindowEvent e ) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosing( WindowEvent e ) {
                 userTextDialog.hide();
             }
         });
@@ -384,7 +396,11 @@ public final class Font2DTest extends JPanel
         printDialog = new JDialog( parent, "Print...", true );
         printDialog.setResizable( false );
         printDialog.addWindowListener( new WindowAdapter() {
-            public void windowClosing( WindowEvent e ) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosing( WindowEvent e ) {
                 printDialog.hide();
             }
         });
@@ -401,7 +417,11 @@ public final class Font2DTest extends JPanel
         fontInfoDialog = new JDialog( parent, "Font info", false );
         fontInfoDialog.setResizable( false );
         fontInfoDialog.addWindowListener( new WindowAdapter() {
-            public void windowClosing( WindowEvent e ) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosing( WindowEvent e ) {
                 fontInfoDialog.hide();
                 showFontInfoCBMI.setState( false );
             }
@@ -432,7 +452,11 @@ public final class Font2DTest extends JPanel
     }
 
     /// Changes the message on the status bar
-    public void fireChangeStatus( String message, boolean error ) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void fireChangeStatus( String message, boolean error ) {
         /// If this is not ran as an applet, use own status bar,
         /// Otherwise, use the appletviewer/browser's status bar
         statusBar.setText( message );
@@ -452,7 +476,11 @@ public final class Font2DTest extends JPanel
         }
     }
 
-    private void setupFontList(int rangeStart, int rangeEnd) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void setupFontList(int rangeStart, int rangeEnd) {
 
         int listCount = fontMenu.getItemCount();
         int size = 16;
@@ -481,7 +509,11 @@ public final class Font2DTest extends JPanel
         fontMenu.repaint();
     }
 
-    protected boolean canDisplayRange(Font font, int rangeStart, int rangeEnd) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected boolean canDisplayRange(Font font, int rangeStart, int rangeEnd) {
         for (int i = rangeStart; i < rangeEnd; i++) {
             if (font.canDisplay(i)) {
                 return true;
@@ -491,7 +523,11 @@ public final class Font2DTest extends JPanel
     }
 
     /// Displays a file load/save dialog and returns the specified file
-    private String promptFile( boolean isSave, String initFileName ) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String promptFile( boolean isSave, String initFileName ) {
         int retVal;
         String str;
 
@@ -581,7 +617,11 @@ public final class Font2DTest extends JPanel
 
     /// Reads the text from specified file, detecting UTF-16 encoding
     /// Then breaks the text into String array, delimited at every line break
-    private void readTextFile( String fileName ) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void readTextFile( String fileName ) {
         try {
             String fileText;
             String[] textLines;
@@ -643,7 +683,11 @@ public final class Font2DTest extends JPanel
     }
 
     /// Returns a String storing current configuration
-    private void writeCurrentOptions( String fileName ) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void writeCurrentOptions( String fileName ) {
         try {
             String curOptions = fp.getCurrentOptions();
             BufferedOutputStream bos =
@@ -710,7 +754,11 @@ public final class Font2DTest extends JPanel
     }
 
     /// Loads saved options and applies them
-    private void loadOptions( String fileName ) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void loadOptions( String fileName ) {
         try {
             BufferedInputStream bis =
               new BufferedInputStream( new FileInputStream( fileName ));
@@ -805,7 +853,11 @@ public final class Font2DTest extends JPanel
     }
 
     /// Loads a previously saved image
-    private void loadComparisonPNG( String fileName ) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void loadComparisonPNG( String fileName ) {
         try {
             BufferedImage image =
                 javax.imageio.ImageIO.read(new File(fileName));
@@ -814,6 +866,10 @@ public final class Font2DTest extends JPanel
             f.setResizable( false );
             f.getContentPane().add( ip );
             f.addWindowListener( new WindowAdapter() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void windowClosing( WindowEvent e ) {
                     ( (JFrame) e.getSource() ).dispose();
                 }
@@ -831,7 +887,11 @@ public final class Font2DTest extends JPanel
 
     /// ActionListener interface function
     /// Responds to JMenuItem, JTextField and JButton actions
-    public void actionPerformed( ActionEvent e ) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed( ActionEvent e ) {
         Object source = e.getSource();
 
         if ( source instanceof JMenuItem ) {
@@ -973,7 +1033,11 @@ public final class Font2DTest extends JPanel
         }
     }
 
-    public void stateChanged(ChangeEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void stateChanged(ChangeEvent e) {
          Object source = e.getSource();
          if (source instanceof JSlider) {
              fp.setRenderingHints(antiAliasMenu.getSelectedItem(),
@@ -984,7 +1048,11 @@ public final class Font2DTest extends JPanel
 
     /// ItemListener interface function
     /// Responds to JCheckBoxMenuItem, JComboBox and JCheckBox actions
-    public void itemStateChanged( ItemEvent e ) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void itemStateChanged( ItemEvent e ) {
         Object source = e.getSource();
 
         if ( source instanceof JCheckBoxMenuItem ) {
@@ -1033,8 +1101,16 @@ public final class Font2DTest extends JPanel
         final JFrame f = new JFrame( "Font2DTest" );
         final Font2DTest f2dt = new Font2DTest( f, false );
         f.addWindowListener( new WindowAdapter() {
-            public void windowOpening( WindowEvent e ) { f2dt.repaint(); }
-            public void windowClosing( WindowEvent e ) { System.exit(0); }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowOpening( WindowEvent e ) { f2dt.repaint(); }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosing( WindowEvent e ) { System.exit(0); }
         });
 
         f.getContentPane().add( f2dt );
@@ -1057,7 +1133,11 @@ public final class Font2DTest extends JPanel
             return new Dimension( bi.getWidth(), bi.getHeight() );
         }
 
-        public void paintComponent( Graphics g ) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void paintComponent( Graphics g ) {
             g.drawImage( bi, 0, 0, this );
         }
     }
@@ -1108,11 +1188,19 @@ public final class Font2DTest extends JPanel
             return super.getToolTipText();
         }
 
-        public void setBit(int bitIndex, boolean value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setBit(int bitIndex, boolean value) {
             bitSet.set(bitIndex, value);
         }
 
-        public boolean getBit(int bitIndex) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean getBit(int bitIndex) {
             return bitSet.get(bitIndex);
         }
     }

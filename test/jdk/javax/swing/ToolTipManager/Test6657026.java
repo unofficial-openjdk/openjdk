@@ -32,6 +32,7 @@
 import sun.awt.SunToolkit;
 import javax.swing.ToolTipManager;
 
+@Bean
 public class Test6657026 implements Runnable {
 
     private static final int DISMISS = 4000;

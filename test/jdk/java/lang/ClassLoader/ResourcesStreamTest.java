@@ -38,6 +38,7 @@ import java.util.stream.Stream;
  * @build ResourcesStreamTest
  * @run main ResourcesStreamTest
  */
+@Bean
 public class ResourcesStreamTest {
 
     public static void main(String[] args) throws Exception {

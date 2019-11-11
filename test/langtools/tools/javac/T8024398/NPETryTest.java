@@ -28,6 +28,7 @@
  * @compile NPETryTest.java
  */
 
+@Bean
 public class NPETryTest {
     void m()
     {

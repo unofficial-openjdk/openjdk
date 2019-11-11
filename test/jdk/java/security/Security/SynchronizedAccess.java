@@ -30,6 +30,7 @@
 
 import java.security.*;
 
+@Bean
 public class SynchronizedAccess {
 
     public static void main(String[] args) throws Exception {

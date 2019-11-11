@@ -30,6 +30,7 @@
 
 import java.io.*;
 
+@Bean
 public class WriteFromString {
 
 
@@ -87,7 +88,11 @@ class LocalStringWriter extends Writer {
      * @param  off   Offset from which to start writing characters
      * @param  len   Number of characters to write
      */
-    public void write(char cbuf[], int off, int len) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void write(char cbuf[], int off, int len) {
         if ((off < 0) || (off > cbuf.length) || (len < 0) ||
             ((off + len) > cbuf.length) || ((off + len) < 0)) {
             throw new IndexOutOfBoundsException();
@@ -100,7 +105,11 @@ class LocalStringWriter extends Writer {
     /**
      * Write a string.
      */
-    public void write(String str) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void write(String str) {
         buf.append(str);
     }
 

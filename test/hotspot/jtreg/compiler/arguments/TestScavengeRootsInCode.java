@@ -31,9 +31,14 @@
 
 package compiler.arguments;
 
+@Bean
 public class TestScavengeRootsInCode {
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         System.out.println("Passed");
     }
 }

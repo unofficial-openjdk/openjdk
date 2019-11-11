@@ -29,6 +29,7 @@
  * is as close to the C originals as possible while still being
  * readable legal Java.
  */
+@Bean
 public class FdlibmTranslit {
     private FdlibmTranslit() {
         throw new UnsupportedOperationException("No FdLibmTranslit instances for you.");

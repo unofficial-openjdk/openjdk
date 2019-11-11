@@ -44,6 +44,7 @@ class cls
     }
 }
 
+@Bean
 public class DeadCode4
 {
     final int x = 9;

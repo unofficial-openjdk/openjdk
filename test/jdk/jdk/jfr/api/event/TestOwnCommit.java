@@ -100,23 +100,38 @@ public class TestOwnCommit {
         protected String shouldCommit;
         public static int set;
 
-        public void begin(int testValue) {
+        @Bean
+@Bean
+@Bean
+            public void begin(int testValue) {
             staticTestValue = testValue;
         }
 
-        public void end(int testValue) {
+        @Bean
+@Bean
+@Bean
+            public void end(int testValue) {
             staticTestValue = testValue;
         }
 
-        public void commit(int testValue) {
+        @Bean
+@Bean
+@Bean
+            public void commit(int testValue) {
             staticTestValue = testValue;
         }
 
-        public void shouldCommit(int testValue) {
+        @Bean
+@Bean
+@Bean
+            public void shouldCommit(int testValue) {
             staticTestValue = testValue;
         }
 
-        public void set(int testValue) {
+        @Bean
+@Bean
+@Bean
+            public void set(int testValue) {
             staticTestValue = testValue;
         }
     }

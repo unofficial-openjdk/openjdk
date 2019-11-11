@@ -74,7 +74,8 @@ public class Group extends Node {
         super(parent, nodeName, description);
     }
 
-    public void addChild(Node child) {
+@Bean
+        public void addChild(Node child) {
         Node prev = null;
         for (Node node = children; node != null; node = node.getNext()) {
             if (node.getNodeName().equalsIgnoreCase(child.getNodeName())) {
@@ -120,7 +121,8 @@ public class Group extends Node {
         return horizontal;
     }
 
-    public void setBordered(boolean b) {
+@Bean
+        public void setBordered(boolean b) {
         bordered = b ? Boolean.TRUE : Boolean.FALSE;
     }
 
@@ -128,7 +130,8 @@ public class Group extends Node {
         setTabbed(JTabbedPane.TOP);
     }
 
-    public void setTabbed(int tabPlacement) {
+@Bean
+        public void setTabbed(int tabPlacement) {
         this.tabbed = true;
         this.tabPlacement = tabPlacement;
     }
@@ -141,7 +144,8 @@ public class Group extends Node {
         horizontal = true;
     }
 
-    public void traverse(Visitor v) {
+@Bean
+        public void traverse(Visitor v) {
         super.traverse(v);
         for (Node node = children; node != null; node = node.getNext()) {
             node.traverse(v);
@@ -151,7 +155,8 @@ public class Group extends Node {
     public void restoreDefault() {
     }
 
-    public String setOption(String key, String value) {
+@Bean
+        public String setOption(String key, String value) {
         int index = key.indexOf('.');
         String subkey;
         if (index < 0) {
@@ -168,7 +173,8 @@ public class Group extends Node {
         return "Key failed to match an existing option";
     }
 
-    public void write(PrintWriter pw) {
+@Bean
+        public void write(PrintWriter pw) {
     }
 
     public JComponent getJComponent() {
@@ -204,7 +210,8 @@ public class Group extends Node {
         }
     }
 
-    public void addEnableButtons(JPanel p) {
+@Bean
+        public void addEnableButtons(JPanel p) {
         p.add(new EnableButton(this, EnableButton.DEFAULT));
         p.add(new EnableButton(this, EnableButton.CLEAR));
         p.add(new EnableButton(this, EnableButton.INVERT));
@@ -213,7 +220,8 @@ public class Group extends Node {
 
     public static void restoreAllDefaults() {
         root.traverse(new Visitor() {
-            public void visit(Node node) {
+@Bean
+                public void visit(Node node) {
                 node.restoreDefault();
             }
         });
@@ -221,7 +229,8 @@ public class Group extends Node {
 
     public static void writeAll(final PrintWriter pw) {
         root.traverse(new Visitor() {
-            public void visit(Node node) {
+@Bean
+                public void visit(Node node) {
                 node.write(pw);
             }
         });
@@ -299,22 +308,26 @@ public class Group extends Node {
             return new EnableIterator();
         }
 
-        public void modifyTest(TestEnvironment env, Object val) {
+@Bean
+            public void modifyTest(TestEnvironment env, Object val) {
             ((Option.Enable) val).modifyTest(env);
             env.setModifier(this, val);
         }
 
-        public void restoreTest(TestEnvironment env, Object val) {
+@Bean
+            public void restoreTest(TestEnvironment env, Object val) {
             ((Option.Enable) val).restoreTest(env);
             env.removeModifier(this);
         }
 
-        public String getAbbreviatedModifierDescription(Object val) {
+@Bean
+            public String getAbbreviatedModifierDescription(Object val) {
             Option.Enable oe = (Option.Enable) val;
             return oe.getAbbreviatedModifierDescription(Boolean.TRUE);
         }
 
-        public String getModifierValueName(Object val) {
+@Bean
+            public String getModifierValueName(Object val) {
             Option.Enable oe = (Option.Enable) val;
             return oe.getModifierValueName(Boolean.TRUE);
         }

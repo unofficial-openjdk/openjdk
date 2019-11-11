@@ -48,7 +48,10 @@ public class PrintArcTest extends Panel implements ActionListener {
     }
 
 
-    public void actionPerformed(ActionEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
         String cmd = e.getActionCommand();
         if (cmd.equals("print")) {
             PrintJob pjob = getToolkit().getPrintJob(getFrame(), "Printing Test", null);
@@ -81,7 +84,10 @@ public class PrintArcTest extends Panel implements ActionListener {
         f.setSize(500,400);
         f.show();
         f.addWindowListener( new WindowAdapter() {
-                                        public void windowClosing(WindowEvent ev) {
+                                        @Bean
+@Bean
+@Bean
+            public void windowClosing(WindowEvent ev) {
                                             System.exit(0);
                                         }
                                     }

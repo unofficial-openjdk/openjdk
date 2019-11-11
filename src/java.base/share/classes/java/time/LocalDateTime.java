@@ -513,7 +513,9 @@ public final class LocalDateTime
      * @param newTime  the time of the new date-time, not null
      * @return the date-time, not null
      */
-    private LocalDateTime with(LocalDate newDate, LocalTime newTime) {
+    @Bean
+@Bean
+        private LocalDateTime with(LocalDate newDate, LocalTime newTime) {
         if (date == newDate && time == newTime) {
             return this;
         }
@@ -572,7 +574,9 @@ public final class LocalDateTime
      * @return true if the field is supported on this date-time, false if not
      */
     @Override
-    public boolean isSupported(TemporalField field) {
+    @Bean
+@Bean
+        public boolean isSupported(TemporalField field) {
         if (field instanceof ChronoField) {
             ChronoField f = (ChronoField) field;
             return f.isDateBased() || f.isTimeBased();
@@ -617,7 +621,9 @@ public final class LocalDateTime
      * @return true if the unit can be added/subtracted, false if not
      */
     @Override  // override for Javadoc
-    public boolean isSupported(TemporalUnit unit) {
+    @Bean
+@Bean
+        public boolean isSupported(TemporalUnit unit) {
         return ChronoLocalDateTime.super.isSupported(unit);
     }
 
@@ -646,7 +652,9 @@ public final class LocalDateTime
      * @throws UnsupportedTemporalTypeException if the field is not supported
      */
     @Override
-    public ValueRange range(TemporalField field) {
+    @Bean
+@Bean
+        public ValueRange range(TemporalField field) {
         if (field instanceof ChronoField) {
             ChronoField f = (ChronoField) field;
             return (f.isTimeBased() ? time.range(field) : date.range(field));
@@ -683,7 +691,9 @@ public final class LocalDateTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public int get(TemporalField field) {
+    @Bean
+@Bean
+        public int get(TemporalField field) {
         if (field instanceof ChronoField) {
             ChronoField f = (ChronoField) field;
             return (f.isTimeBased() ? time.get(field) : date.get(field));
@@ -715,7 +725,9 @@ public final class LocalDateTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public long getLong(TemporalField field) {
+    @Bean
+@Bean
+        public long getLong(TemporalField field) {
         if (field instanceof ChronoField) {
             ChronoField f = (ChronoField) field;
             return (f.isTimeBased() ? time.getLong(field) : date.getLong(field));
@@ -915,7 +927,9 @@ public final class LocalDateTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public LocalDateTime with(TemporalAdjuster adjuster) {
+    @Bean
+@Bean
+        public LocalDateTime with(TemporalAdjuster adjuster) {
         // optimizations
         if (adjuster instanceof LocalDate) {
             return with((LocalDate) adjuster, time);
@@ -962,7 +976,9 @@ public final class LocalDateTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public LocalDateTime with(TemporalField field, long newValue) {
+    @Bean
+@Bean
+        public LocalDateTime with(TemporalField field, long newValue) {
         if (field instanceof ChronoField) {
             ChronoField f = (ChronoField) field;
             if (f.isTimeBased()) {
@@ -987,7 +1003,9 @@ public final class LocalDateTime
      * @return a {@code LocalDateTime} based on this date-time with the requested year, not null
      * @throws DateTimeException if the year value is invalid
      */
-    public LocalDateTime withYear(int year) {
+    @Bean
+@Bean
+        public LocalDateTime withYear(int year) {
         return with(date.withYear(year), time);
     }
 
@@ -1003,7 +1021,9 @@ public final class LocalDateTime
      * @return a {@code LocalDateTime} based on this date-time with the requested month, not null
      * @throws DateTimeException if the month-of-year value is invalid
      */
-    public LocalDateTime withMonth(int month) {
+    @Bean
+@Bean
+        public LocalDateTime withMonth(int month) {
         return with(date.withMonth(month), time);
     }
 
@@ -1020,7 +1040,9 @@ public final class LocalDateTime
      * @throws DateTimeException if the day-of-month value is invalid,
      *  or if the day-of-month is invalid for the month-year
      */
-    public LocalDateTime withDayOfMonth(int dayOfMonth) {
+    @Bean
+@Bean
+        public LocalDateTime withDayOfMonth(int dayOfMonth) {
         return with(date.withDayOfMonth(dayOfMonth), time);
     }
 
@@ -1036,7 +1058,9 @@ public final class LocalDateTime
      * @throws DateTimeException if the day-of-year value is invalid,
      *  or if the day-of-year is invalid for the year
      */
-    public LocalDateTime withDayOfYear(int dayOfYear) {
+    @Bean
+@Bean
+        public LocalDateTime withDayOfYear(int dayOfYear) {
         return with(date.withDayOfYear(dayOfYear), time);
     }
 
@@ -1050,7 +1074,9 @@ public final class LocalDateTime
      * @return a {@code LocalDateTime} based on this date-time with the requested hour, not null
      * @throws DateTimeException if the hour value is invalid
      */
-    public LocalDateTime withHour(int hour) {
+    @Bean
+@Bean
+        public LocalDateTime withHour(int hour) {
         LocalTime newTime = time.withHour(hour);
         return with(date, newTime);
     }
@@ -1064,7 +1090,9 @@ public final class LocalDateTime
      * @return a {@code LocalDateTime} based on this date-time with the requested minute, not null
      * @throws DateTimeException if the minute value is invalid
      */
-    public LocalDateTime withMinute(int minute) {
+    @Bean
+@Bean
+        public LocalDateTime withMinute(int minute) {
         LocalTime newTime = time.withMinute(minute);
         return with(date, newTime);
     }
@@ -1078,7 +1106,9 @@ public final class LocalDateTime
      * @return a {@code LocalDateTime} based on this date-time with the requested second, not null
      * @throws DateTimeException if the second value is invalid
      */
-    public LocalDateTime withSecond(int second) {
+    @Bean
+@Bean
+        public LocalDateTime withSecond(int second) {
         LocalTime newTime = time.withSecond(second);
         return with(date, newTime);
     }
@@ -1092,7 +1122,9 @@ public final class LocalDateTime
      * @return a {@code LocalDateTime} based on this date-time with the requested nanosecond, not null
      * @throws DateTimeException if the nano value is invalid
      */
-    public LocalDateTime withNano(int nanoOfSecond) {
+    @Bean
+@Bean
+        public LocalDateTime withNano(int nanoOfSecond) {
         LocalTime newTime = time.withNano(nanoOfSecond);
         return with(date, newTime);
     }
@@ -1118,7 +1150,9 @@ public final class LocalDateTime
      * @throws DateTimeException if unable to truncate
      * @throws UnsupportedTemporalTypeException if the unit is not supported
      */
-    public LocalDateTime truncatedTo(TemporalUnit unit) {
+    @Bean
+@Bean
+        public LocalDateTime truncatedTo(TemporalUnit unit) {
         return with(date, time.truncatedTo(unit));
     }
 
@@ -1144,7 +1178,9 @@ public final class LocalDateTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public LocalDateTime plus(TemporalAmount amountToAdd) {
+    @Bean
+@Bean
+        public LocalDateTime plus(TemporalAmount amountToAdd) {
         if (amountToAdd instanceof Period) {
             Period periodToAdd = (Period) amountToAdd;
             return with(date.plus(periodToAdd), time);
@@ -1180,7 +1216,9 @@ public final class LocalDateTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public LocalDateTime plus(long amountToAdd, TemporalUnit unit) {
+    @Bean
+@Bean
+        public LocalDateTime plus(long amountToAdd, TemporalUnit unit) {
         if (unit instanceof ChronoUnit) {
             ChronoUnit f = (ChronoUnit) unit;
             switch (f) {
@@ -1218,7 +1256,9 @@ public final class LocalDateTime
      * @return a {@code LocalDateTime} based on this date-time with the years added, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public LocalDateTime plusYears(long years) {
+    @Bean
+@Bean
+        public LocalDateTime plusYears(long years) {
         LocalDate newDate = date.plusYears(years);
         return with(newDate, time);
     }
@@ -1243,7 +1283,9 @@ public final class LocalDateTime
      * @return a {@code LocalDateTime} based on this date-time with the months added, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public LocalDateTime plusMonths(long months) {
+    @Bean
+@Bean
+        public LocalDateTime plusMonths(long months) {
         LocalDate newDate = date.plusMonths(months);
         return with(newDate, time);
     }
@@ -1263,7 +1305,9 @@ public final class LocalDateTime
      * @return a {@code LocalDateTime} based on this date-time with the weeks added, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public LocalDateTime plusWeeks(long weeks) {
+    @Bean
+@Bean
+        public LocalDateTime plusWeeks(long weeks) {
         LocalDate newDate = date.plusWeeks(weeks);
         return with(newDate, time);
     }
@@ -1283,7 +1327,9 @@ public final class LocalDateTime
      * @return a {@code LocalDateTime} based on this date-time with the days added, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public LocalDateTime plusDays(long days) {
+    @Bean
+@Bean
+        public LocalDateTime plusDays(long days) {
         LocalDate newDate = date.plusDays(days);
         return with(newDate, time);
     }
@@ -1298,7 +1344,9 @@ public final class LocalDateTime
      * @return a {@code LocalDateTime} based on this date-time with the hours added, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public LocalDateTime plusHours(long hours) {
+    @Bean
+@Bean
+        public LocalDateTime plusHours(long hours) {
         return plusWithOverflow(date, hours, 0, 0, 0, 1);
     }
 
@@ -1311,7 +1359,9 @@ public final class LocalDateTime
      * @return a {@code LocalDateTime} based on this date-time with the minutes added, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public LocalDateTime plusMinutes(long minutes) {
+    @Bean
+@Bean
+        public LocalDateTime plusMinutes(long minutes) {
         return plusWithOverflow(date, 0, minutes, 0, 0, 1);
     }
 
@@ -1324,7 +1374,9 @@ public final class LocalDateTime
      * @return a {@code LocalDateTime} based on this date-time with the seconds added, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public LocalDateTime plusSeconds(long seconds) {
+    @Bean
+@Bean
+        public LocalDateTime plusSeconds(long seconds) {
         return plusWithOverflow(date, 0, 0, seconds, 0, 1);
     }
 
@@ -1337,7 +1389,9 @@ public final class LocalDateTime
      * @return a {@code LocalDateTime} based on this date-time with the nanoseconds added, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public LocalDateTime plusNanos(long nanos) {
+    @Bean
+@Bean
+        public LocalDateTime plusNanos(long nanos) {
         return plusWithOverflow(date, 0, 0, 0, nanos, 1);
     }
 
@@ -1363,7 +1417,9 @@ public final class LocalDateTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public LocalDateTime minus(TemporalAmount amountToSubtract) {
+    @Bean
+@Bean
+        public LocalDateTime minus(TemporalAmount amountToSubtract) {
         if (amountToSubtract instanceof Period) {
             Period periodToSubtract = (Period) amountToSubtract;
             return with(date.minus(periodToSubtract), time);
@@ -1392,7 +1448,9 @@ public final class LocalDateTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public LocalDateTime minus(long amountToSubtract, TemporalUnit unit) {
+    @Bean
+@Bean
+        public LocalDateTime minus(long amountToSubtract, TemporalUnit unit) {
         return (amountToSubtract == Long.MIN_VALUE ? plus(Long.MAX_VALUE, unit).plus(1, unit) : plus(-amountToSubtract, unit));
     }
 
@@ -1417,7 +1475,9 @@ public final class LocalDateTime
      * @return a {@code LocalDateTime} based on this date-time with the years subtracted, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public LocalDateTime minusYears(long years) {
+    @Bean
+@Bean
+        public LocalDateTime minusYears(long years) {
         return (years == Long.MIN_VALUE ? plusYears(Long.MAX_VALUE).plusYears(1) : plusYears(-years));
     }
 
@@ -1441,7 +1501,9 @@ public final class LocalDateTime
      * @return a {@code LocalDateTime} based on this date-time with the months subtracted, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public LocalDateTime minusMonths(long months) {
+    @Bean
+@Bean
+        public LocalDateTime minusMonths(long months) {
         return (months == Long.MIN_VALUE ? plusMonths(Long.MAX_VALUE).plusMonths(1) : plusMonths(-months));
     }
 
@@ -1460,7 +1522,9 @@ public final class LocalDateTime
      * @return a {@code LocalDateTime} based on this date-time with the weeks subtracted, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public LocalDateTime minusWeeks(long weeks) {
+    @Bean
+@Bean
+        public LocalDateTime minusWeeks(long weeks) {
         return (weeks == Long.MIN_VALUE ? plusWeeks(Long.MAX_VALUE).plusWeeks(1) : plusWeeks(-weeks));
     }
 
@@ -1479,7 +1543,9 @@ public final class LocalDateTime
      * @return a {@code LocalDateTime} based on this date-time with the days subtracted, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public LocalDateTime minusDays(long days) {
+    @Bean
+@Bean
+        public LocalDateTime minusDays(long days) {
         return (days == Long.MIN_VALUE ? plusDays(Long.MAX_VALUE).plusDays(1) : plusDays(-days));
     }
 
@@ -1493,7 +1559,9 @@ public final class LocalDateTime
      * @return a {@code LocalDateTime} based on this date-time with the hours subtracted, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public LocalDateTime minusHours(long hours) {
+    @Bean
+@Bean
+        public LocalDateTime minusHours(long hours) {
         return plusWithOverflow(date, hours, 0, 0, 0, -1);
    }
 
@@ -1506,7 +1574,9 @@ public final class LocalDateTime
      * @return a {@code LocalDateTime} based on this date-time with the minutes subtracted, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public LocalDateTime minusMinutes(long minutes) {
+    @Bean
+@Bean
+        public LocalDateTime minusMinutes(long minutes) {
         return plusWithOverflow(date, 0, minutes, 0, 0, -1);
     }
 
@@ -1519,7 +1589,9 @@ public final class LocalDateTime
      * @return a {@code LocalDateTime} based on this date-time with the seconds subtracted, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public LocalDateTime minusSeconds(long seconds) {
+    @Bean
+@Bean
+        public LocalDateTime minusSeconds(long seconds) {
         return plusWithOverflow(date, 0, 0, seconds, 0, -1);
     }
 
@@ -1532,7 +1604,9 @@ public final class LocalDateTime
      * @return a {@code LocalDateTime} based on this date-time with the nanoseconds subtracted, not null
      * @throws DateTimeException if the result exceeds the supported date range
      */
-    public LocalDateTime minusNanos(long nanos) {
+    @Bean
+@Bean
+        public LocalDateTime minusNanos(long nanos) {
         return plusWithOverflow(date, 0, 0, 0, nanos, -1);
     }
 
@@ -1550,7 +1624,9 @@ public final class LocalDateTime
      * @param sign  the sign to determine add or subtract
      * @return the combined result, not null
      */
-    private LocalDateTime plusWithOverflow(LocalDate newDate, long hours, long minutes, long seconds, long nanos, int sign) {
+    @Bean
+@Bean
+        private LocalDateTime plusWithOverflow(LocalDate newDate, long hours, long minutes, long seconds, long nanos, int sign) {
         // 9223372036854775808 long, 2147483648 int
         if ((hours | minutes | seconds | nanos) == 0) {
             return with(newDate, time);
@@ -1626,7 +1702,9 @@ public final class LocalDateTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override  // override for Javadoc
-    public Temporal adjustInto(Temporal temporal) {
+    @Bean
+@Bean
+        public Temporal adjustInto(Temporal temporal) {
         return ChronoLocalDateTime.super.adjustInto(temporal);
     }
 
@@ -1680,7 +1758,9 @@ public final class LocalDateTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public long until(Temporal endExclusive, TemporalUnit unit) {
+    @Bean
+@Bean
+        public long until(Temporal endExclusive, TemporalUnit unit) {
         LocalDateTime end = LocalDateTime.from(endExclusive);
         if (unit instanceof ChronoUnit) {
             if (unit.isTimeBased()) {
@@ -1748,7 +1828,9 @@ public final class LocalDateTime
      * @throws DateTimeException if an error occurs during printing
      */
     @Override  // override for Javadoc and performance
-    public String format(DateTimeFormatter formatter) {
+    @Bean
+@Bean
+        public String format(DateTimeFormatter formatter) {
         Objects.requireNonNull(formatter, "formatter");
         return formatter.format(this);
     }
@@ -1763,7 +1845,9 @@ public final class LocalDateTime
      * @param offset  the offset to combine with, not null
      * @return the offset date-time formed from this date-time and the specified offset, not null
      */
-    public OffsetDateTime atOffset(ZoneOffset offset) {
+    @Bean
+@Bean
+        public OffsetDateTime atOffset(ZoneOffset offset) {
         return OffsetDateTime.of(this, offset);
     }
 
@@ -1797,7 +1881,9 @@ public final class LocalDateTime
      * @return the zoned date-time formed from this date-time, not null
      */
     @Override
-    public ZonedDateTime atZone(ZoneId zone) {
+    @Bean
+@Bean
+        public ZonedDateTime atZone(ZoneId zone) {
         return ZonedDateTime.of(this, zone);
     }
 
@@ -1817,7 +1903,8 @@ public final class LocalDateTime
      * @return the comparator value, negative if less, positive if greater
      */
     @Override  // override for Javadoc and performance
-    public int compareTo(ChronoLocalDateTime<?> other) {
+@Bean
+        public int compareTo(ChronoLocalDateTime<?> other) {
         if (other instanceof LocalDateTime) {
             return compareTo0((LocalDateTime) other);
         }
@@ -1854,7 +1941,8 @@ public final class LocalDateTime
      * @return true if this date-time is after the specified date-time
      */
     @Override  // override for Javadoc and performance
-    public boolean isAfter(ChronoLocalDateTime<?> other) {
+@Bean
+        public boolean isAfter(ChronoLocalDateTime<?> other) {
         if (other instanceof LocalDateTime) {
             return compareTo0((LocalDateTime) other) > 0;
         }
@@ -1883,7 +1971,8 @@ public final class LocalDateTime
      * @return true if this date-time is before the specified date-time
      */
     @Override  // override for Javadoc and performance
-    public boolean isBefore(ChronoLocalDateTime<?> other) {
+@Bean
+        public boolean isBefore(ChronoLocalDateTime<?> other) {
         if (other instanceof LocalDateTime) {
             return compareTo0((LocalDateTime) other) < 0;
         }
@@ -1912,7 +2001,8 @@ public final class LocalDateTime
      * @return true if this date-time is equal to the specified date-time
      */
     @Override  // override for Javadoc and performance
-    public boolean isEqual(ChronoLocalDateTime<?> other) {
+@Bean
+        public boolean isEqual(ChronoLocalDateTime<?> other) {
         if (other instanceof LocalDateTime) {
             return compareTo0((LocalDateTime) other) == 0;
         }
@@ -1930,7 +2020,8 @@ public final class LocalDateTime
      * @return true if this is equal to the other date-time
      */
     @Override
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (this == obj) {
             return true;
         }

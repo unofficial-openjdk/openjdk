@@ -44,6 +44,7 @@ class ConcreteQ<E> extends AbstractQ<E> {
     public Iterator<E> iterator() { return null; }
 }
 
+@Bean
 public class SuperfluousAbstract {
     public static void main(String[] args) {
         try {

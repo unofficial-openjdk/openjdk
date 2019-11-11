@@ -31,6 +31,7 @@ import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Iterator;
 
+@Bean
 public class EmptyMapIterator {
     public static void main(String[] args) throws Exception {
         HashMap map = new HashMap();

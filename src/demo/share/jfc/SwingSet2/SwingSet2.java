@@ -49,6 +49,7 @@ import java.util.*;
  *
  * @author Jeff Dinkins
  */
+@Bean
 public class SwingSet2 extends JPanel {
 
     String[] demos = {
@@ -264,7 +265,11 @@ public class SwingSet2 extends JPanel {
 
     DemoModule currentTabDemo = null;
     class TabListener implements ChangeListener {
-        public void stateChanged(ChangeEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void stateChanged(ChangeEvent e) {
             SingleSelectionModel model = (SingleSelectionModel) e.getSource();
             boolean srcSelected = model.getSelectedIndex() == 1;
             if(currentTabDemo != currentDemo && demoSrcPane != null && srcSelected) {
@@ -537,7 +542,11 @@ public class SwingSet2 extends JPanel {
     /**
      * Creates a JRadioButtonMenuItem for the Look and Feel menu
      */
-    public JMenuItem createLafMenuItem(JMenu menu, LookAndFeelData lafData) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JMenuItem createLafMenuItem(JMenu menu, LookAndFeelData lafData) {
         JMenuItem mi = menu.add(new JRadioButtonMenuItem(lafData.label));
         lafMenuGroup.add(mi);
         mi.setMnemonic(lafData.mnemonic);
@@ -549,7 +558,11 @@ public class SwingSet2 extends JPanel {
     /**
      * Creates a multi-screen menu item
      */
-    public JMenuItem createMultiscreenMenuItem(JMenu menu, int screen) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JMenuItem createMultiscreenMenuItem(JMenu menu, int screen) {
         JMenuItem mi = null;
         if (screen == MultiScreenAction.ALL_SCREENS) {
             mi = (JMenuItem) menu.add(new JMenuItem(getString("MultiMenu.all_label")));
@@ -589,7 +602,11 @@ public class SwingSet2 extends JPanel {
     /**
      * Creates a JMenuItem for the Look and Feel popup menu
      */
-    public JMenuItem createPopupMenuItem(JPopupMenu menu, LookAndFeelData lafData) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JMenuItem createPopupMenuItem(JPopupMenu menu, LookAndFeelData lafData) {
         JMenuItem mi = menu.add(new JMenuItem(lafData.label));
         popupMenuGroup.add(mi);
         mi.setMnemonic(lafData.mnemonic);
@@ -612,7 +629,11 @@ public class SwingSet2 extends JPanel {
     /**
      * Add a demo to the toolbar
      */
-    public DemoModule addDemo(DemoModule demo) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public DemoModule addDemo(DemoModule demo) {
         demosList.add(demo);
         if (dragEnabled) {
             demo.updateDragEnabled(true);
@@ -642,7 +663,11 @@ public class SwingSet2 extends JPanel {
     /**
      * Sets the current demo
      */
-    public void setDemo(DemoModule demo) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setDemo(DemoModule demo) {
         currentDemo = demo;
 
         // Ensure panel's UI is current before making visible
@@ -780,6 +805,10 @@ public class SwingSet2 extends JPanel {
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         } else {
             WindowListener l = new WindowAdapter() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void windowClosing(WindowEvent e) {
                     numSSs--;
                     swingSets.remove(this);
@@ -794,7 +823,11 @@ public class SwingSet2 extends JPanel {
     /**
      * Set the status
      */
-    public void setStatus(String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setStatus(String s) {
         // do the following on the gui thread
         SwingUtilities.invokeLater(new SwingSetRunnable(this, s) {
             public void run() {
@@ -843,14 +876,22 @@ public class SwingSet2 extends JPanel {
      * Returns a mnemonic from the resource bundle. Typically used as
      * keyboard shortcuts in menu items.
      */
-    public char getMnemonic(String key) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public char getMnemonic(String key) {
         return (getString(key)).charAt(0);
     }
 
     /**
      * Creates an icon from an image contained in the "images" directory.
      */
-    public ImageIcon createImageIcon(String filename, String description) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public ImageIcon createImageIcon(String filename, String description) {
         String path = "/resources/images/" + filename;
         return new ImageIcon(getClass().getResource(path));
     }
@@ -858,7 +899,11 @@ public class SwingSet2 extends JPanel {
     /**
      * If DEBUG is defined, prints debug information out to std ouput.
      */
-    public void debug(String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void debug(String s) {
         if(DEBUG) {
             System.out.println((debugCounter++) + ": " + s);
         }
@@ -867,7 +912,11 @@ public class SwingSet2 extends JPanel {
     /**
      * Stores the current L&F, and calls updateLookAndFeel, below
      */
-    public void setLookAndFeel(LookAndFeelData laf) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setLookAndFeel(LookAndFeelData laf) {
         if(!currentLookAndFeel.equals(laf)) {
             currentLookAndFeel = laf;
             /* The recommended way of synchronizing state between multiple
@@ -925,7 +974,11 @@ public class SwingSet2 extends JPanel {
     /**
      * Loads and puts the source code text into JEditorPane in the "Source Code" tab
      */
-    public void setSourceCode(DemoModule demo) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setSourceCode(DemoModule demo) {
         // do the following on the gui thread
         SwingUtilities.invokeLater(new SwingSetRunnable(this, demo) {
             public void run() {
@@ -965,7 +1018,11 @@ public class SwingSet2 extends JPanel {
     // *******************************************************
     class ToolBarPanel extends JPanel implements ContainerListener {
 
-        public boolean contains(int x, int y) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean contains(int x, int y) {
             Component c = getParent();
             if (c != null) {
                 Rectangle r = c.getBounds();
@@ -976,7 +1033,11 @@ public class SwingSet2 extends JPanel {
             }
         }
 
-        public void componentAdded(ContainerEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void componentAdded(ContainerEvent e) {
             Container c = e.getContainer().getParent();
             if (c != null) {
                 c.getParent().validate();
@@ -984,7 +1045,11 @@ public class SwingSet2 extends JPanel {
             }
         }
 
-        public void componentRemoved(ContainerEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void componentRemoved(ContainerEvent e) {
             Container c = e.getContainer().getParent();
             if (c != null) {
                 c.getParent().validate();
@@ -1022,7 +1087,8 @@ public class SwingSet2 extends JPanel {
     // ********************   Actions  ***********************
     // *******************************************************
 
-    public class SwitchToDemoAction extends AbstractAction {
+    @Bean
+public class SwitchToDemoAction extends AbstractAction {
         SwingSet2 swingset;
         DemoModule demo;
 
@@ -1032,7 +1098,11 @@ public class SwingSet2 extends JPanel {
             this.demo = demo;
         }
 
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             swingset.setDemo(demo);
         }
     }
@@ -1045,7 +1115,11 @@ public class SwingSet2 extends JPanel {
             this.aboutBox = aboutBox;
         }
 
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             aboutBox.setVisible(false);
         }
     }
@@ -1059,7 +1133,11 @@ public class SwingSet2 extends JPanel {
             this.lafData = lafData;
         }
 
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             swingset.setLookAndFeel(lafData);
         }
     }
@@ -1073,7 +1151,11 @@ public class SwingSet2 extends JPanel {
             this.popup = popup;
         }
 
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             Dimension invokerSize = getSize();
             Dimension popupSize = popup.getPreferredSize();
             popup.show(swingset, (invokerSize.width - popupSize.width) / 2,
@@ -1088,7 +1170,11 @@ public class SwingSet2 extends JPanel {
             super("Audio On");
             this.swingset = swingset;
         }
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             UIManager.put("AuditoryCues.playList",
                           UIManager.get("AuditoryCues.allAuditoryCues"));
             swingset.updateLookAndFeel();
@@ -1102,7 +1188,11 @@ public class SwingSet2 extends JPanel {
             super("Audio Default");
             this.swingset = swingset;
         }
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             UIManager.put("AuditoryCues.playList",
                           UIManager.get("AuditoryCues.defaultCueList"));
             swingset.updateLookAndFeel();
@@ -1116,7 +1206,11 @@ public class SwingSet2 extends JPanel {
             super("Audio Off");
             this.swingset = swingset;
         }
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             UIManager.put("AuditoryCues.playList",
                           UIManager.get("AuditoryCues.noAuditoryCues"));
             swingset.updateLookAndFeel();
@@ -1129,7 +1223,11 @@ public class SwingSet2 extends JPanel {
             super("ToolTip Control");
         }
 
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             boolean status = ((JCheckBoxMenuItem)e.getSource()).isSelected();
             ToolTipManager.sharedInstance().setEnabled(status);
         }
@@ -1140,7 +1238,11 @@ public class SwingSet2 extends JPanel {
             super("DragSupport Control");
         }
 
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             boolean dragEnabled = ((JCheckBoxMenuItem)e.getSource()).isSelected();
             if (isApplet()) {
                 setDragEnabled(dragEnabled);
@@ -1161,7 +1263,11 @@ public class SwingSet2 extends JPanel {
             this.theme = theme;
         }
 
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             MetalLookAndFeel.setCurrentTheme(theme);
             swingset.updateLookAndFeel();
         }
@@ -1174,7 +1280,11 @@ public class SwingSet2 extends JPanel {
             this.swingset = swingset;
         }
 
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             System.exit(0);
         }
     }
@@ -1186,7 +1296,11 @@ public class SwingSet2 extends JPanel {
             this.swingset = swingset;
         }
 
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             if(aboutBox == null) {
                 // JPanel panel = new JPanel(new BorderLayout());
                 JPanel panel = new AboutPanel(swingset);
@@ -1225,7 +1339,11 @@ public class SwingSet2 extends JPanel {
             this.screen = screen;
         }
 
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             GraphicsDevice[] gds = GraphicsEnvironment.
                                    getLocalGraphicsEnvironment().
                                    getScreenDevices();
@@ -1270,7 +1388,11 @@ public class SwingSet2 extends JPanel {
             setOpaque(false);
         }
 
-        public void paint(Graphics g) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(Graphics g) {
             aboutimage.paintIcon(this, g, 0, 0);
             super.paint(g);
         }
@@ -1292,7 +1414,11 @@ public class SwingSet2 extends JPanel {
             this.plain = plain;
         }
 
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             if (plain) {
                 UIManager.put("swing.boldMetal", Boolean.FALSE);
             }

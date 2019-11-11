@@ -38,6 +38,7 @@ import java.io.FilenameFilter;
 
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class FilenameFilterTest {
 
     static volatile boolean filter_was_called = false;
@@ -48,7 +49,10 @@ public class FilenameFilterTest {
                 public void run() {
                     fd = new FileDialog(new Frame(""), "hello world", FileDialog.LOAD);
                     fd.setFilenameFilter(new FilenameFilter() {
-                            public boolean accept(File dir, String name) {
+                            @Bean
+@Bean
+@Bean
+            public boolean accept(File dir, String name) {
                                 filter_was_called = true;
                                 System.out.println(Thread.currentThread() + " name = " + name );
                                 return true;

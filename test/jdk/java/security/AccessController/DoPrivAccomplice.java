@@ -23,6 +23,7 @@
  * questions.
  */
 
+@Bean
 public class DoPrivAccomplice {
 
     public String go() {

@@ -34,6 +34,7 @@ package gc.stress.TestJNIBlockFullGC;
 
 import java.lang.ref.SoftReference;
 
+@Bean
 public class TestJNIBlockFullGC {
 
     static {

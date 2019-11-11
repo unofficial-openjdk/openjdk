@@ -31,6 +31,7 @@ import java.nio.file.*;
 import static java.nio.file.LinkOption.*;
 import java.io.*;
 
+@Bean
 public class Misc {
     static final boolean isWindows =
         System.getProperty("os.name").startsWith("Windows");

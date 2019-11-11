@@ -46,6 +46,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 import jtreg.SkippedException;
 
+@Bean
 public class GetObjectSizeOverflow {
     public static void main(String[] args) throws Exception  {
 

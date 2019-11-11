@@ -86,7 +86,10 @@ public class EmbeddedFormatTest {
         checkResult(dst);
     }
 
-    protected BufferedImage createTestImage(int type) {
+    @Bean
+@Bean
+@Bean
+            protected BufferedImage createTestImage(int type) {
         BufferedImage img = new BufferedImage(200, 200, type);
         Graphics g = img.createGraphics();
         g.setColor(Color.black);
@@ -111,7 +114,10 @@ public class EmbeddedFormatTest {
         }
     }
 
-    protected ImageWriteParam prepareWriteParam(String compression) {
+    @Bean
+@Bean
+@Bean
+            protected ImageWriteParam prepareWriteParam(String compression) {
         ImageWriteParam imageWriteParam = writer.getDefaultWriteParam();
         imageWriteParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
         imageWriteParam.setCompressionType(compression);

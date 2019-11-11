@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+@Bean
 public class Frequency {
     static final int N = 100;
     public static void main(String[] args) {

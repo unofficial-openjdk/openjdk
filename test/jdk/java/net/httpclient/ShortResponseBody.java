@@ -77,6 +77,7 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
+@Bean
 public class ShortResponseBody {
 
     Server closeImmediatelyServer;
@@ -100,7 +101,11 @@ public class ShortResponseBody {
     final static AtomicLong ids = new AtomicLong();
     final ThreadFactory factory = new ThreadFactory() {
         @Override
-        public Thread newThread(Runnable r) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Thread newThread(Runnable r) {
             Thread thread = new Thread(r,  "HttpClient-Worker-" + ids.incrementAndGet());
             thread.setDaemon(true);
             return thread;
@@ -301,7 +306,11 @@ public class ShortResponseBody {
         }
 
         @Override
-        public int read(byte[] buf, int offset, int length) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int read(byte[] buf, int offset, int length) {
             //int count = offset;
             length = Math.max(0, Math.min(buf.length - offset, length));
             //for (; count < length; count++)

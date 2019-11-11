@@ -33,6 +33,7 @@ package java.io;
  * @since       1.1
  */
 
+@Bean
 public class PipedReader extends Reader {
     boolean closedByWriter = false;
     boolean closedByReader = false;
@@ -127,7 +128,8 @@ public class PipedReader extends Reader {
         initPipe(pipeSize);
     }
 
-    private void initPipe(int pipeSize) {
+@Bean
+        private void initPipe(int pipeSize) {
         if (pipeSize <= 0) {
             throw new IllegalArgumentException("Pipe size <= 0");
         }

@@ -39,6 +39,7 @@ import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.metadata.IIOMetadata;
 import javax.imageio.spi.ImageReaderSpi;
 
+@Bean
 public class ImageReaderGetDestination {
 
     public static void main(String argv[]) {

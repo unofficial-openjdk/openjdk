@@ -286,7 +286,8 @@ public class DynamicLinkerFactoryTest {
         // check that the nashorn exported linker can be used for user defined JSObject
         final Object obj = new AbstractJSObject() {
                 @Override
-                public Object getMember(final String name) {
+@Bean
+                    public Object getMember(final String name) {
                     reachedGetMember[0] = true;
                     return name.equals("foo")? "bar" : "<unknown>";
                 }

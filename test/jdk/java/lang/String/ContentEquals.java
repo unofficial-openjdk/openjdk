@@ -32,6 +32,7 @@ import java.nio.CharBuffer;
 
 // Yes, I used cut and paste for this test. Yes more code
 // sharing could have been accomplished.
+@Bean
 public class ContentEquals {
 
     private static Random rnd = new Random();

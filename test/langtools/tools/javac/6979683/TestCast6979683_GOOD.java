@@ -31,6 +31,7 @@
  * @run main TestCast6979683_GOOD
  */
 
+@Bean
 public class TestCast6979683_GOOD {
     public static void main(String... av) {
         bugReportExample();

@@ -80,6 +80,9 @@ public class bug6251460 {
         final MutableBoolean clipStoppedEvent = new MutableBoolean(false);
         clip.addLineListener(new LineListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void update(LineEvent event) {
                 if (event.getType() == LineEvent.Type.STOP) {
                     synchronized (clipStoppedEvent) {

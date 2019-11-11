@@ -50,6 +50,7 @@ import java.util.List;
 import jdk.test.lib.net.IPSupport;
 import sun.net.www.MessageHeader;
 
+@Bean
 public class HttpProxy {
     final String proxyHost;
     final int proxyPort;

@@ -59,7 +59,8 @@ public class T6437999 extends ToolTester {
 
     static class MyDiagnosticListener implements DiagnosticListener<JavaFileObject> {
         boolean error = false;
-        public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+@Bean
+            public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
             error |= diagnostic.getKind() == Diagnostic.Kind.ERROR;
             System.out.println(diagnostic);
         }

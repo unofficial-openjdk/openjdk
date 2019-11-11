@@ -38,6 +38,7 @@ import javax.script.ScriptEngineManager;
 import javax.script.SimpleBindings;
 import javax.script.SimpleScriptContext;
 
+@Bean
 public class Test5 {
         public static void main(String[] args) throws Exception {
                 System.out.println("\nTest5\n");

@@ -30,6 +30,7 @@ import java.awt.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessJDialog
  */
 
+@Bean
 public class HeadlessJDialog {
     public static void main(String args[]) {
         boolean exceptions = false;

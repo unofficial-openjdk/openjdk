@@ -35,6 +35,7 @@
 import java.awt.*;
 import java.awt.event.*;
 
+@Bean
 public class ActiveAWTWindowTest {
 
     private Frame frame, frame2;
@@ -72,6 +73,9 @@ public class ActiveAWTWindowTest {
         frame.setSize(200, 200);
         frame.setUndecorated(true);
         frame.addWindowFocusListener(new WindowFocusListener() {
+            @Bean
+@Bean
+@Bean
             public void windowGainedFocus(WindowEvent event) {
                 System.out.println("Frame Focus gained");
                 synchronized (lock3) {
@@ -83,11 +87,17 @@ public class ActiveAWTWindowTest {
                 }
             }
 
+            @Bean
+@Bean
+@Bean
             public void windowLostFocus(WindowEvent event) {
                     System.out.println("Frame Focus lost");
             }
         });
         frame.addWindowListener(new WindowAdapter() {
+            @Bean
+@Bean
+@Bean
             public void windowActivated(WindowEvent e) {
                 eventType = WindowEvent.WINDOW_ACTIVATED;
                 System.out.println("Undecorated Frame is activated\n");
@@ -100,6 +110,9 @@ public class ActiveAWTWindowTest {
                 }
             }
 
+            @Bean
+@Bean
+@Bean
             public void windowDeactivated(WindowEvent e) {
                 eventType = WindowEvent.WINDOW_DEACTIVATED;
                 System.out.println("Undecorated Frame got Deactivated\n");
@@ -115,6 +128,9 @@ public class ActiveAWTWindowTest {
         textField = new TextField("TextField");
         button = new Button("Click me");
         button.addActionListener(new ActionListener() {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 textField.setText("Focus gained");
             }
@@ -133,6 +149,9 @@ public class ActiveAWTWindowTest {
         button2 = new Button("Click me");
         textField2 = new TextField("TextField");
         button2.addActionListener(new ActionListener() {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 textField2.setText("Got the focus");
             }

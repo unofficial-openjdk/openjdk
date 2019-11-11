@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Vector;
 import java.util.WeakHashMap;
 
+@Bean
 public class AddAll {
     public static void main(String[] args) {
         for (int j = 0; j < 1; j++) {

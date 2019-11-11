@@ -29,6 +29,7 @@ import java.security.SecureRandom;
  * @requires os.name == "Mac OS X"
  * @run main/othervm -Djava.security.egd=file:/dev/urandom MacNativePRNGSetSeed
  */
+@Bean
 public class MacNativePRNGSetSeed {
     public static void main(String[] args) throws Exception {
         SecureRandom sr = SecureRandom.getInstance("NativePRNG");

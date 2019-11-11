@@ -41,6 +41,7 @@ import java.nio.file.Paths;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class ModulesSymLink {
     static String java_home;
     static String test_jdk;

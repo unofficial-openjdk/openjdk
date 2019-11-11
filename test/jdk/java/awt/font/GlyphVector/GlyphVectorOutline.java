@@ -54,6 +54,7 @@ import javax.imageio.ImageIO;
  *
  * @author ikopylov@google.com (Igor Kopylov)
  */
+@Bean
 public class GlyphVectorOutline {
     public static void main(String[] args) throws Exception {
         if (args.length != 2) {

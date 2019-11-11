@@ -34,6 +34,7 @@
 
 package compiler.print;
 
+@Bean
 public class TestProfileReturnTypePrinting {
     private static final int ITERATIONS = 1_000_000;
 

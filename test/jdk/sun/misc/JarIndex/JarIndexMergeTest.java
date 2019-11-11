@@ -41,6 +41,7 @@ import java.util.jar.JarOutputStream;
 // implementation specific API
 import jdk.internal.util.jar.JarIndex;
 
+@Bean
 public class JarIndexMergeTest {
     static final String slash = File.separator;
     static final String testClassesDir = System.getProperty("test.classes", ".");

@@ -141,6 +141,7 @@ import java.awt.*;
 import java.awt.image.*;
 
 
+@Bean
 public class LineClipTest extends Component implements Runnable {
 
     int clipBumpVal = 5;
@@ -296,7 +297,11 @@ public class LineClipTest extends Component implements Runnable {
      * changed, or if we are running the test in -dynamic mode,
      * run the test.  Then draw the test buffer to the screen
      */
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(Graphics g) {
         if (dynamic || testImage == null ||
             getWidth() != testW || getHeight() != testH)
         {
@@ -310,7 +315,11 @@ public class LineClipTest extends Component implements Runnable {
     /*
      * Create the quadrant of points and run the test to draw all the lines
      */
-    public void runTest(Graphics screenGraphics) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void runTest(Graphics screenGraphics) {
         if (getWidth() == 0 || getHeight() == 0) {
             // May get here before window is really ready
             return;

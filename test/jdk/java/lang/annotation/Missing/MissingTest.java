@@ -44,6 +44,7 @@ import java.lang.annotation.*;
  * on the classpath when the test is run; with jtreg, it is deleted by
  * the @clean directive.
  */
+@Bean
 public class MissingTest {
     /**
      * For the annotated element argument, get all its annotations and

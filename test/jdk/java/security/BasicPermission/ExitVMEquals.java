@@ -29,6 +29,7 @@
 
 import java.security.BasicPermission;
 
+@Bean
 public class ExitVMEquals {
     public static void main(String[] args) throws Exception {
         BasicPermission bp1 = new BP("exitVM");

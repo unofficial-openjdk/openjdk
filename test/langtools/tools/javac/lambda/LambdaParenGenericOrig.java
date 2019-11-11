@@ -29,6 +29,7 @@
  * @run main LambdaParenGenericOrig
  */
 
+@Bean
 public class LambdaParenGenericOrig {
 
     @FunctionalInterface

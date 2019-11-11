@@ -38,6 +38,7 @@ import javax.smartcardio.CardChannel;
 import javax.smartcardio.CardTerminal;
 import javax.smartcardio.CommandAPDU;
 
+@Bean
 public class TestChannel extends Utils {
 
     static final byte[] c1 = parse("00 A4 04 00 07 A0 00 00 00 62 81 01 00");

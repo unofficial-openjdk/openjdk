@@ -27,6 +27,7 @@ import java.io.Serializable ;
  * That class is used to modelize a parameter to be used as MBean property
  * value or MBean operation parameter or returned value.
  */
+@Bean
 public class RjmxMBeanParameter implements Serializable {
     public String name = "unset" ;
 
@@ -37,7 +38,11 @@ public class RjmxMBeanParameter implements Serializable {
         this.name = name ;
     }
 
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object obj) {
         if ( this.name.equals(((RjmxMBeanParameter)obj).name) ) {
             return true ;
         } else {

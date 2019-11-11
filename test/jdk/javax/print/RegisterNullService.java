@@ -31,6 +31,7 @@
 import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
 
+@Bean
 public class RegisterNullService {
     public static void main (String [] args) throws RuntimeException {
 

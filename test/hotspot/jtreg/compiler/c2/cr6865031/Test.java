@@ -52,7 +52,11 @@ abstract class AbstractMemoryEfficientList implements MyList {
     abstract public Object get(final int index);
     abstract public Object set(final int index, final Object element);
 
-    public boolean equals(Object o) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) {
         if (o == this) {
             return true;
         }
@@ -104,7 +108,11 @@ final class SingletonList extends AbstractMemoryEfficientList {
         return 1;
     }
 
-    public Object get(final int index) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Object get(final int index) {
         if (index == 0) {
             return this.element1;
         } else {
@@ -112,7 +120,11 @@ final class SingletonList extends AbstractMemoryEfficientList {
         }
     }
 
-    public Object set(final int index, final Object element) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Object set(final int index, final Object element) {
         if (index == 0) {
             final Object previousElement = this.element1;
             this.element1 = element;
@@ -136,7 +148,11 @@ final class DoubletonList extends AbstractMemoryEfficientList {
         return 2;
     }
 
-    public Object get(final int index) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Object get(final int index) {
         switch (index) {
             case 0 : return this.element1;
             case 1 : return this.element2;
@@ -144,7 +160,11 @@ final class DoubletonList extends AbstractMemoryEfficientList {
         }
     }
 
-    public Object set(final int index, final Object element) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Object set(final int index, final Object element) {
         switch (index) {
             case 0 :
             {
@@ -568,7 +588,11 @@ final class MultiSynonymKey {
         return this.getKeys().hashCode();
     }
 
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object obj) {
         if (this == obj) {
             return true;
         }
@@ -586,6 +610,7 @@ final class MultiSynonymKey {
     }
 }
 
+@Bean
 public class Test extends Thread {
     static public Test test;
     static private byte[] arg1;
@@ -650,7 +675,11 @@ public class Test extends Thread {
         }
     }
 
-    private boolean eq(Object x, Object y) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean eq(Object x, Object y) {
         return x == y || x.equals(y);
     }
 }

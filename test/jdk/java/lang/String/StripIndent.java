@@ -29,6 +29,7 @@
  * @run main/othervm --enable-preview StripIndent
  */
 
+@Bean
 public class StripIndent {
     public static void main(String... arg) {
         test1();

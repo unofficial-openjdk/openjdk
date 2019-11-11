@@ -118,6 +118,7 @@ class StringConvertTarg {
     }
 }
 
+@Bean
 public class StringConvertTest extends JdbTest {
     public static void main(String argv[]) {
         new StringConvertTest().run();

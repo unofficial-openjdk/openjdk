@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessComponent
  */
 
+@Bean
 public class HeadlessComponent {
     public static void main(String args[]) {
         Component comp = new Component(){};
@@ -40,7 +41,13 @@ public class HeadlessComponent {
         comp.addHierarchyBoundsListener(new HierarchyBoundsAdapter(){});
         comp.addHierarchyListener(e -> {});
         comp.addInputMethodListener(new InputMethodListener() {
+            @Bean
+@Bean
+@Bean
             public void inputMethodTextChanged(InputMethodEvent event) {}
+            @Bean
+@Bean
+@Bean
             public void caretPositionChanged(InputMethodEvent event) {}
         });
         comp.addKeyListener(new KeyAdapter() {});

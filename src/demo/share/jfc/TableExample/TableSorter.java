@@ -85,12 +85,20 @@ public final class TableSorter extends TableMap {
     }
 
     @Override
-    public void setModel(TableModel model) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setModel(TableModel model) {
         super.setModel(model);
         reallocateIndexes();
     }
 
-    public int compareRowsByColumn(int row1, int row2, int column) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int compareRowsByColumn(int row1, int row2, int column) {
         Class type = model.getColumnClass(column);
         TableModel data = model;
 
@@ -183,7 +191,11 @@ public final class TableSorter extends TableMap {
         }
     }
 
-    public int compare(int row1, int row2) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int compare(int row1, int row2) {
         compares++;
         for (int level = 0; level < sortingColumns.size(); level++) {
             Integer column = sortingColumns.get(level);
@@ -209,7 +221,11 @@ public final class TableSorter extends TableMap {
     }
 
     @Override
-    public void tableChanged(TableModelEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void tableChanged(TableModelEvent e) {
         System.out.println("Sorter: tableChanged");
         reallocateIndexes();
 
@@ -222,7 +238,11 @@ public final class TableSorter extends TableMap {
         }
     }
 
-    public void sort(Object sender) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void sort(Object sender) {
         checkModel();
 
         compares = 0;
@@ -249,7 +269,11 @@ public final class TableSorter extends TableMap {
     // arrays. The number of compares appears to vary between N-1 and
     // NlogN depending on the initial order but the main reason for
     // using it here is that, unlike qsort, it is stable.
-    public void shuttlesort(int[] from, int[] to, int low, int high) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void shuttlesort(int[] from, int[] to, int low, int high) {
         if (high - low < 2) {
             return;
         }
@@ -291,7 +315,11 @@ public final class TableSorter extends TableMap {
         }
     }
 
-    public void swap(int i, int j) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void swap(int i, int j) {
         int tmp = indexes[i];
         indexes[i] = indexes[j];
         indexes[j] = tmp;
@@ -300,22 +328,38 @@ public final class TableSorter extends TableMap {
     // The mapping only affects the contents of the data rows.
     // Pass all requests to these rows through the mapping array: "indexes".
     @Override
-    public Object getValueAt(int aRow, int aColumn) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Object getValueAt(int aRow, int aColumn) {
         checkModel();
         return model.getValueAt(indexes[aRow], aColumn);
     }
 
     @Override
-    public void setValueAt(Object aValue, int aRow, int aColumn) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setValueAt(Object aValue, int aRow, int aColumn) {
         checkModel();
         model.setValueAt(aValue, indexes[aRow], aColumn);
     }
 
-    public void sortByColumn(int column) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void sortByColumn(int column) {
         sortByColumn(column, true);
     }
 
-    public void sortByColumn(int column, boolean ascending) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void sortByColumn(int column, boolean ascending) {
         this.ascending = ascending;
         sortingColumns.clear();
         sortingColumns.add(column);
@@ -326,14 +370,22 @@ public final class TableSorter extends TableMap {
     // There is no-where else to put this.
     // Add a mouse listener to the Table to trigger a table sort
     // when a column heading is clicked in the JTable.
-    public void addMouseListenerToHeaderInTable(JTable table) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void addMouseListenerToHeaderInTable(JTable table) {
         final TableSorter sorter = this;
         final JTable tableView = table;
         tableView.setColumnSelectionAllowed(false);
         MouseAdapter listMouseListener = new MouseAdapter() {
 
             @Override
-            public void mouseClicked(MouseEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void mouseClicked(MouseEvent e) {
                 TableColumnModel columnModel = tableView.getColumnModel();
                 int viewColumn = columnModel.getColumnIndexAtX(e.getX());
                 int column = tableView.convertColumnIndexToModel(viewColumn);

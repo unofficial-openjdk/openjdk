@@ -46,6 +46,7 @@ import sun.hotspot.WhiteBox;
 import sun.hotspot.code.Compiler;
 import sun.hotspot.gc.GC;
 
+@Bean
 public class MemberNameLeak {
     private static String className  = "MemberNameLeakTestClass";
     private static String methodPrefix = "method";

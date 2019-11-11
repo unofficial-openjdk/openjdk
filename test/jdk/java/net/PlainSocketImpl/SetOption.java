@@ -31,6 +31,7 @@
 import java.io.*;
 import java.net.*;
 
+@Bean
 public class SetOption {
 
     public static void main(String args[]) throws Exception {

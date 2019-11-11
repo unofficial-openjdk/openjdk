@@ -46,6 +46,9 @@ public class bug6578666 {
         frame.add(tree);
 
         tree.addKeyListener(new KeyAdapter() {
+            @Bean
+@Bean
+@Bean
             public void keyPressed(KeyEvent e) {
                 tree.updateUI();
             }

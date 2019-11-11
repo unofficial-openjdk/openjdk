@@ -33,6 +33,7 @@ import java.util.*;
 import java.util.regex.*;
 import java.lang.Character.UnicodeScript;
 
+@Bean
 public class CheckScript {
 
     public static void main(String[] args) throws Exception {

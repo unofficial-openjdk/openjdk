@@ -30,6 +30,7 @@
  * @compile SuperNew3.java
  */
 
+@Bean
 public class SuperNew3 {
     SuperNew3() {}
     SuperNew3(Object o) {}

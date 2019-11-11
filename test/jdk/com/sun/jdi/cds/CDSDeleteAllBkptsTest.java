@@ -43,6 +43,7 @@
  * into the CDS archive, so this will test debugging a class in the archive.
  */
 
+@Bean
 public class CDSDeleteAllBkptsTest extends CDSJDITest {
     static String jarClasses[] = {
         // DeleteAllBkptsTarg is the only class we need in the archive. It will

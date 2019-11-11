@@ -30,6 +30,7 @@
 
 import java.lang.invoke.MethodHandle;
 
+@Bean
 public class MethodHandleInvokeTest {
 
     private static interface Obj2Obj {

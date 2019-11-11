@@ -36,6 +36,7 @@ import java.io.InputStream;
 import org.testng.annotations.Test;
 
 @Test
+@Bean
 public class UserInputTest extends KullaTesting {
 
     public void testReadInput() {

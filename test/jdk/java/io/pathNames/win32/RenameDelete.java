@@ -35,6 +35,7 @@ import java.io.*;
  * and then tests delete() method with non canonical pathnames
  */
 
+@Bean
 public class RenameDelete {
 
     public static void main(String[] args) throws Exception {

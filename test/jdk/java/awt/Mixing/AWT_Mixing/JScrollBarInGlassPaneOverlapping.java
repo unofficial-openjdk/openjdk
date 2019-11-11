@@ -57,6 +57,9 @@ public class JScrollBarInGlassPaneOverlapping extends GlassPaneOverlappingTestBa
         ch.setValue(50);
         ch.addAdjustmentListener(new AdjustmentListener() {
 
+            @Bean
+@Bean
+@Bean
             public void adjustmentValueChanged(AdjustmentEvent e) {
                 wasLWClicked = true;
             }

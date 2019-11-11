@@ -54,6 +54,7 @@ import static org.testng.Assert.fail;
  * @run testng ListFactories
  */
 
+@Bean
 public class ListFactories {
 
     static final int NUM_STRINGS = 20; // should be larger than the largest fixed-arg overload
@@ -154,27 +155,47 @@ public class ListFactories {
     }
 
     @Test(dataProvider="all", expectedExceptions=UnsupportedOperationException.class)
-    public void cannotAddLast(List<String> act, List<String> exp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void cannotAddLast(List<String> act, List<String> exp) {
         act.add("x");
     }
 
     @Test(dataProvider="all", expectedExceptions=UnsupportedOperationException.class)
-    public void cannotAddFirst(List<String> act, List<String> exp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void cannotAddFirst(List<String> act, List<String> exp) {
         act.add(0, "x");
     }
 
     @Test(dataProvider="nonempty", expectedExceptions=UnsupportedOperationException.class)
-    public void cannotRemove(List<String> act, List<String> exp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void cannotRemove(List<String> act, List<String> exp) {
         act.remove(0);
     }
 
     @Test(dataProvider="nonempty", expectedExceptions=UnsupportedOperationException.class)
-    public void cannotSet(List<String> act, List<String> exp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void cannotSet(List<String> act, List<String> exp) {
         act.set(0, "x");
     }
 
     @Test(dataProvider="all")
-    public void contentsMatch(List<String> act, List<String> exp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void contentsMatch(List<String> act, List<String> exp) {
         assertEquals(act, exp);
     }
 
@@ -254,29 +275,49 @@ public class ListFactories {
     }
 
     @Test(dataProvider="all", expectedExceptions=NullPointerException.class)
-    public void containsNullShouldThrowNPE(List<String> act, List<String> exp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void containsNullShouldThrowNPE(List<String> act, List<String> exp) {
         act.contains(null);
     }
 
     @Test(dataProvider="all", expectedExceptions=NullPointerException.class)
-    public void indexOfNullShouldThrowNPE(List<String> act, List<String> exp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void indexOfNullShouldThrowNPE(List<String> act, List<String> exp) {
         act.indexOf(null);
     }
 
     @Test(dataProvider="all", expectedExceptions=NullPointerException.class)
-    public void lastIndexOfNullShouldThrowNPE(List<String> act, List<String> exp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void lastIndexOfNullShouldThrowNPE(List<String> act, List<String> exp) {
         act.lastIndexOf(null);
     }
 
     // List.of().subList views should not be Serializable
     @Test(dataProvider="sublists")
-    public void isNotSerializable(List<String> act, List<String> exp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void isNotSerializable(List<String> act, List<String> exp) {
         assertFalse(act instanceof Serializable);
     }
 
     // ... but List.of() should be
     @Test(dataProvider="nonsublists")
-    public void serialEquality(List<String> act, List<String> exp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void serialEquality(List<String> act, List<String> exp) {
         // assume that act.equals(exp) tested elsewhere
         List<String> copy = serialClone(act);
         assertEquals(act, copy);

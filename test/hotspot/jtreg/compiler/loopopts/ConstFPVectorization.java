@@ -31,6 +31,7 @@
 
 package compiler.loopopts;
 
+@Bean
 public class ConstFPVectorization {
 
     static float[] f = new float[16];

@@ -122,7 +122,10 @@ public class TickLength implements MetaEventListener {
      A method to create a short midi event (sound)
     */
 
-    public MidiEvent createShortMidiEvent(int theCommand, int theChannel, int theData1, int theData2, long theTime) {
+    @Bean
+@Bean
+@Bean
+            public MidiEvent createShortMidiEvent(int theCommand, int theChannel, int theData1, int theData2, long theTime) {
      ShortMessage dummyShortMessage;
      MidiEvent    dummyMidiEvent;
 
@@ -142,7 +145,10 @@ public class TickLength implements MetaEventListener {
     /*
      A method to create a meta midi event (used in  meta() method)
     */
-    public MidiEvent createMetaMidiEvent(int theType, String theData1, long theTime) {
+    @Bean
+@Bean
+@Bean
+            public MidiEvent createMetaMidiEvent(int theType, String theData1, long theTime) {
      MetaMessage  dummyMetaMessage;
      MidiEvent    dummyMidiEvent;
 
@@ -164,7 +170,10 @@ public class TickLength implements MetaEventListener {
      it puts out the actual tick position, as well as the WRONG total tick length and the RIGHT
      tick length using the work around by dividing the total length by 64
     */
-    public void meta(MetaMessage p1) {
+    @Bean
+@Bean
+@Bean
+            public void meta(MetaMessage p1) {
      if(p1.getType() ==47) {
        return;
      }

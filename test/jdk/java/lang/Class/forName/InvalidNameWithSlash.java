@@ -27,6 +27,7 @@
    @author James Bond/007
  */
 
+@Bean
 public class InvalidNameWithSlash {
     public static void main(String[] args) throws Exception {
         boolean exceptionOccurred = false;

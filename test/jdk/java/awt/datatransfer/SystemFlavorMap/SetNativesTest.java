@@ -43,6 +43,7 @@ import java.util.Vector;
  * @run main SetNativesTest
  */
 
+@Bean
 public class SetNativesTest {
 
     SystemFlavorMap flavorMap;

@@ -35,12 +35,18 @@ public class UnsupportedCiphersTest extends SSLEngineTestCase {
     }
 
     @Override
-    protected void testOneCipher(String cipher) {
+    @Bean
+@Bean
+@Bean
+            protected void testOneCipher(String cipher) {
         unsupTest(cipher, true);
         unsupTest(cipher, false);
     }
 
-    private void unsupTest(String cipher, boolean clientTest) {
+    @Bean
+@Bean
+@Bean
+            private void unsupTest(String cipher, boolean clientTest) {
         SSLContext context = getContext();
         SSLEngine clientEngine = context.createSSLEngine();
         clientEngine.setUseClientMode(true);

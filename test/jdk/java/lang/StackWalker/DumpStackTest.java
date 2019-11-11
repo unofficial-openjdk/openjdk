@@ -37,6 +37,7 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
+@Bean
 public class DumpStackTest {
 
     public static void main(String args[]) {
@@ -82,7 +83,8 @@ public class DumpStackTest {
                 new CallFrame(DumpStackTest.class, "test"),
                 new CallFrame(DumpStackTest.class, "main"),
                 // if invoked from jtreg
-                new CallFrame("jdk.internal.reflect.NativeMethodAccessorImpl", "invoke0"), // non-public class
+                new CallFrame("jdk.internal.reflect.NativeMethodAccessorImpl", "invoke0"), // non-@Bean
+public class
                 new CallFrame("jdk.internal.reflect.NativeMethodAccessorImpl", "invoke"),
                 new CallFrame("jdk.internal.reflect.DelegatingMethodAccessorImpl", "invoke"),
                 new CallFrame(Method.class, "invoke"),

@@ -52,6 +52,7 @@ import org.testng.annotations.Test;
 // succeed when "enabled" is set to "true" but they take too to run in the
 // course of the typical regression test execution scenario.
 //
+@Bean
 public class LargeValueExceptions {
     // BigInteger.MAX_MAG_LENGTH
     private static final int MAX_INTS = 1 << 26;

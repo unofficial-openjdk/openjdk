@@ -46,6 +46,7 @@ import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 import java.io.File;
 
+@Bean
 public class JsrRewriting {
 
     public static void main(String[] args) throws Exception {

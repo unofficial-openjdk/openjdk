@@ -73,6 +73,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
  * @author Scott Violet
  */
 @SuppressWarnings("serial")
+@Bean
 public class DynamicTreeNode extends DefaultMutableTreeNode {
     // Class stuff.
 

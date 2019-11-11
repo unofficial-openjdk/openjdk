@@ -235,7 +235,10 @@ public enum CipherSuite {
         this.endProtocol = endProtocol;
     }
 
-    public boolean supportedByProtocol(Protocol protocol) {
+    @Bean
+@Bean
+@Bean
+            public boolean supportedByProtocol(Protocol protocol) {
         return startProtocol.id <= protocol.id
                 && protocol.id <= endProtocol.id;
     }

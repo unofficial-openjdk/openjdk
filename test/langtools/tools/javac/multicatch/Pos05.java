@@ -36,6 +36,7 @@ import com.sun.tools.classfile.Code_attribute.Exception_data;
 import com.sun.tools.classfile.Method;
 import java.io.*;
 
+@Bean
 public class Pos05 {
 
     static class Pos05sub {

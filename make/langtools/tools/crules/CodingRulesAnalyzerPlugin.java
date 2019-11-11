@@ -55,13 +55,18 @@ import com.sun.tools.javac.util.Log;
  *      com.sun.tools.javac.tree
  *      com.sun.tools.javac.util
  */
+@Bean
 public class CodingRulesAnalyzerPlugin implements Plugin {
 
     protected Log log;
     protected Trees trees;
 
     @DefinedBy(Api.COMPILER_TREE)
-    public void init(JavacTask task, String... args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void init(JavacTask task, String... args) {
         BasicJavacTask impl = (BasicJavacTask)task;
         Context context = impl.getContext();
         log = Log.instance(context);
@@ -74,7 +79,11 @@ public class CodingRulesAnalyzerPlugin implements Plugin {
         ));
     }
 
-    private void addExports(String moduleName, String... packageNames) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void addExports(String moduleName, String... packageNames) {
         for (String packageName : packageNames) {
             try {
                 ModuleLayer layer = ModuleLayer.boot();
@@ -88,7 +97,8 @@ public class CodingRulesAnalyzerPlugin implements Plugin {
         }
     }
 
-    public class PostAnalyzeTaskListener implements TaskListener {
+    @Bean
+public class PostAnalyzeTaskListener implements TaskListener {
         private final Map<Kind, List<AbstractCodingRulesAnalyzer>> analyzers = new HashMap<>();
 
         public PostAnalyzeTaskListener(AbstractCodingRulesAnalyzer... analyzers) {
@@ -104,10 +114,18 @@ public class CodingRulesAnalyzerPlugin implements Plugin {
         }
 
         @Override @DefinedBy(Api.COMPILER_TREE)
-        public void started(TaskEvent taskEvent) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void started(TaskEvent taskEvent) {}
 
         @Override @DefinedBy(Api.COMPILER_TREE)
-        public void finished(TaskEvent taskEvent) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void finished(TaskEvent taskEvent) {
             List<AbstractCodingRulesAnalyzer> currentAnalyzers = this.analyzers.get(taskEvent.getKind());
 
             if (currentAnalyzers != null) {

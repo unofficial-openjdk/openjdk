@@ -36,6 +36,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static org.testng.Assert.*;
 import org.testng.annotations.Test;
 
+@Bean
 public class BasicDouble {
     static final double DOUBLEVAL = Math.PI;
     static final double UNEXPECTED = 6.62607004E-34;

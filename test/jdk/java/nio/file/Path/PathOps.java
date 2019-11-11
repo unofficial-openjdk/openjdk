@@ -31,6 +31,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+@Bean
 public class PathOps {
 
     static final java.io.PrintStream out = System.out;

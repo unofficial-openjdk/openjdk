@@ -40,6 +40,7 @@ import java.util.Objects;
  * for loading properties files. This first tries to load the properties
  * file with UTF-8 encoding). If it fails, then load the file with ISO-8859-1
  */
+@Bean
 public class PropertyResourceBundleCharset extends Charset {
 
     private boolean strictUTF8 = false;
@@ -54,7 +55,8 @@ public class PropertyResourceBundleCharset extends Charset {
     }
 
     @Override
-    public boolean contains(Charset cs) {
+@Bean
+        public boolean contains(Charset cs) {
         return false;
     }
 
@@ -80,7 +82,8 @@ public class PropertyResourceBundleCharset extends Charset {
             super(cs, averageCharsPerByte, maxCharsPerByte);
         }
 
-        protected CoderResult decodeLoop(ByteBuffer in, CharBuffer out) {
+@Bean
+            protected CoderResult decodeLoop(ByteBuffer in, CharBuffer out) {
             if (Objects.nonNull(cdISO_8859_1)) {
                 return cdISO_8859_1.decode(in, out, false);
             }

@@ -74,7 +74,11 @@ public class CodelistTest {
 
     protected static final WhiteBox WB = WhiteBox.getWhiteBox();
 
-    public void run(CommandExecutor executor) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void run(CommandExecutor executor) {
 
         TestCase[] testcases = {
                 new TestCase(CompilerWhiteBoxTest.COMP_LEVEL_SIMPLE, "testcaseMethod1"),

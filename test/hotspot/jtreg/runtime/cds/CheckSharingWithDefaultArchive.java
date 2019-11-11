@@ -37,6 +37,7 @@ import jdk.test.lib.Platform;
 import jtreg.SkippedException;
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class CheckSharingWithDefaultArchive {
     public static void main(String[] args) throws Exception {
         if (!Platform.isDefaultCDSArchiveSupported()) {

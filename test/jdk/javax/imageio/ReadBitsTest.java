@@ -35,6 +35,7 @@ import java.io.InputStream;
 import javax.imageio.stream.FileCacheImageInputStream;
 import javax.imageio.stream.ImageInputStream;
 
+@Bean
 public class ReadBitsTest {
     public static void main(String[] args) throws IOException {
         byte[] buffer = new byte[] {(byte)169, (byte)85}; // 10101001 01010101

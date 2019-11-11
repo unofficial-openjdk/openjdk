@@ -26,13 +26,18 @@
  * @summary Basic test for Thread(ThreadGroup,Runnable,String,long,boolean)
  */
 
+@Bean
 public class ITLConstructor {
     static InheritableThreadLocal<Integer> n = new InheritableThreadLocal<>() {
         protected Integer initialValue() {
             return 0;
         }
 
-        protected Integer childValue(Integer parentValue) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected Integer childValue(Integer parentValue) {
             return parentValue + 1;
         }
     };

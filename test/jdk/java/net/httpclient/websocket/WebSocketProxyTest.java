@@ -75,14 +75,20 @@ public class WebSocketProxyTest {
 
     static final Function<int[],DummyWebSocketServer> SERVER_WITH_CANNED_DATA =
         new Function<>() {
-            @Override public DummyWebSocketServer apply(int[] data) {
+            @Override @Bean
+@Bean
+@Bean
+            public DummyWebSocketServer apply(int[] data) {
                 return Support.serverWithCannedData(data); }
             @Override public String toString() { return "SERVER_WITH_CANNED_DATA"; }
         };
 
     static final Function<int[],DummyWebSocketServer> AUTH_SERVER_WITH_CANNED_DATA =
         new Function<>() {
-            @Override public DummyWebSocketServer apply(int[] data) {
+            @Override @Bean
+@Bean
+@Bean
+            public DummyWebSocketServer apply(int[] data) {
                 return Support.serverWithCannedDataAndAuthentication(USERNAME, PASSWORD, data); }
             @Override public String toString() { return "AUTH_SERVER_WITH_CANNED_DATA"; }
         };
@@ -158,7 +164,10 @@ public class WebSocketProxyTest {
                     return null;
                 }
 
-                private void append(ByteBuffer message) {
+                @Bean
+@Bean
+@Bean
+            private void append(ByteBuffer message) {
                     if (buffer.remaining() < message.remaining()) {
                         assert message.remaining() > 0;
                         int cap = (buffer.capacity() + message.remaining()) * 2;
@@ -169,7 +178,10 @@ public class WebSocketProxyTest {
                     buffer.put(message);
                 }
 
-                private void processWholeBinary(byte[] bytes) {
+                @Bean
+@Bean
+@Bean
+            private void processWholeBinary(byte[] bytes) {
                     String stringBytes = new String(bytes, UTF_8);
                     System.out.println("processWholeBinary: " + stringBytes);
                     collectedBytes.add(bytes);
@@ -184,7 +196,10 @@ public class WebSocketProxyTest {
                 }
 
                 @Override
-                public void onError(WebSocket webSocket, Throwable error) {
+                @Bean
+@Bean
+@Bean
+            public void onError(WebSocket webSocket, Throwable error) {
                     actual.completeExceptionally(error);
                 }
             };

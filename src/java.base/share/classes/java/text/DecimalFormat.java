@@ -380,6 +380,7 @@ import sun.util.locale.provider.ResourceBundleBasedAdapter;
  * @author       Alan Liu
  * @since 1.1
  */
+@Bean
 public class DecimalFormat extends NumberFormat {
 
     /**
@@ -933,7 +934,8 @@ public class DecimalFormat extends NumberFormat {
      * @since 1.4
      */
     @Override
-    public AttributedCharacterIterator formatToCharacterIterator(Object obj) {
+@Bean
+        public AttributedCharacterIterator formatToCharacterIterator(Object obj) {
         CharacterIteratorFieldDelegate delegate =
                          new CharacterIteratorFieldDelegate();
         StringBuffer sb = new StringBuffer();
@@ -1091,7 +1093,8 @@ public class DecimalFormat extends NumberFormat {
         return true;
     }
 
-    private void resetFastPathData(boolean fastPathWasOn) {
+@Bean
+        private void resetFastPathData(boolean fastPathWasOn) {
         // Since some instance properties may have changed while still falling
         // in the fast-path case, we need to reinitialize fastPathData anyway.
         if (isFastPath) {
@@ -1414,8 +1417,10 @@ public class DecimalFormat extends NumberFormat {
      * @param suffix     Char sequence to append as a suffix.
      *
      */
-    //    private void addAffixes(boolean isNegative, char[] container) {
-    private void addAffixes(char[] container, char[] prefix, char[] suffix) {
+    //@Bean
+        private void addAffixes(boolean isNegative, char[] container) {
+@Bean
+        private void addAffixes(char[] container, char[] prefix, char[] suffix) {
 
         // We add affixes only if needed (affix length > 0).
         int pl = prefix.length;
@@ -1511,7 +1516,8 @@ public class DecimalFormat extends NumberFormat {
      *
      * @param digitsBuffer The char array container where the digits are stored.
      */
-    private void localizeDigits(char[] digitsBuffer) {
+@Bean
+        private void localizeDigits(char[] digitsBuffer) {
 
         // We will localize only the digits, using the groupingSize,
         // and taking into account fractional part.
@@ -2134,7 +2140,8 @@ public class DecimalFormat extends NumberFormat {
      *             {@code pos} is null.
      */
     @Override
-    public Number parse(String text, ParsePosition pos) {
+@Bean
+        public Number parse(String text, ParsePosition pos) {
         // special case NaN
         if (text.regionMatches(pos.index, symbols.getNaN(), 0, symbols.getNaN().length())) {
             pos.index = pos.index + symbols.getNaN().length();
@@ -2536,7 +2543,8 @@ public class DecimalFormat extends NumberFormat {
      * @param newSymbols desired DecimalFormatSymbols
      * @see java.text.DecimalFormatSymbols
      */
-    public void setDecimalFormatSymbols(DecimalFormatSymbols newSymbols) {
+@Bean
+        public void setDecimalFormatSymbols(DecimalFormatSymbols newSymbols) {
         try {
             // don't allow multiple references
             symbols = (DecimalFormatSymbols) newSymbols.clone();
@@ -2748,7 +2756,8 @@ public class DecimalFormat extends NumberFormat {
      * {@inheritDoc}
      */
     @Override
-    public void setGroupingUsed(boolean newValue) {
+@Bean
+        public void setGroupingUsed(boolean newValue) {
         super.setGroupingUsed(newValue);
         fastPathCheckNeeded = true;
     }
@@ -2819,7 +2828,8 @@ public class DecimalFormat extends NumberFormat {
      * @param newValue {@code true} if the decimal separator is always shown;
      *                 {@code false} otherwise
      */
-    public void setDecimalSeparatorAlwaysShown(boolean newValue) {
+@Bean
+        public void setDecimalSeparatorAlwaysShown(boolean newValue) {
         decimalSeparatorAlwaysShown = newValue;
         fastPathCheckNeeded = true;
     }
@@ -2846,7 +2856,8 @@ public class DecimalFormat extends NumberFormat {
      * @see #isParseBigDecimal
      * @since 1.5
      */
-    public void setParseBigDecimal(boolean newValue) {
+@Bean
+        public void setParseBigDecimal(boolean newValue) {
         parseBigDecimal = newValue;
     }
 
@@ -2989,7 +3000,8 @@ public class DecimalFormat extends NumberFormat {
      * @param buffer a scratch StringBuffer; its contents will be lost
      * @return the expanded equivalent of pattern
      */
-    private String expandAffix(String pattern, StringBuffer buffer) {
+@Bean
+        private String expandAffix(String pattern, StringBuffer buffer) {
         buffer.setLength(0);
         for (int i=0; i<pattern.length(); ) {
             char c = pattern.charAt(i++);
@@ -3154,7 +3166,8 @@ public class DecimalFormat extends NumberFormat {
      * there are special characters.  Single quotes themselves must be
      * escaped in either case.
      */
-    private void appendAffix(StringBuffer buffer, String affix, boolean localized) {
+@Bean
+        private void appendAffix(StringBuffer buffer, String affix, boolean localized) {
         boolean needQuote;
         if (localized) {
             needQuote = affix.indexOf(symbols.getZeroDigit()) >= 0
@@ -3191,7 +3204,8 @@ public class DecimalFormat extends NumberFormat {
 
     /**
      * Does the real work of generating a pattern.  */
-    private String toPattern(boolean localized) {
+@Bean
+        private String toPattern(boolean localized) {
         StringBuffer result = new StringBuffer();
         for (int j = 1; j >= 0; --j) {
             if (j == 1)
@@ -3272,7 +3286,8 @@ public class DecimalFormat extends NumberFormat {
      * @throws    NullPointerException if {@code pattern} is null
      * @throws    IllegalArgumentException if the given pattern is invalid.
      */
-    public void applyPattern(String pattern) {
+@Bean
+        public void applyPattern(String pattern) {
         applyPattern(pattern, false);
     }
 
@@ -3299,14 +3314,16 @@ public class DecimalFormat extends NumberFormat {
      * @throws    NullPointerException if {@code pattern} is null
      * @throws    IllegalArgumentException if the given pattern is invalid.
      */
-    public void applyLocalizedPattern(String pattern) {
+@Bean
+        public void applyLocalizedPattern(String pattern) {
         applyPattern(pattern, true);
     }
 
     /**
      * Does the real work of applying a pattern.
      */
-    private void applyPattern(String pattern, boolean localized) {
+@Bean
+        private void applyPattern(String pattern, boolean localized) {
         char zeroDigit         = PATTERN_ZERO_DIGIT;
         char groupingSeparator = PATTERN_GROUPING_SEPARATOR;
         char decimalSeparator  = PATTERN_DECIMAL_SEPARATOR;
@@ -3646,7 +3663,8 @@ public class DecimalFormat extends NumberFormat {
      * @see NumberFormat#setMaximumIntegerDigits
      */
     @Override
-    public void setMaximumIntegerDigits(int newValue) {
+@Bean
+        public void setMaximumIntegerDigits(int newValue) {
         maximumIntegerDigits = Math.min(Math.max(0, newValue), MAXIMUM_INTEGER_DIGITS);
         super.setMaximumIntegerDigits((maximumIntegerDigits > DOUBLE_INTEGER_DIGITS) ?
             DOUBLE_INTEGER_DIGITS : maximumIntegerDigits);
@@ -3667,7 +3685,8 @@ public class DecimalFormat extends NumberFormat {
      * @see NumberFormat#setMinimumIntegerDigits
      */
     @Override
-    public void setMinimumIntegerDigits(int newValue) {
+@Bean
+        public void setMinimumIntegerDigits(int newValue) {
         minimumIntegerDigits = Math.min(Math.max(0, newValue), MAXIMUM_INTEGER_DIGITS);
         super.setMinimumIntegerDigits((minimumIntegerDigits > DOUBLE_INTEGER_DIGITS) ?
             DOUBLE_INTEGER_DIGITS : minimumIntegerDigits);
@@ -3688,7 +3707,8 @@ public class DecimalFormat extends NumberFormat {
      * @see NumberFormat#setMaximumFractionDigits
      */
     @Override
-    public void setMaximumFractionDigits(int newValue) {
+@Bean
+        public void setMaximumFractionDigits(int newValue) {
         maximumFractionDigits = Math.min(Math.max(0, newValue), MAXIMUM_FRACTION_DIGITS);
         super.setMaximumFractionDigits((maximumFractionDigits > DOUBLE_FRACTION_DIGITS) ?
             DOUBLE_FRACTION_DIGITS : maximumFractionDigits);
@@ -3709,7 +3729,8 @@ public class DecimalFormat extends NumberFormat {
      * @see NumberFormat#setMinimumFractionDigits
      */
     @Override
-    public void setMinimumFractionDigits(int newValue) {
+@Bean
+        public void setMinimumFractionDigits(int newValue) {
         minimumFractionDigits = Math.min(Math.max(0, newValue), MAXIMUM_FRACTION_DIGITS);
         super.setMinimumFractionDigits((minimumFractionDigits > DOUBLE_FRACTION_DIGITS) ?
             DOUBLE_FRACTION_DIGITS : minimumFractionDigits);
@@ -3801,7 +3822,8 @@ public class DecimalFormat extends NumberFormat {
      * @since 1.4
      */
     @Override
-    public void setCurrency(Currency currency) {
+@Bean
+        public void setCurrency(Currency currency) {
         if (currency != symbols.getCurrency()) {
             symbols.setCurrency(currency);
             if (isCurrencyFormat) {
@@ -3832,7 +3854,8 @@ public class DecimalFormat extends NumberFormat {
      * @since 1.6
      */
     @Override
-    public void setRoundingMode(RoundingMode roundingMode) {
+@Bean
+        public void setRoundingMode(RoundingMode roundingMode) {
         if (roundingMode == null) {
             throw new NullPointerException();
         }

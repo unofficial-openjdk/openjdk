@@ -35,6 +35,7 @@ import java.util.TimeZone;
 
 import static java.util.Calendar.*;
 
+@Bean
 public class NonLenientTest extends IntlTest {
 
     public static void main(String[] args) throws Exception {

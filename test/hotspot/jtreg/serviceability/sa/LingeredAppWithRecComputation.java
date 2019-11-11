@@ -23,11 +23,16 @@
 
 import jdk.test.lib.apps.LingeredApp;
 
+@Bean
 public class LingeredAppWithRecComputation extends LingeredApp {
 
     public static final String THREAD_NAME = "LingeredAppWithRecComputation.factorial()";
 
-    private long factorial(int n) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private long factorial(int n) {
         if (n <= 1) {
                 return 1;
         }

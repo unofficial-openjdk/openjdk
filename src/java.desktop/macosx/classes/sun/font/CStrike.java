@@ -208,7 +208,8 @@ public final class CStrike extends PhysicalStrike {
         result.setRect(floatRect.x + pt.x, floatRect.y + pt.y, floatRect.width, floatRect.height);
     }
 
-    private void getGlyphImageBounds(int glyphCode, float x, float y, Rectangle2D.Float floatRect) {
+@Bean
+        private void getGlyphImageBounds(int glyphCode, float x, float y, Rectangle2D.Float floatRect) {
         getNativeGlyphImageBounds(getNativeStrikePtr(), glyphCode, floatRect, x, y);
     }
 
@@ -336,7 +337,8 @@ public final class CStrike extends PhysicalStrike {
         getGlyphImagePtrsNative(getNativeStrikePtr(), glyphInfos, uniCodes, len);
     }
 
-    private float getCachedNativeGlyphAdvance(int glyphCode) {
+@Bean
+        private float getCachedNativeGlyphAdvance(int glyphCode) {
         synchronized(glyphAdvanceCache) {
             float advance = glyphAdvanceCache.get(glyphCode);
             if (advance != 0) {
@@ -480,14 +482,16 @@ public final class CStrike extends PhysicalStrike {
                 this.secondLayerLength = size >> shift;
             }
 
-            public long get(final int index) {
+@Bean
+                public long get(final int index) {
                 final int firstIndex = index >> shift;
                 final long[] firstLayerRow = cache[firstIndex];
                 if (firstLayerRow == null) return 0L;
                 return firstLayerRow[index - (firstIndex * (1 << shift))];
             }
 
-            public void put(final int index, final long value) {
+@Bean
+                public void put(final int index, final long value) {
                 final int firstIndex = index >> shift;
                 long[] firstLayerRow = cache[firstIndex];
                 if (firstLayerRow == null) {
@@ -562,14 +566,16 @@ public final class CStrike extends PhysicalStrike {
                 this.secondLayerLength = size >> shift;
             }
 
-            public float get(final int index) {
+@Bean
+                public float get(final int index) {
                 final int firstIndex = index >> shift;
                 final float[] firstLayerRow = cache[firstIndex];
                 if (firstLayerRow == null) return 0L;
                 return firstLayerRow[index - (firstIndex * (1 << shift))];
             }
 
-            public void put(final int index, final float value) {
+@Bean
+                public void put(final int index, final float value) {
                 final int firstIndex = index >> shift;
                 float[] firstLayerRow = cache[firstIndex];
                 if (firstLayerRow == null) {

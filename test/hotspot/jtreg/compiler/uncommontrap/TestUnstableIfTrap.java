@@ -91,6 +91,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.ILOAD;
 import static jdk.internal.org.objectweb.asm.Opcodes.ISUB;
 import static jdk.internal.org.objectweb.asm.Opcodes.RETURN;
 
+@Bean
 public class TestUnstableIfTrap {
     private static final WhiteBox WB = WhiteBox.getWhiteBox();
     private static final String CLASS_NAME = "UnstableIfExecutable";

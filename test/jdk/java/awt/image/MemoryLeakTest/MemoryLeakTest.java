@@ -133,7 +133,10 @@ public void start()
   show();
 }
 
-public void paint(Graphics g) {
+@Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
     if (osImage != null) {
         g.drawImage(osImage, 0, 0, this);
     }
@@ -159,7 +162,10 @@ public void componentResized(ComponentEvent e)
     g.dispose();
 }
 
-public void componentMoved(ComponentEvent e) {}
+@Bean
+@Bean
+@Bean
+            public void componentMoved(ComponentEvent e) {}
 
 public void componentShown(ComponentEvent e)
 {
@@ -170,6 +176,9 @@ public void componentShown(ComponentEvent e)
     g.dispose();
 }
 
-public void componentHidden(ComponentEvent e) {}
+@Bean
+@Bean
+@Bean
+            public void componentHidden(ComponentEvent e) {}
 
 }

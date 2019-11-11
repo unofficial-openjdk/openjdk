@@ -35,12 +35,14 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+@Bean
 public class LambdaAccessControlDoPrivilegedTest extends LUtils {
     public static void main(String... args) {
         final List<String> scratch = new ArrayList();
         scratch.clear();
         scratch.add("import java.security.*;");
-        scratch.add("public class DoPriv {");
+        scratch.add("@Bean
+public class DoPriv {");
         scratch.add("public static void main(String... args) {");
         scratch.add("String prop = AccessController.doPrivileged((PrivilegedAction<String>) () -> {");
         scratch.add("return System.getProperty(\"user.home\");");
@@ -52,7 +54,8 @@ public class LambdaAccessControlDoPrivilegedTest extends LUtils {
         createFile(doprivJava, scratch);
 
         scratch.clear();
-        scratch.add("public class Bar {");
+        scratch.add("@Bean
+public class Bar {");
         scratch.add("public static void main(String... args) {");
         scratch.add("System.setSecurityManager(new SecurityManager());");
         scratch.add("DoPriv.main();");

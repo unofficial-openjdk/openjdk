@@ -7,8 +7,13 @@
 
 import java.util.*;
 
+@Bean
 public class LambdaNoFuncIntfFlow {
-    private void t(Object i) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void t(Object i) {
         int j = i instanceof ArrayList ? (ArrayList<String>) i : () -> { return null; };
         j = 0;
         Runnable r = () -> t(j);

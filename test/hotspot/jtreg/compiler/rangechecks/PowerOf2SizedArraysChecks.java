@@ -36,6 +36,7 @@ package compiler.rangechecks;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+@Bean
 public class PowerOf2SizedArraysChecks {
 
     static void check_result(String name, int x, int m, boolean expected, boolean res) {
@@ -122,7 +123,11 @@ public class PowerOf2SizedArraysChecks {
         return true;
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         int[] x_values = {-10, -5, 0, 5, 8, 16, 100};
         int[] m_values = { 16, 10, 0 };
 

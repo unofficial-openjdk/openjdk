@@ -77,7 +77,10 @@ public class ConstrainedPrintingTest implements ActionListener
     final Button button = new Button("Print");
     final Panel panel = new Panel();
     final Component testComponent = new Component() {
-        public void paint(Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
             ConstrainedPrintingTest.paintOutsideBounds(this, g, Color.green);
         }
         public Dimension getPreferredSize() {
@@ -85,7 +88,10 @@ public class ConstrainedPrintingTest implements ActionListener
         }
     };
     final Canvas testCanvas = new Canvas() {
-        public void paint(Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
             ConstrainedPrintingTest.paintOutsideBounds(this, g, Color.red);
             // The frame is sized so that only the upper part of
             // the canvas is visible. We draw on the lower part,
@@ -164,7 +170,10 @@ public class ConstrainedPrintingTest implements ActionListener
         frame.dispose();
     }
 
-    public void actionPerformed(ActionEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
         PageAttributes pa = new PageAttributes();
         pa.setPrinterResolution(36);
         PrintJob pjob = frame.getToolkit().getPrintJob(frame, "NewTest",

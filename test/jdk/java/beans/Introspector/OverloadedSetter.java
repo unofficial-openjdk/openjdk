@@ -43,57 +43,161 @@ public final class OverloadedSetter {
 
     // DDD will be selected because it is most specific type.
     class ParentADC<T> {
-        public void setValue(AAA value) {}
-        public void setValue(DDD value) {}
-        public void setValue(CCC value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(AAA value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(DDD value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(CCC value) {}
     }
     // DDD will be selected because it is most specific type.
     class ParentACD<T> {
-        public void setValue(AAA value) {}
-        public void setValue(CCC value) {}
-        public void setValue(DDD value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(AAA value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(CCC value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(DDD value) {}
     }
     // DDD will be selected because it is most specific type.
     class ParentDAC<T> {
-        public void setValue(DDD value) {}
-        public void setValue(AAA value) {}
-        public void setValue(CCC value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(DDD value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(AAA value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(CCC value) {}
     }
     // DDD will be selected because it is most specific type.
     class ParentDCA<T> {
-        public void setValue(DDD value) {}
-        public void setValue(CCC value) {}
-        public void setValue(AAA value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(DDD value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(CCC value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(AAA value) {}
     }
     // DDD will be selected because it is most specific type.
     class ParentCAD<T> {
-        public void setValue(CCC value) {}
-        public void setValue(AAA value) {}
-        public void setValue(DDD value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(CCC value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(AAA value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(DDD value) {}
     }
     // DDD will be selected because it is most specific type.
     class ParentCDA<T> {
-        public void setValue(CCC value) {}
-        public void setValue(DDD value) {}
-        public void setValue(AAA value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(CCC value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(DDD value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(AAA value) {}
     }
     // DDD will be selected because it is most specific type and ZZZ will be
     // skipped because it will be placed at the end of the methods list.
     class ParentCDAZ<T> {
-        public void setValue(CCC value) {}
-        public void setValue(DDD value) {}
-        public void setValue(AAA value) {}
-        public void setValue(ZZZ value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(CCC value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(DDD value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(AAA value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(ZZZ value) {}
     }
     // DDD will be selected because it is most specific type which related to
     // the type of getValue(); BBB will be skipped because it is not a type or
     // subclass of the type returned by getValue();
     class ParentDACB<T> {
         public DDD getValue(){return null;}
-        public void setValue(AAA value) {}
-        public void setValue(DDD value) {}
-        public void setValue(CCC value) {}
-        public void setValue(BBB value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(AAA value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(DDD value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(CCC value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(BBB value) {}
     }
 
     public static void main(String[] args) throws Exception {

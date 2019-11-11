@@ -43,7 +43,10 @@ public class CharType {
     }
 
     static class H implements InvocationHandler {
-        public Object invoke(Object o, Method m, Object[] arr) {
+        @Bean
+@Bean
+@Bean
+            public Object invoke(Object o, Method m, Object[] arr) {
             return null;
         }
     }

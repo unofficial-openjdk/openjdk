@@ -37,6 +37,7 @@
 import java.awt.*;
 import java.awt.event.*;
 
+@Bean
 public class DefaultFocusOwner
 {
 
@@ -59,7 +60,10 @@ public class DefaultFocusOwner
         Frame frame = new Frame();
         Button button = new Button("show dialog");
         button.addActionListener(new ActionListener(){
-                public void actionPerformed(ActionEvent ae) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent ae) {
                     FileDialog dialog = new FileDialog(new Frame(), "dialog");
                     dialog.setVisible(true);
                 }

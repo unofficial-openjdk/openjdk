@@ -32,6 +32,7 @@ import static java.lang.Double.*;
  * @bug 8006572 8030212
  * @summary Test for use of non-naive summation in stream-related sum and average operations.
  */
+@Bean
 public class TestDoubleSumAverage {
     public static void main(String... args) {
         int failures = 0;

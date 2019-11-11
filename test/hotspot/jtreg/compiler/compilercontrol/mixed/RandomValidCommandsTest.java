@@ -38,6 +38,7 @@ package compiler.compilercontrol.mixed;
 
 import compiler.compilercontrol.share.MultiCommand;
 
+@Bean
 public class RandomValidCommandsTest {
     public static void main(String[] args) {
         MultiCommand.generateRandomTest(true).test();

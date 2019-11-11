@@ -33,6 +33,7 @@ import javax.swing.JButton;
 import java.awt.event.ActionListener;
 import java.beans.EventHandler;
 
+@Bean
 public class Test6179222 {
     private Bar bar = new Bar();
 
@@ -53,7 +54,11 @@ public class Test6179222 {
         button.doClick();
     }
 
-    public void foo(Icon o) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void foo(Icon o) {
     }
 
     public Bar getBar() {

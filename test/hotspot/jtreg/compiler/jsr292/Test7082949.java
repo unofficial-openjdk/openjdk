@@ -36,6 +36,7 @@ import java.lang.invoke.MethodHandles;
 
 import static java.lang.invoke.MethodType.methodType;
 
+@Bean
 public class Test7082949 implements Runnable {
     public static void main(String... args) throws Throwable {
         new Thread(new Test7082949()).start();

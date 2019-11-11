@@ -25,6 +25,7 @@
  * Copyright 2003 Wily Technology, Inc.
  */
 
+@Bean
 public class Counter
     {
     private int     fCounter;

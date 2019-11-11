@@ -86,7 +86,10 @@ public class ForkJoinPool8Test extends JSR166TestCase {
      * checkInvoke.
      */
 
-    private void checkInvoke(ForkJoinTask a) {
+    @Bean
+@Bean
+@Bean
+            private void checkInvoke(ForkJoinTask a) {
         checkNotDone(a);
         assertNull(a.invoke());
         checkCompletedNormally(a);

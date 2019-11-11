@@ -54,6 +54,7 @@ import javax.lang.model.element.Name;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 
+@Bean
 public class SimpleDocTreeVisitorTest {
     public static void main(String... args) throws Exception {
         SimpleDocTreeVisitorTest t = new SimpleDocTreeVisitorTest();
@@ -111,21 +112,33 @@ public class SimpleDocTreeVisitorTest {
         }
 
         @Override
-        public Void visitClass(ClassTree tree, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitClass(ClassTree tree, Void ignore) {
             super.visitClass(tree, ignore);
             visitDecl(tree, tree.getSimpleName());
             return null;
         }
 
         @Override
-        public Void visitMethod(MethodTree tree, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitMethod(MethodTree tree, Void ignore) {
             super.visitMethod(tree, ignore);
             visitDecl(tree, tree.getName());
             return null;
         }
 
         @Override
-        public Void visitVariable(VariableTree tree, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitVariable(VariableTree tree, Void ignore) {
             super.visitVariable(tree, ignore);
             visitDecl(tree, tree.getName());
             return null;
@@ -147,7 +160,11 @@ public class SimpleDocTreeVisitorTest {
         }
 
         @Override
-        public Void scan(DocTree tree, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void scan(DocTree tree, Void ignore) {
             if (tree != null)
                 tree.accept(visitor, ignore);
             return super.scan(tree, ignore);
@@ -162,7 +179,11 @@ public class SimpleDocTreeVisitorTest {
         }
 
         @Override
-        public Void defaultAction(DocTree tree, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void defaultAction(DocTree tree, Void ignore) {
             found.add(tree.getKind());
             return null;
         }

@@ -58,6 +58,7 @@ import java.util.List;
  * so in order to avoid issue with retriable locks -XX:RTMRetryCount=0 is used.
  * For more details on that issue see {@link TestUseRTMAfterLockInflation}.
  */
+@Bean
 public class TestRTMDeoptOnLowAbortRatio {
     private static final long LOCKING_THRESHOLD = 100L;
     private static final long ABORT_THRESHOLD = LOCKING_THRESHOLD / 2L;
@@ -138,7 +139,11 @@ public class TestRTMDeoptOnLowAbortRatio {
                                   XAbortProvoker.class.getName() + "::doAbort" };
         }
 
-        public void forceAbort(boolean abort) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void forceAbort(boolean abort) {
             synchronized(monitor) {
                 if (abort) {
                     xabort.doAbort();

@@ -42,6 +42,7 @@ import jdk.internal.misc.Unsafe;
  *                 java.base/jdk.internal.misc
  * @run main/timeout=900 jdk.jfr.startupargs.TestMemoryOptions
  */
+@Bean
 public class TestMemoryOptions {
 
     public enum Unit {
@@ -91,7 +92,11 @@ public class TestMemoryOptions {
         private long result;
         private Unit resultUnit;
 
-        private long getValueAsUnit(long value, Unit unit) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private long getValueAsUnit(long value, Unit unit) {
             switch (unit) {
                 case b:
                     return value;
@@ -105,7 +110,11 @@ public class TestMemoryOptions {
             return value;
         }
 
-        private long getRawValue(long value, Unit unit) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private long getRawValue(long value, Unit unit) {
             switch (unit) {
                 case b:
                     return value;
@@ -119,7 +128,11 @@ public class TestMemoryOptions {
             return value;
         }
 
-        private long parseValue(String valueString, char unit) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private long parseValue(String valueString, char unit) {
             if (Character.isLetter(unit)) {
                 unit = Character.toLowerCase(unit);
                 return getRawValue(Long.parseLong(valueString.substring(0, valueString.length() - 1), 10),
@@ -155,7 +168,11 @@ public class TestMemoryOptions {
             this.paramName = "";
         }
 
-        public void setInput(long value, char unit) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setInput(long value, char unit) {
             this.inputUnit = Unit.valueOf(String.valueOf(unit));
             this.input = getRawValue(value, this.inputUnit);
         }
@@ -164,7 +181,11 @@ public class TestMemoryOptions {
             return input;
         }
 
-        public void setResult(long value, char unit) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setResult(long value, char unit) {
             this.resultUnit = Unit.valueOf(String.valueOf(unit));
             this.result = getRawValue(value, this.resultUnit);
         }
@@ -173,7 +194,11 @@ public class TestMemoryOptions {
             return result;
         }
 
-        public long getResultAs(Unit unit) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long getResultAs(Unit unit) {
             return getValueAsUnit(this.result, unit);
         }
 
@@ -242,7 +267,11 @@ public class TestMemoryOptions {
         }
 
         @Override
-        public int compareTo(Option obj) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int compareTo(Option obj) {
             if (getResult() == obj.getResult()) {
                 return 0;
             }
@@ -250,7 +279,11 @@ public class TestMemoryOptions {
         }
 
         @Override
-        public boolean equals(Object obj) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object obj) {
             if (obj == null) {
                 return false;
             }
@@ -274,11 +307,19 @@ public class TestMemoryOptions {
             return Long.toString(getResult());
         }
 
-        public Option multiply(Option rhsFactor) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Option multiply(Option rhsFactor) {
             return new Option(getResult() * rhsFactor.getResult(), 'b');
         }
 
-        public Option divide(Option rhsDivisor) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Option divide(Option rhsDivisor) {
             long divisor = rhsDivisor.getResult();
             if (divisor == 0) {
                 return new Option(0, 'b');
@@ -348,43 +389,83 @@ public class TestMemoryOptions {
             return this.testName;
         }
 
-        private void setInputForIndex(int index, long size, char unit) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void setInputForIndex(int index, long size, char unit) {
             optionList.get(index).setInput(size, unit);
         }
 
-        private void setResultForIndex(int index, long size, char unit) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void setResultForIndex(int index, long size, char unit) {
             optionList.get(index).setResult(size, unit);
         }
 
-        public void setMemorySizeTestParam(long size, char unit) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setMemorySizeTestParam(long size, char unit) {
             setInputForIndex(MEMORYSIZE, size, unit);
         }
 
-        public void setMemorySizeTestResult(long size, char unit) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setMemorySizeTestResult(long size, char unit) {
             setResultForIndex(MEMORYSIZE, size, unit);
         }
 
-        public void setGlobalBufferSizeTestParam(long size, char unit) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setGlobalBufferSizeTestParam(long size, char unit) {
             setInputForIndex(GLOBALBUFFERSIZE, size, unit);
         }
 
-        public void setGlobalBufferSizeTestResult(long size, char unit) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setGlobalBufferSizeTestResult(long size, char unit) {
             setResultForIndex(GLOBALBUFFERSIZE, size, unit);
         }
 
-        public void setGlobalBufferCountTestParam(long size, char unit) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setGlobalBufferCountTestParam(long size, char unit) {
             setInputForIndex(GLOBALBUFFERCOUNT, size, unit);
         }
 
-        public void setGlobalBufferCountTestResult(long size, char unit) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setGlobalBufferCountTestResult(long size, char unit) {
             setResultForIndex(GLOBALBUFFERCOUNT, size, unit);
         }
 
-        public void setThreadBufferSizeTestParam(long size, char unit) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setThreadBufferSizeTestParam(long size, char unit) {
             setInputForIndex(THREADBUFFERSIZE, size, unit);
         }
 
-        public void setThreadBufferSizeTestResult(long size, char unit) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setThreadBufferSizeTestResult(long size, char unit) {
             setResultForIndex(THREADBUFFERSIZE, size, unit);
         }
 

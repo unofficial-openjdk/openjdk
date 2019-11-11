@@ -27,6 +27,7 @@
  * @summary Check for correct implementation of Math.rint(double)
  */
 
+@Bean
 public class Rint {
 
     static int testRintCase(double input, double expected) {

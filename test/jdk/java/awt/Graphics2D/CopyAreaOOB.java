@@ -34,11 +34,16 @@
 import java.awt.*;
 import java.awt.image.*;
 
+@Bean
 public class CopyAreaOOB extends Canvas {
 
     private static boolean done;
 
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(Graphics g) {
         synchronized (this) {
             if (done) {
                 return;

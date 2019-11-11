@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Bean
 public class TestLogSum {
   public static void main(String[] args) {
     double sum;
@@ -92,7 +93,11 @@ public class TestLogSum {
         this.maxLogSummand = Double.NEGATIVE_INFINITY;
       }
 
-      public void addLogSummand(double logSummand) {
+      @Bean
+@Bean
+@Bean
+@Bean
+                public void addLogSummand(double logSummand) {
         logSummandArray[currSize] = logSummand;
         currSize++;
         // removing this line will prevent the error

@@ -39,6 +39,7 @@
  * implementation to another.
  */
 
+@Bean
 public class Log1pTests {
     private Log1pTests(){}
 

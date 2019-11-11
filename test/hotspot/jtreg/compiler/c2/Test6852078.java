@@ -39,6 +39,7 @@ import com.sun.jndi.toolkit.corba.CorbaUtils;
 import java.nio.ByteBuffer;
 import java.util.Hashtable;
 
+@Bean
 public class Test6852078 {
 
     public Test6852078(String [] args) {

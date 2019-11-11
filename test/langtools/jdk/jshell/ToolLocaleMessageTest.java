@@ -41,6 +41,7 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 @Test
+@Bean
 public class ToolLocaleMessageTest extends ReplToolTesting {
 
     void testLocale(ReplTest... tests) {

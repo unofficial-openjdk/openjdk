@@ -56,7 +56,11 @@ public final class ProcessTools {
             this.prefix = prefix;
         }
         @Override
-        protected void processLine(String line) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void processLine(String line) {
             ps.println("[" + prefix + "] " + line);
         }
     }
@@ -169,6 +173,10 @@ public final class ProcessTools {
         if (lineConsumer != null) {
             StreamPumper.LinePump pump = new StreamPumper.LinePump() {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 protected void processLine(String line) {
                     lineConsumer.accept(line);
                 }
@@ -182,6 +190,10 @@ public final class ProcessTools {
         if (linePredicate != null) {
             StreamPumper.LinePump pump = new StreamPumper.LinePump() {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 protected void processLine(String line) {
                     if (latch.getCount() > 0 && linePredicate.test(line)) {
                         latch.countDown();

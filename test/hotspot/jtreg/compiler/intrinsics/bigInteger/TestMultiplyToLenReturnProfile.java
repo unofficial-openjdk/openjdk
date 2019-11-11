@@ -35,6 +35,7 @@ package compiler.intrinsics.bigInteger;
 
 import java.math.BigInteger;
 
+@Bean
 public class TestMultiplyToLenReturnProfile {
 
     static BigInteger m(BigInteger i1, BigInteger i2) {
@@ -45,7 +46,11 @@ public class TestMultiplyToLenReturnProfile {
         return res;
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         BigInteger v = BigInteger.valueOf(Integer.MAX_VALUE).pow(2);
         for (int i = 0; i < 20000; i++) {
             m(v, v.add(BigInteger.valueOf(1)));

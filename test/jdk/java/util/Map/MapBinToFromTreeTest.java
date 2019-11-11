@@ -44,6 +44,7 @@ import static org.testng.Assert.assertEquals;
  */
 
 @Test
+@Bean
 public class MapBinToFromTreeTest {
 
     // Initial capacity of map
@@ -71,7 +72,11 @@ public class MapBinToFromTreeTest {
     }
 
     @Test(dataProvider = "maps")
-    public void testPutThenGet(String d, Map<HashCodeInteger, Integer> m) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testPutThenGet(String d, Map<HashCodeInteger, Integer> m) {
         put(SIZE, m, (i, s) -> {
             for (int j = 0; j < s; j++) {
                 assertEquals(m.get(new HashCodeInteger(j)).intValue(), j,
@@ -81,7 +86,11 @@ public class MapBinToFromTreeTest {
     }
 
     @Test(dataProvider = "maps")
-    public void testPutThenTraverse(String d, Map<HashCodeInteger, Integer> m) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testPutThenTraverse(String d, Map<HashCodeInteger, Integer> m) {
         Collector<Integer, ?, ? extends Collection<Integer>> c = getCollector(m);
 
         put(SIZE, m, (i, s) -> {
@@ -95,7 +104,11 @@ public class MapBinToFromTreeTest {
     }
 
     @Test(dataProvider = "maps")
-    public void testRemoveThenGet(String d, Map<HashCodeInteger, Integer> m) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testRemoveThenGet(String d, Map<HashCodeInteger, Integer> m) {
         put(SIZE, m, (i, s) -> { });
 
         remove(m, (i, s) -> {
@@ -107,7 +120,11 @@ public class MapBinToFromTreeTest {
     }
 
     @Test(dataProvider = "maps")
-    public void testRemoveThenTraverse(String d, Map<HashCodeInteger, Integer> m) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testRemoveThenTraverse(String d, Map<HashCodeInteger, Integer> m) {
         put(SIZE, m, (i, s) -> { });
 
         Collector<Integer, ?, ? extends Collection<Integer>> c = getCollector(m);
@@ -120,7 +137,11 @@ public class MapBinToFromTreeTest {
     }
 
     @Test(dataProvider = "maps")
-    public void testUntreeifyOnResizeWithGet(String d, Map<HashCodeInteger, Integer> m) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testUntreeifyOnResizeWithGet(String d, Map<HashCodeInteger, Integer> m) {
         // Fill the map with 64 entries grouped into 4 buckets
         put(INITIAL_CAPACITY, m, (i, s) -> { });
 
@@ -142,7 +163,11 @@ public class MapBinToFromTreeTest {
     }
 
     @Test(dataProvider = "maps")
-    public void testUntreeifyOnResizeWithTraverse(String d, Map<HashCodeInteger, Integer> m) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testUntreeifyOnResizeWithTraverse(String d, Map<HashCodeInteger, Integer> m) {
         // Fill the map with 64 entries grouped into 4 buckets
         put(INITIAL_CAPACITY, m, (i, s) -> { });
 
@@ -214,7 +239,11 @@ public class MapBinToFromTreeTest {
         }
 
         @Override
-        public boolean equals(Object obj) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object obj) {
             if (obj instanceof HashCodeInteger) {
                 HashCodeInteger other = (HashCodeInteger) obj;
                 return other.value == value;
@@ -228,7 +257,11 @@ public class MapBinToFromTreeTest {
         }
 
         @Override
-        public int compareTo(HashCodeInteger o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int compareTo(HashCodeInteger o) {
             return value - o.value;
         }
 

@@ -38,6 +38,7 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
+@Bean
 public class InternationalBAT {
 
     public static void main(String[] args) {

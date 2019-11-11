@@ -32,6 +32,7 @@ import java.util.logging.Level;
  * The ApplicationServer class provides the other server side of the "juicer"
  * stress test of RMI.
  */
+@Bean
 public class ApplicationServer implements Runnable {
 
     /** number of remote Apple objects to export */

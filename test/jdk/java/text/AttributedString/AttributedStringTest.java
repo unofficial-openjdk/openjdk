@@ -39,6 +39,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 
+@Bean
 public class AttributedStringTest {
 
     private static final String text = "Hello, world!";

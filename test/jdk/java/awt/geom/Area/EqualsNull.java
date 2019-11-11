@@ -29,6 +29,7 @@
 
 import java.awt.geom.Area;
 
+@Bean
 public class EqualsNull {
     public static void main(String argv[]) {
         if (new Area().equals(null)) {

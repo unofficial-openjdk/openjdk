@@ -28,6 +28,7 @@
  */
 import java.text.Bidi;
 
+@Bean
 public class Bug8005277 {
 
     public static void main(String[] args) {

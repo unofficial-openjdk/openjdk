@@ -27,6 +27,7 @@ interface TestComparator {
     public boolean compare(int a1, int a2);
 }
 
+@Bean
 public class LingeredAppWithInvokeDynamic extends LingeredApp {
     public static void main(String args[]) {
         Runnable r1 = () -> System.out.println("Hello");

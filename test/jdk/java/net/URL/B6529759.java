@@ -28,6 +28,7 @@
 
 import java.net.URL;
 
+@Bean
 public class B6529759
 {
     public static void main(String[] args) {
@@ -46,7 +47,11 @@ public class B6529759
             throw new UnsupportedOperationException();
         }
 
-        protected void parseURL(java.net.URL u, String spec, int start, int limit) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void parseURL(java.net.URL u, String spec, int start, int limit) {
             throw new RuntimeException();
         }
     }

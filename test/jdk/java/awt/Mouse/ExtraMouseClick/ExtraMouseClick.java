@@ -69,27 +69,42 @@ public class ExtraMouseClick {
     public void init()
     {
         frame.addMouseListener(new MouseAdapter() {
-                public void mousePressed(MouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void mousePressed(MouseEvent e) {
                     System.out.println("MousePressed");
                     pressed = true;
                 }
 
-                public void mouseReleased(MouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void mouseReleased(MouseEvent e) {
                     System.out.println("MouseReleased");
                     released = true;
                 }
 
-                public void mouseClicked(MouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void mouseClicked(MouseEvent e) {
                     System.out.println("MouseClicked!!!!");
                     clicked = true;
                 }
             });
         frame.addMouseMotionListener(new MouseMotionAdapter() {
-                public void mouseDragged(MouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void mouseDragged(MouseEvent e) {
                     System.out.println("MouseDragged--"+e);
                     dragged = true;
                 }
-                public void mouseMoved(MouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void mouseMoved(MouseEvent e) {
                 }
             });
 

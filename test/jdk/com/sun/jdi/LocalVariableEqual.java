@@ -109,6 +109,7 @@ class LocalVariableEqualTarg {
 
     /********** test program **********/
 
+@Bean
 public class LocalVariableEqual extends TestScaffold {
     ReferenceType targetClass;
     ThreadReference mainThread;

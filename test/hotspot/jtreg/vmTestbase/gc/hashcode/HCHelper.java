@@ -170,7 +170,11 @@ public final class HCHelper {
          *
          * @param allocatedSize Total allocated size.
          */
-        public void setAllocatedSize(long allocatedSize) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAllocatedSize(long allocatedSize) {
             this.allocatedSize = allocatedSize;
         }
 
@@ -188,7 +192,11 @@ public final class HCHelper {
          *
          * @param numOfAllocedObjs Number of objects allocated.
          */
-        public void setNumOfAllocedObjs(long numOfAllocedObjs) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setNumOfAllocedObjs(long numOfAllocedObjs) {
             this.numOfAllocedObjs = numOfAllocedObjs;
         }
 
@@ -350,7 +358,11 @@ public final class HCHelper {
         System.gc();
     }
 
-    private void allocObjects(ArrayList al, long totalSizeLimit) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void allocObjects(ArrayList al, long totalSizeLimit) {
         long allocedSize = 0;
         int multiplier = maxSize - minSize;
 
@@ -370,7 +382,11 @@ public final class HCHelper {
      *
      * @param listNr The evacuation list to clear. Must be between 0 and 5.
      */
-    public void clearList(int listNr) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void clearList(int listNr) {
         if (listNr < EVAC_LIST_0 || listNr > EVAC_LIST_5) {
             throw new IllegalArgumentException("List to removed bust be "
                     + "between EVAC_LIST_0 and EVAC_LIST_5");

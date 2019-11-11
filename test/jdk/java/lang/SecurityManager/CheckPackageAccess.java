@@ -36,6 +36,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+@Bean
 public class CheckPackageAccess {
 
     private static final SecurityManager sm = new SecurityManager();

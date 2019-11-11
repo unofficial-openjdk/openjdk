@@ -31,6 +31,7 @@
 
 package compiler.c1;
 
+@Bean
 public class Test8011771 {
 
     static void m(int[] a, int[] b, int j) {
@@ -47,7 +48,11 @@ public class Test8011771 {
         b[j+4] = 0; // this range check shouldn't be eliminated
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         int[] arr1 = new int[10], arr2 = new int[10];
         // force compilation:
         for (int i = 0; i < 5000; i++) {

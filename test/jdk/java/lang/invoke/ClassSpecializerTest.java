@@ -41,6 +41,7 @@ import java.util.List;
 import static java.lang.invoke.ClassSpecializerHelper.*;
 
 
+@Bean
 public class ClassSpecializerTest {
     @Test
     public void testFindSpecies() throws Throwable {

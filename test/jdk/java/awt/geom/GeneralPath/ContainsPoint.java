@@ -29,6 +29,7 @@
 
 import java.awt.geom.GeneralPath;
 
+@Bean
 public class ContainsPoint {
     public static void main(String args[]) {
         GeneralPath gp = new GeneralPath(GeneralPath.WIND_NON_ZERO);

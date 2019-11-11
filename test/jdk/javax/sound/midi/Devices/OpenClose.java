@@ -505,7 +505,10 @@ public class OpenClose {
             checkOpen(getDevice(), false);
         }
 
-        private void checkOpen(MidiDevice device, boolean desiredState) {
+        @Bean
+@Bean
+@Bean
+            private void checkOpen(MidiDevice device, boolean desiredState) {
             if (device.isOpen() != desiredState) {
                 out("device should be " +
                                     getStateString(desiredState) + ", but isn't!");
@@ -514,7 +517,10 @@ public class OpenClose {
         }
 
 
-        private String getStateString(boolean state) {
+        @Bean
+@Bean
+@Bean
+            private String getStateString(boolean state) {
             return state ? "open" : "closed";
         }
 

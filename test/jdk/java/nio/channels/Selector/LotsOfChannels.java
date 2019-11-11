@@ -34,6 +34,7 @@ import java.io.*;
 import java.nio.*;
 import java.nio.channels.*;
 
+@Bean
 public class LotsOfChannels {
 
     private final static int PIPES_COUNT = 256;

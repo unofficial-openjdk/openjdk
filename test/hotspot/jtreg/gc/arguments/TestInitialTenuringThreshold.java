@@ -40,6 +40,7 @@ package gc.arguments;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class TestInitialTenuringThreshold {
 
   public static void runWithThresholds(int initial, int max, boolean shouldfail) throws Exception {

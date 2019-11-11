@@ -969,12 +969,20 @@ public class NullPointerExceptionTest {
     }
 
     // Helper method to cause test case.
-    private Object returnNull(String[][] dummy1, int[][][] dummy2, float dummy3) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Object returnNull(String[][] dummy1, int[][][] dummy2, float dummy3) {
         return null;
     }
 
     // Helper method to cause test case.
-    private NullPointerExceptionTest returnMeAsNull(Throwable dummy1, int dummy2, char dummy3) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private NullPointerExceptionTest returnMeAsNull(Throwable dummy1, int dummy2, char dummy3) {
         return null;
     }
 
@@ -997,13 +1005,21 @@ public class NullPointerExceptionTest {
             return null;
         }
 
-        public Object returnMyNull(double dummy1, long dummy2, short dummy3) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Object returnMyNull(double dummy1, long dummy2, short dummy3) {
             return null;
         }
     }
 
     // Helper method to cause test case.
-    public void ImplTestLoadedFromMethod(DoubleArrayGen gen) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void ImplTestLoadedFromMethod(DoubleArrayGen gen) {
         try {
             (gen.getArray())[0] = 1.0;
             Asserts.fail();
@@ -1503,7 +1519,11 @@ public class NullPointerExceptionTest {
 
     // Generates:
     // class E implements E0 {
-    //     public int throwNPE(F f) {
+    //     @Bean
+@Bean
+@Bean
+@Bean
+                public int throwNPE(F f) {
     //         return f.i;
     //     }
     //     public void throwNPE_reuseStackSlot1(String s1) {

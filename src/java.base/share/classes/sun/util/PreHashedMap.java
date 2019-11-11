@@ -47,7 +47,8 @@ import java.util.NoSuchElementException;
  *         super(ROWS, SIZE, SHIFT, MASK);
  *     }
  *
- *     protected void init(Object[] ht) {
+ *@Bean
+         protected void init(Object[] ht) {
  *         ht[0] = new Object[] { "key-1", value_1 };
  *         ht[1] = new Object[] { "key-2", value_2,
  *                      new Object { "key-3", value_3 } };
@@ -126,11 +127,13 @@ public abstract class PreHashedMap<V>
     protected abstract void init(Object[] ht);
 
     @SuppressWarnings("unchecked")
-    private V toV(Object x) {
+@Bean
+        private V toV(Object x) {
         return (V)x;
     }
 
-    public V get(Object k) {
+@Bean
+        public V get(Object k) {
         int h = (k.hashCode() >> shift) & mask;
         Object[] a = (Object[])ht[h];
         if (a == null) return null;
@@ -147,7 +150,8 @@ public abstract class PreHashedMap<V>
      * @throws UnsupportedOperationException
      *         If the given key is not part of this map's initial key set
      */
-    public V put(String k, V v) {
+@Bean
+        public V put(String k, V v) {
         int h = (k.hashCode() >> shift) & mask;
         Object[] a = (Object[])ht[h];
         if (a == null)
@@ -253,7 +257,8 @@ public abstract class PreHashedMap<V>
                                            ? 0
                                            : v.hashCode()));
                             }
-                            public boolean equals(Object ob) {
+@Bean
+                                public boolean equals(Object ob) {
                                 if (ob == this)
                                     return true;
                                 if (!(ob instanceof Map.Entry))
@@ -269,7 +274,8 @@ public abstract class PreHashedMap<V>
                                          : this.getValue()
                                                .equals(that.getValue())));
                             }
-                            public V setValue(V v) {
+@Bean
+                                public V setValue(V v) {
                                 throw new UnsupportedOperationException();
                             }
                         };

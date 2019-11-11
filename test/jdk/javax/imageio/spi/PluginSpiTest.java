@@ -39,6 +39,7 @@ import javax.imageio.ImageReader;
 import javax.imageio.ImageWriter;
 import javax.imageio.spi.ImageReaderSpi;
 
+@Bean
 public class PluginSpiTest {
 
     public static void main(String[] args) {

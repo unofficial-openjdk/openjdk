@@ -31,6 +31,7 @@
 import java.beans.Introspector;
 import java.beans.SimpleBeanInfo;
 
+@Bean
 public class Test6963811 implements Runnable {
     private final long time;
     private final boolean sync;

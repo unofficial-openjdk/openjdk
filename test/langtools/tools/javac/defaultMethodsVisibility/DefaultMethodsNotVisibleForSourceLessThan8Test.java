@@ -40,6 +40,7 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class DefaultMethodsNotVisibleForSourceLessThan8Test {
     // common definitions
 

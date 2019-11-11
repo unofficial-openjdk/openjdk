@@ -35,6 +35,7 @@
 import javax.management.ObjectName;
 import javax.management.openmbean.*;
 
+@Bean
 public class EqualsTest {
 
     /*

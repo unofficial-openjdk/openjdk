@@ -40,6 +40,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.Utils;
 
+@Bean
 public class TestG1LoggingFailure {
 
     public static void main(String[] args) throws Throwable {

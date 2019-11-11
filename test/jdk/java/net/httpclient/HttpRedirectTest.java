@@ -77,6 +77,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *                   HttpRedirectTest
  *
  */
+@Bean
 public class HttpRedirectTest implements HttpServerAdapters {
     static final String GET_RESPONSE_BODY = "Lorem ipsum dolor sit amet";
     static final String REQUEST_BODY = "Here it goes";
@@ -113,7 +114,11 @@ public class HttpRedirectTest implements HttpServerAdapters {
     final ExecutorService clientexec = new ThreadPoolExecutor(6, 12, 1,
             TimeUnit.SECONDS, new LinkedBlockingQueue<>()); // Used by the client
 
-    public HttpClient newHttpClient(ProxySelector ps) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public HttpClient newHttpClient(ProxySelector ps) {
         HttpClient.Builder builder = HttpClient
                 .newBuilder()
                 .sslContext(context)
@@ -369,7 +374,11 @@ public class HttpRedirectTest implements HttpServerAdapters {
         }
 
         @Override
-        public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
             System.err.println("Connection to proxy failed: " + ioe);
             System.err.println("Proxy: " + sa);
             System.err.println("\tURI: " + uri);

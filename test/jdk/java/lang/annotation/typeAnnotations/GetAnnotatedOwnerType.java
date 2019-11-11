@@ -36,6 +36,7 @@ import java.lang.reflect.*;
 
 import jdk.test.lib.Asserts;
 
+@Bean
 public class GetAnnotatedOwnerType<Dummy> {
     public @TA("generic") GetAnnotatedOwnerType<String> . @TB("generic") Nested<Integer> genericField;
     public @TA("raw") GetAnnotatedOwnerType . @TB("raw") Nested rawField;
@@ -308,10 +309,14 @@ public class GetAnnotatedOwnerType<Dummy> {
         Asserts.assertNull(t.getAnnotatedOwnerType(), msg);
     }
 
-    public class Nested<AlsoDummy> {}
-    public class B {
-        public class C<R, S> {
-            public class D<T> {
+    @Bean
+public class Nested<AlsoDummy> {}
+    @Bean
+public class B {
+        @Bean
+public class C<R, S> {
+            @Bean
+public class D<T> {
             }
         }
     }

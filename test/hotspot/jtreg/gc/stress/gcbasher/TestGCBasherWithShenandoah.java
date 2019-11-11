@@ -134,6 +134,7 @@ import java.io.IOException;
  *      -XX:+UseShenandoahGC -XX:ShenandoahGCMode=traversal
  *      gc.stress.gcbasher.TestGCBasherWithShenandoah 120000
  */
+@Bean
 public class TestGCBasherWithShenandoah {
     public static void main(String[] args) throws IOException {
         TestGCBasher.main(args);

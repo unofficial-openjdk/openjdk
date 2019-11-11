@@ -57,6 +57,7 @@ import javax.swing.table.AbstractTableModel;
  * @author Philip Milne
  */
 @SuppressWarnings("serial")
+@Bean
 public class JDBCAdapter extends AbstractTableModel {
 
     Connection connection;
@@ -83,7 +84,11 @@ public class JDBCAdapter extends AbstractTableModel {
         }
     }
 
-    public void executeQuery(String query) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void executeQuery(String query) {
         if (connection == null || statement == null) {
             System.err.println("There is no database to execute the query.");
             return;
@@ -138,7 +143,11 @@ public class JDBCAdapter extends AbstractTableModel {
     //////////////////////////////////////////////////////////////////////////
     // MetaData
     @Override
-    public String getColumnName(int column) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String getColumnName(int column) {
         if (columnNames[column] != null) {
             return columnNames[column];
         } else {
@@ -147,7 +156,8 @@ public class JDBCAdapter extends AbstractTableModel {
     }
 
     @Override
-    public Class<?> getColumnClass(int column) {
+    @Bean
+public class<?> getColumnClass(int column) {
         int type;
         try {
             type = metaData.getColumnType(column + 1);
@@ -185,7 +195,11 @@ public class JDBCAdapter extends AbstractTableModel {
     }
 
     @Override
-    public boolean isCellEditable(int row, int column) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean isCellEditable(int row, int column) {
         try {
             return metaData.isWritable(column + 1);
         } catch (SQLException e) {
@@ -202,12 +216,20 @@ public class JDBCAdapter extends AbstractTableModel {
         return rows.size();
     }
 
-    public Object getValueAt(int aRow, int aColumn) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Object getValueAt(int aRow, int aColumn) {
         List<Object> row = rows.get(aRow);
         return row.get(aColumn);
     }
 
-    public String dbRepresentation(int column, Object value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String dbRepresentation(int column, Object value) {
         int type;
 
         if (value == null) {
@@ -236,7 +258,11 @@ public class JDBCAdapter extends AbstractTableModel {
     }
 
     @Override
-    public void setValueAt(Object value, int row, int column) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setValueAt(Object value, int row, int column) {
         try {
             String tableName = metaData.getTableName(column + 1);
             // Some of the drivers seem buggy, tableName should not be null.

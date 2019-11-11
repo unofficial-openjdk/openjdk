@@ -376,7 +376,8 @@ public abstract class ImageReader {
      *
      * @see #getInput
      */
-    public void setInput(Object input) {
+@Bean
+        public void setInput(Object input) {
         setInput(input, false, false);
     }
 
@@ -476,7 +477,8 @@ public abstract class ImageReader {
      *
      * @see #getLocale
      */
-    public void setLocale(Locale locale) {
+@Bean
+        public void setLocale(Locale locale) {
         if (locale != null) {
             Locale[] locales = getAvailableLocales();
             boolean found = false;
@@ -1831,7 +1833,8 @@ public abstract class ImageReader {
      *
      * @see #removeIIOReadWarningListener
      */
-    public void addIIOReadWarningListener(IIOReadWarningListener listener) {
+@Bean
+        public void addIIOReadWarningListener(IIOReadWarningListener listener) {
         if (listener == null) {
             return;
         }
@@ -1849,7 +1852,8 @@ public abstract class ImageReader {
      *
      * @see #addIIOReadWarningListener
      */
-    public void removeIIOReadWarningListener(IIOReadWarningListener listener) {
+@Bean
+        public void removeIIOReadWarningListener(IIOReadWarningListener listener) {
         if (listener == null || warningListeners == null) {
             return;
         }
@@ -1887,7 +1891,8 @@ public abstract class ImageReader {
      *
      * @see #removeIIOReadProgressListener
      */
-    public void addIIOReadProgressListener(IIOReadProgressListener listener) {
+@Bean
+        public void addIIOReadProgressListener(IIOReadProgressListener listener) {
         if (listener == null) {
             return;
         }
@@ -1977,7 +1982,8 @@ public abstract class ImageReader {
      *
      * @see #addIIOReadUpdateListener
      */
-    public void removeIIOReadUpdateListener(IIOReadUpdateListener listener) {
+@Bean
+        public void removeIIOReadUpdateListener(IIOReadUpdateListener listener) {
         if (listener == null || updateListeners == null) {
             return;
         }
@@ -2004,7 +2010,8 @@ public abstract class ImageReader {
      *
      * @param minIndex the lowest index being read.
      */
-    protected void processSequenceStarted(int minIndex) {
+@Bean
+        protected void processSequenceStarted(int minIndex) {
         if (progressListeners == null) {
             return;
         }
@@ -2042,7 +2049,8 @@ public abstract class ImageReader {
      *
      * @param imageIndex the index of the image about to be read.
      */
-    protected void processImageStarted(int imageIndex) {
+@Bean
+        protected void processImageStarted(int imageIndex) {
         if (progressListeners == null) {
             return;
         }
@@ -2063,7 +2071,8 @@ public abstract class ImageReader {
      * @param percentageDone the current percentage of completion,
      * as a {@code float}.
      */
-    protected void processImageProgress(float percentageDone) {
+@Bean
+        protected void processImageProgress(float percentageDone) {
         if (progressListeners == null) {
             return;
         }
@@ -2125,7 +2134,8 @@ public abstract class ImageReader {
      * @param percentageDone the current percentage of completion,
      * as a {@code float}.
      */
-    protected void processThumbnailProgress(float percentageDone) {
+@Bean
+        protected void processThumbnailProgress(float percentageDone) {
         if (progressListeners == null) {
             return;
         }
@@ -2263,7 +2273,8 @@ public abstract class ImageReader {
      *
      * @param theImage the {@code BufferedImage} being updated.
      */
-    protected void processPassComplete(BufferedImage theImage) {
+@Bean
+        protected void processPassComplete(BufferedImage theImage) {
         if (updateListeners == null) {
             return;
         }
@@ -2368,7 +2379,8 @@ public abstract class ImageReader {
      * @param theThumbnail the {@code BufferedImage} thumbnail
      * being updated.
      */
-    protected void processThumbnailPassComplete(BufferedImage theThumbnail) {
+@Bean
+        protected void processThumbnailPassComplete(BufferedImage theThumbnail) {
         if (updateListeners == null) {
             return;
         }
@@ -2391,7 +2403,8 @@ public abstract class ImageReader {
      * @exception IllegalArgumentException if {@code warning}
      * is {@code null}.
      */
-    protected void processWarningOccurred(String warning) {
+@Bean
+        protected void processWarningOccurred(String warning) {
         if (warningListeners == null) {
             return;
         }

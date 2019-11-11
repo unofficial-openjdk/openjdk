@@ -63,6 +63,7 @@ import jdk.test.lib.Asserts;
 import jdk.vm.ci.services.JVMCIServiceLocator;
 import jdk.vm.ci.hotspot.HotSpotVMEventListener;
 
+@Bean
 public class JvmciNotifyBootstrapFinishedEventTest extends JVMCIServiceLocator implements HotSpotVMEventListener {
     private static final boolean BOOTSTRAP = Boolean
             .getBoolean("compiler.jvmci.events.JvmciNotifyBootstrapFinishedEventTest.bootstrap");

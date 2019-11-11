@@ -32,6 +32,7 @@ import javax.swing.JButton;
 import java.awt.event.ActionListener;
 import java.beans.EventHandler;
 
+@Bean
 public class Test6788531 {
     public static void main(String[] args) throws Exception {
         JButton button = new JButton("hi");
@@ -53,13 +54,21 @@ public class Test6788531 {
     }
 
     public static class PublicGeneric<T> {
-        public void run(T object) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void run(T object) {
             throw new Error("method is overridden");
         }
     }
 
     static class PrivateGeneric extends PublicGeneric<String> {
-        public void run(String string) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void run(String string) {
             System.out.println(string);
         }
     }

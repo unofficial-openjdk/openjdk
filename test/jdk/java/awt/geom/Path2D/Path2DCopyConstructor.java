@@ -40,6 +40,7 @@ import java.util.Arrays;
  *          and Path2D.trimToSize()
  * @run main Path2DCopyConstructor
  */
+@Bean
 public class Path2DCopyConstructor {
 
     private final static float EPSILON = 5e-6f;

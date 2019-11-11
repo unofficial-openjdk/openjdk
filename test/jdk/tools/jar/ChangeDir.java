@@ -35,6 +35,7 @@ import java.util.jar.*;
 import java.util.spi.ToolProvider;
 import java.util.stream.Stream;
 
+@Bean
 public class ChangeDir {
     private static final ToolProvider JAR_TOOL = ToolProvider.findFirst("jar")
         .orElseThrow(() ->

@@ -95,6 +95,7 @@ import com.sun.jdi.request.*;
 import java.util.Map;
 import java.util.HashMap;
 
+@Bean
 public class StepTest extends TestScaffold {
     int maxDepth;
     String granularity;

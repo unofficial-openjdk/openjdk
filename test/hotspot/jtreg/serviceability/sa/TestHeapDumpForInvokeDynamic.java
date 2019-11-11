@@ -58,6 +58,7 @@ import jdk.test.lib.hprof.model.Snapshot;
  * @run main/othervm TestHeapDumpForInvokeDynamic
  */
 
+@Bean
 public class TestHeapDumpForInvokeDynamic {
 
     private static LingeredAppWithInvokeDynamic theApp = null;

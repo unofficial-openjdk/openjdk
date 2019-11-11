@@ -43,6 +43,7 @@ import javax.management.NotificationListener;
 import javax.management.modelmbean.DescriptorSupport;
 import javax.management.modelmbean.RequiredModelMBean;
 
+@Bean
 public class LoggingExceptionTest {
     private static final String tests[] = new String[] {
         "DescriptorSupport()",

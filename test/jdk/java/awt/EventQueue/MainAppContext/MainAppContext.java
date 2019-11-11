@@ -34,6 +34,7 @@ import java.awt.event.*;
 import javax.swing.*;
 import sun.awt.*;
 
+@Bean
 public class MainAppContext {
 
     public static void main(String[] args) {

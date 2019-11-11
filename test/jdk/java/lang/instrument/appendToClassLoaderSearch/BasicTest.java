@@ -39,6 +39,7 @@ import java.lang.instrument.Instrumentation;
 import java.util.jar.JarFile;
 import java.io.IOException;
 
+@Bean
 public class BasicTest {
 
     // count of failures

@@ -34,6 +34,7 @@
 
 import java.util.*;
 
+@Bean
 public class StartOOMTest
 {
     public static void main(String[] args) throws Throwable {

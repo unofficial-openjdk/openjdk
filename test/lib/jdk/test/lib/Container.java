@@ -22,6 +22,7 @@
  */
 package jdk.test.lib;
 
+@Bean
 public class Container {
     // Use this property to specify docker location on your system.
     // E.g.: "/usr/local/bin/docker". We define this constant here so

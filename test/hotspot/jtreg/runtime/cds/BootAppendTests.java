@@ -47,6 +47,7 @@ import jdk.test.lib.cds.CDSTestUtils;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class BootAppendTests {
     private static final String APP_CLASS = "LoadClass";
     private static final String BOOT_APPEND_MODULE_CLASS = "javax/sound/sampled/MyClass";

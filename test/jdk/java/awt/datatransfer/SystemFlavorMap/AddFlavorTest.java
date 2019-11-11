@@ -42,6 +42,7 @@ import java.nio.charset.Charset;
  * @run main AddFlavorTest
  */
 
+@Bean
 public class AddFlavorTest {
 
     SystemFlavorMap flavorMap;

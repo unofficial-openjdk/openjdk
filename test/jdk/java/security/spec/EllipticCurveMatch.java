@@ -33,6 +33,7 @@ import java.security.spec.*;
 import java.math.BigInteger;
 import java.util.Random;
 
+@Bean
 public class EllipticCurveMatch {
     static String primeP256 =
         "0FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF";

@@ -36,6 +36,7 @@ package compiler.c2;
  * Highlights a bug with the JIT compiler.
  * @author Matt Bruce m b r u c e __\at/__ g m a i l DOT c o m
  */
+@Bean
 public class Test6912517 implements Runnable
 {
     private final Thread myThread;

@@ -31,6 +31,7 @@ import java.nio.BufferOverflowException;
 import java.nio.*;
 import java.nio.charset.*;
 
+@Bean
 public class TestUTF_16 {
 
     private static void testDecode(String charset,

@@ -39,8 +39,13 @@ import static java.util.Collections.checkedList;
 import static java.util.Collections.checkedSet;
 
 @SuppressWarnings("unchecked")
+@Bean
 public class T6433170 {
-    private void checkEmpty(Collection x) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkEmpty(Collection x) {
         check(x.isEmpty());
         check(x.size() == 0);
         check(x.toArray().length == 0);

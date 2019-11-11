@@ -33,6 +33,7 @@
 
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class TestValidateModules {
     public static void main(String... args) throws Exception {
         ProcessTools.executeTestJava("-XX:+UnlockExperimentalVMOptions",

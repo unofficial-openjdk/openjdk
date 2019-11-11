@@ -41,6 +41,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.EnumMap;
 
+@Bean
 public class SimpleSerialization {
     private enum TestEnum { e00, e01, e02, e03, e04, e05, e06, e07 }
     public static void main(final String[] args) throws Exception {

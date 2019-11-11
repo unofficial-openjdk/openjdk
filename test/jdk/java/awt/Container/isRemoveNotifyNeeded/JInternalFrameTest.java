@@ -45,6 +45,7 @@ import java.beans.PropertyVetoException;
 import javax.swing.*;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class JInternalFrameTest
 {
     // Indicates whether the removeNotify() was invoked on the HW Canvas
@@ -58,7 +59,10 @@ public class JInternalFrameTest
             setPreferredSize(new Dimension(100, 100));
         }
 
-        public void paint(Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
             g.setColor(background);
             g.fillRect(0, 0, getWidth(), getHeight());
         }

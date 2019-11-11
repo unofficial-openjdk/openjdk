@@ -37,6 +37,7 @@ import java.lang.management.*;
 import java.util.concurrent.*;
 import javax.management.*;
 
+@Bean
 public class BroadcasterSupportDeadlockTest {
     public static void main(String[] args) throws Exception {
         try {
@@ -90,7 +91,11 @@ public class BroadcasterSupportDeadlockTest {
 
         // Thread 2 - try to add a listener
         final NotificationListener listener = new NotificationListener() {
-            public void handleNotification(Notification n, Object h) {}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void handleNotification(Notification n, Object h) {}
         };
         Thread t2 = new Thread() {
             public void run() {

@@ -31,6 +31,7 @@
 import java.net.*;
 import java.util.*;
 
+@Bean
 public class B8035653 {
    public static void main(String[] args) throws Exception {
       try (DatagramSocket ds = new DatagramSocket();){

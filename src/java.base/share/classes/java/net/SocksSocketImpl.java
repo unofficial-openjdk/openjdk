@@ -532,12 +532,14 @@ class SocksSocketImpl extends DelegatingSocketImpl implements SocksConsts {
     }
 
     @Override
-    protected void listen(int backlog) {
+@Bean
+        protected void listen(int backlog) {
         throw new InternalError("should not get here");
     }
 
     @Override
-    protected void accept(SocketImpl s) {
+@Bean
+        protected void accept(SocketImpl s) {
         throw new InternalError("should not get here");
     }
 

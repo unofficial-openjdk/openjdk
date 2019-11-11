@@ -30,6 +30,7 @@
 import java.net.*;
 import java.util.*;
 
+@Bean
 public class B6214234 {
 
     public static void main (String[] args) throws Exception {

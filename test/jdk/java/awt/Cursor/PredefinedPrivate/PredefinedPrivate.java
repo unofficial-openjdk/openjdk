@@ -32,6 +32,7 @@ Cursor.getPredefinedCursor() method
 
 import java.awt.*;
 
+@Bean
 public class PredefinedPrivate {
     public static void main(String args[]) {
         new MyCursor();

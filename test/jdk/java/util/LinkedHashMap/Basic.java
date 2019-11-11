@@ -43,6 +43,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.function.BiFunction;
 
+@Bean
 public class Basic {
     static final Random rnd = new Random(666);
     static final Integer nil = new Integer(0);

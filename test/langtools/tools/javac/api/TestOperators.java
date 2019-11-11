@@ -48,6 +48,7 @@ import static com.sun.source.tree.Tree.Kind.*;
 }
 
 @SupportedAnnotationTypes("TestMe")
+@Bean
 public class TestOperators extends JavacTestingAbstractProcessor {
 
     @TestMe(POSTFIX_INCREMENT)
@@ -303,7 +304,11 @@ public class TestOperators extends JavacTestingAbstractProcessor {
         final Elements elements = processingEnv.getElementUtils();
         class Scan extends ElementScanner<Void,Void> {
             @Override
-            public Void visitExecutable(ExecutableElement e, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitExecutable(ExecutableElement e, Void p) {
                 Object debug = e; // info for exception handler
                 try {
                     TestMe info = e.getAnnotation(TestMe.class);

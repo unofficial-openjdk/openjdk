@@ -30,6 +30,7 @@
 
 import java.util.*;
 
+@Bean
 public class ListTimeZones{
   public static void main(String[] args){
     Date date = new Date();

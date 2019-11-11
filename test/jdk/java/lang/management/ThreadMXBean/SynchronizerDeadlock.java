@@ -32,6 +32,7 @@ import java.lang.management.*;
 import java.util.*;
 import java.util.concurrent.locks.*;
 
+@Bean
 public class SynchronizerDeadlock {
 
     private Lock a = new ReentrantLock();

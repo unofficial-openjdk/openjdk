@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+@Bean
 public class ShadowingTest {
 
     // We generate a method "test" that tries to call T.<something,

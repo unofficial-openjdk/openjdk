@@ -38,6 +38,7 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 @Test
+@Bean
 public class ToolCommandOptionTest extends ReplToolTesting {
 
     public void listTest() {

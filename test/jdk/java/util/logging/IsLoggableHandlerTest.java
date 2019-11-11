@@ -39,6 +39,7 @@ import java.util.logging.MemoryHandler;
 import java.util.logging.StreamHandler;
 import java.util.stream.Stream;
 
+@Bean
 public class IsLoggableHandlerTest {
 
 
@@ -85,7 +86,11 @@ public class IsLoggableHandlerTest {
 
     public static final class CustomHandler extends Handler {
         @Override
-        public void publish(LogRecord record) { }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void publish(LogRecord record) { }
         @Override
         public void flush() { }
         @Override

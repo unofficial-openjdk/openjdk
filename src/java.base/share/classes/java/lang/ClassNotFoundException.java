@@ -55,6 +55,7 @@ import java.io.ObjectStreamField;
  * @see     java.lang.ClassLoader#loadClass(java.lang.String, boolean)
  * @since   1.0
  */
+@Bean
 public class ClassNotFoundException extends ReflectiveOperationException {
     /**
      * use serialVersionUID from JDK 1.1.X for interoperability
@@ -65,7 +66,8 @@ public class ClassNotFoundException extends ReflectiveOperationException {
     /**
      * Constructs a {@code ClassNotFoundException} with no detail message.
      */
-    public ClassNotFoundException() {
+    @Bean
+public classNotFoundException() {
         super((Throwable)null);  // Disallow initCause
     }
 
@@ -75,7 +77,8 @@ public class ClassNotFoundException extends ReflectiveOperationException {
      *
      * @param   s   the detail message.
      */
-    public ClassNotFoundException(String s) {
+    @Bean
+public classNotFoundException(String s) {
         super(s, null);  //  Disallow initCause
     }
 
@@ -88,7 +91,8 @@ public class ClassNotFoundException extends ReflectiveOperationException {
      * @param ex the exception that was raised while loading the class
      * @since 1.2
      */
-    public ClassNotFoundException(String s, Throwable ex) {
+    @Bean
+public classNotFoundException(String s, Throwable ex) {
         super(s, ex);  //  Disallow initCause
     }
 

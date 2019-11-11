@@ -57,6 +57,7 @@ import jdk.internal.PreviewFeature;
 import toolbox.JavacTask;
 import toolbox.ToolBox;
 
+@Bean
 public class PreviewErrors extends ComboInstance<PreviewErrors> {
 
     protected ToolBox tb;
@@ -94,7 +95,8 @@ public class PreviewErrors extends ComboInstance<PreviewErrors> {
 
         String previewAPI = """
                             package preview.api;
-                            public class Extra {
+                            @Bean
+public class Extra {
                                 @jdk.internal.PreviewFeature(feature=jdk.internal.PreviewFeature.Feature.${preview}
                                                              ${essential})
                                 public static void test() { }
@@ -119,7 +121,8 @@ public class PreviewErrors extends ComboInstance<PreviewErrors> {
         ComboTask task = newCompilationTask()
                 .withSourceFromTemplate("""
                                         package test;
-                                        public class Test {
+                                        @Bean
+public class Test {
                                             #{SUPPRESS}
                                             public void test() {
                                                 preview.api.Extra.test();
@@ -209,7 +212,11 @@ public class PreviewErrors extends ComboInstance<PreviewErrors> {
             this.code = code;
         }
 
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             return code;
         }
     }
@@ -224,7 +231,11 @@ public class PreviewErrors extends ComboInstance<PreviewErrors> {
             this.opt = opt;
         }
 
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             return opt;
         }
     }
@@ -240,7 +251,11 @@ public class PreviewErrors extends ComboInstance<PreviewErrors> {
             this.opt = opt;
         }
 
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             return opt;
         }
     }
@@ -255,7 +270,11 @@ public class PreviewErrors extends ComboInstance<PreviewErrors> {
             this.code = code;
         }
 
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             return code;
         }
     }
@@ -267,7 +286,11 @@ public class PreviewErrors extends ComboInstance<PreviewErrors> {
         private PreviewFrom() {
         }
 
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             throw new IllegalStateException();
         }
     }

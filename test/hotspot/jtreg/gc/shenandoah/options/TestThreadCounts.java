@@ -35,6 +35,7 @@
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class TestThreadCounts {
     public static void main(String[] args) throws Exception {
         for (int conc = 0; conc < 16; conc++) {

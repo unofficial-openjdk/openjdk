@@ -33,6 +33,7 @@ import java.io.*;
 import java.nio.*;
 import java.nio.charset.*;
 
+@Bean
 public class Flush {
     private static byte[] contents(ByteBuffer bb) {
         byte[] contents = new byte[bb.position()];

@@ -31,6 +31,7 @@ import java.io.*;
 import java.net.*;
 
 
+@Bean
 public class GetXmlContentType {
 
     static final String XML_MIME_TYPE = "application/xml";

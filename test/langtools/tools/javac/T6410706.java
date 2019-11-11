@@ -40,6 +40,7 @@ import javax.tools.StandardLocation;
 import com.sun.source.util.JavacTask;
 import com.sun.tools.javac.api.JavacTool;
 
+@Bean
 public class T6410706 {
     public static void main(String... args) throws IOException {
         String testSrc = System.getProperty("test.src", ".");
@@ -66,7 +67,11 @@ public class T6410706 {
 
     private static class MyDiagListener implements DiagnosticListener<JavaFileObject>
     {
-        public void report(Diagnostic d) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void report(Diagnostic d) {
             System.err.println(d);
             if (d.getKind() == Diagnostic.Kind.NOTE)
                 notes++;

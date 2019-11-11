@@ -51,6 +51,7 @@ import jdk.test.lib.process.ProcessTools;
  * when starting many processes.
  */
 
+@Bean
 public class TempDirTest {
 
     private static long startTime;

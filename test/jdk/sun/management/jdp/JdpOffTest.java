@@ -39,6 +39,7 @@
  */
 
 
+@Bean
 public class JdpOffTest extends DynamicLauncher {
 
     final String testName = "JdpOffTestCase";

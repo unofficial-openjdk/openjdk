@@ -25,6 +25,7 @@ import javax.script.*;
 import java.util.*;
 
 // do many bad things to prevent ScriptEngineManager to run correctly
+@Bean
 public class BadFactory implements ScriptEngineFactory {
     public String getEngineName() {
         return null;
@@ -46,7 +47,11 @@ public class BadFactory implements ScriptEngineFactory {
         return null;
     }
 
-    public String getMethodCallSyntax(String obj, String m, String[] args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String getMethodCallSyntax(String obj, String m, String[] args) {
         return null;
     }
 
@@ -62,15 +67,27 @@ public class BadFactory implements ScriptEngineFactory {
         throw new IllegalArgumentException();
     }
 
-    public String getOutputStatement(String str) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String getOutputStatement(String str) {
         return "bad-factory-output";
     }
 
-    public String getParameter(String key) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String getParameter(String key) {
         return null;
     }
 
-    public String getProgram(String[] statements) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String getProgram(String[] statements) {
         return null;
     }
 

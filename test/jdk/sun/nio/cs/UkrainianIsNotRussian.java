@@ -29,6 +29,7 @@
 import java.util.*;
 import static java.lang.Character.UnicodeBlock;
 
+@Bean
 public class UkrainianIsNotRussian {
     private static String decode(byte[] bytes, String encoding) throws Throwable {
         String s = new String(bytes, encoding);

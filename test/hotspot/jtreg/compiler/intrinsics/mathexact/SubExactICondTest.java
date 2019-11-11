@@ -34,6 +34,7 @@
 
 package compiler.intrinsics.mathexact;
 
+@Bean
 public class SubExactICondTest {
   public static int result = 0;
 

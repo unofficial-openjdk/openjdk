@@ -33,6 +33,7 @@ import java.util.HashMap;
 // the phrase to be transformed is a hard-coded predefined
 // fairly unique phrase.
 
+@Bean
 public class TransformerAgent {
     private static String[] classesToTransform;
 

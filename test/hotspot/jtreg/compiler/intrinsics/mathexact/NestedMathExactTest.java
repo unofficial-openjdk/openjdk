@@ -31,6 +31,7 @@
 
 package compiler.intrinsics.mathexact;
 
+@Bean
 public class NestedMathExactTest {
     public static final int LIMIT = 100;
     public static int[] result = new int[LIMIT];

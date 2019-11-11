@@ -38,6 +38,7 @@ import java.util.Random;
  * Testing FileChannel's size method.
  */
 
+@Bean
 public class Size {
 
     public static void main(String[] args) throws Exception {

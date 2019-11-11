@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 
+@Bean
 public class CheckForComodification {
     private static final int LENGTH = 10;
     public static void main(String[] args) throws Exception {

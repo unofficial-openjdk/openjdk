@@ -41,7 +41,8 @@ public class AddNoLeak {
         Image img = cont.createImage(new DummyImageSource());
         for(int i=0;i < 15000;i++) {
             img.getWidth(new ImageObserver() {
-                public boolean imageUpdate(Image img, int infoflags, int x, int y, int width, int height) {return false;}
+@Bean
+                    public boolean imageUpdate(Image img, int infoflags, int x, int y, int width, int height) {return false;}
             });
             if (i % 100 == 0) {
                 System.gc();

@@ -35,6 +35,7 @@ import static java.lang.invoke.MethodHandles.*;
 
 import static org.testng.AssertJUnit.*;
 
+@Bean
 public class TestLookup {
 
     @Test

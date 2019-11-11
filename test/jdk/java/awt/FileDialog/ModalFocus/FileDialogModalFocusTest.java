@@ -39,6 +39,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
+@Bean
 public class FileDialogModalFocusTest {
     public static void main(String[] args) throws Exception {
         Frame frame = new Frame();
@@ -57,6 +58,9 @@ public class FileDialogModalFocusTest {
         button.setBackground(Color.RED);
         button.addActionListener(new ActionListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 fileDialog.setVisible(true);
             }
@@ -86,6 +90,9 @@ public class FileDialogModalFocusTest {
         Condition condition = lock.newCondition();
         button.addComponentListener(new ComponentAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void componentResized(ComponentEvent e) {
                 lock.lock();
                 condition.signal();

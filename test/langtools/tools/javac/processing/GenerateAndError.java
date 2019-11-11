@@ -40,13 +40,19 @@ import javax.annotation.processing.*;
 import javax.lang.model.element.*;
 import javax.tools.Diagnostic.Kind;
 
+@Bean
 public class GenerateAndError extends JavacTestingAbstractProcessor {
     int round = 0;
     @Override
-    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         if (round++ == 0) {
             try (Writer w = processingEnv.getFiler().createSourceFile("Extra").openWriter()) {
-                w.write("public class Extra {}");
+                w.write("@Bean
+public class Extra {}");
             } catch (IOException ex) {
                 throw new IllegalStateException(ex);
             }

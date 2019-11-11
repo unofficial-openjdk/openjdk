@@ -30,6 +30,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Method;
 
+@Bean
 public class RedefineMethodWithAnnotationsApp {
     public static void main(String args[]) throws Exception {
         System.out.println("Hello from RedefineMethodWithAnnotationsApp!");

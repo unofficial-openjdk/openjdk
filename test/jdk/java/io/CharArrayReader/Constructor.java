@@ -31,6 +31,7 @@
 
 import java.io.*;
 
+@Bean
 public class Constructor {
     public static void main(String argv[]) throws Exception {
         int values[] = {Integer.MIN_VALUE, -1, 0, 1, 4, 16, 31,

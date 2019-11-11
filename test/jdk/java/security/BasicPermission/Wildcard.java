@@ -36,6 +36,7 @@ import javax.net.ssl.SSLPermission;
  * @modules java.sql
  */
 
+@Bean
 public class Wildcard {
 
     public static void main(String[] args) throws Exception {

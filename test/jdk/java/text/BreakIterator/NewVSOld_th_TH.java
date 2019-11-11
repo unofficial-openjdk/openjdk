@@ -34,6 +34,7 @@ import java.util.Locale;
 import java.text.BreakIterator;
 import java.lang.Math;
 
+@Bean
 public class NewVSOld_th_TH {
     public static void main(String args[]) throws FileNotFoundException,
                                                   UnsupportedEncodingException,

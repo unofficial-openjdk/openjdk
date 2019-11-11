@@ -46,6 +46,7 @@ import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.Utils;
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class TestSurvivorRatioFlag {
 
     public static final long M = 1024 * 1024;

@@ -52,6 +52,7 @@ import java.lang.management.MemoryPoolMXBean;
 import java.util.HashMap;
 import java.util.Map;
 
+@Bean
 public class GetUsageTest {
 
     private final BlobType btype;

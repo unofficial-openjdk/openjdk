@@ -30,6 +30,7 @@
 
 import java.util.ResourceBundle;
 
+@Bean
 public class Bug4396021 {
 
     private static ResourceBundle bundle;

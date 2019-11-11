@@ -39,6 +39,7 @@ import jdk.test.lib.Asserts;
  * @library /test/lib /test/jdk
  * @run main/othervm jdk.jfr.jmx.TestConfigurationInfo
  */
+@Bean
 public class TestConfigurationInfo {
     public static void main(String[] args) throws Exception {
         Map<String, Configuration> cc = new HashMap<>();

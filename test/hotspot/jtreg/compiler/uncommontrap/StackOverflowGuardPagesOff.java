@@ -41,6 +41,7 @@ package compiler.uncommontrap;
 // overflow exception to be thrown which is propagated to m3 in the
 // deopt blob. If the guard pages are no enabled, the stack bang in
 // the deopt blob triggers a crash.
+@Bean
 public class StackOverflowGuardPagesOff {
 
     static class A {
@@ -335,7 +336,11 @@ public class StackOverflowGuardPagesOff {
     static volatile boolean do_load = false;
     static volatile boolean load_done = false;
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         // This thread does the loading of B. If m1 does it, the class
         // loading can cause stack overflows.
         Thread thread = new Thread() {

@@ -31,6 +31,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test7048332 {
 
     static int capacity = 2;

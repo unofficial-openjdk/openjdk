@@ -35,6 +35,7 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import java.awt.*;
 
+@Bean
 public class JTextPaneDocumentAlignment {
 
     private static JFrame frame;

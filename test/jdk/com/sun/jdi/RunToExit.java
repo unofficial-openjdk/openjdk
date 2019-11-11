@@ -45,6 +45,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class RunToExit {
 
     /* Increment this when ERROR: seen */

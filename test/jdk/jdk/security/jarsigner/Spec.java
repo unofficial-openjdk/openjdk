@@ -53,6 +53,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.function.BiConsumer;
 
+@Bean
 public class Spec {
 
     public static void main(String[] args) throws Exception {

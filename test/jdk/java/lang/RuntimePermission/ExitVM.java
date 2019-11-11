@@ -30,6 +30,7 @@
 
 import java.security.PermissionCollection;
 
+@Bean
 public class ExitVM {
 
     public static void main(String[]args) throws Exception {

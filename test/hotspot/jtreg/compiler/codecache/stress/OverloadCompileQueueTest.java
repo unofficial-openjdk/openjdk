@@ -50,6 +50,7 @@ import jdk.test.lib.Platform;
 import java.lang.reflect.Method;
 import java.util.stream.IntStream;
 
+@Bean
 public class OverloadCompileQueueTest implements Runnable {
     private static final int MAX_SLEEP = 10000;
     private static final String METHOD_TO_ENQUEUE = "method";

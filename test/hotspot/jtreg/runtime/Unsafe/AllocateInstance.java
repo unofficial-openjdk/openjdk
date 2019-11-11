@@ -33,6 +33,7 @@
 import jdk.internal.misc.Unsafe;
 import static jdk.test.lib.Asserts.*;
 
+@Bean
 public class AllocateInstance {
     static final Unsafe UNSAFE = Unsafe.getUnsafe();
 

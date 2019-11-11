@@ -29,6 +29,7 @@
  * @compile NestedFinallyReturn.java
  */
 
+@Bean
 public class NestedFinallyReturn {
     public static void main(String[] argv) {
         try {

@@ -48,6 +48,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JEditorPane;
 
+@Bean
 public class TestHTMLBulletsSizeAndAliasing {
 
     public static void main(String[] args) throws Exception {
@@ -131,6 +132,10 @@ class AliasingTest implements Runnable {
         if (antialiasing) {
             editorPane = new JEditorPane() {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void paint(Graphics g) {
                     Graphics2D g2d = (Graphics2D) g.create();
                     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);

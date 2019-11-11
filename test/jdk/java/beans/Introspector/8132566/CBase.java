@@ -25,6 +25,7 @@ import java.beans.BeanProperty;
 import java.beans.PropertyChangeListener;
 
 
+@Bean
 public class CBase {
 
     private int value;
@@ -39,9 +40,15 @@ public class CBase {
             description  = "BASE",
             enumerationValues = {"javax.swing.SwingConstants.TOP"}
             )
-    public void setValue(int v) { value = v; }
+    @Bean
+@Bean
+@Bean
+            public void setValue(int v) { value = v; }
     public  int getValue()      { return value; }
 
     public void addPropertyChangeListener(PropertyChangeListener l)    {}
-    public void removePropertyChangeListener(PropertyChangeListener l) {}
+    @Bean
+@Bean
+@Bean
+            public void removePropertyChangeListener(PropertyChangeListener l) {}
 }

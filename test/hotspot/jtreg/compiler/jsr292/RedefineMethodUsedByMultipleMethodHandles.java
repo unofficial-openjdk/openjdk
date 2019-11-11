@@ -62,6 +62,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
+@Bean
 public class RedefineMethodUsedByMultipleMethodHandles {
 
     static class Foo {
@@ -167,12 +168,20 @@ public class RedefineMethodUsedByMultipleMethodHandles {
                 ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_FRAMES);
                 ClassVisitor adapter = new ClassVisitor(Opcodes.ASM5, cw) {
                     @Override
-                    public MethodVisitor visitMethod(int access, String base, String desc, String signature, String[] exceptions) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public MethodVisitor visitMethod(int access, String base, String desc, String signature, String[] exceptions) {
                         MethodVisitor mv = cv.visitMethod(access, base, desc, signature, exceptions);
                         if (mv != null) {
                             mv = new MethodVisitor(Opcodes.ASM5, mv) {
                                 @Override
-                                public void visitLdcInsn(Object cst) {
+                                @Bean
+@Bean
+@Bean
+@Bean
+                public void visitLdcInsn(Object cst) {
                                     System.out.println("replacing \"" + cst + "\" with \"bar\"");
                                     mv.visitLdcInsn("bar");
                                 }

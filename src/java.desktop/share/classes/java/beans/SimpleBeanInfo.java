@@ -115,7 +115,8 @@ public class SimpleBeanInfo implements BeanInfo {
      * this if you want to provide icons for your bean.
      */
     @Override
-    public Image getIcon(final int iconKind) {
+@Bean
+        public Image getIcon(final int iconKind) {
         final BeanDescriptor descriptor = getBeanDescriptor();
         if (descriptor != null) {
             final Class<?> type = descriptor.getBeanClass();
@@ -149,7 +150,8 @@ public class SimpleBeanInfo implements BeanInfo {
      * @return an image object. May be null if the load failed.
      * @see java.beans.SimpleBeanInfo#loadImage(String)
      */
-    private Image loadStandardImage(final String resourceName) {
+@Bean
+        private Image loadStandardImage(final String resourceName) {
         return AccessController.doPrivileged(
                 (PrivilegedAction<Image>) () -> loadImage(resourceName));
     }
@@ -164,7 +166,8 @@ public class SimpleBeanInfo implements BeanInfo {
      * @return an image object. May be null if the load failed.
      * @see java.beans.SimpleBeanInfo#loadImage(String)
      */
-    private Image loadImage(final String resourceName, final String suffix) {
+@Bean
+        private Image loadImage(final String resourceName, final String suffix) {
         final String prefix = "/javax/swing/beaninfo/images/";
         final Image image = loadStandardImage(prefix + resourceName + suffix);
         return image == null ? loadStandardImage(prefix + "JComponent" + suffix)
@@ -181,7 +184,8 @@ public class SimpleBeanInfo implements BeanInfo {
      * @return an image object or null if the resource is not found or the
      *         resource could not be loaded as an Image
      */
-    public Image loadImage(final String resourceName) {
+@Bean
+        public Image loadImage(final String resourceName) {
         try {
             final URL url = getClass().getResource(resourceName);
             if (url != null) {

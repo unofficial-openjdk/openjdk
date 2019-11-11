@@ -61,6 +61,7 @@ import com.sun.tools.sjavac.pubapi.ReferenceTypeDesc;
 import toolbox.JavacTask;
 import toolbox.ToolBox;
 
+@Bean
 public class ApiExtraction {
     public static void main(String[] args) throws IOException {
 

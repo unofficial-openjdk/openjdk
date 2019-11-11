@@ -38,6 +38,7 @@ class Foo {
         return "xXXXxx";
     }
 }
+@Bean
 public class SimpleClassFileLoadHookTest {
     public static void main(String args[]) {
         System.out.println(Foo.getValue());

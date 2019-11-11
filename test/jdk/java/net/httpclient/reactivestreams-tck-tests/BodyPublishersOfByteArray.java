@@ -29,6 +29,7 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.Flow.Publisher;
 
 /* See TckDriver.java for more information */
+@Bean
 public class BodyPublishersOfByteArray
         extends FlowPublisherVerification<ByteBuffer> {
 

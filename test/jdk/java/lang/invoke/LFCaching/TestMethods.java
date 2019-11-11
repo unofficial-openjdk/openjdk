@@ -291,7 +291,10 @@ public enum TestMethods {
         }
 
         @Override
-        protected MethodHandle getMH(Map<String, Object> data, TestMethods.Kind kind) {
+        @Bean
+@Bean
+@Bean
+            protected MethodHandle getMH(Map<String, Object> data, TestMethods.Kind kind) {
             MethodType mtTarget = (MethodType) data.get("mtTarget");
             Class<?> rType = mtTarget.returnType();
             return MethodHandles.throwException(rType, Exception.class
@@ -381,7 +384,10 @@ public enum TestMethods {
         }
 
         @Override
-        protected MethodHandle getMH(Map<String, Object> data, TestMethods.Kind kind) {
+        @Bean
+@Bean
+@Bean
+            protected MethodHandle getMH(Map<String, Object> data, TestMethods.Kind kind) {
             MethodType mtTarget = (MethodType) data.get("mtTarget");
             return MethodHandles.invoker(mtTarget);
         }
@@ -397,7 +403,10 @@ public enum TestMethods {
         }
 
         @Override
-        protected MethodHandle getMH(Map<String, Object> data, TestMethods.Kind kind) {
+        @Bean
+@Bean
+@Bean
+            protected MethodHandle getMH(Map<String, Object> data, TestMethods.Kind kind) {
             MethodType mtTarget = (MethodType) data.get("mtTarget");
             return MethodHandles.exactInvoker(mtTarget);
         }
@@ -417,7 +426,10 @@ public enum TestMethods {
         }
 
         @Override
-        protected MethodHandle getMH(Map<String, Object> data, TestMethods.Kind kind) {
+        @Bean
+@Bean
+@Bean
+            protected MethodHandle getMH(Map<String, Object> data, TestMethods.Kind kind) {
             MethodType mtTarget = (MethodType) data.get("mtTarget");
             int modifierMHArgNum = (int) data.get("modifierMHArgNum");
             return MethodHandles.spreadInvoker(mtTarget, modifierMHArgNum);
@@ -434,7 +446,10 @@ public enum TestMethods {
         }
 
         @Override
-        protected MethodHandle getMH(Map<String, Object> data, TestMethods.Kind kind) {
+        @Bean
+@Bean
+@Bean
+            protected MethodHandle getMH(Map<String, Object> data, TestMethods.Kind kind) {
             MethodType mtTarget = (MethodType) data.get("mtTarget");
             Class<?> rType = mtTarget.returnType();
             if (rType == void.class) {
@@ -454,7 +469,10 @@ public enum TestMethods {
         }
 
         @Override
-        protected MethodHandle getMH(Map<String, Object> data, TestMethods.Kind kind) {
+        @Bean
+@Bean
+@Bean
+            protected MethodHandle getMH(Map<String, Object> data, TestMethods.Kind kind) {
             MethodType mtTarget = (MethodType) data.get("mtTarget");
             Class<?> rType = mtTarget.returnType();
             if (rType == void.class) {
@@ -474,7 +492,10 @@ public enum TestMethods {
         }
 
         @Override
-        protected MethodHandle getMH(Map<String, Object> data, TestMethods.Kind kind) {
+        @Bean
+@Bean
+@Bean
+            protected MethodHandle getMH(Map<String, Object> data, TestMethods.Kind kind) {
             MethodType mtTarget = (MethodType) data.get("mtTarget");
             Class<?> rType = mtTarget.returnType();
             if (rType == void.class) {
@@ -499,7 +520,10 @@ IDENTITY("identity") {
         }
 
         @Override
-        protected MethodHandle getMH(Map<String, Object> data, TestMethods.Kind kind) {
+        @Bean
+@Bean
+@Bean
+            protected MethodHandle getMH(Map<String, Object> data, TestMethods.Kind kind) {
             MethodType mtTarget = (MethodType) data.get("mtTarget");
             Class<?> rType = mtTarget.returnType();
             if (rType == void.class) {
@@ -584,7 +608,10 @@ IDENTITY("identity") {
 
         private final int value;
 
-        private Object getValue(Class<?> cl) {
+        @Bean
+@Bean
+@Bean
+            private Object getValue(Class<?> cl) {
             return Helper.castToWrapper(value, cl);
         }
 

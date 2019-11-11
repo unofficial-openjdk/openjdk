@@ -35,6 +35,7 @@ import java.net.URI;
 import java.util.Arrays;
 import javax.tools.*;
 
+@Bean
 public class T6972327 {
 
     public static void main(String[] args) throws Exception {
@@ -63,7 +64,11 @@ public class T6972327 {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return text;
         }
     }

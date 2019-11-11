@@ -32,6 +32,7 @@
 import java.security.Provider;
 import java.util.Map;
 
+@Bean
 public class EqualsCast {
     public static void main(String[] args) throws Exception {
         Map m1 = new MyProvider("foo", 69, "baz");

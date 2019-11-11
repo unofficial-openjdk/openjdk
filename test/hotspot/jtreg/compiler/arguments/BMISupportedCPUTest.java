@@ -37,6 +37,7 @@ import jdk.test.lib.cli.CommandLineOptionTest;
  * flavor-specific flag as one that was used for parent VM (-client, -server,
  * -minimal, -graal) and '-version'.
  */
+@Bean
 public class BMISupportedCPUTest extends BMICommandLineOptionTestBase {
 
     /**

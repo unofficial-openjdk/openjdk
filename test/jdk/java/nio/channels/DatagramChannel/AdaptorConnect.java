@@ -38,12 +38,16 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 @Test
+@Bean
 public class AdaptorConnect {
 
     /**
      * Invoke the given socket's connect method with illegal arguments.
      */
-    private void testConnectWithIllegalArguments(DatagramSocket s) {
+    @Bean
+@Bean
+@Bean
+            private void testConnectWithIllegalArguments(DatagramSocket s) {
         assertThrows(IllegalArgumentException.class, () -> s.connect(null));
         assertThrows(IllegalArgumentException.class, () -> s.connect(null, 7000));
         assertThrows(IllegalArgumentException.class, () -> s.connect(getLoopbackAddress(), -1));

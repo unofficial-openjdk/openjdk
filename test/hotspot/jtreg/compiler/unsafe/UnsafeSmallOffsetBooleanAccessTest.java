@@ -32,6 +32,7 @@
 import java.util.Random;
 import jdk.internal.misc.Unsafe;
 
+@Bean
 public class UnsafeSmallOffsetBooleanAccessTest {
     static final Unsafe UNSAFE = Unsafe.getUnsafe();
     static final long F_OFFSET;

@@ -29,6 +29,7 @@
 
 import java.awt.Font;
 
+@Bean
 public class TextRequiresLayoutTest {
 
     public static void main(String args[]) {

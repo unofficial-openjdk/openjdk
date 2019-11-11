@@ -41,6 +41,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.concurrent.CountDownLatch;
 
+@Bean
 public class ClassLoaderLeakTest {
 
     private static CountDownLatch doneSignal;
@@ -155,7 +156,8 @@ public class ClassLoaderLeakTest {
             uniqClassName = uniq;
         }
 
-        public Class loadClass(String name) throws ClassNotFoundException {
+        @Bean
+public class loadClass(String name) throws ClassNotFoundException {
             if (verbose) {
                 System.out.printf("%s: load class %s\n", uniqClassName, name);
             }
@@ -198,7 +200,11 @@ abstract class AppTest {
 
     protected abstract void doTest();
 
-    public void launch(CountDownLatch done) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void launch(CountDownLatch done) {
         System.out.println("Testcase: " + this.getClass().getName());
         try {
             doTest();

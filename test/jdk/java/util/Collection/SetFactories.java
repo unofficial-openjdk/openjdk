@@ -54,6 +54,7 @@ import static org.testng.Assert.fail;
  */
 
 
+@Bean
 public class SetFactories {
 
     static final int NUM_STRINGS = 20; // should be larger than the largest fixed-arg overload
@@ -122,17 +123,29 @@ public class SetFactories {
     }
 
     @Test(dataProvider="all", expectedExceptions=UnsupportedOperationException.class)
-    public void cannotAdd(Set<String> act, Set<String> exp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void cannotAdd(Set<String> act, Set<String> exp) {
         act.add("x");
     }
 
     @Test(dataProvider="nonempty", expectedExceptions=UnsupportedOperationException.class)
-    public void cannotRemove(Set<String> act, Set<String> exp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void cannotRemove(Set<String> act, Set<String> exp) {
         act.remove(act.iterator().next());
     }
 
     @Test(dataProvider="all")
-    public void contentsMatch(Set<String> act, Set<String> exp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void contentsMatch(Set<String> act, Set<String> exp) {
         assertEquals(act, exp);
     }
 
@@ -189,12 +202,20 @@ public class SetFactories {
     }
 
     @Test(dataProvider="all")
-    public void hashCodeEqual(Set<String> act, Set<String> exp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void hashCodeEqual(Set<String> act, Set<String> exp) {
         assertEquals(act.hashCode(), exp.hashCode());
     }
 
     @Test(dataProvider="all")
-    public void containsAll(Set<String> act, Set<String> exp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void containsAll(Set<String> act, Set<String> exp) {
         assertTrue(act.containsAll(exp));
         assertTrue(exp.containsAll(act));
     }
@@ -267,12 +288,20 @@ public class SetFactories {
     }
 
     @Test(dataProvider="all", expectedExceptions=NullPointerException.class)
-    public void containsNullShouldThrowNPE(Set<String> act, Set<String> exp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void containsNullShouldThrowNPE(Set<String> act, Set<String> exp) {
         act.contains(null);
     }
 
     @Test(dataProvider="all")
-    public void serialEquality(Set<String> act, Set<String> exp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void serialEquality(Set<String> act, Set<String> exp) {
         // assume that act.equals(exp) tested elsewhere
         Set<String> copy = serialClone(act);
         assertEquals(act, copy);

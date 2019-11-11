@@ -73,7 +73,10 @@ public class PageSetupDlgBlockingTest extends Panel {
     public void start() {
         JButton button = new JButton("Click Me");
         final AWTEventListener listener = new AWTEventListener() {
-                public void eventDispatched(AWTEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void eventDispatched(AWTEvent e) {
                     if (e.getSource().getClass() == TestFrame.class) {
                         Sysout.println(e.paramString() + " on <Test Frame>");
                     }
@@ -81,7 +84,10 @@ public class PageSetupDlgBlockingTest extends Panel {
             };
 
         button.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
 
                     // Show PAINT events only when the dialog is displayed.
                     Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.PAINT_EVENT_MASK);

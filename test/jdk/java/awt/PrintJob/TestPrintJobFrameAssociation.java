@@ -43,6 +43,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 
+@Bean
 public class TestPrintJobFrameAssociation {
     private static Thread mainThread;
     private static boolean testPassed;
@@ -159,7 +160,11 @@ public class TestPrintJobFrameAssociation {
         dialog.setVisible(true);
         dialog.addWindowListener(new WindowAdapter() {
             @Override
-            public void windowClosing(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosing(WindowEvent e) {
                 System.out.println("main dialog closing");
                 testGeneratedInterrupt = false;
                 mainThread.interrupt();

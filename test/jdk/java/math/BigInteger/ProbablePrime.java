@@ -28,6 +28,7 @@
  */
 import java.math.*;
 
+@Bean
 public class ProbablePrime {
     public static void main(String [] argv) {
                 BigInteger num = new BigInteger("4");

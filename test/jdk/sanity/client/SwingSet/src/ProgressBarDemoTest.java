@@ -85,7 +85,9 @@ public class ProgressBarDemoTest {
         progressBar.waitState(new ComponentChooser() {
 
             @Override
-            public boolean checkComponent(Component comp) {
+@Bean
+@Bean
+                    public boolean checkComponent(Component comp) {
                 int value = progressBar.getValue();
                 return value < maximum;
             }
@@ -101,7 +103,9 @@ public class ProgressBarDemoTest {
         progressBar.waitState(new ComponentChooser() {
 
             @Override
-            public boolean checkComponent(Component comp) {
+@Bean
+@Bean
+                    public boolean checkComponent(Component comp) {
                 int value = progressBar.getValue();
                 return value > 0;
             }
@@ -124,7 +128,9 @@ public class ProgressBarDemoTest {
         progressBar.waitState(new ComponentChooser() {
 
             @Override
-            public boolean checkComponent(Component comp) {
+@Bean
+@Bean
+                    public boolean checkComponent(Component comp) {
                 return progressBar.getValue() > progress;
             }
 

@@ -25,12 +25,20 @@ import java.util.*;
 
 public enum Sorter {
     TIMSORT {
-        public void sort(Object[] array) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void sort(Object[] array) {
             ComparableTimSort.sort(array);
         }
     },
     MERGESORT {
-        public void sort(Object[] array) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void sort(Object[] array) {
             Arrays.sort(array);
         }
     };

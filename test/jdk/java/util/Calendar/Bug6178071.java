@@ -31,6 +31,7 @@
 import java.util.GregorianCalendar;
 import static java.util.Calendar.*;
 
+@Bean
 public class Bug6178071 {
     public static void main(String[] args) {
         GregorianCalendar cal = new GregorianCalendar(2004, JANUARY, 1);

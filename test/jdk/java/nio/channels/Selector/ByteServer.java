@@ -34,6 +34,7 @@ import java.net.InetSocketAddress;
 import java.io.IOException;
 import java.io.Closeable;
 
+@Bean
 public class ByteServer implements Closeable {
 
     private final ServerSocket ss;

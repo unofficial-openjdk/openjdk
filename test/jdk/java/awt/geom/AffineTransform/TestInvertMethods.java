@@ -56,6 +56,7 @@ import java.awt.geom.NoninvertibleTransformException;
  * affine operation (scale, rotate, etc.) but also composite matrices
  * that represent multiple operations concatenated together.
  */
+@Bean
 public class TestInvertMethods {
     public static boolean verbose;
 
@@ -106,6 +107,9 @@ public class TestInvertMethods {
          * on the incoming AffineTransform.
          */
         public static final Tester theVerifier = new Tester() {
+            @Bean
+@Bean
+@Bean
             public void test(AffineTransform at, boolean full) {
                 numtests++;
                 AffineTransform inv1, inv2;
@@ -181,7 +185,10 @@ public class TestInvertMethods {
          * with their original matrices to get rid of small variations
          * in the values that should have ended up being 0.0.
          */
-        public void concatfix(AffineTransform at) {
+        @Bean
+@Bean
+@Bean
+            public void concatfix(AffineTransform at) {
             double m00 = at.getScaleX();
             double m10 = at.getShearY();
             double m01 = at.getShearX();
@@ -199,19 +206,31 @@ public class TestInvertMethods {
                             m02, m12);
         }
 
-        public void test(boolean full) {
+        @Bean
+@Bean
+@Bean
+            public void test(boolean full) {
             test(IdentityTx, full);
         }
 
-        public void test(AffineTransform init, boolean full) {
+        @Bean
+@Bean
+@Bean
+            public void test(AffineTransform init, boolean full) {
             test(init, theVerifier, full);
         }
 
-        public void test(AffineTransform init, Tester next, boolean full) {
+        @Bean
+@Bean
+@Bean
+            public void test(AffineTransform init, Tester next, boolean full) {
             next.test(init, full);
         }
 
-        public Tester chain(Tester next) {
+        @Bean
+@Bean
+@Bean
+            public Tester chain(Tester next) {
             return new Chain(this, next);
         }
 
@@ -228,10 +247,16 @@ public class TestInvertMethods {
                 this.next = next;
             }
 
+            @Bean
+@Bean
+@Bean
             public void test(AffineTransform init, boolean full) {
                 prev.test(init, next, full);
             }
 
+            @Bean
+@Bean
+@Bean
             public Tester chain(Tester next) {
                 this.next = this.next.chain(next);
                 return this;
@@ -242,6 +267,9 @@ public class TestInvertMethods {
          * Utility node for testing.
          */
         public static class Fail extends Tester {
+            @Bean
+@Bean
+@Bean
             public void test(AffineTransform init, Tester next, boolean full) {
                 throw new RuntimeException("Debug: Forcing failure");
             }
@@ -251,6 +279,9 @@ public class TestInvertMethods {
          * Utility node for testing that chaining works.
          */
         public static class Debug extends Tester {
+            @Bean
+@Bean
+@Bean
             public void test(AffineTransform init, Tester next, boolean full) {
                 new Throwable().printStackTrace();
                 next.test(init, full);
@@ -261,6 +292,9 @@ public class TestInvertMethods {
          * NOP node.
          */
         public static class Identity extends Tester {
+            @Bean
+@Bean
+@Bean
             public void test(AffineTransform init, Tester next, boolean full) {
                 if (verbose) System.out.println("*Identity = "+init);
                 next.test(init, full);
@@ -271,6 +305,9 @@ public class TestInvertMethods {
          * Affine rotation node.
          */
         public static class Rotate extends Tester {
+            @Bean
+@Bean
+@Bean
             public void test(AffineTransform init, Tester next, boolean full) {
                 int inc = full ? 10 : 45;
                 for (int i = -720; i <= 720; i += inc) {
@@ -318,6 +355,9 @@ public class TestInvertMethods {
                 2.0, 3.0,
             };
 
+            @Bean
+@Bean
+@Bean
             public void test(AffineTransform init, Tester next, boolean full) {
                 double scales[] = (full ? fullvals : abbrevvals);
                 for (int i = 0; i < scales.length; i += 2) {
@@ -358,6 +398,9 @@ public class TestInvertMethods {
                 1.0, 1.0,
             };
 
+            @Bean
+@Bean
+@Bean
             public void test(AffineTransform init, Tester next, boolean full) {
                 double shears[] = (full ? fullvals : abbrevvals);
                 for (int i = 0; i < shears.length; i += 2) {
@@ -393,6 +436,9 @@ public class TestInvertMethods {
                 Math.PI, Math.E,
             };
 
+            @Bean
+@Bean
+@Bean
             public void test(AffineTransform init, Tester next, boolean full) {
                 double translates[] = (full ? fullvals : abbrevvals);
                 for (int i = 0; i < translates.length; i += 2) {

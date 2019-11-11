@@ -32,6 +32,7 @@ import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 
+@Bean
 public class CreateTxReturnsGP {
     public static void main(String argv[]) {
         GeneralPath gp = new GeneralPath();

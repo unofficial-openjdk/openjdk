@@ -32,6 +32,7 @@ import java.net.*;
 import jdk.test.lib.NetworkConfiguration;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class NoLoopbackPackets {
     private static String osname;
 

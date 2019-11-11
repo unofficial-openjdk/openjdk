@@ -30,6 +30,7 @@
 
 import java.beans.Expression;
 
+@Bean
 public class Test6707226 {
     public static void main(String[] args) throws Exception {
         Object value = new Object();

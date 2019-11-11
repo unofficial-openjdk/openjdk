@@ -39,6 +39,7 @@ import javax.swing.JTextField;
 import javax.swing.JButton;
 
 
+@Bean
 public class ActiveSwingWindowTest {
 
     private JFrame frame, frame2;
@@ -76,6 +77,9 @@ public class ActiveSwingWindowTest {
         frame.setSize(200, 200);
         frame.setUndecorated(true);
         frame.addWindowFocusListener(new WindowFocusListener() {
+            @Bean
+@Bean
+@Bean
             public void windowGainedFocus(WindowEvent event) {
                 System.out.println("Frame Focus gained");
                 synchronized (lock3) {
@@ -87,11 +91,17 @@ public class ActiveSwingWindowTest {
                 }
             }
 
+            @Bean
+@Bean
+@Bean
             public void windowLostFocus(WindowEvent event) {
                     System.out.println("Frame Focus lost");
             }
         });
         frame.addWindowListener(new WindowAdapter() {
+            @Bean
+@Bean
+@Bean
             public void windowActivated(WindowEvent e) {
                 eventType = WindowEvent.WINDOW_ACTIVATED;
                 System.out.println("Undecorated Frame is activated\n");
@@ -104,6 +114,9 @@ public class ActiveSwingWindowTest {
                 }
             }
 
+            @Bean
+@Bean
+@Bean
             public void windowDeactivated(WindowEvent e) {
                 eventType = WindowEvent.WINDOW_DEACTIVATED;
                 System.out.println("Undecorated Frame got Deactivated\n");
@@ -119,6 +132,9 @@ public class ActiveSwingWindowTest {
         textField = new JTextField("TextField");
         button = new JButton("Click me");
         button.addActionListener(new ActionListener() {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 textField.setText("Focus gained");
             }
@@ -137,6 +153,9 @@ public class ActiveSwingWindowTest {
         button2 = new JButton("Click me");
         textField2 = new JTextField("TextField");
         button2.addActionListener(new ActionListener() {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 textField2.setText("Got the focus");
             }

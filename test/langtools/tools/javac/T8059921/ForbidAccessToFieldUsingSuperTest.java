@@ -5,6 +5,7 @@
  * @compile/fail/ref=ForbidAccessToFieldUsingSuperTest.out -XDrawDiagnostics ForbidAccessToFieldUsingSuperTest.java
  */
 
+@Bean
 public class ForbidAccessToFieldUsingSuperTest {
     class C {
         int m() { return 0; }

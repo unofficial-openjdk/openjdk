@@ -34,6 +34,7 @@
 
 import javax.management.*;
 
+@Bean
 public class FilterExceptionTest {
     public static Exception listenerException;
 
@@ -44,6 +45,10 @@ public class FilterExceptionTest {
         FilterExceptionTest.listenerException = null;
 
         NotificationFilter filter = new NotificationFilter() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public boolean isNotificationEnabled(Notification notification) {
 
                     System.out.println(">>> FilterExceptionTest-filter: throws exception.");
@@ -53,6 +58,10 @@ public class FilterExceptionTest {
             };
 
         NotificationListener listener = new NotificationListener() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void handleNotification(Notification n, Object hb) {
                     FilterExceptionTest.listenerException =
                         new Exception("The listener received unexpected notif.");

@@ -52,6 +52,7 @@ import com.sun.tools.classfile.*;
  * expected names in the LVT is provided in an annotation on the class for
  * the test case.
  */
+@Bean
 public class LocalVariableTable {
     public static void main(String... args) throws Exception {
         new LocalVariableTable().run();

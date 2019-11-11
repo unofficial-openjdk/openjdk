@@ -153,7 +153,10 @@ public class BMPSubsamplingTest {
         }
     }
 
-    private ImageWriteParam getImageWriteParam(ImageWriter writer, String value) {
+    @Bean
+@Bean
+@Bean
+            private ImageWriteParam getImageWriteParam(ImageWriter writer, String value) {
         ImageWriteParam imageWriteParam = writer.getDefaultWriteParam();
         imageWriteParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
         imageWriteParam.setCompressionType(value);
@@ -192,7 +195,10 @@ public class BMPSubsamplingTest {
         return true;
     }
 
-    private String getImageTypeName(int t) {
+    @Bean
+@Bean
+@Bean
+            private String getImageTypeName(int t) {
         switch(t) {
           case BufferedImage.TYPE_INT_RGB:
               return "TYPE_INT_RGB";
@@ -231,7 +237,10 @@ public class BMPSubsamplingTest {
         }
     }
 
-    private BufferedImage getTestImage(int type) {
+    @Bean
+@Bean
+@Bean
+            private BufferedImage getTestImage(int type) {
         BufferedImage dst = null;
         ColorModel colorModel = null;
         WritableRaster raster = null;
@@ -305,7 +314,10 @@ public class BMPSubsamplingTest {
         return dst;
     }
 
-    private BufferedImage createIndexImage(int bpp) {
+    @Bean
+@Bean
+@Bean
+            private BufferedImage createIndexImage(int bpp) {
         // calculate palette size
         int psize = (1 << bpp);
 
@@ -341,7 +353,10 @@ public class BMPSubsamplingTest {
         return new BufferedImage(colorModel, raster, false, null);
     }
 
-    private void checkTestImage(BufferedImage dst) {
+    @Bean
+@Bean
+@Bean
+            private void checkTestImage(BufferedImage dst) {
         // NB: do not forget about subsampling factor.
         int x = dx / (2 * srcXSubsampling);
         int y = h / (2 * srcYSubsampling);

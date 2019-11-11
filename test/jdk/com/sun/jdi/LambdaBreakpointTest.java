@@ -66,6 +66,7 @@ class LambdaBreakpointTestTarg {
 
  /********** test program **********/
 
+@Bean
 public class LambdaBreakpointTest extends TestScaffold {
     private static final int TEST_LINE_1 = 57;
     private static final int TEST_LINE_2 = TEST_LINE_1 + 1;

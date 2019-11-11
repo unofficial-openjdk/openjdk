@@ -53,6 +53,7 @@ import javax.lang.model.element.Name;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 
+@Bean
 public class DocTreePathScannerTest {
     public static void main(String... args) throws Exception {
         DocTreePathScannerTest t = new DocTreePathScannerTest();
@@ -104,21 +105,33 @@ public class DocTreePathScannerTest {
         }
 
         @Override
-        public Void visitClass(ClassTree tree, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitClass(ClassTree tree, Void ignore) {
             super.visitClass(tree, ignore);
             visitDecl(tree, tree.getSimpleName());
             return null;
         }
 
         @Override
-        public Void visitMethod(MethodTree tree, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitMethod(MethodTree tree, Void ignore) {
             super.visitMethod(tree, ignore);
             visitDecl(tree, tree.getName());
             return null;
         }
 
         @Override
-        public Void visitVariable(VariableTree tree, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitVariable(VariableTree tree, Void ignore) {
             super.visitVariable(tree, ignore);
             visitDecl(tree, tree.getName());
             return null;
@@ -136,14 +149,22 @@ public class DocTreePathScannerTest {
         CommentPathScanner() {}
 
         @Override
-        public Void scan(final DocTree tree, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void scan(final DocTree tree, Void ignore) {
             if (tree != null) {
                 DocTree previous = null;
                 for (DocTree current : getCurrentPath()) {
                     if (previous != null) {
                         final List<DocTree> children = new ArrayList<>();
                         current.accept(new DocTreeScanner<Void, Void>() {
-                            @Override public Void scan(DocTree node, Void p) {
+                            @Override @Bean
+@Bean
+@Bean
+@Bean
+                public Void scan(DocTree node, Void p) {
                                 children.add(node);
                                 return null;
                             }

@@ -51,6 +51,7 @@ import static jdk.test.lib.process.ProcessTools.executeCommand;
 import static org.testng.Assert.*;
 
 @Test
+@Bean
 public class DefaultImage {
     private static final String JAVA_HOME = System.getProperty("java.home");
     private static final Path TEST_SRC = Paths.get(System.getProperty("test.src"));

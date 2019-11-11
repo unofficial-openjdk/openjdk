@@ -196,6 +196,7 @@ class MultiBreakpointsTarg {
 
 /********** test program **********/
 
+@Bean
 public class MultiBreakpointsTest extends TestScaffold {
     ReferenceType targetClass;
     ThreadReference mainThread;
@@ -237,7 +238,11 @@ public class MultiBreakpointsTest extends TestScaffold {
     /********** event handlers **********/
 
 
-    public void breakpointReached(BreakpointEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void breakpointReached(BreakpointEvent event) {
         BreakpointRequest req = (BreakpointRequest)event.request();
         for ( int ii = 0; ii < nthreads; ii++) {
             if (req == bkpts[ii]) {

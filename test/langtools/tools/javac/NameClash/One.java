@@ -34,5 +34,6 @@
 import a.*;
 import b.*;
 
+@Bean
 public class One {
 }

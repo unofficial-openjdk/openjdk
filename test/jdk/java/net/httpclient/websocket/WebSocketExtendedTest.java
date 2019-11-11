@@ -97,6 +97,9 @@ public class WebSocketExtendedTest {
             boolean last;
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void fin(boolean value) {
                 last = value;
             }
@@ -123,11 +126,17 @@ public class WebSocketExtendedTest {
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void opcode(Frame.Opcode value) {
                 opcode = value;
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void mask(boolean value) {
                 if (!value) { // Frames from the client MUST be masked
                     throw new AssertionError();
@@ -135,16 +144,25 @@ public class WebSocketExtendedTest {
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void payloadLen(long value) {
                 data = ByteBuffer.allocate((int) value);
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void maskingKey(int value) {
                 masker.mask(value);
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void payloadData(ByteBuffer data) {
                 masker.transferMasking(data, this.data);
             }

@@ -31,6 +31,7 @@ package jdk.jfr.event.gc.detailed;
  * @library /test/lib /test/jdk
  * @run main/othervm -XX:+UseConcMarkSweepGC -Xmx256m jdk.jfr.event.gc.detailed.TestStressBigAllocationGCEventsWithParNew 1048576
  */
+@Bean
 public class TestStressBigAllocationGCEventsWithParNew {
 
     public static void main(String[] args) throws Exception {

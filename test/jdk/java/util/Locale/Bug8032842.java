@@ -37,6 +37,7 @@ import java.util.Locale;
 import java.util.Locale.FilteringMode;
 import java.util.Locale.LanguageRange;
 
+@Bean
 public class Bug8032842 {
 
     public static void main(String[] args) {

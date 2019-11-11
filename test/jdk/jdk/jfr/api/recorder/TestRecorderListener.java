@@ -50,7 +50,10 @@ public class TestRecorderListener {
         }
 
         @Override
-        public void recordingStateChanged(Recording recording) {
+        @Bean
+@Bean
+@Bean
+            public void recordingStateChanged(Recording recording) {
             System.out.println("Listener: recording=" + recording.getName() + " state=" + recording.getState());
             RecordingState rs = recording.getState();
             if (rs == waitFor) {

@@ -43,6 +43,7 @@ import java.awt.Container;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
+@Bean
 public class WindowTest {
 
     public static void main(String args[]) throws Exception {

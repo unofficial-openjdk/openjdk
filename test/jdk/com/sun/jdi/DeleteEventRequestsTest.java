@@ -48,6 +48,7 @@ class DeleteEventRequestsTarg {
 
     /********** test program **********/
 
+@Bean
 public class DeleteEventRequestsTest extends TestScaffold {
     ReferenceType targetClass;
     ThreadReference mainThread;
@@ -62,7 +63,11 @@ public class DeleteEventRequestsTest extends TestScaffold {
 
     /********** event handlers **********/
 
-    public void stepCompleted(StepEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void stepCompleted(StepEvent event) {
         failure("Got StepEvent which was deleted");
     }
 

@@ -31,6 +31,7 @@
 
 import java.io.*;
 
+@Bean
 public class Zombies {
 
     static final String os = System.getProperty("os.name");

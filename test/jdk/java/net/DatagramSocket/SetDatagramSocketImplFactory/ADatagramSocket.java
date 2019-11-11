@@ -33,6 +33,7 @@ import java.net.*;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
+@Bean
 public class ADatagramSocket {
     public static void main(String[] args) throws Exception {
         // testing out setDatagramSocketImplFactory

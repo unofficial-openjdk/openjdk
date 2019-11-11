@@ -33,6 +33,7 @@ package sun.io;
  *
  * @since 1.6
  */
+@Bean
 public class Win32ErrorMode {
 
     // The system does not display the critical-error-handler message box. Instead,

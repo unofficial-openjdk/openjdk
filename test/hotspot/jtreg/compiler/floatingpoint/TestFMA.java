@@ -35,6 +35,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
 // Test all fused mac instructions that can be generated
+@Bean
 public class TestFMA {
 
     @Test(args = {5.0F, 10.0F, 7.0F}, res = 57.0F)

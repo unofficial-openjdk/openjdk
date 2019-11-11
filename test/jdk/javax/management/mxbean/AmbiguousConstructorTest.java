@@ -35,6 +35,7 @@
 import javax.management.ConstructorParameters;
 import javax.management.*;
 
+@Bean
 public class AmbiguousConstructorTest {
     public static void main(String[] args) throws Exception {
         MBeanServer mbs = MBeanServerFactory.newMBeanServer();
@@ -105,7 +106,11 @@ public class AmbiguousConstructorTest {
     }
 
     public static class UnambiguousImpl implements UnambiguousMXBean {
-        public void setUnambiguous(Unambiguous x) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setUnambiguous(Unambiguous x) {}
     }
 
     public static interface AmbiguousMXBean {
@@ -113,6 +118,10 @@ public class AmbiguousConstructorTest {
     }
 
     public static class AmbiguousImpl implements AmbiguousMXBean {
-        public void setAmbiguous(Ambiguous x) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAmbiguous(Ambiguous x) {}
     }
 }

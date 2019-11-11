@@ -35,6 +35,7 @@ import java.awt.*;
 import java.awt.event.*;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class IconifiedFrameFocusChangeTest {
     Frame testFrame = new Frame("Test Frame");
     Frame otherFrame = new Frame("Other Frame");
@@ -58,6 +59,9 @@ public class IconifiedFrameFocusChangeTest {
         otherFrame.setLocation(200, 0);
 
         testButton.addFocusListener(new FocusAdapter() {
+            @Bean
+@Bean
+@Bean
             public void focusLost(FocusEvent e) {
                 testButton.requestFocus();
             }

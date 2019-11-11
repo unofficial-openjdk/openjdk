@@ -119,7 +119,8 @@ public class Canvas extends Component implements Accessible {
      * @see        #update(Graphics)
      * @see        Component#paint(Graphics)
      */
-    public void paint(Graphics g) {
+@Bean
+        public void paint(Graphics g) {
         g.clearRect(0, 0, width, height);
     }
 
@@ -138,7 +139,8 @@ public class Canvas extends Component implements Accessible {
      * @see   #paint(Graphics)
      * @see   Component#update(Graphics)
      */
-    public void update(Graphics g) {
+@Bean
+        public void update(Graphics g) {
         g.clearRect(0, 0, width, height);
         paint(g);
     }
@@ -166,7 +168,8 @@ public class Canvas extends Component implements Accessible {
      * @see #getBufferStrategy
      * @since 1.4
      */
-    public void createBufferStrategy(int numBuffers) {
+@Bean
+        public void createBufferStrategy(int numBuffers) {
         super.createBufferStrategy(numBuffers);
     }
 

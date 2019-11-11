@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
+@Bean
 public class Bug8001562 {
 
     static final List<String> jdk7availTags = List.of(

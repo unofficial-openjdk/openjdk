@@ -64,7 +64,11 @@ public final class java_awt_GridBagLayout extends AbstractTest<GridBagLayout> {
     }
 
     @Override
-    protected void validate(GridBagLayout before, GridBagLayout after) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void validate(GridBagLayout before, GridBagLayout after) {
         super.validate(before, after);
         try {
             Hashtable a = (Hashtable) HASHTABLE.get(after);

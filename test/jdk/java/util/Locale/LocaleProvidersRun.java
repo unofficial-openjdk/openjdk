@@ -42,6 +42,7 @@ import jdk.test.lib.JDKToolLauncher;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.Utils;
 
+@Bean
 public class LocaleProvidersRun {
     public static void main(String[] args) throws Throwable {
         //get the platform default locales

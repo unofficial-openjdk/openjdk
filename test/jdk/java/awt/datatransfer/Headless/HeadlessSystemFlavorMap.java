@@ -32,6 +32,7 @@ import java.awt.datatransfer.SystemFlavorMap;
  * @run main/othervm -Djava.awt.headless=true HeadlessSystemFlavorMap
  */
 
+@Bean
 public class HeadlessSystemFlavorMap {
     public static void main(String args[]) {
         FlavorMap sfm = SystemFlavorMap.getDefaultFlavorMap();

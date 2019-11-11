@@ -39,6 +39,7 @@ import javax.tools.ToolProvider;
  * A manual benchmark of the JVMTI RedefineClasses when a
  * single class (and its parent) contains many methods.
  */
+@Bean
 public class ManyMethodsBenchmarkApp {
      // Limit is 64k but we can not put such many as the CP limit is 32k.
      // In practice, it means a real limit is much lower (less than 22000).
@@ -91,7 +92,8 @@ public class ManyMethodsBenchmarkApp {
         // Create source files with many methods
         File base = new File("Base.java");
         try (FileWriter fw = new FileWriter(base)) {
-            fw.write("public class Base {\n");
+            fw.write("@Bean
+public class Base {\n");
             final int L = 10;
             // Each of the first L methods makes calls to its own chunk of METHOD_COUNT/L methods
             for (int k = 0; k < L; k++) {

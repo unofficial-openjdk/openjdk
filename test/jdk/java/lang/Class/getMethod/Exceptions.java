@@ -27,6 +27,7 @@
  * @summary Verify that exceptions are thrown as expected.
  */
 
+@Bean
 public class Exceptions {
     void m0() {}
     public void m1() {}
@@ -37,7 +38,10 @@ public class Exceptions {
     private static final String [] nsme = {"m0", "m2", "m4", "m6"};
     private static final String [] pass = {"m1"};
 
-    private void test(String s, Class ex) {
+    @Bean
+@Bean
+@Bean
+            private void test(String s, Class ex) {
         Throwable t = null;
         try {
             getClass().getMethod(s, new Class[] {});

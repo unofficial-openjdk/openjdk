@@ -29,6 +29,7 @@
 import java.net.*;
 import java.util.Enumeration;
 
+@Bean
 public class NetParamsTest {
     private static void printIF(NetworkInterface netif) throws SocketException {
         System.out.println(netif.getName() + " : ");

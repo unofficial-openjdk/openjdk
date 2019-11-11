@@ -35,6 +35,7 @@ import java.nio.channels.*;
 import jdk.nio.mapmode.*;
 import jdk.internal.misc.Unsafe;
 
+@Bean
 public class MapSyncFail {
 
     public static final int K = 1024;

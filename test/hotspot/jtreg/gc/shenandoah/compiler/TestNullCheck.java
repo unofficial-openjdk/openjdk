@@ -33,6 +33,7 @@
 
 // HeapBaseMinAddress above forces compressed oops with a base
 
+@Bean
 public class TestNullCheck {
 
     int f;
@@ -47,7 +48,11 @@ public class TestNullCheck {
         return static_obj.f;
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         TestNullCheck o = new TestNullCheck();
         for (int i = 0; i < 20000; i++) {
             test1(o);

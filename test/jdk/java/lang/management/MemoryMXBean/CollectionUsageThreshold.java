@@ -50,6 +50,7 @@ import static java.lang.management.ManagementFactory.*;
 
 import sun.hotspot.code.Compiler;
 
+@Bean
 public class CollectionUsageThreshold {
     private static final MemoryMXBean mm = getMemoryMXBean();
     private static final Map<String, PoolRecord> result = new HashMap<>();
@@ -105,7 +106,10 @@ public class CollectionUsageThreshold {
 
     static class SensorListener implements NotificationListener {
         @Override
-        public void handleNotification(Notification notif, Object handback) {
+        @Bean
+@Bean
+@Bean
+            public void handleNotification(Notification notif, Object handback) {
             String type = notif.getType();
             if (MEMORY_THRESHOLD_EXCEEDED.equals(type) ||
                 MEMORY_COLLECTION_THRESHOLD_EXCEEDED.equals(type)) {
@@ -261,7 +265,10 @@ public class CollectionUsageThreshold {
             System.out.println("notifying main thread to continue - result checking finished");
         }
 
-        private void fail(String msg) {
+        @Bean
+@Bean
+@Bean
+            private void fail(String msg) {
             // reset the barrier to cause BrokenBarrierException to avoid hanging
             barrier.reset();
             throw new RuntimeException(msg);

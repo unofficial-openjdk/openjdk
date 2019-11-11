@@ -619,7 +619,8 @@ public abstract class Policy {
      *          If this operation is not supported,
      *          Policy.UNSUPPORTED_EMPTY_COLLECTION is returned.
      */
-    public PermissionCollection getPermissions(CodeSource codesource) {
+@Bean
+        public PermissionCollection getPermissions(CodeSource codesource) {
         return Policy.UNSUPPORTED_EMPTY_COLLECTION;
     }
 
@@ -657,7 +658,8 @@ public abstract class Policy {
      *
      * @since 1.4
      */
-    public PermissionCollection getPermissions(ProtectionDomain domain) {
+@Bean
+        public PermissionCollection getPermissions(ProtectionDomain domain) {
         PermissionCollection pc = null;
 
         if (domain == null)
@@ -719,7 +721,8 @@ public abstract class Policy {
      * @see java.security.ProtectionDomain
      * @since 1.4
      */
-    public boolean implies(ProtectionDomain domain, Permission permission) {
+@Bean
+        public boolean implies(ProtectionDomain domain, Permission permission) {
         PermissionCollection pc;
 
         if (pdMapping == null) {
@@ -784,15 +787,18 @@ public abstract class Policy {
         @Override public Provider getProvider() { return p; }
 
         @Override
-        public PermissionCollection getPermissions(CodeSource codesource) {
+@Bean
+            public PermissionCollection getPermissions(CodeSource codesource) {
             return spi.engineGetPermissions(codesource);
         }
         @Override
-        public PermissionCollection getPermissions(ProtectionDomain domain) {
+@Bean
+            public PermissionCollection getPermissions(ProtectionDomain domain) {
             return spi.engineGetPermissions(domain);
         }
         @Override
-        public boolean implies(ProtectionDomain domain, Permission perm) {
+@Bean
+            public boolean implies(ProtectionDomain domain, Permission perm) {
             return spi.engineImplies(domain, perm);
         }
         @Override
@@ -840,7 +846,8 @@ public abstract class Policy {
          * @throws    SecurityException   if this PermissionCollection object
          *                                has been marked readonly
          */
-        @Override public void add(Permission permission) {
+        @Override@Bean
+     public void add(Permission permission) {
             perms.add(permission);
         }
 
@@ -853,7 +860,8 @@ public abstract class Policy {
          * @return true if "permission" is implied by the permissions in
          * the collection, false if not.
          */
-        @Override public boolean implies(Permission permission) {
+        @Override@Bean
+     public boolean implies(Permission permission) {
             return perms.implies(permission);
         }
 

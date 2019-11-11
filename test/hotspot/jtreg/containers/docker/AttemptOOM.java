@@ -21,6 +21,7 @@
  * questions.
  */
 
+@Bean
 public class AttemptOOM {
     private static MyObj[] data;
 

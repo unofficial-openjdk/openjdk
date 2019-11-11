@@ -33,6 +33,7 @@ import java.util.Random;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
 
+@Bean
 public class ClosedByInterrupt {
 
     static final int K = 1024;

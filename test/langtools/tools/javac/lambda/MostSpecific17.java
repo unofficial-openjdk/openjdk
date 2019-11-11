@@ -26,6 +26,7 @@
  * @bug 8143852
  * @summary Rename functional interface method type parameters during most specific test
  */
+@Bean
 public class MostSpecific17 {
 
     public static void main(String[] args) {

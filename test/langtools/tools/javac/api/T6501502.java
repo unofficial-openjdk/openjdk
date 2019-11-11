@@ -33,6 +33,7 @@ import java.io.*;
 import java.net.URI;
 import javax.tools.*;
 
+@Bean
 public class T6501502 {
     public static void main(String... args) throws Exception {
         new T6501502().run();

@@ -30,6 +30,7 @@
 
 import java.util.function.*;
 
+@Bean
 public class TimingOfMReferenceCheckingTest02 {
     <Z> void g(Consumer<Z> fzr, Z z) {}
    <T> T f(T t) { return null; }

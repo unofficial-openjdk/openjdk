@@ -56,6 +56,7 @@
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
+@Bean
 public class LoggingDeadlock {
 
     public static void randomDelay() {

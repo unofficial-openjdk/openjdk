@@ -39,6 +39,7 @@ class Other6891750 extends Base6891750 {
     }
 }
 
+@Bean
 public class Test6891750 extends Base6891750 {
     Base6891750 d;
     volatile long  value = 9;
@@ -53,7 +54,11 @@ public class Test6891750 extends Base6891750 {
         return value;
     }
 
-    public long test(boolean doit) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public long test(boolean doit) {
         if (doit) {
             long total0 = 0;
             long total1 = 0;

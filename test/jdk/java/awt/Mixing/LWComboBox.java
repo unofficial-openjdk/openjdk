@@ -47,6 +47,7 @@ import test.java.awt.regtesthelpers.Util;
 
 
 
+@Bean
 public class LWComboBox
 {
     static volatile boolean failed = false;
@@ -67,7 +68,11 @@ public class LWComboBox
 
         b = new Button("AWT Button");
         b.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 failed = true;
             }
         });

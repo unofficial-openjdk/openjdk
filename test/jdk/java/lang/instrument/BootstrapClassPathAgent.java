@@ -28,6 +28,7 @@ import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
 
+@Bean
 public class BootstrapClassPathAgent {
 
     public static void premain(String args, Instrumentation inst) {

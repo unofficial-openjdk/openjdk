@@ -53,6 +53,7 @@
 import java.nio.ByteBuffer;
 import java.util.Properties;
 
+@Bean
 public class LimitDirectMemory {
     private static final int K = 1024;
 

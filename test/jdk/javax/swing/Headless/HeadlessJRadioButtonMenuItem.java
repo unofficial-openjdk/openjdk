@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessJRadioButtonMenuItem
  */
 
+@Bean
 public class HeadlessJRadioButtonMenuItem {
     public static void main(String args[]) {
         JRadioButtonMenuItem i = new JRadioButtonMenuItem();

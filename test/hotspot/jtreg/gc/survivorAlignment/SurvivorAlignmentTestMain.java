@@ -42,6 +42,7 @@ import jdk.internal.misc.Unsafe;
  * and verify that actual memory usage in tested heap space is close to
  * expected.
  */
+@Bean
 public class SurvivorAlignmentTestMain {
     enum HeapSpace {
         EDEN,
@@ -304,7 +305,11 @@ public class SurvivorAlignmentTestMain {
      * Verifies that memory usage in a {@code heapSpace} deviates from
      * {@code expectedUsage} for no more than {@code MAX_RELATIVE_DEVIATION}.
      */
-    public void verifyMemoryUsage(long expectedUsage) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void verifyMemoryUsage(long expectedUsage) {
         AlignmentHelper alignmentHelper = getAlignmentHelper(testedSpace);
 
         long actualMemoryUsage = alignmentHelper.getActualMemoryUsage();

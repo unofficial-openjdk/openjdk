@@ -36,6 +36,7 @@
 
 import static jdk.test.lib.Asserts.*;
 
+@Bean
 public class AccessCheckRead {
 
     // Test that a class in a package in module_one cannot access a class in

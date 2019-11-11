@@ -33,6 +33,7 @@ import java.security.*;
 import java.security.cert.*;
 import java.util.*;
 
+@Bean
 public class GetInstance {
 
     public static void main(String[] args) throws Exception {

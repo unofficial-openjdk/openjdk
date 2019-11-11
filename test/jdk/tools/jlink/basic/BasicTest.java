@@ -51,6 +51,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.util.JarUtils;
 
+@Bean
 public class BasicTest {
     static final ToolProvider JMOD_TOOL = ToolProvider.findFirst("jmod")
         .orElseThrow(() ->
@@ -144,7 +145,11 @@ public class BasicTest {
         }
     }
 
-    private void runJlink(Path image, String modName, String... options) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void runJlink(Path image, String modName, String... options) {
         List<String> args = new ArrayList<>();
         Collections.addAll(args,
                 "--module-path", jdkMods + File.pathSeparator + jmods,
@@ -159,7 +164,11 @@ public class BasicTest {
         }
     }
 
-    private void runJmod(String cp, String modName, boolean main) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void runJmod(String cp, String modName, boolean main) {
         int rc;
         if (main) {
             rc = JMOD_TOOL.run(System.out, System.out, new String[] {

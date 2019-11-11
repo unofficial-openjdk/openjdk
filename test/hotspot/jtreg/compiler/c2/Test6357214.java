@@ -32,13 +32,18 @@
 package compiler.c2;
 
 // The test hangs after few iterations before the fix. So it fails if timeout.
+@Bean
 public class Test6357214 {
     static class MyResult {
         public boolean next() {
             return true;
         }
 
-        public String getString(String in) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String getString(String in) {
             if (in.equals("id"))
                 return "idFoo";
             if (in.equals("contentKey"))
@@ -46,7 +51,11 @@ public class Test6357214 {
             return "Foo";
         }
 
-        public int getInt(String in) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int getInt(String in) {
             if (in.equals("processingComplete"))
                 return 0;
             return 1;

@@ -34,6 +34,7 @@ import java.awt.image.*;
  *          a gradient.
  * @author ceisserer
  */
+@Bean
 public class GradientTransformTest extends Frame {
     BufferedImage srcImg;
     Image dstImg;
@@ -44,7 +45,11 @@ public class GradientTransformTest extends Frame {
                 20);
     }
 
-    protected void renderToVI(BufferedImage src, Image dst) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void renderToVI(BufferedImage src, Image dst) {
         Graphics2D g = (Graphics2D) dst.getGraphics();
 
         g.setColor(Color.WHITE);
@@ -61,7 +66,11 @@ public class GradientTransformTest extends Frame {
         g.fillRect(-10, -10, 30, 30);
     }
 
-    public void paint(Graphics g1) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(Graphics g1) {
         Graphics2D g = (Graphics2D) g1;
         renderToVI(createSrcImage(), dstImg);
         g.drawImage(dstImg, 20, 20, null);

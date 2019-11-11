@@ -92,7 +92,10 @@ public class TestJInternalFrameMinimize {
         menuItem.addActionListener(
                 new ActionListener() {
                     @Override
-                    public void actionPerformed(ActionEvent e) {
+                    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                         JInternalFrame f = new JInternalFrame("Child "
                                 + (++count), true, true, true, true);
                         f.setSize(200, 300);
@@ -131,7 +134,10 @@ public class TestJInternalFrameMinimize {
             public void run() {
                 listener = new ActionListener() {
                     @Override
-                    public void actionPerformed(ActionEvent ae) {
+                    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent ae) {
                         JInternalFrame internalFrame
                                 = desktopPane.getSelectedFrame();
                         if (internalFrame != null) {

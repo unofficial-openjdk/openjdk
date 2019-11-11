@@ -171,7 +171,10 @@ public class LastNodeLowerHalfDrop {
         return new DefaultTreeModel(root);
     }
 
-    private void expandTree(JTree tree) {
+    @Bean
+@Bean
+@Bean
+            private void expandTree(JTree tree) {
         DefaultMutableTreeNode root = (DefaultMutableTreeNode) tree.getModel()
                 .getRoot();
         Enumeration e = root.breadthFirstEnumeration();
@@ -205,7 +208,10 @@ class TreeTransferHandler extends TransferHandler {
     }
 
     @Override
-    public boolean canImport(TransferHandler.TransferSupport support) {
+    @Bean
+@Bean
+@Bean
+            public boolean canImport(TransferHandler.TransferSupport support) {
         if (!support.isDrop()) {
             return false;
         }
@@ -244,7 +250,10 @@ class TreeTransferHandler extends TransferHandler {
         return true;
     }
 
-    private boolean haveCompleteNode(JTree tree) {
+    @Bean
+@Bean
+@Bean
+            private boolean haveCompleteNode(JTree tree) {
         int[] selRows = tree.getSelectionRows();
         TreePath path = tree.getPathForRow(selRows[0]);
         DefaultMutableTreeNode first = (DefaultMutableTreeNode)
@@ -271,7 +280,10 @@ class TreeTransferHandler extends TransferHandler {
     }
 
     @Override
-    protected Transferable createTransferable(JComponent c) {
+    @Bean
+@Bean
+@Bean
+            protected Transferable createTransferable(JComponent c) {
         JTree tree = (JTree) c;
         TreePath[] paths = tree.getSelectionPaths();
         if (paths != null) {
@@ -311,12 +323,18 @@ class TreeTransferHandler extends TransferHandler {
     /**
      * Defensive copy used in createTransferable.
      */
-    private DefaultMutableTreeNode copy(TreeNode node) {
+    @Bean
+@Bean
+@Bean
+            private DefaultMutableTreeNode copy(TreeNode node) {
         return new DefaultMutableTreeNode(node);
     }
 
     @Override
-    protected void exportDone(JComponent source, Transferable data, int action) {
+    @Bean
+@Bean
+@Bean
+            protected void exportDone(JComponent source, Transferable data, int action) {
         if ((action & MOVE) == MOVE) {
             JTree tree = (JTree) source;
             DefaultTreeModel model = (DefaultTreeModel) tree.getModel();
@@ -328,12 +346,18 @@ class TreeTransferHandler extends TransferHandler {
     }
 
     @Override
-    public int getSourceActions(JComponent c) {
+    @Bean
+@Bean
+@Bean
+            public int getSourceActions(JComponent c) {
         return COPY_OR_MOVE;
     }
 
     @Override
-    public boolean importData(TransferHandler.TransferSupport support) {
+    @Bean
+@Bean
+@Bean
+            public boolean importData(TransferHandler.TransferSupport support) {
         if (!canImport(support)) {
             return false;
         }
@@ -394,7 +418,10 @@ class TreeTransferHandler extends TransferHandler {
         }
 
         @Override
-        public boolean isDataFlavorSupported(DataFlavor flavor) {
+        @Bean
+@Bean
+@Bean
+            public boolean isDataFlavorSupported(DataFlavor flavor) {
             return nodesFlavor.equals(flavor);
         }
     }

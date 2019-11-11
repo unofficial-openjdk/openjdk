@@ -21,6 +21,7 @@
  * questions.
  */
 
+@Bean
 public class InstTarg {
 
     static InstTarg first = new InstTarg();

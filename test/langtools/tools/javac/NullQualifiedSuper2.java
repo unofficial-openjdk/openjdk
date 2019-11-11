@@ -30,6 +30,7 @@
  * @run main/fail NullQualifiedSuper2
  */
 
+@Bean
 public class NullQualifiedSuper2 {
     NullQualifiedSuper2 u = null;
     class a {

@@ -33,6 +33,7 @@ import java.awt.Color;
 import javax.swing.JColorChooser;
 import javax.swing.JLabel;
 
+@Bean
 public class Test4193384 {
     public static void main(String[] args) {
         test(new Color[] {

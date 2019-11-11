@@ -43,7 +43,10 @@ public class TestImpl
         UnicastRemoteObject.unexportObject(this, true);
     }
 
-    public String testCall(String ign) {
+    @Bean
+@Bean
+@Bean
+            public String testCall(String ign) {
         return ("OK");
     }
 }

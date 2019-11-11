@@ -28,6 +28,7 @@
  * @author  Josh Bloch and Steffen Grarup
  */
 
+@Bean
 public class HoldsLock {
     private static Object target = null;
 

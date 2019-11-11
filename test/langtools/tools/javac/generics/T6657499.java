@@ -30,6 +30,7 @@
  *
  */
 
+@Bean
 public class T6657499<T> {
     T t;
     public T test() {

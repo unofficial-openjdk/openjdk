@@ -36,6 +36,10 @@ class LambdaConv06 {
     private int t() {
         return a((final Object indexed) -> {
             return b(new R() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public String build(final Object index) {
                     return "";
                 }
@@ -43,8 +47,16 @@ class LambdaConv06 {
         });
     }
 
-    private int a(R r) {return 0;}
-    private String b(R r) {return null;}
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int a(R r) {return 0;}
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String b(R r) {return null;}
 
     public static interface R {
         public String build(Object o);

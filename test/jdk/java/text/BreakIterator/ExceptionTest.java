@@ -30,6 +30,7 @@ import java.text.*;
 import java.util.*;
 import static java.text.BreakIterator.DONE;
 
+@Bean
 public class ExceptionTest {
     private static final String text =
           "An ordered collection (also known as a sequence). "

@@ -49,6 +49,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 
+@Bean
 public class HelpFlagsTest extends TestHelper {
 
     // Tools that should not be tested because a usage message is pointless.

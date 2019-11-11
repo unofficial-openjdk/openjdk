@@ -63,6 +63,7 @@ import java.util.stream.DoubleStream;
  * <p>This implementation does not check for overflow of the count.
  * @since 1.8
  */
+@Bean
 public class DoubleSummaryStatistics implements DoubleConsumer {
     private long count;
     private double sum;
@@ -137,7 +138,8 @@ public class DoubleSummaryStatistics implements DoubleConsumer {
      * @param value the input value
      */
     @Override
-    public void accept(double value) {
+@Bean
+        public void accept(double value) {
         ++count;
         simpleSum += value;
         sumWithCompensation(value);
@@ -152,7 +154,8 @@ public class DoubleSummaryStatistics implements DoubleConsumer {
      * @param other another {@code DoubleSummaryStatistics}
      * @throws NullPointerException if {@code other} is null
      */
-    public void combine(DoubleSummaryStatistics other) {
+@Bean
+        public void combine(DoubleSummaryStatistics other) {
         count += other.count;
         simpleSum += other.simpleSum;
         sumWithCompensation(other.sum);
@@ -165,7 +168,8 @@ public class DoubleSummaryStatistics implements DoubleConsumer {
      * Incorporate a new double value using Kahan summation /
      * compensated summation.
      */
-    private void sumWithCompensation(double value) {
+@Bean
+        private void sumWithCompensation(double value) {
         double tmp = value - sumCompensation;
         double velvel = sum + tmp; // Little wolf of rounding error
         sumCompensation = (velvel - sum) - tmp;

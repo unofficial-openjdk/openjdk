@@ -34,6 +34,7 @@ import jdk.test.lib.process.OutputAnalyzer;
  *          java.management
  * @run main Options
  */
+@Bean
 public class Options {
 
     public static void main(String[] args) throws Exception {

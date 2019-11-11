@@ -36,6 +36,7 @@ import java.security.spec.*;
 import javax.crypto.*;
 import javax.crypto.spec.*;
 
+@Bean
 public class GetAlgName {
     private static String PASSWD = "password";
 

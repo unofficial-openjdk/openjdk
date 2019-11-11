@@ -41,6 +41,7 @@ import java.lang.invoke.*;
 import static java.lang.invoke.MethodHandles.*;
 import static java.lang.invoke.MethodType.*;
 
+@Bean
 public class CallSiteTest {
     private static final Class<?> CLASS = CallSiteTest.class;
 

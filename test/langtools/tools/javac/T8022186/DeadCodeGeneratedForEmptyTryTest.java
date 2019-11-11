@@ -46,6 +46,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+@Bean
 public class DeadCodeGeneratedForEmptyTryTest {
 
     public static void main(String[] args) throws Exception {
@@ -97,65 +98,110 @@ public class DeadCodeGeneratedForEmptyTryTest {
         }
 
         @Override
-        public Void visitNoOperands(Instruction instr, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitNoOperands(Instruction instr, Void p) {
             return null;
         }
 
         @Override
-        public Void visitArrayType(Instruction instr, TypeKind kind, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitArrayType(Instruction instr, TypeKind kind, Void p) {
             return null;
         }
 
         @Override
-        public Void visitBranch(Instruction instr, int offset, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitBranch(Instruction instr, int offset, Void p) {
             return null;
         }
 
         @Override
-        public Void visitConstantPoolRef(Instruction instr, int index, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitConstantPoolRef(Instruction instr, int index, Void p) {
             checkIndirectRefToString(index);
             return null;
         }
 
         @Override
-        public Void visitConstantPoolRefAndValue(Instruction instr, int index, int value, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitConstantPoolRefAndValue(Instruction instr, int index, int value, Void p) {
             checkIndirectRefToString(index);
             return null;
         }
 
         @Override
-        public Void visitLocal(Instruction instr, int index, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitLocal(Instruction instr, int index, Void p) {
             return null;
         }
 
         @Override
-        public Void visitLocalAndValue(Instruction instr, int index, int value, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitLocalAndValue(Instruction instr, int index, int value, Void p) {
             return null;
         }
 
         @Override
-        public Void visitLookupSwitch(Instruction instr, int default_, int npairs, int[] matches, int[] offsets, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitLookupSwitch(Instruction instr, int default_, int npairs, int[] matches, int[] offsets, Void p) {
             return null;
         }
 
         @Override
-        public Void visitTableSwitch(Instruction instr, int default_, int low, int high, int[] offsets, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitTableSwitch(Instruction instr, int default_, int low, int high, int[] offsets, Void p) {
             return null;
         }
 
         @Override
-        public Void visitValue(Instruction instr, int value, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitValue(Instruction instr, int value, Void p) {
             return null;
         }
 
         @Override
-        public Void visitUnknown(Instruction instr, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitUnknown(Instruction instr, Void p) {
             return null;
         }
 
     }
 
-    public class Test {
+    @Bean
+public class Test {
         void methodToLookFor() {
             try {
             } finally {

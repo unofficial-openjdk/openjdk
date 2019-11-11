@@ -33,6 +33,7 @@ import java.nio.charset.*;
 import java.util.*;
 
 
+@Bean
 public class AvailableCharsetNames {
 
     public static void main(String[] args) throws Exception {

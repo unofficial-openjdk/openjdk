@@ -29,6 +29,7 @@
    @author Robert Field
 */
 
+@Bean
 public class SetLength {
     public static void main(String[] argv) throws Exception {
         StringBuffer active = new StringBuffer();

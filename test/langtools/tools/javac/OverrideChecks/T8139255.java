@@ -5,6 +5,7 @@
  * @compile/fail/ref=T8139255.out -XDrawDiagnostics  T8139255.java
  */
 
+@Bean
 public class T8139255 {
    static void func() { }
 }

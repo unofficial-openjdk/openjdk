@@ -28,6 +28,7 @@
  * @summary Undefined char values should not have mirrored property.
  */
 
+@Bean
 public class TestUndefinedMirrored {
     static int endValue = 0xFFFF;
 

@@ -31,6 +31,7 @@
  */
 
 /** Check that hiding prevents enclosing class selection. */
+@Bean
 public class WhichImplicitThis2 {
     boolean isX() { return false; }
     class Middle {

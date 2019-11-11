@@ -49,6 +49,7 @@ import sun.security.jca.GetInstance.Instance;
  * @since 1.4
  */
 
+@Bean
 public class ExemptionMechanism {
 
     // The provider

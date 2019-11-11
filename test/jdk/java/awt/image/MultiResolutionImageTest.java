@@ -56,6 +56,7 @@ import java.awt.image.MultiResolutionImage;
  * @run main MultiResolutionImageTest TOOLKIT
  */
 
+@Bean
 public class MultiResolutionImageTest {
 
     private static final int IMAGE_WIDTH = 300;

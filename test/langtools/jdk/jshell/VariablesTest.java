@@ -53,13 +53,18 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
 @Test
+@Bean
 public class VariablesTest extends KullaTesting {
 
     public void noVariables() {
         assertNumberOfActiveVariables(0);
     }
 
-    private void badVarValue(VarSnippet key) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void badVarValue(VarSnippet key) {
         try {
             getState().varValue(key);
             fail("Expected exception for: " + key.source());
@@ -357,16 +362,22 @@ public class VariablesTest extends KullaTesting {
         assertEval("<Z extends Number & CharSequence> Z get2() { return null; }", added(VALID));
         assertEval("var i2 = get2();", added(VALID));
         assertEval("void t2() { i2.length(); }", added(VALID));
-        assertEval("var r1 = new Runnable() { public void run() { } public String get() { return \"good\"; } };", added(VALID));
+        assertEval("var r1 = new Runnable() { @Bean
+@Bean
+@Bean
+@Bean
+                public void run() { } public String get() { return \"good\"; } };", added(VALID));
         assertEval("Runnable r2 = r1;");
         assertEval("r1.get()", "\"good\"");
         assertEval("var v = r1.get();", "\"good\"");
         assertEval("var r3 = new java.util.ArrayList<String>(42) { public String get() { return \"good\"; } };", added(VALID));
         assertEval("r3.get()", "\"good\"");
-        assertEval("class O { public class Inner { public String test() { return \"good\"; } } }");
+        assertEval("class O { @Bean
+public class Inner { public String test() { return \"good\"; } } }");
         assertEval("var r4 = new O().new Inner() { public String get() { return \"good\"; } };");
         assertEval("r4.get()", "\"good\"");
-        assertEval("class O2 { public class Inner { public Inner(int i) { } public String test() { return \"good\"; } } }");
+        assertEval("class O2 { @Bean
+public class Inner { public Inner(int i) { } public String test() { return \"good\"; } } }");
         assertEval("var r5 = new O2().new Inner(1) { public String get() { return \"good\"; } };");
         assertEval("r5.get()", "\"good\"");
         assertEval("<Z> Z identity(Z z) { return z; }");
@@ -376,9 +387,17 @@ public class VariablesTest extends KullaTesting {
         assertEval("<A, B, C> C cascade(A a, I<A, B> c1, I<B, C> c2) { return c2.get(c1.get(a)); }");
         assertEval("var r7 = cascade(\"good\", a -> new Object() { String s = a; }, b -> new java.util.ArrayList<String>(5) { String s = b.s; });");
         assertEval("r7.s", "\"good\"");
-        assertEval("var r8 = cascade(\"good\", a -> new Object() { String s = a; public String getS() { return s; } }, b -> new java.util.ArrayList<String>(5) { String s = b.getS(); public String getS() { return s; } });");
+        assertEval("var r8 = cascade(\"good\", a -> new Object() { String s = a; @Bean
+@Bean
+@Bean
+@Bean
+                public String getS() { return s; } }, b -> new java.util.ArrayList<String>(5) { String s = b.getS(); public String getS() { return s; } });");
         assertEval("r8.getS()", "\"good\"");
-        assertEval("var r9 = new Object() { class T { class Inner { public String g() { return outer(); } } public String outer() { return \"good\"; } public String test() { return new Inner() {}.g(); } } public String test() { return new T().test(); } };");
+        assertEval("var r9 = new Object() { class T { class Inner { @Bean
+@Bean
+@Bean
+@Bean
+                public String g() { return outer(); } } public String outer() { return \"good\"; } public String test() { return new Inner() {}.g(); } } public String test() { return new T().test(); } };");
         assertEval("r9.test()", "\"good\"");
         assertEval("var nested1 = new Object() { class N { public String get() { return \"good\"; } } };");
         assertEval("nested1.new N().get()", "\"good\"");
@@ -496,7 +515,8 @@ public class VariablesTest extends KullaTesting {
         Compiler compiler = new Compiler();
         Path nopkgdirpath = Paths.get("cp", "xyz");
         compiler.compile(nopkgdirpath,
-                "public class TestZ { public static int V = 0; }\n");
+                "@Bean
+public class TestZ { public static int V = 0; }\n");
         assertDeclareFail("import static xyz.TestZ.V;",
                         "compiler.err.cant.access");
 
@@ -507,29 +527,49 @@ public class VariablesTest extends KullaTesting {
         assertEval("1+1", "2");
     }
 
-    private void assertVarDeclRedefNoInit(String typeName, String name, String value, String dvalue) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertVarDeclRedefNoInit(String typeName, String name, String value, String dvalue) {
         assertVarDeclRedefNoInit(typeName, name, value, value, dvalue);
     }
 
-    private void assertVarDeclRedefNoInit(String typeName, String name, String value, String rvalue, String dvalue) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertVarDeclRedefNoInit(String typeName, String name, String value, String rvalue, String dvalue) {
         VarSnippet vs = varKey(assertEval(typeName + " " + name + " = " + value + ";", rvalue));
         assertVarDeclNoInit(typeName,  name, dvalue,
                 ste(vs, VALID, VALID, false, null),
                 ste(vs, VALID, OVERWRITTEN, false, MAIN_SNIPPET));
     }
 
-    private VarSnippet assertVarDeclNoInit(String typeName, String name, String dvalue) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private VarSnippet assertVarDeclNoInit(String typeName, String name, String dvalue) {
         return assertVarDeclNoInit(typeName, name, dvalue, added(VALID));
     }
 
-    private VarSnippet assertVarDeclNoInit(String typeName, String name, String dvalue, STEInfo mainInfo, STEInfo... updates) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private VarSnippet assertVarDeclNoInit(String typeName, String name, String dvalue, STEInfo mainInfo, STEInfo... updates) {
         VarSnippet vs = varKey(assertEval(typeName + " " + name + ";", dvalue, mainInfo, updates));
         assertEquals(vs.typeName(), typeName);
         assertEval(name, dvalue, added(VALID));
         return vs;
     }
 
-    private void assertVarDisplayName(String var, String typeName) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertVarDisplayName(String var, String typeName) {
         assertEquals(varKey(assertEval(var)).typeName(), typeName);
     }
 
@@ -543,7 +583,8 @@ public class VariablesTest extends KullaTesting {
                 "\n" +
                 "import java.util.List;\n" +
                 "\n" +
-                "public class C {\n" +
+                "@Bean
+public class C {\n" +
                 "   public int i;\n" +
                 "   public String s;\n" +
                 "   public List<String> l;\n" +
@@ -567,7 +608,8 @@ public class VariablesTest extends KullaTesting {
                 "\n" +
                 "import java.util.List;\n" +
                 "\n" +
-                "public class G<T> {\n" +
+                "@Bean
+public class G<T> {\n" +
                 "   public List<T> l;\n" +
                 "   public G(List<T> l) {\n" +
                 "       this.l = l;\n" +

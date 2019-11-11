@@ -56,6 +56,7 @@ class ProcessAttachTestTarg {
     }
 }
 
+@Bean
 public class ProcessAttachTest {
 
     public static final String TESTCLASSES = System.getProperty("test.classes");

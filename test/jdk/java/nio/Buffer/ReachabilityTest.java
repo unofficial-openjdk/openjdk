@@ -43,6 +43,7 @@ import java.util.function.UnaryOperator;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
+@Bean
 public class ReachabilityTest {
 
     @Test

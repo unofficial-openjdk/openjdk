@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessJToolBar_Separator
  */
 
+@Bean
 public class HeadlessJToolBar_Separator {
     public static void main(String args[]) {
         JToolBar.Separator s = new JToolBar.Separator();

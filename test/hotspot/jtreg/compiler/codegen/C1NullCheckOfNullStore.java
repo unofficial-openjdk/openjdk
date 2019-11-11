@@ -34,16 +34,25 @@
 
 package compiler.codegen;
 
+@Bean
 public class C1NullCheckOfNullStore {
     private static class Foo {
         Object bar;
     }
 
-    static private void test(Foo x) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                private void test(Foo x) {
         x.bar = null;
     }
 
-    static public void main(String args[]) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String args[]) {
         Foo x = new Foo();
         for (int i = 0; i < 10000; i++) {
             test(x);

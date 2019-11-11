@@ -244,6 +244,7 @@ import java.util.Locale;
  * @author     Helena Shih, Laura Werner, Richard Gillam
  * @since 1.1
  */
+@Bean
 public class RuleBasedCollator extends Collator{
     // IMPLEMENTATION NOTES:  The implementation of the collation algorithm is
     // divided across three classes: RuleBasedCollator, RBCollationTables, and
@@ -327,7 +328,8 @@ public class RuleBasedCollator extends Collator{
      * @return a {@code CollationElementIterator} object
      * @see java.text.CollationElementIterator
      */
-    public CollationElementIterator getCollationElementIterator(String source) {
+@Bean
+        public CollationElementIterator getCollationElementIterator(String source) {
         return new CollationElementIterator( source, this );
     }
 
@@ -725,7 +727,8 @@ public class RuleBasedCollator extends Collator{
      * @return true if the current table-based collation object is the same
      * as the table-based collation object obj; false otherwise.
      */
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (obj == null) return false;
         if (!super.equals(obj)) return false;  // super does class check
         RuleBasedCollator other = (RuleBasedCollator) obj;

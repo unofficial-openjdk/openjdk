@@ -86,6 +86,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since   1.3
  */
 
+@Bean
 public class Timer {
     /**
      * The timer task queue.  This data structure is shared with the timer
@@ -188,7 +189,8 @@ public class Timer {
      *         cancelled, timer was cancelled, or timer thread terminated.
      * @throws NullPointerException if {@code task} is null
      */
-    public void schedule(TimerTask task, long delay) {
+@Bean
+        public void schedule(TimerTask task, long delay) {
         if (delay < 0)
             throw new IllegalArgumentException("Negative delay.");
         sched(task, System.currentTimeMillis()+delay, 0);
@@ -205,7 +207,8 @@ public class Timer {
      *         cancelled, timer was cancelled, or timer thread terminated.
      * @throws NullPointerException if {@code task} or {@code time} is null
      */
-    public void schedule(TimerTask task, Date time) {
+@Bean
+        public void schedule(TimerTask task, Date time) {
         sched(task, time.getTime(), 0);
     }
 
@@ -241,7 +244,8 @@ public class Timer {
      *         cancelled, timer was cancelled, or timer thread terminated.
      * @throws NullPointerException if {@code task} is null
      */
-    public void schedule(TimerTask task, long delay, long period) {
+@Bean
+        public void schedule(TimerTask task, long delay, long period) {
         if (delay < 0)
             throw new IllegalArgumentException("Negative delay.");
         if (period <= 0)
@@ -282,7 +286,8 @@ public class Timer {
      *         cancelled, timer was cancelled, or timer thread terminated.
      * @throws NullPointerException if {@code task} or {@code firstTime} is null
      */
-    public void schedule(TimerTask task, Date firstTime, long period) {
+@Bean
+        public void schedule(TimerTask task, Date firstTime, long period) {
         if (period <= 0)
             throw new IllegalArgumentException("Non-positive period.");
         sched(task, firstTime.getTime(), -period);
@@ -321,7 +326,8 @@ public class Timer {
      *         cancelled, timer was cancelled, or timer thread terminated.
      * @throws NullPointerException if {@code task} is null
      */
-    public void scheduleAtFixedRate(TimerTask task, long delay, long period) {
+@Bean
+        public void scheduleAtFixedRate(TimerTask task, long delay, long period) {
         if (delay < 0)
             throw new IllegalArgumentException("Negative delay.");
         if (period <= 0)
@@ -384,7 +390,8 @@ public class Timer {
      *         cancelled, timer was cancelled, or timer thread terminated.
      * @throws NullPointerException if {@code task} is null
      */
-    private void sched(TimerTask task, long time, long period) {
+@Bean
+        private void sched(TimerTask task, long time, long period) {
         if (time < 0)
             throw new IllegalArgumentException("Illegal execution time.");
 
@@ -677,7 +684,8 @@ class TaskQueue {
      * (by swapping it with its parent) repeatedly until queue[k]'s
      * nextExecutionTime is greater than or equal to that of its parent.
      */
-    private void fixUp(int k) {
+@Bean
+        private void fixUp(int k) {
         while (k > 1) {
             int j = k >> 1;
             if (queue[j].nextExecutionTime <= queue[k].nextExecutionTime)
@@ -697,7 +705,8 @@ class TaskQueue {
      * (by swapping it with its smaller child) repeatedly until queue[k]'s
      * nextExecutionTime is less than or equal to those of its children.
      */
-    private void fixDown(int k) {
+@Bean
+        private void fixDown(int k) {
         int j;
         while ((j = k << 1) <= size && j > 0) {
             if (j < size &&

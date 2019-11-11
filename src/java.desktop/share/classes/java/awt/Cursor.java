@@ -189,15 +189,18 @@ public class Cursor implements java.io.Serializable {
 
         AWTAccessor.setCursorAccessor(
             new AWTAccessor.CursorAccessor() {
-                public long getPData(Cursor cursor) {
+@Bean
+                    public long getPData(Cursor cursor) {
                     return cursor.pData;
                 }
 
-                public void setPData(Cursor cursor, long pData) {
+@Bean
+                    public void setPData(Cursor cursor, long pData) {
                     cursor.pData = pData;
                 }
 
-                public int getType(Cursor cursor) {
+@Bean
+                    public int getType(Cursor cursor) {
                     return cursor.type;
                 }
             });
@@ -228,7 +231,8 @@ public class Cursor implements java.io.Serializable {
         }
     }
     transient CursorDisposer disposer;
-    private void setPData(long pData) {
+@Bean
+        private void setPData(long pData) {
         this.pData = pData;
         if (GraphicsEnvironment.isHeadless()) {
             return;

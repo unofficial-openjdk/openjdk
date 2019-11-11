@@ -34,6 +34,7 @@ import java.awt.geom.GeneralPath;
 import java.awt.image.BufferedImage;
 
 
+@Bean
 public class DashStrokeTest {
 
     public static void main(String[] args) {

@@ -38,6 +38,7 @@ import java.util.*;
 import static java.net.StandardSocketOptions.*;
 import static jdk.net.ExtendedSocketOptions.*;
 
+@Bean
 public class SocketOptionTests {
 
     private static final int DEFAULT_KEEP_ALIVE_PROBES = 7;

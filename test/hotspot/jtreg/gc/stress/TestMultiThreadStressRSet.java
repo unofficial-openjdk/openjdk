@@ -55,6 +55,7 @@ import sun.hotspot.WhiteBox;
  *   -XX:+UseG1GC -XX:G1SummarizeRSetStatsPeriod=100 -Xlog:gc
  *   -Xmx500m -XX:G1HeapRegionSize=1m -XX:MaxGCPauseMillis=1000 gc.stress.TestMultiThreadStressRSet 600 32
  */
+@Bean
 public class TestMultiThreadStressRSet {
 
     private static final Random RND = new Random(2015 * 2016);
@@ -151,7 +152,11 @@ public class TestMultiThreadStressRSet {
      * @param timeInMillis how long to stress
      * @param maxThreads the maximum number of Worker thread working together.
      */
-    public void test(long timeInMillis, int maxThreads) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void test(long timeInMillis, int maxThreads) {
         if (timeInMillis <= 0 || maxThreads <= 0) {
             throw new IllegalArgumentException("TEST BUG: be positive!");
         }

@@ -30,6 +30,7 @@ import java.awt.color.*;
  * @run main/othervm LoadProfileWithSM
  */
 
+@Bean
 public class LoadProfileWithSM {
 
     public static void main(String[] args) {

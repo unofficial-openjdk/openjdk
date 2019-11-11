@@ -61,7 +61,10 @@ class MyX509KeyManager implements X509KeyManager  {
         return km.getCertificateChain(alias);
     }
 
-    public PrivateKey getPrivateKey(String alias) {
+    @Bean
+@Bean
+@Bean
+            public PrivateKey getPrivateKey(String alias) {
         System.out.println("Calling from X509KeyManager");
         return km.getPrivateKey(alias);
     }

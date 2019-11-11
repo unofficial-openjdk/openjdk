@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.io.IOException;
 
+@Bean
 public class TestInterfaces {
 
     static final boolean isWindows = System.getProperty("os.name").startsWith("Windows");

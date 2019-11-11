@@ -34,6 +34,7 @@ import java.util.jar.Pack200;
  * @run main T7007157
  * @author ksrini
  */
+@Bean
 public class T7007157 {
 
     public static void main(String... args) throws IOException {

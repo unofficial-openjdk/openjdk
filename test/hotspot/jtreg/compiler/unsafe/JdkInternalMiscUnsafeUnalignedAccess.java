@@ -39,6 +39,7 @@ import jdk.internal.misc.Unsafe;
 import java.lang.reflect.Field;
 import java.nio.ByteOrder;
 
+@Bean
 public class JdkInternalMiscUnsafeUnalignedAccess {
     static final int ITERS = Integer.getInteger("iters", 20_000);
     private static final boolean BIG_ENDIAN = ByteOrder.nativeOrder().equals(ByteOrder.BIG_ENDIAN);

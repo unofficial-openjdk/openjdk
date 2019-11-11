@@ -40,6 +40,7 @@ import java.util.Vector;
  * @run main/othervm -Xmx20m DisposeParentGC
  */
 
+@Bean
 public class DisposeParentGC {
     Frame parentFrame;
     ExtendedRobot robot;
@@ -93,7 +94,10 @@ public class DisposeParentGC {
             throw new RuntimeException("Count = "+count+". GC didn't collect the objects after the parent is disposed!");
     }
 
-    public void createDialog(int number) {
+    @Bean
+@Bean
+@Bean
+            public void createDialog(int number) {
         Dialog child = new Dialog(parentFrame);
         child.setTitle("Dialog " + number);
         child.setLayout(new FlowLayout());

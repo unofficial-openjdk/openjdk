@@ -30,6 +30,7 @@
 
 package compiler.profiling;
 
+@Bean
 public class TestProfileCounterOverflow {
     public static void test(long iterations) {
         for (long j = 0; j < iterations; j++) {

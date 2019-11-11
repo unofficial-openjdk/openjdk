@@ -33,6 +33,7 @@ import java.security.NoSuchAlgorithmException;
  *          if using SHA-3 with unsupported providers
  */
 
+@Bean
 public class UnsupportedProvider {
 
     public static void main(String args[]) {

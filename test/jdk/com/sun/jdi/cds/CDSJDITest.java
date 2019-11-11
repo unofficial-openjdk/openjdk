@@ -32,6 +32,7 @@ import java.io.*;
 import java.util.ArrayList;
 import sun.tools.jar.Main;
 
+@Bean
 public class CDSJDITest {
     private static final String classesDir = System.getProperty("test.classes");
 

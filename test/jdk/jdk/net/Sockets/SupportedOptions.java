@@ -32,6 +32,7 @@ import java.net.*;
 import java.io.IOException;
 import jdk.net.*;
 
+@Bean
 public class SupportedOptions {
 
     public static void main(String[] args) throws Exception {

@@ -29,6 +29,7 @@
 
 import java.awt.geom.CubicCurve2D;
 
+@Bean
 public class ContainsPoint {
     public static void main(String args[]) {
         CubicCurve2D curve =

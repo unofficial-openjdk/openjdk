@@ -35,6 +35,7 @@ import java.awt.Menu;
 import java.awt.MenuBar;
 import java.awt.MenuItem;
 
+@Bean
 public class DisposeStressTest {
 
     public static void main(final String[] args) {

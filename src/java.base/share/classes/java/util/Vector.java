@@ -89,6 +89,7 @@ import jdk.internal.util.ArraysSupport;
  * @see LinkedList
  * @since   1.0
  */
+@Bean
 public class Vector<E>
     extends AbstractList<E>
     implements List<E>, RandomAccess, Cloneable, java.io.Serializable
@@ -354,7 +355,8 @@ public class Vector<E>
      * @param o element whose presence in this vector is to be tested
      * @return {@code true} if this vector contains the specified element
      */
-    public boolean contains(Object o) {
+@Bean
+        public boolean contains(Object o) {
         return indexOf(o, 0) >= 0;
     }
 
@@ -369,7 +371,8 @@ public class Vector<E>
      * @return the index of the first occurrence of the specified element in
      *         this vector, or -1 if this vector does not contain the element
      */
-    public int indexOf(Object o) {
+@Bean
+        public int indexOf(Object o) {
         return indexOf(o, 0);
     }
 
@@ -776,7 +779,8 @@ public class Vector<E>
      * bytecode size under 35 (the -XX:MaxInlineSize default value),
      * which helps when add(E) is called in a C1-compiled loop.
      */
-    private void add(E e, Object[] elementData, int s) {
+@Bean
+        private void add(E e, Object[] elementData, int s) {
         if (s == elementData.length)
             elementData = grow();
         elementData[s] = e;
@@ -807,7 +811,8 @@ public class Vector<E>
      * @return true if the Vector contained the specified element
      * @since 1.2
      */
-    public boolean remove(Object o) {
+@Bean
+        public boolean remove(Object o) {
         return removeElement(o);
     }
 
@@ -822,7 +827,8 @@ public class Vector<E>
      *         ({@code index < 0 || index > size()})
      * @since 1.2
      */
-    public void add(int index, E element) {
+@Bean
+        public void add(int index, E element) {
         insertElementAt(element, index);
     }
 
@@ -891,7 +897,8 @@ public class Vector<E>
      * @throws NullPointerException if the specified collection is null
      * @since 1.2
      */
-    public boolean addAll(Collection<? extends E> c) {
+@Bean
+        public boolean addAll(Collection<? extends E> c) {
         Object[] a = c.toArray();
         modCount++;
         int numNew = a.length;
@@ -925,7 +932,8 @@ public class Vector<E>
      *         or if the specified collection is null
      * @since 1.2
      */
-    public boolean removeAll(Collection<?> c) {
+@Bean
+        public boolean removeAll(Collection<?> c) {
         Objects.requireNonNull(c);
         return bulkRemove(e -> c.contains(e));
     }
@@ -949,7 +957,8 @@ public class Vector<E>
      *         or if the specified collection is null
      * @since 1.2
      */
-    public boolean retainAll(Collection<?> c) {
+@Bean
+        public boolean retainAll(Collection<?> c) {
         Objects.requireNonNull(c);
         return bulkRemove(e -> !c.contains(e));
     }
@@ -958,7 +967,8 @@ public class Vector<E>
      * @throws NullPointerException {@inheritDoc}
      */
     @Override
-    public boolean removeIf(Predicate<? super E> filter) {
+@Bean
+        public boolean removeIf(Predicate<? super E> filter) {
         Objects.requireNonNull(filter);
         return bulkRemove(filter);
     }
@@ -1134,7 +1144,8 @@ public class Vector<E>
     }
 
     /** Erases the gap from lo to hi, by sliding down following elements. */
-    private void shiftTailOverGap(Object[] es, int lo, int hi) {
+@Bean
+        private void shiftTailOverGap(Object[] es, int lo, int hi) {
         System.arraycopy(es, hi, es, lo, elementCount - hi);
         for (int to = elementCount, i = (elementCount -= hi - lo); i < to; i++)
             es[i] = null;
@@ -1266,7 +1277,8 @@ public class Vector<E>
         }
 
         @Override
-        public void forEachRemaining(Consumer<? super E> action) {
+@Bean
+            public void forEachRemaining(Consumer<? super E> action) {
             Objects.requireNonNull(action);
             synchronized (Vector.this) {
                 final int size = elementCount;
@@ -1324,7 +1336,8 @@ public class Vector<E>
             }
         }
 
-        public void set(E e) {
+@Bean
+            public void set(E e) {
             if (lastRet == -1)
                 throw new IllegalStateException();
             synchronized (Vector.this) {
@@ -1333,7 +1346,8 @@ public class Vector<E>
             }
         }
 
-        public void add(E e) {
+@Bean
+            public void add(E e) {
             int i = cursor;
             synchronized (Vector.this) {
                 checkForComodification();
@@ -1440,7 +1454,8 @@ public class Vector<E>
         }
 
         @SuppressWarnings("unchecked")
-        public boolean tryAdvance(Consumer<? super E> action) {
+@Bean
+            public boolean tryAdvance(Consumer<? super E> action) {
             Objects.requireNonNull(action);
             int i;
             if (getFence() > (i = index)) {
@@ -1454,7 +1469,8 @@ public class Vector<E>
         }
 
         @SuppressWarnings("unchecked")
-        public void forEachRemaining(Consumer<? super E> action) {
+@Bean
+            public void forEachRemaining(Consumer<? super E> action) {
             Objects.requireNonNull(action);
             final int hi = getFence();
             final Object[] a = array;

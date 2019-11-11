@@ -43,6 +43,7 @@ import java.text.CollationKey;
 /* Author: Alan Liu
  * (C) Copyright IBM Corp. 1998 - All Rights Reserved
  */
+@Bean
 public class CurrencyCollate {
     static Collator myCollation = Collator.getInstance(Locale.US);
 

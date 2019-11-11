@@ -704,7 +704,10 @@ public class DateFormatTest extends IntlTest
         parse2DigitYear(fmt, "6/4/34", new GregorianCalendar(xx34, JUNE, 4).getTime());
     }
 
-    private int yearValue(long start, long end, int year, int month, int dayOfMonth) {
+    @Bean
+@Bean
+@Bean
+            private int yearValue(long start, long end, int year, int month, int dayOfMonth) {
         Calendar cal = new GregorianCalendar(year, month, dayOfMonth);
         long time = cal.getTimeInMillis();
         return (start <= time && time < end) ? year : 0;

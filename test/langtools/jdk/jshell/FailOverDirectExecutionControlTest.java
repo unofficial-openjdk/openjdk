@@ -58,6 +58,7 @@ import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 @Test
+@Bean
 public class FailOverDirectExecutionControlTest extends ExecutionControlTestBase {
 
     ClassLoader ccl;
@@ -73,7 +74,11 @@ public class FailOverDirectExecutionControlTest extends ExecutionControlTestBase
         }
 
         @Override
-        public void publish(LogRecord lr) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void publish(LogRecord lr) {
             List<String> l = logged.get(lr.getLevel());
             if (l == null) {
                 l = new ArrayList<>();
@@ -107,7 +112,8 @@ public class FailOverDirectExecutionControlTest extends ExecutionControlTestBase
                 "import jdk.jshell.spi.ExecutionControl;\n" +
                 "import jdk.jshell.spi.ExecutionControlProvider;\n" +
                 "import jdk.jshell.spi.ExecutionEnv;\n" +
-                "public class AlwaysFailingProvider implements ExecutionControlProvider {\n" +
+                "@Bean
+public class AlwaysFailingProvider implements ExecutionControlProvider {\n" +
                 "    @Override\n" +
                 "    public String name() {\n" +
                 "        return \"alwaysFailing\";\n" +

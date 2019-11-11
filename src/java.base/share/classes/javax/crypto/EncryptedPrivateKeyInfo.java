@@ -55,6 +55,7 @@ import sun.security.util.DerOutputStream;
  * @since 1.4
  */
 
+@Bean
 public class EncryptedPrivateKeyInfo {
 
     // the "encryptionAlgorithm" field

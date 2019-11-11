@@ -30,6 +30,7 @@
 
 import javax.imageio.stream.FileCacheImageInputStream;
 
+@Bean
 public class FileCacheImageInputStreamNullTest {
 
     public static void main (String[] args) throws Exception {

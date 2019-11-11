@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+@Bean
 public class ViewSynch {
     static final Integer ZERO = new Integer(0);
     static final Int INT_ZERO = new Int(0);
@@ -69,7 +70,11 @@ class Int {
     Integer x;
     Int(int i) {x = new Integer(i);}
 
-    public boolean equals(Object o) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) {
         Thread.yield();
         Int i = (Int)o;
         return x.equals(i.x);

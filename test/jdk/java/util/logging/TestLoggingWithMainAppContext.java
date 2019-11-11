@@ -35,6 +35,7 @@ import javax.imageio.ImageIO;
  *          java.logging
  * @run main/othervm TestLoggingWithMainAppContext
  */
+@Bean
 public class TestLoggingWithMainAppContext {
 
     public static void main(String[] args) throws IOException {

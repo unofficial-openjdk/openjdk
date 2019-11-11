@@ -36,6 +36,7 @@
 
 import java.util.*;
 
+@Bean
 public class TestWithLogLevel {
     public static void main(String[] args) {
         ArrayList<Object> list = new ArrayList<>();

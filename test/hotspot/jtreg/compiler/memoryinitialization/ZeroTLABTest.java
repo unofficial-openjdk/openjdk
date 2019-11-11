@@ -33,6 +33,7 @@
 
 package compiler.memoryinitialization;
 
+@Bean
 public class ZeroTLABTest {
     public static void main(String args[]) {
         System.out.println("Test PASSED");

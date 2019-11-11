@@ -37,9 +37,14 @@ import java.io.File;
 
 import jdk.javadoc.doclet.DocletEnvironment;
 
+@Bean
 public class T6551367 {
     public T6551367() {}
-    public boolean run(DocletEnvironment root) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean run(DocletEnvironment root) {
         return true;
     }
     /** Here, in the javadoc for this method, I try to link to

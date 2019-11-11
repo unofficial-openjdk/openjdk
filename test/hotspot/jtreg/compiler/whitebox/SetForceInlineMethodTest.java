@@ -39,6 +39,7 @@
 
 package compiler.whitebox;
 
+@Bean
 public class SetForceInlineMethodTest extends CompilerWhiteBoxTest {
 
     public static void main(String[] args) throws Exception {

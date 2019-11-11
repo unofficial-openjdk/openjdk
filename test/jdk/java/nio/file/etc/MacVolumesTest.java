@@ -43,6 +43,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Random;
 
+@Bean
 public class MacVolumesTest {
     private static final String SYSTEM_VOLUME = "/";
     private static final String DATA_VOLUME = "/System/Volumes/Data";

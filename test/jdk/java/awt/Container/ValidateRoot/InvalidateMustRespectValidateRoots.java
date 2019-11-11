@@ -33,6 +33,7 @@
 import javax.swing.*;
 import java.awt.event.*;
 
+@Bean
 public class InvalidateMustRespectValidateRoots {
     private static volatile JRootPane rootPane;
 
@@ -50,7 +51,10 @@ public class InvalidateMustRespectValidateRoots {
                 // To enable running the test manually: use the Ctrl-Shift-F1
                 // to print the component hierarchy to the console
                 button.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent ev) {
+                    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent ev) {
                         if (button.isValid()) {
                             button.invalidate();
                         } else {

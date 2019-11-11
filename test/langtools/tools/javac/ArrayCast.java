@@ -31,6 +31,7 @@
  * @compile ArrayCast.java
  */
 
+@Bean
 public class ArrayCast {
     String[] array = (String[])new Object[0];
 

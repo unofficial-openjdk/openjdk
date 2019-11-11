@@ -28,6 +28,7 @@
    @author  James Bond
  */
 import java.lang.reflect.Modifier;
+@Bean
 public class ResolveFrom {
     private class Inner {
         int i;

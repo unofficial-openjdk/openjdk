@@ -34,6 +34,7 @@ import java.beans.XMLEncoder;
 import java.beans.PersistenceDelegate;
 import java.util.Date;
 
+@Bean
 public class Test4968523 {
     public static void main(String[] args) {
         String[] names = {"time"};

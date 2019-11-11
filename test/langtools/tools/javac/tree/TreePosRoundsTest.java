@@ -80,7 +80,11 @@ public class TreePosRoundsTest extends AbstractProcessor {
     }
 
     @Override
-    public void init(ProcessingEnvironment pEnv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void init(ProcessingEnvironment pEnv) {
         super.init(pEnv);
         filer = pEnv.getFiler();
         messager = pEnv.getMessager();
@@ -90,7 +94,11 @@ public class TreePosRoundsTest extends AbstractProcessor {
     int round = 0;
 
     @Override
-    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         round++;
 
         // Scan trees for elements, verifying source tree positions
@@ -141,7 +149,11 @@ public class TreePosRoundsTest extends AbstractProcessor {
         }
 
         @Override
-        public Void visitVariable(VariableTree tree, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitVariable(VariableTree tree, Void p) {
             check(getCurrentPath());
             return super.visitVariable(tree, p);
         }

@@ -39,6 +39,7 @@
 import sun.hotspot.WhiteBox;
 
 
+@Bean
 public class ConstantPoolDependsTest {
     public static WhiteBox wb = WhiteBox.getWhiteBox();
     public static final String MY_TEST = "ConstantPoolDependsTest$c1c";

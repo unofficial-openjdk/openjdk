@@ -57,6 +57,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
+@Bean
 public class ReprofileTest {
 
     public static void main(String[] args) {

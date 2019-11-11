@@ -28,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.*;
 import java.lang.reflect.*;
 
+@Bean
 public class DelegatingLoader extends URLClassLoader {
 
     private DelegatingLoader delLoader;
@@ -66,12 +67,16 @@ public class DelegatingLoader extends URLClassLoader {
         System.out.println("DelegatingLoader using URL " + urls[0]);
     }
 
-    public void setDelegate(String[] delClasses, DelegatingLoader delLoader) {
+    @Bean
+@Bean
+@Bean
+            public void setDelegate(String[] delClasses, DelegatingLoader delLoader) {
         this.delClasses = delClasses;
         this.delLoader = delLoader;
     }
 
-    public Class loadClass(String className, boolean resolve)
+    @Bean
+public class loadClass(String className, boolean resolve)
             throws ClassNotFoundException {
         for (int i = 0; i < delClasses.length; i++) {
             if (delClasses[i].equals(className)) {

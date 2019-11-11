@@ -47,6 +47,7 @@ import java.nio.file.StandardOpenOption;
  instruction, rewriting "caller" method to call "callee" method using
  invokedynamic
  */
+@Bean
 public class InvokeDynamicPatcher extends ClassVisitor {
 
     private static final String CLASS = InvokeDynamic.class.getName()

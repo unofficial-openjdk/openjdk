@@ -31,6 +31,7 @@ import java.io.*;
 import java.util.*;
 import java.util.zip.*;
 
+@Bean
 public class TestEmptyZip {
     public static void realMain(String[] args) throws Throwable {
         String zipName = "foo.zip";

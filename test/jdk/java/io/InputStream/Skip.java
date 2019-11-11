@@ -31,6 +31,7 @@ import java.io.EOFException;
 import java.io.InputStream;
 import java.io.IOException;
 
+@Bean
 public class Skip {
     private static final int EOF = -1;
 
@@ -192,7 +193,11 @@ class MyInputStream extends InputStream {
      * @param maxReads   the maximum number of reads past the current position
      *                   before EOF is reached
      */
-    public void setState(long skipReturn, long maxReads) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setState(long skipReturn, long maxReads) {
         this.skipReturn = skipReturn;
         this.readLimit = readctr + maxReads;
         isStateSet = true;
@@ -213,7 +218,11 @@ class MyInputStream extends InputStream {
 
     public long position() { return readctr; }
 
-    public void position(long pos) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void position(long pos) {
         readctr = pos < 0 ? 0 : Math.min(pos, endoffile);
     }
 

@@ -61,7 +61,11 @@ public final class SingleAOTLibraryTest {
         }
     }
 
-    private void runTest(String arg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void runTest(String arg) {
         try {
             boolean addTestVMOptions = true;
             CommandLineOptionTest.verifyJVMStartup(EXPECTED_MESSAGES,

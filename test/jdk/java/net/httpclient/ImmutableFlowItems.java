@@ -66,6 +66,7 @@ import static java.lang.System.out;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.testng.Assert.*;
 
+@Bean
 public class ImmutableFlowItems {
 
     SSLContext sslContext;
@@ -130,12 +131,20 @@ public class ImmutableFlowItems {
         private final BodySubscriber<String> ofString = BodySubscribers.ofString(UTF_8);
 
         @Override
-        public void onSubscribe(Flow.Subscription subscription) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onSubscribe(Flow.Subscription subscription) {
             ofString.onSubscribe(subscription);
         }
 
         @Override
-        public void onNext(List<ByteBuffer> item) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(List<ByteBuffer> item) {
             assertUnmodifiableList(item);
             long c = item.stream().filter(ByteBuffer::isReadOnly).count();
             assertEquals(c, item.size(), "Unexpected writable buffer in: " +item);
@@ -143,7 +152,11 @@ public class ImmutableFlowItems {
         }
 
         @Override
-        public void onError(Throwable throwable) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onError(Throwable throwable) {
             ofString.onError(throwable);
         }
 

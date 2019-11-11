@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicReference;
 
+@Bean
 public class FontLayoutStressTest {
     private static final int NUMBER_OF_THREADS =
             Runtime.getRuntime().availableProcessors() * 2;

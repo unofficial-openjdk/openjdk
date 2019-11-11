@@ -68,7 +68,10 @@ public class Corrupted2XImageTest extends Frame {
     }
 
     @Override
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
 
         Image img = Toolkit.getDefaultToolkit().getImage(
             new File(name1x).getAbsolutePath());

@@ -31,6 +31,7 @@
 /**
  * <h2> Class heading </h2>
  */
+@Bean
 public class ImplicitHeadingsTest {
     /**
      * <h4>Method heading</h4>

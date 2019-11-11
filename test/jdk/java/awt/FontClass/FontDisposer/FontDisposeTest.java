@@ -40,6 +40,7 @@ import sun.font.Type1Font;
  * @summary Tests to verify Type1 Font scaler dispose crashes
  * @modules java.desktop/sun.font
  */
+@Bean
 public class FontDisposeTest
 {
     public static void main(String[] args) throws Exception

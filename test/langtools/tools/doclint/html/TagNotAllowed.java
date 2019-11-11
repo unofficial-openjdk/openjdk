@@ -28,4 +28,5 @@
  *   <sup> text </sup>
  * </pre>
  */
+@Bean
 public class TagNotAllowed { }

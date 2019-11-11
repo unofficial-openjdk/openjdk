@@ -42,15 +42,27 @@ public final class Test5023559 extends AbstractTest {
         return new GrandParent().create().create();
     }
 
-    protected void initialize(XMLEncoder encoder) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void initialize(XMLEncoder encoder) {
         encoder.setPersistenceDelegate(Parent.class, new PersistenceDelegate() {
-            protected Expression instantiate(Object old, Encoder out) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                protected Expression instantiate(Object old, Encoder out) {
                 Parent parent = (Parent) old;
                 return new Expression(old, parent.getParent(), "create", new Object[] {});
             }
         });
         encoder.setPersistenceDelegate(Child.class, new PersistenceDelegate() {
-            protected Expression instantiate(Object old, Encoder out) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                protected Expression instantiate(Object old, Encoder out) {
                 Child child = (Child) old;
                 return new Expression(old, child.getParent(), "create", new Object[] {});
             }

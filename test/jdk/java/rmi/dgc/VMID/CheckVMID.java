@@ -41,6 +41,7 @@
 import java.rmi.dgc.VMID;
 import java.net.InetAddress;
 
+@Bean
 public class CheckVMID {
 
     public static void main(String[] args) {

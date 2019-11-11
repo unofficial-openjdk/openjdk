@@ -29,6 +29,7 @@
 import java.io.*;
 import java.util.zip.*;
 
+@Bean
 public class InterruptibleZip {
 
     public static void main(String[] args) throws Exception {

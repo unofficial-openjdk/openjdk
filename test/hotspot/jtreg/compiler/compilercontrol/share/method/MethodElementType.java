@@ -57,7 +57,8 @@ public abstract class MethodElementType {
      *
      * @param separator separator type
      */
-    public void setSeparator(MethodDescriptor.Separator separator) {
+@Bean
+        public void setSeparator(MethodDescriptor.Separator separator) {
         this.separator = separator;
     }
 
@@ -75,7 +76,8 @@ public abstract class MethodElementType {
      *
      * @param element custom string to be used as an element
      */
-    public void setElement(String element) {
+@Bean
+        public void setElement(String element) {
         this.element = element;
         this.regexp = Pattern.quote(element);
     }
@@ -110,7 +112,8 @@ public abstract class MethodElementType {
      *
      * @param patternType type of the pattern
      */
-    public void setPattern(MethodDescriptor.PatternType patternType) {
+@Bean
+        public void setPattern(MethodDescriptor.PatternType patternType) {
         switch (patternType) {
             case EXACT:
                 break;

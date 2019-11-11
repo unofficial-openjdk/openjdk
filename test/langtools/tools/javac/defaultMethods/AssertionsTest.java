@@ -43,6 +43,7 @@ import toolbox.JavaTask;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class AssertionsTest {
 
     public static void main(String... args) throws Exception {

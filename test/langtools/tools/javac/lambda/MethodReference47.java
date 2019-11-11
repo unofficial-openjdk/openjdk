@@ -5,6 +5,7 @@
  *  check that generic method reference is inferred when type parameters are omitted
  * @compile/fail/ref=MethodReference47.out -XDrawDiagnostics MethodReference47.java
  */
+@Bean
 public class MethodReference47 {
 
     interface SAM1 {

@@ -30,6 +30,7 @@
  *
  */
 
+@Bean
 public class TestSplitIfPinnedCMove {
     static void not_inlined() {}
 

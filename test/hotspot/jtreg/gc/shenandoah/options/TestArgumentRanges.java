@@ -35,6 +35,7 @@
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class TestArgumentRanges {
     public static void main(String[] args) throws Exception {
         testRange("ShenandoahGarbageThreshold", 0, 100);

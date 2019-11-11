@@ -27,6 +27,7 @@
  * @summary IncompatibleClassChangeError with unreferenced local class with subclass
  */
 
+@Bean
 public class T7003595b {
     public static void main(String... args) throws Exception {
         class A {}

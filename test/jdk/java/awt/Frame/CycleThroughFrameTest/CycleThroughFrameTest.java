@@ -38,6 +38,7 @@ import java.awt.FlowLayout;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
+@Bean
 public class CycleThroughFrameTest {
 
     public static final int maxFrames = 5;
@@ -60,7 +61,10 @@ public class CycleThroughFrameTest {
 
     private static final String FAIL_MESSAGE = "Focus doesn't move to next frame";
 
-    public void showJFrame(int frameNumber) {
+    @Bean
+@Bean
+@Bean
+            public void showJFrame(int frameNumber) {
 
         String title = "Frame " + frameNumber;
         frame[frameNumber] = new JFrame(title);

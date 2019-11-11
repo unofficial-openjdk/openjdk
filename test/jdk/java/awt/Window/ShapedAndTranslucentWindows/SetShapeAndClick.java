@@ -74,6 +74,9 @@ public class SetShapeAndClick extends Common {
         super.initBackgroundFrame();
         background.addMouseListener(new MouseAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseClicked(MouseEvent e) {
                 clicked |= 1 << 0;
             }
@@ -97,6 +100,9 @@ public class SetShapeAndClick extends Common {
         window.setLayout(new BorderLayout());
 
         window.addComponentListener(new ComponentAdapter() {
+            @Bean
+@Bean
+@Bean
             public void componentResized(ComponentEvent e) {
                 applyShape();
             }
@@ -105,6 +111,9 @@ public class SetShapeAndClick extends Common {
         south = new Label("South");
         south.addMouseListener(new MouseAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseClicked(MouseEvent e) {
                 clicked |= 1 << 3;
             }
@@ -114,6 +123,9 @@ public class SetShapeAndClick extends Common {
         center = new List(5);
         center.addMouseListener(new MouseAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseClicked(MouseEvent e) {
                 clicked |= 1 << 2;
             }
@@ -123,6 +135,9 @@ public class SetShapeAndClick extends Common {
         north = new TextField("North");
         north.addMouseListener(new MouseAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseClicked(MouseEvent e) {
                 clicked |= 1 << 1;
             }

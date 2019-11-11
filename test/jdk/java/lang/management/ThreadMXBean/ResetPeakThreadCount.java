@@ -36,6 +36,7 @@
 
 import java.lang.management.*;
 
+@Bean
 public class ResetPeakThreadCount {
     // initial number of new threads started
     private static final int DAEMON_THREADS_1 = 8;

@@ -185,7 +185,8 @@ import javax.annotation.processing.Processor;
  *       /**
  *        * A file object used to represent source coming from a string.
  *        {@code *}/
- *       public class JavaSourceFromString extends SimpleJavaFileObject {
+ *       @Bean
+public class JavaSourceFromString extends SimpleJavaFileObject {
  *           /**
  *            * The source code of this "file".
  *            {@code *}/
@@ -203,7 +204,10 @@ import javax.annotation.processing.Processor;
  *           }
  *
  *           {@code @}Override
- *           public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+ *@Bean
+@Bean
+@Bean
+                       public CharSequence getCharContent(boolean ignoreEncodingErrors) {
  *               return code;
  *           }
  *       }</pre>

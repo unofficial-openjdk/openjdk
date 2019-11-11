@@ -57,6 +57,7 @@ import javax.swing.UIManager.LookAndFeelInfo;
  *
  * @author Philip Milne
  */
+@Bean
 public class TableExample3 {
 
     public TableExample3() {
@@ -64,7 +65,11 @@ public class TableExample3 {
         frame.addWindowListener(new WindowAdapter() {
 
             @Override
-            public void windowClosing(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosing(WindowEvent e) {
                 System.exit(0);
             }
         });
@@ -109,29 +114,50 @@ public class TableExample3 {
                 return data.length;
             }
 
-            public Object getValueAt(int row, int col) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Object getValueAt(int row, int col) {
                 return data[row][col];
             }
 
             // The default implementations of these methods in
             // AbstractTableModel would work, but we can refine them.
             @Override
-            public String getColumnName(int column) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public String getColumnName(int column) {
                 return names[column];
             }
 
             @Override
-            public Class getColumnClass(int col) {
+            @Bean
+@Bean
+@Bean
+@Bean
+@Bean
+                public class getColumnClass(int col) {
                 return getValueAt(0, col).getClass();
             }
 
             @Override
-            public boolean isCellEditable(int row, int col) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public boolean isCellEditable(int row, int col) {
                 return (col == 4);
             }
 
             @Override
-            public void setValueAt(Object aValue, int row, int column) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setValueAt(Object aValue, int row, int column) {
                 data[row][column] = aValue;
             }
         };

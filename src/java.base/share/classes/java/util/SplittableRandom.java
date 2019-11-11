@@ -405,7 +405,8 @@ public final class SplittableRandom {
      * @throws NullPointerException if bytes is null
      * @since  10
      */
-    public void nextBytes(byte[] bytes) {
+@Bean
+        public void nextBytes(byte[] bytes) {
         int i = 0;
         int len = bytes.length;
         for (int words = len >> 3; words--> 0; ) {
@@ -436,7 +437,8 @@ public final class SplittableRandom {
      *         (inclusive) and the bound (exclusive)
      * @throws IllegalArgumentException if {@code bound} is not positive
      */
-    public int nextInt(int bound) {
+@Bean
+        public int nextInt(int bound) {
         if (bound <= 0)
             throw new IllegalArgumentException(BAD_BOUND);
         // Specialize internalNextInt for origin 0
@@ -464,7 +466,8 @@ public final class SplittableRandom {
      * @throws IllegalArgumentException if {@code origin} is greater than
      *         or equal to {@code bound}
      */
-    public int nextInt(int origin, int bound) {
+@Bean
+        public int nextInt(int origin, int bound) {
         if (origin >= bound)
             throw new IllegalArgumentException(BAD_RANGE);
         return internalNextInt(origin, bound);
@@ -488,7 +491,8 @@ public final class SplittableRandom {
      *         (inclusive) and the bound (exclusive)
      * @throws IllegalArgumentException if {@code bound} is not positive
      */
-    public long nextLong(long bound) {
+@Bean
+        public long nextLong(long bound) {
         if (bound <= 0)
             throw new IllegalArgumentException(BAD_BOUND);
         // Specialize internalNextLong for origin 0
@@ -516,7 +520,8 @@ public final class SplittableRandom {
      * @throws IllegalArgumentException if {@code origin} is greater than
      *         or equal to {@code bound}
      */
-    public long nextLong(long origin, long bound) {
+@Bean
+        public long nextLong(long origin, long bound) {
         if (origin >= bound)
             throw new IllegalArgumentException(BAD_RANGE);
         return internalNextLong(origin, bound);
@@ -542,7 +547,8 @@ public final class SplittableRandom {
      *         (inclusive) and the bound (exclusive)
      * @throws IllegalArgumentException if {@code bound} is not positive
      */
-    public double nextDouble(double bound) {
+@Bean
+        public double nextDouble(double bound) {
         if (!(bound > 0.0))
             throw new IllegalArgumentException(BAD_BOUND);
         double result = (mix64(nextSeed()) >>> 11) * DOUBLE_UNIT * bound;
@@ -561,7 +567,8 @@ public final class SplittableRandom {
      * @throws IllegalArgumentException if {@code origin} is greater than
      *         or equal to {@code bound}
      */
-    public double nextDouble(double origin, double bound) {
+@Bean
+        public double nextDouble(double origin, double bound) {
         if (!(origin < bound))
             throw new IllegalArgumentException(BAD_RANGE);
         return internalNextDouble(origin, bound);
@@ -589,7 +596,8 @@ public final class SplittableRandom {
      * @throws IllegalArgumentException if {@code streamSize} is
      *         less than zero
      */
-    public IntStream ints(long streamSize) {
+@Bean
+        public IntStream ints(long streamSize) {
         if (streamSize < 0L)
             throw new IllegalArgumentException(BAD_SIZE);
         return StreamSupport.intStream
@@ -656,7 +664,8 @@ public final class SplittableRandom {
      * @throws IllegalArgumentException if {@code randomNumberOrigin}
      *         is greater than or equal to {@code randomNumberBound}
      */
-    public IntStream ints(int randomNumberOrigin, int randomNumberBound) {
+@Bean
+        public IntStream ints(int randomNumberOrigin, int randomNumberBound) {
         if (randomNumberOrigin >= randomNumberBound)
             throw new IllegalArgumentException(BAD_RANGE);
         return StreamSupport.intStream
@@ -675,7 +684,8 @@ public final class SplittableRandom {
      * @throws IllegalArgumentException if {@code streamSize} is
      *         less than zero
      */
-    public LongStream longs(long streamSize) {
+@Bean
+        public LongStream longs(long streamSize) {
         if (streamSize < 0L)
             throw new IllegalArgumentException(BAD_SIZE);
         return StreamSupport.longStream
@@ -742,7 +752,8 @@ public final class SplittableRandom {
      * @throws IllegalArgumentException if {@code randomNumberOrigin}
      *         is greater than or equal to {@code randomNumberBound}
      */
-    public LongStream longs(long randomNumberOrigin, long randomNumberBound) {
+@Bean
+        public LongStream longs(long randomNumberOrigin, long randomNumberBound) {
         if (randomNumberOrigin >= randomNumberBound)
             throw new IllegalArgumentException(BAD_RANGE);
         return StreamSupport.longStream
@@ -761,7 +772,8 @@ public final class SplittableRandom {
      * @throws IllegalArgumentException if {@code streamSize} is
      *         less than zero
      */
-    public DoubleStream doubles(long streamSize) {
+@Bean
+        public DoubleStream doubles(long streamSize) {
         if (streamSize < 0L)
             throw new IllegalArgumentException(BAD_SIZE);
         return StreamSupport.doubleStream
@@ -829,7 +841,8 @@ public final class SplittableRandom {
      * @throws IllegalArgumentException if {@code randomNumberOrigin}
      *         is greater than or equal to {@code randomNumberBound}
      */
-    public DoubleStream doubles(double randomNumberOrigin, double randomNumberBound) {
+@Bean
+        public DoubleStream doubles(double randomNumberOrigin, double randomNumberBound) {
         if (!(randomNumberOrigin < randomNumberBound))
             throw new IllegalArgumentException(BAD_RANGE);
         return StreamSupport.doubleStream
@@ -874,7 +887,8 @@ public final class SplittableRandom {
                     Spliterator.NONNULL | Spliterator.IMMUTABLE);
         }
 
-        public boolean tryAdvance(IntConsumer consumer) {
+@Bean
+            public boolean tryAdvance(IntConsumer consumer) {
             if (consumer == null) throw new NullPointerException();
             long i = index, f = fence;
             if (i < f) {
@@ -885,7 +899,8 @@ public final class SplittableRandom {
             return false;
         }
 
-        public void forEachRemaining(IntConsumer consumer) {
+@Bean
+            public void forEachRemaining(IntConsumer consumer) {
             if (consumer == null) throw new NullPointerException();
             long i = index, f = fence;
             if (i < f) {
@@ -930,7 +945,8 @@ public final class SplittableRandom {
                     Spliterator.NONNULL | Spliterator.IMMUTABLE);
         }
 
-        public boolean tryAdvance(LongConsumer consumer) {
+@Bean
+            public boolean tryAdvance(LongConsumer consumer) {
             if (consumer == null) throw new NullPointerException();
             long i = index, f = fence;
             if (i < f) {
@@ -941,7 +957,8 @@ public final class SplittableRandom {
             return false;
         }
 
-        public void forEachRemaining(LongConsumer consumer) {
+@Bean
+            public void forEachRemaining(LongConsumer consumer) {
             if (consumer == null) throw new NullPointerException();
             long i = index, f = fence;
             if (i < f) {
@@ -987,7 +1004,8 @@ public final class SplittableRandom {
                     Spliterator.NONNULL | Spliterator.IMMUTABLE);
         }
 
-        public boolean tryAdvance(DoubleConsumer consumer) {
+@Bean
+            public boolean tryAdvance(DoubleConsumer consumer) {
             if (consumer == null) throw new NullPointerException();
             long i = index, f = fence;
             if (i < f) {
@@ -998,7 +1016,8 @@ public final class SplittableRandom {
             return false;
         }
 
-        public void forEachRemaining(DoubleConsumer consumer) {
+@Bean
+            public void forEachRemaining(DoubleConsumer consumer) {
             if (consumer == null) throw new NullPointerException();
             long i = index, f = fence;
             if (i < f) {

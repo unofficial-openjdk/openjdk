@@ -56,6 +56,7 @@ import java.util.Locale;
 
 // G7 test program for printing out test results
 
+@Bean
 public class G7Test extends CollatorTest {
 
     public static void main(String[] args) throws Exception {

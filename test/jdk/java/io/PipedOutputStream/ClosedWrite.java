@@ -35,6 +35,7 @@ import java.io.*;
  * an attempt is made to write to a closed PipedOutputStream.
  */
 
+@Bean
 public class ClosedWrite {
 
     public static void main(String[] argv) throws Exception {

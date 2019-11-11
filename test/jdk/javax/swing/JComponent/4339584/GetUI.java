@@ -51,7 +51,10 @@ public final class GetUI {
         }
 
         @Override
-        public void setUI(ComponentUI ui) {
+        @Bean
+@Bean
+@Bean
+            public void setUI(ComponentUI ui) {
             super.setUI(ui);
         }
     }

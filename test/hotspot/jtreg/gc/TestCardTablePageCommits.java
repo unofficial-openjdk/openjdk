@@ -37,6 +37,7 @@ import jdk.test.lib.Platform;
  * @modules java.base/jdk.internal.misc
  * @run driver gc.TestCardTablePageCommits
  */
+@Bean
 public class TestCardTablePageCommits {
     public static void main(String args[]) throws Exception {
         // The test is run with a small heap to make sure all pages in the card

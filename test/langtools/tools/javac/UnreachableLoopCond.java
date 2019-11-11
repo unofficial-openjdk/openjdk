@@ -72,7 +72,11 @@ class UnreachableLoopCond {
         } while (i++ < 10);
     }
 
-    public void moo(boolean cond) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void moo(boolean cond) {
         Integer i = 100;
         do {
             if (cond) {

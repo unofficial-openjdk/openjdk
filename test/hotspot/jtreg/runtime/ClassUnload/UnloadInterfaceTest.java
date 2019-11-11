@@ -44,13 +44,15 @@ import java.lang.ClassLoader;
  * [1.366s][trace][class,unload] unlinking class (subclass): test.ImplementorClass
  * [1.366s][trace][class,unload] unlinking class (implementor): test.ImplementorClass
  */
+@Bean
 public class UnloadInterfaceTest {
     private static String className = "test.ImplementorClass";
     private static String interfaceName = "test.Interface";
 
     static class LoaderToUnload extends ClassLoader {
        ClassLoader myParent;
-        public Class loadClass(String name) throws ClassNotFoundException {
+        @Bean
+public class loadClass(String name) throws ClassNotFoundException {
             if (name.contains(className)) {
               System.out.println("className found " + className);
               byte[] data = ClassUnloadCommon.getClassData(name);

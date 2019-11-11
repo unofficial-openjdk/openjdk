@@ -30,6 +30,7 @@ import java.io.File;
 import java.net.URL;
 
 
+@Bean
 public class ToURL {
 
     static void go(String fn) throws Exception {

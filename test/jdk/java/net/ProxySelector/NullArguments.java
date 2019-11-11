@@ -29,6 +29,7 @@ import java.net.*;
 import java.util.List;
 import java.io.IOException;
 
+@Bean
 public class NullArguments {
     public static void main(String[] args) {
         ProxySelector ps = ProxySelector.getDefault();

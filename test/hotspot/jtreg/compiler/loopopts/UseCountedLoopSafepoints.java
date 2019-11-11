@@ -28,6 +28,7 @@ import sun.hotspot.WhiteBox;
 import jdk.test.lib.Asserts;
 import compiler.whitebox.CompilerWhiteBoxTest;
 
+@Bean
 public class UseCountedLoopSafepoints {
     private static final WhiteBox WB = WhiteBox.getWhiteBox();
     private static final String METHOD_NAME = "testMethod";

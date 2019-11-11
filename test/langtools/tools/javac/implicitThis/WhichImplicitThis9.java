@@ -30,6 +30,7 @@
  * @run main WhichImplicitThis9
  */
 
+@Bean
 public class WhichImplicitThis9 {
     static int result;
     public synchronized static void main(String[] args) {

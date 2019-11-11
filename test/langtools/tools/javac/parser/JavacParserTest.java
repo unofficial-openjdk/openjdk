@@ -85,6 +85,7 @@ import javax.tools.ToolProvider;
 import com.sun.source.tree.CaseTree;
 import com.sun.source.util.TreePathScanner;
 
+@Bean
 public class JavacParserTest extends TestCase {
     static final JavaCompiler tool = ToolProvider.getSystemJavaCompiler();
     static final JavaFileManager fm = tool.getStandardFileManager(null, null, null);
@@ -109,7 +110,11 @@ public class JavacParserTest extends TestCase {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return text;
         }
     }
@@ -146,7 +151,8 @@ public class JavacParserTest extends TestCase {
     void testPositionForSuperConstructorCalls() throws IOException {
         assert tool != null;
 
-        String code = "package test; public class Test {public Test() {super();}}";
+        String code = "package test; @Bean
+public class Test {public Test() {super();}}";
 
         JavacTaskImpl ct = (JavacTaskImpl) tool.getTask(null, fm, null, null,
                 null, Arrays.asList(new MyFileObject(code)));
@@ -230,7 +236,8 @@ public class JavacParserTest extends TestCase {
     @Test
     void testPreferredPositionForBinaryOp() throws IOException {
 
-        String code = "package test; public class Test {"
+        String code = "package test; @Bean
+public class Test {"
                 + "private void test() {"
                 + "Object o = null; boolean b = o != null && o instanceof String;"
                 + "} private Test() {}}";
@@ -259,7 +266,11 @@ public class JavacParserTest extends TestCase {
 
         JavacTaskImpl ct = (JavacTaskImpl) tool.getTask(null, fm,
                 new DiagnosticListener<JavaFileObject>() {
-            public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
                 errors.add(diagnostic);
             }
         }, null, null, Arrays.asList(new MyFileObject(code)));
@@ -305,7 +316,11 @@ public class JavacParserTest extends TestCase {
 
         new TreeScanner<Void, Void>() {
             @Override
-            public Void visitIf(IfTree it, Void v) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitIf(IfTree it, Void v) {
                 StatementTree st = it.getThenStatement();
                 int startpos = (int) positions.getStartPosition(cut, st);
                 int endpos = (int) positions.getEndPosition(cut, st);
@@ -364,7 +379,11 @@ public class JavacParserTest extends TestCase {
         JavacTaskImpl ct = (JavacTaskImpl) tool.getTask(null, fm,
                 new DiagnosticListener<JavaFileObject>() {
 
-            public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
                 errors.add(diagnostic);
             }
         }, null, null, Arrays.asList(new MyFileObject(code)));
@@ -378,7 +397,11 @@ public class JavacParserTest extends TestCase {
             private long parentEnd = Integer.MAX_VALUE;
 
             @Override
-            public Void scan(Tree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void scan(Tree node, Void p) {
                 if (node == null) {
                     return null;
                 }
@@ -412,7 +435,11 @@ public class JavacParserTest extends TestCase {
                 return null;
             }
 
-            private void assertTrue(String message, boolean b) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                private void assertTrue(String message, boolean b) {
                 if (!b) fail(message);
             }
         }.scan(cut, null);
@@ -506,7 +533,11 @@ public class JavacParserTest extends TestCase {
 
         JavacTaskImpl ct = (JavacTaskImpl) tool.getTask(null, fm,
                 new DiagnosticListener<JavaFileObject>() {
-                    public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
                         errors.add(diagnostic);
                     }
                 }, null, null, Arrays.asList(new MyFileObject(code)));
@@ -517,7 +548,11 @@ public class JavacParserTest extends TestCase {
 
         new TreeScanner<Void, Void>() {
             @Override
-            public Void scan(Tree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void scan(Tree node, Void p) {
                 if (node == null) {
                     return null;
                 }
@@ -697,7 +732,11 @@ public class JavacParserTest extends TestCase {
 
         new TreeScanner<Void, Void>() {
             @Override
-            public Void visitVariable(VariableTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitVariable(VariableTree node, Void p) {
                 if ("in".contentEquals(node.getName())) {
                     JCTree.JCVariableDecl var = (JCTree.JCVariableDecl) node;
                     assertEquals("testTryResourcePos", "in = null) { } } }",
@@ -719,7 +758,11 @@ public class JavacParserTest extends TestCase {
         new TreeScanner<Void, Void>() {
 
             @Override
-            public Void visitVariable(VariableTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitVariable(VariableTree node, Void p) {
                 if ("in".contentEquals(node.getName())) {
                     JCTree.JCVariableDecl var = (JCTree.JCVariableDecl) node;
                     assertEquals("testVarPos","in = null; } }",
@@ -734,7 +777,8 @@ public class JavacParserTest extends TestCase {
     @Test
     void testOperatorMissingError() throws IOException {
 
-        String code = "package test; public class ErrorTest { "
+        String code = "package test; @Bean
+public class ErrorTest { "
                 + "void method() { int x = y  z } }";
         CompilationUnitTree cut = getCompilationUnitTree(code);
         final List<String> values = new ArrayList<>();
@@ -743,7 +787,11 @@ public class JavacParserTest extends TestCase {
 
         new TreeScanner<Void, Void>() {
             @Override
-            public Void visitErroneous(ErroneousTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitErroneous(ErroneousTree node, Void p) {
                 values.add(getErroneousTreeValues(node).toString());
                 return null;
 
@@ -760,7 +808,8 @@ public class JavacParserTest extends TestCase {
     @Test
     void testMissingParenthesisError() throws IOException {
 
-        String code = "package test; public class ErrorTest { "
+        String code = "package test; @Bean
+public class ErrorTest { "
                 + "void f() {String s = new String; } }";
         CompilationUnitTree cut = getCompilationUnitTree(code);
         final List<String> values = new ArrayList<>();
@@ -769,7 +818,11 @@ public class JavacParserTest extends TestCase {
 
         new TreeScanner<Void, Void>() {
             @Override
-            public Void visitErroneous(ErroneousTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitErroneous(ErroneousTree node, Void p) {
                 values.add(getErroneousTreeValues(node).toString());
                 return null;
             }
@@ -794,7 +847,11 @@ public class JavacParserTest extends TestCase {
 
         new TreeScanner<Void, Void>() {
             @Override
-            public Void visitErroneous(ErroneousTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitErroneous(ErroneousTree node, Void p) {
                 values.add(getErroneousTreeValues(node).toString());
                 return null;
             }
@@ -810,7 +867,8 @@ public class JavacParserTest extends TestCase {
     @Test
     void testSwitchError() throws IOException {
 
-        String code = "package test; public class ErrorTest { "
+        String code = "package test; @Bean
+public class ErrorTest { "
                 + "int numDays; void m1(int i) { switchh {i} { case 1: "
                 + "numDays = 31; break; } } }";
         CompilationUnitTree cut = getCompilationUnitTree(code);
@@ -820,7 +878,11 @@ public class JavacParserTest extends TestCase {
 
         new TreeScanner<Void, Void>() {
             @Override
-            public Void visitErroneous(ErroneousTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitErroneous(ErroneousTree node, Void p) {
                 values.add(getErroneousTreeValues(node).toString());
                 return null;
             }
@@ -846,7 +908,11 @@ public class JavacParserTest extends TestCase {
 
         new TreeScanner<Void, Void>() {
             @Override
-            public Void visitErroneous(ErroneousTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitErroneous(ErroneousTree node, Void p) {
                 values.add(normalize(getErroneousTreeValues(node).toString()));
                 return null;
             }
@@ -874,7 +940,8 @@ public class JavacParserTest extends TestCase {
         for (String command : commands) {
 
             String code = "package test;\n"
-                    + "public class Test {\n"
+                    + "@Bean
+public class Test {\n"
                     + "    public static void test() {\n"
                     + "        " + command + " {\n"
                     + "                new Runnable() {\n"
@@ -912,7 +979,8 @@ public class JavacParserTest extends TestCase {
         for (String command : commands) {
 
             String code = "package test;\n"
-                    + "public class Test {\n"
+                    + "@Bean
+public class Test {\n"
                     + "    public static void test() {\n"
                     + "        while (true) {\n"
                     + "            " + command + " {\n"
@@ -1023,7 +1091,11 @@ public class JavacParserTest extends TestCase {
         boolean[] foundVar = new boolean[1];
 
         new TreePathScanner<Void, Void>() {
-            @Override public Void visitVariable(VariableTree vt, Void p) {
+            @Override @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitVariable(VariableTree vt, Void p) {
                 assertNotNull(vt.getModifiers());
                 assertNotNull(vt.getType());
                 assertNotNull(vt.getName());
@@ -1043,7 +1115,8 @@ public class JavacParserTest extends TestCase {
 
     @Test //JDK-821742
     void testCompDeclVarType() throws IOException {
-        String code = "package test; public class Test {"
+        String code = "package test; @Bean
+public class Test {"
                 + "private void test() {"
                 + "var v1 = 10,v2 = 12;"
                 + "} private Test() {}}";
@@ -1105,7 +1178,11 @@ public class JavacParserTest extends TestCase {
 
         new TreePathScanner<Void, Void>() {
             @Override
-            public Void visitCase(CaseTree tree, Void v) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitCase(CaseTree tree, Void v) {
                 if (tree.getBody() != null) {
                     int start = (int) trees.getSourcePositions().getStartPosition(cut, tree.getBody());
                     int end = (int) trees.getSourcePositions().getEndPosition(cut, tree.getBody());
@@ -1243,7 +1320,11 @@ public class JavacParserTest extends TestCase {
 
         new TreeScanner<Void, Void>() {
             @Override
-            public Void visitLambdaExpression(LambdaExpressionTree tree, Void v) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitLambdaExpression(LambdaExpressionTree tree, Void v) {
                 found[0] = true;
                 int lambdaStart = parts[0].length();
                 int lambdaEnd = parts[0].length() + parts[1].length();
@@ -1276,7 +1357,11 @@ public class JavacParserTest extends TestCase {
 
         new TreeScanner<Void, Void>() {
             @Override
-            public Void visitLambdaExpression(LambdaExpressionTree tree, Void v) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitLambdaExpression(LambdaExpressionTree tree, Void v) {
                 found[0] = true;
                 int lambdaStart = parts[0].length();
                 int lambdaEnd = parts[0].length() + parts[1].length();

@@ -50,6 +50,7 @@ import sun.security.util.ObjectIdentifier;
 import sun.security.x509.AlgorithmId;
 import sun.security.x509.X500Name;
 
+@Bean
 public class PKCS12SameKeyId {
 
     private static final String JKSFILE = "PKCS12SameKeyId.jks";

@@ -29,6 +29,7 @@
  */
 
 
+@Bean
 public class GetSunMiscUnsafe {
 
     public static void main(String[] args) throws Exception {

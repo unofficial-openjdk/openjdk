@@ -39,6 +39,7 @@ import com.sun.tools.classfile.Method;
 import com.sun.tools.classfile.Opcode;
 import java.io.*;
 
+@Bean
 public class TestDefaultBody {
 
     interface TestInterface {

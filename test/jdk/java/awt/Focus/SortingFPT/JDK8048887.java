@@ -42,6 +42,7 @@ import java.awt.event.WindowEvent;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+@Bean
 public class JDK8048887 {
 
     static volatile boolean passed = true;
@@ -58,7 +59,10 @@ public class JDK8048887 {
                 // Catch the original exception which sounds like:
                 // java.lang.IllegalArgumentException: Comparison method violates its general contract!
                 Thread.currentThread().setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-                        public void uncaughtException(Thread t, Throwable e) {
+                        @Bean
+@Bean
+@Bean
+            public void uncaughtException(Thread t, Throwable e) {
                             e.printStackTrace();
                             if (e instanceof IllegalArgumentException) {
                                 passed = false;
@@ -71,7 +75,10 @@ public class JDK8048887 {
                 // It's expected that the dialog is focused on start.
                 // The listener is called after the FTP completes processing and the bug is reproduced or not.
                 d.addWindowFocusListener(new WindowAdapter() {
-                        public void windowGainedFocus(WindowEvent e) {
+                        @Bean
+@Bean
+@Bean
+            public void windowGainedFocus(WindowEvent e) {
                             latch.countDown();
                         }
                 });

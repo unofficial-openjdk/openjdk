@@ -28,6 +28,7 @@
 import java.nio.*;
 
 
+@Bean
 public class NativeOrder {
 
     public static void main(String[] args) throws Exception {

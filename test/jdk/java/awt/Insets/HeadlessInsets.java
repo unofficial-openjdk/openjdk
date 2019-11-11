@@ -30,6 +30,7 @@ import java.awt.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessInsets
  */
 
+@Bean
 public class HeadlessInsets {
     public static void main(String args[]) {
         new Insets(1, 2, 3, 4);

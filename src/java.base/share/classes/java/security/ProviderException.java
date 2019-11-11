@@ -34,6 +34,7 @@ package java.security;
  * @author Benjamin Renaud
  * @since 1.1
  */
+@Bean
 public class ProviderException extends RuntimeException {
 
     @java.io.Serial

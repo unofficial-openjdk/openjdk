@@ -46,6 +46,7 @@ import test.java.awt.regtesthelpers.Util;
 
 
 
+@Bean
 public class MixingInHwPanel
 {
     static volatile boolean failed = true;
@@ -72,7 +73,11 @@ public class MixingInHwPanel
 
         Button button = new Button("HW Button");
         button.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 failed = false;
             }
         });

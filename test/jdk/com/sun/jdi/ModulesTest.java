@@ -47,6 +47,7 @@ class ModulesTarg {
 
     /********** test program **********/
 
+@Bean
 public class ModulesTest extends TestScaffold {
     static final String FailPrefix = "ModulesTest: failed: ";
 
@@ -68,7 +69,11 @@ public class ModulesTest extends TestScaffold {
 
     /********** test core **********/
 
-    private boolean reftypeSanityCheck(ModuleReference module, ReferenceType type) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean reftypeSanityCheck(ModuleReference module, ReferenceType type) {
         ModuleReference other = type.module();
         if (other == null) {
             testFailed = true;
@@ -80,7 +85,11 @@ public class ModulesTest extends TestScaffold {
         return true;
     }
 
-    private void checkLoaderDefinedClasses(ModuleReference module, ClassLoaderReference loader) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkLoaderDefinedClasses(ModuleReference module, ClassLoaderReference loader) {
         String moduleName = module.name();
         List<ReferenceType> definedClasses = loader.definedClasses();
         boolean origModuleWasObserved = false;
@@ -99,7 +108,11 @@ public class ModulesTest extends TestScaffold {
         }
     }
 
-    private void checkLoaderVisibleClasses(ModuleReference module, ClassLoaderReference loader) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkLoaderVisibleClasses(ModuleReference module, ClassLoaderReference loader) {
         String moduleName = module.name();
         List<ReferenceType> visibleClasses = loader.visibleClasses();
 
@@ -114,13 +127,21 @@ public class ModulesTest extends TestScaffold {
     }
 
     // Check any ClassLoader except the bootsrtap ClassLoader
-    private void checkClassLoader(ModuleReference module, ClassLoaderReference loader) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkClassLoader(ModuleReference module, ClassLoaderReference loader) {
         checkLoaderDefinedClasses(module, loader);
         checkLoaderVisibleClasses(module, loader);
     }
 
     // Sanity checks to make sure there are no crashes or exceptions.
-    private void checkModule(ModuleReference module, ModuleReference other, int checkIdx) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkModule(ModuleReference module, ModuleReference other, int checkIdx) {
         if (module == null) {
             testFailed = true;
             println(FailPrefix + "a ModuleReference should never be null #2");

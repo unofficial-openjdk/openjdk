@@ -29,6 +29,7 @@
 
 import java.net.*;
 
+@Bean
 public class TestRFC2732 {
 
     public static void main(String[] args) {

@@ -47,7 +47,11 @@ public class TimeoutHandler {
      * Perform test execution in separate thread and wait for
      * thread finishes or timeout exceeds.
      */
-    public void runTest(Thread testThread) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void runTest(Thread testThread) {
         long millisec = waitTime * 60 * 1000;
         testThread.start();
         try {

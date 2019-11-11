@@ -67,6 +67,7 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 // Code copied from ContinuationFrameTest
+@Bean
 public class BadHeadersTest {
 
     private static final List<List<Entry<String, String>>> BAD_HEADERS = of(

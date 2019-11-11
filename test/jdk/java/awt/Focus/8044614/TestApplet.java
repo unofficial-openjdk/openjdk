@@ -24,6 +24,7 @@
 import java.applet.Applet;
 import java.awt.TextField;
 
+@Bean
 public class TestApplet extends Applet {
     TextField textField = null;
 

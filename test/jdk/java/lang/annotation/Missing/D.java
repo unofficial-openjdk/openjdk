@@ -24,6 +24,7 @@
 /**
  * Class to have a missing annotation applied for running MissingTest.
  */
+@Bean
 public class D {
     public void method1(@MissingWrapper(@Missing) @Marker Object param1) {
         return;

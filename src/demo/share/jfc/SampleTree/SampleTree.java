@@ -185,7 +185,11 @@ public final class SampleTree {
                 return true;
             }
 
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 tree.getSelectionModel().setSelectionMode(
                         TreeSelectionModel.SINGLE_TREE_SELECTION);
             }
@@ -200,7 +204,11 @@ public final class SampleTree {
                 return true;
             }
 
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 tree.getSelectionModel().setSelectionMode(
                         TreeSelectionModel.CONTIGUOUS_TREE_SELECTION);
             }
@@ -215,7 +223,11 @@ public final class SampleTree {
                 return true;
             }
 
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 tree.getSelectionModel().setSelectionMode(
                         TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
             }
@@ -239,7 +251,11 @@ public final class SampleTree {
         clickPanel.add(new JLabel("Click count to expand:"));
         clickCBox.setSelectedIndex(2);
         clickCBox.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent ae) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent ae) {
         Object       selItem = clickCBox.getSelectedItem();
 
         if(selItem instanceof Integer)
@@ -267,7 +283,11 @@ public final class SampleTree {
         menuItem = menu.add(new JMenuItem("Exit"));
         menuItem.addActionListener(new ActionListener() {
 
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 System.exit(0);
             }
         });
@@ -312,7 +332,11 @@ public final class SampleTree {
         return tree.getSelectionPaths();
     }
 
-    protected DefaultMutableTreeNode createNewNode(String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected DefaultMutableTreeNode createNewNode(String name) {
         return new DynamicTreeNode(new SampleData(null, Color.black, name));
     }
 
@@ -331,7 +355,11 @@ public final class SampleTree {
          * after that.  If nothing is selected, an item is added to
          * the root.
          */
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             DefaultMutableTreeNode lastItem = getSelectedNode();
             DefaultMutableTreeNode parent;
 
@@ -380,7 +408,11 @@ public final class SampleTree {
          * after that.  If nothing is selected, an item is added to
          * the root.
          */
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             DefaultMutableTreeNode lastItem = getSelectedNode();
             DefaultMutableTreeNode parent;
 
@@ -427,7 +459,11 @@ public final class SampleTree {
          * Determines the selection from the Tree and asks the treemodel
          * to reload from that node.
          */
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             DefaultMutableTreeNode lastItem = getSelectedNode();
 
             if (lastItem != null) {
@@ -446,7 +482,11 @@ public final class SampleTree {
         /**
          * Removes the selected item as long as it isn't root.
          */
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             TreePath[] selected = getSelectedPaths();
 
             if (selected != null && selected.length > 0) {
@@ -472,7 +512,11 @@ public final class SampleTree {
          * Removes the sibling TreePaths of <code>path</code>, that are
          * located in <code>paths</code>.
          */
-        private void removeSiblings(TreePath path, TreePath[] paths) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void removeSiblings(TreePath path, TreePath[] paths) {
             // Find the siblings
             if (path.getPathCount() == 1) {
                 // Special case, set the root to null
@@ -535,7 +579,11 @@ public final class SampleTree {
          * <code>paths</code>. Will return null if there is no non-null
          * TreePath is <code>paths</code>.
          */
-        private TreePath findShallowestPath(TreePath[] paths) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private TreePath findShallowestPath(TreePath[] paths) {
             int shallowest = -1;
             TreePath shallowestPath = null;
 
@@ -568,7 +616,11 @@ public final class SampleTree {
          */
         private class PositionComparator implements Comparator<TreePath> {
 
-            public int compare(TreePath p1, TreePath p2) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public int compare(TreePath p1, TreePath p2) {
                 int p1Index = treeModel.getIndexOfChild(p1.getParentPath().
                         getLastPathComponent(), p1.getLastPathComponent());
                 int p2Index = treeModel.getIndexOfChild(p2.getParentPath().
@@ -585,7 +637,11 @@ public final class SampleTree {
      */
     class ShowHandlesChangeListener extends Object implements ChangeListener {
 
-        public void stateChanged(ChangeEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void stateChanged(ChangeEvent e) {
             tree.setShowsRootHandles(((JCheckBox) e.getSource()).isSelected());
         }
     } // End of class SampleTree.ShowHandlesChangeListener
@@ -597,7 +653,11 @@ public final class SampleTree {
      */
     class ShowRootChangeListener extends Object implements ChangeListener {
 
-        public void stateChanged(ChangeEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void stateChanged(ChangeEvent e) {
             tree.setRootVisible(((JCheckBox) e.getSource()).isSelected());
         }
     } // End of class SampleTree.ShowRootChangeListener
@@ -610,7 +670,11 @@ public final class SampleTree {
      */
     class TreeEditableChangeListener extends Object implements ChangeListener {
 
-        public void stateChanged(ChangeEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void stateChanged(ChangeEvent e) {
             tree.setEditable(((JCheckBox) e.getSource()).isSelected());
         }
     } // End of class SampleTree.TreeEditableChangeListener

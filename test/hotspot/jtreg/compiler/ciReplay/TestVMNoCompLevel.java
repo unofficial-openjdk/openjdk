@@ -44,6 +44,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 
+@Bean
 public class TestVMNoCompLevel extends CiReplayBase {
     public static void main(String args[]) {
         new TestVMNoCompLevel().runTest(false);

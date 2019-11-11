@@ -31,6 +31,7 @@
 
 package compiler.c1;
 
+@Bean
 public class Test6757316 {
     public static void main(String[] args) {
         long[] arr = {

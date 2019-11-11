@@ -47,6 +47,7 @@ import java.util.List;
 // -- closed as dup of 6581734 as the same fix resolves both.
 
 
+@Bean
 public class TestMBeanCMS {
 
     private String poolName = "CMS";
@@ -134,7 +135,11 @@ public class TestMBeanCMS {
         System.out.println("Test passed.");
     }
 
-    public void allocationWork(long target) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void allocationWork(long target) {
 
         long sizeAllocated = 0;
         List<byte[]> list = new LinkedList<>();

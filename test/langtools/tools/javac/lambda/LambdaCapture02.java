@@ -31,6 +31,7 @@
  * @run main LambdaCapture02
  */
 
+@Bean
 public class LambdaCapture02 {
 
     static int assertionCount = 0;

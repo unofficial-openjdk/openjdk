@@ -34,6 +34,7 @@ import java.security.*;
 import java.security.spec.*;
 import javax.crypto.*;
 
+@Bean
 public class P2SecretKeyFactory extends SecretKeyFactorySpi {
 
     public P2SecretKeyFactory() {

@@ -60,6 +60,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 
+@Bean
 public class SerialTest {
     public static Object testobjects[] = {
         // non-shapes...

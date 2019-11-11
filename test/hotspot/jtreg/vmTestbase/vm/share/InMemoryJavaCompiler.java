@@ -91,7 +91,11 @@ public class InMemoryJavaCompiler {
         }
 
         @Override
-        public ClassFile getJavaFileForOutput(Location location, String name, JavaFileObject.Kind kind, FileObject source) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public ClassFile getJavaFileForOutput(Location location, String name, JavaFileObject.Kind kind, FileObject source) {
             ClassFile classFile = new ClassFile(name);
             classesMap.put(name, classFile);
             return classFile;
@@ -117,7 +121,11 @@ public class InMemoryJavaCompiler {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignore) {
             return this.sourceCode;
         }
     }

@@ -20,6 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+@Bean
 public class AttachWithStalePidFileTarget {
   static final String READY_MSG = "*ready*";
   public static void main(String... args) throws Exception {

@@ -88,7 +88,11 @@ public class InMemoryJavaCompiler {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return sourceCode;
         }
 
@@ -155,7 +159,11 @@ public class InMemoryJavaCompiler {
         }
 
         @Override
-        public boolean hasLocation(Location location) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean hasLocation(Location location) {
             return super.hasLocation(location) || location == StandardLocation.PATCH_MODULE_PATH;
         }
 

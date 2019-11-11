@@ -459,7 +459,8 @@ public abstract class NumberFormat extends Format  {
      *              {@code false} otherwise
      * @see #isParseIntegerOnly
      */
-    public void setParseIntegerOnly(boolean value) {
+@Bean
+        public void setParseIntegerOnly(boolean value) {
         parseIntegerOnly = value;
     }
 
@@ -707,7 +708,8 @@ public abstract class NumberFormat extends Format  {
      * Overrides equals.
      */
     @Override
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (obj == null) {
             return false;
         }
@@ -756,7 +758,8 @@ public abstract class NumberFormat extends Format  {
      *                 {@code false} otherwise
      * @see #isGroupingUsed
      */
-    public void setGroupingUsed(boolean newValue) {
+@Bean
+        public void setGroupingUsed(boolean newValue) {
         groupingUsed = newValue;
     }
 
@@ -783,7 +786,8 @@ public abstract class NumberFormat extends Format  {
      * upper limit to this value appropriate to the numeric type being formatted.
      * @see #getMaximumIntegerDigits
      */
-    public void setMaximumIntegerDigits(int newValue) {
+@Bean
+        public void setMaximumIntegerDigits(int newValue) {
         maximumIntegerDigits = Math.max(0,newValue);
         if (minimumIntegerDigits > maximumIntegerDigits) {
             minimumIntegerDigits = maximumIntegerDigits;
@@ -813,7 +817,8 @@ public abstract class NumberFormat extends Format  {
      * upper limit to this value appropriate to the numeric type being formatted.
      * @see #getMinimumIntegerDigits
      */
-    public void setMinimumIntegerDigits(int newValue) {
+@Bean
+        public void setMinimumIntegerDigits(int newValue) {
         minimumIntegerDigits = Math.max(0,newValue);
         if (minimumIntegerDigits > maximumIntegerDigits) {
             maximumIntegerDigits = minimumIntegerDigits;
@@ -843,7 +848,8 @@ public abstract class NumberFormat extends Format  {
      * upper limit to this value appropriate to the numeric type being formatted.
      * @see #getMaximumFractionDigits
      */
-    public void setMaximumFractionDigits(int newValue) {
+@Bean
+        public void setMaximumFractionDigits(int newValue) {
         maximumFractionDigits = Math.max(0,newValue);
         if (maximumFractionDigits < minimumFractionDigits) {
             minimumFractionDigits = maximumFractionDigits;
@@ -873,7 +879,8 @@ public abstract class NumberFormat extends Format  {
      * upper limit to this value appropriate to the numeric type being formatted.
      * @see #getMinimumFractionDigits
      */
-    public void setMinimumFractionDigits(int newValue) {
+@Bean
+        public void setMinimumFractionDigits(int newValue) {
         minimumFractionDigits = Math.max(0,newValue);
         if (maximumFractionDigits < minimumFractionDigits) {
             maximumFractionDigits = minimumFractionDigits;
@@ -913,7 +920,8 @@ public abstract class NumberFormat extends Format  {
      * @throws    NullPointerException if {@code currency} is null
      * @since 1.4
      */
-    public void setCurrency(Currency currency) {
+@Bean
+        public void setCurrency(Currency currency) {
         throw new UnsupportedOperationException();
     }
 
@@ -948,7 +956,8 @@ public abstract class NumberFormat extends Format  {
      * @see #getRoundingMode()
      * @since 1.6
      */
-    public void setRoundingMode(RoundingMode roundingMode) {
+@Bean
+        public void setRoundingMode(RoundingMode roundingMode) {
         throw new UnsupportedOperationException();
     }
 

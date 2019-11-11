@@ -52,6 +52,7 @@ import jdk.test.lib.process.ProcessTools;
 /**
  * Test checks PLAB promotion of different size objects.
  */
+@Bean
 public class TestPLABPromotion {
 
     // GC ID with survivor PLAB statistics
@@ -319,7 +320,11 @@ public class TestPLABPromotion {
         /**
          * Print details about test case.
          */
-        public void print(PrintStream out) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void print(PrintStream out) {
             boolean expectPLABAllocation = promotedByPLAB && objectsAreReachable;
             boolean expectDirectAllocation = (!promotedByPLAB) && objectsAreReachable;
 

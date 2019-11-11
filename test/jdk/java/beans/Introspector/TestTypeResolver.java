@@ -48,6 +48,7 @@ import java.util.Map;
 import sun.reflect.generics.reflectiveObjects.GenericArrayTypeImpl;
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
+@Bean
 public class TestTypeResolver {
     static final List<Class<?>> failedCases = new ArrayList<Class<?>>();
 
@@ -126,7 +127,11 @@ public class TestTypeResolver {
     }
 
     private static class ClassNameComparator implements Comparator<Class<?>> {
-        public int compare(Class<?> a, Class<?> b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int compare(Class<?> a, Class<?> b) {
             return a.getName().compareTo(b.getName());
         }
     }
@@ -164,7 +169,11 @@ public class TestTypeResolver {
             return name;
         }
 
-        public boolean equals(Object o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) {
             if (!(o instanceof TypeVariable))
                 return false;
             TypeVariable tv = (TypeVariable) o;
@@ -177,7 +186,11 @@ public class TestTypeResolver {
             return hash(name) ^ hash(gd) ^ Arrays.hashCode(bounds);
         }
 
-        public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
             return false; // not used
         }
 
@@ -252,7 +265,11 @@ public class TestTypeResolver {
             return lowerBounds.clone();
         }
 
-        public boolean equals(Object o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) {
             if (o instanceof WildcardType) {
                 WildcardType wt = (WildcardType) o;
                 return Arrays.equals(upperBounds, wt.getUpperBounds()) &&
@@ -307,7 +324,8 @@ public class TestTypeResolver {
 
 
     public static class Outer<T> {
-        public class Inner {
+        @Bean
+public class Inner {
             public T getThing() {
                 return null;
             }

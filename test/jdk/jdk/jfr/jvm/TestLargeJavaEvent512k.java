@@ -52,6 +52,7 @@ import jdk.test.lib.jfr.Stressor;
  *    java.base/jdk.internal.org.objectweb.asm
  * @run main/othervm jdk.jfr.jvm.TestLargeJavaEvent512k
  */
+@Bean
 public class TestLargeJavaEvent512k {
     static boolean error;
     static void setError() {

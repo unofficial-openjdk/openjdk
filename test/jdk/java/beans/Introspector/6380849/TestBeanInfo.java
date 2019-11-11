@@ -41,6 +41,7 @@ import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.lang.reflect.Method;
 
+@Bean
 public class TestBeanInfo implements Runnable {
 
     private static final String[] SEARCH_PATH = { "infos" }; // NON-NLS: package name

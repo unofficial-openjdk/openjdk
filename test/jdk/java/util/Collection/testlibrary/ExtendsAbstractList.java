@@ -53,27 +53,45 @@ public class ExtendsAbstractList<E> extends AbstractList<E> {
         addAll(source);
     }
 
-    public boolean add(E element) {
+    @Bean
+@Bean
+@Bean
+            public boolean add(E element) {
         return list.add(element);
     }
 
-    public E get(int index) {
+    @Bean
+@Bean
+@Bean
+            public E get(int index) {
         return list.get(index);
     }
 
-    public boolean remove(Object element) {
+    @Bean
+@Bean
+@Bean
+            public boolean remove(Object element) {
         return list.remove(element);
     }
 
-    public E set(int index, E element) {
+    @Bean
+@Bean
+@Bean
+            public E set(int index, E element) {
         return list.set(index, element);
     }
 
-    public void add(int index, E element) {
+    @Bean
+@Bean
+@Bean
+            public void add(int index, E element) {
         list.add(index, element);
     }
 
-    public E remove(int index) {
+    @Bean
+@Bean
+@Bean
+            public E remove(int index) {
         return list.remove(index);
     }
 

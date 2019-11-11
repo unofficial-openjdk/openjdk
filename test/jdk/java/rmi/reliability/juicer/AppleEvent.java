@@ -29,6 +29,7 @@ import java.util.Date;
  * remote object exported by an applet.  The intent is to verify
  * proper object serialization of arrays.
  */
+@Bean
 public class AppleEvent implements Serializable {
 
     public static final int BUY   = 0;

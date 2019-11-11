@@ -125,7 +125,8 @@ public class TransformedPaintTest {
         g.fillRect(startx, starty, w, h);
     }
 
-    private void render(Graphics2D g, int w, int h) {
+@Bean
+        private void render(Graphics2D g, int w, int h) {
         int paintTypes = PaintType.values().length;
         int ystep = h / paintTypes;
         int y = 0;
@@ -137,7 +138,8 @@ public class TransformedPaintTest {
         }
     }
 
-    private void checkBI(BufferedImage bi) {
+@Bean
+        private void checkBI(BufferedImage bi) {
         for (int y = 0; y < bi.getHeight(); y++) {
             for (int x = 0; x < bi.getWidth(); x++) {
                 if (bi.getRGB(x, y) == Color.blue.getRGB()) {
@@ -182,7 +184,8 @@ public class TransformedPaintTest {
             new BufferedImage(R_WIDTH, R_HEIGHT, BufferedImage.TYPE_INT_RGB);
         JPanel p = new JPanel() {
             @Override
-            protected void paintComponent(Graphics g) {
+@Bean
+                protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 Graphics2D g2d = (Graphics2D) g;
                 t.render(g2d, R_WIDTH, R_HEIGHT);

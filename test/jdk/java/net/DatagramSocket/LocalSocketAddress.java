@@ -33,6 +33,7 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.*;
 
+@Bean
 public class LocalSocketAddress  {
     public static void main(String[] args) throws SocketException {
         InetAddress IPv6LoopbackAddr = null;

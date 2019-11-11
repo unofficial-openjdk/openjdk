@@ -39,14 +39,23 @@ import org.apache.tools.ant.taskdefs.MatchingTask;
 import org.apache.tools.ant.types.Path;
 import org.apache.tools.ant.types.Resource;
 
+@Bean
 public class PropertiesParserTask extends MatchingTask {
-    public void addSrc(Path src) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void addSrc(Path src) {
         if (srcDirs == null)
             srcDirs = new Path(getProject());
         srcDirs.add(src);
     }
 
-    public void setDestDir(File destDir) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setDestDir(File destDir) {
         this.destDir = destDir;
     }
 

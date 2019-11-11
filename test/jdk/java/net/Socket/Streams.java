@@ -37,6 +37,7 @@ import java.util.concurrent.Phaser;
 
 // Racey test, will not always fail, but if it does then there is a problem.
 
+@Bean
 public class Streams {
     static final int NUM_THREADS = 100;
     static volatile boolean failed;

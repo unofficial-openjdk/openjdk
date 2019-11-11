@@ -42,6 +42,7 @@ import javax.lang.model.util.*;
 /*
  * Check the enclosing method of a scope against the contents of string literals.
  */
+@Bean
 public class CheckMethod extends Checker {
     public static void main(String... args) throws Exception {
         Checker chk = new CheckMethod();
@@ -49,7 +50,11 @@ public class CheckMethod extends Checker {
     }
 
     @Override
-    protected boolean checkLocal(Scope s, String ref) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected boolean checkLocal(Scope s, String ref) {
         //System.err.println("checkLocal: " + s + " " + ref + " " + s.getEnclosingMethod());
         ExecutableElement ee = s.getEnclosingMethod();
         boolean ok;

@@ -130,7 +130,10 @@ public class PageSetupDialog extends Frame implements Printable {
     c.add (pgbm = new Label());
 
     reverseCB.addItemListener(new ItemListener() {
-                public void itemStateChanged(ItemEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void itemStateChanged(ItemEvent e) {
                        reverse = e.getStateChange() == ItemEvent.SELECTED;
                        int o = myPageFormat.getOrientation();
                        if (o == PageFormat.LANDSCAPE ||
@@ -194,7 +197,10 @@ public class PageSetupDialog extends Frame implements Printable {
       setVisible (true);
   }
 
-  public int print(Graphics graphics, PageFormat pageFormat, int pageIndex) {
+  @Bean
+@Bean
+@Bean
+            public int print(Graphics graphics, PageFormat pageFormat, int pageIndex) {
 
      if (pageIndex > 0) {
         return Printable.NO_SUCH_PAGE;

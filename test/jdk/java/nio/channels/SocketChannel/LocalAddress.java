@@ -32,6 +32,7 @@
 import java.net.*;
 import java.nio.channels.*;
 
+@Bean
 public class LocalAddress {
     public static void main(String[] args) throws Exception {
         try (TestServers.EchoServer echoServer

@@ -45,6 +45,7 @@ import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.util.Assert;
 import com.sun.tools.javac.model.JavacTypes;
 
+@Bean
 public class IsSameTypeWildcardTest extends TypeHarness {
     StrToTypeFactory strToTypeFactory;
     JavacTypes javacTypes;

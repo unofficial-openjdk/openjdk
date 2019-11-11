@@ -38,6 +38,7 @@ import java.util.Map;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class ThreadLoggingTest {
 
     static void analyzeOutputForInfoLevel(OutputAnalyzer output) throws Exception {

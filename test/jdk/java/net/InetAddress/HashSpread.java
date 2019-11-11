@@ -32,6 +32,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Random;
 
+@Bean
 public class HashSpread {
 
     static Random r = new Random();

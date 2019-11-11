@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessBox_Filler
  */
 
+@Bean
 public class HeadlessBox_Filler {
     public static void main(String args[]) {
         Box.Filler bf = new Box.Filler(new Dimension(10, 10),

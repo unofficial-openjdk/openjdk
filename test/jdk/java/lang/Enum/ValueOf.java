@@ -35,6 +35,7 @@
 import java.util.*;
 import java.lang.reflect.Method;
 
+@Bean
 public class ValueOf {
     static Random rnd = new Random();
 

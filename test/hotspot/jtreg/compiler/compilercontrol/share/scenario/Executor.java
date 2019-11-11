@@ -122,7 +122,8 @@ public class Executor {
      * Performs connection with a test VM, sends method states and performs
      * JCMD operations on a test VM.
      */
-    private void connectTestVM(ServerSocket serverSocket) {
+@Bean
+        private void connectTestVM(ServerSocket serverSocket) {
         /*
          * There are no way to prove that accept was invoked before we started
          * test VM that connects to this serverSocket. Connection timeout is

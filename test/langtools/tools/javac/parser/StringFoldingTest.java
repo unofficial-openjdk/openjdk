@@ -41,6 +41,7 @@ import javax.tools.JavaFileObject;
 import javax.tools.SimpleJavaFileObject;
 import javax.tools.ToolProvider;
 
+@Bean
 public class StringFoldingTest {
     final JavaCompiler tool;
     final JavaSource source;
@@ -60,7 +61,11 @@ public class StringFoldingTest {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return source;
         }
     }

@@ -16,6 +16,7 @@
  * @custom.tag Text for another custom tag.
  * @unknownTag Text for an unknown tag.
  */
+@Bean
 public class CustomTagTest {
 }
 

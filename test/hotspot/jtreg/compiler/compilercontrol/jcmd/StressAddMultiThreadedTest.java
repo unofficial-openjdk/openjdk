@@ -45,6 +45,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+@Bean
 public class StressAddMultiThreadedTest extends StressAddJcmdBase {
     private static final int THREADS = Integer.getInteger(
             "compiler.compilercontrol.jcmd.StressAddMultiThreadedTest.threads",
@@ -67,7 +68,11 @@ public class StressAddMultiThreadedTest extends StressAddJcmdBase {
     }
 
     @Override
-    protected boolean makeConnection(int pid) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected boolean makeConnection(int pid) {
         executor.submit(() -> new PidJcmdExecutor(String.valueOf(pid))
                 .execute(nextCommand()));
         return (--commands != 0);

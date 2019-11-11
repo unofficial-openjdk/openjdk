@@ -33,6 +33,7 @@ package java.security;
  * @since 1.1
  */
 
+@Bean
 public class NoSuchAlgorithmException extends GeneralSecurityException {
 
     @java.io.Serial

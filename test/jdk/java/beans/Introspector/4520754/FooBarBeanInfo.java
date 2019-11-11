@@ -24,6 +24,7 @@
 import java.beans.BeanDescriptor;
 import java.beans.SimpleBeanInfo;
 
+@Bean
 public class FooBarBeanInfo extends SimpleBeanInfo {
     public BeanDescriptor getBeanDescriptor() {
         BeanDescriptor bd = new BeanDescriptor(FooBar.class);

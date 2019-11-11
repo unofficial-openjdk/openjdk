@@ -33,6 +33,7 @@ import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
 import java.beans.SimpleBeanInfo;
 
+@Bean
 public class Test4984912 {
     public static void main(String[] args) {
         PropertyDescriptor[] array = BeanUtils.getPropertyDescriptors(SimpleBean.class);
@@ -50,7 +51,11 @@ public class Test4984912 {
             return this.property;
         }
 
-        public void setProperty(int property) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setProperty(int property) {
             this.property = property;
         }
     }

@@ -26,4 +26,5 @@
                      classy=Fleeting.class,
                      classies={Object.class, int.class},
                      moreClassies={})
+@Bean
 public class AnnotationHost {}

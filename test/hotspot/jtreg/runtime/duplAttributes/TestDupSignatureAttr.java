@@ -29,6 +29,7 @@
  * @run main TestDupSignatureAttr
  */
 
+@Bean
 public class TestDupSignatureAttr {
     public static void main(String args[]) throws Throwable {
 

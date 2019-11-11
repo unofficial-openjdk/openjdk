@@ -47,6 +47,7 @@ import jdk.tools.jlink.plugin.ResourcePoolModule;
 import jdk.tools.jlink.plugin.ResourcePool;
 import jdk.tools.jlink.plugin.ResourcePoolEntry;
 
+@Bean
 public class ResourcePoolTest {
 
     public static void main(String[] args) throws Exception {
@@ -97,7 +98,11 @@ public class ResourcePoolTest {
         private int amountAfter;
 
         @Override
-        public ResourcePoolEntry apply(ResourcePoolEntry resource) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public ResourcePoolEntry apply(ResourcePoolEntry resource) {
             int index = ++amountBefore % 3;
             switch (index) {
                 case 0:
@@ -147,7 +152,11 @@ public class ResourcePoolTest {
         });
     }
 
-    private void test(List<String> samples, ResourceAdder adder) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void test(List<String> samples, ResourceAdder adder) {
         if (samples.isEmpty()) {
             throw new AssertionError("No sample to test");
         }
@@ -180,7 +189,11 @@ public class ResourcePoolTest {
         }
     }
 
-    private void checkModule(ResourcePool resources, ResourcePoolEntry res) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkModule(ResourcePool resources, ResourcePoolEntry res) {
         Optional<ResourcePoolModule> optMod = resources.moduleView().findModule(res.moduleName());
         if (!optMod.isPresent()) {
             throw new AssertionError("No module " + res.moduleName());
@@ -212,7 +225,11 @@ public class ResourcePoolTest {
         checkResources(resources2, res1, res2);
     }
 
-    private void checkResources(ResourcePoolManager resources, ResourcePoolEntry... expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkResources(ResourcePoolManager resources, ResourcePoolEntry... expected) {
         List<String> modules = new ArrayList();
         resources.modules().forEach(m -> {
             modules.add(m.name());

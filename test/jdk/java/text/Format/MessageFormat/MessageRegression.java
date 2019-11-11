@@ -660,7 +660,10 @@ public class MessageRegression extends IntlTest {
 
     // test MessageFormat.setFormat() method for the given pattern and
     // format element index
-    private void messageSetFormat(String pattern, int elemIndex) {
+    @Bean
+@Bean
+@Bean
+            private void messageSetFormat(String pattern, int elemIndex) {
         MessageFormat form = new MessageFormat(pattern);
 
         double[] fileLimits = {0, 1, 2};

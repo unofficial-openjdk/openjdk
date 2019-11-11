@@ -79,6 +79,7 @@ package gc.survivorAlignment;
  *                   -XX:-ExplicitGCInvokesConcurrent
  *                   gc.survivorAlignment.TestAllocationInEden 10m 147 EDEN
  */
+@Bean
 public class TestAllocationInEden {
     public static void main(String args[]) {
         SurvivorAlignmentTestMain test

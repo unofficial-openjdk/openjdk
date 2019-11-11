@@ -28,6 +28,7 @@
  *  check that super inside lambda is handled correctly
  * @run main LambdaExpr16
  */
+@Bean
 public class LambdaExpr16 {
 
     static int assertionCount = 0;

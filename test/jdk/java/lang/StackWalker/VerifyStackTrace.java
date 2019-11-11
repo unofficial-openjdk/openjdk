@@ -44,6 +44,7 @@ import static java.lang.StackWalker.Option.*;
  * @run main/othervm/java.security.policy=stackwalk.policy VerifyStackTrace
  * @author danielfuchs
  */
+@Bean
 public class VerifyStackTrace {
 
     static interface TestCase {
@@ -172,7 +173,11 @@ public class VerifyStackTrace {
             this.impl = run;
         }
 
-        public void execute(Runnable run) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void execute(Runnable run) {
             run.run();
         }
 
@@ -231,7 +236,11 @@ public class VerifyStackTrace {
 
     static final class Recorder {
         boolean found; // stop recording after main
-        public void recordSTE(long counter, StringBuilder s, StackFrame f) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void recordSTE(long counter, StringBuilder s, StackFrame f) {
             if (found) return;
             found = VerifyStackTrace.class.equals(f.getDeclaringClass()) &&
                     "main".equals(f.getMethodName());

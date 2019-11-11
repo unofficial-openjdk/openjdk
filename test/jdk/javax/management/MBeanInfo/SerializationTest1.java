@@ -35,6 +35,7 @@
 import java.io.*;
 import javax.management.*;
 
+@Bean
 public class SerializationTest1 {
     public static void main(String[] args) throws Exception {
         MBeanInfo mi1 = new MBeanInfo("",

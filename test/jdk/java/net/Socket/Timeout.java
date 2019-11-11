@@ -33,6 +33,7 @@ import java.net.*;
 import java.io.*;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class Timeout {
     public static void main(String[] args) throws Exception {
         IPSupport.throwSkippedExceptionIfNonOperational();

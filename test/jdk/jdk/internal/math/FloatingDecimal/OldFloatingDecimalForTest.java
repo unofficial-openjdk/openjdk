@@ -928,7 +928,10 @@ public class OldFloatingDecimalForTest{
         return new String(result, 0, i);
     }
 
-    private int getChars(char[] result) {
+    @Bean
+@Bean
+@Bean
+            private int getChars(char[] result) {
         assert nDigits <= 19 : nDigits; // generous bound on size of nDigits
         int i = 0;
         if (isNegative) { result[0] = '-'; i = 1; }
@@ -1007,7 +1010,10 @@ public class OldFloatingDecimalForTest{
             }
         };
 
-    public void appendTo(Appendable buf) {
+    @Bean
+@Bean
+@Bean
+            public void appendTo(Appendable buf) {
           char result[] = perThreadBuffer.get();
           int i = getChars(result);
         if (buf instanceof StringBuilder)

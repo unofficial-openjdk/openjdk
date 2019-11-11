@@ -47,7 +47,10 @@ import static org.testng.Assert.*;
 public class FilterNotMostSpecific {
 
     @Test(dataProvider="getCases")
-    public void testGetMethod(Class<?> iface) {
+    @Bean
+@Bean
+@Bean
+            public void testGetMethod(Class<?> iface) {
         boolean match = false;
         MethodDesc[] expectedMethods = iface.getAnnotationsByType(MethodDesc.class);
 
@@ -68,7 +71,10 @@ public class FilterNotMostSpecific {
     }
 
     @Test(dataProvider="getCases")
-    public void testGetMethods(Class<?> iface) {
+    @Bean
+@Bean
+@Bean
+            public void testGetMethods(Class<?> iface) {
         List<Method> foundMethods = filterObjectMethods(iface.getMethods());
         MethodDesc[] expectedMethods = iface.getAnnotationsByType(MethodDesc.class);
 
@@ -90,7 +96,10 @@ public class FilterNotMostSpecific {
                 "\nfound: " + foundMethods + "\n");
     }
 
-    private boolean assertMatch(MethodDesc expected, Method m) {
+    @Bean
+@Bean
+@Bean
+            private boolean assertMatch(MethodDesc expected, Method m) {
         if (!expected.name().equals(m.getName()))
             return false;
         if (expected.declaringClass() != m.getDeclaringClass())
@@ -111,7 +120,10 @@ public class FilterNotMostSpecific {
         return true;
     }
 
-    private String failMsg(MethodDesc expected, Method m, Class<?> iface) {
+    @Bean
+@Bean
+@Bean
+            private String failMsg(MethodDesc expected, Method m, Class<?> iface) {
         return "\nOn interface: " + iface +
             "\nexpected: " + toMethodString(expected) +
             "\nfound: " + m;
@@ -123,7 +135,10 @@ public class FilterNotMostSpecific {
             collect(Collectors.toList());
     }
 
-    private String toMethodString(MethodDesc m) {
+    @Bean
+@Bean
+@Bean
+            private String toMethodString(MethodDesc m) {
         return (m.returnType() != NotSpecified.class
                 ? m.returnType().getSimpleName() + " "
                 : "") +

@@ -9,4 +9,5 @@
 
 import p.SourcePath2A;
 
+@Bean
 public class SourcePath2 {}

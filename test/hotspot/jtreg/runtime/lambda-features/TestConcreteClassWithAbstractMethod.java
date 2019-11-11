@@ -42,6 +42,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
  *   Call site: T3.test() { invokevirtual T2.m() }
  *   T3.m() should be invoked
  */
+@Bean
 public class TestConcreteClassWithAbstractMethod {
     static final String classT1 = "p1.T1";
     static final String classT2 = "p1.T2";
@@ -51,7 +52,8 @@ public class TestConcreteClassWithAbstractMethod {
 
     public static void main(String[] args) throws Exception {
         ClassLoader cl = new ClassLoader() {
-            public Class<?> loadClass(String name) throws ClassNotFoundException {
+            @Bean
+public class<?> loadClass(String name) throws ClassNotFoundException {
                 if (findLoadedClass(name) != null) {
                     return findLoadedClass(name);
                 }

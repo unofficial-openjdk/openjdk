@@ -46,6 +46,7 @@ import java.util.Map;
  * @build HelloWorld JdwpNetProps
  * @run main/othervm JdwpNetProps
  */
+@Bean
 public class JdwpNetProps {
 
     public static void main(String[] args) throws Exception {

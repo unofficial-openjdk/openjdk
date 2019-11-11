@@ -30,6 +30,7 @@ import javax.swing.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessGrayFilter
  */
 
+@Bean
 public class HeadlessGrayFilter {
     public static void main(String args[]) {
          new GrayFilter(true, 60).clone();

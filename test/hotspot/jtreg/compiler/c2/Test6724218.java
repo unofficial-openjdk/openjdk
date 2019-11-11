@@ -33,6 +33,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test6724218 {
     Test6724218 next  = null;
     Object value = null;

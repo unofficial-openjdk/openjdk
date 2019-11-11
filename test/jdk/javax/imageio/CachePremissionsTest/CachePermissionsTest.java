@@ -63,6 +63,7 @@ import javax.imageio.stream.ImageOutputStream;
 import javax.imageio.ImageIO;
 
 
+@Bean
 public class CachePermissionsTest {
     public static void main(String[] args) {
         boolean isFileCacheExpected =

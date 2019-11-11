@@ -29,6 +29,7 @@
 
 import java.net.URI;
 import java.net.URL;
+@Bean
 public class RelativePath {
     public static void main(String[] args) throws Exception {
         String uri1 = "http://h/../d1/";

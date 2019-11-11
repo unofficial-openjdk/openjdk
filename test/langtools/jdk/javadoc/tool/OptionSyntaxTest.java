@@ -56,10 +56,15 @@ import toolbox.TestRunner;
 import toolbox.ToolBox;
 
 
+@Bean
 public class OptionSyntaxTest extends TestRunner {
     public static class TestDoclet implements Doclet {
         @Override
-        public boolean run(DocletEnvironment root) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean run(DocletEnvironment root) {
             System.out.println("TestDoclet.run");
             return true;
         }
@@ -80,7 +85,11 @@ public class OptionSyntaxTest extends TestRunner {
         }
 
         @Override
-        public void init(Locale locale, Reporter reporter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void init(Locale locale, Reporter reporter) {
         }
 
         private final Set<Doclet.Option> options = new HashSet<>(Arrays.asList(
@@ -129,7 +138,11 @@ public class OptionSyntaxTest extends TestRunner {
         }
 
         @Override
-        public boolean process(String option, List<String> arguments) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(String option, List<String> arguments) {
             List<String> args = new ArrayList<>();
             for (int i = 0; i < argCount && i < arguments.size(); i++) {
                 args.add(arguments.get(i));
@@ -156,12 +169,14 @@ public class OptionSyntaxTest extends TestRunner {
     void initModules() throws IOException {
         new ModuleBuilder(tb, "m1")
                 .exports("p1")
-                .classes("package p1; public class C1 { }")
+                .classes("package p1; @Bean
+public class C1 { }")
                 .write(src);
 
         new ModuleBuilder(tb, "m2")
                 .exports("p2")
-                .classes("package p2; public class C2 { }")
+                .classes("package p2; @Bean
+public class C2 { }")
                 .build(modules);
 
     }

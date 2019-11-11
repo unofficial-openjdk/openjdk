@@ -30,6 +30,7 @@ import static org.testng.Assert.*;
  * TestPrivateCtorRef
  */
 @Test
+@Bean
 public class TestPrivateCtorRef {
     // @@@ Really, this needs to be a combo test:
     //     target class = nested static, nested instance, auxilliary

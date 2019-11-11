@@ -42,6 +42,7 @@ import java.util.stream.Stream;
  * removed. With the security manager enabled, this test can also catch
  * scenarios where the default permission policy needs to be updated.
  */
+@Bean
 public class CheckSecurityProvider {
     public static void main(String[] args) throws Exception {
         ModuleLayer layer = ModuleLayer.boot();

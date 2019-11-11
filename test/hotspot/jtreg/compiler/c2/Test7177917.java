@@ -37,6 +37,7 @@ import jdk.test.lib.Utils;
 
 import java.util.Random;
 
+@Bean
 public class Test7177917 {
 
   static double d;
@@ -94,7 +95,11 @@ public class Test7177917 {
     return res;
   }
 
-  static public void main(String[] args) {
+  static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
     {
       // warmup
       double[][] warmup_values = pow_values(10);

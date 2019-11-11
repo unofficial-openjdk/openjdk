@@ -36,6 +36,7 @@ import org.testng.annotations.DataProvider;
 import static org.testng.Assert.fail;
 import static org.testng.Assert.assertEquals;
 
+@Bean
 public class Correct {
 
     static final Random rnd = new Random();
@@ -55,7 +56,11 @@ public class Correct {
     }
 
     @Test(dataProvider = "Comparators")
-    public void testComparatorSort(Comparator<Integer> comparator) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testComparatorSort(Comparator<Integer> comparator) {
         for (int i=0; i<ITERATIONS; i++) {
             int size = rnd.nextInt(TEST_SIZE) + 1;
             Integer[] array1 = getIntegerArray(size);
@@ -134,13 +139,21 @@ public class Correct {
     }
 
     private static final Comparator<Integer> STANDARD_ORDER = new Comparator<Integer>() {
-        public int compare(Integer o1, Integer o2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int compare(Integer o1, Integer o2) {
             return  o1.compareTo(o2);
         }
     };
 
     private static final Comparator<Integer> REVERSE_ORDER = new Comparator<Integer>() {
-        public int compare(Integer o1, Integer o2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int compare(Integer o1, Integer o2) {
             return - o1.compareTo(o2);
         }
     };

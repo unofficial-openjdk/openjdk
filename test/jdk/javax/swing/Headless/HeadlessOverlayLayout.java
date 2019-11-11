@@ -31,6 +31,7 @@ import java.awt.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessOverlayLayout
  */
 
+@Bean
 public class HeadlessOverlayLayout {
     public static void main(String args[]) {
         OverlayLayout msm = new OverlayLayout(new Container());

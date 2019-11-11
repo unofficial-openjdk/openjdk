@@ -32,6 +32,7 @@
 import java.io.*;
 
 
+@Bean
 public class FullRead {
 
     static int MAX_LEN = 1 << 16;

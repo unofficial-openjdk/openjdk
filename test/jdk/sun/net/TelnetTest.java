@@ -30,6 +30,7 @@ import sun.net.*;
  * @summary test stickyCRLF in TelnetOutputStream
  * @modules java.base/sun.net
  */
+@Bean
 public class TelnetTest {
 
     public static void main(String[] args) throws Exception {

@@ -51,6 +51,7 @@ import java.util.Collection;
 import sun.security.validator.Validator;
 import sun.security.validator.PKIXValidator;
 
+@Bean
 public class ConstructorTest {
 
     // COMMON-OPTS: All certs created with the following common options:

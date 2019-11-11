@@ -36,6 +36,7 @@ import sun.util.logging.PlatformLogger;
  * @compile -XDignore.symbol.file CustomLogManager.java SimpleLogManager.java
  * @run main/othervm -Djava.util.logging.manager=SimpleLogManager SimpleLogManager
  */
+@Bean
 public class SimpleLogManager extends CustomLogManager {
     public static void main(String[] args) {
         String classname = System.getProperty("java.util.logging.manager");
@@ -103,7 +104,8 @@ public class SimpleLogManager extends CustomLogManager {
         return super.addLogger(newLogger);
     }
 
-    public class CustomLogger extends Logger {
+    @Bean
+public class CustomLogger extends Logger {
         final Logger keepRef; // keep a strong reference to avoid GC.
         CustomLogger(Logger logger) {
             super(logger.getName(), logger.getResourceBundleName());

@@ -30,6 +30,7 @@
 import java.util.*;
 import java.text.*;
 
+@Bean
 public class Bug5097350 {
     public static void main(String[] args) {
         String[] tzids = TimeZone.getAvailableIDs();

@@ -706,7 +706,8 @@ public final class String
      *             argument is negative or not less than the length of this
      *             string.
      */
-    public char charAt(int index) {
+@Bean
+        public char charAt(int index) {
         if (isLatin1()) {
             return StringLatin1.charAt(value, index);
         } else {
@@ -736,7 +737,8 @@ public final class String
      *             string.
      * @since      1.5
      */
-    public int codePointAt(int index) {
+@Bean
+        public int codePointAt(int index) {
         if (isLatin1()) {
             checkIndex(index, value.length);
             return value[index] & 0xff;
@@ -768,7 +770,8 @@ public final class String
      *            of this string.
      * @since     1.5
      */
-    public int codePointBefore(int index) {
+@Bean
+        public int codePointBefore(int index) {
         int i = index - 1;
         if (i < 0 || i >= length()) {
             throw new StringIndexOutOfBoundsException(index);
@@ -800,7 +803,8 @@ public final class String
      * {@code beginIndex} is larger than {@code endIndex}.
      * @since  1.5
      */
-    public int codePointCount(int beginIndex, int endIndex) {
+@Bean
+        public int codePointCount(int beginIndex, int endIndex) {
         if (beginIndex < 0 || beginIndex > endIndex ||
             endIndex > length()) {
             throw new IndexOutOfBoundsException();
@@ -831,7 +835,8 @@ public final class String
      *   of {@code codePointOffset} code points.
      * @since 1.5
      */
-    public int offsetByCodePoints(int index, int codePointOffset) {
+@Bean
+        public int offsetByCodePoints(int index, int codePointOffset) {
         if (index < 0 || index > length()) {
             throw new IndexOutOfBoundsException();
         }
@@ -868,7 +873,8 @@ public final class String
      *            <li>{@code dstBegin+(srcEnd-srcBegin)} is larger than
      *                {@code dst.length}</ul>
      */
-    public void getChars(int srcBegin, int srcEnd, char dst[], int dstBegin) {
+@Bean
+        public void getChars(int srcBegin, int srcEnd, char dst[], int dstBegin) {
         checkBoundsBeginEnd(srcBegin, srcEnd, length());
         checkBoundsOffCount(dstBegin, srcEnd - srcBegin, dst.length);
         if (isLatin1()) {
@@ -922,7 +928,8 @@ public final class String
      *          </ul>
      */
     @Deprecated(since="1.1")
-    public void getBytes(int srcBegin, int srcEnd, byte dst[], int dstBegin) {
+@Bean
+        public void getBytes(int srcBegin, int srcEnd, byte dst[], int dstBegin) {
         checkBoundsBeginEnd(srcBegin, srcEnd, length());
         Objects.requireNonNull(dst);
         checkBoundsOffCount(dstBegin, srcEnd - srcBegin, dst.length);
@@ -1017,7 +1024,8 @@ public final class String
      * @see  #compareTo(String)
      * @see  #equalsIgnoreCase(String)
      */
-    public boolean equals(Object anObject) {
+@Bean
+        public boolean equals(Object anObject) {
         if (this == anObject) {
             return true;
         }
@@ -1048,11 +1056,13 @@ public final class String
      *
      * @since  1.4
      */
-    public boolean contentEquals(StringBuffer sb) {
+@Bean
+        public boolean contentEquals(StringBuffer sb) {
         return contentEquals((CharSequence)sb);
     }
 
-    private boolean nonSyncContentEquals(AbstractStringBuilder sb) {
+@Bean
+        private boolean nonSyncContentEquals(AbstractStringBuilder sb) {
         int len = length();
         if (len != sb.length()) {
             return false;
@@ -1095,7 +1105,8 @@ public final class String
      *
      * @since  1.5
      */
-    public boolean contentEquals(CharSequence cs) {
+@Bean
+        public boolean contentEquals(CharSequence cs) {
         // Argument is a StringBuffer, StringBuilder
         if (cs instanceof AbstractStringBuilder) {
             if (cs instanceof StringBuffer) {
@@ -1158,7 +1169,8 @@ public final class String
      *
      * @see  #equals(Object)
      */
-    public boolean equalsIgnoreCase(String anotherString) {
+@Bean
+        public boolean equalsIgnoreCase(String anotherString) {
         return (this == anotherString) ? true
                 : (anotherString != null)
                 && (anotherString.length() == length())
@@ -1209,7 +1221,8 @@ public final class String
      *          value greater than {@code 0} if this string is
      *          lexicographically greater than the string argument.
      */
-    public int compareTo(String anotherString) {
+@Bean
+        public int compareTo(String anotherString) {
         byte v1[] = value;
         byte v2[] = anotherString.value;
         byte coder = coder();
@@ -1240,7 +1253,8 @@ public final class String
         @java.io.Serial
         private static final long serialVersionUID = 8575799808933029326L;
 
-        public int compare(String s1, String s2) {
+@Bean
+            public int compare(String s1, String s2) {
             byte v1[] = s1.value;
             byte v2[] = s2.value;
             byte coder = s1.coder();
@@ -1276,7 +1290,8 @@ public final class String
      * @see     java.text.Collator
      * @since   1.2
      */
-    public int compareToIgnoreCase(String str) {
+@Bean
+        public int compareToIgnoreCase(String str) {
         return CASE_INSENSITIVE_ORDER.compare(this, str);
     }
 
@@ -1315,7 +1330,8 @@ public final class String
      *          exactly matches the specified subregion of the string argument;
      *          {@code false} otherwise.
      */
-    public boolean regionMatches(int toffset, String other, int ooffset, int len) {
+@Bean
+        public boolean regionMatches(int toffset, String other, int ooffset, int len) {
         byte tv[] = value;
         byte ov[] = other.value;
         // Note: toffset, ooffset, or len might be near -1>>>1.
@@ -1447,7 +1463,8 @@ public final class String
      *          this.substring(toffset).startsWith(prefix)
      *          </pre>
      */
-    public boolean startsWith(String prefix, int toffset) {
+@Bean
+        public boolean startsWith(String prefix, int toffset) {
         // Note: toffset might be near -1>>>1.
         if (toffset < 0 || toffset > length() - prefix.length()) {
             return false;
@@ -1491,7 +1508,8 @@ public final class String
      *          {@link #equals(Object)} method.
      * @since   1.0
      */
-    public boolean startsWith(String prefix) {
+@Bean
+        public boolean startsWith(String prefix) {
         return startsWith(prefix, 0);
     }
 
@@ -1506,7 +1524,8 @@ public final class String
      *          empty string or is equal to this {@code String} object
      *          as determined by the {@link #equals(Object)} method.
      */
-    public boolean endsWith(String suffix) {
+@Bean
+        public boolean endsWith(String suffix) {
         return startsWith(suffix, length() - suffix.length());
     }
 
@@ -1569,7 +1588,8 @@ public final class String
      *          character sequence represented by this object, or
      *          {@code -1} if the character does not occur.
      */
-    public int indexOf(int ch) {
+@Bean
+        public int indexOf(int ch) {
         return indexOf(ch, 0);
     }
 
@@ -1612,7 +1632,8 @@ public final class String
      *          than or equal to {@code fromIndex}, or {@code -1}
      *          if the character does not occur.
      */
-    public int indexOf(int ch, int fromIndex) {
+@Bean
+        public int indexOf(int ch, int fromIndex) {
         return isLatin1() ? StringLatin1.indexOf(value, ch, fromIndex)
                           : StringUTF16.indexOf(value, ch, fromIndex);
     }
@@ -1640,7 +1661,8 @@ public final class String
      *          character sequence represented by this object, or
      *          {@code -1} if the character does not occur.
      */
-    public int lastIndexOf(int ch) {
+@Bean
+        public int lastIndexOf(int ch) {
         return lastIndexOf(ch, length() - 1);
     }
 
@@ -1678,7 +1700,8 @@ public final class String
      *          than or equal to {@code fromIndex}, or {@code -1}
      *          if the character does not occur before that point.
      */
-    public int lastIndexOf(int ch, int fromIndex) {
+@Bean
+        public int lastIndexOf(int ch, int fromIndex) {
         return isLatin1() ? StringLatin1.lastIndexOf(value, ch, fromIndex)
                           : StringUTF16.lastIndexOf(value, ch, fromIndex);
     }
@@ -1697,7 +1720,8 @@ public final class String
      * @return  the index of the first occurrence of the specified substring,
      *          or {@code -1} if there is no such occurrence.
      */
-    public int indexOf(String str) {
+@Bean
+        public int indexOf(String str) {
         byte coder = coder();
         if (coder == str.coder()) {
             return isLatin1() ? StringLatin1.indexOf(value, str.value)
@@ -1726,7 +1750,8 @@ public final class String
      *          starting at the specified index,
      *          or {@code -1} if there is no such occurrence.
      */
-    public int indexOf(String str, int fromIndex) {
+@Bean
+        public int indexOf(String str, int fromIndex) {
         return indexOf(value, coder(), length(), str, fromIndex);
     }
 
@@ -1786,7 +1811,8 @@ public final class String
      * @return  the index of the last occurrence of the specified substring,
      *          or {@code -1} if there is no such occurrence.
      */
-    public int lastIndexOf(String str) {
+@Bean
+        public int lastIndexOf(String str) {
         return lastIndexOf(str, length());
     }
 
@@ -1807,7 +1833,8 @@ public final class String
      *          searching backward from the specified index,
      *          or {@code -1} if there is no such occurrence.
      */
-    public int lastIndexOf(String str, int fromIndex) {
+@Bean
+        public int lastIndexOf(String str, int fromIndex) {
         return lastIndexOf(value, coder(), length(), str, fromIndex);
     }
 
@@ -1871,7 +1898,8 @@ public final class String
      *             {@code beginIndex} is negative or larger than the
      *             length of this {@code String} object.
      */
-    public String substring(int beginIndex) {
+@Bean
+        public String substring(int beginIndex) {
         return substring(beginIndex, length());
     }
 
@@ -1897,7 +1925,8 @@ public final class String
      *             {@code beginIndex} is larger than
      *             {@code endIndex}.
      */
-    public String substring(int beginIndex, int endIndex) {
+@Bean
+        public String substring(int beginIndex, int endIndex) {
         int length = length();
         checkBoundsBeginEnd(beginIndex, endIndex, length);
         int subLen = endIndex - beginIndex;
@@ -1937,7 +1966,8 @@ public final class String
      * @since 1.4
      * @spec JSR-51
      */
-    public CharSequence subSequence(int beginIndex, int endIndex) {
+@Bean
+        public CharSequence subSequence(int beginIndex, int endIndex) {
         return this.substring(beginIndex, endIndex);
     }
 
@@ -1961,7 +1991,8 @@ public final class String
      * @return  a string that represents the concatenation of this object's
      *          characters followed by the string argument's characters.
      */
-    public String concat(String str) {
+@Bean
+        public String concat(String str) {
         if (str.isEmpty()) {
             return this;
         }
@@ -1997,7 +2028,8 @@ public final class String
      * @return  a string derived from this string by replacing every
      *          occurrence of {@code oldChar} with {@code newChar}.
      */
-    public String replace(char oldChar, char newChar) {
+@Bean
+        public String replace(char oldChar, char newChar) {
         if (oldChar != newChar) {
             String ret = isLatin1() ? StringLatin1.replace(value, oldChar, newChar)
                                     : StringUTF16.replace(value, oldChar, newChar);
@@ -2035,7 +2067,8 @@ public final class String
      * @since 1.4
      * @spec JSR-51
      */
-    public boolean matches(String regex) {
+@Bean
+        public boolean matches(String regex) {
         return Pattern.matches(regex, this);
     }
 
@@ -2047,7 +2080,8 @@ public final class String
      * @return true if this string contains {@code s}, false otherwise
      * @since 1.5
      */
-    public boolean contains(CharSequence s) {
+@Bean
+        public boolean contains(CharSequence s) {
         return indexOf(s.toString()) >= 0;
     }
 
@@ -2092,7 +2126,8 @@ public final class String
      * @since 1.4
      * @spec JSR-51
      */
-    public String replaceFirst(String regex, String replacement) {
+@Bean
+        public String replaceFirst(String regex, String replacement) {
         return Pattern.compile(regex).matcher(this).replaceFirst(replacement);
     }
 
@@ -2137,7 +2172,8 @@ public final class String
      * @since 1.4
      * @spec JSR-51
      */
-    public String replaceAll(String regex, String replacement) {
+@Bean
+        public String replaceAll(String regex, String replacement) {
         return Pattern.compile(regex).matcher(this).replaceAll(replacement);
     }
 
@@ -2153,7 +2189,8 @@ public final class String
      * @return  The resulting string
      * @since 1.5
      */
-    public String replace(CharSequence target, CharSequence replacement) {
+@Bean
+        public String replace(CharSequence target, CharSequence replacement) {
         String trgtStr = target.toString();
         String replStr = replacement.toString();
         int thisLen = length();
@@ -2535,7 +2572,8 @@ public final class String
      * @see     java.lang.String#toUpperCase(Locale)
      * @since   1.1
      */
-    public String toLowerCase(Locale locale) {
+@Bean
+        public String toLowerCase(Locale locale) {
         return isLatin1() ? StringLatin1.toLowerCase(this, value, locale)
                           : StringUTF16.toLowerCase(this, value, locale);
     }
@@ -2616,7 +2654,8 @@ public final class String
      * @see     java.lang.String#toLowerCase(Locale)
      * @since   1.1
      */
-    public String toUpperCase(Locale locale) {
+@Bean
+        public String toUpperCase(Locale locale) {
         return isLatin1() ? StringLatin1.toUpperCase(this, value, locale)
                           : StringUTF16.toUpperCase(this, value, locale);
     }
@@ -2861,7 +2900,8 @@ public final class String
      *
      * @since 12
      */
-    public String indent(int n) {
+@Bean
+        public String indent(int n) {
         if (isEmpty()) {
             return "";
         }
@@ -3351,7 +3391,8 @@ public final class String
      */
     @jdk.internal.PreviewFeature(feature=jdk.internal.PreviewFeature.Feature.TEXT_BLOCKS,
                                  essentialAPI=true)
-    public String formatted(Object... args) {
+@Bean
+        public String formatted(Object... args) {
         return new Formatter().format(this, args).toString();
     }
 
@@ -3561,7 +3602,8 @@ public final class String
      *
      * @since 11
      */
-    public String repeat(int count) {
+@Bean
+        public String repeat(int count) {
         if (count < 0) {
             throw new IllegalArgumentException("count is negative: " + count);
         }
@@ -3783,7 +3825,8 @@ public final class String
      * @since 12
      */
     @Override
-    public String resolveConstantDesc(MethodHandles.Lookup lookup) {
+@Bean
+        public String resolveConstantDesc(MethodHandles.Lookup lookup) {
         return this;
     }
 

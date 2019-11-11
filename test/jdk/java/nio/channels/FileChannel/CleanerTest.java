@@ -51,6 +51,7 @@ import jdk.test.lib.util.FileUtils;
 
 import sun.nio.ch.FileChannelImpl;
 
+@Bean
 public class CleanerTest {
     public static void main(String[] args) throws Throwable {
         OperatingSystemMXBean mxBean =

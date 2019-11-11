@@ -44,6 +44,7 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 
+@Bean
 public class GetCallerClassTest {
     static final Policy DEFAULT_POLICY = Policy.getPolicy();
     private final StackWalker walker;
@@ -59,6 +60,10 @@ public class GetCallerClassTest {
             perms.add(new RuntimePermission("getStackWalkerWithClassReference"));
             Policy.setPolicy(new Policy() {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public boolean implies(ProtectionDomain domain, Permission p) {
                     return perms.implies(p) ||
                         DEFAULT_POLICY.implies(domain, p);

@@ -56,6 +56,7 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
+@Bean
 public class ExternalEditorTest extends EditorTestBase {
 
     private static Path executionScript;
@@ -65,7 +66,11 @@ public class ExternalEditorTest extends EditorTestBase {
     private DataOutputStream outputStream;
 
     @Override
-    public void writeSource(String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void writeSource(String s) {
         try {
             outputStream.writeInt(CustomEditor.SOURCE_CODE);
             byte[] bytes = s.getBytes(StandardCharsets.UTF_8);
@@ -81,7 +86,11 @@ public class ExternalEditorTest extends EditorTestBase {
         return readString(CustomEditor.GET_SOURCE_CODE);
     }
 
-    private void sendCode(int code) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void sendCode(int code) {
         try {
             outputStream.writeInt(code);
         } catch (IOException e) {
@@ -110,7 +119,11 @@ public class ExternalEditorTest extends EditorTestBase {
         return readString(CustomEditor.GET_FILENAME);
     }
 
-    private String readString(int code) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String readString(int code) {
         try {
             outputStream.writeInt(code);
             int length = inputStream.readInt();
@@ -123,7 +136,11 @@ public class ExternalEditorTest extends EditorTestBase {
     }
 
     @Override
-    public void testEditor(boolean defaultStartup, String[] args, ReplTest... tests) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testEditor(boolean defaultStartup, String[] args, ReplTest... tests) {
         ReplTest[] t = new ReplTest[tests.length + 1];
         t[0] = a -> assertCommandCheckOutput(a, "/set editor " + executionScript,
                 assertStartsWith("|  Editor set to: " + executionScript));

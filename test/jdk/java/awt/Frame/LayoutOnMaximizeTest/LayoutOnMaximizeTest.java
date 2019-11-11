@@ -50,6 +50,7 @@ import test.java.awt.regtesthelpers.Util;
 
 //*** global search and replace LayoutOnMaximizeTest with name of the test ***
 
+@Bean
 public class LayoutOnMaximizeTest
 {
 

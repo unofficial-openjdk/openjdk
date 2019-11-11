@@ -40,6 +40,7 @@ import static java.util.Calendar.*;
 // test case just checks that set() calls don't cause any nextStamp
 // overflow.
 
+@Bean
 public class StampOverflow {
     public static void main(String[] args) throws IllegalAccessException {
         // Get a Field for "nextStamp".

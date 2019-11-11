@@ -31,6 +31,7 @@
 
 import javax.annotation.processing.ProcessingEnvironment;
 
+@Bean
 public class NoProfileAnnotationWarning {
     void t(ProcessingEnvironment pe) {
         pe.getElementUtils().getTypeElement("a");

@@ -33,6 +33,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test6837011 {
     static boolean var_3 = true;
 

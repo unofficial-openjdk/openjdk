@@ -31,6 +31,7 @@
 import java.io.*;
 
 
+@Bean
 public class SJIS {
 
     private static void rm(File f) {

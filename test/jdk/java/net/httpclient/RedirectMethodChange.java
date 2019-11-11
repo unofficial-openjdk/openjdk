@@ -58,6 +58,7 @@ import org.testng.annotations.Test;
 import static java.nio.charset.StandardCharsets.US_ASCII;
 import static org.testng.Assert.assertEquals;
 
+@Bean
 public class RedirectMethodChange implements HttpServerAdapters {
 
     SSLContext sslContext;

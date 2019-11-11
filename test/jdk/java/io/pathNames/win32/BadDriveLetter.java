@@ -26,6 +26,7 @@
    @summary Make sure that a bad drive letter doesn't cause an exception
  */
 
+@Bean
 public class BadDriveLetter {
 
     public static void main(String[] args) {

@@ -33,6 +33,7 @@
 
 import java.io.*;
 
+@Bean
 public class DefinesWriteObject implements Externalizable {
 
     private int    intData = 4;

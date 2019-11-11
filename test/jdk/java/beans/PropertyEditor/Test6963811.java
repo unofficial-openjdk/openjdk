@@ -34,6 +34,7 @@
 import java.beans.PropertyEditorManager;
 import com.sun.beans.editors.StringEditor;
 
+@Bean
 public class Test6963811 implements Runnable {
     private final long time;
     private final boolean sync;

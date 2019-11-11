@@ -30,6 +30,7 @@
  */
 
 
+@Bean
 public class TestArrayCopyUNCBadMem {
 
     volatile static int field;

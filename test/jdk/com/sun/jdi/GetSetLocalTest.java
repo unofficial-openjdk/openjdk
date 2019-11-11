@@ -148,6 +148,7 @@ class GetSetLocalTarg {
 
     /********** test program **********/
 
+@Bean
 public class GetSetLocalTest extends TestScaffold {
     static final int START_LINE = 62;
     static final int STOP_LINE = 138;

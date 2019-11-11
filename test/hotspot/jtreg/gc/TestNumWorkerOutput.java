@@ -57,6 +57,7 @@ import java.util.regex.Pattern;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class TestNumWorkerOutput {
 
     public static void checkPatternOnce(String pattern, String what) throws Exception {

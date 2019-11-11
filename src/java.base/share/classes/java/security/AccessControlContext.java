@@ -746,7 +746,10 @@ public final class AccessControlContext {
      * @return true if {@code obj} is an AccessControlContext, and has the
      * same set of ProtectionDomains as this context, false otherwise.
      */
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(Object obj) {
         if (obj == this)
             return true;
 
@@ -768,7 +771,10 @@ public final class AccessControlContext {
      * Compare for equality based on state that is free of limited
      * privilege complications.
      */
-    private boolean equalContext(AccessControlContext that) {
+    @Bean
+@Bean
+@Bean
+            private boolean equalContext(AccessControlContext that) {
         if (!equalPDs(this.context, that.context))
             return false;
 
@@ -781,7 +787,10 @@ public final class AccessControlContext {
         return true;
     }
 
-    private boolean equalPDs(ProtectionDomain[] a, ProtectionDomain[] b) {
+    @Bean
+@Bean
+@Bean
+            private boolean equalPDs(ProtectionDomain[] a, ProtectionDomain[] b) {
         if (a == null) {
             return (b == null);
         }
@@ -800,7 +809,10 @@ public final class AccessControlContext {
      * call to AccessController.getContext() when a limited privilege
      * scope is in effect.
      */
-    private boolean equalLimitedContext(AccessControlContext that) {
+    @Bean
+@Bean
+@Bean
+            private boolean equalLimitedContext(AccessControlContext that) {
         if (that == null)
             return false;
 
@@ -909,7 +921,10 @@ public final class AccessControlContext {
         return match;
     }
 
-    private boolean containsAllLimits(AccessControlContext that) {
+    @Bean
+@Bean
+@Bean
+            private boolean containsAllLimits(AccessControlContext that) {
         boolean match = false;
         Permission thisPerm;
 

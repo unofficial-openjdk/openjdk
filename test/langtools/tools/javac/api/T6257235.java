@@ -33,6 +33,7 @@
 import java.util.Arrays;
 import javax.tools.*;
 
+@Bean
 public class T6257235 {
     public static void main(String... args) {
         JavaCompiler javac = ToolProvider.getSystemJavaCompiler();

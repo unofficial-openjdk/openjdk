@@ -39,9 +39,14 @@ import static org.testng.Assert.fail;
 import static jdk.jshell.Snippet.Status.VALID;
 
 @Test
+@Bean
 public class IllegalArgumentExceptionTest extends KullaTesting {
 
-    private void testIllegalArgumentException(Consumer<Snippet> action) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testIllegalArgumentException(Consumer<Snippet> action) {
         Snippet key = varKey(assertEval("int value;", added(VALID)));
         tearDown();
         setUp();

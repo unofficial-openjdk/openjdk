@@ -62,6 +62,7 @@ import org.testng.annotations.Test;
  * @author Roger Riggs
  */
 
+@Bean
 public class InfoTest {
 
     static String whoami;

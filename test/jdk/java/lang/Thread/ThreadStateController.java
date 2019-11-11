@@ -38,6 +38,7 @@ import jdk.test.lib.Utils;
  * is supported (the Phaser expects only parties of 2 to arrive and advance
  * to next phase).
  */
+@Bean
 public class ThreadStateController extends Thread {
     // used to achieve waiting states
     private final Object lock;
@@ -46,7 +47,11 @@ public class ThreadStateController extends Thread {
         this.lock = lock;
     }
 
-    public void checkThreadState(Thread.State expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void checkThreadState(Thread.State expected) {
         // maximum number of retries when checking for thread state.
         final int MAX_RETRY = 500;
 
@@ -218,7 +223,11 @@ public class ThreadStateController extends Thread {
     /**
      * Change the state if it matches newState.
      */
-    private void stateChange(int nextState) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void stateChange(int nextState) {
         // no state change
         if (state == nextState)
             return;
@@ -319,13 +328,21 @@ public class ThreadStateController extends Thread {
         }
     }
 
-    private String phaserToString(Phaser p) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String phaserToString(Phaser p) {
         return "[phase = " + p.getPhase() +
                " parties = " + p.getRegisteredParties() +
                " arrived = " + p.getArrivedParties() + "]";
     }
 
-    private String toStateName(int state) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String toStateName(int state) {
         switch (state) {
             case S_RUNNABLE:
                 return "runnable";
@@ -348,7 +365,11 @@ public class ThreadStateController extends Thread {
         }
     }
 
-    private void log(String msg, Object ... params) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void log(String msg, Object ... params) {
         logger.log(msg, params);
     }
 

@@ -32,6 +32,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Properties;
 
+@Bean
 public class Bug6609431 {
     private static final String expected = "backslash";
 

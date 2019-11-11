@@ -91,7 +91,8 @@ public abstract class AbstractQueue<E>
      * @throws IllegalArgumentException if some property of this element
      *         prevents it from being added to this queue
      */
-    public boolean add(E e) {
+@Bean
+        public boolean add(E e) {
         if (offer(e))
             return true;
         else
@@ -177,7 +178,8 @@ public abstract class AbstractQueue<E>
      *         this time due to insertion restrictions
      * @see #add(Object)
      */
-    public boolean addAll(Collection<? extends E> c) {
+@Bean
+        public boolean addAll(Collection<? extends E> c) {
         if (c == null)
             throw new NullPointerException();
         if (c == this)

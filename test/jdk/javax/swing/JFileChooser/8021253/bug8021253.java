@@ -89,6 +89,9 @@ public class bug8021253 {
         fileChooser = new JFileChooser(file.getParentFile());
         fileChooser.addActionListener(new ActionListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 defaultKeyPressed = true;
                 frame.dispose();

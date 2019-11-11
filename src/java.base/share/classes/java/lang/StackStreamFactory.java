@@ -139,7 +139,8 @@ final class StackStreamFactory {
             this.depth = 0;
         }
 
-        private int toStackWalkMode(StackWalker walker, int mode) {
+@Bean
+            private int toStackWalkMode(StackWalker walker, int mode) {
             int newMode = mode;
             if (walker.hasOption(Option.SHOW_HIDDEN_FRAMES) &&
                     (mode & FILL_CLASS_REFS_ONLY) != FILL_CLASS_REFS_ONLY)
@@ -379,7 +380,8 @@ final class StackStreamFactory {
          * @params batchSize number of elements of the frame  buffers for this batch
          * @returns number of frames fetched in this batch
          */
-        private int fetchStackFrames(int batchSize) {
+@Bean
+            private int fetchStackFrames(int batchSize) {
             int startIndex = frameBuffer.startIndex();
             frameBuffer.resize(startIndex, batchSize);
 
@@ -542,7 +544,8 @@ final class StackStreamFactory {
         }
 
         @Override
-        protected int batchSize(int lastBatchFrameCount) {
+@Bean
+            protected int batchSize(int lastBatchFrameCount) {
             if (lastBatchFrameCount == 0) {
                 // First batch, use estimateDepth if not exceed the large batch size
                 // and not too small
@@ -575,7 +578,8 @@ final class StackStreamFactory {
         }
 
         @Override
-        public void forEachRemaining(Consumer<? super StackFrame> action) {
+@Bean
+            public void forEachRemaining(Consumer<? super StackFrame> action) {
             checkState(OPEN);
             for (int n = 0; n < maxDepth; n++) {
                 StackFrame frame = nextStackFrame();
@@ -586,7 +590,8 @@ final class StackStreamFactory {
         }
 
         @Override
-        public boolean tryAdvance(Consumer<? super StackFrame> action) {
+@Bean
+            public boolean tryAdvance(Consumer<? super StackFrame> action) {
             checkState(OPEN);
 
             int index = frameBuffer.getIndex();
@@ -697,7 +702,8 @@ final class StackStreamFactory {
         }
 
         @Override
-        protected int batchSize(int lastBatchFrameCount) {
+@Bean
+            protected int batchSize(int lastBatchFrameCount) {
             return MIN_BATCH_SIZE;
         }
 

@@ -29,6 +29,7 @@
  * IllegalArgumentException is permission name is empty.
  */
 
+@Bean
 public class NullOrEmptyName {
 
     public static void main(String[]args) throws Exception {

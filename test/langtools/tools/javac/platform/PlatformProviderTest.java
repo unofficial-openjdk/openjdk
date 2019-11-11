@@ -69,6 +69,7 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class PlatformProviderTest implements PlatformProvider {
 
     public static void main(String... args) throws IOException {
@@ -257,7 +258,11 @@ public class PlatformProviderTest implements PlatformProvider {
     class ProcessorImpl extends AbstractProcessor {
 
         @Override
-        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             System.err.println("process: " + processingEnv.getOptions());
             return true;
         }
@@ -277,7 +282,11 @@ public class PlatformProviderTest implements PlatformProvider {
         }
 
         @Override
-        public void init(com.sun.source.util.JavacTask task, String... args) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void init(com.sun.source.util.JavacTask task, String... args) {
             System.err.println("testPlugin: " + Arrays.toString(args));
         }
 

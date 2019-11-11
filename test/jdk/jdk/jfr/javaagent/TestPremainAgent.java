@@ -41,6 +41,7 @@
 package jdk.jfr.javaagent;
 
 
+@Bean
 public class TestPremainAgent {
     public static void main(String... arg) throws Exception {
         EventEmitterAgent.validateRecording();

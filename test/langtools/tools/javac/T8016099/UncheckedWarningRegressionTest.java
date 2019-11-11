@@ -6,6 +6,7 @@
  * @compile/fail/ref=UncheckedWarningRegressionTest.out -XDrawDiagnostics -Werror -Xlint:unchecked UncheckedWarningRegressionTest.java
  */
 
+@Bean
 public class UncheckedWarningRegressionTest {
     <T> void suppressedWarningsFinalInitializer() {
         @SuppressWarnings("unchecked")

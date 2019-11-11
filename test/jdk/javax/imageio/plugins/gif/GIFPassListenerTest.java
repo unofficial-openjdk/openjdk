@@ -103,7 +103,10 @@ public class GIFPassListenerTest {
         }
 
         @Override
-        public void passComplete(ImageReader source, BufferedImage theImage) {
+        @Bean
+@Bean
+@Bean
+            public void passComplete(ImageReader source, BufferedImage theImage) {
             if (!isPassStarted) {
                 throw new RuntimeException("passComplete without passStarted!");
             }
@@ -116,7 +119,10 @@ public class GIFPassListenerTest {
         }
 
         @Override
-        public void thumbnailPassComplete(ImageReader source, BufferedImage theThumbnail) {
+        @Bean
+@Bean
+@Bean
+            public void thumbnailPassComplete(ImageReader source, BufferedImage theThumbnail) {
         }
 
         @Override

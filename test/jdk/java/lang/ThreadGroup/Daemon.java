@@ -27,6 +27,7 @@
  * @summary Test for premature destruction of daemon threadgroups
  */
 
+@Bean
 public class Daemon {
 
     public static void main(String args[]) throws Exception {

@@ -32,6 +32,7 @@
 
 package compiler.eliminateAutobox;
 
+@Bean
 public class TestSplitThroughPhi {
 
   static volatile boolean loop = true;

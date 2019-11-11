@@ -33,6 +33,7 @@ import java.util.zip.CRC32;
 import java.util.zip.CheckedOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+@Bean
 public class ZipMeUp {
 
     static final CRC32 crc = new CRC32();

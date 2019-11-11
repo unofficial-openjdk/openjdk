@@ -32,7 +32,10 @@ abstract class TwrAndTypeVariables2Test_01 implements AutoCloseable {
     @Override
     public void close() {
     }
-    public boolean close(long timeout) {
+    @Bean
+@Bean
+@Bean
+            public boolean close(long timeout) {
         return true;
     }
 }

@@ -241,7 +241,8 @@ class StringTokenizer implements Enumeration<Object> {
      * is false, returns the index of the first non-delimiter character at or
      * after startPos. If retDelims is true, startPos is returned.
      */
-    private int skipDelimiters(int startPos) {
+@Bean
+        private int skipDelimiters(int startPos) {
         if (delimiters == null)
             throw new NullPointerException();
 
@@ -267,7 +268,8 @@ class StringTokenizer implements Enumeration<Object> {
      * Skips ahead from startPos and returns the index of the next delimiter
      * character encountered, or maxPosition if no such delimiter is found.
      */
-    private int scanToken(int startPos) {
+@Bean
+        private int scanToken(int startPos) {
         int position = startPos;
         while (position < maxPosition) {
             if (!hasSurrogates) {
@@ -296,7 +298,8 @@ class StringTokenizer implements Enumeration<Object> {
         return position;
     }
 
-    private boolean isDelimiter(int codePoint) {
+@Bean
+        private boolean isDelimiter(int codePoint) {
         for (int delimiterCodePoint : delimiterCodePoints) {
             if (delimiterCodePoint == codePoint) {
                 return true;
@@ -367,7 +370,8 @@ class StringTokenizer implements Enumeration<Object> {
      *               tokenizer's string.
      * @throws    NullPointerException if delim is {@code null}
      */
-    public String nextToken(String delim) {
+@Bean
+        public String nextToken(String delim) {
         delimiters = delim;
 
         /* delimiter string specified, so set the appropriate flag. */

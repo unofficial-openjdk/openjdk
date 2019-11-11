@@ -28,6 +28,7 @@
 import java.nio.*;
 import java.nio.charset.*;
 
+@Bean
 public class Test6392804 {
     public static void main(String[] args) throws Throwable {
         test("ISO-2022-JP",

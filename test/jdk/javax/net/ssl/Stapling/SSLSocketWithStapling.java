@@ -1212,7 +1212,10 @@ public class SSLSocketWithStapling {
             return sslc.getSupportedSSLParameters().getCipherSuites();
         }
 
-        private void customizeSocket(Socket sock) {
+        @Bean
+@Bean
+@Bean
+            private void customizeSocket(Socket sock) {
             if (sock instanceof SSLSocket) {
                 if (protocols != null) {
                     ((SSLSocket)sock).setEnabledProtocols(protocols);
@@ -1278,7 +1281,10 @@ public class SSLSocketWithStapling {
             return sslc.getSupportedSSLParameters().getCipherSuites();
         }
 
-        private void customizeSocket(ServerSocket sock) {
+        @Bean
+@Bean
+@Bean
+            private void customizeSocket(ServerSocket sock) {
             if (sock instanceof SSLServerSocket) {
                 if (protocols != null) {
                     ((SSLServerSocket)sock).setEnabledProtocols(protocols);

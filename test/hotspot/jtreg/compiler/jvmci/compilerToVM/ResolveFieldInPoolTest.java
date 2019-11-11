@@ -67,6 +67,7 @@ import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.CON
 /**
  * Test for {@code jdk.vm.ci.hotspot.CompilerToVM.resolveFieldInPool} method
  */
+@Bean
 public class ResolveFieldInPoolTest {
 
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();

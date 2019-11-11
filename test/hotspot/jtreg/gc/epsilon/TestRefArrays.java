@@ -45,6 +45,7 @@ package gc.epsilon;
 
 import java.util.Random;
 
+@Bean
 public class TestRefArrays {
 
   static long SEED = Long.getLong("seed", System.nanoTime());

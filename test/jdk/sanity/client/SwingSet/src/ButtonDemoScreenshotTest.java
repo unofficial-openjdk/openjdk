@@ -83,7 +83,9 @@ public class ButtonDemoScreenshotTest {
         }
     }
 
-    private void checkButton(JFrameOperator jfo, int i, Robot rob) {
+@Bean
+@Bean
+            private void checkButton(JFrameOperator jfo, int i, Robot rob) {
         JButtonOperator button = new JButtonOperator(jfo, i);
 
         //additional instrumentation for JDK-8198920. To be removed after the bug is fixed
@@ -109,7 +111,9 @@ public class ButtonDemoScreenshotTest {
             button.getOutput().printTrace("JDK-8198920: Button press confirmed by " + System.currentTimeMillis());
             //end of instrumentation for JDK-8198920
             button.waitState(new ComponentChooser() {
-                public boolean checkComponent(Component c) {
+@Bean
+@Bean
+                        public boolean checkComponent(Component c) {
                     pressedImage[0] = capture(rob, button);
                     assertNotBlack(pressedImage[0]);
                     return !sComparator.compare(initialButtonImage, pressedImage[0]);

@@ -57,6 +57,7 @@ import com.sun.tools.javac.tree.DCTree.DCDocComment;
 import com.sun.tools.javac.tree.DCTree.DCErroneous;
 import com.sun.tools.javac.tree.DocPretty;
 
+@Bean
 public class DocCommentTester {
 
     public static final String BI_MARKER = "BREAK_ITERATOR";
@@ -103,7 +104,11 @@ public class DocCommentTester {
 
         DeclScanner d = new DeclScanner() {
             @Override
-            public Void visitCompilationUnit(CompilationUnitTree tree, Void ignore) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitCompilationUnit(CompilationUnitTree tree, Void ignore) {
                 for (Checker c: checkers)
                     c.visitCompilationUnit(tree);
                 return super.visitCompilationUnit(tree, ignore);
@@ -145,21 +150,33 @@ public class DocCommentTester {
         abstract void visitDecl(Tree tree, Name name);
 
         @Override
-        public Void visitClass(ClassTree tree, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitClass(ClassTree tree, Void ignore) {
             super.visitClass(tree, ignore);
             visitDecl(tree, tree.getSimpleName());
             return null;
         }
 
         @Override
-        public Void visitMethod(MethodTree tree, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitMethod(MethodTree tree, Void ignore) {
             super.visitMethod(tree, ignore);
             visitDecl(tree, tree.getName());
             return null;
         }
 
         @Override
-        public Void visitVariable(VariableTree tree, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitVariable(VariableTree tree, Void ignore) {
             super.visitVariable(tree, ignore);
             visitDecl(tree, tree.getName());
             return null;
@@ -284,6 +301,10 @@ public class DocCommentTester {
                 String source;
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public Void visitCompilationUnit(CompilationUnitTree tree, Void ignore) {
                     System.err.println("processing " + tree.getSourceFile().getName());
                     try {
@@ -364,7 +385,11 @@ public class DocCommentTester {
                 this.out.flush();
             }
 
-            public Void visitAttribute(AttributeTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitAttribute(AttributeTree node, Void p) {
                 header(node);
                 indent(+1);
                 print("name", node.getName().toString());
@@ -376,7 +401,11 @@ public class DocCommentTester {
                 return null;
             }
 
-            public Void visitAuthor(AuthorTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitAuthor(AuthorTree node, Void p) {
                 header(node);
                 indent(+1);
                 print("name", node.getName());
@@ -386,12 +415,20 @@ public class DocCommentTester {
                 return null;
             }
 
-            public Void visitComment(CommentTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitComment(CommentTree node, Void p) {
                 header(node, compress(node.getBody()));
                 return null;
             }
 
-            public Void visitDeprecated(DeprecatedTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitDeprecated(DeprecatedTree node, Void p) {
                 header(node);
                 indent(+1);
                 print("body", node.getBody());
@@ -401,7 +438,11 @@ public class DocCommentTester {
                 return null;
             }
 
-            public Void visitDocComment(DocCommentTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitDocComment(DocCommentTree node, Void p) {
                 header(node);
                 indent(+1);
                 // Applicable only to html files, print iff non-empty
@@ -422,27 +463,47 @@ public class DocCommentTester {
                 return null;
             }
 
-            public Void visitDocRoot(DocRootTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitDocRoot(DocRootTree node, Void p) {
                 header(node, "");
                 return null;
             }
 
-            public Void visitDocType(DocTypeTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitDocType(DocTypeTree node, Void p) {
                 header(node, compress(node.getText()));
                 return null;
             }
 
-            public Void visitEndElement(EndElementTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitEndElement(EndElementTree node, Void p) {
                 header(node, node.getName().toString());
                 return null;
             }
 
-            public Void visitEntity(EntityTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitEntity(EntityTree node, Void p) {
                 header(node, node.getName().toString());
                 return null;
             }
 
-            public Void visitErroneous(ErroneousTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitErroneous(ErroneousTree node, Void p) {
                 header(node);
                 indent(+1);
                 print("code", ((DCErroneous) node).diag.getCode());
@@ -453,7 +514,11 @@ public class DocCommentTester {
                 return null;
             }
 
-            public Void visitHidden(HiddenTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitHidden(HiddenTree node, Void p) {
                 header(node);
                 indent(+1);
                 print("body", node.getBody());
@@ -463,13 +528,21 @@ public class DocCommentTester {
                 return null;
             }
 
-            public Void visitIdentifier(IdentifierTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitIdentifier(IdentifierTree node, Void p) {
                 header(node, compress(node.getName().toString()));
                 return null;
             }
 
             @Override
-            public Void visitIndex(IndexTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitIndex(IndexTree node, Void p) {
                 header(node);
                 indent(+1);
                 print("term", node.getSearchTerm());
@@ -480,12 +553,20 @@ public class DocCommentTester {
                 return null;
             }
 
-            public Void visitInheritDoc(InheritDocTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitInheritDoc(InheritDocTree node, Void p) {
                 header(node, "");
                 return null;
             }
 
-            public Void visitLink(LinkTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitLink(LinkTree node, Void p) {
                 header(node);
                 indent(+1);
                 print("reference", node.getReference());
@@ -496,12 +577,20 @@ public class DocCommentTester {
                 return null;
             }
 
-            public Void visitLiteral(LiteralTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitLiteral(LiteralTree node, Void p) {
                 header(node, compress(node.getBody().getBody()));
                 return null;
             }
 
-            public Void visitParam(ParamTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitParam(ParamTree node, Void p) {
                 header(node);
                 indent(+1);
                 print("name", node.getName());
@@ -512,7 +601,11 @@ public class DocCommentTester {
                 return null;
             }
 
-            public Void visitProvides(ProvidesTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitProvides(ProvidesTree node, Void p) {
                 header(node);
                 indent(+1);
                 print("serviceName", node.getServiceType());
@@ -523,12 +616,20 @@ public class DocCommentTester {
                 return null;
             }
 
-            public Void visitReference(ReferenceTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitReference(ReferenceTree node, Void p) {
                 header(node, compress(node.getSignature()));
                 return null;
             }
 
-            public Void visitReturn(ReturnTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitReturn(ReturnTree node, Void p) {
                 header(node);
                 indent(+1);
                 print("description", node.getDescription());
@@ -538,7 +639,11 @@ public class DocCommentTester {
                 return null;
             }
 
-            public Void visitSee(SeeTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitSee(SeeTree node, Void p) {
                 header(node);
                 indent(+1);
                 print("reference", node.getReference());
@@ -548,7 +653,11 @@ public class DocCommentTester {
                 return null;
             }
 
-            public Void visitSerial(SerialTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitSerial(SerialTree node, Void p) {
                 header(node);
                 indent(+1);
                 print("description", node.getDescription());
@@ -558,7 +667,11 @@ public class DocCommentTester {
                 return null;
             }
 
-            public Void visitSerialData(SerialDataTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitSerialData(SerialDataTree node, Void p) {
                 header(node);
                 indent(+1);
                 print("description", node.getDescription());
@@ -568,7 +681,11 @@ public class DocCommentTester {
                 return null;
             }
 
-            public Void visitSerialField(SerialFieldTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitSerialField(SerialFieldTree node, Void p) {
                 header(node);
                 indent(+1);
                 print("name", node.getName());
@@ -580,7 +697,11 @@ public class DocCommentTester {
                 return null;
             }
 
-            public Void visitSince(SinceTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitSince(SinceTree node, Void p) {
                 header(node);
                 indent(+1);
                 print("body", node.getBody());
@@ -590,7 +711,11 @@ public class DocCommentTester {
                 return null;
             }
 
-            public Void visitStartElement(StartElementTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitStartElement(StartElementTree node, Void p) {
                 header(node);
                 indent(+1);
                 indent();
@@ -603,7 +728,11 @@ public class DocCommentTester {
             }
 
             @Override
-            public Void visitSummary(SummaryTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitSummary(SummaryTree node, Void p) {
                 header(node);
                 indent(+1);
                 print("summary", node.getSummary());
@@ -614,7 +743,11 @@ public class DocCommentTester {
             }
 
             @Override
-            public Void visitSystemProperty(SystemPropertyTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitSystemProperty(SystemPropertyTree node, Void p) {
                 header(node);
                 indent(+1);
                 print("property name", node.getPropertyName().toString());
@@ -624,12 +757,20 @@ public class DocCommentTester {
                 return null;
             }
 
-            public Void visitText(TextTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitText(TextTree node, Void p) {
                 header(node, compress(node.getBody()));
                 return null;
             }
 
-            public Void visitThrows(ThrowsTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitThrows(ThrowsTree node, Void p) {
                 header(node);
                 indent(+1);
                 print("exceptionName", node.getExceptionName());
@@ -640,7 +781,11 @@ public class DocCommentTester {
                 return null;
             }
 
-            public Void visitUnknownBlockTag(UnknownBlockTagTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitUnknownBlockTag(UnknownBlockTagTree node, Void p) {
                 header(node);
                 indent(+1);
                 indent();
@@ -652,7 +797,11 @@ public class DocCommentTester {
                 return null;
             }
 
-            public Void visitUnknownInlineTag(UnknownInlineTagTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitUnknownInlineTag(UnknownInlineTagTree node, Void p) {
                 header(node);
                 indent(+1);
                 indent();
@@ -664,7 +813,11 @@ public class DocCommentTester {
                 return null;
             }
 
-            public Void visitUses(UsesTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitUses(UsesTree node, Void p) {
                 header(node);
                 indent(+1);
                 print("serviceName", node.getServiceType());
@@ -675,7 +828,11 @@ public class DocCommentTester {
                 return null;
             }
 
-            public Void visitValue(ValueTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitValue(ValueTree node, Void p) {
                 header(node);
                 indent(+1);
                 print("reference", node.getReference());
@@ -685,7 +842,11 @@ public class DocCommentTester {
                 return null;
             }
 
-            public Void visitVersion(VersionTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitVersion(VersionTree node, Void p) {
                 header(node);
                 indent(+1);
                 print("body", node.getBody());
@@ -695,7 +856,11 @@ public class DocCommentTester {
                 return null;
             }
 
-            public Void visitOther(DocTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitOther(DocTree node, Void p) {
                 throw new UnsupportedOperationException("Not supported yet.");
             }
 
@@ -806,6 +971,10 @@ public class DocCommentTester {
 
             DocTreeScanner scanner = new DocTreeScanner<Void,Void>() {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public Void scan(DocTree node, Void ignore) {
                     if (node != null) {
                         try {

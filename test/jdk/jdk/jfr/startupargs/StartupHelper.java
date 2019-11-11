@@ -43,6 +43,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 
 
 
+@Bean
 public class StartupHelper {
 
     public static Recording getRecording(String name) {

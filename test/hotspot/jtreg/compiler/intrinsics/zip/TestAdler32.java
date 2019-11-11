@@ -35,6 +35,7 @@ import java.nio.ByteBuffer;
 import java.util.zip.Adler32;
 import java.util.zip.Checksum;
 
+@Bean
 public class TestAdler32 {
     public static void main(String[] args) {
         int offset = Integer.getInteger("offset", 0);

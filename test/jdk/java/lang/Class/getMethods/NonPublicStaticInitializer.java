@@ -37,6 +37,7 @@ interface TestedInterface {
 }
 
 
+@Bean
 public class NonPublicStaticInitializer {
     public static void main(String args[]) throws Exception {
         Method m[] = TestedInterface.class.getMethods();

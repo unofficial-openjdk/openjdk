@@ -34,6 +34,7 @@
 
 package compiler.intrinsics.mathexact;
 
+@Bean
 public class AddExactINonConstantTest {
   public static void main(String[] args) {
       Verify.NonConstantTest.verify(new Verify.AddExactI());

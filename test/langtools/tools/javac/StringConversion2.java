@@ -27,6 +27,7 @@
  * @summary allow Object += String
  */
 
+@Bean
 public class StringConversion2
 {
     public static void main(String[] args) {

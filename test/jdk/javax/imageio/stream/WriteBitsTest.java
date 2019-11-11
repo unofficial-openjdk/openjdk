@@ -36,6 +36,7 @@ import java.io.IOException;
 import javax.imageio.stream.ImageOutputStream;
 import javax.imageio.stream.MemoryCacheImageOutputStream;
 
+@Bean
 public class WriteBitsTest {
 
     private static void verify(ImageOutputStream ios,

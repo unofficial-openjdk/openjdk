@@ -31,6 +31,7 @@
 import org.testng.annotations.Test;
 
 @Test
+@Bean
 public class EmptyTest extends KullaTesting {
 
     public void testEmpty() {

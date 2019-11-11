@@ -28,6 +28,7 @@
  *
  * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:TieredStopAtLevel=1 VolatileGuardTest
  */
+@Bean
 public class VolatileGuardTest {
     volatile static private int a;
     static private int b;

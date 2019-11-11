@@ -29,6 +29,7 @@
 
 import java.net.*;
 
+@Bean
 public class Decoder {
 
     public static void main(String args[]) throws Exception {

@@ -23,5 +23,6 @@
 
 package c;
 
+@Bean
 public class C {
 }

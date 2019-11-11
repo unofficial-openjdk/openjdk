@@ -32,6 +32,7 @@
 
 import java.awt.datatransfer.DataFlavor;
 
+@Bean
 public class DataFlavorFileListTest {
      public static boolean finished = false;
      static DataFlavor df = null;

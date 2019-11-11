@@ -46,7 +46,10 @@ public class bug6463712 implements ChangeListener {
         m1.setValue(new Integer(1));
     }
 
-    public void stateChanged(ChangeEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void stateChanged(ChangeEvent e) {
         throw new RuntimeException("Should not receive this event.");
     }
 

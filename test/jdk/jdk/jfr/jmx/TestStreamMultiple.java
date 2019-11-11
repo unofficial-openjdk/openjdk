@@ -39,6 +39,7 @@ import jdk.test.lib.jfr.SimpleEventHelper;
  * @library /test/lib /test/jdk
  * @run main/othervm jdk.jfr.jmx.TestStreamMultiple
  */
+@Bean
 public class TestStreamMultiple {
 
     public static void main(String[] args) throws Exception {

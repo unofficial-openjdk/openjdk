@@ -26,6 +26,7 @@ class OnThrowException extends Exception {
     private String myname = "OnThrowException";
 }
 
+@Bean
 public class OnThrowTarget extends Thread {
   static void doThrow() throws OnThrowException {
     System.out.println( "target doing throw");

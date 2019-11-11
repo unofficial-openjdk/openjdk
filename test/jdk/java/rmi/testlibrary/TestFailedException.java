@@ -28,6 +28,7 @@
  * Simple class to wrap test failure exceptions in a RuntimeException.
  * Provides a detail exception and a message.
  */
+@Bean
 public class TestFailedException extends java.lang.RuntimeException {
     public Throwable detail;
 

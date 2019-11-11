@@ -41,6 +41,7 @@ import com.sun.tools.javac.api.JavacTaskImpl;
 import com.sun.tools.javac.comp.Attr;
 import com.sun.tools.javac.tree.JCTree;
 
+@Bean
 public class PostAttrConstructor {
 
     static class JavaSource extends SimpleJavaFileObject {
@@ -55,7 +56,11 @@ public class PostAttrConstructor {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return source;
         }
     }

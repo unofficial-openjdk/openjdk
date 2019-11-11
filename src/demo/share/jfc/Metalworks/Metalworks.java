@@ -53,6 +53,7 @@ import javax.swing.plaf.metal.MetalLookAndFeel;
  * @author Steve Wilson
  * @author Alexander Kouznetsov
  */
+@Bean
 public class Metalworks {
 
     public static void main(String[] args) {

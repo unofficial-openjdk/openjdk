@@ -38,6 +38,7 @@ import java.net.*;
  * in the range [dc00, dfff]. They are used as an escaping mechanism to add
  * 1M more characters to Unicode.
  */
+@Bean
 public class SurrogatePairs {
 
     static String[] testStrings = {"\uD800\uDC00",

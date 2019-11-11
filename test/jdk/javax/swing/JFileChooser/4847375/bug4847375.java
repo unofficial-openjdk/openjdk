@@ -108,7 +108,10 @@ public class bug4847375 {
         }
     }
 
-    private JButton findNewFolderButton(Container container) {
+    @Bean
+@Bean
+@Bean
+            private JButton findNewFolderButton(Container container) {
         JButton result = null;
 
         for (int i = 0; i < container.getComponentCount(); i++) {
@@ -153,11 +156,17 @@ public class bug4847375 {
         }
     }
 
-    private void fail(String s) {
+    @Bean
+@Bean
+@Bean
+            private void fail(String s) {
         throw new RuntimeException("Test failed: " + s);
     }
 
-    private void fail(String s, Throwable e) {
+    @Bean
+@Bean
+@Bean
+            private void fail(String s, Throwable e) {
         throw new RuntimeException("Test failed for LookAndFeel " + lookAndFeel + ": " + s, e);
     }
 }

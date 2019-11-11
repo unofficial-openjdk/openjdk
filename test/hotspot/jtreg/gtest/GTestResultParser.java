@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@Bean
 public class GTestResultParser {
     private final List<String> _failedTests;
 

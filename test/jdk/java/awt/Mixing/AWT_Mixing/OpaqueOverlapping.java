@@ -93,6 +93,9 @@ public class OpaqueOverlapping extends OverlappingTestBase {
 
         currentAwtControl.addMouseListener(new MouseAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseClicked(MouseEvent e) {
                 panel.setComponentZOrder(light, 0);
                 frame.validate();
@@ -100,6 +103,9 @@ public class OpaqueOverlapping extends OverlappingTestBase {
             }
         });
         light.addActionListener(new java.awt.event.ActionListener() {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 panel.setComponentZOrder(currentAwtControl, 0);
                 frame.validate();

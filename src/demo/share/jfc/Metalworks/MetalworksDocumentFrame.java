@@ -64,6 +64,7 @@ import javax.swing.border.EmptyBorder;
  * @author Steve Wilson
  */
 @SuppressWarnings("serial")
+@Bean
 public class MetalworksDocumentFrame extends JInternalFrame {
 
     static int openFrameCount = 0;
@@ -131,7 +132,11 @@ public class MetalworksDocumentFrame extends JInternalFrame {
         int yGap = 2;
         int xGap = 2;
 
-        public void addLayoutComponent(String s, Component c) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addLayoutComponent(String s, Component c) {
             if (s.equals("label")) {
                 labels.add(c);
             } else {
@@ -139,7 +144,11 @@ public class MetalworksDocumentFrame extends JInternalFrame {
             }
         }
 
-        public void layoutContainer(Container c) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void layoutContainer(Container c) {
             Insets insets = c.getInsets();
 
             int labelWidth = 0;
@@ -167,7 +176,11 @@ public class MetalworksDocumentFrame extends JInternalFrame {
 
         }
 
-        public Dimension minimumLayoutSize(Container c) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Dimension minimumLayoutSize(Container c) {
             Insets insets = c.getInsets();
 
             int labelWidth = 0;
@@ -189,13 +202,21 @@ public class MetalworksDocumentFrame extends JInternalFrame {
             return new Dimension(labelWidth * 3, yPos);
         }
 
-        public Dimension preferredLayoutSize(Container c) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Dimension preferredLayoutSize(Container c) {
             Dimension d = minimumLayoutSize(c);
             d.width *= 2;
             return d;
         }
 
-        public void removeLayoutComponent(Component c) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removeLayoutComponent(Component c) {
         }
     }
 }

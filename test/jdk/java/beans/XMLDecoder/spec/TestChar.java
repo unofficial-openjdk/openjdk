@@ -41,7 +41,10 @@ public final class TestChar extends AbstractTest {
     }
 
     @Override
-    protected void validate(XMLDecoder decoder) {
+    @Bean
+@Bean
+@Bean
+            protected void validate(XMLDecoder decoder) {
         if (!decoder.readObject().equals(Character.valueOf('X'))) {
             throw new Error("unexpected character");
         }

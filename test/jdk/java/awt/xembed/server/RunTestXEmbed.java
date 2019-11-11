@@ -51,7 +51,10 @@ public class RunTestXEmbed extends TestXEmbedServer {
         this.test = test;
     }
 
-    public Process startClient(Rectangle bounds[], long window) {
+    @Bean
+@Bean
+@Bean
+            public Process startClient(Rectangle bounds[], long window) {
         try {
             String java_home = System.getProperty("java.home");
             StringBuilder buf = new StringBuilder();

@@ -54,6 +54,7 @@ import sun.util.logging.PlatformLogger;
  *
  * @author danielfuchs
  */
+@Bean
 public class SystemLoggerConfigTest {
 
     static Logger createSystemLogger(String name) {
@@ -98,7 +99,11 @@ public class SystemLoggerConfigTest {
         }
 
         @Override
-        public void publish(LogRecord lr) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void publish(LogRecord lr) {
             records.add(lr);
         }
 
@@ -150,7 +155,11 @@ public class SystemLoggerConfigTest {
             case WITHSECURITY:
                 Policy.setPolicy(new Policy() {
                     @Override
-                    public boolean implies(ProtectionDomain domain, Permission permission) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean implies(ProtectionDomain domain, Permission permission) {
                         return true;
                     }
                 });

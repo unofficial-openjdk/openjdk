@@ -52,6 +52,7 @@ import com.sun.tools.attach.VirtualMachineDescriptor;
  * @run build Agent BadAgent RedefineAgent Application RedefineDummy RunnerUtil
  * @run main BasicTests
  */
+@Bean
 public class BasicTests {
 
     /*

@@ -27,6 +27,7 @@ import java.util.*;
 import java.io.StringWriter;
 import java.io.PrintWriter;
 
+@Bean
 public class SourceModel {
 
     public static final String stdMethodName = "m";
@@ -53,7 +54,11 @@ public class SourceModel {
 
         public AccessFlag(String name) { flag = name; }
 
-        protected void generate(PrintWriter pw) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void generate(PrintWriter pw) {
             pw.print(flag);
         }
 
@@ -79,7 +84,11 @@ public class SourceModel {
             this.parameter = str;
         }
 
-        protected void generate(PrintWriter pw) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void generate(PrintWriter pw) {
             pw.print(parameter);
         }
     }
@@ -91,7 +100,11 @@ public class SourceModel {
             this.argument = str;
         }
 
-        protected void generate(PrintWriter pw) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void generate(PrintWriter pw) {
             pw.print(argument);
         }
     }
@@ -105,7 +118,11 @@ public class SourceModel {
             this.name = name;
         }
 
-        protected void generate(PrintWriter pw) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void generate(PrintWriter pw) {
             pw.printf("%s %s", this.type, this.name);
         }
 
@@ -145,22 +162,39 @@ public class SourceModel {
             return this.methodDependencies;
         }
 
-        public Class getSuperclass() { return null; }
+        @Bean
+public class getSuperclass() { return null; }
         protected abstract void setSuperClass(Extends supertype);
 
-        public void addSuperType(Extends sup) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addSuperType(Extends sup) {
             assert sup.getType() instanceof Interface : "Must be an interface";
             this.supertypes.add(sup);
         }
-        public void addSuperType(Interface iface) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addSuperType(Interface iface) {
             this.supertypes.add(new Extends(iface));
         }
 
-        public void addMethod(Method m) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addMethod(Method m) {
             this.methods.add(m);
         }
 
-        public void addAccessFlag(AccessFlag f) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addAccessFlag(AccessFlag f) {
             this.accessFlags.add(f);
         }
 
@@ -169,7 +203,11 @@ public class SourceModel {
         // considered a superclass (only one allowed).  TypeParameters are
         // generic parameter names.  Interface (or Extends with an Interface
         // type) is an implemented supertype.  Methods are methods (duh!).
-        protected void addComponent(Element p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void addComponent(Element p) {
             if (p instanceof Class) {
                 setSuperClass(new Extends((Class)p));
             } else if (p instanceof Extends) {
@@ -195,7 +233,11 @@ public class SourceModel {
         }
 
         // Find and return the first method that has name 'name'
-        public Method findMethod(String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Method findMethod(String name) {
             for (Method m : methods) {
                 if (m.name.equals(name)) {
                     return m;
@@ -204,17 +246,29 @@ public class SourceModel {
             return null;
         }
 
-        public void addCompilationDependency(Type t) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addCompilationDependency(Type t) {
             typeDependencies.add(t);
         }
 
-        public void addCompilationDependency(Method m) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addCompilationDependency(Method m) {
             methodDependencies.add(m);
         }
 
         // Convenience method for creating an Extends object using this
         // class and specified type arguments.
-        public Extends with(String ... args) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Extends with(String ... args) {
             return new Extends(this, args);
         }
 
@@ -222,7 +276,11 @@ public class SourceModel {
         public abstract void generateAsDependency(
             SourceProcessor sp, Set<Method> neededMethods);
 
-        protected void generateName(PrintWriter pw) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void generateName(PrintWriter pw) {
             pw.print(this.name);
             StringJoiner joiner = new StringJoiner(",", "<", ">").setEmptyValue("");
             this.parameters.stream().map(Element::toString).forEach(joiner::add);
@@ -230,7 +288,11 @@ public class SourceModel {
             pw.print(" ");
         }
 
-        protected void generateBody(PrintWriter pw, String superSpec) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void generateBody(PrintWriter pw, String superSpec) {
             StringJoiner joiner = new StringJoiner(",", superSpec + " ", " ")
                     .setEmptyValue("");
             supertypes.stream().map(Element::toString).forEach(joiner::add);
@@ -242,7 +304,11 @@ public class SourceModel {
             pw.println("}");
         }
 
-        protected void generateAccessFlags(PrintWriter pw) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void generateAccessFlags(PrintWriter pw) {
             StringJoiner joiner = new StringJoiner(" ", "", " ");
             accessFlags.stream().map(AccessFlag::toString).forEach(joiner::add);
             pw.print(joiner.toString());
@@ -279,7 +345,8 @@ public class SourceModel {
     public static class Class extends Type {
         private Extends superClass;
 
-        public Class(String name, List<AccessFlag> flags,
+        @Bean
+public class(String name, List<AccessFlag> flags,
                 List<TypeParameter> params, Extends sprClass,
                 List<Extends> interfaces, List<Method> methods) {
             super(name, flags, params, interfaces, methods);
@@ -287,7 +354,8 @@ public class SourceModel {
             addAccessFlag(AccessFlag.PUBLIC); // should remove this
         }
 
-        public Class(String name, Element ... components) {
+        @Bean
+public class(String name, Element ... components) {
             super(name, null, null, null, null);
             this.superClass = null;
 
@@ -307,29 +375,46 @@ public class SourceModel {
         }
 
         @Override
-        public void setSuperClass(Extends ext) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setSuperClass(Extends ext) {
             assert this.superClass == null : "Multiple superclasses defined";
             assert ext.getType() instanceof Class : "Must be a class";
             this.superClass = ext;
         }
 
-        public void setSuperClass(Class c) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setSuperClass(Class c) {
             setSuperClass(new Extends(c));
         }
 
         @Override
-        public Class getSuperclass() {
+        @Bean
+public class getSuperclass() {
             return superClass == null ? null : (Class)superClass.supertype;
         }
 
-        public void generate(SourceProcessor processor) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void generate(SourceProcessor processor) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             generate(pw);
             processor.process(getName(), sw.toString());
         }
 
-        public void generate(PrintWriter pw) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void generate(PrintWriter pw) {
             generateAccessFlags(pw);
             pw.print("class ");
             generateName(pw);
@@ -370,18 +455,30 @@ public class SourceModel {
             }
         }
 
-        protected void setSuperClass(Extends ext) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void setSuperClass(Extends ext) {
             assert false : "Interfaces cannot have Class supertypes";
         }
 
-        public void generate(SourceProcessor processor) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void generate(SourceProcessor processor) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             generate(pw);
             processor.process(getName(), sw.toString());
         }
 
-        public void generate(PrintWriter pw) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void generate(PrintWriter pw) {
             generateAccessFlags(pw);
             pw.print("interface ");
             generateName(pw);
@@ -425,7 +522,11 @@ public class SourceModel {
             }
         }
 
-        public void generate(PrintWriter pw) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void generate(PrintWriter pw) {
             StringJoiner joiner = new StringJoiner(",", "<", ">").setEmptyValue("");
             getArguments().stream().map(Element::toString).forEach(joiner::add);
             pw.print(supertype.getName());
@@ -476,13 +577,21 @@ public class SourceModel {
 
         public void suppressWarnings() { this.emitSuppressWarnings = true; }
 
-        public void generateWarningSuppression(PrintWriter pw) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void generateWarningSuppression(PrintWriter pw) {
             if (this.emitSuppressWarnings) {
                 pw.printf("@SuppressWarnings(\"unchecked\")\n    ");
             }
         }
 
-        protected void generateDecl(PrintWriter pw) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void generateDecl(PrintWriter pw) {
             generateWarningSuppression(pw);
             StringJoiner joiner = new StringJoiner(" ", "", " ");
             accessFlags.stream().map(AccessFlag::toString).forEach(joiner::add);
@@ -502,7 +611,11 @@ public class SourceModel {
             this.getAccessFlags().add(AccessFlag.ABSTRACT);
         }
 
-        public void generate(PrintWriter pw) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void generate(PrintWriter pw) {
             generateDecl(pw);
             pw.print(";");
         }
@@ -522,7 +635,11 @@ public class SourceModel {
             this.body = body;
         }
 
-        public void generate(PrintWriter pw) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void generate(PrintWriter pw) {
             generateDecl(pw);
             pw.printf(" { %s }", this.body);
         }
@@ -547,7 +664,11 @@ public class SourceModel {
             this.getAccessFlags().add(AccessFlag.DEFAULT);
         }
 
-        public void generate(PrintWriter pw) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void generate(PrintWriter pw) {
             generateDecl(pw);
             pw.printf(" { %s }", this.body);
         }

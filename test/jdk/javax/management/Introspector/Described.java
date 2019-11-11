@@ -30,6 +30,7 @@ import javax.management.ConstructorParameters;
 /**
  * An MBean used by AnnotationSecurityTest.java
  **/
+@Bean
 public class Described implements DescribedMBean {
     private String name ;
 
@@ -47,11 +48,19 @@ public class Described implements DescribedMBean {
         return this.name;
     }
 
-    public void setStringProp(String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setStringProp(String name) {
         this.name = name;
     }
 
     public void doNothing() {}
 
-    public void doNothingParam(String param) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void doNothingParam(String param) {}
 }

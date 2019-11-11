@@ -32,6 +32,7 @@
 import java.io.*;
 import java.util.*;
 
+@Bean
 public class MainClassCantBeLoadedTest extends TestHelper {
     private MainClassCantBeLoadedTest(){}
 
@@ -52,7 +53,8 @@ public class MainClassCantBeLoadedTest extends TestHelper {
          * class A has a main method
          */
         ArrayList<String> scratchpad = new ArrayList<>();
-        scratchpad.add("public class A extends B {");
+        scratchpad.add("@Bean
+public class A extends B {");
         scratchpad.add("    public static void main(String... args) {}");
         scratchpad.add("}");
         createFile(new File(srcDir, "A.java"), scratchpad);
@@ -101,7 +103,8 @@ public class MainClassCantBeLoadedTest extends TestHelper {
         /* we want to generate class C that will resolve additional class
          */
         ArrayList<String> scratchpad = new ArrayList<>();
-        scratchpad.add("public class C {");
+        scratchpad.add("@Bean
+public class C {");
         scratchpad.add("    public static void main(String... args) {");
         scratchpad.add("        try {");
         scratchpad.add("            System.out.println(\"loading of restricted class\");");

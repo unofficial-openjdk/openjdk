@@ -131,7 +131,11 @@ public abstract class AbstractThrowingPushPromises implements HttpServerAdapters
         }
 
         @Override
-        public void execute(Runnable command) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void execute(Runnable command) {
             long id = tasks.incrementAndGet();
             executor.execute(() -> {
                 try {
@@ -209,6 +213,10 @@ public abstract class AbstractThrowingPushPromises implements HttpServerAdapters
         public Consumer<Where> select(Consumer<Where> consumer) {
             return new Consumer<Where>() {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void accept(Where where) {
                     if (Where.this == where) {
                         consumer.accept(where);
@@ -530,13 +538,21 @@ public abstract class AbstractThrowingPushPromises implements HttpServerAdapters
 
     static final class UncheckedCustomExceptionThrower implements Thrower {
         @Override
-        public void accept(Where where) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void accept(Where where) {
             out.println(now() + "Throwing in " + where);
             throw new UncheckedCustomException(where.name());
         }
 
         @Override
-        public boolean test(Throwable throwable) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean test(Throwable throwable) {
             return UncheckedCustomException.class.isInstance(throwable);
         }
 
@@ -548,13 +564,21 @@ public abstract class AbstractThrowingPushPromises implements HttpServerAdapters
 
     static final class UncheckedIOExceptionThrower implements Thrower {
         @Override
-        public void accept(Where where) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void accept(Where where) {
             out.println(now() + "Throwing in " + where);
             throw new UncheckedIOException(new CustomIOException(where.name()));
         }
 
         @Override
-        public boolean test(Throwable throwable) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean test(Throwable throwable) {
             return UncheckedIOException.class.isInstance(throwable)
                     && CustomIOException.class.isInstance(throwable.getCause());
         }
@@ -627,7 +651,11 @@ public abstract class AbstractThrowingPushPromises implements HttpServerAdapters
         }
 
         @Override
-        public void onSubscribe(Flow.Subscription subscription) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onSubscribe(Flow.Subscription subscription) {
             //out.println("onSubscribe ");
             onSubscribeCalled = true;
             throwing.accept(Where.ON_SUBSCRIBE);
@@ -635,7 +663,11 @@ public abstract class AbstractThrowingPushPromises implements HttpServerAdapters
         }
 
         @Override
-        public void onNext(List<ByteBuffer> item) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(List<ByteBuffer> item) {
            // out.println("onNext " + item);
             assertTrue(onSubscribeCalled);
             throwing.accept(Where.ON_NEXT);
@@ -643,7 +675,11 @@ public abstract class AbstractThrowingPushPromises implements HttpServerAdapters
         }
 
         @Override
-        public void onError(Throwable throwable) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onError(Throwable throwable) {
             //out.println("onError");
             assertTrue(onSubscribeCalled);
             throwing.accept(Where.ON_ERROR);

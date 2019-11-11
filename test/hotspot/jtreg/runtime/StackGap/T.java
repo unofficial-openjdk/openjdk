@@ -21,6 +21,7 @@
  * questions.
  */
 
+@Bean
 public class T {
 
   public static void test(int n) {

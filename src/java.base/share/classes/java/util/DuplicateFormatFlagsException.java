@@ -35,6 +35,7 @@ package java.util;
  *
  * @since 1.5
  */
+@Bean
 public class DuplicateFormatFlagsException extends IllegalFormatException {
 
     @java.io.Serial

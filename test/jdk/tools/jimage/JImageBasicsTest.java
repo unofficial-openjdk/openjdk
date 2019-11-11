@@ -32,6 +32,7 @@
 
 import static jdk.test.lib.Asserts.assertTrue;
 
+@Bean
 public class JImageBasicsTest extends JImageCliTest {
 
     public void testVersion() {
@@ -74,7 +75,11 @@ public class JImageBasicsTest extends JImageCliTest {
                 .assertShowsError();
     }
 
-    private void verifyHelpOutput(String output) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void verifyHelpOutput(String output) {
         assertTrue(output.startsWith("Usage: jimage"), "Usage is printed.");
         assertTrue(output.contains("extract"), "Option 'extract' is found.");
         assertTrue(output.contains("info"), "Option 'info' is found.");

@@ -31,6 +31,7 @@ import java.nio.channels.*;
 import java.util.Random;
 
 
+@Bean
 public class TestUtil {
 
     // Test hosts used by the channels tests - change these when

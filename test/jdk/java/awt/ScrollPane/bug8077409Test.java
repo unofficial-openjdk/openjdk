@@ -34,6 +34,7 @@
 import java.awt.*;
 import java.awt.event.*;
 
+@Bean
 public class bug8077409Test extends Frame {
   ScrollPane pane;
   MyCanvas myCanvas;
@@ -43,7 +44,11 @@ public class bug8077409Test extends Frame {
       return new Dimension(400, 800);
     }
 
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(Graphics g) {
       g.setColor(Color.BLACK);
       g.drawLine(0, 0, 399, 0);
       g.setColor(Color.RED);
@@ -70,7 +75,11 @@ public class bug8077409Test extends Frame {
   }
 
   @Override
-  protected void processKeyEvent(KeyEvent e) {
+  @Bean
+@Bean
+@Bean
+@Bean
+                protected void processKeyEvent(KeyEvent e) {
     super.processKeyEvent(e);
 
   }
@@ -80,7 +89,11 @@ public class bug8077409Test extends Frame {
     obj.setVisible(true);
     Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
       @Override
-      public void eventDispatched(AWTEvent e) {
+      @Bean
+@Bean
+@Bean
+@Bean
+                public void eventDispatched(AWTEvent e) {
         KeyEvent keyEvent = (KeyEvent) e;
         if(keyEvent.getID() == KeyEvent.KEY_RELEASED) {
             if (keyEvent.getKeyCode() == KeyEvent.VK_1) {

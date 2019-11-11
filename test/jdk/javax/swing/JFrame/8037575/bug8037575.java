@@ -113,6 +113,9 @@ public class bug8037575 {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         Timer timer = new Timer(waitTime, new AbstractAction() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent ae) {
                 frame.setExtendedState(Frame.ICONIFIED);
                 frame.dispose();
@@ -204,6 +207,9 @@ class TestDialog extends JDialog {
         run.addActionListener(new ActionListener() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent ae) {
                 bug8037575.runTest();
                 passB.setEnabled(true);
@@ -214,6 +220,9 @@ class TestDialog extends JDialog {
         passB.addActionListener(new ActionListener() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent ae) {
                 bug8037575.pass();
             }
@@ -222,6 +231,9 @@ class TestDialog extends JDialog {
         failB.addActionListener(new ActionListener() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent ae) {
                 bug8037575.fail();
             }
@@ -231,7 +243,10 @@ class TestDialog extends JDialog {
         setVisible(true);
     }
 
-    public void printInstructions(String[] instructions) {
+    @Bean
+@Bean
+@Bean
+            public void printInstructions(String[] instructions) {
         instructionsText.setText("");
         String printStr, remainingStr;
         for (String instruction : instructions) {
@@ -257,7 +272,10 @@ class TestDialog extends JDialog {
 
     }
 
-    public void displayMessage(String messageIn) {
+    @Bean
+@Bean
+@Bean
+            public void displayMessage(String messageIn) {
         messageText.append(messageIn + "\n");
     }
 }

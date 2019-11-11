@@ -32,6 +32,7 @@ import java.io.*;
 import java.util.Arrays;
 import java.util.zip.*;
 
+@Bean
 public class StoredCRC {
     public static void realMain(String[] args) throws Throwable {
 

@@ -40,6 +40,7 @@ import java.util.Properties;
  *
  */
 
+@Bean
 public class NetProperties {
     private static Properties props = new Properties();
     static {

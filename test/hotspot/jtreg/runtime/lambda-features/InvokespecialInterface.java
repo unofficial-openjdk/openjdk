@@ -32,6 +32,7 @@
 import java.util.function.*;
 import java.util.*;
 
+@Bean
 public class InvokespecialInterface {
 interface I {
   default void imethod() { System.out.println("I::imethod"); }

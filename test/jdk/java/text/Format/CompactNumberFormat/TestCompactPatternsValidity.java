@@ -127,7 +127,10 @@ public class TestCompactPatternsValidity {
 
     @Test(dataProvider = "invalidPatterns",
             expectedExceptions = IllegalArgumentException.class)
-    public void testInvalidCompactPatterns(String[] compactPatterns) {
+    @Bean
+@Bean
+@Bean
+            public void testInvalidCompactPatterns(String[] compactPatterns) {
         new CompactNumberFormat("#,##0.0#", DecimalFormatSymbols
                 .getInstance(Locale.US), compactPatterns);
     }

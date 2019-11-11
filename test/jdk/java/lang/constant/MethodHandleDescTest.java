@@ -66,6 +66,7 @@ import static org.testng.Assert.fail;
  * @summary unit tests for java.lang.constant.MethodHandleDesc
  */
 @Test
+@Bean
 public class MethodHandleDescTest extends SymbolicDescTest {
     private static ClassDesc helperHolderClass = ClassDesc.of("TestHelpers");
     private static ClassDesc testClass = helperHolderClass.nested("TestClass");
@@ -95,7 +96,11 @@ public class MethodHandleDescTest extends SymbolicDescTest {
         }
     }
 
-    private String lookupDescriptor(DirectMethodHandleDesc rr) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String lookupDescriptor(DirectMethodHandleDesc rr) {
         switch (rr.kind()) {
             case VIRTUAL:
             case SPECIAL:
@@ -308,7 +313,11 @@ public class MethodHandleDescTest extends SymbolicDescTest {
         assertEquals(7, (int) ((MethodHandle)getterDesc.resolveConstantDesc(TestHelpers.TestClass.LOOKUP)).invokeExact(instance));
     }
 
-    private void assertBadArgs(Supplier<MethodHandleDesc> supplier, String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertBadArgs(Supplier<MethodHandleDesc> supplier, String s) {
         try {
             MethodHandleDesc r = supplier.get();
             fail("Expected failure for " + s);

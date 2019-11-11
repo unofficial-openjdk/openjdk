@@ -30,6 +30,7 @@
 
 import java.awt.Font;
 
+@Bean
 public class DebugFonts {
 
    public static void main(String [] args) {

@@ -51,6 +51,7 @@ import java.awt.image.BufferedImage;
   @build ExtendedRobot
   @run main PaintAll
 */
+@Bean
 public class PaintAll {
 
     private static volatile boolean lwPainted;
@@ -71,49 +72,70 @@ public class PaintAll {
 
     private static final Button buttonStub = new Button() {
         @Override
-        public void paint(final Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paint(final Graphics g) {
             buttonPainted = true;
         }
     };
 
     private static final Canvas canvasStub = new Canvas() {
         @Override
-        public void paint(final Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paint(final Graphics g) {
             canvasPainted = true;
         }
     };
 
     private static final Checkbox checkboxStub = new Checkbox() {
         @Override
-        public void paint(final Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paint(final Graphics g) {
             checkboxPainted = true;
         }
     };
 
     private static final Choice choiceStub = new Choice() {
         @Override
-        public void paint(final Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paint(final Graphics g) {
             choicePainted = true;
         }
     };
 
     private static final Component lwComponentStub = new Component() {
         @Override
-        public void paint(final Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paint(final Graphics g) {
             lwPainted = true;
         }
     };
 
     private static final Container containerStub = new Container() {
         @Override
-        public void paint(final Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paint(final Graphics g) {
             containerPainted = true;
         }
     };
 
     private static final Frame frame = new Frame() {
         @Override
-        public void paint(final Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paint(final Graphics g) {
             super.paint(g);
             framePainted = true;
         }
@@ -121,49 +143,70 @@ public class PaintAll {
 
     private static final Label labelStub = new Label() {
         @Override
-        public void paint(final Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paint(final Graphics g) {
             labelPainted = true;
         }
     };
 
     private static final List listStub = new List() {
         @Override
-        public void paint(final Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paint(final Graphics g) {
             listPainted = true;
         }
     };
 
     private static final Panel panelStub = new Panel() {
         @Override
-        public void paint(final Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paint(final Graphics g) {
             panelPainted = true;
         }
     };
 
     private static final Scrollbar scrollbarStub = new Scrollbar() {
         @Override
-        public void paint(final Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paint(final Graphics g) {
             scrollbarPainted = true;
         }
     };
 
     private static final ScrollPane scrollPaneStub = new ScrollPane() {
         @Override
-        public void paint(final Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paint(final Graphics g) {
             scrollPanePainted = true;
         }
     };
 
     private static final TextArea textAreaStub = new TextArea() {
         @Override
-        public void paint(final Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paint(final Graphics g) {
             textAreaPainted = true;
         }
     };
 
     private static final TextField textFieldStub = new TextField() {
         @Override
-        public void paint(final Graphics g) {
+        @Bean
+@Bean
+@Bean
+            public void paint(final Graphics g) {
             textFieldPainted = true;
         }
     };

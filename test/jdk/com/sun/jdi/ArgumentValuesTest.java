@@ -78,7 +78,11 @@ class ArgumentValuesTarg {
         int index = 0;     // line GENERIC_ARGS_LINE_1
     }
 
-    public void instanceMethod(char p_char, byte p_byte) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void instanceMethod(char p_char, byte p_byte) {
         int index = 0;     // line INSTANCE_METHOD_LINE_1
     }
 
@@ -105,6 +109,7 @@ class ArgumentValuesTarg {
 
  /********** test program **********/
 
+@Bean
 public class ArgumentValuesTest extends TestScaffold {
     static final int NO_ARGS_LINE_1 = 63;
     static final int ALL_ARGS_LINE_1 = 70;

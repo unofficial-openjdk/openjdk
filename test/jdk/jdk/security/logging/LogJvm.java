@@ -47,7 +47,11 @@ public final class LogJvm {
         ensureLogging(args);
     }
 
-    private void ensureLogging(String[] args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void ensureLogging(String[] args) {
         for(String s : args) {
             if (s.equals(LOGGING_ENABLED) || s.equals(LOGGING_DISABLED)) {
                 return;
@@ -58,7 +62,11 @@ public final class LogJvm {
             " or " + LOGGING_DISABLED);
     }
 
-    public void addExpected(String logMsg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void addExpected(String logMsg) {
         expectedLogMessages.add(logMsg);
     }
 
@@ -90,13 +98,21 @@ public final class LogJvm {
         return out;
     }
 
-    private void testLoggingDisabled(OutputAnalyzer out) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testLoggingDisabled(OutputAnalyzer out) {
         for (String expected : expectedLogMessages) {
             out.shouldNotContain(expected);
         }
     }
 
-    private void testLoggingEnabled(OutputAnalyzer out) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testLoggingEnabled(OutputAnalyzer out) {
         for (String expected : expectedLogMessages) {
             out.shouldContain(expected);
         }

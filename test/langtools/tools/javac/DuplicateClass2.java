@@ -30,5 +30,6 @@
  * @compile DuplicateClass2.java DuplicateClass2.java
  */
 
+@Bean
 public class DuplicateClass2 {
 }

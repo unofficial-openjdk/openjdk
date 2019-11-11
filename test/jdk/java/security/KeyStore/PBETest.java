@@ -35,6 +35,7 @@ import javax.crypto.spec.*;
 // Retrieve a keystore entry, protected by the default encryption algorithm.
 // Set the keystore entry, protected by a stronger encryption algorithm.
 
+@Bean
 public class PBETest {
     private final static String DIR = System.getProperty("test.src", ".");
     private final static String KEY_PROTECTION_PROPERTY =

@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+@Bean
 public class ReadLineSync {
 
     public static int lineCount = 0;

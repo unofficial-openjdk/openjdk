@@ -35,6 +35,7 @@ import jdk.test.lib.net.URIBuilder;
  * @run main/othervm -Djava.net.preferIPv6Addresses=true AuthNPETest
  */
 
+@Bean
 public class AuthNPETest {
 
     static class BasicServer extends Thread {

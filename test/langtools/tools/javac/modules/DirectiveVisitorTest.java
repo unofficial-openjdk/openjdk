@@ -55,6 +55,7 @@ import com.sun.source.util.JavacTask;
  * @run main DirectiveVisitorTest
  */
 
+@Bean
 public class DirectiveVisitorTest extends ModuleTestBase {
     public static void main(String... args) throws Exception {
         new DirectiveVisitorTest().runTests();
@@ -73,7 +74,8 @@ public class DirectiveVisitorTest extends ModuleTestBase {
                           + " provides p1.Service with p2.Impl;"
                           + "}",
                           "package p1; public interface Service { }",
-                          "package p2; public class Impl implements p1.Service { }");
+                          "package p2; @Bean
+public class Impl implements p1.Service { }");
         Path src_m2 = src.resolve("m2x");
         tb.writeJavaFiles(src_m2,
                           "module m2x { }");
@@ -103,41 +105,69 @@ public class DirectiveVisitorTest extends ModuleTestBase {
     static class Visitor implements DirectiveVisitor<Void,Set<DirectiveKind>> {
         private final PrintStream out = System.err;
 
-        public void visit(ModuleElement e, Set<DirectiveKind> kinds) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visit(ModuleElement e, Set<DirectiveKind> kinds) {
             e.getDirectives().stream().forEach(d -> visit(d, kinds));
         }
 
         @Override
-        public Void visitRequires(RequiresDirective d, Set<DirectiveKind> kinds) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitRequires(RequiresDirective d, Set<DirectiveKind> kinds) {
             visitAny(d, kinds);
             return null;
         }
 
         @Override
-        public Void visitExports(ExportsDirective d, Set<DirectiveKind> kinds) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitExports(ExportsDirective d, Set<DirectiveKind> kinds) {
             visitAny(d, kinds);
             return null;
         }
 
         @Override
-        public Void visitOpens(OpensDirective d, Set<DirectiveKind> kinds) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitOpens(OpensDirective d, Set<DirectiveKind> kinds) {
             visitAny(d, kinds);
             return null;
         }
 
         @Override
-        public Void visitUses(UsesDirective d, Set<DirectiveKind> kinds) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitUses(UsesDirective d, Set<DirectiveKind> kinds) {
             visitAny(d, kinds);
             return null;
         }
 
         @Override
-        public Void visitProvides(ProvidesDirective d, Set<DirectiveKind> kinds) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitProvides(ProvidesDirective d, Set<DirectiveKind> kinds) {
             visitAny(d, kinds);
             return null;
         }
 
-        private void visitAny(Directive d, Set<DirectiveKind> kinds) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void visitAny(Directive d, Set<DirectiveKind> kinds) {
             out.println("visit: " + d);
             kinds.remove(d.getKind());
         }

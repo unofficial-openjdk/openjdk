@@ -42,6 +42,7 @@ import java.util.concurrent.CountDownLatch;
  * This test makes reasonable effort to reproduce the race.
  * Run repeatedly to ensure correctness.
  */
+@Bean
 public class RacyHandler {
     static volatile boolean factorySet = false;
     static int NUM_THREADS = 2;

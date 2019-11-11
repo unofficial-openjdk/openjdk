@@ -31,6 +31,7 @@
  */
 import java.lang.instrument.Instrumentation;
 
+@Bean
 public class Agent {
     public static void premain(String options, Instrumentation ins) throws Exception {
         Class<?> c = Class.forName("AgentSupport");

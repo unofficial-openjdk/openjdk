@@ -43,6 +43,7 @@ import java.awt.Graphics2D;
 import java.awt.GraphicsEnvironment;
 import java.awt.image.BufferedImage;
 
+@Bean
 public class TestSGEuseAlternateFontforJALocales {
 
     public static void main(String args[]) throws Exception {

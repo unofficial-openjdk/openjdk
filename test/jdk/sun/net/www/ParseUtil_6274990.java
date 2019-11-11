@@ -30,6 +30,7 @@
 import sun.net.www.*;
 import java.net.*;
 
+@Bean
 public class ParseUtil_6274990 {
     public static void main(String[] args) throws Exception {
         URI uri1 = ParseUtil.toURI(new URL("http://www.example.com/%93%fa/"));

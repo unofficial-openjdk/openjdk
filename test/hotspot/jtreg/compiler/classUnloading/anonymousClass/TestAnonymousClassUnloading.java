@@ -47,6 +47,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import compiler.whitebox.CompilerWhiteBoxTest;
 
+@Bean
 public class TestAnonymousClassUnloading {
     private static final WhiteBox WHITE_BOX = WhiteBox.getWhiteBox();
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();
@@ -80,7 +81,11 @@ public class TestAnonymousClassUnloading {
      * Makes sure that method is compiled by forcing compilation if not yet compiled.
      * @param m Method to be checked
      */
-    static private void makeSureIsCompiled(Method m) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                private void makeSureIsCompiled(Method m) {
         // Make sure background compilation is disabled
         if (WHITE_BOX.getBooleanVMFlag("BackgroundCompilation")) {
             throw new RuntimeException("Background compilation enabled");

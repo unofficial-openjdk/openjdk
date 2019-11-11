@@ -50,6 +50,7 @@ import java.lang.RuntimeException;
  *
  */
 
+@Bean
 public class ParsingTest {
 
     public static void main(String... argv) {

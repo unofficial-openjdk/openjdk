@@ -50,6 +50,7 @@ import sun.hotspot.WhiteBox;
 import java.io.File;
 import java.lang.reflect.Method;
 
+@Bean
 public class TestCompilerDirectivesCompatibilityBase {
 
     public static final WhiteBox WB = WhiteBox.getWhiteBox();

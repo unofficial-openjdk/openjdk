@@ -29,6 +29,7 @@
  * @run main MethodReferenceGenericTarget
  */
 
+@Bean
 public class MethodReferenceGenericTarget {
     static String result = "";
 
@@ -55,7 +56,11 @@ public class MethodReferenceGenericTarget {
     }
 
     class E<T> {
-        private T xI(T t) { return t; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                private T xI(T t) { return t; }
     }
 }
 
@@ -63,7 +68,11 @@ public class MethodReferenceGenericTarget {
 class MethodReferenceTestPrivateTypeConversion {
 
     class MethodReferenceTestTypeConversion_E<T> {
-        private T xI(T t) { return t; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                private T xI(T t) { return t; }
     }
 
     interface ISi { int m(Short a); }

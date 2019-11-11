@@ -310,7 +310,8 @@ public class EventSetDescriptor extends FeatureDescriptor {
                 : null;
     }
 
-    private void setListenerType(Class<?> cls) {
+@Bean
+        private void setListenerType(Class<?> cls) {
         this.listenerTypeRef = getWeakReference(cls);
     }
 
@@ -335,7 +336,8 @@ public class EventSetDescriptor extends FeatureDescriptor {
         return methods;
     }
 
-    private void setListenerMethods(Method[] methods) {
+@Bean
+        private void setListenerMethods(Method[] methods) {
         if (methods == null) {
             return;
         }
@@ -434,7 +436,8 @@ public class EventSetDescriptor extends FeatureDescriptor {
      *
      * @param unicast  True if the event set is unicast.
      */
-    public void setUnicast(boolean unicast) {
+@Bean
+        public void setUnicast(boolean unicast) {
         this.unicast = unicast;
     }
 
@@ -457,7 +460,8 @@ public class EventSetDescriptor extends FeatureDescriptor {
      *                          the "default" set,
      *                          {@code false} if not
      */
-    public void setInDefaultEventSet(boolean inDefaultEventSet) {
+@Bean
+        public void setInDefaultEventSet(boolean inDefaultEventSet) {
         this.inDefaultEventSet = inDefaultEventSet;
     }
 

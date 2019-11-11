@@ -40,6 +40,7 @@ import java.nio.file.*;
 import java.io.IOException;
 import com.sun.nio.file.ExtendedWatchEventModifier;
 
+@Bean
 public class WithSecurityManager {
 
     public static void main(String[] args) throws IOException {

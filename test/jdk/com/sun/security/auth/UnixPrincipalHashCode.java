@@ -39,6 +39,7 @@ import java.nio.file.Path;
 import java.security.PrivilegedAction;
 import java.util.List;
 
+@Bean
 public class UnixPrincipalHashCode {
     public static void main(java.lang.String[] args) throws Exception {
         Files.write(Path.of("uphc.conf"), List.of(

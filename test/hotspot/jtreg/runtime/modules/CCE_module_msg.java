@@ -42,6 +42,7 @@ import java.nio.file.Paths;
 import static jdk.test.lib.Asserts.*;
 
 // Test that the message in a runtime ClassCastException contains module info.
+@Bean
 public class CCE_module_msg {
     private static final Path CLASSES_DIR = Paths.get("classes");
 
@@ -187,13 +188,21 @@ public class CCE_module_msg {
 }
 
 class OriginalInner extends java.lang.Object {
-    public int method(int left, int right) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int method(int left, int right) {
         return right;
     }
 }
 
 class Derived extends java.lang.Object {
-    public int method(int left, int right) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int method(int left, int right) {
         return right;
     }
 }
@@ -205,7 +214,8 @@ class MyURLClassLoader extends URLClassLoader {
         super(name, urls, parent);
     }
 
-    public Class loadClass(String name) throws ClassNotFoundException {
+    @Bean
+public class loadClass(String name) throws ClassNotFoundException {
         if (!name.equals("p4.c4")) {
             return super.loadClass(name);
         }

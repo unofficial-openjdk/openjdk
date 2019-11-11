@@ -39,6 +39,7 @@ import java.util.List;
 import toolbox.JavacTask;
 import toolbox.Task;
 
+@Bean
 public class AnnotationProcessorsInModulesTest extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {
@@ -76,7 +77,11 @@ public class AnnotationProcessorsInModulesTest extends ModuleTestBase {
             "public final class MyProcessor1 extends AbstractProcessor {\n" +
             "\n" +
             "    @Override\n" +
-            "    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {\n" +
+            "    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {\n" +
             "        return false;\n" +
             "    }\n" +
             "\n" +
@@ -102,7 +107,11 @@ public class AnnotationProcessorsInModulesTest extends ModuleTestBase {
             "public final class MyProcessor2 extends AbstractProcessor {\n" +
             "\n" +
             "    @Override\n" +
-            "    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {\n" +
+            "    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {\n" +
             "        return false;\n" +
             "    }\n" +
             "\n" +

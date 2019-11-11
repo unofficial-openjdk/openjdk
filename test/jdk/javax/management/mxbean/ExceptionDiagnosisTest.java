@@ -42,6 +42,7 @@ import javax.management.MBeanServerFactory;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 
+@Bean
 public class ExceptionDiagnosisTest {
     private static volatile String failure;
 
@@ -103,12 +104,20 @@ public class ExceptionDiagnosisTest {
 
     public static class BlimContainer {
         public Blim getBlim() {return null;}
-        public void setBlim(Blim blim) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setBlim(Blim blim) {}
     }
 
     public static class Blim {
         public Blam getBlam() {return null;}
-        public void setBlam(Blam blam) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setBlam(Blam blam) {}
     }
 
     public static class Blam {

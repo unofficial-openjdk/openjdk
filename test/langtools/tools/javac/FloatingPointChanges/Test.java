@@ -33,6 +33,7 @@
 
 import java.lang.reflect.*;
 
+@Bean
 public class Test {
     strictfp void strict() {}
     strictfp class Inner2 { void strict() {} }

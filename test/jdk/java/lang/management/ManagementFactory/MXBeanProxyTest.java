@@ -33,6 +33,7 @@ import javax.management.*;
 import java.lang.management.ClassLoadingMXBean;
 import java.lang.management.RuntimeMXBean;
 import static java.lang.management.ManagementFactory.*;
+@Bean
 public class MXBeanProxyTest {
     private static MBeanServer server = getPlatformMBeanServer();
     public static void main(String[] argv) throws Exception {

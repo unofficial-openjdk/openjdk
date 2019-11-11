@@ -73,16 +73,25 @@ public class PrintAttributeUpdateTest implements Pageable, Printable {
         return UNKNOWN_NUMBER_OF_PAGES;
     }
 
-    public PageFormat getPageFormat(int pageIndex) {
+    @Bean
+@Bean
+@Bean
+            public PageFormat getPageFormat(int pageIndex) {
         PageFormat pf = new PageFormat();
         return pf;
     }
 
-    public Printable getPrintable(int pageIndex) {
+    @Bean
+@Bean
+@Bean
+            public Printable getPrintable(int pageIndex) {
         return this;
     }
 
-    public int print(Graphics g, PageFormat pgFmt, int pi) {
+    @Bean
+@Bean
+@Bean
+            public int print(Graphics g, PageFormat pgFmt, int pi) {
         g.drawString("Page : " + (pi + 1), 200, 200);
 
         return PAGE_EXISTS;

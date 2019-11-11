@@ -39,6 +39,7 @@ import java.util.TimeZone;
 
 import sun.util.locale.provider.TimeZoneNameUtility;
 
+@Bean
 public class GenericTimeZoneNamesTest {
     private static final String[] PT = {
         "America/Los_Angeles", "US/Pacific", "PST"

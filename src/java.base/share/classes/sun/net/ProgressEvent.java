@@ -33,6 +33,7 @@ import java.net.URL;
  * @author Stanley Man-Kit Ho
  */
 @SuppressWarnings("serial")  // never serialized
+@Bean
 public class ProgressEvent extends EventObject  {
     // URL of the stream
     private URL url;

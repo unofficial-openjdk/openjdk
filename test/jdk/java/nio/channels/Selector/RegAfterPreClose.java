@@ -33,6 +33,7 @@ import java.util.concurrent.*;
 import java.util.*;
 import java.io.IOException;
 
+@Bean
 public class RegAfterPreClose {
 
     static final int TEST_ITERATIONS = 300;
@@ -90,6 +91,9 @@ public class RegAfterPreClose {
 
         ThreadFactory factory = new ThreadFactory() {
             @Override
+            @Bean
+@Bean
+@Bean
             public Thread newThread(Runnable r) {
                 Thread t = new Thread(r);
                 t.setDaemon(true);

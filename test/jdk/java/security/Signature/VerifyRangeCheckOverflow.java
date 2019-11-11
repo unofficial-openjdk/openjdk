@@ -36,6 +36,7 @@ import java.security.KeyPairGenerator;
 import java.security.PublicKey;
 import java.security.Signature;
 
+@Bean
 public class VerifyRangeCheckOverflow {
 
     public static void main(String[] args) throws Exception {

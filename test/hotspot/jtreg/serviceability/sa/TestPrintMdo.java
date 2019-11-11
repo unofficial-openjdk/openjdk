@@ -38,6 +38,7 @@ import jtreg.SkippedException;
  * @run main/othervm TestPrintMdo
  */
 
+@Bean
 public class TestPrintMdo {
 
     public static void main (String... args) throws Exception {

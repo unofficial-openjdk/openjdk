@@ -28,6 +28,7 @@
  */
 import java.net.*;
 
+@Bean
 public class CheckDiscard {
 
     CheckDiscard() throws Exception {
@@ -86,7 +87,8 @@ public class CheckDiscard {
 
 
 
-    public class Sender implements Runnable {
+    @Bean
+public class Sender implements Runnable {
 
         Exception exc = null;
         DatagramSocket s;
@@ -101,7 +103,11 @@ public class CheckDiscard {
             return s.getLocalPort();
         }
 
-        public void setException(Exception e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setException(Exception e) {
             exc = e;
         }
 

@@ -53,11 +53,16 @@ import javax.management.openmbean.OpenMBeanOperationInfo;
  * Class TooManyFooTest
  * @author Sun Microsystems, 2005 - All rights reserved.
  */
+@Bean
 public class TooManyFooTest {
 
     public static class NumberHolder {
         public Integer getNumber() { return 0;}
-        public void setNumber(Integer n) {};
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setNumber(Integer n) {};
     }
     public static class MyNumberHolder extends NumberHolder {
 

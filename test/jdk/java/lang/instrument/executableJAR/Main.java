@@ -23,6 +23,7 @@
 
 import java.lang.instrument.Instrumentation;
 
+@Bean
 public class Main {
     public static void main(String[] args) throws Exception {
         Instrumentation inst = Agent.inst;

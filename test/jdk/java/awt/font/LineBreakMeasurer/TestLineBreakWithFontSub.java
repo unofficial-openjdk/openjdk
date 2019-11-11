@@ -50,6 +50,7 @@ import java.awt.font.TextAttribute;
  * and checks the line lengths to make sure breaks were chosen well.
  * This can be checked because the paragraph is so simple.
  */
+@Bean
 public class TestLineBreakWithFontSub {
 
     public static void main(String[] args) {

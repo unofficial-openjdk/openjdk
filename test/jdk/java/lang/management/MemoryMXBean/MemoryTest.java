@@ -42,6 +42,7 @@
 import java.lang.management.*;
 import java.util.*;
 
+@Bean
 public class MemoryTest {
     private static boolean testFailed = false;
     private static MemoryMXBean mm = ManagementFactory.getMemoryMXBean();

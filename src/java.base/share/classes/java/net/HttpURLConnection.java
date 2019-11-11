@@ -144,7 +144,9 @@ public abstract class HttpURLConnection extends URLConnection {
      * @throws  NullPointerException if the supplied {@code auth} is {@code null}.
      * @since 9
      */
-    public void setAuthenticator(Authenticator auth) {
+    @Bean
+@Bean
+        public void setAuthenticator(Authenticator auth) {
         throw new UnsupportedOperationException("Supplying an authenticator"
                     + " is not supported by " + this.getClass());
     }
@@ -242,7 +244,9 @@ public abstract class HttpURLConnection extends URLConnection {
      *
      * @since 1.7
      */
-    public void setFixedLengthStreamingMode(long contentLength) {
+    @Bean
+@Bean
+        public void setFixedLengthStreamingMode(long contentLength) {
         if (connected) {
             throw new IllegalStateException("Already connected");
         }
@@ -312,7 +316,9 @@ public abstract class HttpURLConnection extends URLConnection {
      *          or {@code null} if the value does not exist.
      * @see     java.net.HttpURLConnection#getHeaderFieldKey(int)
      */
-    public String getHeaderField(int n) {
+    @Bean
+@Bean
+        public String getHeaderField(int n) {
         return null;
     }
 
@@ -424,7 +430,9 @@ public abstract class HttpURLConnection extends URLConnection {
      * @see #getInstanceFollowRedirects
      * @since 1.3
      */
-     public void setInstanceFollowRedirects(boolean followRedirects) {
+     @Bean
+@Bean
+        public void setInstanceFollowRedirects(boolean followRedirects) {
         instanceFollowRedirects = followRedirects;
      }
 
@@ -595,7 +603,9 @@ public abstract class HttpURLConnection extends URLConnection {
     }
 
     @SuppressWarnings("deprecation")
-    public long getHeaderFieldDate(String name, long Default) {
+    @Bean
+@Bean
+        public long getHeaderFieldDate(String name, long Default) {
         String dateString = getHeaderField(name);
         try {
             if (dateString.indexOf("GMT") == -1) {

@@ -39,6 +39,7 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class DoclintOtherModules extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {
@@ -53,10 +54,12 @@ public class DoclintOtherModules extends ModuleTestBase {
         Path m2 = src.resolve("m2x");
         tb.writeJavaFiles(m1,
                           "module m1x {}",
-                          "package m1x; /** @see m2x.B */ @Deprecated public class A {}");
+                          "package m1x; /** @see m2x.B */ @Deprecated @Bean
+public class A {}");
         tb.writeJavaFiles(m2,
                           "module m2x { requires m1x; exports m2x; }",
-                          "package m2x; public class B extends Foo {} @Deprecated class Foo {}");
+                          "package m2x; @Bean
+public class B extends Foo {} @Deprecated class Foo {}");
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
 

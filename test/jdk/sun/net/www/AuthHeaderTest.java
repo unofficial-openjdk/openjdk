@@ -34,6 +34,7 @@
 import java.io.*;
 import java.net.*;
 
+@Bean
 public class AuthHeaderTest implements HttpCallback {
 
     static int count = 0;

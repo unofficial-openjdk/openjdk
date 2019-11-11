@@ -31,6 +31,7 @@
 import java.net.*;
 import java.io.*;
 
+@Bean
 public class getResponseCode {
     public static void main(String[] args) throws Exception {
         try {

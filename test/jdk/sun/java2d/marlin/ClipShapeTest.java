@@ -145,7 +145,11 @@ public final class ClipShapeTest {
         final Logger log = Logger.getLogger("sun.java2d.marlin");
         log.addHandler(new Handler() {
             @Override
-            public void publish(LogRecord record) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void publish(LogRecord record) {
                 final String msg = record.getMessage();
                 if (msg != null) {
                     // last space to avoid matching other settings:

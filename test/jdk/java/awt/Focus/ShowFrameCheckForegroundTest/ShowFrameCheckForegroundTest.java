@@ -35,6 +35,7 @@ import java.awt.*;
 import java.awt.event.*;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class ShowFrameCheckForegroundTest {
     Robot robot;
     Frame nofocusFrame = new Frame("Non-focusable");
@@ -65,6 +66,9 @@ public class ShowFrameCheckForegroundTest {
 
     public void start() {
         showButton.addActionListener(new ActionListener() {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 Util.showWindowWait(testToplevel);
             }
@@ -91,7 +95,10 @@ public class ShowFrameCheckForegroundTest {
         System.out.println("Test passed.");
     }
 
-    private void test(Window toplevel, int stage) {
+    @Bean
+@Bean
+@Bean
+            private void test(Window toplevel, int stage) {
         toplevel.add(testButton);
         toplevel.pack();
         toplevel.setLocation(400, 200);

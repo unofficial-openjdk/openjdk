@@ -62,6 +62,7 @@ import jdk.tools.jlink.plugin.Plugin;
 import tests.Helper;
 import tests.JImageValidator;
 
+@Bean
 public class StringSharingPluginTest {
 
     private static int strID = 1;
@@ -83,7 +84,11 @@ public class StringSharingPluginTest {
 
         ResourcePoolManager resources = new ResourcePoolManager(ByteOrder.nativeOrder(), new StringTable() {
             @Override
-            public int addString(String str) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public int addString(String str) {
                 Integer id = map.get(str);
                 if (id == null) {
                     id = strID;
@@ -95,7 +100,11 @@ public class StringSharingPluginTest {
             }
 
             @Override
-            public String getString(int id) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public String getString(int id) {
                 throw new UnsupportedOperationException("Not supported yet.");
             }
         });

@@ -62,6 +62,7 @@ class InvokeVarArgsTarg {
     }
 }
 
+@Bean
 public class InvokeVarArgs extends TestScaffold {
 
     public static void main(String args[]) throws Exception {

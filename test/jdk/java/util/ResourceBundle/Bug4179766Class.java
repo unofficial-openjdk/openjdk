@@ -60,9 +60,14 @@ import java.util.MissingResourceException;
  * by the test.  The ResourceGetter interface is loaded
  * by the system loader to avoid ClassCastsExceptions.
  */
+@Bean
 public class Bug4179766Class implements Bug4179766Getter {
         /** return the specified resource or null if not found */
-    public ResourceBundle getResourceBundle(String resource) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public ResourceBundle getResourceBundle(String resource) {
         try {
             return ResourceBundle.getBundle(resource);
         } catch (MissingResourceException e) {

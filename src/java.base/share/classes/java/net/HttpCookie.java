@@ -258,7 +258,8 @@ public final class HttpCookie implements Cloneable {
      *
      * @see  #getComment
      */
-    public void setComment(String purpose) {
+@Bean
+        public void setComment(String purpose) {
         comment = purpose;
     }
 
@@ -284,7 +285,8 @@ public final class HttpCookie implements Cloneable {
      *
      * @see  #getCommentURL
      */
-    public void setCommentURL(String purpose) {
+@Bean
+        public void setCommentURL(String purpose) {
         commentURL = purpose;
     }
 
@@ -310,7 +312,8 @@ public final class HttpCookie implements Cloneable {
      *
      * @see  #getDiscard
      */
-    public void setDiscard(boolean discard) {
+@Bean
+        public void setDiscard(boolean discard) {
         toDiscard = discard;
     }
 
@@ -335,7 +338,8 @@ public final class HttpCookie implements Cloneable {
      *
      * @see  #getPortlist
      */
-    public void setPortlist(String ports) {
+@Bean
+        public void setPortlist(String ports) {
         portlist = ports;
     }
 
@@ -366,7 +370,8 @@ public final class HttpCookie implements Cloneable {
      *
      * @see  #getDomain
      */
-    public void setDomain(String pattern) {
+@Bean
+        public void setDomain(String pattern) {
         if (pattern != null)
             domain = pattern.toLowerCase();
         else
@@ -404,7 +409,8 @@ public final class HttpCookie implements Cloneable {
      *
      * @see  #getMaxAge
      */
-    public void setMaxAge(long expiry) {
+@Bean
+        public void setMaxAge(long expiry) {
         maxAge = expiry;
     }
 
@@ -438,7 +444,8 @@ public final class HttpCookie implements Cloneable {
      *
      * @see  #getPath
      */
-    public void setPath(String uri) {
+@Bean
+        public void setPath(String uri) {
         path = uri;
     }
 
@@ -468,7 +475,8 @@ public final class HttpCookie implements Cloneable {
      *
      * @see  #getSecure
      */
-    public void setSecure(boolean flag) {
+@Bean
+        public void setSecure(boolean flag) {
         secure = flag;
     }
 
@@ -510,7 +518,8 @@ public final class HttpCookie implements Cloneable {
      *
      * @see  #getValue
      */
-    public void setValue(String newValue) {
+@Bean
+        public void setValue(String newValue) {
         value = newValue;
     }
 
@@ -554,7 +563,8 @@ public final class HttpCookie implements Cloneable {
      *
      * @see  #getVersion
      */
-    public void setVersion(int v) {
+@Bean
+        public void setVersion(int v) {
         if (v != 0 && v != 1) {
             throw new IllegalArgumentException("cookie version should be 0 or 1");
         }
@@ -586,7 +596,8 @@ public final class HttpCookie implements Cloneable {
      *
      * @see  #isHttpOnly()
      */
-    public void setHttpOnly(boolean httpOnly) {
+@Bean
+        public void setHttpOnly(boolean httpOnly) {
         this.httpOnly = httpOnly;
     }
 
@@ -712,7 +723,8 @@ public final class HttpCookie implements Cloneable {
      *          otherwise, {@code false}
      */
     @Override
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (obj == this)
             return true;
         if (!(obj instanceof HttpCookie))
@@ -991,7 +1003,8 @@ public final class HttpCookie implements Cloneable {
                     return HttpCookie.parse(header, true);
                 }
 
-                public String header(HttpCookie cookie) {
+@Bean
+                    public String header(HttpCookie cookie) {
                     return cookie.header;
                 }
             }

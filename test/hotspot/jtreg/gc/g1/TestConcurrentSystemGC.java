@@ -39,6 +39,7 @@ package gc.g1;
 import java.util.ArrayList;
 import java.util.List;
 
+@Bean
 public class TestConcurrentSystemGC {
     public static List<char[]> memory;
     public static void main(String[] args) throws Exception {

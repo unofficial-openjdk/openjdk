@@ -71,7 +71,11 @@ public final class PaintNativeOnUpdate extends Label {
     }
 
     @Override
-    public void update(final Graphics g) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void update(final Graphics g) {
         if (fullUpdate) {
             //full paint
             g.setColor(Color.GREEN);
@@ -84,7 +88,11 @@ public final class PaintNativeOnUpdate extends Label {
     }
 
     @Override
-    public void paint(final Graphics g) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(final Graphics g) {
         // Do nothing
     }
 }

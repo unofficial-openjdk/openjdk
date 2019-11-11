@@ -49,6 +49,7 @@ import static org.testng.Assert.*;
  * @run testng InvalidZipHeaderTests
  * @run testng/othervm/java.security.policy=test.policy  InvalidZipHeaderTests
  */
+@Bean
 public class InvalidZipHeaderTests {
 
 

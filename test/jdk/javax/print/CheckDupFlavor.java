@@ -35,6 +35,7 @@ import javax.print.attribute.standard.*;
 import java.util.ArrayList;
 
 
+@Bean
 public class CheckDupFlavor {
     public static void main(String[] args){
         PrintService defService = PrintServiceLookup.lookupDefaultPrintService();

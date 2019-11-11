@@ -31,9 +31,11 @@
  * @run main QualifiedThisAndSuper_1
  */
 
+@Bean
 public class QualifiedThisAndSuper_1 {
 
-    public class AS {
+    @Bean
+public class AS {
         String s = "ass";
         private String t = "ast";
         protected String u = "asu";
@@ -42,7 +44,8 @@ public class QualifiedThisAndSuper_1 {
         protected String o() { return "aso"; }
     }
 
-    public class BS {
+    @Bean
+public class BS {
         String s = "bss";
         private String t = "bst";
         protected String u = "bsu";
@@ -51,7 +54,8 @@ public class QualifiedThisAndSuper_1 {
         protected String o() { return "bso"; }
     }
 
-    public class CS {
+    @Bean
+public class CS {
         String s = "css";
         private String t = "cst";
         protected String u = "csu";
@@ -68,7 +72,8 @@ public class QualifiedThisAndSuper_1 {
         }
     }
 
-    public class A extends AS {
+    @Bean
+public class A extends AS {
         A() { super(); }
         String s = "as";
         private String t = "at";
@@ -76,7 +81,8 @@ public class QualifiedThisAndSuper_1 {
         String m() { return "am"; }
         private String n() { return "an"; }
         protected String o() { return "ao"; }
-        public class B extends BS {
+        @Bean
+public class B extends BS {
             B() { super(); }
             String s = "bs";
             private String t = "bt";
@@ -84,7 +90,8 @@ public class QualifiedThisAndSuper_1 {
             String m() { return "bm"; }
             private String n() { return "bn"; }
             protected String o() { return "bo"; }
-            public class C extends CS {
+            @Bean
+public class C extends CS {
                 C() { super(); }
                 String s = "cs";
                 private String t = "ct";

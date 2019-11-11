@@ -36,6 +36,7 @@ import jdk.test.lib.security.JDKSecurityProperties;
  * @run main/othervm jdk.security.logging.TestSecurityPropertyModificationLog LOGGING_ENABLED
  * @run main/othervm jdk.security.logging.TestSecurityPropertyModificationLog LOGGING_DISABLED
  */
+@Bean
 public class TestSecurityPropertyModificationLog {
 
     static List<String> keys = JDKSecurityProperties.getKeys();

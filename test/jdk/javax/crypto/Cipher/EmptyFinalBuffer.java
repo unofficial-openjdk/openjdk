@@ -36,6 +36,7 @@ import java.security.*;
 import javax.crypto.*;
 import javax.crypto.spec.*;
 
+@Bean
 public class EmptyFinalBuffer {
 
     private static final String[] ALGOS = {

@@ -57,7 +57,10 @@ public class WindowDragTest {
             frame1.toFront();
             frame1.addMouseListener(new MouseAdapter() {
                 @Override
-                public void mouseClicked(MouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void mouseClicked(MouseEvent e) {
                     // Clicking frame1 succeeded - mouse is not captured
                     passed = true;
                 }

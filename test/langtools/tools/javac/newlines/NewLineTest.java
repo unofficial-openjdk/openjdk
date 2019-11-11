@@ -48,6 +48,7 @@ import toolbox.ToolBox;
  * embedded newlines in the resource strings. For more context,
  * see JDK-4110560.
  */
+@Bean
 public class NewLineTest {
 
     public static void main(String args[]) throws Exception {

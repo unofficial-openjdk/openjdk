@@ -64,6 +64,7 @@ class TestC<T>{
         this.t = t;
     }
 }
+@Bean
 public class T6326754{
     public static void main(String... arg){
         TestC tC =new TestC();

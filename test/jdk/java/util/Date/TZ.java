@@ -29,6 +29,7 @@
 import java.util.TimeZone;
 import java.util.Date;
 
+@Bean
 public class TZ {
 
     public static void main(String args[]) {

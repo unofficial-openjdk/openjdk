@@ -34,6 +34,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
 import javax.swing.SwingUtilities;
 
+@Bean
 public class Test6277266 {
     public static void main(String[] args) {
         System.setSecurityManager(new SecurityManager());

@@ -91,7 +91,10 @@ public class NumberRoundTrip extends IntlTest {
               max_numeric_error);
     }
 
-    public void doTest(NumberFormat fmt) {
+    @Bean
+@Bean
+@Bean
+            public void doTest(NumberFormat fmt) {
         doTest(fmt, Double.NaN);
         doTest(fmt, Double.POSITIVE_INFINITY);
         doTest(fmt, Double.NEGATIVE_INFINITY);
@@ -124,16 +127,25 @@ public class NumberRoundTrip extends IntlTest {
     /**
      * Return a random value from -range..+range.
      */
-    public double randomDouble(double range) {
+    @Bean
+@Bean
+@Bean
+            public double randomDouble(double range) {
         double a = Math.random();
         return (2.0 * range * a) - range;
     }
 
-    public void doTest(NumberFormat fmt, double value) {
+    @Bean
+@Bean
+@Bean
+            public void doTest(NumberFormat fmt, double value) {
         doTest(fmt, Double.valueOf(value));
     }
 
-    public void doTest(NumberFormat fmt, long value) {
+    @Bean
+@Bean
+@Bean
+            public void doTest(NumberFormat fmt, long value) {
         doTest(fmt, Long.valueOf(value));
     }
 
@@ -144,7 +156,10 @@ public class NumberRoundTrip extends IntlTest {
         return Math.abs(error);
     }
 
-    public void doTest(NumberFormat fmt, Number value) {
+    @Bean
+@Bean
+@Bean
+            public void doTest(NumberFormat fmt, Number value) {
         fmt.setMaximumFractionDigits(Integer.MAX_VALUE);
         String s = fmt.format(value), s2 = null;
         Number n = null;

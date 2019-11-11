@@ -21,6 +21,7 @@
  * questions.
  */
 
+@Bean
 public class DummyClassWithLVT
 {
     public static void main(String[] args) {

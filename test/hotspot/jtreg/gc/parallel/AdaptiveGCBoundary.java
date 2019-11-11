@@ -39,6 +39,7 @@ package gc.parallel;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class AdaptiveGCBoundary {
   public static void main(String args[]) throws Exception {
 

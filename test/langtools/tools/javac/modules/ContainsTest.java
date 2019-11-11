@@ -53,6 +53,7 @@ import javax.tools.ToolProvider;
 import toolbox.JarTask;
 import toolbox.JavacTask;
 
+@Bean
 public class ContainsTest extends ModuleTestBase {
     public static void main(String... args) throws Exception {
         ContainsTest t = new ContainsTest();

@@ -35,6 +35,7 @@
 import java.awt.*;
 import java.awt.image.*;
 
+@Bean
 public class FontAccess {
 
      public static void main(String[] args) {

@@ -33,6 +33,7 @@
 import javax.imageio.metadata.IIOMetadataFormatImpl;
 import javax.imageio.ImageTypeSpecifier;
 
+@Bean
 public class GetObjectMinValue {
 
     public static void main(String argv[]) {

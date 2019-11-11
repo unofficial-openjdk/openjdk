@@ -46,6 +46,7 @@ import org.xml.sax.SAXParseException;
 import org.w3c.dom.Document;
 import org.w3c.dom.DOMException;
 
+@Bean
 public class jvmtiGen
 {
     private static final int EXIT_FAILURE_ERROR = 1;

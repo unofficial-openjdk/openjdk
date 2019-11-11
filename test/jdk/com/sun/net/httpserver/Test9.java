@@ -43,6 +43,7 @@ import jdk.test.lib.net.URIBuilder;
 /* Same as Test1 but requests run in parallel.
  */
 
+@Bean
 public class Test9 extends Test {
 
     static SSLContext ctx;

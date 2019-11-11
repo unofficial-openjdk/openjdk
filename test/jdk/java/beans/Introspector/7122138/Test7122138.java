@@ -31,6 +31,7 @@
 
 import pack.Sub;
 
+@Bean
 public class Test7122138 {
 
     public static void main(String[] args) throws Exception {

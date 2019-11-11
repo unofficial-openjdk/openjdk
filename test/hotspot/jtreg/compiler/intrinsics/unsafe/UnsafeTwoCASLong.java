@@ -39,6 +39,7 @@ import java.lang.reflect.Field;
 
 import static org.testng.Assert.*;
 
+@Bean
 public class UnsafeTwoCASLong {
     static final int ITERS = Integer.getInteger("iters", 1);
     static final jdk.internal.misc.Unsafe UNSAFE;

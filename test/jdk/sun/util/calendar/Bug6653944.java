@@ -30,6 +30,7 @@
 import java.io.*;
 import java.util.*;
 
+@Bean
 public class Bug6653944 {
     private static int errorCount = 0;
 

@@ -36,6 +36,7 @@ import java.security.interfaces.*;
 import java.security.spec.RSAPrivateKeySpec;
 import javax.crypto.Cipher;
 
+@Bean
 public class CipherSignNotSupported extends UcryptoTest {
 
     public static void main(String[] args) throws Exception {

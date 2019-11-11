@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
+@Bean
 public class TruncateRAF {
 
     static void checkState(RandomAccessFile raf, FileChannel fch,

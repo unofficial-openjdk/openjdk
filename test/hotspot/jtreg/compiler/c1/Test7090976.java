@@ -32,6 +32,7 @@
 
 package compiler.c1;
 
+@Bean
 public class Test7090976 {
 
     static interface I1 {

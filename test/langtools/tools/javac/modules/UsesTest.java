@@ -43,6 +43,7 @@ import toolbox.ModuleBuilder;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class UsesTest extends ModuleTestBase {
     public static void main(String... args) throws Exception {
         UsesTest t = new UsesTest();
@@ -54,7 +55,8 @@ public class UsesTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                 "module m { uses p.C; }",
-                "package p; public class C { }");
+                "package p; @Bean
+public class C { }");
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
 
@@ -70,7 +72,9 @@ public class UsesTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                 "module m { uses p.C.Inner; }",
-                "package p; public class C { public class Inner { } }");
+                "package p; @Bean
+public class C { @Bean
+public class Inner { } }");
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
 
@@ -125,7 +129,8 @@ public class UsesTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                 "module m { uses p.C.A; uses p.C; }",
-                "package p; public class C { protected class A { } }");
+                "package p; @Bean
+public class C { protected class A { } }");
 
         List<String> output = new JavacTask(tb)
                 .options("-XDrawDiagnostics")
@@ -147,7 +152,8 @@ public class UsesTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src.resolve("m1x"),
                 "module m1x { exports p; }",
-                "package p; public class C { }");
+                "package p; @Bean
+public class C { }");
         tb.writeJavaFiles(src.resolve("m2x"),
                 "module m2x { requires m1x; uses p.C; }");
         Path modules = base.resolve("modules");
@@ -167,7 +173,8 @@ public class UsesTest extends ModuleTestBase {
         Path modules = base.resolve("modules");
         new ModuleBuilder(tb, "m1x")
                 .exports("p")
-                .classes("package p; public class C { }")
+                .classes("package p; @Bean
+public class C { }")
                 .build(modules);
         new ModuleBuilder(tb, "m2x")
                 .requires("m1x")
@@ -188,7 +195,9 @@ public class UsesTest extends ModuleTestBase {
         Path modules = base.resolve("modules");
         new ModuleBuilder(tb, "m1x")
                 .exports("p")
-                .classes("package p; public class C { public class Inner { } }")
+                .classes("package p; @Bean
+public class C { @Bean
+public class Inner { } }")
                 .build(modules);
         new ModuleBuilder(tb, "m2x")
                 .requires("m1x")
@@ -208,7 +217,8 @@ public class UsesTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src.resolve("m"),
                 "module m { uses p.C; uses p.C; }",
-                "package p; public class C { }");
+                "package p; @Bean
+public class C { }");
 
         List<String> output = new JavacTask(tb)
                 .options("-XDrawDiagnostics")
@@ -229,7 +239,8 @@ public class UsesTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                 "module m { uses p.NotExist; }",
-                "package p; public class C { }");
+                "package p; @Bean
+public class C { }");
 
         List<String> output = new JavacTask(tb)
                 .outdir(Files.createDirectories(base.resolve("classes")))
@@ -250,7 +261,8 @@ public class UsesTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src.resolve("m1x"),
                 "module m1x { }",
-                "package p; public class C { }");
+                "package p; @Bean
+public class C { }");
         tb.writeJavaFiles(src.resolve("m2x"),
                 "module m2x { requires m1x; uses p.C; }");
 
@@ -274,7 +286,8 @@ public class UsesTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src.resolve("m1x"),
                 "module m1x { provides p.C with p.C; }",
-                "package p; public class C { }");
+                "package p; @Bean
+public class C { }");
         tb.writeJavaFiles(src.resolve("m2x"),
                 "module m2x { requires m1x; uses p.C; }");
 

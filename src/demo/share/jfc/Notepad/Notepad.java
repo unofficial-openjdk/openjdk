@@ -88,7 +88,11 @@ class Notepad extends JPanel {
     }
 
     @Override
-    public void paintChildren(Graphics g) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void paintChildren(Graphics g) {
         super.paintChildren(g);
         if (exitAfterFirstPaint) {
             System.exit(0);
@@ -204,7 +208,11 @@ class Notepad extends JPanel {
     protected static final class AppCloser extends WindowAdapter {
 
         @Override
-        public void windowClosing(WindowEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosing(WindowEvent e) {
             System.exit(0);
         }
     }
@@ -225,7 +233,11 @@ class Notepad extends JPanel {
      * This is the hook through which all menu items are
      * created.
      */
-    protected JMenuItem createMenuItem(String cmd) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected JMenuItem createMenuItem(String cmd) {
         JMenuItem mi = new JMenuItem(getResourceString(cmd + labelSuffix));
         URL url = getResource(cmd + imageSuffix);
         if (url != null) {
@@ -248,15 +260,27 @@ class Notepad extends JPanel {
         return mi;
     }
 
-    protected Action getAction(String cmd) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected Action getAction(String cmd) {
         return commands.get(cmd);
     }
 
-    protected String getProperty(String key) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected String getProperty(String key) {
         return properties.getProperty(key);
     }
 
-    protected String getResourceString(String nm) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected String getResourceString(String nm) {
         String str;
         try {
             str = resources.getString(nm);
@@ -266,7 +290,11 @@ class Notepad extends JPanel {
         return str;
     }
 
-    protected URL getResource(String key) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected URL getResource(String key) {
         String name = getResourceString(key);
         if (name != null) {
             return this.getClass().getResource(name);
@@ -312,7 +340,11 @@ class Notepad extends JPanel {
     /**
      * Hook through which every toolbar item is created.
      */
-    protected Component createTool(String key) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected Component createTool(String key) {
         return createToolbarButton(key);
     }
 
@@ -325,7 +357,11 @@ class Notepad extends JPanel {
      * @param key The key in the resource file to serve as the basis
      *  of lookups.
      */
-    protected JButton createToolbarButton(String key) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected JButton createToolbarButton(String key) {
         URL url = getResource(key + imageSuffix);
         JButton b = new JButton(new ImageIcon(url)) {
 
@@ -376,7 +412,11 @@ class Notepad extends JPanel {
      * Create a menu for the app.  By default this pulls the
      * definition of the menu from the associated resource file.
      */
-    protected JMenu createMenu(String key) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected JMenu createMenu(String key) {
         JMenu menu = new JMenu(getResourceString(key + labelSuffix));
         for (String itemKey: getItemKeys(key)) {
             if (itemKey.equals("-")) {
@@ -414,7 +454,11 @@ class Notepad extends JPanel {
     }
 
     // Yarked from JMenu, ideally this would be public.
-    protected PropertyChangeListener createActionChangeListener(JMenuItem b) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected PropertyChangeListener createActionChangeListener(JMenuItem b) {
         return new ActionChangedListener(b);
     }
 
@@ -429,7 +473,11 @@ class Notepad extends JPanel {
             this.menuItem = mi;
         }
 
-        public void propertyChange(PropertyChangeEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void propertyChange(PropertyChangeEvent e) {
             String propertyName = e.getPropertyName();
             if (e.getPropertyName().equals(Action.NAME)) {
                 String text = (String) e.getNewValue();
@@ -486,7 +534,11 @@ class Notepad extends JPanel {
          * Messaged when the Document has created an edit, the edit is
          * added to <code>undo</code>, an instance of UndoManager.
          */
-        public void undoableEditHappened(UndoableEditEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void undoableEditHappened(UndoableEditEvent e) {
             undo.addEdit(e.getEdit());
             undoAction.update();
             redoAction.update();
@@ -505,7 +557,11 @@ class Notepad extends JPanel {
         }
 
         @Override
-        public void paint(Graphics g) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(Graphics g) {
             super.paint(g);
         }
     }
@@ -533,7 +589,11 @@ class Notepad extends JPanel {
             setEnabled(false);
         }
 
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             try {
                 undo.undo();
             } catch (CannotUndoException ex) {
@@ -563,7 +623,11 @@ class Notepad extends JPanel {
             setEnabled(false);
         }
 
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             try {
                 undo.redo();
             } catch (CannotRedoException ex) {
@@ -593,7 +657,11 @@ class Notepad extends JPanel {
         }
 
         @Override
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             Frame frame = getFrame();
             JFileChooser chooser = new JFileChooser();
             int ret = chooser.showOpenDialog(frame);
@@ -631,7 +699,11 @@ class Notepad extends JPanel {
             super(saveAction);
         }
 
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             Frame frame = getFrame();
             JFileChooser chooser = new JFileChooser();
             int ret = chooser.showSaveDialog(frame);
@@ -658,7 +730,11 @@ class Notepad extends JPanel {
             super(nm);
         }
 
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             Document oldDoc = getEditor().getDocument();
             if (oldDoc != null) {
                 oldDoc.removeUndoableEditListener(undoHandler);
@@ -681,7 +757,11 @@ class Notepad extends JPanel {
             super(exitAction);
         }
 
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             System.exit(0);
         }
     }
@@ -697,7 +777,11 @@ class Notepad extends JPanel {
             super(showElementTreeAction);
         }
 
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             if (elementTreeFrame == null) {
                 // Create a frame containing an instance of
                 // ElementTreePanel.
@@ -711,7 +795,11 @@ class Notepad extends JPanel {
                 elementTreeFrame.addWindowListener(new WindowAdapter() {
 
                     @Override
-                    public void windowClosing(WindowEvent weeee) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosing(WindowEvent weeee) {
                         elementTreeFrame.setVisible(false);
                     }
                 });

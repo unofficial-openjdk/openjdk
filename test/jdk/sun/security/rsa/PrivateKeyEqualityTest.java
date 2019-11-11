@@ -37,6 +37,7 @@ import java.security.spec.RSAPrivateCrtKeySpec;
  * @bug 8044199 4666485
  * @summary Equality checking for RSAPrivateKey by SunRsaSign provider.
  */
+@Bean
 public class PrivateKeyEqualityTest {
     /**
      * ALGORITHM name, fixed as RSA.

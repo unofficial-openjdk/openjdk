@@ -48,6 +48,7 @@ import javax.swing.TransferHandler;
 import javax.swing.SwingUtilities;
 import javax.swing.JOptionPane;
 
+@Bean
 public class DragLinkFromBrowser implements ActionListener {
 
     private static GridBagLayout layout;
@@ -78,12 +79,18 @@ public class DragLinkFromBrowser implements ActionListener {
                 urlFrame.getContentPane().add(urlPanel);
                 urlPanel.setTransferHandler(new TransferHandler() {
                     @Override
-                    public boolean canImport(final TransferSupport support) {
+                    @Bean
+@Bean
+@Bean
+            public boolean canImport(final TransferSupport support) {
                         return true;
                     }
 
                     @Override
-                    public boolean importData(final TransferSupport support) {
+                    @Bean
+@Bean
+@Bean
+            public boolean importData(final TransferSupport support) {
                         final Transferable transferable =
                             support.getTransferable();
                         final DataFlavor[] flavors
@@ -177,7 +184,10 @@ public class DragLinkFromBrowser implements ActionListener {
     }
 
     @Override
-    public void actionPerformed(ActionEvent ae) {
+    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent ae) {
         if (ae.getSource() instanceof Button) {
             Button btn = (Button) ae.getSource();
             switch (btn.getName()) {

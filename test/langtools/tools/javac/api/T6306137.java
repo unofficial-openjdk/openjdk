@@ -42,6 +42,7 @@ import java.util.List;
 import javax.tools.*;
 import static java.nio.file.StandardOpenOption.*;
 
+@Bean
 public class T6306137 {
     boolean error;
     final StandardJavaFileManager fm;
@@ -52,6 +53,10 @@ public class T6306137 {
 
     T6306137() throws IOException {
         dl = new DiagnosticListener<JavaFileObject>() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void report(Diagnostic<? extends JavaFileObject> message) {
                     if (message.getKind() == Diagnostic.Kind.ERROR)
                         error = true;

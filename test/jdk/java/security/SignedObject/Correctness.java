@@ -37,6 +37,7 @@ import java.security.Signature;
 import java.security.SignedObject;
 
 
+@Bean
 public class Correctness {
 
     public static void main(String[] args) throws Exception {

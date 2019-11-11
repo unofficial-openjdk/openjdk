@@ -50,6 +50,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 
+@Bean
 public class Test6505027 {
 
     private static final boolean INTERNAL = true;

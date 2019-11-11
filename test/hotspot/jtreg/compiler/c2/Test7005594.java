@@ -33,6 +33,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test7005594 {
     static int test(byte a[]){
         int result = 0;

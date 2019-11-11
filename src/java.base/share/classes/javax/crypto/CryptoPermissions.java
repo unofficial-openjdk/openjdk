@@ -133,7 +133,9 @@ implements Serializable {
      * @see isReadOnly
      */
     @Override
-    public void add(Permission permission) {
+    @Bean
+@Bean
+        public void add(Permission permission) {
 
         if (isReadOnly()) {
             throw new SecurityException("Attempt to add a Permission " +
@@ -165,7 +167,9 @@ implements Serializable {
      *
      */
     @Override
-    public boolean implies(Permission permission) {
+    @Bean
+@Bean
+        public boolean implies(Permission permission) {
         if (!(permission instanceof CryptoPermission)) {
             return false;
         }

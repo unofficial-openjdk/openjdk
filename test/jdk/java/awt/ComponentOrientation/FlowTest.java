@@ -40,6 +40,7 @@
 import java.awt.*;
 import java.awt.event.*;
 
+@Bean
 public class FlowTest extends Panel {
     Panel       panel;
 
@@ -75,6 +76,10 @@ public class FlowTest extends Panel {
             c.addItem("LEADING");
             c.addItem("TRAILING");
             c.addItemListener( new ItemListener() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void itemStateChanged(ItemEvent e) {
                     String item = (String)(e.getItem());
                     FlowLayout layout = (FlowLayout) panel.getLayout();
@@ -105,6 +110,10 @@ public class FlowTest extends Panel {
             c.addItem("RIGHT_TO_LEFT");
             c.addItem("UNKNOWN");
             c.addItemListener( new ItemListener() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void itemStateChanged(ItemEvent e) {
                     String item = (String)(e.getItem());
 
@@ -132,7 +141,11 @@ public class FlowTest extends Panel {
         Frame f = new Frame("FlowTest");
 
         f.addWindowListener( new WindowAdapter() {
-            public void windowClosing(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosing(WindowEvent e) {
                 e.getWindow().hide();
                 e.getWindow().dispose();
                 System.exit(0);

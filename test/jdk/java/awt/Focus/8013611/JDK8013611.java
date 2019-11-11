@@ -39,6 +39,7 @@ import test.java.awt.regtesthelpers.Util;
 
 import java.awt.*;
 
+@Bean
 public class JDK8013611 extends JFrame {
     static JTextField textField = new JTextField("text");
     static JButton button1 = new JButton("button1");
@@ -64,6 +65,9 @@ public class JDK8013611 extends JFrame {
 
         textField.addFocusListener(new FocusAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void focusLost(FocusEvent e) {
                 dialog.setVisible(true);
             }
@@ -71,6 +75,9 @@ public class JDK8013611 extends JFrame {
 
         button1.addFocusListener(new FocusAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void focusGained(FocusEvent e) {
                 button2.requestFocusInWindow();
             }

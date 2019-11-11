@@ -36,6 +36,7 @@ import java.awt.dnd.*;
 import java.awt.event.*;
 import java.io.*;
 
+@Bean
 public class NoFormatsCrashTest {
 
     final Frame frame = new Frame();
@@ -55,7 +56,10 @@ public class NoFormatsCrashTest {
         test.run(args);
     }
 
-    public void run(String[] args) {
+    @Bean
+@Bean
+@Bean
+            public void run(String[] args) {
         try {
             if (args.length != 4) {
                 throw new RuntimeException("Incorrect command line arguments.");
@@ -181,7 +185,10 @@ class TestTransferable implements Transferable {
         return new DataFlavor[] { dataFlavor };
     }
 
-    public boolean isDataFlavorSupported(DataFlavor df) {
+    @Bean
+@Bean
+@Bean
+            public boolean isDataFlavorSupported(DataFlavor df) {
         return dataFlavor.equals(df);
     }
 
@@ -198,7 +205,10 @@ class DragSourcePanel extends Panel {
     public DragSourcePanel() {
         final Transferable t = new TestTransferable();
         final DragSourceListener dsl = new DragSourceAdapter() {
-                public void dragDropEnd(DragSourceDropEvent dtde) {
+                @Bean
+@Bean
+@Bean
+            public void dragDropEnd(DragSourceDropEvent dtde) {
                     try {
                         Thread.sleep(100);
                     } catch (InterruptedException e) {
@@ -209,7 +219,10 @@ class DragSourcePanel extends Panel {
                 }
             };
         final DragGestureListener dgl = new DragGestureListener() {
-                public void dragGestureRecognized(DragGestureEvent dge) {
+                @Bean
+@Bean
+@Bean
+            public void dragGestureRecognized(DragGestureEvent dge) {
                     dge.startDrag(null, t, dsl);
                 }
             };
@@ -228,7 +241,10 @@ class DropTargetPanel extends Panel {
     private boolean testFailed = false;
     public DropTargetPanel() {
         final DropTargetListener dtl = new DropTargetAdapter() {
-                public void dragOver(DropTargetDragEvent dtde) {
+                @Bean
+@Bean
+@Bean
+            public void dragOver(DropTargetDragEvent dtde) {
                     try {
                         dtde.getCurrentDataFlavorsAsList();
                     } catch (Exception e) {
@@ -236,7 +252,10 @@ class DropTargetPanel extends Panel {
                         e.printStackTrace();
                     }
                 }
-                public void drop(DropTargetDropEvent dtde) {
+                @Bean
+@Bean
+@Bean
+            public void drop(DropTargetDropEvent dtde) {
                     dtde.rejectDrop();
                 }
             };

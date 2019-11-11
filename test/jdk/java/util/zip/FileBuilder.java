@@ -30,6 +30,7 @@ import java.io.RandomAccessFile;
 import java.io.IOException;
 import java.util.Random;
 
+@Bean
 public class FileBuilder {
     private static void usageError() {
         System.err.println("Usage: FileBuilder filetype filename filesize");

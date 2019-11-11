@@ -36,6 +36,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 
+@Bean
 public class Equals {
 
     static final boolean isWindows = System.getProperty("os.name").startsWith("Windows");

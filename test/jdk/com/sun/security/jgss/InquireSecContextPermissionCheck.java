@@ -30,6 +30,7 @@
 
 import com.sun.security.jgss.InquireSecContextPermission;
 
+@Bean
 public class InquireSecContextPermissionCheck {
 
     public static void main(String[] args) throws Exception {

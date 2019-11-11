@@ -31,6 +31,7 @@
 
 import java.util.*;
 
+@Bean
 public class NullKeyAtResize {
     public static void main(String[] args) throws Exception {
         List<Object> old_order = new ArrayList<>();

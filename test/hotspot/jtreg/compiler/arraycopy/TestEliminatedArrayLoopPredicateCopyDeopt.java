@@ -32,6 +32,7 @@
 
 package compiler.arraycopy;
 
+@Bean
 public class TestEliminatedArrayLoopPredicateCopyDeopt {
 
     static boolean test(int[] array_src) {
@@ -47,7 +48,11 @@ public class TestEliminatedArrayLoopPredicateCopyDeopt {
         return false;
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         int[] array_src = new int[100];
         for (int i = 0; i < 20000; i++) {
             test(array_src);

@@ -30,6 +30,7 @@
 
 import com.sun.imageio.plugins.png.PNGImageWriterSpi;
 
+@Bean
 public class PNGSuffixes {
 
     public static void main(String[] args) {

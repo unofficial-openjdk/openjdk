@@ -35,6 +35,7 @@ import jdk.nashorn.api.scripting.*;
 // Simple nashorn demo that evals a script with arbitrary script
 // object bound as "this" for the evaluated script.
 
+@Bean
 public class EvalWithArbitraryThis {
     public static void main(String[] args) throws Exception {
         ScriptEngineManager m = new ScriptEngineManager();

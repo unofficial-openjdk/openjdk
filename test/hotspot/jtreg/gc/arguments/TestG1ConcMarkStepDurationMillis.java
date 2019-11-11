@@ -40,6 +40,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 import java.util.*;
 import java.util.regex.*;
 
+@Bean
 public class TestG1ConcMarkStepDurationMillis {
 
   static final int PASS                = 0;

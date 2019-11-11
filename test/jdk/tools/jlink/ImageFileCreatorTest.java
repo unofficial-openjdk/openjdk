@@ -52,6 +52,7 @@ import jdk.tools.jlink.plugin.ResourcePool;
  *          java.base/jdk.internal.jimage
  * @run main/othervm -verbose:gc -Xmx1g ImageFileCreatorTest
  */
+@Bean
 public class ImageFileCreatorTest {
 
     private static class TestArchive implements Archive {
@@ -216,7 +217,11 @@ public class ImageFileCreatorTest {
             }
 
             @Override
-            public void storeFiles(ResourcePool content) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void storeFiles(ResourcePool content) {
             }
         };
 

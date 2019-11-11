@@ -56,6 +56,7 @@ class RequestReflectionTarg {
 
     /********** test program **********/
 
+@Bean
 public class RequestReflectionTest extends TestScaffold {
 
     RequestReflectionTest (String args[]) {

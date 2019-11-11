@@ -36,6 +36,7 @@ import java.lang.reflect.*;
 import java.util.*;
 import javax.management.*;
 
+@Bean
 public class MXBeanBehavior {
     // Exclude list: list of platform MBeans that are not MXBeans
     public static final HashSet<String> excludeList = new HashSet<>(
@@ -162,7 +163,10 @@ public class MXBeanBehavior {
             return ManagementFactory.getCompilationMXBean();
         }
 
-        public void setCompilationMXBean(CompilationMXBean mxb) {
+        @Bean
+@Bean
+@Bean
+            public void setCompilationMXBean(CompilationMXBean mxb) {
             if (mxb == ManagementFactory.getCompilationMXBean())
                 return;
             MBeanServerInvocationHandler mbsih = (MBeanServerInvocationHandler)

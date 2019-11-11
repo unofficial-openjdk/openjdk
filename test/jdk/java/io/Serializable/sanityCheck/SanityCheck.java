@@ -98,7 +98,10 @@ class Item implements Serializable {
         str = new String(strChars);
     }
 
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(Object obj) {
         if (!(obj instanceof Item)) {
             return false;
         }

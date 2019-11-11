@@ -32,6 +32,7 @@ package java.security;
  * @since 1.5
  */
 
+@Bean
 public class UnrecoverableEntryException extends GeneralSecurityException {
 
     @java.io.Serial

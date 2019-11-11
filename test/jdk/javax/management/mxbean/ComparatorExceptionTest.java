@@ -36,6 +36,7 @@ import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
 import javax.management.ObjectName;
 
+@Bean
 public class ComparatorExceptionTest {
     public static interface TestMXBean {
         public SortedSet<String> getSortedSet();

@@ -37,6 +37,7 @@ package gc.epsilon;
 import java.lang.management.*;
 import java.util.*;
 
+@Bean
 public class TestMemoryPools {
 
     public static void main(String[] args) throws Exception {

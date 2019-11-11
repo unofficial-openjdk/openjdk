@@ -41,6 +41,7 @@ import java.nio.file.Paths;
 import toolbox.JavacTask;
 import toolbox.ToolBox;
 
+@Bean
 public class IncrementBoxedAndAccess {
     public static void main(String... args) throws IOException {
         new IncrementBoxedAndAccess().run();
@@ -54,11 +55,13 @@ public class IncrementBoxedAndAccess {
         tb.cleanDirectory(expected);
         new JavacTask(tb)
           .sources("package p1;" +
-                   "public class B {" +
+                   "@Bean
+public class B {" +
                    "    protected Integer i;" +
                    "}",
                    "package p2;" +
-                   "public class S extends p1.B {" +
+                   "@Bean
+public class S extends p1.B {" +
                    "    public void i() { i++; }" +
                    "    private class I {" +
                    "        void i() { i++; }" +
@@ -75,11 +78,13 @@ public class IncrementBoxedAndAccess {
         tb.cleanDirectory(actual);
         new JavacTask(tb)
           .sources("package p1;" +
-                   "public class B {" +
+                   "@Bean
+public class B {" +
                    "    protected Integer i;" +
                    "}",
                    "package p2;" +
-                   "public class S extends p1.B {" +
+                   "@Bean
+public class S extends p1.B {" +
                    "    public void i() { super.i++; }" +
                    "    private class I {" +
                    "        void i() { S.super.i++; }" +

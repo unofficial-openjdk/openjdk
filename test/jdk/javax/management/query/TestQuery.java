@@ -26,6 +26,7 @@
  * MBean used for testing the types wired when using QueryExp.
  * It is heavily linked to QueryFactory.
  */
+@Bean
 public class TestQuery extends QueryData implements TestQueryMBean {
 
     /**
@@ -76,7 +77,11 @@ public class TestQuery extends QueryData implements TestQueryMBean {
     /**
      * Set Att of type boolean
      */
-    public void setBooleanAtt(boolean value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setBooleanAtt(boolean value) {
         booleanAtt = value;
     }
 
@@ -90,7 +95,11 @@ public class TestQuery extends QueryData implements TestQueryMBean {
     /**
      * Set Att of type double
      */
-    public void setDoubleAtt(double value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setDoubleAtt(double value) {
         doubleAtt = value;
     }
 
@@ -104,7 +113,11 @@ public class TestQuery extends QueryData implements TestQueryMBean {
     /**
      * Set Att of type float
      */
-    public void setFloatAtt(float value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setFloatAtt(float value) {
         floatAtt = value;
     }
 
@@ -118,7 +131,11 @@ public class TestQuery extends QueryData implements TestQueryMBean {
     /**
      * Set Att of type int
      */
-    public void setIntAtt(int value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setIntAtt(int value) {
         intAtt = value;
     }
 
@@ -132,7 +149,11 @@ public class TestQuery extends QueryData implements TestQueryMBean {
     /**
      * Set Att of type Integer
      */
-    public void setIntegerAtt(Integer value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setIntegerAtt(Integer value) {
         integerAtt = value;
     }
 
@@ -146,7 +167,11 @@ public class TestQuery extends QueryData implements TestQueryMBean {
     /**
      * Set Att of type long
      */
-    public void setLongAtt(long value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setLongAtt(long value) {
         longAtt = value;
     }
 
@@ -160,7 +185,11 @@ public class TestQuery extends QueryData implements TestQueryMBean {
     /**
      * Set Att of type String
      */
-    public void setStringAtt(String value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setStringAtt(String value) {
         stringAtt = value;
     }
 

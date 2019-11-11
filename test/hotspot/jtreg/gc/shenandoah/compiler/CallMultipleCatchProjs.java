@@ -32,6 +32,7 @@
  *
  */
 
+@Bean
 public class CallMultipleCatchProjs {
     private static A field = new A();
 

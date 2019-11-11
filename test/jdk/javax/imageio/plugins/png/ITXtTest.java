@@ -48,7 +48,10 @@ import javax.imageio.stream.ImageInputStream;
 import org.w3c.dom.Node;
 
 public class ITXtTest {
-    static public void main(String args[]) {
+    static @Bean
+@Bean
+@Bean
+            public void main(String args[]) {
         ITXtTest t_en = new ITXtTest();
         t_en.description = "xml - en";
         t_en.keyword = "XML:com.adobe.xmp";
@@ -133,7 +136,10 @@ public class ITXtTest {
     }
 
     @Override
-    public boolean equals(Object o) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(Object o) {
         if (! (o instanceof ITXtTest)) {
             return false;
         }

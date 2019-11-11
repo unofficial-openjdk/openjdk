@@ -45,10 +45,15 @@ import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Queue;
 
+@Bean
 public class PriorityQueueSort {
 
     static class MyComparator implements Comparator<Integer> {
-        public int compare(Integer x, Integer y) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int compare(Integer x, Integer y) {
             return Integer.compare(x.intValue(), y.intValue());
         }
     }

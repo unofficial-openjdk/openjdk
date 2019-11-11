@@ -32,6 +32,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.io.IOException;
 
+@Bean
 public class NotBound {
 
     static void checkBound(DatagramChannel dc) throws IOException {

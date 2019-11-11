@@ -31,6 +31,7 @@ package gc.concurrent_phase_control;
 
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class CheckSupported {
 
     private static final WhiteBox WB = WhiteBox.getWhiteBox();

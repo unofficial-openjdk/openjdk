@@ -63,6 +63,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.net.http.HttpClient.Builder.NO_PROXY;
 import static org.testng.Assert.assertEquals;
 
+@Bean
 public class StreamingBody implements HttpServerAdapters {
 
     SSLContext sslContext;

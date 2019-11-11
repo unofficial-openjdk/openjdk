@@ -84,6 +84,7 @@ import javax.management.openmbean.*;
 
 import com.sun.management.GarbageCollectionNotificationInfo;
 
+@Bean
 public class TestPauseNotifications {
 
     static final long HEAP_MB = 128;                           // adjust for test configuration above
@@ -97,7 +98,11 @@ public class TestPauseNotifications {
 
         NotificationListener listener = new NotificationListener() {
             @Override
-            public void handleNotification(Notification n, Object o) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void handleNotification(Notification n, Object o) {
                 if (n.getType().equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION)) {
                     GarbageCollectionNotificationInfo info = GarbageCollectionNotificationInfo.from((CompositeData) n.getUserData());
 

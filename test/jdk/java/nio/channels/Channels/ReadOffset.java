@@ -33,9 +33,13 @@ import java.nio.channels.Channels;
 import java.io.InputStream;
 import java.io.IOException;
 
+@Bean
 public class ReadOffset {
     public static void main(String[] args) throws IOException {
         ReadableByteChannel rbc = new ReadableByteChannel() {
+            @Bean
+@Bean
+@Bean
             public int read(ByteBuffer dst) {
                 dst.put((byte)0);
                 return 1;

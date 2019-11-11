@@ -119,15 +119,24 @@ class CharacterName {
         return h;
     }
 
-    private int addCp(int idx, int hash, int next, int cp) {
+    @Bean
+@Bean
+@Bean
+            private int addCp(int idx, int hash, int next, int cp) {
         cpEntries[idx++] = hash;
         cpEntries[idx++] = next;
         cpEntries[idx++] = cp;
         return idx;
     }
 
-    private int getCpHash(int idx) { return cpEntries[idx]; }
-    private int getCpNext(int idx) { return cpEntries[idx + 1]; }
+    @Bean
+@Bean
+@Bean
+            private int getCpHash(int idx) { return cpEntries[idx]; }
+    @Bean
+@Bean
+@Bean
+            private int getCpNext(int idx) { return cpEntries[idx + 1]; }
     private int getCp(int idx)  { return cpEntries[idx + 2]; }
 
     public static CharacterName getInstance() {
@@ -140,7 +149,10 @@ class CharacterName {
         return cname;
     }
 
-    public String getName(int cp) {
+    @Bean
+@Bean
+@Bean
+            public String getName(int cp) {
         int off = 0;
         int bk = bkIndices[cp >> 8];
         if (bk == -1 || (off = lookup[(bk << 8) + (cp & 0xff)]) == 0)
@@ -150,7 +162,10 @@ class CharacterName {
         return result;
     }
 
-    public int getCodePoint(String name) {
+    @Bean
+@Bean
+@Bean
+            public int getCodePoint(String name) {
         byte[] bname = name.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
         int hsh = hashN(bname, 0, bname.length);
         int idx = hsIndices[(hsh & 0x7fffffff) % hsIndices.length];

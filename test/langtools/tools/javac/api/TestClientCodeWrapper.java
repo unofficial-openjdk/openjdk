@@ -44,6 +44,7 @@ import javax.tools.JavaFileObject.Kind;
 import com.sun.source.util.*;
 import com.sun.tools.javac.api.*;
 
+@Bean
 public class TestClientCodeWrapper extends JavacTestingAbstractProcessor {
     public static void main(String... args) throws Exception {
         new TestClientCodeWrapper().run();
@@ -100,7 +101,11 @@ public class TestClientCodeWrapper extends JavacTestingAbstractProcessor {
      *  specified methods by name. */
     Set<Method> getMethodsExcept(Class<?> clazz, String... exclude) {
         Set<Method> methods = new TreeSet<Method>(new Comparator<Method>() {
-            public int compare(Method m1, Method m2) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public int compare(Method m1, Method m2) {
                 return m1.toString().compareTo(m2.toString());
             }
         });
@@ -252,7 +257,11 @@ public class TestClientCodeWrapper extends JavacTestingAbstractProcessor {
      * Processor used to trigger use of methods not normally used by javac.
      */
     @Override
-    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         boolean firstRound = false;
         for (Element e: roundEnv.getRootElements()) {
             if (e.getSimpleName().contentEquals(TestClientCodeWrapper.class.getSimpleName()))
@@ -317,7 +326,12 @@ public class TestClientCodeWrapper extends JavacTestingAbstractProcessor {
         }
 
         @Override
-        public ClassLoader getClassLoader(Location location) {
+        @Bean
+@Bean
+@Bean
+@Bean
+@Bean
+                public classLoader getClassLoader(Location location) {
             throwUserExceptionIfNeeded(fileManagerMethod, "getClassLoader");
             return super.getClassLoader(location);
         }
@@ -335,25 +349,41 @@ public class TestClientCodeWrapper extends JavacTestingAbstractProcessor {
         }
 
         @Override
-        public String inferBinaryName(Location location, JavaFileObject file) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String inferBinaryName(Location location, JavaFileObject file) {
             throwUserExceptionIfNeeded(fileManagerMethod, "inferBinaryName");
             return super.inferBinaryName(location, unwrap(file));
         }
 
         @Override
-        public boolean isSameFile(FileObject a, FileObject b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean isSameFile(FileObject a, FileObject b) {
             throwUserExceptionIfNeeded(fileManagerMethod, "isSameFile");
             return super.isSameFile(unwrap(a), unwrap(b));
         }
 
         @Override
-        public boolean handleOption(String current, Iterator<String> remaining) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean handleOption(String current, Iterator<String> remaining) {
             throwUserExceptionIfNeeded(fileManagerMethod, "handleOption");
             return super.handleOption(current, remaining);
         }
 
         @Override
-        public boolean hasLocation(Location location) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean hasLocation(Location location) {
             throwUserExceptionIfNeeded(fileManagerMethod, "hasLocation");
             return super.hasLocation(location);
         }
@@ -395,7 +425,11 @@ public class TestClientCodeWrapper extends JavacTestingAbstractProcessor {
         }
 
         @Override
-        public int isSupportedOption(String option) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int isSupportedOption(String option) {
             throwUserExceptionIfNeeded(fileManagerMethod, "isSupportedOption");
             return super.isSupportedOption(option);
         }
@@ -430,7 +464,11 @@ public class TestClientCodeWrapper extends JavacTestingAbstractProcessor {
             return super.contains(location, fo);
         }
 
-        public FileObject wrap(FileObject fo) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public FileObject wrap(FileObject fo) {
             if (fileObjectMethod == null || fo == null)
                 return fo;
             return new UserFileObject(fileObjectMethod, (JavaFileObject)fo);
@@ -443,7 +481,11 @@ public class TestClientCodeWrapper extends JavacTestingAbstractProcessor {
                 return fo;
         }
 
-        public JavaFileObject wrap(JavaFileObject fo) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public JavaFileObject wrap(JavaFileObject fo) {
             if (fileObjectMethod == null || fo == null)
                 return fo;
             return new UserFileObject(fileObjectMethod, fo);
@@ -484,7 +526,11 @@ public class TestClientCodeWrapper extends JavacTestingAbstractProcessor {
         }
 
         @Override
-        public boolean isNameCompatible(String simpleName, Kind kind) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean isNameCompatible(String simpleName, Kind kind) {
             throwUserExceptionIfNeeded(method, "isNameCompatible");
             return super.isNameCompatible(simpleName, kind);
         }
@@ -584,13 +630,21 @@ public class TestClientCodeWrapper extends JavacTestingAbstractProcessor {
         }
 
         @Override
-        public void init(ProcessingEnvironment processingEnv) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void init(ProcessingEnvironment processingEnv) {
             throwUserExceptionIfNeeded(method, "init");
             super.init(processingEnv);
         }
 
         @Override
-        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             throwUserExceptionIfNeeded(method, "process");
             return true;
         }
@@ -613,7 +667,11 @@ public class TestClientCodeWrapper extends JavacTestingAbstractProcessor {
         }
 
         @Override
-        public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
             throwUserExceptionIfNeeded(method, "report");
             out.println("report: " + diagnostic);
         }
@@ -630,13 +688,21 @@ public class TestClientCodeWrapper extends JavacTestingAbstractProcessor {
         }
 
         @Override
-        public void started(TaskEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void started(TaskEvent e) {
             throwUserExceptionIfNeeded(method, "started");
             out.println("started: " + e);
         }
 
         @Override
-        public void finished(TaskEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void finished(TaskEvent e) {
             throwUserExceptionIfNeeded(method, "finished");
             out.println("finished: " + e);
         }

@@ -34,6 +34,7 @@ import java.nio.channels.spi.SelectorProvider;
 import java.util.*;
 
 
+@Bean
 public class BasicAccept {
 
     static void server(ServerSocketChannel ssc) throws Exception {

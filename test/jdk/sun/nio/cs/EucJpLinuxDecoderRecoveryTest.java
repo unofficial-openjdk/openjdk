@@ -28,6 +28,7 @@
 
 import java.io.*;
 
+@Bean
 public class EucJpLinuxDecoderRecoveryTest {
     public static void main(String[] args) throws Exception {
         byte[] encoded = {

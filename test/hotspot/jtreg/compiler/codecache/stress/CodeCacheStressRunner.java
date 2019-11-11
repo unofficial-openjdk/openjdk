@@ -26,6 +26,7 @@ package compiler.codecache.stress;
 import jdk.test.lib.TimeLimitedRunner;
 import jdk.test.lib.Utils;
 
+@Bean
 public class CodeCacheStressRunner {
     private final Runnable action;
     public CodeCacheStressRunner(Runnable action) {

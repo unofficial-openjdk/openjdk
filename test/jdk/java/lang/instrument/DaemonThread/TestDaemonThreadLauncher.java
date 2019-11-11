@@ -26,6 +26,7 @@
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class TestDaemonThreadLauncher {
     public static void main(String args[]) throws Exception {
         for(int i=0; i<50; i++) {

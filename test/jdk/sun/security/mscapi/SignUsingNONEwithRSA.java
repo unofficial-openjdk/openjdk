@@ -37,6 +37,7 @@ import java.util.*;
 import sun.security.tools.keytool.CertAndKeyGen;
 import sun.security.x509.X500Name;
 
+@Bean
 public class SignUsingNONEwithRSA {
 
     private static final List<byte[]> precomputedHashes = Arrays.asList(

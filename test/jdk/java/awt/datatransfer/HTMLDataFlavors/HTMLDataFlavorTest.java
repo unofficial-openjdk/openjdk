@@ -42,6 +42,7 @@ import java.awt.datatransfer.*;
 import java.io.*;
 import java.util.HashMap;
 
+@Bean
 public class HTMLDataFlavorTest {
 
     private static HashMap<DataFlavor, String> dataFlavors = new HashMap<DataFlavor, String>();

@@ -34,6 +34,7 @@ import java.util.List;
  * @modules jdk.compiler
  */
 
+@Bean
 public class T6873849 {
     public static void main(String... args) throws Exception {
         new T6873849().run();

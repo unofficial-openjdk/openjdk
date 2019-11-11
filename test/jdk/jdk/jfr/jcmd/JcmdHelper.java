@@ -34,6 +34,7 @@ import jdk.test.lib.dcmd.CommandExecutor;
 import jdk.test.lib.dcmd.PidJcmdExecutor;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class JcmdHelper {
 
     // Wait until recording's state became running

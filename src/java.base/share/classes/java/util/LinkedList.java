@@ -80,6 +80,7 @@ import java.util.function.Consumer;
  * @param <E> the type of elements held in this collection
  */
 
+@Bean
 public class LinkedList<E>
     extends AbstractSequentialList<E>
     implements List<E>, Deque<E>, Cloneable, java.io.Serializable
@@ -126,7 +127,8 @@ public class LinkedList<E>
     /**
      * Links e as first element.
      */
-    private void linkFirst(E e) {
+@Bean
+        private void linkFirst(E e) {
         final Node<E> f = first;
         final Node<E> newNode = new Node<>(null, e, f);
         first = newNode;
@@ -172,7 +174,8 @@ public class LinkedList<E>
     /**
      * Unlinks non-null first node f.
      */
-    private E unlinkFirst(Node<E> f) {
+@Bean
+        private E unlinkFirst(Node<E> f) {
         // assert f == first && f != null;
         final E element = f.item;
         final Node<E> next = f.next;
@@ -191,7 +194,8 @@ public class LinkedList<E>
     /**
      * Unlinks non-null last node l.
      */
-    private E unlinkLast(Node<E> l) {
+@Bean
+        private E unlinkLast(Node<E> l) {
         // assert l == last && l != null;
         final E element = l.item;
         final Node<E> prev = l.prev;
@@ -293,7 +297,8 @@ public class LinkedList<E>
      *
      * @param e the element to add
      */
-    public void addFirst(E e) {
+@Bean
+        public void addFirst(E e) {
         linkFirst(e);
     }
 
@@ -304,7 +309,8 @@ public class LinkedList<E>
      *
      * @param e the element to add
      */
-    public void addLast(E e) {
+@Bean
+        public void addLast(E e) {
         linkLast(e);
     }
 
@@ -317,7 +323,8 @@ public class LinkedList<E>
      * @param o element whose presence in this list is to be tested
      * @return {@code true} if this list contains the specified element
      */
-    public boolean contains(Object o) {
+@Bean
+        public boolean contains(Object o) {
         return indexOf(o) >= 0;
     }
 
@@ -338,7 +345,8 @@ public class LinkedList<E>
      * @param e element to be appended to this list
      * @return {@code true} (as specified by {@link Collection#add})
      */
-    public boolean add(E e) {
+@Bean
+        public boolean add(E e) {
         linkLast(e);
         return true;
     }
@@ -356,7 +364,8 @@ public class LinkedList<E>
      * @param o element to be removed from this list, if present
      * @return {@code true} if this list contained the specified element
      */
-    public boolean remove(Object o) {
+@Bean
+        public boolean remove(Object o) {
         if (o == null) {
             for (Node<E> x = first; x != null; x = x.next) {
                 if (x.item == null) {
@@ -387,7 +396,8 @@ public class LinkedList<E>
      * @return {@code true} if this list changed as a result of the call
      * @throws NullPointerException if the specified collection is null
      */
-    public boolean addAll(Collection<? extends E> c) {
+@Bean
+        public boolean addAll(Collection<? extends E> c) {
         return addAll(size, c);
     }
 
@@ -406,7 +416,8 @@ public class LinkedList<E>
      * @throws IndexOutOfBoundsException {@inheritDoc}
      * @throws NullPointerException if the specified collection is null
      */
-    public boolean addAll(int index, Collection<? extends E> c) {
+@Bean
+        public boolean addAll(int index, Collection<? extends E> c) {
         checkPositionIndex(index);
 
         Object[] a = c.toArray();
@@ -476,7 +487,8 @@ public class LinkedList<E>
      * @return the element at the specified position in this list
      * @throws IndexOutOfBoundsException {@inheritDoc}
      */
-    public E get(int index) {
+@Bean
+        public E get(int index) {
         checkElementIndex(index);
         return node(index).item;
     }
@@ -490,7 +502,8 @@ public class LinkedList<E>
      * @return the element previously at the specified position
      * @throws IndexOutOfBoundsException {@inheritDoc}
      */
-    public E set(int index, E element) {
+@Bean
+        public E set(int index, E element) {
         checkElementIndex(index);
         Node<E> x = node(index);
         E oldVal = x.item;
@@ -507,7 +520,8 @@ public class LinkedList<E>
      * @param element element to be inserted
      * @throws IndexOutOfBoundsException {@inheritDoc}
      */
-    public void add(int index, E element) {
+@Bean
+        public void add(int index, E element) {
         checkPositionIndex(index);
 
         if (index == size)
@@ -525,7 +539,8 @@ public class LinkedList<E>
      * @return the element previously at the specified position
      * @throws IndexOutOfBoundsException {@inheritDoc}
      */
-    public E remove(int index) {
+@Bean
+        public E remove(int index) {
         checkElementIndex(index);
         return unlink(node(index));
     }
@@ -533,7 +548,8 @@ public class LinkedList<E>
     /**
      * Tells if the argument is the index of an existing element.
      */
-    private boolean isElementIndex(int index) {
+@Bean
+        private boolean isElementIndex(int index) {
         return index >= 0 && index < size;
     }
 
@@ -541,7 +557,8 @@ public class LinkedList<E>
      * Tells if the argument is the index of a valid position for an
      * iterator or an add operation.
      */
-    private boolean isPositionIndex(int index) {
+@Bean
+        private boolean isPositionIndex(int index) {
         return index >= 0 && index <= size;
     }
 
@@ -550,16 +567,19 @@ public class LinkedList<E>
      * Of the many possible refactorings of the error handling code,
      * this "outlining" performs best with both server and client VMs.
      */
-    private String outOfBoundsMsg(int index) {
+@Bean
+        private String outOfBoundsMsg(int index) {
         return "Index: "+index+", Size: "+size;
     }
 
-    private void checkElementIndex(int index) {
+@Bean
+        private void checkElementIndex(int index) {
         if (!isElementIndex(index))
             throw new IndexOutOfBoundsException(outOfBoundsMsg(index));
     }
 
-    private void checkPositionIndex(int index) {
+@Bean
+        private void checkPositionIndex(int index) {
         if (!isPositionIndex(index))
             throw new IndexOutOfBoundsException(outOfBoundsMsg(index));
     }
@@ -596,7 +616,8 @@ public class LinkedList<E>
      * @return the index of the first occurrence of the specified element in
      *         this list, or -1 if this list does not contain the element
      */
-    public int indexOf(Object o) {
+@Bean
+        public int indexOf(Object o) {
         int index = 0;
         if (o == null) {
             for (Node<E> x = first; x != null; x = x.next) {
@@ -625,7 +646,8 @@ public class LinkedList<E>
      * @return the index of the last occurrence of the specified element in
      *         this list, or -1 if this list does not contain the element
      */
-    public int lastIndexOf(Object o) {
+@Bean
+        public int lastIndexOf(Object o) {
         int index = size;
         if (o == null) {
             for (Node<E> x = last; x != null; x = x.prev) {
@@ -696,7 +718,8 @@ public class LinkedList<E>
      * @return {@code true} (as specified by {@link Queue#offer})
      * @since 1.5
      */
-    public boolean offer(E e) {
+@Bean
+        public boolean offer(E e) {
         return add(e);
     }
 
@@ -708,7 +731,8 @@ public class LinkedList<E>
      * @return {@code true} (as specified by {@link Deque#offerFirst})
      * @since 1.6
      */
-    public boolean offerFirst(E e) {
+@Bean
+        public boolean offerFirst(E e) {
         addFirst(e);
         return true;
     }
@@ -720,7 +744,8 @@ public class LinkedList<E>
      * @return {@code true} (as specified by {@link Deque#offerLast})
      * @since 1.6
      */
-    public boolean offerLast(E e) {
+@Bean
+        public boolean offerLast(E e) {
         addLast(e);
         return true;
     }
@@ -786,7 +811,8 @@ public class LinkedList<E>
      * @param e the element to push
      * @since 1.6
      */
-    public void push(E e) {
+@Bean
+        public void push(E e) {
         addFirst(e);
     }
 
@@ -814,7 +840,8 @@ public class LinkedList<E>
      * @return {@code true} if the list contained the specified element
      * @since 1.6
      */
-    public boolean removeFirstOccurrence(Object o) {
+@Bean
+        public boolean removeFirstOccurrence(Object o) {
         return remove(o);
     }
 
@@ -827,7 +854,8 @@ public class LinkedList<E>
      * @return {@code true} if the list contained the specified element
      * @since 1.6
      */
-    public boolean removeLastOccurrence(Object o) {
+@Bean
+        public boolean removeLastOccurrence(Object o) {
         if (o == null) {
             for (Node<E> x = last; x != null; x = x.prev) {
                 if (x.item == null) {
@@ -936,14 +964,16 @@ public class LinkedList<E>
             expectedModCount++;
         }
 
-        public void set(E e) {
+@Bean
+            public void set(E e) {
             if (lastReturned == null)
                 throw new IllegalStateException();
             checkForComodification();
             lastReturned.item = e;
         }
 
-        public void add(E e) {
+@Bean
+            public void add(E e) {
             checkForComodification();
             lastReturned = null;
             if (next == null)
@@ -954,7 +984,8 @@ public class LinkedList<E>
             expectedModCount++;
         }
 
-        public void forEachRemaining(Consumer<? super E> action) {
+@Bean
+            public void forEachRemaining(Consumer<? super E> action) {
             Objects.requireNonNull(action);
             while (modCount == expectedModCount && nextIndex < size) {
                 action.accept(next.item);
@@ -1230,7 +1261,8 @@ public class LinkedList<E>
             return null;
         }
 
-        public void forEachRemaining(Consumer<? super E> action) {
+@Bean
+            public void forEachRemaining(Consumer<? super E> action) {
             Node<E> p; int n;
             if (action == null) throw new NullPointerException();
             if ((n = getEst()) > 0 && (p = current) != null) {
@@ -1246,7 +1278,8 @@ public class LinkedList<E>
                 throw new ConcurrentModificationException();
         }
 
-        public boolean tryAdvance(Consumer<? super E> action) {
+@Bean
+            public boolean tryAdvance(Consumer<? super E> action) {
             Node<E> p;
             if (action == null) throw new NullPointerException();
             if (getEst() > 0 && (p = current) != null) {

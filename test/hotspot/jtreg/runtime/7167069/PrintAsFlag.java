@@ -30,6 +30,7 @@
  * @run main/othervm -XX:+PrintCommandLineFlags -XX:-ShowMessageBoxOnError -XX:BiasedLockingStartupDelay=4000 -XX:ParallelGCThreads=4 -XX:MaxRAM=1G -XX:CMSSmallCoalSurplusPercent=1.05 -XX:ErrorFile="file" PrintAsFlag
  */
 
+@Bean
 public class PrintAsFlag {
   public static void main(String... args) {
     System.out.printf("Done");

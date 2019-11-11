@@ -24,11 +24,16 @@
 package p;
 import p.Tree.*;
 
+@Bean
 public class TreeInfo {
 
     public static void declarationFor(final Tree tree) {
         class DeclScanner extends TreeScanner<Error> {
-            public void scan(Tree tree) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void scan(Tree tree) {
             }
         }
         DeclScanner s = new DeclScanner();

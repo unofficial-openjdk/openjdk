@@ -1209,6 +1209,7 @@ interface Tester_Interface_11 {
     public Tester_Class_2 func_1(Tester_Class_5 arg_0, final Tester_Class_0 arg_1, final int arg_2);
 }
 
+@Bean
 public class Test6712835 {
     final boolean var_149 = false;
     Tester_Class_8 var_150;

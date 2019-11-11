@@ -67,6 +67,7 @@ import static java.util.stream.Collectors.toUnmodifiableMap;
  * long as the iteration order is usually different. The test fails if *all* of the
  * iteration orders are the same.
  */
+@Bean
 public class RandomizedIteration {
     /**
      * Generates a set and a map from the word array, and then writes

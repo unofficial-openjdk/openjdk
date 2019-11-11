@@ -32,6 +32,7 @@ import java.awt.RenderingHints;
 import java.awt.geom.GeneralPath;
 import java.awt.image.BufferedImage;
 
+@Bean
 public class AALineTest {
 
     /* Pairs of endpoints which cause VM crash */

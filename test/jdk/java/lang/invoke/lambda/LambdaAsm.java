@@ -50,6 +50,7 @@ import jdk.internal.org.objectweb.asm.MethodVisitor;
 import static java.nio.file.Files.*;
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
+@Bean
 public class LambdaAsm {
 
     static final File TestFile = new File("A.java");
@@ -78,7 +79,10 @@ public class LambdaAsm {
         scratch.add("       static Integer d() { return 0; }");
         scratch.add("   }");
         scratch.add("   static class C implements I {");
-        scratch.add("       public int m(int i) { return i;}");
+        scratch.add("       @Bean
+@Bean
+@Bean
+            public int m(int i) { return i;}");
         scratch.add("   }");
         scratch.add("   public static void main(String[] args) {");
         scratch.add("       I i = new C();");

@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
  * A small helper class to help track clients which still
  * have pending operations at the end of a test.
  */
+@Bean
 public class ReferenceTracker {
     private final ConcurrentLinkedQueue<Tracker> TRACKERS
             = new ConcurrentLinkedQueue<Tracker>();
@@ -39,7 +40,11 @@ public class ReferenceTracker {
     public static final ReferenceTracker INSTANCE
             = new ReferenceTracker();
 
-    public HttpClient track(HttpClient client) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public HttpClient track(HttpClient client) {
         Tracker tracker = OperationTrackers.getTracker(client);
         assert tracker != null;
         TRACKERS.add(tracker);
@@ -50,7 +55,11 @@ public class ReferenceTracker {
         return TRACKERS.size();
     }
 
-    public StringBuilder diagnose(StringBuilder warnings) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public StringBuilder diagnose(StringBuilder warnings) {
         for (Tracker tracker : TRACKERS) {
             checkOutstandingOperations(warnings, tracker);
         }
@@ -75,7 +84,11 @@ public class ReferenceTracker {
                 .count();
     }
 
-    public AssertionError check(long graceDelayMs) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public AssertionError check(long graceDelayMs) {
         AssertionError fail = null;
         if (hasOutstandingOperations()) {
             try {
@@ -95,7 +108,11 @@ public class ReferenceTracker {
         return fail;
     }
 
-    private void addSummary(StringBuilder warning) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void addSummary(StringBuilder warning) {
         long activeClients = getOutstandingClientCount();
         long operations = getOutstandingOperationsCount();
         long tracked = getTrackedClientCount();

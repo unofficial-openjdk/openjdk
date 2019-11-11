@@ -30,6 +30,7 @@
 import java.io.*;
 import java.lang.reflect.Array;
 
+@Bean
 public class ArrayGetIntException {
     public static void main(String[] args) throws Exception {
         Object[] objArray = {new Integer(Integer.MAX_VALUE)};

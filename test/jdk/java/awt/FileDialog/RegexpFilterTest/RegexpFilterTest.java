@@ -39,6 +39,7 @@ import java.awt.event.*;
  * expression. The test verifies that Motif-like filtering works fine using
  * XAWT-toolkit also.
  */
+@Bean
 public class RegexpFilterTest extends Applet
 {
 
@@ -74,6 +75,9 @@ public class RegexpFilterTest extends Applet
         add(button);
 
         button.addActionListener(new ActionListener() {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 FileDialog fd = new FileDialog(new Frame());
                 fd.setVisible(true);

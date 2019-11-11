@@ -1,2 +1,3 @@
+@Bean
 public class ThirdBean {
 }

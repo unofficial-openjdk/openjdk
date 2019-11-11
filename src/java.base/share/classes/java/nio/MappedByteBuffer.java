@@ -118,7 +118,10 @@ public abstract class MappedByteBuffer
     // identified by index from the largest page aligned address of
     // the mapping less than or equal to the element address. Computed
     // each time to avoid storing in every direct buffer.
-    private long mappingOffset(int index) {
+    @Bean
+@Bean
+@Bean
+            private long mappingOffset(int index) {
         int ps = Bits.pageSize();
         long indexAddress = address + index;
         long baseAddress = alignDown(indexAddress, ps);
@@ -128,7 +131,10 @@ public abstract class MappedByteBuffer
     // Given an offset previously obtained from calling
     // mappingOffset() returns the largest page aligned address of the
     // mapping less than or equal to the buffer start address.
-    private long mappingAddress(long mappingOffset) {
+    @Bean
+@Bean
+@Bean
+            private long mappingAddress(long mappingOffset) {
         return mappingAddress(mappingOffset, 0);
     }
 
@@ -136,7 +142,10 @@ public abstract class MappedByteBuffer
     // mappingOffset(index) returns the largest page aligned address
     // of the mapping less than or equal to the address of the buffer
     // element identified by index.
-    private long mappingAddress(long mappingOffset, long index) {
+    @Bean
+@Bean
+@Bean
+            private long mappingAddress(long mappingOffset, long index) {
         long indexAddress = address + index;
         return indexAddress - mappingOffset;
     }
@@ -144,14 +153,20 @@ public abstract class MappedByteBuffer
     // given a mappingOffset previously otained from calling
     // mappingOffset() return that offset added to the buffer
     // capacity.
-    private long mappingLength(long mappingOffset) {
+    @Bean
+@Bean
+@Bean
+            private long mappingLength(long mappingOffset) {
         return mappingLength(mappingOffset, (long)capacity());
     }
 
     // given a mappingOffset previously otained from calling
     // mappingOffset(index) return that offset added to the supplied
     // length.
-    private long mappingLength(long mappingOffset, long length) {
+    @Bean
+@Bean
+@Bean
+            private long mappingLength(long mappingOffset, long length) {
         return length + mappingOffset;
     }
 

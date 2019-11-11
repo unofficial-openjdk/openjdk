@@ -45,6 +45,7 @@ import javax.tools.StandardJavaFileManager;
 import javax.tools.StandardLocation;
 import javax.tools.ToolProvider;
 
+@Bean
 public class TestCompileJARInClassPath {
 
     public static void main(String args[]) throws Exception {
@@ -93,12 +94,14 @@ public class TestCompileJARInClassPath {
         sun.tools.jar.Main jarGenerator = new sun.tools.jar.Main(System.out, System.err, "jar");
 
         writeFile("C1.java",
-                  "public class C1 {public static void f() {}}");
+                  "@Bean
+public class C1 {public static void f() {}}");
         com.sun.tools.javac.Main.compile(new String[]{"C1.java"});
         jarGenerator.run(new String[] {"cf", "C1.jar", "C1.class"});
 
         writeFile("C2.java",
-                  "public class C2 {public static void g() {}}");
+                  "@Bean
+public class C2 {public static void g() {}}");
         writeFile("MANIFEST.MF",
                   "Manifest-Version: 1.0\n" +
                   "Class-Path: C1.jar\n" +
@@ -107,7 +110,8 @@ public class TestCompileJARInClassPath {
         jarGenerator.run(new String[] {"cfm", "C2.jar", "MANIFEST.MF", "C2.class"});
 
         writeFile("C3.java",
-                  "public class C3 {public static void h() {C2.g(); C1.f();}}");
+                  "@Bean
+public class C3 {public static void h() {C2.g(); C1.f();}}");
     }
 
     void compileWithJSR199() throws IOException {

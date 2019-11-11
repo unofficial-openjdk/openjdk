@@ -53,6 +53,7 @@ import compiler.whitebox.CompilerWhiteBoxTest;
 import sun.hotspot.code.Compiler;
 import jtreg.SkippedException;
 
+@Bean
 public class TestBase64 {
     static boolean checkOutput = Boolean.getBoolean("checkOutput");
 

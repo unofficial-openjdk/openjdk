@@ -50,7 +50,11 @@ public class WaitNotifyThreadTest {
     class ActionNotify implements Action {
 
         @Override
-        public void doAction(Thread thread) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void doAction(Thread thread) {
             // Notify the waiting thread, so it stops waiting and sleeps
             synchronized (monitor) {
                 monitor.notifyAll();
@@ -63,7 +67,11 @@ public class WaitNotifyThreadTest {
     class ActionInterrupt implements Action {
 
         @Override
-        public void doAction(Thread thread) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void doAction(Thread thread) {
             // Interrupt the thread
             thread.interrupt();
             // Wait until MyWaitingThread exits the monitor and sleeps
@@ -130,7 +138,11 @@ public class WaitNotifyThreadTest {
         analyzeThreadStackNoWaiting(ti2);
     }
 
-    private void analyzeThreadStackWaiting(ThreadStack ti1) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void analyzeThreadStackWaiting(ThreadStack ti1) {
         Iterator<MethodInfo> it = ti1.getStack().iterator();
 
         String monitorAddress = null;
@@ -166,7 +178,11 @@ public class WaitNotifyThreadTest {
         }
     }
 
-    private void assertMonitorInfo(String expectedMessage, MonitorInfo monInfo, String monitorAddress, String method) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertMonitorInfo(String expectedMessage, MonitorInfo monInfo, String monitorAddress, String method) {
         if (monInfo.getType().equals(expectedMessage)
                 && compareMonitorClass(monInfo)
                 && monInfo.getMonitorAddress().equals(
@@ -179,14 +195,22 @@ public class WaitNotifyThreadTest {
         }
     }
 
-    private boolean compareMonitorClass(MonitorInfo monInfo) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean compareMonitorClass(MonitorInfo monInfo) {
         // If monitor class info is present in the jstack output
         // then compare it with the class of the actual monitor object
         // If there is no monitor class info available then return true
         return OBJECT.equals(monInfo.getMonitorClass()) || (monInfo.getMonitorClass() == null);
     }
 
-    private void analyzeThreadStackNoWaiting(ThreadStack ti2) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void analyzeThreadStackNoWaiting(ThreadStack ti2) {
         Iterator<MethodInfo> it = ti2.getStack().iterator();
 
         while (it.hasNext()) {

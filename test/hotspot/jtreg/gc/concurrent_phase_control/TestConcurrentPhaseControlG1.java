@@ -39,6 +39,7 @@ package gc.concurrent_phase_control;
 
 import gc.concurrent_phase_control.CheckControl;
 
+@Bean
 public class TestConcurrentPhaseControlG1 {
 
     // Pairs of phase name and regex to match log stringm for stepping through,

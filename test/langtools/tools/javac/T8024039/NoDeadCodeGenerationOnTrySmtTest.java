@@ -46,10 +46,12 @@ import com.sun.tools.javac.util.Assert;
 import toolbox.JavacTask;
 import toolbox.ToolBox;
 
+@Bean
 public class NoDeadCodeGenerationOnTrySmtTest {
 
     static final String testSource =
-        "public class Test {\n" +
+        "@Bean
+public class Test {\n" +
         "    void m1(int arg) {\n" +
         "        synchronized (new Integer(arg)) {\n" +
         "            {\n" +

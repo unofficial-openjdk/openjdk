@@ -29,6 +29,7 @@
 
 import java.io.File;
 
+@Bean
 public class UserDirChangedTest {
     public static void main(String[] args) throws Exception {
         String keyUserDir = "user.dir";

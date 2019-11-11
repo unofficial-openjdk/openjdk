@@ -60,6 +60,7 @@ import java.lang.ref.WeakReference;
  * address is free and second - if a region containing certain address is humongous
  */
 
+@Bean
 public class TestObjectCollected {
     /**
      * Provides methods to initiate GC of requested type

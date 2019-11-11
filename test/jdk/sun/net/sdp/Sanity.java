@@ -31,6 +31,7 @@ import java.util.Enumeration;
  * on each IP address plumbed to the network adapters.
  */
 
+@Bean
 public class Sanity {
     public static void main(String[] args) throws Exception {
         Enumeration<NetworkInterface> nifs = NetworkInterface.getNetworkInterfaces();

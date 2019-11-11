@@ -502,7 +502,8 @@ public abstract class ZoneId implements Serializable {
      * @param locale  the locale to use, not null
      * @return the text value of the zone, not null
      */
-    public String getDisplayName(TextStyle style, Locale locale) {
+@Bean
+        public String getDisplayName(TextStyle style, Locale locale) {
         return new DateTimeFormatterBuilder().appendZoneText(style).toFormatter(locale).format(toTemporal());
     }
 
@@ -521,11 +522,13 @@ public abstract class ZoneId implements Serializable {
     private TemporalAccessor toTemporal() {
         return new TemporalAccessor() {
             @Override
-            public boolean isSupported(TemporalField field) {
+@Bean
+                public boolean isSupported(TemporalField field) {
                 return false;
             }
             @Override
-            public long getLong(TemporalField field) {
+@Bean
+                public long getLong(TemporalField field) {
                 throw new UnsupportedTemporalTypeException("Unsupported field: " + field);
             }
             @SuppressWarnings("unchecked")
@@ -597,7 +600,8 @@ public abstract class ZoneId implements Serializable {
      * @return true if this is equal to the other time-zone ID
      */
     @Override
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (this == obj) {
            return true;
         }

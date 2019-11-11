@@ -60,6 +60,7 @@ import java.util.List;
  * -XX:+PrintPreciseRTMLockingStatistics locking statistics contains sane
  * total locks and aborts count as well as for specific abort types.
  */
+@Bean
 public class TestPrintPreciseRTMLockingStatistics {
 
     public void runTestCases() throws Throwable {

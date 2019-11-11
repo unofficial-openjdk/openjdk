@@ -30,7 +30,8 @@ import java.io.*;
 /**
  * Framework used by all JDI regression tests
  */
-abstract public class TestScaffold extends TargetAdapter {
+abstract @Bean
+public class TestScaffold extends TargetAdapter {
     private boolean shouldTrace = false;
     private VMConnection connection;
     private VirtualMachine vm;
@@ -76,7 +77,11 @@ abstract public class TestScaffold extends TargetAdapter {
     /**
      * An easy way to sleep for awhile
      */
-    public void mySleep(int millis) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void mySleep(int millis) {
         try {
             Thread.sleep(millis);
         } catch (InterruptedException ee) {
@@ -95,7 +100,11 @@ abstract public class TestScaffold extends TargetAdapter {
      * Return true if eventSet contains the VMDeathEvent for the request in
      * the ourVMDeathRequest ivar.
      */
-    private boolean containsOurVMDeathRequest(EventSet eventSet) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean containsOurVMDeathRequest(EventSet eventSet) {
         if (ourVMDeathRequest != null) {
             Iterator myIter = eventSet.iterator();
             while (myIter.hasNext()) {
@@ -120,7 +129,11 @@ abstract public class TestScaffold extends TargetAdapter {
     /**
      * Events handled directly by scaffold always resume (well, almost always)
      */
-    public void eventSetComplete(EventSet set) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void eventSetComplete(EventSet set) {
         // The listener in connect(..) resumes after receiving our
         // special VMDeathEvent.  We can't also do the resume
         // here or we will probably get a VMDisconnectedException
@@ -187,7 +200,11 @@ abstract public class TestScaffold extends TargetAdapter {
             thread.start();
         }
 
-        private void notifyEvent(TargetListener listener, Event event) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void notifyEvent(TargetListener listener, Event event) {
             if (event instanceof BreakpointEvent) {
                 listener.breakpointReached((BreakpointEvent)event);
             } else if (event instanceof ExceptionEvent) {
@@ -229,7 +246,11 @@ abstract public class TestScaffold extends TargetAdapter {
             }
         }
 
-        private void traceSuspendPolicy(int policy) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void traceSuspendPolicy(int policy) {
             if (shouldTrace) {
                 switch (policy) {
                 case EventRequest.SUSPEND_NONE:
@@ -348,7 +369,11 @@ abstract public class TestScaffold extends TargetAdapter {
     /**
      * Redefine a class - HotSwap it
      */
-    protected void redefine(ReferenceType rt) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void redefine(ReferenceType rt) {
         try {
             println("Redefining " + rt);
             vm().redefineClasses(makeRedefineMap(rt));
@@ -357,7 +382,11 @@ abstract public class TestScaffold extends TargetAdapter {
         }
     }
 
-    protected void startUp(String targetName) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void startUp(String targetName) {
         List argList = new ArrayList(Arrays.asList(args));
         argList.add(targetName);
         println("run args: " + argList);
@@ -365,7 +394,11 @@ abstract public class TestScaffold extends TargetAdapter {
         waitForVMStart();
     }
 
-    protected BreakpointEvent startToMain(String targetName) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected BreakpointEvent startToMain(String targetName) {
         return startTo(targetName, "main", "([Ljava/lang/String;)V");
     }
 
@@ -434,27 +467,47 @@ abstract public class TestScaffold extends TargetAdapter {
         }
     }
 
-    protected void println(String str) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void println(String str) {
         long elapsed = System.currentTimeMillis() - startTime;
         System.err.println("[" + elapsed + "ms] " + str);
     }
 
-    protected void print(String str) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void print(String str) {
         System.err.print(str);
     }
 
-    protected void traceln(String str) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void traceln(String str) {
         if (shouldTrace) {
             println(str);
         }
     }
 
-    protected void failure(String str) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void failure(String str) {
         println(str);
         testFailed = true;
     }
 
-    private ArgInfo parseArgs(String args[]) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private ArgInfo parseArgs(String args[]) {
         ArgInfo argInfo = new ArgInfo();
         for (int i = 0; i < args.length; i++) {
             if (args[i].equals("-connect")) {
@@ -510,7 +563,11 @@ abstract public class TestScaffold extends TargetAdapter {
      * waitForRequestedEvent is called by most of the methods to do bkpts,
      * etc.
      */
-    public void connect(String args[]) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void connect(String args[]) {
         ArgInfo argInfo = parseArgs(args);
 
         argInfo.targetVMArgs += VMConnection.getDebuggeeVMOptions();
@@ -518,6 +575,10 @@ abstract public class TestScaffold extends TargetAdapter {
                                       argInfo.traceFlags);
 
         addListener(new TargetAdapter() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void eventSetComplete(EventSet set) {
                     if (TestScaffold.this.containsOurVMDeathRequest(set)) {
                         traceln("TS: connect: set.resume() called");
@@ -530,6 +591,10 @@ abstract public class TestScaffold extends TargetAdapter {
                         }
                     }
                 }
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void eventReceived(Event event) {
                     if (redefineAtEvents && event instanceof Locatable) {
                         Location loc = ((Locatable)event).location();
@@ -549,6 +614,10 @@ abstract public class TestScaffold extends TargetAdapter {
                     }
                 }
 
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void vmStarted(VMStartEvent event) {
                     synchronized(TestScaffold.this) {
                         vmStartThread = event.thread();
@@ -560,6 +629,10 @@ abstract public class TestScaffold extends TargetAdapter {
                  * The testcase must override the createDefaultExceptionRequest
                  * method if it doesn't want this behavior.
                  */
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void exceptionThrown(ExceptionEvent event) {
                     if (TestScaffold.this.ourExceptionRequest != null &&
                         TestScaffold.this.ourExceptionRequest.equals(
@@ -607,11 +680,19 @@ abstract public class TestScaffold extends TargetAdapter {
                     }
                 }
 
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void vmDied(VMDeathEvent event) {
                     vmDied = true;
                     traceln("TS: vmDied called");
                 }
 
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void vmDisconnected(VMDisconnectEvent event) {
                     synchronized(TestScaffold.this) {
                         vmDisconnected = true;
@@ -649,12 +730,20 @@ abstract public class TestScaffold extends TargetAdapter {
         return requestManager;
     }
 
-    public void addListener(TargetListener listener) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void addListener(TargetListener listener) {
         traceln("TS: Adding listener " + listener);
         listeners.add(listener);
     }
 
-    public void removeListener(TargetListener listener) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void removeListener(TargetListener listener) {
         traceln("TS: Removing listener " + listener);
         listeners.remove(listener);
     }
@@ -698,7 +787,11 @@ abstract public class TestScaffold extends TargetAdapter {
         traceln("TS: waitForVMDisconnect: done");
     }
 
-    public Event waitForRequestedEvent(final EventRequest request) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Event waitForRequestedEvent(final EventRequest request) {
         class EventNotification {
             Event event;
             boolean disconnected = false;
@@ -706,7 +799,11 @@ abstract public class TestScaffold extends TargetAdapter {
         final EventNotification en = new EventNotification();
 
         TargetAdapter adapter = new TargetAdapter() {
-            public void eventReceived(Event event) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void eventReceived(Event event) {
                 if (request.equals(event.request())) {
                     traceln("TS:Listener2: got requested event");
                     synchronized (en) {
@@ -746,7 +843,11 @@ abstract public class TestScaffold extends TargetAdapter {
         return en.event;
     }
 
-    private StepEvent doStep(ThreadReference thread, int gran, int depth) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private StepEvent doStep(ThreadReference thread, int gran, int depth) {
         final StepRequest sr =
                   requestManager.createStepRequest(thread, gran, depth);
 
@@ -765,31 +866,59 @@ abstract public class TestScaffold extends TargetAdapter {
         return retEvent;
     }
 
-    public StepEvent stepIntoInstruction(ThreadReference thread) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public StepEvent stepIntoInstruction(ThreadReference thread) {
         return doStep(thread, StepRequest.STEP_MIN, StepRequest.STEP_INTO);
     }
 
-    public StepEvent stepIntoLine(ThreadReference thread) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public StepEvent stepIntoLine(ThreadReference thread) {
         return doStep(thread, StepRequest.STEP_LINE, StepRequest.STEP_INTO);
     }
 
-    public StepEvent stepOverInstruction(ThreadReference thread) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public StepEvent stepOverInstruction(ThreadReference thread) {
         return doStep(thread, StepRequest.STEP_MIN, StepRequest.STEP_OVER);
     }
 
-    public StepEvent stepOverLine(ThreadReference thread) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public StepEvent stepOverLine(ThreadReference thread) {
         return doStep(thread, StepRequest.STEP_LINE, StepRequest.STEP_OVER);
     }
 
-    public StepEvent stepOut(ThreadReference thread) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public StepEvent stepOut(ThreadReference thread) {
         return doStep(thread, StepRequest.STEP_LINE, StepRequest.STEP_OUT);
     }
 
-    public BreakpointEvent resumeTo(Location loc) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public BreakpointEvent resumeTo(Location loc) {
         return resumeTo(loc, false);
     }
 
-    public BreakpointEvent resumeTo(Location loc, boolean suspendThread) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public BreakpointEvent resumeTo(Location loc, boolean suspendThread) {
         final BreakpointRequest request =
                 requestManager.createBreakpointRequest(loc);
         request.addCountFilter(1);
@@ -800,7 +929,11 @@ abstract public class TestScaffold extends TargetAdapter {
         return (BreakpointEvent)waitForRequestedEvent(request);
     }
 
-    public ReferenceType findReferenceType(String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public ReferenceType findReferenceType(String name) {
         List rts = vm.classesByName(name);
         Iterator iter = rts.iterator();
         while (iter.hasNext()) {
@@ -812,7 +945,11 @@ abstract public class TestScaffold extends TargetAdapter {
         return null;
     }
 
-    public Method findMethod(ReferenceType rt, String name, String signature) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Method findMethod(ReferenceType rt, String name, String signature) {
         List methods = rt.methods();
         Iterator iter = methods.iterator();
         while (iter.hasNext()) {
@@ -866,7 +1003,12 @@ abstract public class TestScaffold extends TargetAdapter {
         return resumeTo(findLocation(rt, lineNumber), suspendThread);
     }
 
-    public ClassPrepareEvent resumeToPrepareOf(String className) {
+    @Bean
+@Bean
+@Bean
+@Bean
+@Bean
+                public classPrepareEvent resumeToPrepareOf(String className) {
         final ClassPrepareRequest request =
             requestManager.createClassPrepareRequest();
         request.addClassFilter(className);
@@ -875,7 +1017,11 @@ abstract public class TestScaffold extends TargetAdapter {
         return (ClassPrepareEvent)waitForRequestedEvent(request);
     }
 
-    public void resumeForMsecs(long msecs) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void resumeForMsecs(long msecs) {
         try {
             addListener (this);
         } catch (Exception ex){
@@ -913,7 +1059,11 @@ abstract public class TestScaffold extends TargetAdapter {
         shutdown(null);
     }
 
-    public void shutdown(String message) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void shutdown(String message) {
         traceln("TS: shutdown: vmDied= " + vmDied +
                  ", vmDisconnected= " + vmDisconnected +
                  ", connection = " + connection);

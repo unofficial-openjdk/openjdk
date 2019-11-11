@@ -51,6 +51,7 @@ import jdk.test.lib.Platform;
  * @build jdk.test.lib.Platform
  * @run main MouseClickRequestFocusRaceTest
  */
+@Bean
 public class MouseClickRequestFocusRaceTest {
     static Robot robot;
     static JFrame frame1 = new JFrame("Frame-1") {
@@ -95,16 +96,25 @@ public class MouseClickRequestFocusRaceTest {
                         popup.show(button1, e.getX() - loc.x, e.getY() - loc.y);
                     }
                 }
-                public void mousePressed(MouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void mousePressed(MouseEvent e) {
                     popup(e);
                 }
-                public void mouseReleased(MouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void mouseReleased(MouseEvent e) {
                     popup(e);
                 }
             });
 
         frame2.addMouseListener(new MouseAdapter() {
-                public void mousePressed(MouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void mousePressed(MouseEvent e) {
                     button1.requestFocusInWindow();
                 }
             });

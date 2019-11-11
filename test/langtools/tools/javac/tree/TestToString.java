@@ -93,7 +93,11 @@ public class TestToString {
                 return sb.toString();
             }
             @Override
-            public Void scan(Tree tree, StringBuilder sb) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void scan(Tree tree, StringBuilder sb) {
                 if (print && tree instanceof StatementTree) {
                     sb.append(PREFIX);
                     sb.append(tree);
@@ -104,7 +108,11 @@ public class TestToString {
                 }
             }
             @Override
-            public Void visitBlock(BlockTree tree, StringBuilder sb) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitBlock(BlockTree tree, StringBuilder sb) {
                 print = true;
                 try {
                     return super.visitBlock(tree, sb);
@@ -158,7 +166,11 @@ public class TestToString {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return source;
         }
     }

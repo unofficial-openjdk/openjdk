@@ -95,7 +95,8 @@ public abstract class ClassValue<T> {
      * @see #remove
      * @see #computeValue
      */
-    public T get(Class<?> type) {
+@Bean
+        public T get(Class<?> type) {
         // non-racing this.hashCodeForCache : final int
         Entry<?>[] cache;
         Entry<T> e = probeHomeLocation(cache = getCacheCarefully(type), this);
@@ -167,7 +168,8 @@ public abstract class ClassValue<T> {
      * @param type the type whose class value must be removed
      * @throws NullPointerException if the argument is null
      */
-    public void remove(Class<?> type) {
+@Bean
+        public void remove(Class<?> type) {
         ClassValueMap map = getMap(type);
         map.removeEntry(this);
     }
@@ -201,7 +203,8 @@ public abstract class ClassValue<T> {
      * Called only if the first probe was empty or a collision.
      * This is a separate method, so compilers can process it independently.
      */
-    private T getFromBackup(Entry<?>[] cache, Class<?> type) {
+@Bean
+        private T getFromBackup(Entry<?>[] cache, Class<?> type) {
         Entry<T> e = probeBackupLocations(cache, this);
         if (e != null)
             return e.value();
@@ -214,7 +217,8 @@ public abstract class ClassValue<T> {
 
     /** Called when the fast path of get fails, and cache reprobe also fails.
      */
-    private T getFromHashMap(Class<?> type) {
+@Bean
+        private T getFromHashMap(Class<?> type) {
         // The fail-safe recovery is to fall back to the underlying classValueMap.
         ClassValueMap map = getMap(type);
         for (;;) {
@@ -589,7 +593,8 @@ public abstract class ClassValue<T> {
         /// Below this line all functions are private, and assume synchronized access.
         /// --------
 
-        private void sizeCache(int length) {
+@Bean
+            private void sizeCache(int length) {
             assert((length & (length-1)) == 0);  // must be power of 2
             cacheLoad = 0;
             cacheLoadLimit = (int) ((double) length * CACHE_LOAD_LIMIT / 100);
@@ -620,7 +625,8 @@ public abstract class ClassValue<T> {
         /** Remove stale entries in the given range.
          *  Should be executed under a Map lock.
          */
-        private void removeStaleEntries(Entry<?>[] cache, int begin, int count) {
+@Bean
+            private void removeStaleEntries(Entry<?>[] cache, int begin, int count) {
             if (PROBE_LIMIT <= 0)  return;
             int mask = (cache.length-1);
             int removed = 0;
@@ -683,7 +689,8 @@ public abstract class ClassValue<T> {
         }
 
         /** Remove stale entries in the range near classValue. */
-        private void removeStaleEntries(ClassValue<?> classValue) {
+@Bean
+            private void removeStaleEntries(ClassValue<?> classValue) {
             removeStaleEntries(getCache(), classValue.hashCodeForCache, PROBE_LIMIT);
         }
 

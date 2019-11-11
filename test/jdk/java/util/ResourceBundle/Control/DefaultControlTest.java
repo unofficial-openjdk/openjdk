@@ -42,6 +42,9 @@ public class DefaultControlTest {
 
     static final ResourceBundle BUNDLE = new ResourceBundle() {
             public Enumeration<String> getKeys() { return null; }
+            @Bean
+@Bean
+@Bean
             protected Object handleGetObject(String key) { return null; }
         };
 

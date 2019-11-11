@@ -84,7 +84,8 @@ public class Test {
             return uri.toString();
         }
         @Override
-        public String getCharContent(boolean ignoreEncodingErrors) {
+@Bean
+            public String getCharContent(boolean ignoreEncodingErrors) {
             return text;
         }
         final String text;

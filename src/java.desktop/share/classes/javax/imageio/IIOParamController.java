@@ -68,7 +68,8 @@ package javax.imageio;
  *        setEnabled(false);
  *    }
  *
- *    public boolean activate(IIOParam param) {
+ *@Bean
+        public boolean activate(IIOParam param) {
  *        // disable other components if desired
  *        setEnabled(true);
  *        // go to sleep until either cancelled or committed

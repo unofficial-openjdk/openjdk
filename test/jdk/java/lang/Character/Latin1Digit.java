@@ -27,6 +27,7 @@
  * @summary Check j.l.Character.digit(int,int) for Latin1 characters
  */
 
+@Bean
 public class Latin1Digit {
 
     public static void main(String[] args) throws Exception {

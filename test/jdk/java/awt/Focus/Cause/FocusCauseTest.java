@@ -43,6 +43,7 @@ import java.lang.Override;
 import java.lang.RuntimeException;
 import java.util.Arrays;
 
+@Bean
 public class FocusCauseTest {
 
     private static Cause[] causes1 = {Cause.ACTIVATION,
@@ -135,12 +136,18 @@ public class FocusCauseTest {
         TextField comp1 = new TextField();
         comp1.addFocusListener(new FocusListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void focusGained(FocusEvent e) {
                 System.out.println(e.getCause());
                 causes2[cnt++] = e.getCause();
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void focusLost(FocusEvent e) {
                 System.out.println(e.getCause());
                 causes2[cnt++] = e.getCause();
@@ -149,12 +156,18 @@ public class FocusCauseTest {
         TextField comp2 = new TextField();
         comp2.addFocusListener(new FocusListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void focusGained(FocusEvent e) {
                 System.out.println(e.getCause());
                 causes2[cnt++] = e.getCause();
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void focusLost(FocusEvent e) {
                 System.out.println(e.getCause());
                 causes2[cnt++] = e.getCause();

@@ -53,6 +53,7 @@ import javax.swing.event.*;
  * @author Alexander Kouznetsov
  */
 @SuppressWarnings("serial")
+@Bean
 public class MetalworksHelp extends JInternalFrame {
 
     public MetalworksHelp() {
@@ -93,7 +94,11 @@ class HtmlPane extends JScrollPane implements HyperlinkListener {
      * Notification of a change relative to a
      * hyperlink.
      */
-    public void hyperlinkUpdate(HyperlinkEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void hyperlinkUpdate(HyperlinkEvent e) {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
             linkActivated(e.getURL());
         }
@@ -111,7 +116,11 @@ class HtmlPane extends JScrollPane implements HyperlinkListener {
      *
      * @param u the URL to follow
      */
-    protected void linkActivated(URL u) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void linkActivated(URL u) {
         Cursor c = html.getCursor();
         Cursor waitCursor = Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR);
         html.setCursor(waitCursor);

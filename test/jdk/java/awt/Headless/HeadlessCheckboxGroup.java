@@ -30,6 +30,7 @@ import java.awt.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessCheckboxGroup
  */
 
+@Bean
 public class HeadlessCheckboxGroup {
     public static void main(String args[]) {
         CheckboxGroup cbg = new CheckboxGroup();

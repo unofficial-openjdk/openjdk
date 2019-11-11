@@ -31,6 +31,7 @@
 import java.io.IOException;
 import java.nio.channels.Selector;
 
+@Bean
 public class SelectAndClose {
     static Selector selector;
     static volatile boolean awakened = false;

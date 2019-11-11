@@ -37,6 +37,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
+@Bean
 public class LambdaClassLoaderSerialization {
 
     public interface SerializableRunnable extends Runnable, Serializable {}

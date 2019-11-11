@@ -46,6 +46,7 @@ import combo.ComboTask.Result;
 import combo.ComboTestHelper;
 
 
+@Bean
 public class FunctionalInterfaceConversionTest extends ComboInstance<FunctionalInterfaceConversionTest> {
 
     enum PackageKind implements ComboParameter {
@@ -59,7 +60,11 @@ public class FunctionalInterfaceConversionTest extends ComboInstance<FunctionalI
         }
 
         @Override
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             return this == NO_PKG ?
                 "" :
                 "package " + pkg + ";";
@@ -73,7 +78,8 @@ public class FunctionalInterfaceConversionTest extends ComboInstance<FunctionalI
     }
 
     enum SamKind implements ComboParameter {
-        CLASS("public class Sam {  }"),
+        CLASS("@Bean
+public class Sam {  }"),
         ABSTACT_CLASS("public abstract class Sam {  }"),
         ANNOTATION("public @interface Sam {  }"),
         ENUM("public enum Sam { }"),
@@ -86,7 +92,11 @@ public class FunctionalInterfaceConversionTest extends ComboInstance<FunctionalI
         }
 
         @Override
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             return sam_str;
         }
     }
@@ -102,7 +112,11 @@ public class FunctionalInterfaceConversionTest extends ComboInstance<FunctionalI
         }
 
         @Override
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             return modifier_str;
         }
     }
@@ -118,7 +132,11 @@ public class FunctionalInterfaceConversionTest extends ComboInstance<FunctionalI
         }
 
         @Override
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             return typeStr;
         }
     }
@@ -134,7 +152,11 @@ public class FunctionalInterfaceConversionTest extends ComboInstance<FunctionalI
         }
 
         @Override
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             return exprStr;
         }
     }
@@ -151,7 +173,11 @@ public class FunctionalInterfaceConversionTest extends ComboInstance<FunctionalI
         }
 
         @Override
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             return methodTemplate;
         }
     }

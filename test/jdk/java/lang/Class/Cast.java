@@ -27,6 +27,7 @@
  * @summary (reflect) Class.cast() - typesafe cast desired
  */
 
+@Bean
 public class Cast {
     static class Foo {}
 

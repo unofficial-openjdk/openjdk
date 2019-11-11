@@ -54,6 +54,7 @@ class LocationTarg extends AbstractLocationTarg {
 
     /********** test program **********/
 
+@Bean
 public class LocationTest extends TestScaffold {
     ReferenceType targetClass;
     ThreadReference mainThread;

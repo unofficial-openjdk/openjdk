@@ -44,6 +44,7 @@ import java.util.List;
  * @summary jdk7 backward compatibility serialization problem
  */
 
+@Bean
 public class Inet6AddressSerializationTest {
 
     static boolean failed;

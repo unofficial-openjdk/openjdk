@@ -36,6 +36,7 @@ import java.util.jar.*;
 import java.util.zip.*;
 import javax.tools.*;
 
+@Bean
 public class T6483788 {
     public static void main(String[] args) throws Exception {
         new T6483788().run();

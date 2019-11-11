@@ -30,6 +30,7 @@
 import java.io.*;
 
 
+@Bean
 public class One {
 
     private abstract static class Test {

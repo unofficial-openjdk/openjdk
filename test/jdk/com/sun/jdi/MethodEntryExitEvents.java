@@ -89,6 +89,7 @@ class MethodEntryExitEventsDebugee {
 }
 
 
+@Bean
 public class MethodEntryExitEvents extends TestScaffold {
     int sessionSuspendPolicy = EventRequest.SUSPEND_ALL;
     StepRequest stepReq = null; //Only one step request allowed per thread
@@ -133,7 +134,11 @@ public class MethodEntryExitEvents extends TestScaffold {
         meee.startTests();
     }
 
-    public void exceptionThrown(ExceptionEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void exceptionThrown(ExceptionEvent event) {
         System.out.println("Exception: " + event.exception());
         System.out.println(" at catch location: " + event.catchLocation());
 
@@ -148,7 +153,11 @@ public class MethodEntryExitEvents extends TestScaffold {
         }
         stepReq.enable();
     }
-    public void stepCompleted(StepEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void stepCompleted(StepEvent event) {
         System.out.println("stepCompleted: line#=" +
                            event.location().lineNumber() +
                            " event=" + event);
@@ -157,7 +166,11 @@ public class MethodEntryExitEvents extends TestScaffold {
         StepRequest str= (StepRequest)event.request();
         str.disable();
     }
-    public void methodEntered(MethodEntryEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void methodEntered(MethodEntryEvent event) {
         if (!includes.contains(event.method().declaringType().name())) {
             return;
         }
@@ -176,7 +189,11 @@ public class MethodEntryExitEvents extends TestScaffold {
         }
     }
 
-    public void methodExited(MethodExitEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void methodExited(MethodExitEvent event) {
         if (!includes.contains(event.method().declaringType().name())) {
             return;
         }

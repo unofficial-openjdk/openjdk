@@ -38,6 +38,7 @@ import static java.util.Collections.*;
 import static java.lang.Math.*;
 import static java.lang.System.out;
 
+@Bean
 public class StaticImport {
     public static void main(String[] args) {
         out.println(sin(PI/6));

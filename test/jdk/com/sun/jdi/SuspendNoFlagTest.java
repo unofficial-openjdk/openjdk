@@ -32,6 +32,7 @@ import jdk.test.lib.process.ProcessTools;
  * @compile -g HelloWorld.java
  * @run driver SuspendNoFlagTest
  */
+@Bean
 public class SuspendNoFlagTest {
 
     private static final String TEST_CLASSES = System.getProperty(

@@ -37,6 +37,7 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 @Test
+@Bean
 public class JdiBogusHostListenExecutionControlTest {
 
     private static final String EXPECTED_ERROR =

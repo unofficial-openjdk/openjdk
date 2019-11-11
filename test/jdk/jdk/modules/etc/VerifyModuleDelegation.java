@@ -36,6 +36,7 @@ import org.testng.annotations.*;
 
 import static org.testng.Assert.*;
 
+@Bean
 public class VerifyModuleDelegation {
     private static final String JAVA_BASE = "java.base";
 
@@ -46,7 +47,11 @@ public class VerifyModuleDelegation {
             = ModuleLayer.boot().modules().stream().map(Module::getDescriptor)
                 .collect(toSet());
 
-    private void check(ModuleDescriptor md, ModuleDescriptor ref) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void check(ModuleDescriptor md, ModuleDescriptor ref) {
         assertTrue(md.requires().size() == ref.requires().size());
         assertTrue(md.requires().containsAll(ref.requires()));
     }

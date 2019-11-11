@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessJOptionPane
  */
 
+@Bean
 public class HeadlessJOptionPane {
     public static void main(String args[]) {
         JOptionPane op = new JOptionPane();

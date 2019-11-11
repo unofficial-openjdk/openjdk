@@ -55,6 +55,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 @Test
+@Bean
 public class ClassesTest extends KullaTesting {
 
     public void noClasses() {
@@ -295,7 +296,11 @@ public class ClassesTest extends KullaTesting {
     }
 
     @Test(dataProvider = "innerClasses")
-    public void innerClasses(ClassType outerClassType, ClassType innerClassType) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void innerClasses(ClassType outerClassType, ClassType innerClassType) {
         String source =
                 outerClassType + " A {" + (outerClassType == ClassType.ENUM ? ";" : "") +
                 innerClassType + " B { }" +
@@ -332,14 +337,16 @@ public class ClassesTest extends KullaTesting {
     public void testCircular() {
         assertEval("import java.util.function.Supplier;");
         TypeDeclSnippet aClass =
-                classKey(assertEval("public class A<T> {\n" +
+                classKey(assertEval("@Bean
+public class A<T> {\n" +
                                     "  private class SomeClass {}\n" +
                                     "  public Supplier<T> m() {\n" +
                                     "    return new B<>(this);\n" +
                                     "  }\n" +
                                     "}",
                                    added(RECOVERABLE_DEFINED)));
-        assertEval("public class B<T> implements Supplier<T> {\n" +
+        assertEval("@Bean
+public class B<T> implements Supplier<T> {\n" +
                    "  public B(A<T> a) {}\n" +
                    "  public T get() {return null;}\n" +
                    "}",

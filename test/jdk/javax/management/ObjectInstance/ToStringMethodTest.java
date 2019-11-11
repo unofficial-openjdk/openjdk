@@ -34,6 +34,7 @@
 
 import javax.management.*;
 
+@Bean
 public class ToStringMethodTest {
     public static void main(String[] args) throws Exception {
 

@@ -42,6 +42,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+@Bean
 public class TestCheckJDK {
     static boolean testPassed = true;
     private static final WhiteBox WB = WhiteBox.getWhiteBox();

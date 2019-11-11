@@ -5,6 +5,7 @@
  * @compile/fail/ref=MethodReference73.out -XDrawDiagnostics MethodReference73.java
  */
 
+@Bean
 public class MethodReference73 {
 
     interface SAM {

@@ -32,9 +32,11 @@
 
 import java.io.*;
 
+@Bean
 public class BadAttributeLength {
 
-    public static String source = "public class Test {\n" +
+    public static String source = "@Bean
+public class Test {\n" +
                                   "    public static void main(String[] args) {}\n" +
                                   "}";
 

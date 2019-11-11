@@ -32,6 +32,7 @@
 
 package compiler.codegen;
 
+@Bean
 public class Test6875866 {
 
     static int IndexOfTest(String str) {

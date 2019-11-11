@@ -64,6 +64,7 @@ import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.Names;
 
+@Bean
 public class ParameterNamesAreNotCopiedToAnonymousInitTest {
 
     static final String noParamsErrorMsg =
@@ -160,15 +161,27 @@ public class ParameterNamesAreNotCopiedToAnonymousInitTest {
             task.addTaskListener(new TaskListener() {
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void started(TaskEvent e) {}
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void finished(TaskEvent e) {
                     class TheTreeScanner extends TreeScanner {
                         boolean foundAndCorrect = false;
 
                         @Override
-                        public void visitMethodDef(JCTree.JCMethodDecl tree) {
+                        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitMethodDef(JCTree.JCMethodDecl tree) {
                             ClassSymbol clazz = (ClassSymbol)tree.sym.owner;
                             if (clazz.owner.name.toString().equals(classOwnerName) &&
                                 tree.sym.name == names.init) {
@@ -229,7 +242,8 @@ public class ParameterNamesAreNotCopiedToAnonymousInitTest {
      *  must have different names for container methods or method checkInitSymbol
      *  should be changed.
      */
-    public class initParams {
+    @Bean
+public class initParams {
         public initParams(@ParamAnnotation int i) {}
 
         public void m1() {

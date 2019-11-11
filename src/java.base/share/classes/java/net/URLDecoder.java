@@ -79,6 +79,7 @@ import java.util.Objects;
  * @since   1.2
  */
 
+@Bean
 public class URLDecoder {
 
     // The platform default encoding

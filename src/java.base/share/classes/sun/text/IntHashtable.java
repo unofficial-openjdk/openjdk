@@ -54,7 +54,8 @@ public final class IntHashtable {
         return count == 0;
     }
 
-    public void put(int key, int value) {
+@Bean
+        public void put(int key, int value) {
         if (count > highWaterMark) {
             rehash();
         }
@@ -66,11 +67,13 @@ public final class IntHashtable {
         values[index] = value;                   // reset value
     }
 
-    public int get(int key) {
+@Bean
+        public int get(int key) {
         return values[find(key)];
     }
 
-    public void remove(int key) {
+@Bean
+        public void remove(int key) {
         int index = find(key);
         if (keyList[index] > MAX_UNUSED) {       // neither deleted nor empty
             keyList[index] = DELETED;            // set to deleted
@@ -86,7 +89,8 @@ public final class IntHashtable {
         return defaultValue;
     }
 
-    public void setDefaultValue(int newValue) {
+@Bean
+        public void setDefaultValue(int newValue) {
         defaultValue = newValue;
         rehash();
     }

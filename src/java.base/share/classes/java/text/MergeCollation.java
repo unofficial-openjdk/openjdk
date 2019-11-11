@@ -85,7 +85,8 @@ final class MergeCollation {
      * @param withWhiteSpace puts spacing around the entries, and \n
      * before & and <
      */
-    public String getPattern(boolean withWhiteSpace) {
+@Bean
+        public String getPattern(boolean withWhiteSpace) {
         StringBuffer result = new StringBuffer();
         PatternEntry tmp = null;
         ArrayList<PatternEntry> extList = null;
@@ -145,7 +146,8 @@ final class MergeCollation {
      * @return emits the string in the format understable to the collation
      * builder.
      */
-    public String emitPattern(boolean withWhiteSpace) {
+@Bean
+        public String emitPattern(boolean withWhiteSpace) {
         StringBuffer result = new StringBuffer();
         for (int i = 0; i < patterns.size(); ++i)
         {
@@ -197,7 +199,8 @@ final class MergeCollation {
      * @param index the offset of the desired pattern entry
      * @return the requested pattern entry
      */
-    public PatternEntry getItemAt(int index) {
+@Bean
+        public PatternEntry getItemAt(int index) {
         return patterns.get(index);
     }
 

@@ -30,6 +30,7 @@
 import java.awt.geom.Point2D;
 import java.awt.geom.QuadCurve2D;
 
+@Bean
 public class Quad2DContainsTest {
 
     static Object[][] trues = {

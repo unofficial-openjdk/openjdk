@@ -52,6 +52,7 @@ import java.net.*;
  *
  * @author Jeff Dinkins
  */
+@Bean
 public class InternalFrameDemo extends DemoModule {
     int windowCount = 0;
     JDesktopPane desktop = null;
@@ -135,7 +136,11 @@ public class InternalFrameDemo extends DemoModule {
     /**
      * Create an internal frame and add a scrollable imageicon to it
      */
-    public JInternalFrame createInternalFrame(Icon icon, Integer layer, int width, int height) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public JInternalFrame createInternalFrame(Icon icon, Integer layer, int width, int height) {
         JInternalFrame jif = new JInternalFrame();
 
         if(!windowTitleField.getText().equals(getString("InternalFrameDemo.frame_label"))) {
@@ -293,7 +298,11 @@ public class InternalFrameDemo extends DemoModule {
             this.icon = icon;
         }
 
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             demo.createInternalFrame(icon,
                                      getDemoFrameLayer(),
                                      getFrameWidth(),

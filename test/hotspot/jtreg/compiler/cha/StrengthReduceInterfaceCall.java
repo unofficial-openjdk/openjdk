@@ -68,6 +68,7 @@ import static jdk.test.lib.Asserts.*;
 import static jdk.internal.org.objectweb.asm.ClassWriter.*;
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
+@Bean
 public class StrengthReduceInterfaceCall {
     public static void main(String[] args) {
         run(ObjectToString.class);
@@ -97,7 +98,11 @@ public class StrengthReduceInterfaceCall {
         static class DJ2 implements J { public String toString() { return "DJ2"; }}
 
         @Override
-        public Object test(I i) { return ObjectToStringHelper.test(i); /* invokeinterface I.toString() */ }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Object test(I i) { return ObjectToStringHelper.test(i); /* invokeinterface I.toString() */ }
 
         @TestCase
         public void testMono() {
@@ -185,7 +190,11 @@ public class StrengthReduceInterfaceCall {
         static class DJ2 implements J { public int hashCode() { return super.hashCode(); }}
 
         @Override
-        public Object test(I i) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Object test(I i) {
             return ObjectHashCodeHelper.test(i); /* invokeinterface I.hashCode() */
         }
 
@@ -272,7 +281,11 @@ public class StrengthReduceInterfaceCall {
         static class DJ2 implements J { public Object m() { return WRONG; }}
 
         @DontInline
-        public Object test(I i) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Object test(I i) {
             return i.m();
         }
 
@@ -369,7 +382,11 @@ public class StrengthReduceInterfaceCall {
         static class DJ implements J { public Object m() { return WRONG;   }}
 
         @DontInline
-        public Object test(I i) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Object test(I i) {
             return i.m(); // I <: J.m ABSTRACT
         }
 
@@ -463,7 +480,11 @@ public class StrengthReduceInterfaceCall {
         static class C  implements I { public Object m() { return CORRECT; }}
 
         @DontInline
-        public Object test(I i) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Object test(I i) {
             return i.m(); // intf I.m OVERPASS
         }
 
@@ -576,7 +597,11 @@ public class StrengthReduceInterfaceCall {
         static class DJ implements J { public Object m() { return WRONG; }}
 
         @DontInline
-        public Object test(I i) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Object test(I i) {
             return i.m(); // no inlining since J.m is a default method
         }
 
@@ -636,7 +661,11 @@ public class StrengthReduceInterfaceCall {
         static class DJ2 implements J2 { public Object m() { return WRONG; }}
 
         @DontInline
-        public Object test(I i) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Object test(I i) {
             return i.m(); // no inlining since J.m is a default method
         }
 
@@ -766,7 +795,11 @@ public class StrengthReduceInterfaceCall {
 
         public abstract void checkInvalidReceiver();
 
-        public T receiver(int id) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public T receiver(int id) {
             return receivers.computeIfAbsent(id, (i -> {
                 try {
                     MyClassLoader cl = (MyClassLoader) receiver.getClassLoader();
@@ -779,7 +812,11 @@ public class StrengthReduceInterfaceCall {
         }
 
 
-        public void compile(Runnable r) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void compile(Runnable r) {
             while (!WB.isMethodCompiled(TEST)) {
                 for (int i = 0; i < 100; i++) {
                     r.run();
@@ -805,7 +842,11 @@ public class StrengthReduceInterfaceCall {
         }
 
         @Override
-        public void call(T i) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void call(T i) {
             assertTrue(test(i) != WRONG);
         }
     }

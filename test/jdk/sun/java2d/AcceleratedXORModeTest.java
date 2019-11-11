@@ -40,6 +40,7 @@ import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 
+@Bean
 public class AcceleratedXORModeTest {
     public static void main(String argv[]) {
         String fileName = argv.length > 0 ? argv[0] : null;

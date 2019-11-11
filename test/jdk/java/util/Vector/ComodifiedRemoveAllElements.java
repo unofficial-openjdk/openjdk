@@ -33,6 +33,7 @@ import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.Vector;
 
+@Bean
 public class ComodifiedRemoveAllElements {
     public static void main(String[] args) {
         Vector v = new Vector();

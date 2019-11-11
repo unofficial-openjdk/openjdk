@@ -32,9 +32,14 @@
 import java.io.*;
 import java.net.*;
 
+@Bean
 public class NonOverridableHandlerFactory implements URLStreamHandlerFactory {
     @Override
-    public URLStreamHandler createURLStreamHandler(String protocol) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public URLStreamHandler createURLStreamHandler(String protocol) {
         return new NonOverridableHandler();
     }
 

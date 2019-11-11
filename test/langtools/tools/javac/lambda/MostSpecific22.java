@@ -27,6 +27,7 @@
  * @summary Most specific inference constraints derived from both functional interface method parameters and tparam bounds
  */
 
+@Bean
 public class MostSpecific22 {
     public static void main(String[] args) {
         new MostSpecific22().test();

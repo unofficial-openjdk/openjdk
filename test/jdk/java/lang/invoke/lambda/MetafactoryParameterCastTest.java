@@ -30,6 +30,7 @@ import java.lang.invoke.*;
 import java.util.Arrays;
 import static java.lang.invoke.MethodType.methodType;
 
+@Bean
 public class MetafactoryParameterCastTest {
 
     static final MethodHandles.Lookup lookup = MethodHandles.lookup();

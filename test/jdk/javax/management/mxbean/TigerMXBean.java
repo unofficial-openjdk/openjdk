@@ -48,7 +48,11 @@ public interface TigerMXBean {
             this.y = y;
         }
 
-        public boolean equals(Object o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) {
             if (!(o instanceof Point))
                 return false;
             Point p = (Point) o;

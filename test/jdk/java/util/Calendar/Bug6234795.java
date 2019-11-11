@@ -36,6 +36,7 @@ import static java.util.Calendar.SEPTEMBER;
 import java.util.Locale;
 import java.util.TimeZone;
 
+@Bean
 public class Bug6234795 {
     public static void main(String[] args) {
         testRoll(HOUR);

@@ -157,6 +157,9 @@ public class JapaneseReadingAttributes {
 
         frame.addWindowListener(new WindowAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent e) {
                 testStartLatch.countDown();
             }
@@ -168,10 +171,16 @@ public class JapaneseReadingAttributes {
 
         textFieldMain.addInputMethodListener(new InputMethodListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void caretPositionChanged(InputMethodEvent event) {
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void inputMethodTextChanged(InputMethodEvent event) {
                 AttributedCharacterIterator itr = event.getText();
                 if (itr != null) {

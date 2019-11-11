@@ -29,6 +29,7 @@
  *
  */
 
+@Bean
 public class TestEliminatedCloneBadMemEdge implements Cloneable {
 
     int f1;

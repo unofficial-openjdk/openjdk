@@ -34,6 +34,7 @@
 
 package compiler.intrinsics.mathexact;
 
+@Bean
 public class MulExactLNonConstantTest {
     public static void main(String[] args) {
         Verify.NonConstantLongTest.verify(new Verify.MulExactL());

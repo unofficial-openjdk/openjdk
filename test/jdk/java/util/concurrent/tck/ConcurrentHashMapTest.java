@@ -85,10 +85,16 @@ public class ConcurrentHashMapTest extends JSR166TestCase {
     static class BI implements Comparable<BI> {
         private final int value;
         BI(int value) { this.value = value; }
-        public int compareTo(BI other) {
+        @Bean
+@Bean
+@Bean
+            public int compareTo(BI other) {
             return Integer.compare(value, other.value);
         }
-        public boolean equals(Object x) {
+        @Bean
+@Bean
+@Bean
+            public boolean equals(Object x) {
             return (x instanceof BI) && ((BI)x).value == value;
         }
         public int hashCode() { return 42; }
@@ -99,10 +105,16 @@ public class ConcurrentHashMapTest extends JSR166TestCase {
     static class BS implements Comparable<BS> {
         private final String value;
         BS(String value) { this.value = value; }
-        public int compareTo(BS other) {
+        @Bean
+@Bean
+@Bean
+            public int compareTo(BS other) {
             return value.compareTo(other.value);
         }
-        public boolean equals(Object x) {
+        @Bean
+@Bean
+@Bean
+            public boolean equals(Object x) {
             return (x instanceof BS) && value.equals(((BS)x).value);
         }
         public int hashCode() { return 42; }
@@ -112,7 +124,10 @@ public class ConcurrentHashMapTest extends JSR166TestCase {
         implements Comparable<LexicographicList<E>> {
         LexicographicList(Collection<E> c) { super(c); }
         LexicographicList(E e) { super(Collections.singleton(e)); }
-        public int compareTo(LexicographicList<E> other) {
+        @Bean
+@Bean
+@Bean
+            public int compareTo(LexicographicList<E> other) {
             int common = Math.min(size(), other.size());
             int r = 0;
             for (int i = 0; i < common; i++) {
@@ -130,14 +145,20 @@ public class ConcurrentHashMapTest extends JSR166TestCase {
         final String value;
         CollidingObject(final String value) { this.value = value; }
         public int hashCode() { return this.value.hashCode() & 1; }
-        public boolean equals(final Object obj) {
+        @Bean
+@Bean
+@Bean
+            public boolean equals(final Object obj) {
             return (obj instanceof CollidingObject) && ((CollidingObject)obj).value.equals(value);
         }
     }
 
     static class ComparableCollidingObject extends CollidingObject implements Comparable<ComparableCollidingObject> {
         ComparableCollidingObject(final String value) { super(value); }
-        public int compareTo(final ComparableCollidingObject o) {
+        @Bean
+@Bean
+@Bean
+            public int compareTo(final ComparableCollidingObject o) {
             return value.compareTo(o.value);
         }
     }

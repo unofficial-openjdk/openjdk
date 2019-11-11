@@ -29,6 +29,7 @@
 import java.lang.ref.*;
 
 
+@Bean
 public class EnqueueNullRef {
 
     static void test(ReferenceQueue q, Reference r) {

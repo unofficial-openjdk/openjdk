@@ -62,6 +62,7 @@ class RedefineTarg {
 
     /********** test program **********/
 
+@Bean
 public class RedefineTest extends TestScaffold {
     static int redefineRepeat = 1;
     int bpCnt = 0;
@@ -130,7 +131,10 @@ public class RedefineTest extends TestScaffold {
 
     /********** event handlers **********/
 
-    public void breakpointReached(BreakpointEvent event) {
+    @Bean
+@Bean
+@Bean
+            public void breakpointReached(BreakpointEvent event) {
         println("Got BreakpointEvent - " + event);
         try {
             checkFrames(event.thread(), bpPlaces[bpCnt++]);

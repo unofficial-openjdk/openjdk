@@ -58,7 +58,10 @@ public abstract class TestXEmbedServer {
 
         f = new Frame("Main frame");
         f.addWindowListener(new WindowAdapter() {
-                public void windowClosing(WindowEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void windowClosing(WindowEvent e) {
                     synchronized(TestXEmbedServer.this) {
                         TestXEmbedServer.this.notifyAll();
                     }
@@ -76,18 +79,27 @@ public abstract class TestXEmbedServer {
         tf.setName("0");
         DragSource ds = new DragSource();
         final DragSourceListener dsl = new DragSourceAdapter() {
-                public void dragDropEnd(DragSourceDropEvent dsde) {
+                @Bean
+@Bean
+@Bean
+            public void dragDropEnd(DragSourceDropEvent dsde) {
                 }
             };
         final DragGestureListener dgl = new DragGestureListener() {
-                public void dragGestureRecognized(DragGestureEvent dge) {
+                @Bean
+@Bean
+@Bean
+            public void dragGestureRecognized(DragGestureEvent dge) {
                     dge.startDrag(null, new StringSelection(tf.getText()), dsl);
                 }
             };
         ds.createDefaultDragGestureRecognizer(tf, DnDConstants.ACTION_COPY, dgl);
 
         final DropTargetListener dtl = new DropTargetAdapter() {
-                public void drop(DropTargetDropEvent dtde) {
+                @Bean
+@Bean
+@Bean
+            public void drop(DropTargetDropEvent dtde) {
                     dtde.acceptDrop(DnDConstants.ACTION_COPY);
                     try {
                         tf.setText(tf.getText() + (String)dtde.getTransferable().getTransferData(DataFlavor.stringFlavor));
@@ -99,13 +111,19 @@ public abstract class TestXEmbedServer {
 
         Button b_add = new Button("Add client");
         b_add.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                     addClient();
                 }
             });
         Button b_remove = new Button("Remove client");
         b_remove.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                     if (clientCont.getComponentCount() != 0) {
                         clientCont.remove(clientCont.getComponentCount()-1);
                     }
@@ -113,13 +131,19 @@ public abstract class TestXEmbedServer {
             });
         b_close = new JButton("Close modal dialog");
         b_close.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                     modal_d.dispose();
                 }
             });
         b_modal = new Button("Show modal dialog");
         b_modal.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                     modal_d = new JDialog(f, "Modal dialog", true);
                     modal_d.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
                     modal_d.setBounds(0, 100, 200, 50);
@@ -137,7 +161,10 @@ public abstract class TestXEmbedServer {
         if (manual) {
             Button pass = new Button("Pass");
             pass.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
+                    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                         passed = true;
                         synchronized(TestXEmbedServer.this) {
                             TestXEmbedServer.this.notifyAll();
@@ -147,7 +174,10 @@ public abstract class TestXEmbedServer {
             bcont.add(pass);
             Button fail = new Button("Fail");
             fail.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
+                    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                         passed = false;
                         synchronized(TestXEmbedServer.this) {
                             TestXEmbedServer.this.notifyAll();
@@ -177,7 +207,10 @@ public abstract class TestXEmbedServer {
 
     public void addClient() {
         client = new Canvas() {
-                public void paint(Graphics g) {
+                @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
                     super.paint(g);
                 }
             };

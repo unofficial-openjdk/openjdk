@@ -46,6 +46,9 @@ public class TranslucentJAppletTest {
         JApplet applet = new JApplet();
         applet.setBackground(new Color(0, 0, 0, 0));
         JPanel panel = new JPanel() {
+            @Bean
+@Bean
+@Bean
             protected void paintComponent(Graphics g) {
                 paintComponentCalled = true;
                 g.setColor(Color.RED);

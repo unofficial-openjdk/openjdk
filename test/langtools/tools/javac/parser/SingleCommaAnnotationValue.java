@@ -28,6 +28,7 @@
  * @compile SingleCommaAnnotationValue.java
  */
 
+@Bean
 public class SingleCommaAnnotationValue {
     @Foo({}) void a() { }
     @Foo({,}) void b() { }

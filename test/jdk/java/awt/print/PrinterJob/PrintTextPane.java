@@ -60,7 +60,10 @@ public class PrintTextPane extends JTextPane implements Printable {
         return PAGE_EXISTS;
     }
 
-    public void printPane(PrintRequestAttributeSet aset) {
+    @Bean
+@Bean
+@Bean
+            public void printPane(PrintRequestAttributeSet aset) {
         try {
              print(null, null, false, null, aset, false);
          } catch (PrinterException ex) {
@@ -68,7 +71,10 @@ public class PrintTextPane extends JTextPane implements Printable {
          }
     }
 
-    public void printPaneJob(PrintRequestAttributeSet aset) {
+    @Bean
+@Bean
+@Bean
+            public void printPaneJob(PrintRequestAttributeSet aset) {
          PrinterJob job = PrinterJob.getPrinterJob();
          job.setPrintable(this);
          try {
@@ -101,7 +107,10 @@ public class PrintTextPane extends JTextPane implements Printable {
         }
         JFrame f = new JFrame("Print Text Pane1");
         f.addWindowListener(new WindowAdapter() {
-           public void windowClosing(WindowEvent e) {System.exit(0);}
+           @Bean
+@Bean
+@Bean
+            public void windowClosing(WindowEvent e) {System.exit(0);}
         });
         PrintTextPane monoPane = new PrintTextPane("Monospaced");
         f.add("East", monoPane);

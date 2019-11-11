@@ -36,6 +36,7 @@ import javax.swing.*;
 import java.awt.*;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class RequestFocusToDisabledCompTest {
     Robot robot;
     JFrame frame = new JFrame("Frame");

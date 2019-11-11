@@ -37,6 +37,7 @@ import java.awt.image.BufferedImage;
 import java.util.Random;
 import sun.java2d.pipe.Region;
 
+@Bean
 public class RegionOps {
     public static final int DEFAULT_NUMREGIONS = 50;
     public static final int DEFAULT_MINSUBRECTS = 1;
@@ -399,7 +400,11 @@ public class RegionOps {
             theArea = a;
         }
 
-        public void addRect(int lox, int loy, int hix, int hiy) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addRect(int lox, int loy, int hix, int hiy) {
             Area a2 = new Area(new Rectangle(lox, loy, hix-lox, hiy-loy));
             if (theArea == null) {
                 theArea = a2;
@@ -408,30 +413,50 @@ public class RegionOps {
             }
         }
 
-        public RectListImpl getTranslation(int dx, int dy) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public RectListImpl getTranslation(int dx, int dy) {
             AffineTransform at = AffineTransform.getTranslateInstance(dx, dy);
             return new AreaImpl(theArea.createTransformedArea(at));
         }
 
-        public RectListImpl getIntersection(RectListImpl rli) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public RectListImpl getIntersection(RectListImpl rli) {
             Area a2 = new Area(theArea);
             a2.intersect(((AreaImpl) rli).theArea);
             return new AreaImpl(a2);
         }
 
-        public RectListImpl getExclusiveOr(RectListImpl rli) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public RectListImpl getExclusiveOr(RectListImpl rli) {
             Area a2 = new Area(theArea);
             a2.exclusiveOr(((AreaImpl) rli).theArea);
             return new AreaImpl(a2);
         }
 
-        public RectListImpl getDifference(RectListImpl rli) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public RectListImpl getDifference(RectListImpl rli) {
             Area a2 = new Area(theArea);
             a2.subtract(((AreaImpl) rli).theArea);
             return new AreaImpl(a2);
         }
 
-        public RectListImpl getUnion(RectListImpl rli) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public RectListImpl getUnion(RectListImpl rli) {
             Area a2 = new Area(theArea);
             a2.add(((AreaImpl) rli).theArea);
             return new AreaImpl(a2);
@@ -444,7 +469,11 @@ public class RegionOps {
             return true;
         }
 
-        public boolean contains(int x, int y) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean contains(int x, int y) {
             return theArea.contains(x, y);
         }
 
@@ -453,7 +482,11 @@ public class RegionOps {
             return 0;
         }
 
-        public boolean equals(RectListImpl other) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(RectListImpl other) {
             return theArea.equals(((AreaImpl) other).theArea);
         }
 
@@ -472,7 +505,11 @@ public class RegionOps {
             theRegion = r;
         }
 
-        public void addRect(int lox, int loy, int hix, int hiy) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addRect(int lox, int loy, int hix, int hiy) {
             Region r2 = Region.getInstanceXYXY(lox, loy, hix, hiy);
             if (theRegion == null) {
                 theRegion = r2;
@@ -481,29 +518,49 @@ public class RegionOps {
             }
         }
 
-        public RectListImpl getTranslation(int dx, int dy) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public RectListImpl getTranslation(int dx, int dy) {
             return new RegionImpl(theRegion.getTranslatedRegion(dx, dy));
         }
 
-        public RectListImpl getIntersection(RectListImpl rli) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public RectListImpl getIntersection(RectListImpl rli) {
             Region r2 = ((RegionImpl) rli).theRegion;
             r2 = theRegion.getIntersection(r2);
             return new RegionImpl(r2);
         }
 
-        public RectListImpl getExclusiveOr(RectListImpl rli) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public RectListImpl getExclusiveOr(RectListImpl rli) {
             Region r2 = ((RegionImpl) rli).theRegion;
             r2 = theRegion.getExclusiveOr(r2);
             return new RegionImpl(r2);
         }
 
-        public RectListImpl getDifference(RectListImpl rli) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public RectListImpl getDifference(RectListImpl rli) {
             Region r2 = ((RegionImpl) rli).theRegion;
             r2 = theRegion.getDifference(r2);
             return new RegionImpl(r2);
         }
 
-        public RectListImpl getUnion(RectListImpl rli) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public RectListImpl getUnion(RectListImpl rli) {
             Region r2 = ((RegionImpl) rli).theRegion;
             r2 = theRegion.getUnion(r2);
             return new RegionImpl(r2);
@@ -515,7 +572,11 @@ public class RegionOps {
             return theRegion.isEmpty();
         }
 
-        public boolean contains(int x, int y) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean contains(int x, int y) {
             return theRegion.contains(x, y);
         }
 
@@ -523,7 +584,11 @@ public class RegionOps {
             return theRegion.hashCode();
         }
 
-        public boolean equals(RectListImpl other) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(RectListImpl other) {
             return theRegion.equals(((RegionImpl) other).theRegion);
         }
 

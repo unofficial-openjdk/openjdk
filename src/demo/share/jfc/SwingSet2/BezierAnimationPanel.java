@@ -94,7 +94,11 @@ class BezierAnimationPanel extends JPanel implements Runnable {
     public BezierAnimationPanel() {
         addHierarchyListener(
             new HierarchyListener() {
-               public void hierarchyChanged(HierarchyEvent e) {
+               @Bean
+@Bean
+@Bean
+@Bean
+                public void hierarchyChanged(HierarchyEvent e) {
                    if(isShowing()) {
                        start();
                    } else {
@@ -114,7 +118,11 @@ class BezierAnimationPanel extends JPanel implements Runnable {
         return gradientColorA;
     }
 
-    public void setGradientColorA(Color c) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setGradientColorA(Color c) {
         if(c != null) {
             gradientColorA = c;
         }
@@ -124,7 +132,11 @@ class BezierAnimationPanel extends JPanel implements Runnable {
         return gradientColorB;
     }
 
-    public void setGradientColorB(Color c) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setGradientColorB(Color c) {
         if(c != null) {
             gradientColorB = c;
         }
@@ -134,7 +146,11 @@ class BezierAnimationPanel extends JPanel implements Runnable {
         return outerColor;
     }
 
-    public void setOuterColor(Color c) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setOuterColor(Color c) {
         if(c != null) {
             outerColor = c;
         }
@@ -144,7 +160,11 @@ class BezierAnimationPanel extends JPanel implements Runnable {
         return backgroundColor;
     }
 
-    public void setBackgroundColor(Color c) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setBackgroundColor(Color c) {
         if(c != null) {
             backgroundColor = c;
             setBackground(c);
@@ -176,7 +196,11 @@ class BezierAnimationPanel extends JPanel implements Runnable {
         notify();
     }
 
-    public void animate(float[] pts, float[] deltas, int index, int limit) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void animate(float[] pts, float[] deltas, int index, int limit) {
         float newpt = pts[index] + deltas[index];
         if (newpt <= 0) {
             newpt = -newpt;
@@ -329,7 +353,11 @@ class BezierAnimationPanel extends JPanel implements Runnable {
         }
     }
 
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(Graphics g) {
         synchronized (lock) {
            Graphics2D g2d = (Graphics2D) g;
            if (img != null) {

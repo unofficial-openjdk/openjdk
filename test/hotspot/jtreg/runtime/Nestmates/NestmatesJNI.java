@@ -25,6 +25,7 @@
  * Utility class for invoking methods and constructors and accessing fields
  * via JNI.
  */
+@Bean
 public class NestmatesJNI {
 
     static {

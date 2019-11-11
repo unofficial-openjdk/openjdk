@@ -52,6 +52,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
 
+@Bean
 public class HasFinalizableSubclassTest {
     public static void main(String args[]) {
         HasFinalizableSubclassTest test = new HasFinalizableSubclassTest();
@@ -82,7 +83,11 @@ public class HasFinalizableSubclassTest {
         return result;
     }
 
-    private void runTest(TestCase tcase) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void runTest(TestCase tcase) {
         System.out.println(tcase);
         HotSpotResolvedObjectType metaspaceKlass = CompilerToVMHelper
                 .lookupTypeHelper(Utils.toJVMTypeSignature(tcase.aClass),

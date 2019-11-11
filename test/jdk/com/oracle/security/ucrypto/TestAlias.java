@@ -33,6 +33,7 @@ import java.util.*;
 import javax.crypto.*;
 import javax.crypto.spec.*;
 
+@Bean
 public class TestAlias extends UcryptoTest {
 
     private static final String[] CIPHER_ALGOS = {

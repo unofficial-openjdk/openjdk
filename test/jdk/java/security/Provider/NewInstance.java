@@ -31,6 +31,7 @@
 import java.security.*;
 import java.util.*;
 
+@Bean
 public class NewInstance {
 
     public static void main(String[] args) throws Exception {

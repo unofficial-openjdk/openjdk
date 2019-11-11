@@ -25,6 +25,7 @@
  * @summary Load the class specifiecd by the argument
  *   Input: className
  */
+@Bean
 public class LoadClass {
     public static void main(String args[]) {
         Class c = null;

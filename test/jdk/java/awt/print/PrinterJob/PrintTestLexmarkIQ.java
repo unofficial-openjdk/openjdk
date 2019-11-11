@@ -148,6 +148,9 @@ public class PrintTestLexmarkIQ implements Printable {
         dialog.pack();
         dialog.setVisible(true);
         dialog.addWindowListener(new WindowAdapter() {
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent e) {
                 System.out.println("main dialog closing");
                 testGeneratedInterrupt = false;

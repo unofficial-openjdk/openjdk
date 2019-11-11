@@ -1820,13 +1820,22 @@ class myformat implements Serializable
 
 @SuppressWarnings("serial")
 class MyNumberFormatTest extends NumberFormat {
-    public StringBuffer format(double number, StringBuffer toAppendTo, FieldPosition pos) {
+    @Bean
+@Bean
+@Bean
+            public StringBuffer format(double number, StringBuffer toAppendTo, FieldPosition pos) {
         return new StringBuffer("");
     }
-    public StringBuffer format(long number,StringBuffer toAppendTo, FieldPosition pos) {
+    @Bean
+@Bean
+@Bean
+            public StringBuffer format(long number,StringBuffer toAppendTo, FieldPosition pos) {
         return new StringBuffer("");
     }
-    public Number parse(String text, ParsePosition parsePosition) {
+    @Bean
+@Bean
+@Bean
+            public Number parse(String text, ParsePosition parsePosition) {
         return 0;
     }
 }

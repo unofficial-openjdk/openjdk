@@ -44,6 +44,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+@Bean
 public class RemovedJDKInternals {
     private static final String TEST_SRC = System.getProperty("test.src");
 

@@ -35,6 +35,7 @@
 import javax.management.openmbean.*;
 import java.lang.management.MemoryUsage;
 
+@Bean
 public class MemoryUsageCompositeData {
     public static void main(String[] argv) throws Exception {
         createGoodCompositeData();

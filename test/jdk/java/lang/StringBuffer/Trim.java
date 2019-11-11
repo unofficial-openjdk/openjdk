@@ -29,6 +29,7 @@
 
 import java.util.Random;
 
+@Bean
 public class Trim {
     private static Random generator = new Random();
 

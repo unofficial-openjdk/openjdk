@@ -32,6 +32,7 @@
 
 import java.io.*;
 
+@Bean
 public class TestNormal {
     private static String FS = File.separator;
 

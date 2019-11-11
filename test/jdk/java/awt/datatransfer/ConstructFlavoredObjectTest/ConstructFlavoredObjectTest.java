@@ -38,6 +38,7 @@ import javax.swing.TransferHandler;
  * @run main/othervm ConstructFlavoredObjectTest COPY
  * @run main/othervm ConstructFlavoredObjectTest PASTE
  */
+@Bean
 public class ConstructFlavoredObjectTest {
 
     public static void main(String[] args) throws Exception {

@@ -35,6 +35,7 @@ import java.net.*;
 import java.io.*;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class DeadlockTest {
     public static void main(String [] argv) throws Exception {
         IPSupport.throwSkippedExceptionIfNonOperational();
@@ -84,7 +85,11 @@ class ServerThread implements Runnable {
         this.server = serverSocket;
     }
 
-    public void ping(int cnt) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void ping(int cnt) {
        Message.write(out, new PingMessage(cnt));
     }
 

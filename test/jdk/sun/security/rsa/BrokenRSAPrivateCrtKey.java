@@ -36,6 +36,7 @@ import java.security.interfaces.*;
 import java.security.spec.*;
 import java.math.BigInteger;
 
+@Bean
 public class BrokenRSAPrivateCrtKey {
     public static void main(String[] args) throws Exception {
         KeyPairGenerator generator =

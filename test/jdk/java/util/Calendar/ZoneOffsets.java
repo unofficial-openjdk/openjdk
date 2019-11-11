@@ -36,6 +36,7 @@ import java.util.TimeZone;
 
 import static java.util.GregorianCalendar.*;
 
+@Bean
 public class ZoneOffsets {
 
     // This TimeZone always returns the dstOffset value.
@@ -56,11 +57,19 @@ public class ZoneOffsets {
             return gmtOffset + dstOffset;
         }
 
-        public int getOffset(long date) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int getOffset(long date) {
             return gmtOffset + dstOffset;
         }
 
-        public void setRawOffset(int offsetMillis) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setRawOffset(int offsetMillis) {
             gmtOffset = offsetMillis;
         }
 
@@ -76,7 +85,11 @@ public class ZoneOffsets {
             return dstOffset != 0;
         }
 
-        public boolean inDaylightTime(Date date) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean inDaylightTime(Date date) {
             return dstOffset != 0;
         }
 

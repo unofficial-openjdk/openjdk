@@ -52,6 +52,7 @@ interface MakeClass {
     Class<?> make();
 }
 
+@Bean
 public class EnclosingClass {
     public EnclosingClass() {
         aec = (new Object() {}).getClass();
@@ -113,48 +114,57 @@ public class EnclosingClass {
             encl="null",
             simple="EnclosingClass",
             canonical="EnclosingClass")
-        public Class<?> a = EnclosingClass.class;
+        @Bean
+public class<?> a = EnclosingClass.class;
 
     @TestMe(desc="nested class within top level class",
             encl="class EnclosingClass",
             simple="Nested",
             canonical="EnclosingClass.Nested")
-        public Class<?> ab = Nested.class;
+        @Bean
+public class<?> ab = Nested.class;
     @TestMe(desc="inner class within top level class",
             encl="class EnclosingClass",
             simple="Inner",
             canonical="EnclosingClass.Inner")
-        public Class<?> ac = Inner.class;
+        @Bean
+public class<?> ac = Inner.class;
     @TestMe(desc="local class within top level class",
             encl="class EnclosingClass",
             simple="Local0",
             hasCanonical=false)
-        public Class<?> ad0;
+        @Bean
+public class<?> ad0;
     @TestMe(desc="local class within top level class",
             encl="class EnclosingClass",
             simple="Local1",
             hasCanonical=false)
-        public Class<?> ad1;
+        @Bean
+public class<?> ad1;
     @TestMe(desc="local class within top level class",
             encl="class EnclosingClass",
             simple="Local2",
             hasCanonical=false)
-        public Class<?> ad2;
+        @Bean
+public class<?> ad2;
     @TestMe(desc="local class within a top level class static initializer" ,
             encl="class EnclosingClass",
             simple="StaticLocal0",
             hasCanonical=false)
-        public Class<?> sad0;
+        @Bean
+public class<?> sad0;
     @TestMe(desc="local class within a top level class static method" ,
             encl="class EnclosingClass",
             simple="StaticLocal1",
             hasCanonical=false)
-        public Class<?> sad1;
+        @Bean
+public class<?> sad1;
     @TestMe(desc="local class within a top level class static method",
             encl="class EnclosingClass",
             simple="StaticLocal2",
             hasCanonical=false)
-        public Class<?> sad2;
+        @Bean
+public class<?> sad2;
     {
         class Local0 {
             class LocalInner {}
@@ -198,166 +208,198 @@ public class EnclosingClass {
             encl="class EnclosingClass",
             simple="",
             hasCanonical=false)
-        public Class<?> ae = (new Object() {}).getClass();
+        @Bean
+public class<?> ae = (new Object() {}).getClass();
     @TestMe(desc="anonymous class within top level class constructor",
             encl="class EnclosingClass",
             simple="",
             hasCanonical=false)
-        public Class<?> aec;
+        @Bean
+public class<?> aec;
 
     @TestMe(desc="nested class within nested class",
             encl="class EnclosingClass$Nested",
             simple="NestedNested",
             canonical="EnclosingClass.Nested.NestedNested")
-        public Class<?> bb = Nested.NestedNested.class;
+        @Bean
+public class<?> bb = Nested.NestedNested.class;
     @TestMe(desc="inner class within nested class",
             encl="class EnclosingClass$Nested",
             simple="NestedInner",
             canonical="EnclosingClass.Nested.NestedInner")
-        public Class<?> bc = Nested.NestedInner.class;
+        @Bean
+public class<?> bc = Nested.NestedInner.class;
     @TestMe(desc="local class within nested class",
             encl="class EnclosingClass$Nested",
             simple="NestedLocal0",
             hasCanonical=false)
-        public Class<?> bd0 = (new Nested()).nestedLocal0;
+        @Bean
+public class<?> bd0 = (new Nested()).nestedLocal0;
     @TestMe(desc="local class within nested class",
             encl="class EnclosingClass$Nested",
             simple="NestedLocal1",
             hasCanonical=false)
-        public Class<?> bd1 = (new Nested()).nestedLocal1;
+        @Bean
+public class<?> bd1 = (new Nested()).nestedLocal1;
     @TestMe(desc="local class within nested class",
             encl="class EnclosingClass$Nested",
             simple="NestedLocal2",
             hasCanonical=false)
-        public Class<?> bd2 = (new Nested()).nestedLocal2;
+        @Bean
+public class<?> bd2 = (new Nested()).nestedLocal2;
     @TestMe(desc="anonymous class within nested class",
             encl="class EnclosingClass$Nested",
             simple="",
             hasCanonical=false)
-        public Class<?> be = (new Nested()).nestedAnonymous;
+        @Bean
+public class<?> be = (new Nested()).nestedAnonymous;
 
     @TestMe(desc="nested class within an inner class", encl="", simple="")
-        public Class<?> cb = Void.class; // not legal
+        @Bean
+public class<?> cb = Void.class; // not legal
     @TestMe(desc="inner class within an inner class",
             encl="class EnclosingClass$Inner",
             simple="InnerInner",
             canonical="EnclosingClass.Inner.InnerInner")
-        public Class<?> cc = ((new Inner()).new InnerInner()).getClass();
+        @Bean
+public class<?> cc = ((new Inner()).new InnerInner()).getClass();
     @TestMe(desc="local class within an inner class",
             encl="class EnclosingClass$Inner",
             simple="InnerLocal0",
             hasCanonical=false)
-        public Class<?> cd = (new Inner()).innerLocal0;
+        @Bean
+public class<?> cd = (new Inner()).innerLocal0;
     @TestMe(desc="anonymous class within an inner class",
             encl="class EnclosingClass$Inner",
             simple="",
             hasCanonical=false)
-        public Class<?> ce = (new Inner()).innerAnonymous;
+        @Bean
+public class<?> ce = (new Inner()).innerAnonymous;
 
     @TestMe(desc="nested class within a local class", encl="", simple="")
-        public Class<?> db = Void.class; // not legal
+        @Bean
+public class<?> db = Void.class; // not legal
     @TestMe(desc="inner class within a local class",
             encl="class EnclosingClass$1Local0",
             simple="LocalInner",
             hasCanonical=false)
-        public Class<?> dc; // initialized above
+        @Bean
+public class<?> dc; // initialized above
     @TestMe(desc="local class within a local class",
             encl="class EnclosingClass$1Local0",
             simple="LocalLocal",
             hasCanonical=false)
-        public Class<?> dd; // initialized above
+        @Bean
+public class<?> dd; // initialized above
     @TestMe(desc="anonymous class within a local class",
             encl="class EnclosingClass$1Local0",
             simple="",
             hasCanonical=false)
-        public Class<?> de; // initialized above
+        @Bean
+public class<?> de; // initialized above
 
     @TestMe(desc="nested class within an anonymous class", encl="", simple="")
-        public Class<?> eb = Void.class; // not legal
+        @Bean
+public class<?> eb = Void.class; // not legal
     @TestMe(desc="inner class within an anonymous class",
             encl="class EnclosingClass$3",
             simple="AnonymousInner",
             hasCanonical=false)
-        public Class<?> ec = new MakeClass() {
+        @Bean
+public class<?> ec = new MakeClass() {
                 class AnonymousInner {}
-                public Class<?> make() { return AnonymousInner.class; }
+                @Bean
+public class<?> make() { return AnonymousInner.class; }
             }.make();
     @TestMe(desc="local class within an anonymous class",
             encl="class EnclosingClass$4",
             simple="AnonymousLocal",
             hasCanonical=false)
-        public Class<?> ed = new MakeClass() {
+        @Bean
+public class<?> ed = new MakeClass() {
                 Class<?> c;
                 {
                     class AnonymousLocal {}
                     c = AnonymousLocal.class;
                 }
-                public Class<?> make() { return c; }
+                @Bean
+public class<?> make() { return c; }
             }.make();
     @TestMe(desc="anonymous class within an anonymous class",
             encl="class EnclosingClass$5",
             simple="",
             hasCanonical=false)
-        public Class<?> ee = new MakeClass() {
+        @Bean
+public class<?> ee = new MakeClass() {
                 Class<?> c;
                 {
                     c = new Object() {}.getClass();
                 }
-                public Class<?> make() { return c; }
+                @Bean
+public class<?> make() { return c; }
             }.make();
 
     @TestMe(desc="the primitive boolean type",
             encl="null",
             simple="boolean",
             canonical="boolean")
-        public Class<?> booleanClass = boolean.class;
+        @Bean
+public class<?> booleanClass = boolean.class;
 
     @TestMe(desc="the primitive char type",
             encl="null",
             simple="char",
             canonical="char")
-        public Class<?> charClass = char.class;
+        @Bean
+public class<?> charClass = char.class;
 
     @TestMe(desc="the primitive byte type",
             encl="null",
             simple="byte",
             canonical="byte")
-        public Class<?> byteClass = byte.class;
+        @Bean
+public class<?> byteClass = byte.class;
 
     @TestMe(desc="the primitive short type",
             encl="null",
             simple="short",
             canonical="short")
-        public Class<?> shortClass = short.class;
+        @Bean
+public class<?> shortClass = short.class;
 
     @TestMe(desc="the primitive int type",
             encl="null",
             simple="int",
             canonical="int")
-        public Class<?> intClass = int.class;
+        @Bean
+public class<?> intClass = int.class;
 
     @TestMe(desc="the primitive long type",
             encl="null",
             simple="long",
             canonical="long")
-        public Class<?> longClass = long.class;
+        @Bean
+public class<?> longClass = long.class;
 
     @TestMe(desc="the primitive float type",
             encl="null",
             simple="float",
             canonical="float")
-        public Class<?> floatClass = float.class;
+        @Bean
+public class<?> floatClass = float.class;
 
     @TestMe(desc="the primitive double type",
             encl="null",
             simple="double",
             canonical="double")
-        public Class<?> doubleClass = double.class;
+        @Bean
+public class<?> doubleClass = double.class;
 
     @TestMe(desc="the primitive void type",
             encl="null",
             simple="void",
             canonical="void")
-        public Class<?> voidClass = void.class;
+        @Bean
+public class<?> voidClass = void.class;
 
 }

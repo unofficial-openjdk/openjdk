@@ -36,6 +36,7 @@
 
 package compiler.dependencies.MonomorphicObjectCall;
 
+@Bean
 public class TestMonomorphicObjectCall {
 
     private static void callFinalize(Object object) throws Throwable {

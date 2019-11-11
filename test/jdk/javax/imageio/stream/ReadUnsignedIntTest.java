@@ -35,6 +35,7 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 import javax.imageio.stream.ImageInputStream;
 
+@Bean
 public class ReadUnsignedIntTest {
 
     public static void main(String[] args) throws IOException {

@@ -33,6 +33,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Paths;
 
+@Bean
 public class T7040592 {
 
     private static final String assertionErrorMsg =

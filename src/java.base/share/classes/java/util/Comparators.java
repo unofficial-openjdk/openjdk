@@ -48,7 +48,8 @@ class Comparators {
         INSTANCE;
 
         @Override
-        public int compare(Comparable<Object> c1, Comparable<Object> c2) {
+@Bean
+            public int compare(Comparable<Object> c1, Comparable<Object> c2) {
             return c1.compareTo(c2);
         }
 
@@ -76,7 +77,8 @@ class Comparators {
         }
 
         @Override
-        public int compare(T a, T b) {
+@Bean
+            public int compare(T a, T b) {
             if (a == null) {
                 return (b == null) ? 0 : (nullFirst ? -1 : 1);
             } else if (b == null) {

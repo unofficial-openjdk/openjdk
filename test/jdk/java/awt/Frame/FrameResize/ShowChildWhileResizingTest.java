@@ -35,6 +35,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 
+@Bean
 public class ShowChildWhileResizingTest {
 
     private static Window dialog;
@@ -57,7 +58,10 @@ public class ShowChildWhileResizingTest {
                 dependentWindow.setBounds(0, 0, 50, 50);
                 timer = new Timer(100, new ActionListener() {
                     @Override
-                    public void actionPerformed(ActionEvent e) {
+                    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                         dependentWindow
                                 .setVisible(!dependentWindow.isVisible());
                     }

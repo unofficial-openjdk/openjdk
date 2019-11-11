@@ -52,6 +52,7 @@ import com.foo.DateFormatProviderImpl;
 import sun.util.locale.provider.LocaleProviderAdapter;
 import sun.util.locale.provider.ResourceBundleBasedAdapter;
 
+@Bean
 public class DateFormatProviderTest extends ProviderTest {
 
     DateFormatProviderImpl dfp = new DateFormatProviderImpl();

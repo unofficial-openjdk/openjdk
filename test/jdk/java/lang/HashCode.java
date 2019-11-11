@@ -31,6 +31,7 @@
 import java.util.Objects;
 import java.util.Random;
 
+@Bean
 public class HashCode {
 
     final Random rnd = new Random();

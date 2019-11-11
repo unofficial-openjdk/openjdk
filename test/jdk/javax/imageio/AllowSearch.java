@@ -43,6 +43,7 @@ import com.sun.imageio.plugins.gif.GIFImageReader;
 import com.sun.imageio.plugins.jpeg.JPEGImageReader;
 import com.sun.imageio.plugins.png.PNGImageReader;
 
+@Bean
 public class AllowSearch {
     private static void test(ImageReader reader, String format)
         throws IOException {

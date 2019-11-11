@@ -84,6 +84,7 @@ import jdk.internal.util.ArraysSupport;
  * @param <E> the type of elements held in this queue
  */
 @SuppressWarnings("unchecked")
+@Bean
 public class PriorityQueue<E> extends AbstractQueue<E>
     implements java.io.Serializable {
 
@@ -251,7 +252,8 @@ public class PriorityQueue<E> extends AbstractQueue<E>
         return (es.length > 0) ? es : new Object[1];
     }
 
-    private void initFromPriorityQueue(PriorityQueue<? extends E> c) {
+@Bean
+        private void initFromPriorityQueue(PriorityQueue<? extends E> c) {
         if (c.getClass() == PriorityQueue.class) {
             this.queue = ensureNonEmpty(c.toArray());
             this.size = c.size();
@@ -260,7 +262,8 @@ public class PriorityQueue<E> extends AbstractQueue<E>
         }
     }
 
-    private void initElementsFromCollection(Collection<? extends E> c) {
+@Bean
+        private void initElementsFromCollection(Collection<? extends E> c) {
         Object[] es = c.toArray();
         int len = es.length;
         // If c.toArray incorrectly doesn't return Object[], copy it.
@@ -279,7 +282,8 @@ public class PriorityQueue<E> extends AbstractQueue<E>
      *
      * @param c the collection
      */
-    private void initFromCollection(Collection<? extends E> c) {
+@Bean
+        private void initFromCollection(Collection<? extends E> c) {
         initElementsFromCollection(c);
         heapify();
     }
@@ -289,7 +293,8 @@ public class PriorityQueue<E> extends AbstractQueue<E>
      *
      * @param minCapacity the desired minimum capacity
      */
-    private void grow(int minCapacity) {
+@Bean
+        private void grow(int minCapacity) {
         int oldCapacity = queue.length;
         // Double size if small; else grow by 50%
         int newCapacity = ArraysSupport.newLength(oldCapacity,
@@ -308,7 +313,8 @@ public class PriorityQueue<E> extends AbstractQueue<E>
      *         according to the priority queue's ordering
      * @throws NullPointerException if the specified element is null
      */
-    public boolean add(E e) {
+@Bean
+        public boolean add(E e) {
         return offer(e);
     }
 
@@ -321,7 +327,8 @@ public class PriorityQueue<E> extends AbstractQueue<E>
      *         according to the priority queue's ordering
      * @throws NullPointerException if the specified element is null
      */
-    public boolean offer(E e) {
+@Bean
+        public boolean offer(E e) {
         if (e == null)
             throw new NullPointerException();
         modCount++;
@@ -337,7 +344,8 @@ public class PriorityQueue<E> extends AbstractQueue<E>
         return (E) queue[0];
     }
 
-    private int indexOf(Object o) {
+@Bean
+        private int indexOf(Object o) {
         if (o != null) {
             final Object[] es = queue;
             for (int i = 0, n = size; i < n; i++)
@@ -358,7 +366,8 @@ public class PriorityQueue<E> extends AbstractQueue<E>
      * @param o element to be removed from this queue, if present
      * @return {@code true} if this queue changed as a result of the call
      */
-    public boolean remove(Object o) {
+@Bean
+        public boolean remove(Object o) {
         int i = indexOf(o);
         if (i == -1)
             return false;
@@ -391,7 +400,8 @@ public class PriorityQueue<E> extends AbstractQueue<E>
      * @param o object to be checked for containment in this queue
      * @return {@code true} if this queue contains the specified element
      */
-    public boolean contains(Object o) {
+@Bean
+        public boolean contains(Object o) {
         return indexOf(o) >= 0;
     }
 
@@ -633,7 +643,8 @@ public class PriorityQueue<E> extends AbstractQueue<E>
      * @param k the position to fill
      * @param x the item to insert
      */
-    private void siftUp(int k, E x) {
+@Bean
+        private void siftUp(int k, E x) {
         if (comparator != null)
             siftUpUsingComparator(k, x, queue, comparator);
         else
@@ -674,7 +685,8 @@ public class PriorityQueue<E> extends AbstractQueue<E>
      * @param k the position to fill
      * @param x the item to insert
      */
-    private void siftDown(int k, E x) {
+@Bean
+        private void siftDown(int k, E x) {
         if (comparator != null)
             siftDownUsingComparator(k, x, queue, size, comparator);
         else
@@ -847,7 +859,8 @@ public class PriorityQueue<E> extends AbstractQueue<E>
                 new PriorityQueueSpliterator(lo, index = mid, expectedModCount);
         }
 
-        public void forEachRemaining(Consumer<? super E> action) {
+@Bean
+            public void forEachRemaining(Consumer<? super E> action) {
             if (action == null)
                 throw new NullPointerException();
             if (fence < 0) { fence = size; expectedModCount = modCount; }
@@ -862,7 +875,8 @@ public class PriorityQueue<E> extends AbstractQueue<E>
                 throw new ConcurrentModificationException();
         }
 
-        public boolean tryAdvance(Consumer<? super E> action) {
+@Bean
+            public boolean tryAdvance(Consumer<? super E> action) {
             if (action == null)
                 throw new NullPointerException();
             if (fence < 0) { fence = size; expectedModCount = modCount; }
@@ -891,7 +905,8 @@ public class PriorityQueue<E> extends AbstractQueue<E>
     /**
      * @throws NullPointerException {@inheritDoc}
      */
-    public boolean removeIf(Predicate<? super E> filter) {
+@Bean
+        public boolean removeIf(Predicate<? super E> filter) {
         Objects.requireNonNull(filter);
         return bulkRemove(filter);
     }
@@ -899,7 +914,8 @@ public class PriorityQueue<E> extends AbstractQueue<E>
     /**
      * @throws NullPointerException {@inheritDoc}
      */
-    public boolean removeAll(Collection<?> c) {
+@Bean
+        public boolean removeAll(Collection<?> c) {
         Objects.requireNonNull(c);
         return bulkRemove(e -> c.contains(e));
     }
@@ -907,7 +923,8 @@ public class PriorityQueue<E> extends AbstractQueue<E>
     /**
      * @throws NullPointerException {@inheritDoc}
      */
-    public boolean retainAll(Collection<?> c) {
+@Bean
+        public boolean retainAll(Collection<?> c) {
         Objects.requireNonNull(c);
         return bulkRemove(e -> !c.contains(e));
     }
@@ -925,7 +942,8 @@ public class PriorityQueue<E> extends AbstractQueue<E>
     }
 
     /** Implementation of bulk remove methods. */
-    private boolean bulkRemove(Predicate<? super E> filter) {
+@Bean
+        private boolean bulkRemove(Predicate<? super E> filter) {
         final int expectedModCount = ++modCount;
         final Object[] es = queue;
         final int end = size;
@@ -962,7 +980,8 @@ public class PriorityQueue<E> extends AbstractQueue<E>
     /**
      * @throws NullPointerException {@inheritDoc}
      */
-    public void forEach(Consumer<? super E> action) {
+@Bean
+        public void forEach(Consumer<? super E> action) {
         Objects.requireNonNull(action);
         final int expectedModCount = modCount;
         final Object[] es = queue;

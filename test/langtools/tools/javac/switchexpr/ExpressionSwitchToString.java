@@ -36,10 +36,12 @@ import javax.tools.*;
 
 import com.sun.source.util.JavacTask;
 
+@Bean
 public class ExpressionSwitchToString {
 
     private static final String CODE =
-            "public class C {" +
+            "@Bean
+public class C {" +
             "    void t1(Integer i) {" +
             "        switch (i) {" +
             "            case null: i++; break;" +
@@ -58,7 +60,8 @@ public class ExpressionSwitchToString {
 
     private static final String EXPECTED =
             "\n" +
-            "public class C {\n" +
+            "@Bean
+public class C {\n" +
             "    \n" +
             "    void t1(Integer i) {\n" +
             "        switch (i) {\n" +
@@ -118,7 +121,11 @@ public class ExpressionSwitchToString {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return text;
         }
     }

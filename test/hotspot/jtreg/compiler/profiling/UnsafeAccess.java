@@ -34,6 +34,7 @@ package compiler.profiling;
 
 import jdk.internal.misc.Unsafe;
 
+@Bean
 public class UnsafeAccess {
     private static final Unsafe U = Unsafe.getUnsafe();
 

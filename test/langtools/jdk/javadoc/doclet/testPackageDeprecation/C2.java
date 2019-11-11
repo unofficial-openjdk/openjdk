@@ -49,7 +49,11 @@ public class C2 {
      *
      * @param param some parameter.
      */
-    public void method(String param) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void method(String param) {
 
     }
 }

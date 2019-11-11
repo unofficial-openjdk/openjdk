@@ -63,6 +63,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 @Test
+@Bean
 public class LayerAndLoadersTest {
 
     private static final String TEST_SRC = System.getProperty("test.src");
@@ -691,7 +692,11 @@ public class LayerAndLoadersTest {
         return list;
     }
 
-    private String readModuleName(URL url) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String readModuleName(URL url) {
         try (InputStream in = url.openStream()) {
             ModuleDescriptor descriptor = ModuleDescriptor.read(in);
             return descriptor.name();
@@ -743,7 +748,11 @@ public class LayerAndLoadersTest {
      * Checks that the given layer contains exactly the expected modules
      * (by name).
      */
-    private void checkLayer(ModuleLayer layer, String ... expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkLayer(ModuleLayer layer, String ... expected) {
         Set<String> names = layer.modules().stream()
                 .map(Module::getName)
                 .collect(Collectors.toSet());

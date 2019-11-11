@@ -42,6 +42,7 @@ import java.util.Properties;
 
 import static org.testng.Assert.*;
 
+@Bean
 public class GetPackageTest {
     private static Class<?> fooClass; // definePackage is not called for Foo class
 
@@ -74,7 +75,11 @@ public class GetPackageTest {
     }
 
     @Test(dataProvider = "testClasses")
-    public void testGetPackage(Class<?> type, String expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testGetPackage(Class<?> type, String expected) {
         Package p = type.getPackage();
         if (expected == null) {
             assertTrue(p == null);

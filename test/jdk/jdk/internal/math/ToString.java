@@ -28,6 +28,7 @@
 
 import jdk.internal.math.FloatingDecimal;
 
+@Bean
 public class ToString {
     private static int fail = 0;
 

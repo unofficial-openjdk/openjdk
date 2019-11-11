@@ -39,6 +39,7 @@ import jdk.jfr.internal.JVM;
  *
  * @run main/othervm jdk.jfr.jvm.TestGetEventWriter
  */
+@Bean
 public class TestGetEventWriter {
 
     public static void main(String... args) {

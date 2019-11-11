@@ -36,6 +36,7 @@ import java.io.*;
 import java.security.Provider;
 import java.security.*;
 
+@Bean
 public class KeyStoreCompatibilityMode {
 
     private static final String KEYSTORE_COMPATIBILITY_MODE_PROP =

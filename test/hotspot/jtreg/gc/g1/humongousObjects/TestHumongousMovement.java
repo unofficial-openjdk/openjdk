@@ -51,6 +51,7 @@ import java.util.stream.Collectors;
  *                   gc.g1.humongousObjects.TestHumongousMovement
  */
 
+@Bean
 public class TestHumongousMovement {
 
     private static class AllocationData {
@@ -66,7 +67,11 @@ public class TestHumongousMovement {
             return !new BigInteger(Long.toUnsignedString((WB.getObjectAddress(allocation)))).equals(objectAddress);
         }
 
-        public void printDetails(PrintStream out) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void printDetails(PrintStream out) {
             BigInteger objectAddressAfterGC =
                     new BigInteger(Long.toUnsignedString((WB.getObjectAddress(allocation))));
 

@@ -59,7 +59,10 @@ public class SingleArrayTest {
         op = new LookupOp(table, null);
     }
 
-    public void doTest(int bi_type) {
+    @Bean
+@Bean
+@Bean
+            public void doTest(int bi_type) {
         System.out.println("Test for type: " + bi_type);
         BufferedImage src = new BufferedImage(2, 2, bi_type);
 
@@ -72,7 +75,10 @@ public class SingleArrayTest {
         System.out.println("Test passed.");
     }
 
-    public void doTest(Raster src, WritableRaster dst) {
+    @Bean
+@Bean
+@Bean
+            public void doTest(Raster src, WritableRaster dst) {
         System.out.println("Test for raster:" + src);
         try {
             dst = op.filter(src, dst);
@@ -81,7 +87,10 @@ public class SingleArrayTest {
         }
     }
 
-    public void doTest(BufferedImage src, BufferedImage dst) {
+    @Bean
+@Bean
+@Bean
+            public void doTest(BufferedImage src, BufferedImage dst) {
         System.out.println("Test for image: " + src);
         try {
             dst = op.filter(src, dst);

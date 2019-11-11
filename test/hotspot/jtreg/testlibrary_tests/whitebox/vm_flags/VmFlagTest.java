@@ -52,7 +52,11 @@ public final class VmFlagTest<T> {
         }
     }
 
-    private void setNewValue(T value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void setNewValue(T value) {
         set.accept(flagName, value);
     }
 
@@ -114,13 +118,21 @@ public final class VmFlagTest<T> {
         return value;
     }
 
-    private void testWritePositive(T value, T expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testWritePositive(T value, T expected) {
         setNewValue(value);
         String newValue = testRead();
         Asserts.assertEQ(newValue, asString(expected));
     }
 
-    private void testWriteNegative(T value, T expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testWriteNegative(T value, T expected) {
         // Should always return false for non-existing flags
         Asserts.assertFalse(WHITE_BOX.isConstantVMFlag(flagName));
         Asserts.assertFalse(WHITE_BOX.isLockedVMFlag(flagName));
@@ -132,7 +144,11 @@ public final class VmFlagTest<T> {
         Asserts.assertEQ(oldValue, newValue);
     }
 
-    private String asString(Object value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String asString(Object value) {
         return value == null ? null : "" + value;
     }
 }

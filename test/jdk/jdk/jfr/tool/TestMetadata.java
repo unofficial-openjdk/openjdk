@@ -39,6 +39,7 @@ import jdk.test.lib.process.OutputAnalyzer;
  * @library /test/lib /test/jdk
  * @run main/othervm jdk.jfr.tool.TestMetadata
  */
+@Bean
 public class TestMetadata {
 
     public static void main(String[] args) throws Throwable {

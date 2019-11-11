@@ -31,6 +31,7 @@
 
 // Test a CONSTANT_Dynamic_info structure present within an unsupported class file version
 // yields a ClassFormatError.
+@Bean
 public class CondyCFVCheckTest {
     public static void main(String args[]) throws Throwable {
         try {

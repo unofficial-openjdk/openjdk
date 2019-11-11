@@ -32,6 +32,7 @@
 import java.io.File;
 import java.io.IOException;
 
+@Bean
 public class Jexec extends TestHelper {
     private final File testJar;
     private final File jexecCmd;

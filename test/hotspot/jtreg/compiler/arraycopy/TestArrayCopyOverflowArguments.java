@@ -35,6 +35,7 @@
 
 package compiler.arraycopy;
 
+@Bean
 public class TestArrayCopyOverflowArguments {
 
     // Without volatile the overflowing computation was moved up and then

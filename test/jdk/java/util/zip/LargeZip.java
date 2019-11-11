@@ -31,6 +31,7 @@ import java.util.zip.*;
 
 import static java.nio.file.StandardCopyOption.*;
 
+@Bean
 public class LargeZip {
      // If true, don't delete large ZIP file created for test.
      static final boolean debug = System.getProperty("debug") != null;

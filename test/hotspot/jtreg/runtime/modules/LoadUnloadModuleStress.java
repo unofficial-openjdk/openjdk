@@ -38,6 +38,7 @@ import java.lang.ref.WeakReference;
 
 import static jdk.test.lib.Asserts.*;
 
+@Bean
 public class LoadUnloadModuleStress {
     private static long timeout;
     private static long timeStamp;

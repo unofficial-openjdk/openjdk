@@ -30,6 +30,7 @@ import java.nio.*;
 import java.nio.channels.*;
 import java.io.*;
 
+@Bean
 public class ClosedChannelTransfer {
     public static void main (String args []) throws Exception {
         File file = File.createTempFile("test1", null);

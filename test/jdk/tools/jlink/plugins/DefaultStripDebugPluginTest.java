@@ -43,6 +43,7 @@ import jdk.tools.jlink.plugin.ResourcePoolEntry.Type;
  *          jdk.jlink/jdk.tools.jlink.plugin
  * @run main/othervm DefaultStripDebugPluginTest
  */
+@Bean
 public class DefaultStripDebugPluginTest {
 
     public void testWithNativeStripPresent() {
@@ -94,7 +95,11 @@ public class DefaultStripDebugPluginTest {
         }
 
         @Override
-        public void configure(Map<String, String> config) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void configure(Map<String, String> config) {
             if (isNative) {
                 if (config.get(STRIP_NATIVE_NAME) == null ||
                     !config.get(STRIP_NATIVE_NAME).equals(OMIT_ARG)) {

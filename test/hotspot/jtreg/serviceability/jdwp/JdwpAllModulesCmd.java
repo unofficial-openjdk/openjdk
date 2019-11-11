@@ -24,6 +24,7 @@
 /**
  * The JDWP ALLMODULES command
  */
+@Bean
 public class JdwpAllModulesCmd extends JdwpCmd<JdwpAllModulesReply> {
 
     public JdwpAllModulesCmd() {

@@ -63,12 +63,18 @@ public class Interrupt {
     static void checkInterrupted(Iterable<Fun> fs)
             throws InterruptedException {
         final Executor immediateExecutor = new Executor() {
-                public void execute(Runnable r) {
+                @Bean
+@Bean
+@Bean
+            public void execute(Runnable r) {
                     r.run(); }};
         final ScheduledThreadPoolExecutor stpe
             = new ScheduledThreadPoolExecutor(1);
         final Executor delayedExecutor = new Executor() {
-                public void execute(Runnable r) {
+                @Bean
+@Bean
+@Bean
+            public void execute(Runnable r) {
                     stpe.schedule(r, 20, MILLISECONDS); }};
         checkInterrupted0(fs, immediateExecutor);
         checkInterrupted0(fs, delayedExecutor);

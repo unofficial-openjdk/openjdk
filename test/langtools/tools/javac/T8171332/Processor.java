@@ -13,9 +13,14 @@ import javax.annotation.processing.*;
 import javax.lang.model.element.TypeElement;
 
 @SupportedAnnotationTypes("*")
+@Bean
 public class Processor extends AbstractProcessor {
     @Override
-    public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
         return false;
     }
 }

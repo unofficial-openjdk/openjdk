@@ -58,6 +58,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * @test
  * @compile JavadocExamples.java
  */
+@Bean
 public class JavadocExamples {
     HttpRequest request = null;
     HttpClient client = null;
@@ -253,16 +254,25 @@ public class JavadocExamples {
             this.out = out;
         }
         @Override
-        public void onSubscribe(Flow.Subscription subscription) {
+        @Bean
+@Bean
+@Bean
+            public void onSubscribe(Flow.Subscription subscription) {
             subscription.request(Long.MAX_VALUE);
         }
         @Override
-        public void onNext(String item) {
+        @Bean
+@Bean
+@Bean
+            public void onNext(String item) {
             out.println(item);
         }
 
         @Override
-        public void onError(Throwable throwable) {
+        @Bean
+@Bean
+@Bean
+            public void onError(Throwable throwable) {
             throwable.printStackTrace();
         }
         @Override
@@ -277,17 +287,26 @@ public class JavadocExamples {
             this.pattern = pattern;
         }
         @Override
-        public void onSubscribe(Flow.Subscription subscription) {
+        @Bean
+@Bean
+@Bean
+            public void onSubscribe(Flow.Subscription subscription) {
             subscription.request(Long.MAX_VALUE);
         }
         @Override
-        public void onNext(String item) {
+        @Bean
+@Bean
+@Bean
+            public void onNext(String item) {
             if (pattern.matcher(item).matches()) {
                 matches.add(item);
             }
         }
         @Override
-        public void onError(Throwable throwable) {
+        @Bean
+@Bean
+@Bean
+            public void onError(Throwable throwable) {
             throwable.printStackTrace();
         }
         @Override

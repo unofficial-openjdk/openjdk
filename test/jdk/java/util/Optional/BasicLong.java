@@ -36,6 +36,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static org.testng.Assert.*;
 import org.testng.annotations.Test;
 
+@Bean
 public class BasicLong {
     static final long LONGVAL = 2_305_843_008_139_952_128L;
     static final long UNEXPECTED = 0xFEEDBEEFCAFEBABEL;

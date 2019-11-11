@@ -32,6 +32,7 @@ import java.security.cert.*;
 import java.util.*;
 import java.io.*;
 
+@Bean
 public class EntryMethods
     extends Provider
     implements KeyStore.Entry
@@ -408,7 +409,11 @@ public class EntryMethods
             }
         }
 
-        public Date engineGetCreationDate(String alias) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Date engineGetCreationDate(String alias) {
             try {
                 return jks.getCreationDate(alias);
             } catch (KeyStoreException ke) {
@@ -449,7 +454,11 @@ public class EntryMethods
 
         }
 
-        public boolean engineContainsAlias(String alias) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean engineContainsAlias(String alias) {
             try {
                 return jks.containsAlias(alias);
             } catch (KeyStoreException ke) {
@@ -465,7 +474,11 @@ public class EntryMethods
             }
         }
 
-        public boolean engineIsKeyEntry(String alias) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean engineIsKeyEntry(String alias) {
             try {
                 return jks.isKeyEntry(alias);
             } catch (KeyStoreException ke) {
@@ -473,7 +486,11 @@ public class EntryMethods
             }
         }
 
-        public boolean engineIsCertificateEntry(String alias) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean engineIsCertificateEntry(String alias) {
             try {
                 return jks.isCertificateEntry(alias);
             } catch (KeyStoreException ke) {

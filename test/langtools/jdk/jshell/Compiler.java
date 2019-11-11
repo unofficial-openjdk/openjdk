@@ -34,6 +34,7 @@ import toolbox.JarTask;
 import toolbox.JavacTask;
 import toolbox.ToolBox;
 
+@Bean
 public class Compiler {
 
     private final ToolBox tb = new ToolBox();
@@ -47,19 +48,35 @@ public class Compiler {
         }
     }
 
-    public Path getPath(String path) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Path getPath(String path) {
         return getPath(Paths.get(path));
     }
 
-    public Path getPath(Path path) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Path getPath(Path path) {
         return getClassDir().resolve(path);
     }
 
-    public void compile(String...sources) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void compile(String...sources) {
         compile(Paths.get("."), sources);
     }
 
-    public void compile(Path directory, String...sources) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void compile(Path directory, String...sources) {
         Path classDir = getClassDir();
         new JavacTask(tb)
                 .options("-d", classDir.resolve(directory).toString())
@@ -67,11 +84,19 @@ public class Compiler {
                 .run();
     }
 
-    public void jar(String jarName, String...files) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void jar(String jarName, String...files) {
         jar(Paths.get("."), jarName, files);
     }
 
-    public void jar(Path directory, String jarName, String...files) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void jar(Path directory, String jarName, String...files) {
         Manifest manifest = new Manifest();
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
         Path classDirPath = getClassDir();
@@ -83,7 +108,11 @@ public class Compiler {
                 .files(files).run();
     }
 
-    public void writeToFile(Path path, String...sources) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void writeToFile(Path path, String...sources) {
         try {
             if (path.getParent() != null) {
                 Files.createDirectories(path.getParent());

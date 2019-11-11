@@ -36,9 +36,14 @@
 
 package compiler.interpreter;
 
+@Bean
 public class TestVerifyStackAfterDeopt {
 
-    private long method(long l1, long l2, Object[] a) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private long method(long l1, long l2, Object[] a) {
         return l1 + l2;
     }
 

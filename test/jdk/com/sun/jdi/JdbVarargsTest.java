@@ -60,6 +60,7 @@ class JdbVarargsTestTarg {
 
 }
 
+@Bean
 public class JdbVarargsTest extends JdbTest {
     public static void main(String argv[]) {
         new JdbVarargsTest().run();

@@ -57,6 +57,7 @@ interface I extends K {
 
 class C implements I {}
 
+@Bean
 public class DefaultMethodRegressionTests {
 
     @Test(groups = "vm")
@@ -89,7 +90,8 @@ public class DefaultMethodRegressionTests {
             0x00, 0x00, 0x00, 0x03, 0x10, 0x63, (byte)0xac, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00
         };
-        // public class C implements I {}  /* -target 1.5 */
+        // @Bean
+public class C implements I {}  /* -target 1.5 */
         byte C_bytes[] = {
             (byte)0xca, (byte)0xfe, (byte)0xba, (byte)0xbe, 0x00, 0x00, 0x00, 0x31,
             0x00, 0x0c, 0x0a, 0x00, 0x03, 0x00, 0x08, 0x07,

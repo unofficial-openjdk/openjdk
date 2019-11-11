@@ -35,6 +35,7 @@ import jdk.internal.misc.Unsafe;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 
+@Bean
 public class TestLoopUnswitching {
 
     static final jdk.internal.misc.Unsafe UNSAFE = Unsafe.getUnsafe();
@@ -90,7 +91,11 @@ public class TestLoopUnswitching {
         return res;
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         A[] arr = new A[1000];
         Arrays.fill(arr, new A(0x42));
         for (int i = 0; i < 20000; i++) {

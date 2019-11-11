@@ -40,6 +40,7 @@ import sun.hotspot.WhiteBox;
 import java.util.function.Consumer;
 import jdk.test.lib.Utils;
 
+@Bean
 public class BlobSanityTest {
 
     private static void runTest(Consumer<Integer> consumer, int val, String testCaseName, Class<? extends Throwable>

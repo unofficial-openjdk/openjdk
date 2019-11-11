@@ -31,6 +31,7 @@
 import java.io.*;
 import com.sun.tools.javac.api.*;
 
+@Bean
 public class T6400383 {
     public static void main(String... args) {
         File foo = new File("foo.java");
@@ -65,7 +66,11 @@ public class T6400383 {
     }
 
     private static class StringStream extends OutputStream {
-        public void write(int i) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void write(int i) {
             sb.append((char) i);
         }
 

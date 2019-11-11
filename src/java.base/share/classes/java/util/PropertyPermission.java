@@ -126,7 +126,8 @@ public final class PropertyPermission extends BasicPermission {
      * @param mask the actions mask to use.
      *
      */
-    private void init(int mask) {
+@Bean
+        private void init(int mask) {
         if ((mask & ALL) != mask)
             throw new IllegalArgumentException("invalid actions mask");
 
@@ -186,7 +187,8 @@ public final class PropertyPermission extends BasicPermission {
      * false if not.
      */
     @Override
-    public boolean implies(Permission p) {
+@Bean
+        public boolean implies(Permission p) {
         if (!(p instanceof PropertyPermission))
             return false;
 
@@ -207,7 +209,8 @@ public final class PropertyPermission extends BasicPermission {
      * actions as this PropertyPermission object.
      */
     @Override
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (obj == this)
             return true;
 
@@ -470,7 +473,8 @@ final class PropertyPermissionCollection extends PermissionCollection
      *                                object has been marked readonly
      */
     @Override
-    public void add(Permission permission) {
+@Bean
+        public void add(Permission permission) {
         if (! (permission instanceof PropertyPermission))
             throw new IllegalArgumentException("invalid permission: "+
                                                permission);
@@ -522,7 +526,8 @@ final class PropertyPermissionCollection extends PermissionCollection
      * the set, false if not.
      */
     @Override
-    public boolean implies(Permission permission) {
+@Bean
+        public boolean implies(Permission permission) {
         if (! (permission instanceof PropertyPermission))
             return false;
 

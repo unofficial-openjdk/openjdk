@@ -39,6 +39,7 @@ import javax.imageio.ImageIO;
  * @ignore tests that take a long time and consumes 5Gb memory
  * @run main/othervm -ms4g -mx4g CrashTest -slow
 */
+@Bean
 public class CrashTest {
 
     static final boolean SAVE_IMAGE = false;

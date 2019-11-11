@@ -35,6 +35,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.Platform;
 
+@Bean
 public class MonitorMismatchTest {
 
     public static void main(String... args) throws Exception {

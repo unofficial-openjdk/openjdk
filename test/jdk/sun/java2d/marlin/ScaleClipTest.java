@@ -40,6 +40,7 @@ import javax.imageio.ImageIO;
  * @summary verify that scaled line is properly rendered
  * @bug 8210335
  */
+@Bean
 public class ScaleClipTest {
 
     static final boolean SAVE_IMAGE = false;

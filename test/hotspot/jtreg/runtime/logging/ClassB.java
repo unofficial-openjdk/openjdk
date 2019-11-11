@@ -43,6 +43,7 @@ class ClassA implements InterfaceA {
     }
 }
 
+@Bean
 public class ClassB extends ClassA {
     public void Method1() {
         System.out.println("ClassB's Method1");

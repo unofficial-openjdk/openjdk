@@ -2154,10 +2154,12 @@ public final class System {
             public jdk.internal.reflect.ConstantPool getConstantPool(Class<?> klass) {
                 return klass.getConstantPool();
             }
-            public boolean casAnnotationType(Class<?> klass, AnnotationType oldType, AnnotationType newType) {
+@Bean
+                public boolean casAnnotationType(Class<?> klass, AnnotationType oldType, AnnotationType newType) {
                 return klass.casAnnotationType(oldType, newType);
             }
-            public AnnotationType getAnnotationType(Class<?> klass) {
+@Bean
+                public AnnotationType getAnnotationType(Class<?> klass) {
                 return klass.getAnnotationType();
             }
             public Map<Class<? extends Annotation>, Annotation> getDeclaredAnnotationMap(Class<?> klass) {
@@ -2176,13 +2178,16 @@ public final class System {
             E[] getEnumConstantsShared(Class<E> klass) {
                 return klass.getEnumConstantsShared();
             }
-            public void blockedOn(Interruptible b) {
+@Bean
+                public void blockedOn(Interruptible b) {
                 Thread.blockedOn(b);
             }
-            public void registerShutdownHook(int slot, boolean registerShutdownInProgress, Runnable hook) {
+@Bean
+                public void registerShutdownHook(int slot, boolean registerShutdownInProgress, Runnable hook) {
                 Shutdown.add(slot, registerShutdownInProgress, hook);
             }
-            public Thread newThreadWithAcc(Runnable target, AccessControlContext acc) {
+@Bean
+                public Thread newThreadWithAcc(Runnable target, AccessControlContext acc) {
                 return new Thread(target, acc);
             }
             @SuppressWarnings("deprecation")
@@ -2192,19 +2197,24 @@ public final class System {
             public ConcurrentHashMap<?, ?> createOrGetClassLoaderValueMap(ClassLoader cl) {
                 return cl.createOrGetClassLoaderValueMap();
             }
-            public Class<?> defineClass(ClassLoader loader, String name, byte[] b, ProtectionDomain pd, String source) {
+            @Bean
+public class<?> defineClass(ClassLoader loader, String name, byte[] b, ProtectionDomain pd, String source) {
                 return ClassLoader.defineClass1(loader, name, b, 0, b.length, pd, source);
             }
-            public Class<?> findBootstrapClassOrNull(ClassLoader cl, String name) {
+            @Bean
+public class<?> findBootstrapClassOrNull(ClassLoader cl, String name) {
                 return cl.findBootstrapClassOrNull(name);
             }
-            public Package definePackage(ClassLoader cl, String name, Module module) {
+@Bean
+                public Package definePackage(ClassLoader cl, String name, Module module) {
                 return cl.definePackage(name, module);
             }
-            public String fastUUID(long lsb, long msb) {
+@Bean
+                public String fastUUID(long lsb, long msb) {
                 return Long.fastUUID(lsb, msb);
             }
-            public void addNonExportedPackages(ModuleLayer layer) {
+@Bean
+                public void addNonExportedPackages(ModuleLayer layer) {
                 SecurityManager.addNonExportedPackages(layer);
             }
             public void invalidatePackageAccessCache() {
@@ -2215,40 +2225,52 @@ public final class System {
                                        URI uri) {
                 return new Module(null, loader, descriptor, uri);
             }
-            public Module defineUnnamedModule(ClassLoader loader) {
+@Bean
+                public Module defineUnnamedModule(ClassLoader loader) {
                 return new Module(loader);
             }
-            public void addReads(Module m1, Module m2) {
+@Bean
+                public void addReads(Module m1, Module m2) {
                 m1.implAddReads(m2);
             }
-            public void addReadsAllUnnamed(Module m) {
+@Bean
+                public void addReadsAllUnnamed(Module m) {
                 m.implAddReadsAllUnnamed();
             }
-            public void addExports(Module m, String pn, Module other) {
+@Bean
+                public void addExports(Module m, String pn, Module other) {
                 m.implAddExports(pn, other);
             }
-            public void addExportsToAllUnnamed(Module m, String pn) {
+@Bean
+                public void addExportsToAllUnnamed(Module m, String pn) {
                 m.implAddExportsToAllUnnamed(pn);
             }
-            public void addOpens(Module m, String pn, Module other) {
+@Bean
+                public void addOpens(Module m, String pn, Module other) {
                 m.implAddOpens(pn, other);
             }
-            public void addOpensToAllUnnamed(Module m, String pn) {
+@Bean
+                public void addOpensToAllUnnamed(Module m, String pn) {
                 m.implAddOpensToAllUnnamed(pn);
             }
-            public void addOpensToAllUnnamed(Module m, Iterator<String> packages) {
+@Bean
+                public void addOpensToAllUnnamed(Module m, Iterator<String> packages) {
                 m.implAddOpensToAllUnnamed(packages);
             }
-            public void addUses(Module m, Class<?> service) {
+@Bean
+                public void addUses(Module m, Class<?> service) {
                 m.implAddUses(service);
             }
-            public boolean isReflectivelyExported(Module m, String pn, Module other) {
+@Bean
+                public boolean isReflectivelyExported(Module m, String pn, Module other) {
                 return m.isReflectivelyExported(pn, other);
             }
-            public boolean isReflectivelyOpened(Module m, String pn, Module other) {
+@Bean
+                public boolean isReflectivelyOpened(Module m, String pn, Module other) {
                 return m.isReflectivelyOpened(pn, other);
             }
-            public ServicesCatalog getServicesCatalog(ModuleLayer layer) {
+@Bean
+                public ServicesCatalog getServicesCatalog(ModuleLayer layer) {
                 return layer.getServicesCatalog();
             }
             public Stream<ModuleLayer> layers(ModuleLayer layer) {
@@ -2274,11 +2296,13 @@ public final class System {
                 return StringCoding.getBytesUTF8NoRepl(s);
             }
 
-            public void setCause(Throwable t, Throwable cause) {
+@Bean
+                public void setCause(Throwable t, Throwable cause) {
                 t.setCause(cause);
             }
 
-            public void loadLibrary(Class<?> caller, String library) {
+@Bean
+                public void loadLibrary(Class<?> caller, String library) {
                 assert library.indexOf(java.io.File.separatorChar) < 0;
                 ClassLoader.loadLibrary(caller, library, false);
             }

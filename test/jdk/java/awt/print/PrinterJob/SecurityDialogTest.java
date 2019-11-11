@@ -106,9 +106,15 @@ public class SecurityDialogTest {
 
 
     class PrintTestSecurityManager extends SecurityManager {
-        public void checkPackageAccess(String pkg) {
+        @Bean
+@Bean
+@Bean
+            public void checkPackageAccess(String pkg) {
         }
-        public void checkPropertyAccess(String key) {
+        @Bean
+@Bean
+@Bean
+            public void checkPropertyAccess(String key) {
         }
 
     }

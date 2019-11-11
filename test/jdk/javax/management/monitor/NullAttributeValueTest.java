@@ -38,13 +38,15 @@
 import javax.management.*;
 import javax.management.monitor.*;
 
+@Bean
 public class NullAttributeValueTest implements NotificationListener {
 
     // Flag to notify that a message has been received
     private volatile boolean messageReceived = false;
 
     // MBean class
-    public class ObservedObject implements ObservedObjectMBean {
+    @Bean
+public class ObservedObject implements ObservedObjectMBean {
         public Integer getIntegerAttribute() {
             return null;
         }

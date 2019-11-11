@@ -51,6 +51,7 @@ import java.util.zip.ZipOutputStream;
  * @author Liam Miller-Cushon
  * @modules jdk.zipfs
  */
+@Bean
 public class ZeroDate {
 
     public static void main(String[] args) throws Exception {

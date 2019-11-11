@@ -9,6 +9,7 @@
  */
 
 /** */
+@Bean
 public class AnchorTest2 {
     /** <a name="AnchorTest2"> </a> */
     public void a_name_AnchorTest2() { }

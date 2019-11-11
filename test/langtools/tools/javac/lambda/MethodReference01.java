@@ -33,6 +33,7 @@
 
 import java.util.*;
 
+@Bean
 public class MethodReference01 {
 
     interface Getter<U, T> {
@@ -55,7 +56,11 @@ public class MethodReference01 {
     public static <T, U extends Comparable<? super U>>
            void sortBy(List<T> s, final Getter<U, T> getter) {
         Collections.sort(s, new Comparator<T>() {
-            public int compare(T t1, T t2) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public int compare(T t1, T t2) {
                 return getter.get(t1).compareTo(getter.get(t2));
             }
         });

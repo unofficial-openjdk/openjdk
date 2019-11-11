@@ -44,6 +44,7 @@ import java.util.*;
  * horizontal and vertical alignment.
  */
 
+@Bean
 public class LayoutControlPanel extends JPanel implements SwingConstants {
 
     private boolean  absolutePositions;
@@ -124,7 +125,11 @@ public class LayoutControlPanel extends JPanel implements SwingConstants {
 
 
     class OrientationChangeListener implements ActionListener {
-        public void actionPerformed( ActionEvent e ) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed( ActionEvent e ) {
             if( !e.getActionCommand().equals("OrientationChanged") ){
                 return;
             }
@@ -164,7 +169,11 @@ public class LayoutControlPanel extends JPanel implements SwingConstants {
 
     class PositioningListener implements ItemListener {
 
-        public void itemStateChanged(ItemEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void itemStateChanged(ItemEvent e) {
             JRadioButton rb = (JRadioButton) e.getSource();
             if(rb.getText().equals("Absolute") && rb.isSelected()) {
                 absolutePositions = true;
@@ -201,7 +210,11 @@ public class LayoutControlPanel extends JPanel implements SwingConstants {
 
     // Text Position Listener
     class TextPositionListener implements ActionListener {
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             JRadioButton rb = (JRadioButton) e.getSource();
             if(!rb.isSelected()) {
                 return;
@@ -240,7 +253,11 @@ public class LayoutControlPanel extends JPanel implements SwingConstants {
 
     // Label Alignment Listener
     class LabelAlignmentListener implements  ActionListener {
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             JRadioButton rb = (JRadioButton) e.getSource();
             if(!rb.isSelected()) {
                 return;

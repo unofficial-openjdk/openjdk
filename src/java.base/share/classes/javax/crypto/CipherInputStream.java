@@ -74,6 +74,7 @@ import javax.crypto.IllegalBlockSizeException;
  * @since 1.4
  */
 
+@Bean
 public class CipherInputStream extends FilterInputStream {
 
     // the cipher engine to use to process stream data

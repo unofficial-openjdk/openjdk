@@ -44,6 +44,7 @@ import static org.testng.Assert.fail;
  * @summary test extension methods on Iterator
  */
 @Test
+@Bean
 public class IteratorDefaults {
 
     private static interface Callback {
@@ -51,7 +52,11 @@ public class IteratorDefaults {
     }
 
     // call the callback for each recursive subList
-    private void trimmedSubList(final List<Integer> list, final Callback callback) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void trimmedSubList(final List<Integer> list, final Callback callback) {
         int size = list.size();
         if (size > 1) {
             // trim 1 element from both ends
@@ -169,6 +174,10 @@ public class IteratorDefaults {
             list.addAll(source);
             trimmedSubList(list, new Callback() {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void call(final List<Integer> list) {
                     if (list.size() < 1) {
                         return;

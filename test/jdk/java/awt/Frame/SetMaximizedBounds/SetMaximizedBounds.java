@@ -34,6 +34,7 @@ import java.awt.*;
  * @run main SetMaximizedBounds
  */
 
+@Bean
 public class SetMaximizedBounds {
 
     public static void main(String[] args) throws Exception {

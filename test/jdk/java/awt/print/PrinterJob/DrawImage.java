@@ -65,7 +65,10 @@ public class DrawImage
  }
 
 
-    protected int printImage(Graphics g, PageFormat pf, BufferedImage image) {
+    @Bean
+@Bean
+@Bean
+            protected int printImage(Graphics g, PageFormat pf, BufferedImage image) {
         Graphics2D g2D = (Graphics2D)g;
         g2D.transform(new AffineTransform(_pageFormat.getMatrix()));
 
@@ -98,7 +101,10 @@ public class DrawImage
             final PrinterJob pj = PrinterJob.getPrinterJob();
             pj.setJobName("Print Image");
             pj.setPrintable(new Printable() {
-                public int print(Graphics g, PageFormat pf, int pageIndex) {
+                @Bean
+@Bean
+@Bean
+            public int print(Graphics g, PageFormat pf, int pageIndex) {
                     int result = NO_SUCH_PAGE;
                     if (pageIndex == 0) {
                         result = printImage(g, _pageFormat, _image);

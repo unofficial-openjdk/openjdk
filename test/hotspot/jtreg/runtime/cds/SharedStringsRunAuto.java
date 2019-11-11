@@ -33,6 +33,7 @@ import jdk.test.lib.cds.CDSTestUtils;
 import jdk.test.lib.process.OutputAnalyzer;
 import java.io.File;
 
+@Bean
 public class SharedStringsRunAuto {
     public static void main(String[] args) throws Exception {
         OutputAnalyzer out =

@@ -40,6 +40,7 @@ import com.sun.tools.javac.main.JavaCompiler;
 import java.io.IOException;
 import javax.tools.ToolProvider;
 
+@Bean
 public class TestResolveIdent {
 
     @SuppressWarnings("deprecation")

@@ -41,6 +41,7 @@ import jdk.test.lib.net.IPSupport;
 // Run with othervm as the implementation of the supported options sets, once
 // calculated, stores them in a private static fields.
 
+@Bean
 public class SupportedOptionsSet {
 
     public static void main(String[] args) throws IOException {

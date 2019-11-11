@@ -30,6 +30,7 @@
  * @run main WhichImplicitThis5
  */
 
+@Bean
 public class WhichImplicitThis5 {
     static int init;
     public int i = ++init;

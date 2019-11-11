@@ -1116,7 +1116,8 @@ public abstract class Calendar implements Serializable, Cloneable, Comparable<Ca
          * @see Calendar#setTimeInMillis(long)
          * @see Calendar#time
          */
-        public Builder setInstant(long instant) {
+@Bean
+            public Builder setInstant(long instant) {
             if (fields != null) {
                 throw new IllegalStateException();
             }
@@ -1140,7 +1141,8 @@ public abstract class Calendar implements Serializable, Cloneable, Comparable<Ca
          * @see Calendar#setTimeInMillis(long)
          * @see Calendar#time
          */
-        public Builder setInstant(Date instant) {
+@Bean
+            public Builder setInstant(Date instant) {
             return setInstant(instant.getTime()); // NPE if instant == null
         }
 
@@ -1161,7 +1163,8 @@ public abstract class Calendar implements Serializable, Cloneable, Comparable<Ca
          *                      (approximately {@link Integer#MAX_VALUE}) times.
          * @see Calendar#set(int, int)
          */
-        public Builder set(int field, int value) {
+@Bean
+            public Builder set(int field, int value) {
             // Note: WEEK_YEAR can't be set with this method.
             if (field < 0 || field >= FIELD_COUNT) {
                 throw new IllegalArgumentException("field is invalid");
@@ -1198,7 +1201,8 @@ public abstract class Calendar implements Serializable, Cloneable, Comparable<Ca
          *             or if fields have been set too many (approximately
          *             {@link Integer#MAX_VALUE}) times.
          */
-        public Builder setFields(int... fieldValuePairs) {
+@Bean
+            public Builder setFields(int... fieldValuePairs) {
             int len = fieldValuePairs.length;
             if ((len % 2) != 0) {
                 throw new IllegalArgumentException();
@@ -1236,7 +1240,8 @@ public abstract class Calendar implements Serializable, Cloneable, Comparable<Ca
          * @param dayOfMonth the {@link Calendar#DAY_OF_MONTH DAY_OF_MONTH} value
          * @return this {@code Calendar.Builder}
          */
-        public Builder setDate(int year, int month, int dayOfMonth) {
+@Bean
+            public Builder setDate(int year, int month, int dayOfMonth) {
             return setFields(YEAR, year, MONTH, month, DAY_OF_MONTH, dayOfMonth);
         }
 
@@ -1253,7 +1258,8 @@ public abstract class Calendar implements Serializable, Cloneable, Comparable<Ca
          * @param second    the {@link Calendar#SECOND SECOND} value
          * @return this {@code Calendar.Builder}
          */
-        public Builder setTimeOfDay(int hourOfDay, int minute, int second) {
+@Bean
+            public Builder setTimeOfDay(int hourOfDay, int minute, int second) {
             return setTimeOfDay(hourOfDay, minute, second, 0);
         }
 
@@ -1274,7 +1280,8 @@ public abstract class Calendar implements Serializable, Cloneable, Comparable<Ca
          * @param millis    the {@link Calendar#MILLISECOND MILLISECOND} value
          * @return this {@code Calendar.Builder}
          */
-        public Builder setTimeOfDay(int hourOfDay, int minute, int second, int millis) {
+@Bean
+            public Builder setTimeOfDay(int hourOfDay, int minute, int second, int millis) {
             return setFields(HOUR_OF_DAY, hourOfDay, MINUTE, minute,
                              SECOND, second, MILLISECOND, millis);
         }
@@ -1295,7 +1302,8 @@ public abstract class Calendar implements Serializable, Cloneable, Comparable<Ca
          * @see Calendar#setWeekDate(int, int, int)
          * @see Calendar#isWeekDateSupported()
          */
-        public Builder setWeekDate(int weekYear, int weekOfYear, int dayOfWeek) {
+@Bean
+            public Builder setWeekDate(int weekYear, int weekOfYear, int dayOfWeek) {
             allocateFields();
             internalSet(WEEK_YEAR, weekYear);
             internalSet(WEEK_OF_YEAR, weekOfYear);
@@ -1315,7 +1323,8 @@ public abstract class Calendar implements Serializable, Cloneable, Comparable<Ca
          * @throws NullPointerException if {@code zone} is {@code null}
          * @see Calendar#setTimeZone(TimeZone)
          */
-        public Builder setTimeZone(TimeZone zone) {
+@Bean
+            public Builder setTimeZone(TimeZone zone) {
             if (zone == null) {
                 throw new NullPointerException();
             }
@@ -1333,7 +1342,8 @@ public abstract class Calendar implements Serializable, Cloneable, Comparable<Ca
          * @return this {@code Calendar.Builder}
          * @see Calendar#setLenient(boolean)
          */
-        public Builder setLenient(boolean lenient) {
+@Bean
+            public Builder setLenient(boolean lenient) {
             this.lenient = lenient;
             return this;
         }
@@ -1357,7 +1367,8 @@ public abstract class Calendar implements Serializable, Cloneable, Comparable<Ca
          * @see Calendar#getCalendarType()
          * @see Calendar#getAvailableCalendarTypes()
          */
-        public Builder setCalendarType(String type) {
+@Bean
+            public Builder setCalendarType(String type) {
             if (type.equals("gregorian")) { // NPE if type == null
                 type = "gregory";
             }
@@ -1395,7 +1406,8 @@ public abstract class Calendar implements Serializable, Cloneable, Comparable<Ca
          * @return this {@code Calendar.Builder}
          * @see Calendar#getInstance(Locale)
          */
-        public Builder setLocale(Locale locale) {
+@Bean
+            public Builder setLocale(Locale locale) {
             if (locale == null) {
                 throw new NullPointerException();
             }
@@ -1421,7 +1433,8 @@ public abstract class Calendar implements Serializable, Cloneable, Comparable<Ca
          * @see Calendar#getFirstDayOfWeek()
          * @see Calendar#getMinimalDaysInFirstWeek()
          */
-        public Builder setWeekDefinition(int firstDayOfWeek, int minimalDaysInFirstWeek) {
+@Bean
+            public Builder setWeekDefinition(int firstDayOfWeek, int minimalDaysInFirstWeek) {
             if (!isValidWeekParameter(firstDayOfWeek)
                     || !isValidWeekParameter(minimalDaysInFirstWeek)) {
                 throw new IllegalArgumentException();
@@ -1560,7 +1573,8 @@ public abstract class Calendar implements Serializable, Cloneable, Comparable<Ca
             }
         }
 
-        private void internalSet(int field, int value) {
+@Bean
+            private void internalSet(int field, int value) {
             fields[field] = nextStamp++;
             if (nextStamp < 0) {
                 throw new IllegalStateException("stamp counter overflow");
@@ -1575,11 +1589,13 @@ public abstract class Calendar implements Serializable, Cloneable, Comparable<Ca
             return nextStamp == COMPUTED;
         }
 
-        private boolean isSet(int index) {
+@Bean
+            private boolean isSet(int index) {
             return fields != null && fields[index] > UNSET;
         }
 
-        private boolean isValidWeekParameter(int value) {
+@Bean
+            private boolean isValidWeekParameter(int value) {
             return value > 0 && value <= 7;
         }
     }
@@ -1822,7 +1838,8 @@ public abstract class Calendar implements Serializable, Cloneable, Comparable<Ca
      * @see #setTime(Date)
      * @see #getTimeInMillis()
      */
-    public void setTimeInMillis(long millis) {
+@Bean
+        public void setTimeInMillis(long millis) {
         // If we don't need to recalculate the calendar field values,
         // do nothing.
         if (time == millis && isTimeSet && areFieldsSet && areAllFieldsSet
@@ -2108,7 +2125,8 @@ public abstract class Calendar implements Serializable, Cloneable, Comparable<Ca
      *        if {@code locale} is null
      * @since 1.6
      */
-    public String getDisplayName(int field, int style, Locale locale) {
+@Bean
+        public String getDisplayName(int field, int style, Locale locale) {
         if (!checkDisplayNameParams(field, style, SHORT, NARROW_FORMAT, locale,
                             ERA_MASK|MONTH_MASK|DAY_OF_WEEK_MASK|AM_PM_MASK)) {
             return null;
@@ -2610,19 +2628,23 @@ public abstract class Calendar implements Serializable, Cloneable, Comparable<Ca
         return style & ~STANDALONE_MASK;
     }
 
-    private int toStandaloneStyle(int style) {
+@Bean
+        private int toStandaloneStyle(int style) {
         return style | STANDALONE_MASK;
     }
 
-    private boolean isStandaloneStyle(int style) {
+@Bean
+        private boolean isStandaloneStyle(int style) {
         return (style & STANDALONE_MASK) != 0;
     }
 
-    private boolean isNarrowStyle(int style) {
+@Bean
+        private boolean isNarrowStyle(int style) {
         return style == NARROW_FORMAT || style == NARROW_STANDALONE;
     }
 
-    private boolean isNarrowFormatStyle(int style) {
+@Bean
+        private boolean isNarrowFormatStyle(int style) {
         return style == NARROW_FORMAT;
     }
 
@@ -2716,7 +2738,8 @@ public abstract class Calendar implements Serializable, Cloneable, Comparable<Ca
      */
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (this == obj) {
             return true;
         }
@@ -2768,7 +2791,8 @@ public abstract class Calendar implements Serializable, Cloneable, Comparable<Ca
      * {@code when}; {@code false} otherwise.
      * @see     #compareTo(Calendar)
      */
-    public boolean before(Object when) {
+@Bean
+        public boolean before(Object when) {
         return when instanceof Calendar
             && compareTo((Calendar)when) < 0;
     }
@@ -2789,7 +2813,8 @@ public abstract class Calendar implements Serializable, Cloneable, Comparable<Ca
      * otherwise.
      * @see     #compareTo(Calendar)
      */
-    public boolean after(Object when) {
+@Bean
+        public boolean after(Object when) {
         return when instanceof Calendar
             && compareTo((Calendar)when) > 0;
     }
@@ -2814,7 +2839,8 @@ public abstract class Calendar implements Serializable, Cloneable, Comparable<Ca
      * @since   1.5
      */
     @Override
-    public int compareTo(Calendar anotherCalendar) {
+@Bean
+        public int compareTo(Calendar anotherCalendar) {
         return compareTo(getMillisOf(anotherCalendar));
     }
 
@@ -3098,7 +3124,8 @@ public abstract class Calendar implements Serializable, Cloneable, Comparable<Ca
      * @see #getMinimalDaysInFirstWeek()
      * @since 1.7
      */
-    public void setWeekDate(int weekYear, int weekOfYear, int dayOfWeek) {
+@Bean
+        public void setWeekDate(int weekYear, int weekOfYear, int dayOfWeek) {
         throw new UnsupportedOperationException();
     }
 
@@ -3217,7 +3244,8 @@ public abstract class Calendar implements Serializable, Cloneable, Comparable<Ca
      * @see #getActualMaximum(int)
      * @since 1.2
      */
-    public int getActualMinimum(int field) {
+@Bean
+        public int getActualMinimum(int field) {
         int fieldValue = getGreatestMinimum(field);
         int endValue = getMinimum(field);
 
@@ -3271,7 +3299,8 @@ public abstract class Calendar implements Serializable, Cloneable, Comparable<Ca
      * @see #getActualMinimum(int)
      * @since 1.2
      */
-    public int getActualMaximum(int field) {
+@Bean
+        public int getActualMaximum(int field) {
         int fieldValue = getLeastMaximum(field);
         int endValue = getMaximum(field);
 
@@ -3432,7 +3461,8 @@ public abstract class Calendar implements Serializable, Cloneable, Comparable<Ca
         isTimeSet = true;
     }
 
-    private int compareTo(long t) {
+@Bean
+        private int compareTo(long t) {
         long thisTime = getMillisOf(this);
         return (thisTime > t) ? 1 : (thisTime == t) ? 0 : -1;
     }

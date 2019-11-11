@@ -55,7 +55,11 @@ class MethodInvokeWithTraceOnTestTarg {
 
     }
 
-    public void print(Object obj) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void print(Object obj) {
         System.out.println(obj);
     }
 
@@ -68,6 +72,7 @@ class MethodInvokeWithTraceOnTestTarg {
 
 /********** test program **********/
 
+@Bean
 public class MethodInvokeWithTraceOnTest extends TestScaffold {
 
     MethodInvokeWithTraceOnTest(String args[]) {
@@ -157,12 +162,20 @@ public class MethodInvokeWithTraceOnTest extends TestScaffold {
         classType.invokeMethod(thread, forNameMethod, Collections.singletonList(classNameParam), invokeOptions);
     }
 
-    private ClassType getClassType(String className) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private ClassType getClassType(String className) {
         List classes = vm().classesByName(className);
         return (ClassType) classes.get(0);
     }
 
-    private int getMethodInvokeOptions(BreakpointEvent be) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int getMethodInvokeOptions(BreakpointEvent be) {
         return be.request().suspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD ?
                 ObjectReference.INVOKE_SINGLE_THREADED : 0;
     }

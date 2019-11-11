@@ -33,6 +33,7 @@
 
 package compiler.codegen;
 
+@Bean
 public class TestIntDoubleVect {
   private static final int ARRLEN = 997;
   private static final int ITERS  = 11000;

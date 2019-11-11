@@ -31,6 +31,7 @@
 import java.net.ServerSocket;
 import java.net.SocketImpl;
 
+@Bean
 public class NullConstructor {
 
     public static void main(String args[]) throws Exception {

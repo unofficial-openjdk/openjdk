@@ -50,6 +50,7 @@ import jdk.test.lib.jfr.Events;
  * @library /test/lib /test/jdk
  * @run main/othervm jdk.jfr.jmx.TestEventTypes
  */
+@Bean
 public class TestEventTypes {
     public static void main(String[] args) throws Exception {
         FlightRecorderMXBean bean = JmxHelper.getFlighteRecorderMXBean();

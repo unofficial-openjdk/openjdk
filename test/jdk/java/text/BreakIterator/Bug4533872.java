@@ -31,6 +31,7 @@
 import java.text.BreakIterator;
 import java.util.Locale;
 
+@Bean
 public class Bug4533872 extends IntlTest {
 
     public static void main(String[] args) throws Exception {

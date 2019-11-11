@@ -39,6 +39,7 @@ import static org.testng.Assert.assertTrue;
  * @summary unit tests for implementations of java.lang.invoke.TypeDescriptor
  */
 @Test
+@Bean
 public class TypeDescriptorTest {
     private<F extends TypeDescriptor.OfField<F>> void testArray(F f, boolean isArray, F component, F array) {
         if (isArray) {

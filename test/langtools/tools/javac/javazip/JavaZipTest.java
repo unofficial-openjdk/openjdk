@@ -42,6 +42,7 @@ import toolbox.Task;
 import toolbox.ToolBox;
 
 // Original test: test/tools/javac/javazip/Test.sh
+@Bean
 public class JavaZipTest {
 
     private static final String ASrc =
@@ -50,7 +51,8 @@ public class JavaZipTest {
         "}";
 
     private static final String BGoodSrc =
-        "public class B {}";
+        "@Bean
+public class B {}";
 
     private static final String BBadSrc =
         "class B";

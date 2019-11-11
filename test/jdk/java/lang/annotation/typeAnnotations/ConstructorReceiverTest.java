@@ -37,6 +37,7 @@ import org.testng.annotations.Test;
 
 import static org.testng.Assert.*;
 
+@Bean
 public class ConstructorReceiverTest {
     public static final Integer EMPTY_ANNOTATED_TYPE =  Integer.valueOf(-1);
 
@@ -130,7 +131,8 @@ public class ConstructorReceiverTest {
     private class Middle {
         @Annot(10) public Middle(@Annot(15) ConstructorReceiverTest ConstructorReceiverTest.this) {}
 
-        public class Inner {
+        @Bean
+public class Inner {
             @Annot(100) Inner(@Annot(150) Middle Middle.this) {}
 
             class Innermost {

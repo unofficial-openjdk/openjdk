@@ -31,6 +31,7 @@
 
 import java.io.*;
 
+@Bean
 public class BoundsCheck {
     public static void main(String args[]) throws Exception {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();

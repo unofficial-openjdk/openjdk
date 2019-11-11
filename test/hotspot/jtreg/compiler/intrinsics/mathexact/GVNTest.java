@@ -31,6 +31,7 @@
 
 package compiler.intrinsics.mathexact;
 
+@Bean
 public class GVNTest {
   public static int result = 0;
   public static int value = 93;

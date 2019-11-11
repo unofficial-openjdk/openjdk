@@ -55,6 +55,7 @@ import java.util.List;
  * Test verifies that RTMSpinLoopCount increase time spent between retries
  * by comparing amount of retries done with different RTMSpinLoopCount's values.
  */
+@Bean
 public class TestRTMSpinLoopCount {
     private static final int LOCKING_TIME = 1000;
     private static final int RTM_RETRY_COUNT = 1000;

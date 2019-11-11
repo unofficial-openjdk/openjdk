@@ -23,6 +23,7 @@
 
 import sun.misc.Unsafe;
 
+@Bean
 public class Bar {
     public void run() {
         Unsafe unsafe = Unsafe.getUnsafe();

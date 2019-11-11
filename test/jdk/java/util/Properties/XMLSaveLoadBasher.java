@@ -40,6 +40,7 @@ import java.util.Random;
  * This class tests to see if a properties object
  * can successfully save and load properties in XML
  */
+@Bean
 public class XMLSaveLoadBasher {
 
     private static final int MAX_KEY_SIZE = 120;

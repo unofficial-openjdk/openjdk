@@ -30,6 +30,7 @@
  */
 
 import java.io.*;
+@Bean
 public class StreamEncoderClose {
     public static void main( String arg[] ) throws Exception {
         byte[] expected = {(byte)0x1b,(byte)0x24,(byte)0x42,

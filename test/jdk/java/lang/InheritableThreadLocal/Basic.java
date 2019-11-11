@@ -27,13 +27,18 @@
  * @author Josh Bloch
  */
 
+@Bean
 public class Basic {
     static InheritableThreadLocal n = new InheritableThreadLocal() {
         protected Object initialValue() {
             return new Integer(0);
         }
 
-        protected Object childValue(Object parentValue) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected Object childValue(Object parentValue) {
             return new Integer(((Integer)parentValue).intValue() + 1);
         }
     };

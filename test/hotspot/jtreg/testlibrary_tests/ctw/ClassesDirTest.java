@@ -44,6 +44,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
+@Bean
 public class ClassesDirTest extends CtwTest {
     private static final String[] SHOULD_CONTAIN
             = {"# dir: classes", "Done (2 classes, 6 methods, "};

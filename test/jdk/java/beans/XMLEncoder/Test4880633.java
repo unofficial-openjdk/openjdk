@@ -32,6 +32,7 @@ import java.beans.ExceptionListener;
 import java.beans.XMLEncoder;
 import java.io.ByteArrayOutputStream;
 
+@Bean
 public class Test4880633 implements ExceptionListener, Runnable {
     private static final int THREADS_COUNT = 10;
     private static final int THREAD_LENGTH = 90;
@@ -146,14 +147,22 @@ public class Test4880633 implements ExceptionListener, Runnable {
         System.out.println(Thread.currentThread().getName() + " is finished");
     }
 
-    public void exceptionThrown(Exception exception) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void exceptionThrown(Exception exception) {
         throw new Error("unexpected exception", exception);
     }
 
     public static class ValueObject {
         private String a;
 
-        public void setA(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setA(String a) {
             this.a = a;
         }
 
@@ -164,7 +173,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aa;
 
-        public void setAa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAa(String a) {
             this.aa = a;
         }
 
@@ -175,7 +188,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaa;
 
-        public void setAaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaa(String a) {
             this.aaa = a;
         }
 
@@ -186,7 +203,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaa;
 
-        public void setAaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaa(String a) {
             this.aaaa = a;
         }
 
@@ -197,7 +218,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaa;
 
-        public void setAaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaa(String a) {
             this.aaaaa = a;
         }
 
@@ -208,7 +233,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaa;
 
-        public void setAaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaa(String a) {
             this.aaaaaa = a;
         }
 
@@ -219,7 +248,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaa;
 
-        public void setAaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaa(String a) {
             this.aaaaaaa = a;
         }
 
@@ -230,7 +263,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaa;
 
-        public void setAaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaa(String a) {
             this.aaaaaaaa = a;
         }
 
@@ -241,7 +278,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaa;
 
-        public void setAaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaa(String a) {
             this.aaaaaaaaa = a;
         }
 
@@ -252,7 +293,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaa;
 
-        public void setAaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaa(String a) {
             this.aaaaaaaaaa = a;
         }
 
@@ -263,7 +308,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaa;
 
-        public void setAaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaa(String a) {
             this.aaaaaaaaaaa = a;
         }
 
@@ -274,7 +323,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaa = a;
         }
 
@@ -285,7 +338,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaa = a;
         }
 
@@ -296,7 +353,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaa = a;
         }
 
@@ -307,7 +368,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaa = a;
         }
 
@@ -318,7 +383,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaa = a;
         }
 
@@ -329,7 +398,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaa = a;
         }
 
@@ -340,7 +413,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -351,7 +428,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -362,7 +443,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -373,7 +458,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -384,7 +473,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -395,7 +488,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -406,7 +503,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -417,7 +518,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -428,7 +533,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -439,7 +548,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -450,7 +563,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -461,7 +578,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -472,7 +593,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -483,7 +608,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -494,7 +623,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -505,7 +638,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -516,7 +653,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -527,7 +668,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -538,7 +683,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -549,7 +698,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -560,7 +713,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -571,7 +728,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -582,7 +743,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -593,7 +758,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -604,7 +773,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -615,7 +788,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -626,7 +803,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -637,7 +818,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -648,7 +833,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -659,7 +848,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -670,7 +863,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -681,7 +878,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -692,7 +893,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -703,7 +908,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -714,7 +923,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -725,7 +938,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -736,7 +953,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -747,7 +968,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -758,7 +983,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -769,7 +998,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -780,7 +1013,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -791,7 +1028,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -802,7 +1043,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -813,7 +1058,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -824,7 +1073,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -835,7 +1088,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -846,7 +1103,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -857,7 +1118,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -868,7 +1133,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -879,7 +1148,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -890,7 +1163,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -901,7 +1178,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 
@@ -912,7 +1193,11 @@ public class Test4880633 implements ExceptionListener, Runnable {
 
         private String aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 
-        public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(String a) {
             this.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = a;
         }
 

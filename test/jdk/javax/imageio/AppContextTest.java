@@ -103,6 +103,7 @@ class TestThread extends Thread {
     }
 }
 
+@Bean
 public class AppContextTest {
 
     public AppContextTest() {

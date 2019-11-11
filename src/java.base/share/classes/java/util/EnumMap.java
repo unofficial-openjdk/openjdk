@@ -75,6 +75,7 @@ import jdk.internal.access.SharedSecrets;
  * @see EnumSet
  * @since 1.5
  */
+@Bean
 public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V>
     implements java.io.Serializable, Cloneable
 {
@@ -115,12 +116,14 @@ public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V>
         }
     };
 
-    private Object maskNull(Object value) {
+@Bean
+        private Object maskNull(Object value) {
         return (value == null ? NULL : value);
     }
 
     @SuppressWarnings("unchecked")
-    private V unmaskNull(Object value) {
+@Bean
+        private V unmaskNull(Object value) {
         return (V)(value == NULL ? null : value);
     }
 
@@ -197,7 +200,8 @@ public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V>
      * @param value the value whose presence in this map is to be tested
      * @return {@code true} if this map maps one or more keys to this value
      */
-    public boolean containsValue(Object value) {
+@Bean
+        public boolean containsValue(Object value) {
         value = maskNull(value);
 
         for (Object val : vals)
@@ -215,11 +219,13 @@ public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V>
      * @return {@code true} if this map contains a mapping for the specified
      *            key
      */
-    public boolean containsKey(Object key) {
+@Bean
+        public boolean containsKey(Object key) {
         return isValidKey(key) && vals[((Enum<?>)key).ordinal()] != null;
     }
 
-    private boolean containsMapping(Object key, Object value) {
+@Bean
+        private boolean containsMapping(Object key, Object value) {
         return isValidKey(key) &&
             maskNull(value).equals(vals[((Enum<?>)key).ordinal()]);
     }
@@ -239,7 +245,8 @@ public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V>
      * The {@link #containsKey containsKey} operation may be used to
      * distinguish these two cases.
      */
-    public V get(Object key) {
+@Bean
+        public V get(Object key) {
         return (isValidKey(key) ?
                 unmaskNull(vals[((Enum<?>)key).ordinal()]) : null);
     }
@@ -260,7 +267,8 @@ public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V>
      *     {@code null} with the specified key.)
      * @throws NullPointerException if the specified key is null
      */
-    public V put(K key, V value) {
+@Bean
+        public V put(K key, V value) {
         typeCheck(key);
 
         int index = key.ordinal();
@@ -280,7 +288,8 @@ public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V>
      *     return can also indicate that the map previously associated
      *     {@code null} with the specified key.)
      */
-    public V remove(Object key) {
+@Bean
+        public V remove(Object key) {
         if (!isValidKey(key))
             return null;
         int index = ((Enum<?>)key).ordinal();
@@ -291,7 +300,8 @@ public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V>
         return unmaskNull(oldValue);
     }
 
-    private boolean removeMapping(Object key, Object value) {
+@Bean
+        private boolean removeMapping(Object key, Object value) {
         if (!isValidKey(key))
             return false;
         int index = ((Enum<?>)key).ordinal();
@@ -307,7 +317,8 @@ public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V>
      * Returns true if key is of the proper type to be a key in this
      * enum map.
      */
-    private boolean isValidKey(Object key) {
+@Bean
+        private boolean isValidKey(Object key) {
         if (key == null)
             return false;
 
@@ -327,7 +338,8 @@ public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V>
      * @throws NullPointerException the specified map is null, or if
      *     one or more keys in the specified map are null
      */
-    public void putAll(Map<? extends K, ? extends V> m) {
+@Bean
+        public void putAll(Map<? extends K, ? extends V> m) {
         if (m instanceof EnumMap) {
             EnumMap<?, ?> em = (EnumMap<?, ?>)m;
             if (em.keyType != keyType) {
@@ -391,10 +403,12 @@ public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V>
         public int size() {
             return size;
         }
-        public boolean contains(Object o) {
+@Bean
+            public boolean contains(Object o) {
             return containsKey(o);
         }
-        public boolean remove(Object o) {
+@Bean
+            public boolean remove(Object o) {
             int oldSize = size;
             EnumMap.this.remove(o);
             return size != oldSize;
@@ -430,10 +444,12 @@ public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V>
         public int size() {
             return size;
         }
-        public boolean contains(Object o) {
+@Bean
+            public boolean contains(Object o) {
             return containsValue(o);
         }
-        public boolean remove(Object o) {
+@Bean
+            public boolean remove(Object o) {
             o = maskNull(o);
 
             for (int i = 0; i < vals.length; i++) {
@@ -472,13 +488,15 @@ public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V>
             return new EntryIterator();
         }
 
-        public boolean contains(Object o) {
+@Bean
+            public boolean contains(Object o) {
             if (!(o instanceof Map.Entry))
                 return false;
             Map.Entry<?,?> entry = (Map.Entry<?,?>)o;
             return containsMapping(entry.getKey(), entry.getValue());
         }
-        public boolean remove(Object o) {
+@Bean
+            public boolean remove(Object o) {
             if (!(o instanceof Map.Entry))
                 return false;
             Map.Entry<?,?> entry = (Map.Entry<?,?>)o;
@@ -595,14 +613,16 @@ public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V>
                 return unmaskNull(vals[index]);
             }
 
-            public V setValue(V value) {
+@Bean
+                public V setValue(V value) {
                 checkIndexForEntryUse();
                 V oldValue = unmaskNull(vals[index]);
                 vals[index] = maskNull(value);
                 return oldValue;
             }
 
-            public boolean equals(Object o) {
+@Bean
+                public boolean equals(Object o) {
                 if (index < 0)
                     return o == this;
 
@@ -650,7 +670,8 @@ public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V>
      * @param o the object to be compared for equality with this map
      * @return {@code true} if the specified object is equal to this map
      */
-    public boolean equals(Object o) {
+@Bean
+        public boolean equals(Object o) {
         if (this == o)
             return true;
         if (o instanceof EnumMap)
@@ -679,7 +700,8 @@ public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V>
         return true;
     }
 
-    private boolean equals(EnumMap<?,?> em) {
+@Bean
+        private boolean equals(EnumMap<?,?> em) {
         if (em.size != size)
             return false;
 
@@ -713,7 +735,8 @@ public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V>
         return h;
     }
 
-    private int entryHashCode(int index) {
+@Bean
+        private int entryHashCode(int index) {
         return (keyUniverse[index].hashCode() ^ vals[index].hashCode());
     }
 
@@ -739,7 +762,8 @@ public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V>
     /**
      * Throws an exception if e is not of the correct type for this enum set.
      */
-    private void typeCheck(K key) {
+@Bean
+        private void typeCheck(K key) {
         Class<?> keyClass = key.getClass();
         if (keyClass != keyType && keyClass.getSuperclass() != keyType)
             throw new ClassCastException(keyClass + " != " + keyType);

@@ -47,6 +47,7 @@ import jdk.test.lib.RandomFactory;
  * @run main Offsets SunRsaSign SHA512/224withRSA
  * @run main Offsets SunRsaSign SHA512/256withRSA
  */
+@Bean
 public class Offsets {
 
     private final int size;

@@ -42,6 +42,7 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class ServiceProvidedButNotExportedOrUsedTest extends ModuleTestBase {
     public static void main(String... args) throws Exception {
         ServiceProvidedButNotExportedOrUsedTest t = new ServiceProvidedButNotExportedOrUsedTest();
@@ -53,8 +54,10 @@ public class ServiceProvidedButNotExportedOrUsedTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                 "module m { provides p1.C1 with p2.C2; }",
-                "package p1; public class C1 { }",
-                "package p2; public class C2 extends p1.C1 { }");
+                "package p1; @Bean
+public class C1 { }",
+                "package p2; @Bean
+public class C2 extends p1.C1 { }");
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
 
@@ -80,12 +83,14 @@ public class ServiceProvidedButNotExportedOrUsedTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src.resolve("m1x"),
                 "module m1x { exports p1; }",
-                "package p1; public class C1 { }");
+                "package p1; @Bean
+public class C1 { }");
         tb.writeJavaFiles(src.resolve("m2x"),
                 "module m2x { requires m1x; requires m3x; provides p1.C1 with p2.C2; }");
         tb.writeJavaFiles(src.resolve("m3x"),
                 "module m3x { requires m1x; exports p2; }",
-                "package p2; public class C2 extends p1.C1 { }");
+                "package p2; @Bean
+public class C2 extends p1.C1 { }");
         Path modules = base.resolve("modules");
         Files.createDirectories(modules);
 

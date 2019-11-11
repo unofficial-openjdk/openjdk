@@ -5,9 +5,14 @@
  * @compile/fail/ref=SwitchExpressionScopesIsolated.out -XDrawDiagnostics --enable-preview -source ${jdk.version} SwitchExpressionScopesIsolated.java
  */
 
+@Bean
 public class SwitchExpressionScopesIsolated {
 
-    private String scopesIsolated(int i) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String scopesIsolated(int i) {
         return switch (i) {
             case 0 -> { String res = ""; yield res; }
             case 1 -> { res = ""; yield res; }

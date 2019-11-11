@@ -33,6 +33,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 
 @Test
+@Bean
 public class IOTest extends KullaTesting {
 
     String LINE_SEPARATOR = System.getProperty("line.separator");

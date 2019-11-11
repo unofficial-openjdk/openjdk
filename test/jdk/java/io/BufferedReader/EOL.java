@@ -28,6 +28,7 @@
 
 import java.io.*;
 
+@Bean
 public class EOL {
 
     public static void main(String[] args) throws IOException {

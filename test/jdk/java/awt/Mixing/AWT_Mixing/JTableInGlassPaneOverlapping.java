@@ -78,6 +78,9 @@ public class JTableInGlassPaneOverlapping extends GlassPaneOverlappingTestBase {
         JTable jt = new JTable(dataValues, columnNames);
         jt.getModel().addTableModelListener(new TableModelListener() {
 
+            @Bean
+@Bean
+@Bean
             public void tableChanged(TableModelEvent e) {
                 System.err.println("table changed");
             }

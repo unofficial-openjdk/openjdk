@@ -50,7 +50,11 @@ public class PrintTest {
     CyclicBarrier readyBarrier = new CyclicBarrier(3);
     CyclicBarrier doneBarrier = new CyclicBarrier(3);
 
-    private void waitForBarrier(CyclicBarrier b) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void waitForBarrier(CyclicBarrier b) {
         try {
             b.await();
         } catch (InterruptedException | BrokenBarrierException e) {
@@ -90,7 +94,11 @@ public class PrintTest {
         }
     }
 
-    public void run(CommandExecutor executor) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void run(CommandExecutor executor) {
         MonitorThread mThread = new MonitorThread();
         mThread.start();
         LockThread lThread = new LockThread();

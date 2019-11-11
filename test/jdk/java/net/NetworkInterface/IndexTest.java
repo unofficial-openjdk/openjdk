@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import static java.lang.System.out;
 
+@Bean
 public class IndexTest {
     static final boolean isWindows = System.getProperty("os.name").startsWith("Windows");
 

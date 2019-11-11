@@ -48,6 +48,7 @@ import java.util.Random;
 import java.util.Vector;
 
 @SuppressWarnings("unchecked")
+@Bean
 public class LockStep {
     final int DEFAULT_SIZE = 5;
     int size;           // Running time is O(size**2)

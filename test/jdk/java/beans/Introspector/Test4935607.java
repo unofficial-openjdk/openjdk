@@ -55,6 +55,7 @@ import javax.swing.JViewport;
 import javax.swing.table.JTableHeader;
 import javax.swing.text.JTextComponent;
 
+@Bean
 public class Test4935607 {
     public static void main(String[] args) {
         // test all possible cases
@@ -144,13 +145,25 @@ public class Test4935607 {
             return this;
         }
 
-        public void setProperty(Object object) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setProperty(Object object) {
         }
 
-        public void addEventSetListener(EventSetListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addEventSetListener(EventSetListener listener) {
         }
 
-        public void removeEventSetListener(EventSetListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removeEventSetListener(EventSetListener listener) {
         }
     }
 
@@ -163,15 +176,27 @@ public class Test4935607 {
         }
 
         @Transient
-        public void setProperty(Object object) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setProperty(Object object) {
         }
 
         @Transient
-        public void addEventSetListener(EventSetListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addEventSetListener(EventSetListener listener) {
         }
 
         @Transient
-        public void removeEventSetListener(EventSetListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removeEventSetListener(EventSetListener listener) {
         }
     }
 
@@ -184,15 +209,27 @@ public class Test4935607 {
         }
 
         @Transient(false)
-        public void setProperty(Object object) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setProperty(Object object) {
         }
 
         @Transient(false)
-        public void addEventSetListener(EventSetListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addEventSetListener(EventSetListener listener) {
         }
 
         @Transient(false)
-        public void removeEventSetListener(EventSetListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removeEventSetListener(EventSetListener listener) {
         }
     }
 
@@ -203,15 +240,27 @@ public class Test4935607 {
         }
 
         @Override
-        public void setProperty(Object object) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setProperty(Object object) {
         }
 
         @Override
-        public void addEventSetListener(EventSetListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addEventSetListener(EventSetListener listener) {
         }
 
         @Override
-        public void removeEventSetListener(EventSetListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removeEventSetListener(EventSetListener listener) {
         }
     }
 
@@ -226,17 +275,29 @@ public class Test4935607 {
 
         @Override
         @Transient
-        public void setProperty(Object object) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setProperty(Object object) {
         }
 
         @Override
         @Transient
-        public void addEventSetListener(EventSetListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addEventSetListener(EventSetListener listener) {
         }
 
         @Override
         @Transient
-        public void removeEventSetListener(EventSetListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removeEventSetListener(EventSetListener listener) {
         }
     }
 
@@ -251,17 +312,29 @@ public class Test4935607 {
 
         @Override
         @Transient(false)
-        public void setProperty(Object object) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setProperty(Object object) {
         }
 
         @Override
         @Transient(false)
-        public void addEventSetListener(EventSetListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addEventSetListener(EventSetListener listener) {
         }
 
         @Override
         @Transient(false)
-        public void removeEventSetListener(EventSetListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removeEventSetListener(EventSetListener listener) {
         }
     }
 
@@ -272,15 +345,27 @@ public class Test4935607 {
         }
 
         @Override
-        public void setProperty(Object object) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setProperty(Object object) {
         }
 
         @Override
-        public void addEventSetListener(EventSetListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addEventSetListener(EventSetListener listener) {
         }
 
         @Override
-        public void removeEventSetListener(EventSetListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removeEventSetListener(EventSetListener listener) {
         }
     }
 
@@ -293,17 +378,29 @@ public class Test4935607 {
 
         @Override
         @Transient
-        public void setProperty(Object object) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setProperty(Object object) {
         }
 
         @Override
         @Transient
-        public void addEventSetListener(EventSetListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addEventSetListener(EventSetListener listener) {
         }
 
         @Override
         @Transient
-        public void removeEventSetListener(EventSetListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removeEventSetListener(EventSetListener listener) {
         }
     }
 
@@ -318,17 +415,29 @@ public class Test4935607 {
 
         @Override
         @Transient(false)
-        public void setProperty(Object object) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setProperty(Object object) {
         }
 
         @Override
         @Transient(false)
-        public void addEventSetListener(EventSetListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addEventSetListener(EventSetListener listener) {
         }
 
         @Override
         @Transient(false)
-        public void removeEventSetListener(EventSetListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removeEventSetListener(EventSetListener listener) {
         }
     }
 
@@ -339,15 +448,27 @@ public class Test4935607 {
         }
 
         @Override
-        public void setProperty(Object object) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setProperty(Object object) {
         }
 
         @Override
-        public void addEventSetListener(EventSetListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addEventSetListener(EventSetListener listener) {
         }
 
         @Override
-        public void removeEventSetListener(EventSetListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removeEventSetListener(EventSetListener listener) {
         }
     }
 
@@ -362,17 +483,29 @@ public class Test4935607 {
 
         @Override
         @Transient
-        public void setProperty(Object object) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setProperty(Object object) {
         }
 
         @Override
         @Transient
-        public void addEventSetListener(EventSetListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addEventSetListener(EventSetListener listener) {
         }
 
         @Override
         @Transient
-        public void removeEventSetListener(EventSetListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removeEventSetListener(EventSetListener listener) {
         }
     }
 
@@ -385,17 +518,29 @@ public class Test4935607 {
 
         @Override
         @Transient(false)
-        public void setProperty(Object object) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setProperty(Object object) {
         }
 
         @Override
         @Transient(false)
-        public void addEventSetListener(EventSetListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addEventSetListener(EventSetListener listener) {
         }
 
         @Override
         @Transient(false)
-        public void removeEventSetListener(EventSetListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removeEventSetListener(EventSetListener listener) {
         }
     }
 

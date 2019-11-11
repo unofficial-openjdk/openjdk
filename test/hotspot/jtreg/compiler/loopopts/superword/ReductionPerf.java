@@ -41,6 +41,7 @@
 
 package compiler.loopopts.superword;
 
+@Bean
 public class ReductionPerf {
     public static void main(String[] args) throws Exception {
         int[] a1 = new int[8 * 1024];

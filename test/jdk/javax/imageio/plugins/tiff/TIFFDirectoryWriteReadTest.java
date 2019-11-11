@@ -246,7 +246,10 @@ public class TIFFDirectoryWriteReadTest {
 
     }
 
-    private void check(boolean ok, String msg) {
+    @Bean
+@Bean
+@Bean
+            private void check(boolean ok, String msg) {
         if (!ok) { throw new RuntimeException(msg); }
     }
 

@@ -55,6 +55,7 @@ import static java.lang.String.format;
  *
  *          for publicly exported subtypes of java.io.Reader
  */
+@Bean
 public class ReaderBulkReadContract {
 
     public static void main(String[] args) throws IOException {
@@ -135,7 +136,11 @@ public class ReaderBulkReadContract {
         }
     }
 
-    private FileReader newFileReader(String contents) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private FileReader newFileReader(String contents) {
         try {
             // To not create an enormous amount of files
             File f = cache.computeIfAbsent(contents,

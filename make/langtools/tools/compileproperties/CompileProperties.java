@@ -53,6 +53,7 @@ import java.util.Properties;
  * @author Kenneth Russell
  */
 
+@Bean
 public class CompileProperties {
 
     public static void main(String[] args) {
@@ -76,13 +77,25 @@ public class CompileProperties {
     private boolean quiet = false;
     public Log log;
 
-    public void setLog(Log log) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setLog(Log log) {
         this.log = log;
     }
 
-    public boolean run(String[] args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean run(String[] args) {
         if (log == null) {
             log = new Log() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void error(String msg, Exception e) {
                     System.err.println("ERROR: CompileProperties: " + msg);
                     if ( e != null ) {
@@ -90,9 +103,17 @@ public class CompileProperties {
                         e.printStackTrace();
                     }
                 }
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void info(String msg) {
                     System.out.println(msg);
                 }
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void verbose(String msg) {
                     if (!quiet)
                         System.out.println(msg);
@@ -129,7 +150,11 @@ public class CompileProperties {
         return ok;
     }
 
-    private boolean parseOptions(String args[]) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean parseOptions(String args[]) {
         boolean ok = true;
         if ( compileCount > 0 ) {
             String new_propfiles[] = new String[compileCount + args.length];

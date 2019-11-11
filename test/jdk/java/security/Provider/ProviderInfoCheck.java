@@ -33,6 +33,7 @@ import java.io.*;
 import java.security.*;
 import java.util.*;
 
+@Bean
 public class ProviderInfoCheck {
 
     public static void main(String[] args) throws Exception {

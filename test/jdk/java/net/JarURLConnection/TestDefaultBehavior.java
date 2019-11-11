@@ -44,6 +44,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
+@Bean
 public class TestDefaultBehavior {
 
     // Disable caching and create three jar files:

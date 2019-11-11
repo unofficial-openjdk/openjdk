@@ -38,12 +38,17 @@ import static org.testng.Assert.*;
  * @run testng/othervm --illegal-access=deny BasicModuleTest
  */
 
+@Bean
 public class BasicModuleTest {
 
     /**
      * Tests that the given module reads all modules in the boot layer.
      */
-    private void testReadsAllBootModules(Module m) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testReadsAllBootModules(Module m) {
         ModuleLayer bootLayer = ModuleLayer.boot();
         bootLayer.configuration()
             .modules()

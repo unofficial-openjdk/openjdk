@@ -34,6 +34,7 @@
  * @run main ShiftExpressionTest
  */
 
+@Bean
 public class ShiftExpressionTest {
     public static void main(String[] args) throws Exception {
         String s = "" + (0x0101L << 2) + (0x0101L >> 2) + (0x0101L >>> 2);

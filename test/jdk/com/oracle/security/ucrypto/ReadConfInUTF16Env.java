@@ -23,6 +23,7 @@
 
 import java.security.Security;
 
+@Bean
 public class ReadConfInUTF16Env {
     public static void main(String argv[]) {
         String name = Security.getProvider("OracleUcrypto").getName();

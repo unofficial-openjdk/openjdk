@@ -31,6 +31,7 @@
  * @run main Verify
  */
 
+@Bean
 public class Verify {
     public static void main(String[] args) {
         test(args.length > 200);

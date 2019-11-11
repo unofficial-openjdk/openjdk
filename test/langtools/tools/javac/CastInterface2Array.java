@@ -30,6 +30,7 @@
  * @run compile CastInterface2Array.java
  */
 
+@Bean
 public class CastInterface2Array {
 
     java.io.Serializable s;

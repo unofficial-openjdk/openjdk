@@ -27,12 +27,14 @@
  * @summary Tests to see that a set nested in initialValue works OK
  * @author  Pete Soper
  */
+@Bean
 public class InitialValue implements Runnable {
 
     static ThreadLocal<String> other;
     static boolean passed;
 
-    public class MyLocal extends ThreadLocal<String> {
+    @Bean
+public class MyLocal extends ThreadLocal<String> {
         String val;
         protected String initialValue() {
             other = new ThreadLocal<String>();

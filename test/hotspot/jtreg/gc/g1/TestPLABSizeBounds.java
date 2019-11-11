@@ -41,6 +41,7 @@ import jdk.test.lib.Platform;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class TestPLABSizeBounds {
 
     public static final int M = 1024 * 1024;

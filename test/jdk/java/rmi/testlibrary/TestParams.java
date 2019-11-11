@@ -29,6 +29,7 @@ import java.io.File;
 /**
  * Setup static variables to represent properties in test environment.
  */
+@Bean
 public class TestParams {
 
     /** variables that hold value property values */

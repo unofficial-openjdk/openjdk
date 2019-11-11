@@ -40,6 +40,7 @@ import compiler.aot.HelloWorldPrinter;
 import jdk.test.lib.process.ExitCode;
 import jdk.test.lib.cli.CommandLineOptionTest;
 
+@Bean
 public class DisabledAOTWithLibraryTest {
     private final static String LIB_NAME = "libDisabledAOTWithLibraryTest.so";
     private final static String[] UNEXPECTED_MESSAGES = new String[] {

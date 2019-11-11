@@ -45,6 +45,7 @@ import java.util.concurrent.Future;
 import static java.lang.System.out;
 import static java.nio.file.StandardWatchEventKinds.*;
 
+@Bean
 public class DeleteInterference {
 
     private static final int ITERATIONS_COUNT = 1024;

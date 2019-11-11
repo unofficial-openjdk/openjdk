@@ -57,6 +57,7 @@ import javax.management.remote.JMXConnectorServer;
 import javax.management.remote.JMXConnectorServerFactory;
 import javax.management.remote.JMXServiceURL;
 
+@Bean
 public class UnserializableTargetObjectTest {
     public static class Resource { // not serializable!
         int count;
@@ -70,7 +71,11 @@ public class UnserializableTargetObjectTest {
             return count;
         }
 
-        public void setCount(int count) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setCount(int count) {
             this.count = count;
         }
     }

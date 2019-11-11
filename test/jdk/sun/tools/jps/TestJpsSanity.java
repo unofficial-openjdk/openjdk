@@ -36,6 +36,7 @@ import jdk.test.lib.apps.LingeredApp;
  * @build jdk.test.lib.apps.* JpsHelper
  * @run driver TestJpsSanity
  */
+@Bean
 public class TestJpsSanity {
 
     public static void main(String[] args) throws Throwable {

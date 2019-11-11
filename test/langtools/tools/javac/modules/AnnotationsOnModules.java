@@ -59,6 +59,7 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.Task.OutputKind;
 
+@Bean
 public class AnnotationsOnModules extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {
@@ -274,9 +275,12 @@ public class AnnotationsOnModules extends ModuleTestBase {
                         "exports p2 to C; opens p2 to C;" +
                         "exports p3 to B,C; opens p3 to B,C;" +
                         "}",
-                "package p1; public class A { }",
-                "package p2; public class A { }",
-                "package p3; public class A { }");
+                "package p1; @Bean
+public class A { }",
+                "package p2; @Bean
+public class A { }",
+                "package p3; @Bean
+public class A { }");
         String log = new JavacTask(tb)
                 .options("--module-source-path", m1.getParent().toString(),
                         "--module-path", modulePath.toString(),
@@ -466,7 +470,11 @@ public class AnnotationsOnModules extends ModuleTestBase {
     public static final class AP extends AbstractProcessor {
 
         @Override
-        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             ModuleElement m1 = processingEnv.getElementUtils().getModuleElement("m1x");
             Set<String> actualAnnotations = new HashSet<>();
             Set<String> expectedAnnotations =
@@ -514,7 +522,8 @@ public class AnnotationsOnModules extends ModuleTestBase {
                               "    requires m1x;\n" +
                               "    exports api to m1x, m2x;\n" +
                               "}",
-                              "package api; public class Api { }");
+                              "package api; @Bean
+public class Api { }");
             System.err.println("compile m3x");
             actual = new JavacTask(tb)
                     .options("--module-source-path", moduleSrc.toString(),
@@ -614,27 +623,35 @@ public class AnnotationsOnModules extends ModuleTestBase {
                          "public E[] value();",
                          "{test.E.A, test.E.B}",
                          "@test.A({A, B})"),
-            new TestCase("package test; public class Extra {}",
-                         "public Class value();",
+            new TestCase("package test; @Bean
+public class Extra {}",
+                         "@Bean
+public class value();",
                          "test.Extra.class",
                          "@test.A(test.Extra.class)"),
-            new TestCase("package test; public class Extra {}",
-                         "public Class[] value();",
+            new TestCase("package test; @Bean
+public class Extra {}",
+                         "@Bean
+public class[] value();",
                          "{test.Extra.class, String.class}",
                          "@test.A({test.Extra.class, java.lang.String.class})"),
-            new TestCase("package test; public @interface Extra { public Class value(); }",
+            new TestCase("package test; public @interface Extra { @Bean
+public class value(); }",
                          "public test.Extra value();",
                          "@test.Extra(String.class)",
                          "@test.A(@test.Extra(java.lang.String.class))"),
-            new TestCase("package test; public @interface Extra { public Class value(); }",
+            new TestCase("package test; public @interface Extra { @Bean
+public class value(); }",
                          "public test.Extra[] value();",
                          "{@test.Extra(String.class), @test.Extra(Integer.class)}",
                          "@test.A({@test.Extra(java.lang.String.class), @test.Extra(java.lang.Integer.class)})"),
-            new TestCase("package test; public class Any { }",
+            new TestCase("package test; @Bean
+public class Any { }",
                          "public int value();",
                          "1",
                          "@test.A(1)"),
-            new TestCase("package test; public class Any { }",
+            new TestCase("package test; @Bean
+public class Any { }",
                          "public int[] value();",
                          "{1, 2}",
                          "@test.A({1, 2})"),
@@ -695,7 +712,11 @@ public class AnnotationsOnModules extends ModuleTestBase {
     public static final class ProxyTypeValidator extends AbstractProcessor {
 
         @Override
-        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             ModuleElement m = processingEnv.getElementUtils().getModuleElement("m");
             String actualTypes = m.getAnnotationMirrors()
                                   .stream()

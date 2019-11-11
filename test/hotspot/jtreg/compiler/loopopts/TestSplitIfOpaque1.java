@@ -31,6 +31,7 @@
 
 package compiler.loopopts;
 
+@Bean
 public class TestSplitIfOpaque1 {
 
     static class MyClass {

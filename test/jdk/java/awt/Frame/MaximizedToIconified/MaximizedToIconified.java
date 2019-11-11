@@ -43,6 +43,7 @@ import java.awt.Toolkit;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowStateListener;
 
+@Bean
 public class MaximizedToIconified
 {
     static volatile int lastFrameState = Frame.NORMAL;
@@ -80,6 +81,9 @@ public class MaximizedToIconified
         robot.waitForIdle();
 
         frame.addWindowStateListener(new WindowStateListener() {
+            @Bean
+@Bean
+@Bean
             public void windowStateChanged(WindowEvent e) {
                 System.out.println("last = " + lastFrameState + "; getOldState() = " + e.getOldState() +
                         "; getNewState() = " + e.getNewState());

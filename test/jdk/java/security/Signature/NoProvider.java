@@ -31,6 +31,7 @@
 
 import java.security.*;
 
+@Bean
 public class NoProvider {
 
     private static class NoProviderPublicKey implements PublicKey {

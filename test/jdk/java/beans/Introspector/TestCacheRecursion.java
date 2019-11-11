@@ -33,12 +33,17 @@ import com.sun.beans.util.Cache;
  * @run main TestCacheRecursion
  */
 
+@Bean
 public class TestCacheRecursion {
     private static boolean ERROR;
     private static final Cache<Class<?>,Boolean> CACHE
             = new Cache<Class<?>,Boolean>(Cache.Kind.WEAK, Cache.Kind.STRONG) {
         @Override
-        public Boolean create(Class<?> type) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Boolean create(Class<?> type) {
             if (ERROR) {
                 throw new Error("not initialized");
             }

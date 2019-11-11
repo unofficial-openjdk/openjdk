@@ -57,6 +57,7 @@ import com.sun.source.util.Trees;
 
 import static javax.tools.JavaFileObject.Kind.SOURCE;
 
+@Bean
 public class TestGetScopeBinaryNames {
     public static void main(String... args) throws IOException {
         new TestGetScopeBinaryNames().run();
@@ -111,9 +112,17 @@ public class TestGetScopeBinaryNames {
                           "                new D() { class DI extends E {} };" +
                           "            }" +
                           "        }" +
-                          "        private void t() { new F() {}; }" +
+                          "        @Bean
+@Bean
+@Bean
+@Bean
+                private void t() { new F() {}; }" +
                           "    }" +
-                          "    private void t() { new G() {}; }" +
+                          "    @Bean
+@Bean
+@Bean
+@Bean
+                private void t() { new G() {}; }" +
                           "};",
                           false),
             new LocalDesc("class AA extends A {" +
@@ -123,9 +132,17 @@ public class TestGetScopeBinaryNames {
                           "                new D() { class DI extends E {} };" +
                           "            }" +
                           "        }" +
-                          "        private void t() { new F() {}; }" +
+                          "        @Bean
+@Bean
+@Bean
+@Bean
+                private void t() { new F() {}; }" +
                           "    }" +
-                          "    private void t() { new G() {}; }" +
+                          "    @Bean
+@Bean
+@Bean
+@Bean
+                private void t() { new G() {}; }" +
                           "}",
                           false)
         );
@@ -156,11 +173,19 @@ public class TestGetScopeBinaryNames {
 
         t.addTaskListener(new TaskListener() {
             @Override
-            public void finished(TaskEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void finished(TaskEvent e) {
                 if (e.getKind() == TaskEvent.Kind.ENTER) {
                     new TreePathScanner<Void, Void>() {
                         @Override
-                        public Void scan(Tree tree, Void p) {
+                        @Bean
+@Bean
+@Bean
+@Bean
+                public Void scan(Tree tree, Void p) {
                             if (tree != null &&
                                 !isInExtendsClause(getCurrentPath(), tree)) {
                                 TreePath path =
@@ -180,7 +205,11 @@ public class TestGetScopeBinaryNames {
 
         new TreePathScanner<Void, Void>() {
             @Override
-            public Void visitClass(ClassTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitClass(ClassTree node, Void p) {
                 TypeElement type =
                         (TypeElement) trees.getElement(getCurrentPath());
                 checkClass(t.getElements(), type,
@@ -191,7 +220,11 @@ public class TestGetScopeBinaryNames {
 
         new TreePathScanner<Void, Void>() {
             @Override
-            public Void scan(Tree tree, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void scan(Tree tree, Void p) {
                 if (tree != null &&
                     !isInExtendsClause(getCurrentPath(), tree)) {
                     TreePath path =
@@ -219,7 +252,11 @@ public class TestGetScopeBinaryNames {
             Trees trees = Trees.instance(t);
             Elements els = t.getElements();
             @Override
-            public Void visitClass(ClassTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitClass(ClassTree node, Void p) {
                 TypeElement type =
                         (TypeElement) trees.getElement(getCurrentPath());
                 String key = type.getSuperclass().toString();
@@ -283,7 +320,11 @@ public class TestGetScopeBinaryNames {
             this.code = code;
         }
         @Override
-        public String getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String getCharContent(boolean ignoreEncodingErrors) {
             return code;
         }
     }

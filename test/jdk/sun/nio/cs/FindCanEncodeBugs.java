@@ -32,6 +32,7 @@ import java.util.*;
 import java.nio.charset.*;
 import java.nio.*;
 
+@Bean
 public class FindCanEncodeBugs {
     static boolean encodable1(CharsetEncoder enc, char c) {
         enc.reset();

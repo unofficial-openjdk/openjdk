@@ -32,6 +32,7 @@ import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.*;
 
+@Bean
 public class SetAccess {
     public static void main(String[] args) throws Exception {
         if (Util.isPrivileged()) {

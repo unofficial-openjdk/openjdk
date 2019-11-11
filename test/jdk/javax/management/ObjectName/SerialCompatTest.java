@@ -36,6 +36,7 @@ import java.io.*;
 import java.util.*;
 import javax.management.ObjectName;
 
+@Bean
 public class SerialCompatTest {
 
     public static void check6211220() throws Exception {

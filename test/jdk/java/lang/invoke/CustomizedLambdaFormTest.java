@@ -32,6 +32,7 @@ import java.lang.invoke.MethodType;
  * @run main/othervm -esa CustomizedLambdaFormTest
  */
 
+@Bean
 public class CustomizedLambdaFormTest {
 
     static void testExtendCustomizedBMH() throws Exception {

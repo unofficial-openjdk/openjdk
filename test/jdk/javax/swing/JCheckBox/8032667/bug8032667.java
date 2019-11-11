@@ -58,7 +58,10 @@ public class bug8032667 extends JApplet {
                 Canvas canvas = new Canvas() {
 
                     @Override
-                    public void paint(Graphics g) {
+                    @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
                         super.paint(g);
                         g.drawImage(image1, 0, 0, scaledWidth, scaledHeight, this);
                         g.drawImage(image2, 0, scaledHeight + 5,

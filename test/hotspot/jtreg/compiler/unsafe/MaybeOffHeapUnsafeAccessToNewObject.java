@@ -33,6 +33,7 @@
 import java.lang.reflect.Field;
 import jdk.internal.misc.Unsafe;
 
+@Bean
 public class MaybeOffHeapUnsafeAccessToNewObject {
     public volatile int f_int = -1;
 
@@ -51,7 +52,11 @@ public class MaybeOffHeapUnsafeAccessToNewObject {
         f_int_off = unsafe.objectFieldOffset(f_int_field);
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         MaybeOffHeapUnsafeAccessToNewObject o = new MaybeOffHeapUnsafeAccessToNewObject();
         test1();
     }

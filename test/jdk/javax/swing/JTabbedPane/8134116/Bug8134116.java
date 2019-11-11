@@ -187,7 +187,10 @@ public class Bug8134116 {
         }
 
         @Override
-        public String getTitleAt(int i) {
+        @Bean
+@Bean
+@Bean
+            public String getTitleAt(int i) {
             return titles.get(i);
         }
     }

@@ -33,6 +33,7 @@ import java.beans.EventSetDescriptor;
 import java.beans.IntrospectionException;
 import java.util.EventObject;
 
+@Bean
 public class Test4072197 {
     public static void main(String[] args) {
         try {
@@ -53,21 +54,41 @@ public class Test4072197 {
     }
 
     public static class SourceClass {
-        public void addActionListener(ActionListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addActionListener(ActionListener listener) {
         }
 
-        public void removeActionListener(ActionListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removeActionListener(ActionListener listener) {
         }
     }
 
     public static class Listener {
-        public void action(EventObject event) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void action(EventObject event) {
         }
 
-        public void event(EventObject event) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void event(EventObject event) {
         }
 
-        public void dummy(EventObject event) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void dummy(EventObject event) {
         }
     }
 }

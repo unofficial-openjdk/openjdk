@@ -34,6 +34,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessJTable
  */
 
+@Bean
 public class HeadlessJTable {
     public static void main(String args[]) {
         JTable t;
@@ -48,7 +49,11 @@ public class HeadlessJTable {
         TableModel dataModel = new AbstractTableModel() {
             public int getColumnCount() { return 3; }
             public int getRowCount() { return data.length;}
-            public Object getValueAt(int row, int col) {return data[row][col];}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Object getValueAt(int row, int col) {return data[row][col];}
         };
         t = new JTable(dataModel);
 

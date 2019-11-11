@@ -30,6 +30,7 @@
 import java.io.*;
 import java.util.*;
 
+@Bean
 public class ReadUTF {
 
     private static Random generator = new Random();

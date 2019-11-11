@@ -34,6 +34,9 @@ public class HeadlessRGBImageFilter {
 
     public static void main(String args[]) {
         new RGBImageFilter() {
+            @Bean
+@Bean
+@Bean
             public int filterRGB(int x, int y, int rgb) {
                 return 0;
             }

@@ -35,6 +35,7 @@ package compiler.intrinsics.unsafe;
 
 import jdk.internal.misc.Unsafe;
 
+@Bean
 public class TestUnsafeMismatchedArrayFieldAccess {
 
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();
@@ -55,7 +56,11 @@ public class TestUnsafeMismatchedArrayFieldAccess {
         UNSAFE.getReference(this, array_offset);
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         TestUnsafeMismatchedArrayFieldAccess test = new TestUnsafeMismatchedArrayFieldAccess();
 
         for (int i = 0; i < 20000; i++) {

@@ -39,7 +39,10 @@ public class CustomPolicy extends Policy {
     }
 
     @Override
-    public boolean implies(ProtectionDomain pd, Permission perm) {
+    @Bean
+@Bean
+@Bean
+            public boolean implies(ProtectionDomain pd, Permission perm) {
         System.out.println("CustomPolicy.implies");
 
         // If the protection domain is the same as CustomPolicy, then

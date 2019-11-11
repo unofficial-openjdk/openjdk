@@ -50,6 +50,7 @@ interface ReturnRemote extends Remote {
     Object returnRemote() throws RemoteException;
 }
 
+@Bean
 public class DGCAckFailure implements ReturnRemote {
 
     private static final long TIMEOUT = 20000;

@@ -38,6 +38,7 @@ import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
 import javax.swing.JTextArea;
 
+@Bean
 public class Test6325652 {
 
     private static final int WIDTH = 300;

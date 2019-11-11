@@ -32,6 +32,7 @@ import java.util.stream.IntStream;
  * @run main/othervm Strip
  */
 
+@Bean
 public class Strip {
    public static void main(String... arg) {
         testStrip();

@@ -157,7 +157,11 @@ public abstract class SSLSocketTest {
     /*
      * Configure the server side socket.
      */
-    protected void configureServerSocket(SSLServerSocket socket) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void configureServerSocket(SSLServerSocket socket) {
 
     }
 

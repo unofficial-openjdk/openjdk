@@ -81,6 +81,9 @@ public class GetMousePositionWithPopup {
         frame1.addMouseMotionListener(new MouseMotionAdapter() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseMoved(MouseEvent e) {
                 frame2 = new Frame();
                 frame2.setBounds(120, 120, 120, 120);

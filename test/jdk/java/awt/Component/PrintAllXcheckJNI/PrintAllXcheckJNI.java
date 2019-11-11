@@ -37,6 +37,7 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class PrintAllXcheckJNI
 {
     public static void main(String []s)

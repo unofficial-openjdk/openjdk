@@ -38,6 +38,7 @@ import jdk.test.lib.Platform;
  *          java.management
  * @run main gc.arguments.TestCompressedClassFlags
  */
+@Bean
 public class TestCompressedClassFlags {
     public static void main(String[] args) throws Exception {
         if (Platform.is64bit()) {

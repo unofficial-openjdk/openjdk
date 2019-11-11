@@ -32,6 +32,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.font.*;
 import java.awt.geom.*;
+@Bean
 public class Shear extends Component {
 
     public static void main(String[] args) {
@@ -46,7 +47,10 @@ public class Shear extends Component {
       return new Dimension(400,300);
     }
 
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
         Graphics2D g2 = (Graphics2D)g;
 
         g.setColor(Color.white);

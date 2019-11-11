@@ -51,6 +51,7 @@ import jdk.internal.jshell.tool.ConsoleIOContextTestSupport;
 import org.testng.annotations.Test;
 
 @Test
+@Bean
 public class ToolTabSnippetTest extends UITesting {
 
     public ToolTabSnippetTest() {
@@ -280,7 +281,8 @@ public class ToolTabSnippetTest extends UITesting {
                 "package jshelltest;\n" +
                 "/**JShellTest 0" +
                 " */\n" +
-                "public class JShellTest {\n" +
+                "@Bean
+public class JShellTest {\n" +
                 "    /**JShellTest 1\n" +
                 "     * <p>1 <p>1 <p>1 <p>1 <p>1 <p>1 <p>1 <p>1 <p>1 <p>1\n" +
                 "     * <p>1 <p>1 <p>1 <p>1 <p>1 <p>1 <p>1 <p>1 <p>1 <p>1\n" +
@@ -296,7 +298,8 @@ public class ToolTabSnippetTest extends UITesting {
                 "package jshelltest;\n" +
                 "/**JShellTestAux 0" +
                 " */\n" +
-                "public class JShellTestAux {\n" +
+                "@Bean
+public class JShellTestAux {\n" +
                 "    /**JShellTest 1" +
                 "     */\n" +
                 "    public JShellTestAux(String str) { }\n" +

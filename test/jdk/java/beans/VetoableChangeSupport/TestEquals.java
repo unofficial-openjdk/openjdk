@@ -69,7 +69,11 @@ public final class TestEquals implements VetoableChangeListener {
     }
 
     @Override
-    public boolean equals(Object object) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object object) {
         if (object instanceof TestEquals) {
             this.count++;
             TestEquals that = (TestEquals)object;
@@ -78,6 +82,10 @@ public final class TestEquals implements VetoableChangeListener {
         return false;
     }
 
-    public void vetoableChange(PropertyChangeEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void vetoableChange(PropertyChangeEvent event) {
     }
 }

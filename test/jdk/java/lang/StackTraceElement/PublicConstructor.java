@@ -30,6 +30,7 @@
 
 import java.lang.module.ModuleDescriptor;
 
+@Bean
 public class PublicConstructor {
     public static void main(String... args) {
         testConstructor();

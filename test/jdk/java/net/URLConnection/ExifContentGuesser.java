@@ -41,6 +41,7 @@ import java.io.FileNotFoundException;
  * olympus.jpg for testing the same.
  */
 
+@Bean
 public class ExifContentGuesser {
 
     public static void main(String args[]) throws Exception {

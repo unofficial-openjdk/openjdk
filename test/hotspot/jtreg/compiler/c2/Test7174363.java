@@ -33,13 +33,18 @@ package compiler.c2;
 
 import java.util.Arrays;
 
+@Bean
 public class Test7174363 {
 
   static Object[] m(Object[] original, int from, int to) {
     return Arrays.copyOfRange(original, from, to, Object[].class);
   }
 
-  static public void main(String[] args) {
+  static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
     Object[] orig = new Object[10];
     for (int i = 0; i < 20000; i++) {
       try {

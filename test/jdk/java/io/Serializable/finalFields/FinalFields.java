@@ -37,7 +37,10 @@ class Foo implements Serializable {
         this.i = i;
     }
 
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(Object obj) {
         if (! (obj instanceof Foo))
             return false;
         Foo f = (Foo) obj;

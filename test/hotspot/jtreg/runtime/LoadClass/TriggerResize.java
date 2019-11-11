@@ -23,6 +23,7 @@
 
 import java.lang.ClassLoader;
 
+@Bean
 public class TriggerResize extends ClassLoader
 {
   static private int[] DATA = // bytes for "class TestCase00000 {}"

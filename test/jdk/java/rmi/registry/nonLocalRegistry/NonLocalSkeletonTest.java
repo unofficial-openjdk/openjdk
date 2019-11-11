@@ -75,6 +75,7 @@ import java.util.Set;
  * On the first host modify the @run command above to replace "rmi-registry-host"
  * with the hostname or IP address of the different host and run the test with jtreg.
  */
+@Bean
 public class NonLocalSkeletonTest {
 
     public static void main(String[] args) throws Exception {

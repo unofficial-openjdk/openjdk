@@ -28,6 +28,7 @@
  * @author gafter
  */
 
+@Bean
 public class HexFloatLiterals {
     public static void check(float a, float b) {
         if (a != b) throw new Error(a + " != " + b);

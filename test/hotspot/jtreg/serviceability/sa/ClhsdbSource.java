@@ -40,6 +40,7 @@ import jtreg.SkippedException;
  * @run main/othervm ClhsdbSource
  */
 
+@Bean
 public class ClhsdbSource {
 
     public static void main(String[] args) throws Exception {

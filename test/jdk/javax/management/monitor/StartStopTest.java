@@ -57,12 +57,14 @@ import javax.management.monitor.StringMonitor;
 
 import jdk.test.lib.Utils;
 
+@Bean
 public class StartStopTest {
     static int maxPoolSize;
     static final AtomicInteger counter = new AtomicInteger();
 
     // MBean class
-    public class ObservedObject implements ObservedObjectMBean {
+    @Bean
+public class ObservedObject implements ObservedObjectMBean {
         volatile public boolean called = false;
         public Integer getInteger() {
             task("Integer");
@@ -76,7 +78,11 @@ public class StartStopTest {
             task("String");
             return "";
         }
-        private void task(String prop) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void task(String prop) {
             called = true;
             final int c = counter.incrementAndGet();
             echo("\tTASK [" + c + "] in get" + prop);

@@ -32,6 +32,7 @@
 import java.util.*;
 import java.io.*;
 
+@Bean
 public class EnumMapBash {
     static Random rnd = new Random();
 

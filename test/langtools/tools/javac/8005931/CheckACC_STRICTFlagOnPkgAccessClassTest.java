@@ -48,6 +48,7 @@ import com.sun.tools.classfile.Method;
 
 import static com.sun.tools.classfile.AccessFlags.ACC_STRICT;
 
+@Bean
 public class CheckACC_STRICTFlagOnPkgAccessClassTest {
 
     private static final String AssertionErrorMessage =
@@ -80,7 +81,11 @@ public class CheckACC_STRICTFlagOnPkgAccessClassTest {
         }
     }
 
-    private void compile(JavaCompiler comp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void compile(JavaCompiler comp) {
         JavacTask ct = (JavacTask)comp.getTask(null, null, null, null, null,
                 Arrays.asList(source));
         try {
@@ -122,7 +127,11 @@ public class CheckACC_STRICTFlagOnPkgAccessClassTest {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return source;
         }
     }

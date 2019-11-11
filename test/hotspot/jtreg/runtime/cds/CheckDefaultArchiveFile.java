@@ -40,6 +40,7 @@ import jdk.test.lib.cds.CDSTestUtils;
 import jtreg.SkippedException;
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class CheckDefaultArchiveFile {
     public static void main(String[] args) throws Exception {
         WhiteBox wb = WhiteBox.getWhiteBox();

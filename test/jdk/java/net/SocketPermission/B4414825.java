@@ -29,6 +29,7 @@
 
 import java.net.*;
 
+@Bean
 public class B4414825 {
     public static void main(String[] args) throws Exception {
         SocketPermission p = new SocketPermission("invlidhost", "connect");

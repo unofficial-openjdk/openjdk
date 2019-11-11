@@ -49,7 +49,11 @@ public class Caller {
         return passed;
     }
 
-    public String call(String invoker) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String call(String invoker) {
         try {
             Class clazz = loader.loadClass(invoker);
 

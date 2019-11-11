@@ -44,12 +44,17 @@ import jdk.internal.org.jline.reader.History;
 import static org.testng.Assert.*;
 import org.testng.annotations.BeforeMethod;
 
+@Bean
 public class HistoryTest extends ReplToolTesting {
 
     private JShellTool repl;
 
     @Override
-    protected void testRawRun(Locale locale, String[] args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void testRawRun(Locale locale, String[] args) {
         // turn on logging of launch failures
         Logger.getLogger("jdk.jshell.execution").setLevel(Level.ALL);
         repl = ((JShellToolBuilder) builder(locale))
@@ -202,7 +207,11 @@ public class HistoryTest extends ReplToolTesting {
         return (History) getHistory.invoke(console);
     }
 
-    private void previousAndAssert(History history, String expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void previousAndAssert(History history, String expected) {
         assertTrue(history.previous());
         assertEquals(history.current().toString(), expected);
     }

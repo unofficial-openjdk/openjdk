@@ -50,6 +50,7 @@ import javax.net.ssl.SSLSession;
  *       -Djdk.httpclient.HttpClient.log=all
  *       TLSConnection
  */
+@Bean
 public class TLSConnection {
 
     private static final String KEYSTORE = System.getProperty("test.src")

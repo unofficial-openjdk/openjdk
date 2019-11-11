@@ -27,6 +27,7 @@
  */
 import java.lang.ref.*;
 
+@Bean
 public class ReferenceEnqueuePending {
     static class NumberedWeakReference extends WeakReference<Integer> {
         //  Add an integer to identify the weak reference object.

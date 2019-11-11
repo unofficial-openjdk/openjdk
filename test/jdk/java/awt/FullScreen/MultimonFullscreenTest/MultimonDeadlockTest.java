@@ -33,6 +33,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.lang.reflect.InvocationTargetException;
 
+@Bean
 public class MultimonDeadlockTest {
 
     public static void main(String argv[]) {

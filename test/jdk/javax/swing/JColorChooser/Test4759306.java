@@ -33,6 +33,7 @@ import javax.swing.JApplet;
 import javax.swing.JColorChooser;
 import javax.swing.JPanel;
 
+@Bean
 public class Test4759306 extends JApplet {
     public void init() {
         JColorChooser chooser = new JColorChooser();

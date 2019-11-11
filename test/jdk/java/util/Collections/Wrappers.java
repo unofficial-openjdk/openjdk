@@ -43,6 +43,7 @@ import org.testng.annotations.DataProvider;
 import static org.testng.Assert.assertFalse;
 
 @Test(groups = "unit")
+@Bean
 public class Wrappers {
     static Object[][] collections;
 

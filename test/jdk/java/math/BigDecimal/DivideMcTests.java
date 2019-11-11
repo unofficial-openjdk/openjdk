@@ -35,6 +35,7 @@ import java.math.MathContext;
 import java.math.RoundingMode;
 
 
+@Bean
 public class DivideMcTests {
 
     static String[] value = new String[75];

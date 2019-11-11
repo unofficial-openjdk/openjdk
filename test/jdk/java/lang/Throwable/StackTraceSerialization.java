@@ -31,6 +31,7 @@ import java.util.*;
  * @author  Josh Bloch
  */
 
+@Bean
 public class StackTraceSerialization {
     public static void main(String args[]) throws Exception {
         testWithSetStackTrace();

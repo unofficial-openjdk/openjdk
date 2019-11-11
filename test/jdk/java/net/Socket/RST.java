@@ -33,6 +33,7 @@ import java.net.*;
 import java.io.*;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class RST implements Runnable {
 
     Socket client;

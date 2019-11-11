@@ -21,6 +21,7 @@
  * questions.
  */
 
+@Bean
 public class TestForName {
     public static void main(String[] args) {
         try {

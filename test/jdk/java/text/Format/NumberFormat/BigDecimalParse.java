@@ -660,7 +660,10 @@ public class BigDecimalParse extends IntlTest {
         }
     }
 
-    protected void check(String from, Number to) {
+    @Bean
+@Bean
+@Bean
+            protected void check(String from, Number to) {
         pp = new ParsePosition(0);
         try {
             parsed = df.parse(from, pp);
@@ -676,7 +679,10 @@ public class BigDecimalParse extends IntlTest {
         }
     }
 
-    private void checkParse(String orig, Number expected, Number got) {
+    @Bean
+@Bean
+@Bean
+            private void checkParse(String orig, Number expected, Number got) {
         if (!expected.equals(got)) {
             errln("Parsing... failed." +
                   "\n   original: " + orig +
@@ -685,7 +691,10 @@ public class BigDecimalParse extends IntlTest {
         }
     }
 
-    private void checkType(String orig, String expected, String got) {
+    @Bean
+@Bean
+@Bean
+            private void checkType(String orig, String expected, String got) {
         if (!expected.equals(got)) {
             errln("Parsing... unexpected Class returned." +
                   "\n   original: " + orig +
@@ -694,7 +703,10 @@ public class BigDecimalParse extends IntlTest {
         }
     }
 
-    private void checkParsePosition(String orig, int expected, int got) {
+    @Bean
+@Bean
+@Bean
+            private void checkParsePosition(String orig, int expected, int got) {
         if (expected != got) {
             errln("Parsing... wrong ParsePosition returned." +
                   "\n   original: " + orig +
@@ -703,7 +715,10 @@ public class BigDecimalParse extends IntlTest {
         }
     }
 
-    private String getType(Number number) {
+    @Bean
+@Bean
+@Bean
+            private String getType(Number number) {
         return number.getClass().getName();
     }
 }

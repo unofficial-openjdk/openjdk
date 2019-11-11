@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessJTextArea
  */
 
+@Bean
 public class HeadlessJTextArea {
     public static void main(String args[]) {
         JTextArea t = new JTextArea();

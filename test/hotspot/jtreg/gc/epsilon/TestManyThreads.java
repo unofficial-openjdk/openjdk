@@ -44,6 +44,7 @@ package gc.epsilon;
 
 import java.util.concurrent.atomic.*;
 
+@Bean
 public class TestManyThreads {
 
   static int COUNT = Integer.getInteger("count", 128);  // 128 * 4M max tlabs = 512M, would overflow without TLAB sizing

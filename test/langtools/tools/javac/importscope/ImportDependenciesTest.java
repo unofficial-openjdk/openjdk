@@ -49,12 +49,14 @@ import toolbox.ToolBox;
  * import types are tested. In addition, the test checks various combinations
  * of classes.
  */
+@Bean
 public class ImportDependenciesTest {
 
     private static final String sourceTemplate =
             "package pkg;\n" +
             "#IMPORT\n" +
-            "public class Test {\n" +
+            "@Bean
+public class Test {\n" +
             "    static #CLASS_TYPE InnerClass#TYPE_PARAMETER #PARENT {\n" +
             "        static class Inner1 {\n" +
             "        }\n" +
@@ -123,7 +125,11 @@ public class ImportDependenciesTest {
         echo(message);
     }
 
-    private String generateTypeParameter(List<InnerClass> typeParameters) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String generateTypeParameter(List<InnerClass> typeParameters) {
         if (typeParameters.isEmpty()) {
             return "";
         }
@@ -142,7 +148,11 @@ public class ImportDependenciesTest {
         }
     }
 
-    private CompilationResult compile(ToolBox.JavaSource...sources) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private CompilationResult compile(ToolBox.JavaSource...sources) {
         StringWriter writer = new StringWriter();
         JavaCompiler jc = ToolProvider.getSystemJavaCompiler();
         Boolean call = jc.getTask(writer, null, null, null, null, Arrays.asList(sources)).call();
@@ -153,11 +163,19 @@ public class ImportDependenciesTest {
         echo("");
     }
 
-    public void echo(String output) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void echo(String output) {
         printf(output + "\n");
     }
 
-    public void printf(String template, Object...args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void printf(String template, Object...args) {
         System.err.print(String.format(template, args).replace("\n", ToolBox.lineSeparator));
     }
 
@@ -174,7 +192,11 @@ public class ImportDependenciesTest {
             return this == IMPORT_ON_DEMAND || this == STATIC_IMPORT_ON_DEMAND;
         }
 
-        public String generateImports(List<InnerClass> innerClasses) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String generateImports(List<InnerClass> innerClasses) {
             return innerClasses.stream()
                     .map(i -> isOnDemand() ? i.getPackageName() + ".*" : i.getCanonicalName())
                     .distinct()
@@ -186,12 +208,20 @@ public class ImportDependenciesTest {
     enum ClassType {
         CLASS("class") {
             @Override
-            public boolean canBeInherited(List<InnerClass> innerClasses) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public boolean canBeInherited(List<InnerClass> innerClasses) {
                 return true;
             }
 
             @Override
-            public String generateInheritanceString(List<InnerClass> innerClasses) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public String generateInheritanceString(List<InnerClass> innerClasses) {
                 if (innerClasses.isEmpty()) {
                     return "";
                 }
@@ -211,12 +241,20 @@ public class ImportDependenciesTest {
             }
         }, INTERFACE("interface") {
             @Override
-            public boolean canBeInherited(List<InnerClass> innerClasses) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public boolean canBeInherited(List<InnerClass> innerClasses) {
                 return !innerClasses.stream().anyMatch(InnerClass::isClass);
             }
 
             @Override
-            public String generateInheritanceString(List<InnerClass> innerClasses) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public String generateInheritanceString(List<InnerClass> innerClasses) {
                 if (innerClasses.isEmpty()) {
                     return "";
                 }

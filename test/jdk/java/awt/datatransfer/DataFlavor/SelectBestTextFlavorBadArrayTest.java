@@ -36,6 +36,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
+@Bean
 public class SelectBestTextFlavorBadArrayTest {
 
     public static void main(String[] args) {

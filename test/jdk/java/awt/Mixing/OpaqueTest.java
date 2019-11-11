@@ -46,6 +46,7 @@ import test.java.awt.regtesthelpers.Util;
 
 
 
+@Bean
 public class OpaqueTest
 {
 
@@ -65,7 +66,11 @@ public class OpaqueTest
         // Actions for the buttons add appropriate number to the test sequence
         heavy.addActionListener(new java.awt.event.ActionListener()
                 {
-                    public void actionPerformed(java.awt.event.ActionEvent e) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(java.awt.event.ActionEvent e) {
                         p.setComponentZOrder(light, 0);
                         f.validate();
                         testSeq = testSeq + "0";
@@ -75,7 +80,11 @@ public class OpaqueTest
 
         light.addActionListener(new java.awt.event.ActionListener()
                 {
-                    public void actionPerformed(java.awt.event.ActionEvent e) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(java.awt.event.ActionEvent e) {
                         p.setComponentZOrder(heavy, 0);
                         f.validate();
                         testSeq = testSeq + "1";

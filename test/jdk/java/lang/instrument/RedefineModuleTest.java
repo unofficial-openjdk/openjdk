@@ -50,6 +50,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 @Test
+@Bean
 public class RedefineModuleTest {
 
     static void redefineModule(Module module,
@@ -198,7 +199,11 @@ public class RedefineModuleTest {
         return providers;
     }
 
-    private boolean containsInstanceOf(Collection<?> c, Class<?> type) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean containsInstanceOf(Collection<?> c, Class<?> type) {
         for (Object o : c) {
             if (type.isInstance(o)) return true;
         }
@@ -253,7 +258,11 @@ public class RedefineModuleTest {
         Module baseModule = Object.class.getModule();
         class MyProvider extends URLStreamHandlerProvider {
             @Override
-            public URLStreamHandler createURLStreamHandler(String protocol) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public URLStreamHandler createURLStreamHandler(String protocol) {
                 return null;
             }
         }

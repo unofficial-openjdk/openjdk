@@ -41,6 +41,7 @@ import static java.lang.invoke.MethodType.*;
 /*
  * Lookup object can be obtained statically or reflectively.
  */
+@Bean
 public class ReflectiveLookupTest {
     public static void main(String... args) throws Throwable {
         // Get a full power lookup

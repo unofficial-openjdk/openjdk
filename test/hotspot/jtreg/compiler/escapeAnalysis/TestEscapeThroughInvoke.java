@@ -33,6 +33,7 @@
 
 package compiler.escapeAnalysis;
 
+@Bean
 public class TestEscapeThroughInvoke {
     private A a;
 
@@ -56,7 +57,11 @@ public class TestEscapeThroughInvoke {
 
     // Create and return a new instance of A that escaped through 'A::saveInto'.
     // The 'dummy' parameters are needed to avoid EA skipping the methods.
-    private A create(Integer dummy) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private A create(Integer dummy) {
         A result = new A(dummy);
         result.saveInto(a, dummy); // result escapes into 'a' here
         return result;
@@ -68,11 +73,19 @@ public class TestEscapeThroughInvoke {
         public A(Integer dummy) {
         }
 
-        public void saveInto(A other, Integer dummy) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void saveInto(A other, Integer dummy) {
             other.saved = this;
         }
 
-        public void check(A other) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void check(A other) {
             if (this.saved != other) {
                 throw new RuntimeException("TEST FAILED: Objects not equal.");
             }

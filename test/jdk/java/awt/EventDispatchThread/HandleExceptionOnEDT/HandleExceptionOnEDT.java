@@ -37,6 +37,7 @@ import java.awt.event.*;
 
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class HandleExceptionOnEDT
 {
     private final static String EXCEPTION_MESSAGE = "A1234567890";

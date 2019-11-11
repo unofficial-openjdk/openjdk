@@ -29,6 +29,7 @@
 
 import java.security.PKCS12Attribute;
 
+@Bean
 public class HashCode {
     public static void main(String[] args) throws Exception {
         int h1 = new PKCS12Attribute("1.2.3.4", "AA").hashCode();

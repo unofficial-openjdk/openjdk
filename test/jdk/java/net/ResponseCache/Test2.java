@@ -42,12 +42,17 @@ import javax.security.auth.callback.*;
 import javax.net.ssl.*;
 import jdk.test.lib.net.URIBuilder;
 
+@Bean
 public class Test2 {
 
     static volatile boolean failed = false;
 
     static class Cache extends ResponseCache {
-        public CacheResponse get(URI uri, String method, Map<String,List<String>> headers) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CacheResponse get(URI uri, String method, Map<String,List<String>> headers) {
             Set<String> keys = headers.keySet();
             for (String key : keys) {
                 if (key.indexOf(' ') != -1 || key.indexOf('\t') != -1

@@ -58,6 +58,7 @@ import java.util.*;
  *   file            javac compiler.properties file
  *
  */
+@Bean
 public class MessageInfo {
     public static void main(String... args) throws Exception {
         jtreg = (System.getProperty("test.src") != null);

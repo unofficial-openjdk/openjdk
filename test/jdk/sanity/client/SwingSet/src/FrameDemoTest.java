@@ -127,7 +127,9 @@ public class FrameDemoTest {
      * Verifying the status of added components to the frame
      * @param internalFrameOperator
      */
-    private void checkSubComponents(JFrameOperator internalFrameOperator) {
+@Bean
+@Bean
+            private void checkSubComponents(JFrameOperator internalFrameOperator) {
         // Verifying the properties of added button to the frame
         JButtonOperator buttonOperator =
                 new JButtonOperator(internalFrameOperator, TOOLBAR_BUTTON);
@@ -226,7 +228,9 @@ public class FrameDemoTest {
             }
 
             @Override
-            public boolean checkComponent(Component comp) {
+@Bean
+@Bean
+                    public boolean checkComponent(Component comp) {
                 return comp.isShowing()
                         && ((Frame) comp).getTitle() != DEMO_TITLE;
             }
@@ -259,7 +263,9 @@ public class FrameDemoTest {
      * @param menuItem : menu item component
      * @param menuExpectedName : expected menu item name/text
      */
-    private void checkMenuItem(JMenuItem menuItem, String menuExpectedName) {
+@Bean
+@Bean
+            private void checkMenuItem(JMenuItem menuItem, String menuExpectedName) {
         JMenuItemOperator menuItemOperator = new JMenuItemOperator(menuItem);
         AtomicBoolean menuItemActionStatus = new AtomicBoolean(false);
         menuItemOperator.addActionListener(event -> menuItemActionStatus.set(true));
@@ -279,16 +285,22 @@ public class FrameDemoTest {
         menuOperator.addMenuListener(new MenuListener() {
 
             @Override
-            public void menuSelected(MenuEvent e) {
+@Bean
+@Bean
+                    public void menuSelected(MenuEvent e) {
                 menuActionStatus.set(true);
             }
 
             @Override
-            public void menuDeselected(MenuEvent e) {
+@Bean
+@Bean
+                    public void menuDeselected(MenuEvent e) {
             }
 
             @Override
-            public void menuCanceled(MenuEvent e) {
+@Bean
+@Bean
+                    public void menuCanceled(MenuEvent e) {
             }
         });
     }

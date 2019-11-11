@@ -41,6 +41,7 @@ import java.util.concurrent.Phaser;
 import java.util.function.Predicate;
 import jdk.test.lib.LockFreeLogger;
 
+@Bean
 public class Locks {
 
     private static final Object OBJA = new Object();
@@ -288,7 +289,10 @@ public class Locks {
             waitForState(State.BLOCKED);
         }
 
-        private void waitForState(Thread.State state) {
+        @Bean
+@Bean
+@Bean
+            private void waitForState(Thread.State state) {
             while (!waiter.isInterrupted() && waiter.getState() != state) {
                 Thread.yield();
             }

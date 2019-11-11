@@ -46,6 +46,7 @@ import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+@Bean
 public class Test6932496 extends ClassLoader {
     private static final int CLASS_FILE_VERSION = 49;
     private static final String CLASS_TEST = "Test";
@@ -80,7 +81,8 @@ public class Test6932496 extends ClassLoader {
     }
 
     /*
-        public class Test {
+        @Bean
+public class Test {
             volatile boolean flag = false;
             public static void m() {
                 try {

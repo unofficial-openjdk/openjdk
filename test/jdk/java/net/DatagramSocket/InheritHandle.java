@@ -30,6 +30,7 @@ import java.net.BindException;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 
+@Bean
 public class InheritHandle {
     private static final long SLEEPTIME_MS = 1000L;
 

@@ -45,6 +45,7 @@
  * behavior of parseLong(CharSequence, int, int, int) will be tested here.
  */
 
+@Bean
 public class ParsingTest {
 
     public static void main(String... argv) {

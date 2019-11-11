@@ -32,6 +32,7 @@
 
 import java.nio.*;
 
+@Bean
 public class OrderShort extends Order {
     private static void ckShortBuffer(ShortBuffer buf, ByteOrder expected) {
         ck(buf.asReadOnlyBuffer().order(), expected);

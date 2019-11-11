@@ -32,7 +32,9 @@ import java.lang.reflect.*;
 import java.lang.annotation.*;
 import java.util.*;
 
-@ExpectedGenericString("public class GenericStringTest")
+@ExpectedGenericString("@Bean
+public class GenericStringTest")
+@Bean
 public class GenericStringTest {
     public Map<String, Integer>[] mixed = null;
     public Map<String, Integer>[][] mixed2 = null;
@@ -51,7 +53,8 @@ public class GenericStringTest {
                    intArray.getClass(),                "int[][]",
                    java.lang.Enum.class,               "public abstract class java.lang.Enum<E extends java.lang.Enum<E>>",
                    java.util.Map.class,                "public abstract interface java.util.Map<K,V>",
-                   java.util.EnumMap.class,            "public class java.util.EnumMap<K extends java.lang.Enum<K>,V>",
+                   java.util.EnumMap.class,            "@Bean
+public class java.util.EnumMap<K extends java.lang.Enum<K>,V>",
                    java.util.EventListenerProxy.class, "public abstract class java.util.EventListenerProxy<T extends java.util.EventListener>");
 
         for (Map.Entry<Class<?>, String> testCase : testCases.entrySet()) {

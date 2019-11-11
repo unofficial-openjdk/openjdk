@@ -39,6 +39,7 @@ import sun.management.LazyCompositeData;
  * @author Jaroslav Bachorik
  */
 
+@Bean
 public class LazyCompositeDataTest {
     private final static CompositeData dataV1, dataV2;
 
@@ -130,7 +131,11 @@ public class LazyCompositeDataTest {
             return dataV1;
         }
 
-        public boolean isTypeMached(CompositeType type) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean isTypeMached(CompositeType type) {
             return isTypeMatched(this.getCompositeType(), type);
         }
     }

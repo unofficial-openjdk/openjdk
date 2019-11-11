@@ -37,6 +37,7 @@ import java.net.URL;
 import java.util.EnumSet;
 import javax.management.loading.MLet;
 
+@Bean
 public class PostExceptionTest {
 
     /**
@@ -477,7 +478,11 @@ public class PostExceptionTest {
             return name;
         }
 
-        public void postRegister(Boolean registrationDone) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void postRegister(Boolean registrationDone) {
             if (!end && where.contains(WHERE.POSTREGISTER))
                 throw new RuntimeException(doThrow());
         }

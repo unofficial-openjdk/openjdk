@@ -65,6 +65,7 @@ import java.util.List;
  * specified amount of memory. Tests work with enabled IHOP logging.
  *
  */
+@Bean
 public class TestStressIHOPMultiThread {
 
     public final static List<Object> GARBAGE = new LinkedList<>();
@@ -206,7 +207,11 @@ public class TestStressIHOPMultiThread {
         /**
          * Allocates thread local garbage
          */
-        private void allocate(long amount) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void allocate(long amount) {
             long allocated = 0;
             while (allocated < amount && TestStressIHOPMultiThread.this.isRunning()) {
                 garbage.add(new byte[CHUNK_SIZE]);

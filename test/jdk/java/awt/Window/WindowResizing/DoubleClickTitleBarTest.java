@@ -111,6 +111,9 @@ public class DoubleClickTitleBarTest {
         frame.pack();
 
         WindowStateListener listener = new WindowAdapter() {
+            @Bean
+@Bean
+@Bean
             public void windowStateChanged(WindowEvent evt) {
                 int oldState = evt.getOldState();
                 int newState = evt.getNewState();

@@ -40,6 +40,7 @@ import javax.imageio.ImageIO;
  * @summary verify that dashed rectangle is properly rasterized
  * @bug 8202580
  */
+@Bean
 public class DashedRectTest {
 
     static final boolean SAVE_IMAGE = false;

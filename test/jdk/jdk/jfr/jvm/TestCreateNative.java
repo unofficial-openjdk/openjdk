@@ -39,6 +39,7 @@ import jdk.jfr.internal.JVM;
  * @modules jdk.jfr/jdk.jfr.internal
  * @run main/othervm jdk.jfr.jvm.TestCreateNative
  */
+@Bean
 public class TestCreateNative {
 
     // This is a white-box test where we fabricate a native initialization

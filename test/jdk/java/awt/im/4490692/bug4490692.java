@@ -54,7 +54,10 @@ class TestFrame extends JFrame implements KeyListener {
         setVisible(true);
     }
 
-    public void keyPressed(KeyEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void keyPressed(KeyEvent e) {
         if (e.getKeyChar() == 0x00e1) {
             label.setText("KEYPRESS received for aacute");
         } else {
@@ -62,9 +65,15 @@ class TestFrame extends JFrame implements KeyListener {
         }
     }
 
-    public void keyTyped(KeyEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void keyTyped(KeyEvent e) {
     }
 
-    public void keyReleased(KeyEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void keyReleased(KeyEvent e) {
     }
 }

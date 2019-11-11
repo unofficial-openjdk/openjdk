@@ -41,6 +41,7 @@ import java.net.*;
 import java.util.Optional;
 import jdk.test.lib.NetworkConfiguration;
 
+@Bean
 public class B6558853 implements Runnable {
     private InetAddress addr = null;
     private int port = 0;

@@ -53,6 +53,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
 
+@Bean
 public class TestJcmdWithSideCar {
     private static final String IMAGE_NAME = Common.imageName("jfr-jcmd");
     private static final int TIME_TO_RUN_MAIN_PROCESS = (int) (30 * Utils.TIMEOUT_FACTOR); // seconds
@@ -209,7 +210,11 @@ public class TestJcmdWithSideCar {
             return p;
         }
 
-        public void waitForMainMethodStart(long howLong) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void waitForMainMethodStart(long howLong) {
             long expiration = System.currentTimeMillis() + howLong;
 
             do {

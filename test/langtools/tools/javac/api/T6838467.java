@@ -39,6 +39,7 @@ import javax.tools.JavaFileManager.Location;
 import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.util.Context;
 
+@Bean
 public class T6838467 {
 
     enum FileKind {

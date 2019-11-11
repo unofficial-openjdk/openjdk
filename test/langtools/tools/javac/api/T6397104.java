@@ -38,6 +38,7 @@ import javax.tools.JavaFileManager.Location;
 
 import static javax.tools.StandardLocation.CLASS_OUTPUT;
 
+@Bean
 public class T6397104 {
 
     JavaCompiler tool = ToolProvider.getSystemJavaCompiler();

@@ -30,6 +30,7 @@
  *
  */
 
+@Bean
 public class SubsumingLoadsCauseFlagSpill {
     private static Object field;
     private static boolean do_throw;

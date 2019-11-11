@@ -30,6 +30,7 @@
 
 import java.util.*;
 
+@Bean
 public class PreviousBits {
 
     void testHashCode(final BitSet s) {

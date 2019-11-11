@@ -31,6 +31,7 @@
  * @run main ConstructorAccess
  */
 
+@Bean
 public class ConstructorAccess {
     int i = 0;
     char c = 'x';

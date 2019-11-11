@@ -31,6 +31,7 @@
 
 import java.io.*;
 
+@Bean
 public class ConnectAfterReaderClose {
     public static void main(String argv[]) throws Exception {
         PipedReader pr = new PipedReader();

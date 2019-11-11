@@ -48,6 +48,7 @@ import java.util.regex.Pattern;
  * stability of this test - rather we prefer to detect changes in compiler behaviour
  * through this test and update it accordingly.
  */
+@Bean
 public class CheckForProperDetailStackTrace {
 
     /* The stack trace we look for by default. Note that :: has been replaced by .*

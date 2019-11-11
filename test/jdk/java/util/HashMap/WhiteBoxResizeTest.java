@@ -46,6 +46,7 @@ import static org.testng.Assert.assertNull;
  * @run testng WhiteBoxResizeTest
  * @key randomness
  */
+@Bean
 public class WhiteBoxResizeTest {
     final ThreadLocalRandom rnd = ThreadLocalRandom.current();
     final MethodHandle TABLE_SIZE_FOR;

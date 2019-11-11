@@ -30,6 +30,7 @@
 
 import java.security.*;
 
+@Bean
 public class ToString {
 
     public static void main(String[]args) throws Exception {
@@ -57,11 +58,19 @@ public class ToString {
             super(name);
         }
 
-        public boolean implies(Permission permission) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean implies(Permission permission) {
             return false;
         }
 
-        public boolean equals(Object obj) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object obj) {
             return false;
         }
 

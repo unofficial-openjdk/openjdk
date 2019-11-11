@@ -46,6 +46,7 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.stream.*;
 
+@Bean
 public class LocalsAndOperands {
     static final boolean debug = false;
     static final boolean is32bit;

@@ -34,6 +34,7 @@
 import java.nio.channels.AsynchronousSocketChannel;
 import java.io.IOException;
 
+@Bean
 public class BadProperties {
     public static void main(String[] args) throws IOException {
         AsynchronousSocketChannel.open();

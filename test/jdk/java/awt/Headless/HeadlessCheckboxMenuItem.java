@@ -30,6 +30,7 @@ import java.awt.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessCheckboxMenuItem
  */
 
+@Bean
 public class HeadlessCheckboxMenuItem {
 
     public static void main(String args[]) {

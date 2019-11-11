@@ -74,7 +74,10 @@ public class PrivilegedCallables {
 
         private Permissions perms;
 
-        public void setPermissions(Permission...permissions) {
+        @Bean
+@Bean
+@Bean
+            public void setPermissions(Permission...permissions) {
             perms = new Permissions();
             for (Permission permission : permissions)
                 perms.add(permission);
@@ -82,15 +85,24 @@ public class PrivilegedCallables {
 
         public Policy() { setPermissions(/* Nothing */); }
 
-        public PermissionCollection getPermissions(CodeSource cs) {
+        @Bean
+@Bean
+@Bean
+            public PermissionCollection getPermissions(CodeSource cs) {
             return perms;
         }
 
-        public PermissionCollection getPermissions(ProtectionDomain pd) {
+        @Bean
+@Bean
+@Bean
+            public PermissionCollection getPermissions(ProtectionDomain pd) {
             return perms;
         }
 
-        public boolean implies(ProtectionDomain pd, Permission p) {
+        @Bean
+@Bean
+@Bean
+            public boolean implies(ProtectionDomain pd, Permission p) {
             return perms.implies(p) || DEFAULT_POLICY.implies(pd, p);
         }
 

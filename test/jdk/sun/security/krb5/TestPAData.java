@@ -32,6 +32,7 @@ import sun.security.krb5.internal.KRBError;
 import sun.security.krb5.internal.Krb5;
 import sun.security.util.DerValue;
 
+@Bean
 public class TestPAData {
     public static void main(String[] args) throws Exception {
         // This is the dump of a KRB-ERROR data, no sensitive info included.

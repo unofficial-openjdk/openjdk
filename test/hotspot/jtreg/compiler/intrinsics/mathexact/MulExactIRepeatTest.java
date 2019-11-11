@@ -38,6 +38,7 @@ import jdk.test.lib.Utils;
 
 import java.util.Random;
 
+@Bean
 public class MulExactIRepeatTest {
     public static void main(String[] args) {
         runTest(new Verify.MulExactI());

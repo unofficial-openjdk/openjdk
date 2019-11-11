@@ -99,7 +99,10 @@ public class Numbers {
      *            expected result
      */
     @Test(dataProvider = "numbers")
-    public void testIntegerLong(String res, String expected) {
+    @Bean
+@Bean
+@Bean
+            public void testIntegerLong(String res, String expected) {
         assertEquals(res, expected);
     }
 

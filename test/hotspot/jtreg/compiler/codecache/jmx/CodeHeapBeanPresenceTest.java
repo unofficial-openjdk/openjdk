@@ -48,6 +48,7 @@ import sun.hotspot.code.BlobType;
 
 import java.util.EnumSet;
 
+@Bean
 public class CodeHeapBeanPresenceTest {
 
     public static void main(String args[]) {

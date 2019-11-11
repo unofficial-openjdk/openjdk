@@ -36,6 +36,7 @@ import java.net.URL;
  * @run main GetResource
  */
 
+@Bean
 public class GetResource {
     CyclicBarrier go = new CyclicBarrier(2);
     CyclicBarrier done = new CyclicBarrier(2);

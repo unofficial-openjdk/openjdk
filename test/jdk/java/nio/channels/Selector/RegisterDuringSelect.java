@@ -34,6 +34,7 @@ import java.nio.channels.Pipe;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 
+@Bean
 public class RegisterDuringSelect {
     interface TestOperation {
         void accept(Thread t, Selector sel, Pipe.SourceChannel sc) throws Exception;

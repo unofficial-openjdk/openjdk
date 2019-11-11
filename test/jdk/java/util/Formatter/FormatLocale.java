@@ -44,6 +44,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 import java.util.stream.IntStream;
 
+@Bean
 public class FormatLocale {
 
     static final Locale TURKISH = new Locale("tr");

@@ -61,6 +61,7 @@ import javax.management.openmbean.TabularType;
 import jdk.test.lib.JDKToolFinder;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class MXBeanWeirdParamTest {
 
     private static String BASIC_MXBEAN_CLASS_NAME = "Basic";

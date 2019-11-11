@@ -37,6 +37,7 @@ import java.nio.channels.*;
 import java.util.*;
 import jdk.test.lib.RandomFactory;
 
+@Bean
 public class VectorIO {
 
     private static Random generator = RandomFactory.getRandom();

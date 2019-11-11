@@ -40,6 +40,7 @@ import jdk.test.lib.Asserts;
  * @library /test/lib /test/jdk
  * @run main/othervm jdk.jfr.jmx.TestRecordingSettings
  */
+@Bean
 public class TestRecordingSettings {
     public static void main(String[] args) throws Exception {
         Map<String, String> settings = new HashMap<>();

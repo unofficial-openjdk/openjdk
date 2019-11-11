@@ -71,6 +71,7 @@ package java.text;
  * @since 1.1
  * @see         java.text.Format
  */
+@Bean
 public class FieldPosition {
 
     /**
@@ -191,7 +192,8 @@ public class FieldPosition {
      * @param bi the begin index
      * @since 1.2
      */
-    public void setBeginIndex(int bi) {
+@Bean
+        public void setBeginIndex(int bi) {
         beginIndex = bi;
     }
 
@@ -201,7 +203,8 @@ public class FieldPosition {
      * @param ei the end index
      * @since 1.2
      */
-    public void setEndIndex(int ei) {
+@Bean
+        public void setEndIndex(int ei) {
         endIndex = ei;
     }
 
@@ -261,7 +264,8 @@ public class FieldPosition {
      * Return true if the receiver wants a {@code Format.Field} value and
      * {@code attribute} is equal to it.
      */
-    private boolean matchesField(Format.Field attribute) {
+@Bean
+        private boolean matchesField(Format.Field attribute) {
         if (this.attribute != null) {
             return this.attribute.equals(attribute);
         }
@@ -273,7 +277,8 @@ public class FieldPosition {
      * {@code attribute} is equal to it, or true if the receiver
      * represents an inteter constant and {@code field} equals it.
      */
-    private boolean matchesField(Format.Field attribute, int field) {
+@Bean
+        private boolean matchesField(Format.Field attribute, int field) {
         if (this.attribute != null) {
             return this.attribute.equals(attribute);
         }

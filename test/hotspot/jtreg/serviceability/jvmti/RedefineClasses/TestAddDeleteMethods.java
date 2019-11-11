@@ -140,7 +140,11 @@ public class TestAddDeleteMethods {
     static private final String ExpMsgPrefix = "attempted to ";
     static private final String ExpMsgPostfix = " a method";
 
-    static private void log(String msg) { System.out.println(msg); }
+    static @Bean
+@Bean
+@Bean
+@Bean
+                private void log(String msg) { System.out.println(msg); }
 
     public static void test(Runnable obj, String newBytes, String expSuffix, String methodName,
                             boolean expectedRedefToPass) throws Exception {

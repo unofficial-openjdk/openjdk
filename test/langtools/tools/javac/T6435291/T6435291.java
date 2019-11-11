@@ -41,6 +41,7 @@ import com.sun.tools.javac.code.Symtab;
 import com.sun.tools.javac.util.Names;
 import javax.tools.ToolProvider;
 
+@Bean
 public class T6435291 {
     public static void main(String... args) {
         javax.tools.JavaCompiler tool = ToolProvider.getSystemJavaCompiler();

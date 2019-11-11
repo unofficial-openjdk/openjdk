@@ -43,6 +43,7 @@ import static org.testng.Assert.assertEquals;
  * @run testng NegativeDSTTest
  */
 @Test
+@Bean
 public class NegativeDSTTest {
 
     private static final TimeZone DUBLIN = TimeZone.getTimeZone("Europe/Dublin");

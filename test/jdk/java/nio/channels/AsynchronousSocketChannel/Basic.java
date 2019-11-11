@@ -47,6 +47,7 @@ import static jdk.net.ExtendedSocketOptions.TCP_KEEPCOUNT;
 import static jdk.net.ExtendedSocketOptions.TCP_KEEPIDLE;
 import static jdk.net.ExtendedSocketOptions.TCP_KEEPINTERVAL;
 
+@Bean
 public class Basic {
     private static final Random RAND = RandomFactory.getRandom();
 
@@ -254,9 +255,15 @@ public class Basic {
             }
             final AtomicReference<Throwable> connectException = new AtomicReference<>();
             ch.connect(server.address(), (Void)null, new CompletionHandler<Void,Void>() {
-                public void completed(Void result, Void att) {
+                @Bean
+@Bean
+@Bean
+            public void completed(Void result, Void att) {
                 }
-                public void failed(Throwable exc, Void att) {
+                @Bean
+@Bean
+@Bean
+            public void failed(Throwable exc, Void att) {
                     connectException.set(exc);
                 }
             });
@@ -361,13 +368,19 @@ public class Basic {
             // write bytes to fill socket buffer
             final AtomicInteger numCompleted = new AtomicInteger();
             ch.write(genBuffer(), ch, new CompletionHandler<Integer,AsynchronousSocketChannel>() {
-                public void completed(Integer result, AsynchronousSocketChannel ch) {
+                @Bean
+@Bean
+@Bean
+            public void completed(Integer result, AsynchronousSocketChannel ch) {
                     System.out.println("completed write to async channel: " + result);
                     numCompleted.incrementAndGet();
                     ch.write(genBuffer(), ch, this);
                     System.out.println("started another write to async channel: " + result);
                 }
-                public void failed(Throwable x, AsynchronousSocketChannel ch) {
+                @Bean
+@Bean
+@Bean
+            public void failed(Throwable x, AsynchronousSocketChannel ch) {
                     System.out.println("failed write to async channel");
                     writeException.set(x);
                 }
@@ -487,7 +500,10 @@ public class Basic {
             final ByteBuffer dst = ByteBuffer.allocateDirect(src.capacity() + 100);
             final CountDownLatch latch = new CountDownLatch(1);
             ch.read(dst, (Void)null, new CompletionHandler<Integer,Void>() {
-                public void completed(Integer result, Void att) {
+                @Bean
+@Bean
+@Bean
+            public void completed(Integer result, Void att) {
                     int n = result;
                     if (n > 0) {
                         ch.read(dst, (Void)null, this);
@@ -495,7 +511,10 @@ public class Basic {
                         latch.countDown();
                     }
                 }
-                public void failed(Throwable exc, Void att) {
+                @Bean
+@Bean
+@Bean
+            public void failed(Throwable exc, Void att) {
                 }
             });
 
@@ -537,14 +556,20 @@ public class Basic {
             final ByteBuffer dst = ByteBuffer.allocateDirect(src.capacity());
             final CountDownLatch latch = new CountDownLatch(1);
             ch.read(dst, (Void)null, new CompletionHandler<Integer,Void>() {
-                public void completed(Integer result, Void att) {
+                @Bean
+@Bean
+@Bean
+            public void completed(Integer result, Void att) {
                     if (dst.hasRemaining()) {
                         ch.read(dst, (Void)null, this);
                     } else {
                         latch.countDown();
                     }
                 }
-                public void failed(Throwable exc, Void att) {
+                @Bean
+@Bean
+@Bean
+            public void failed(Throwable exc, Void att) {
                 }
             });
 
@@ -594,13 +619,19 @@ public class Basic {
             final CountDownLatch l1 = new CountDownLatch(1);
             ch.read(dsts, 0, dsts.length, 0L, TimeUnit.SECONDS, (Void)null,
                 new CompletionHandler<Long,Void>() {
-                    public void completed(Long result, Void att) {
+                    @Bean
+@Bean
+@Bean
+            public void completed(Long result, Void att) {
                         long n = result;
                         if (n <= 0)
                             throw new RuntimeException("No bytes read");
                         l1.countDown();
                     }
-                    public void failed(Throwable exc, Void att) {
+                    @Bean
+@Bean
+@Bean
+            public void failed(Throwable exc, Void att) {
                     }
             });
 
@@ -621,13 +652,19 @@ public class Basic {
             final CountDownLatch l2 = new CountDownLatch(1);
             ch.read(dsts, 0, dsts.length, 0L, TimeUnit.SECONDS, (Void)null,
                 new CompletionHandler<Long,Void>() {
-                    public void completed(Long result, Void att) {
+                    @Bean
+@Bean
+@Bean
+            public void completed(Long result, Void att) {
                         long n = result;
                         if (n <= 0)
                             throw new RuntimeException("No bytes read");
                         l2.countDown();
                     }
-                    public void failed(Throwable exc, Void att) {
+                    @Bean
+@Bean
+@Bean
+            public void failed(Throwable exc, Void att) {
                     }
             });
             l2.await();
@@ -655,7 +692,10 @@ public class Basic {
             // write all bytes and close connection when done
             final ByteBuffer src = genBuffer();
             ch.write(src, (Void)null, new CompletionHandler<Integer,Void>() {
-                public void completed(Integer result, Void att) {
+                @Bean
+@Bean
+@Bean
+            public void completed(Integer result, Void att) {
                     if (src.hasRemaining()) {
                         ch.write(src, (Void)null, this);
                     } else {
@@ -664,7 +704,10 @@ public class Basic {
                         } catch (IOException ignore) { }
                     }
                 }
-                public void failed(Throwable exc, Void att) {
+                @Bean
+@Bean
+@Bean
+            public void failed(Throwable exc, Void att) {
                 }
             });
 
@@ -711,14 +754,20 @@ public class Basic {
             final CountDownLatch l1 = new CountDownLatch(1);
             ch.write(srcs, 0, srcs.length, 0L, TimeUnit.SECONDS, (Void)null,
                 new CompletionHandler<Long,Void>() {
-                    public void completed(Long result, Void att) {
+                    @Bean
+@Bean
+@Bean
+            public void completed(Long result, Void att) {
                         long n = result;
                         if (n <= 0)
                             throw new RuntimeException("No bytes read");
                         bytesWritten.addAndGet(n);
                         l1.countDown();
                     }
-                    public void failed(Throwable exc, Void att) {
+                    @Bean
+@Bean
+@Bean
+            public void failed(Throwable exc, Void att) {
                     }
             });
             l1.await();
@@ -731,7 +780,10 @@ public class Basic {
             srcs = genBuffers(1);
             ch.write(srcs, 0, srcs.length, 0L, TimeUnit.SECONDS, (Void)null,
                 new CompletionHandler<Long,Void>() {
-                    public void completed(Long result, Void att) {
+                    @Bean
+@Bean
+@Bean
+            public void completed(Long result, Void att) {
                         long n = result;
                         if (n <= 0)
                             throw new RuntimeException("No bytes written");
@@ -742,7 +794,10 @@ public class Basic {
                                 (Void)null, this);
                         }
                     }
-                    public void failed(Throwable exc, Void att) {
+                    @Bean
+@Bean
+@Bean
+            public void failed(Throwable exc, Void att) {
                     }
             });
 
@@ -824,10 +879,16 @@ public class Basic {
 
             // this read should timeout if value is > 0
             ch.read(dst, timeout, unit, null, new CompletionHandler<Integer,Void>() {
-                public void completed(Integer result, Void att) {
+                @Bean
+@Bean
+@Bean
+            public void completed(Integer result, Void att) {
                     readException.set(new RuntimeException("Should not complete"));
                 }
-                public void failed(Throwable exc, Void att) {
+                @Bean
+@Bean
+@Bean
+            public void failed(Throwable exc, Void att) {
                     readException.set(exc);
                 }
             });
@@ -862,10 +923,16 @@ public class Basic {
             ch.write(genBuffer(), timeout, unit, ch,
                 new CompletionHandler<Integer,AsynchronousSocketChannel>()
             {
-                public void completed(Integer result, AsynchronousSocketChannel ch) {
+                @Bean
+@Bean
+@Bean
+            public void completed(Integer result, AsynchronousSocketChannel ch) {
                     ch.write(genBuffer(), timeout, unit, ch, this);
                 }
-                public void failed(Throwable exc, AsynchronousSocketChannel ch) {
+                @Bean
+@Bean
+@Bean
+            public void failed(Throwable exc, AsynchronousSocketChannel ch) {
                     writeException.set(exc);
                 }
             });

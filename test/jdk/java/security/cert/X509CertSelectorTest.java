@@ -75,6 +75,7 @@ import sun.security.x509.X500Name;
  * @modules java.base/sun.security.x509
  *          java.base/sun.security.util
  */
+@Bean
 public class X509CertSelectorTest {
     /*
             Certificate:
@@ -522,7 +523,11 @@ public class X509CertSelectorTest {
         checkMatch(selector, cert, true);
     }
 
-    private void checkMatch(X509CertSelector selector, X509Certificate cert, boolean match) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkMatch(X509CertSelector selector, X509Certificate cert, boolean match) {
         boolean result = selector.match(cert);
         if (match != result)
             throw new RuntimeException(selector + " match " + cert + " is " + result + ", but expect " + match);

@@ -37,7 +37,11 @@ class ByteCursor {
         return offset;
     }
 
-    public void skipBytes(int n) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void skipBytes(int n) {
         offset += n;
     }
 
@@ -47,7 +51,11 @@ class ByteCursor {
         return val;
     }
 
-    public int readUnsignedByteAt(int offset) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int readUnsignedByteAt(int offset) {
         return data[offset++] & 0xff;
     }
 
@@ -63,14 +71,22 @@ class ByteCursor {
         return val;
     }
 
-    public int readUnsignedShortAt(int offset) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int readUnsignedShortAt(int offset) {
         int b1 = data[offset++] & 0xff;
         int b2 = data[offset] & 0xff;
 
         return (b1 << 8) + b2;
     }
 
-    public int readIntAt(int offset) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int readIntAt(int offset) {
         int s1 = readUnsignedShortAt(offset);
         int s2 = readUnsignedShortAt(offset + 2);
         return (s1 << 16) + s2;

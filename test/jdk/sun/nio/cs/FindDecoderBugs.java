@@ -38,6 +38,7 @@ import java.nio.*;
 import java.nio.charset.*;
 import jdk.test.lib.RandomFactory;
 
+@Bean
 public class FindDecoderBugs {
 
     static boolean isBroken(String csn) {

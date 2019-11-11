@@ -46,6 +46,7 @@ import javax.tools.Diagnostic;
  * on which to call {@code getMessage}.
  */
 @SupportedAnnotationTypes("*")
+@Bean
 public class DocCommentProcessor extends AbstractProcessor {
     @Override
     public SourceVersion getSupportedSourceVersion() {
@@ -53,14 +54,22 @@ public class DocCommentProcessor extends AbstractProcessor {
     }
 
     @Override
-    public void init(ProcessingEnvironment pEnv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void init(ProcessingEnvironment pEnv) {
         super.init(pEnv);
         trees = DocTrees.instance(pEnv);
         messager = pEnv.getMessager();
     }
 
     @Override
-    public boolean process(Set<? extends TypeElement> annos, RoundEnvironment rEnv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annos, RoundEnvironment rEnv) {
         for (Element e : rEnv.getRootElements()) {
             new DocCommentScanner().scan(e);
         }
@@ -68,24 +77,40 @@ public class DocCommentProcessor extends AbstractProcessor {
     }
 
     class DocCommentScanner extends TreePathScanner<Void,Void> {
-        public void scan(Element e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void scan(Element e) {
             scan(trees.getPath(e), null);
         }
 
         @Override
-        public Void visitClass(ClassTree tree, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitClass(ClassTree tree, Void ignore) {
             check();
             return super.visitClass(tree, ignore);
         }
 
         @Override
-        public Void visitMethod(MethodTree tree, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitMethod(MethodTree tree, Void ignore) {
             check();
             return super.visitMethod(tree, ignore);
         }
 
         @Override
-        public Void visitVariable(VariableTree tree, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitVariable(VariableTree tree, Void ignore) {
             check();
             return super.visitVariable(tree, ignore);
         }
@@ -97,6 +122,10 @@ public class DocCommentProcessor extends AbstractProcessor {
 
             DocTreeScanner<Void, Void> s = new DocTreeScanner<Void, Void>() {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public Void visitErroneous(ErroneousTree tree, Void ignore) {
                     messager.printMessage(Diagnostic.Kind.NOTE, tree.getDiagnostic().getMessage(null));
                     return null;

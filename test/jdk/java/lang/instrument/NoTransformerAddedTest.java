@@ -31,6 +31,7 @@
  * @run shell MakeJAR.sh redefineAgent
  * @run main/othervm -javaagent:redefineAgent.jar NoTransformerAddedTest NoTransformerAddedTest
  */
+@Bean
 public class
 NoTransformerAddedTest
     extends ATransformerManagementTestCase

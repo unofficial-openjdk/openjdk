@@ -7,6 +7,7 @@
  * @compile/fail/ref=T6594284.out -XDrawDiagnostics  T6594284.java
  */
 
+@Bean
 public class T6594284 {
     class A{ public void a(){}}
     class B extends A{ public void b(){}}

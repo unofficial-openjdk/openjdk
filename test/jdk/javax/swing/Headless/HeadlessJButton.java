@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessJButton
  */
 
+@Bean
 public class HeadlessJButton {
     public static void main(String args[]) {
         JButton b = new JButton();

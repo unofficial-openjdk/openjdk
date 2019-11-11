@@ -31,6 +31,7 @@
 import java.awt.Component;
 import javax.swing.border.TitledBorder;
 
+@Bean
 public class Test6625450 {
 
     public static void main(String[] args) {

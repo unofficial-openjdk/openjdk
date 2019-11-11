@@ -30,6 +30,7 @@ import sun.hotspot.WhiteBox;
  * API to obtain information about enabled JIT compilers
  * retrieved from the VM with the WhiteBox API.
  */
+@Bean
 public class Compiler {
 
     private static final WhiteBox WB = WhiteBox.getWhiteBox();

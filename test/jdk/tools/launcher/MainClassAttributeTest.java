@@ -44,6 +44,7 @@ import java.util.List;
  * jar is executed.
  */
 
+@Bean
 public class MainClassAttributeTest extends TestHelper {
 
     /*

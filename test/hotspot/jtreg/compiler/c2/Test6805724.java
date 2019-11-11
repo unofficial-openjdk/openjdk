@@ -38,6 +38,7 @@ package compiler.c2;
 
 import jdk.test.lib.Utils;
 
+@Bean
 public class Test6805724 implements Runnable {
     // Initialize DIVISOR so that it is final in this class.
     static final long DIVISOR;  // 2^k-1 constant

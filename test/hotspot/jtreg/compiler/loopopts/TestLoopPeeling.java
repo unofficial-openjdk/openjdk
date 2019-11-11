@@ -33,6 +33,7 @@
 
 package compiler.loopopts;
 
+@Bean
 public class TestLoopPeeling {
 
     public int[] array = new int[100];

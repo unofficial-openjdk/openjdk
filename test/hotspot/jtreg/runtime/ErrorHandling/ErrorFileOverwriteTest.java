@@ -39,6 +39,7 @@ import jdk.test.lib.process.ProcessTools;
 import java.io.*;
 import java.util.regex.Pattern;
 
+@Bean
 public class ErrorFileOverwriteTest {
 
   private static File findHsErrorFileInOutput(OutputAnalyzer output) {

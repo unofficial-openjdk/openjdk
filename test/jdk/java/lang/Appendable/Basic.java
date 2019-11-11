@@ -47,6 +47,7 @@ interface BasicRunnable extends Runnable {
     Appendable reset(Appendable csq);
 }
 
+@Bean
 public class Basic {
 
     private static final String s = "Beware the Jabberwock, my son!";
@@ -107,7 +108,11 @@ public class Basic {
     private static BasicRunnable testBufferedWriter =
         new BasicRunnable() {
             private String csn, exp;
-            public void init(Appendable bw, String csn, String exp) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void init(Appendable bw, String csn, String exp) {
                 try {
                     ((BufferedWriter)bw).flush();
                 } catch (IOException x) {
@@ -119,7 +124,11 @@ public class Basic {
             public void run() {
                 ck("BufferedWriter.append(" + csn + ")", exp, gw.toString());
             }
-            public Appendable reset(Appendable bw) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Appendable reset(Appendable bw) {
                 gw.reset();
                 return bw;
             }};
@@ -128,7 +137,11 @@ public class Basic {
         new BasicRunnable() {
             private String csn, exp;
             private CharArrayWriter cw;
-            public void init(Appendable cw, String csn, String exp) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void init(Appendable cw, String csn, String exp) {
                 this.cw = (CharArrayWriter)cw;
                 this.csn = csn;
                 this.exp = exp;
@@ -136,7 +149,11 @@ public class Basic {
             public void run() {
                 ck("CharArrayWriter.append(" + csn + ")", exp, cw.toString());
             }
-            public Appendable reset(Appendable cw) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Appendable reset(Appendable cw) {
                 ((CharArrayWriter)cw).reset();
                 return cw;
             }};
@@ -144,7 +161,11 @@ public class Basic {
     private static BasicRunnable testFileWriter =
         new BasicRunnable() {
             private String csn, exp;
-            public void init(Appendable fw, String csn, String exp) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void init(Appendable fw, String csn, String exp) {
                 try {
                     ((FileWriter)fw).flush();
                 } catch (IOException x) {
@@ -168,7 +189,11 @@ public class Basic {
                 }
                 ck("FileWriter.append(" + csn + ")", exp, sb.toString());
             }
-            public Appendable reset(Appendable fw) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Appendable reset(Appendable fw) {
                 try {
                     fw = new FileWriter(gf);
                 } catch (IOException x) {
@@ -180,7 +205,11 @@ public class Basic {
     private static BasicRunnable testOutputStreamWriter =
         new BasicRunnable() {
             private String csn, exp;
-            public void init(Appendable osw, String csn, String exp) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void init(Appendable osw, String csn, String exp) {
                 try {
                     ((OutputStreamWriter)osw).flush();
                 } catch (IOException x) {
@@ -192,7 +221,11 @@ public class Basic {
             public void run() {
                 ck("OutputStreamWriter.append(" + csn + ")", exp, gos.toString());
             }
-            public Appendable reset(Appendable osw) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Appendable reset(Appendable osw) {
                 gos.reset();
                 return osw;
             }};
@@ -200,7 +233,11 @@ public class Basic {
     private static BasicRunnable testPrintWriter =
         new BasicRunnable() {
             private String csn, exp;
-            public void init(Appendable pw, String csn, String exp) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void init(Appendable pw, String csn, String exp) {
                 ((PrintWriter)pw).flush();
                 this.csn = csn;
                 this.exp = exp;
@@ -208,7 +245,11 @@ public class Basic {
             public void run() {
                 ck("PrintWriter.append(" + csn + ")", exp, gw.toString());
             }
-            public Appendable reset(Appendable pw) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Appendable reset(Appendable pw) {
                 gw.reset();
                 return pw;
             }};
@@ -217,7 +258,11 @@ public class Basic {
         new BasicRunnable() {
             private String csn, exp;
             private StringWriter sw;
-            public void init(Appendable sw, String csn, String exp) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void init(Appendable sw, String csn, String exp) {
                 this.sw = (StringWriter)sw;
                 this.csn = csn;
                 this.exp = exp;
@@ -225,14 +270,22 @@ public class Basic {
             public void run() {
                 ck("StringWriter.append(" + csn + ")", exp, sw.toString());
             }
-            public Appendable reset(Appendable sw) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Appendable reset(Appendable sw) {
                 return new StringWriter();
             }};
 
     private static BasicRunnable testPrintStream =
         new BasicRunnable() {
             private String csn, exp;
-            public void init(Appendable ps, String csn, String exp) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void init(Appendable ps, String csn, String exp) {
                 ((PrintStream)ps).flush();
                 this.csn = csn;
                 this.exp = exp;
@@ -240,7 +293,11 @@ public class Basic {
             public void run() {
                 ck("PrintStream.append(" + csn + ")", exp, gos.toString());
             }
-            public Appendable reset(Appendable ps) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Appendable reset(Appendable ps) {
                 gos.reset();
                 return ps;
             }};
@@ -249,7 +306,11 @@ public class Basic {
         new BasicRunnable() {
             private String csn, exp;
             private CharBuffer cb;
-            public void init(Appendable cb, String csn, String exp) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void init(Appendable cb, String csn, String exp) {
                 this.cb = (CharBuffer)cb;
                 this.csn = csn;
                 this.exp = exp;
@@ -258,7 +319,11 @@ public class Basic {
                 cb.limit(cb.position()).rewind();
                 ck("CharBuffer.append(" + csn + ")", exp, cb.toString());
             }
-            public Appendable reset(Appendable cb) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Appendable reset(Appendable cb) {
                 ((CharBuffer)cb).clear();
                 return cb;
             }};
@@ -267,7 +332,11 @@ public class Basic {
         new BasicRunnable() {
             private String csn, exp;
             private StringBuffer sb;
-            public void init(Appendable sb, String csn, String exp) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void init(Appendable sb, String csn, String exp) {
                 this.sb = (StringBuffer)sb;
                 this.csn = csn;
                 this.exp = exp;
@@ -275,7 +344,11 @@ public class Basic {
             public void run() {
                 ck("StringBuffer.append(" + csn + ")", exp, sb.toString());
             }
-            public Appendable reset(Appendable sb) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Appendable reset(Appendable sb) {
                 return new StringBuffer();
             }};
 
@@ -283,7 +356,11 @@ public class Basic {
         new BasicRunnable() {
             private String csn, exp;
             private StringBuilder sb;
-            public void init(Appendable sb, String csn, String exp) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void init(Appendable sb, String csn, String exp) {
                 this.sb = (StringBuilder)sb;
                 this.csn = csn;
                 this.exp = exp;
@@ -291,7 +368,11 @@ public class Basic {
             public void run() {
                 ck("StringBuilder.append(" + csn + ")", exp, sb.toString());
             }
-            public Appendable reset(Appendable sb) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Appendable reset(Appendable sb) {
                 return new StringBuilder();
             }};
 

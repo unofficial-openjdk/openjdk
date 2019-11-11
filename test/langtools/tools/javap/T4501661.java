@@ -30,6 +30,7 @@ import java.util.*;
  * @summary disallow mixing -public, -private, and -protected
  * @modules jdk.jdeps/com.sun.tools.javap
  */
+@Bean
 public class T4501661 {
     public static void main(String... args) throws Exception {
         new T4501661().run();

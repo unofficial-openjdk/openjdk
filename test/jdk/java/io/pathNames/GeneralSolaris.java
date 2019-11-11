@@ -35,6 +35,7 @@ import java.util.*;
 import java.nio.file.*;
 import java.nio.file.attribute.*;
 
+@Bean
 public class GeneralSolaris extends General {
 
     private static void checkUnreadable() throws Exception {

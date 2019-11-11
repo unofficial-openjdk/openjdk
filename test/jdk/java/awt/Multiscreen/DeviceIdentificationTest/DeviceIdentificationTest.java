@@ -64,11 +64,17 @@ public class DeviceIdentificationTest {
     public static void main(String args[]) {
         final Frame f = new Frame("DeviceIdentificationTest");
         f.addWindowListener(new WindowAdapter() {
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent e) {
                 f.dispose();
             }
         });
         f.addComponentListener(new ComponentAdapter() {
+            @Bean
+@Bean
+@Bean
             public void componentMoved(ComponentEvent e) {
                 f.setTitle("Currently on: "+
                            f.getGraphicsConfiguration().getDevice());
@@ -78,6 +84,9 @@ public class DeviceIdentificationTest {
         Panel p = new Panel();
         Button b = new Button("Print Current Devices");
         b.addActionListener(new ActionListener() {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 GraphicsDevice gds[] =
                     GraphicsEnvironment.getLocalGraphicsEnvironment().
@@ -97,6 +106,9 @@ public class DeviceIdentificationTest {
 
         b = new Button("Print My Device");
         b.addActionListener(new ActionListener() {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 GraphicsConfiguration gc = f.getGraphicsConfiguration();
                 GraphicsDevice gd = gc.getDevice();
@@ -110,6 +122,9 @@ public class DeviceIdentificationTest {
 
         b = new Button("Create FS Frame on my Device");
         b.addActionListener(new ActionListener() {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 GraphicsConfiguration gc = f.getGraphicsConfiguration();
                 final GraphicsDevice gd = gc.getDevice();
@@ -118,7 +133,10 @@ public class DeviceIdentificationTest {
                 System.err.println(" bounds = "+
                         gd.getDefaultConfiguration().getBounds());
                 final Frame fsf = new Frame("Full-screen Frame on dev"+gd, gc) {
-                    public void paint(Graphics g) {
+                    @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
                         g.setColor(Color.green);
                         g.fillRect(0, 0, getWidth(), getHeight());
                         g.setColor(Color.red);
@@ -128,7 +146,10 @@ public class DeviceIdentificationTest {
                 };
                 fsf.setUndecorated(true);
                 fsf.addMouseListener(new MouseAdapter() {
-                    public void mouseClicked(MouseEvent e) {
+                    @Bean
+@Bean
+@Bean
+            public void mouseClicked(MouseEvent e) {
                         gd.setFullScreenWindow(null);
                         fsf.dispose();
                     }
@@ -143,6 +164,9 @@ public class DeviceIdentificationTest {
         b = new Button("Test Passed");
         b.setBackground(Color.green);
         b.addActionListener(new ActionListener() {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 System.out.println("Test Passed");
                 f.dispose();
@@ -152,6 +176,9 @@ public class DeviceIdentificationTest {
         b = new Button("Test Failed");
         b.setBackground(Color.red);
         b.addActionListener(new ActionListener() {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 System.out.println("Test FAILED");
                 f.dispose();

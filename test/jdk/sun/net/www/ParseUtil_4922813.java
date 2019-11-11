@@ -33,6 +33,7 @@ import java.io.File;
 import java.util.Random;
 import sun.net.www.ParseUtil;
 
+@Bean
 public class ParseUtil_4922813 {
     public static void main(String[] argv) throws Exception {
 

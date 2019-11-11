@@ -35,6 +35,7 @@ import java.nio.*;
  * Testing FileChannel's locking methods.
  */
 
+@Bean
 public class TryLock {
 
     public static void main(String[] args) throws Exception {

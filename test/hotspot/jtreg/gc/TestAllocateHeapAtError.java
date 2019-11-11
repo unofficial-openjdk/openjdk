@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.UUID;
 
+@Bean
 public class TestAllocateHeapAtError {
   public static void main(String args[]) throws Exception {
     ArrayList<String> vmOpts = new ArrayList<>();

@@ -79,6 +79,9 @@ public class TestFlightRecorderListenerRecorderInitialized {
         FlightRecorder.addListener(new FlightRecorderListener() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void recorderInitialized(FlightRecorder recorder) {
                 log("Recorder initialized");
                 Signal.signal();

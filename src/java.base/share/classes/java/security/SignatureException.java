@@ -32,6 +32,7 @@ package java.security;
  * @since 1.1
  */
 
+@Bean
 public class SignatureException extends GeneralSecurityException {
 
     @java.io.Serial

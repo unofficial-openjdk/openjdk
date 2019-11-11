@@ -34,6 +34,7 @@ import java.awt.event.*;
   @build   Util
   @run main AppletInitialFocusTest1
  */
+@Bean
 public class AppletInitialFocusTest1 extends Frame implements FocusListener {
 
     Button button1 = new Button("Button1");
@@ -74,7 +75,10 @@ public class AppletInitialFocusTest1 extends Frame implements FocusListener {
         button2.requestFocus();
     }
 
-    public void focusGained(FocusEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void focusGained(FocusEvent e) {
         if (e.getSource() == button1) {
             synchronized (lock) {
                 throw new RuntimeException("failed: focus on the wrong button");
@@ -82,6 +86,9 @@ public class AppletInitialFocusTest1 extends Frame implements FocusListener {
         }
     }
 
-    public void focusLost(FocusEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void focusLost(FocusEvent e) {
     }
 }

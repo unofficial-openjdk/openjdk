@@ -28,6 +28,7 @@
  *  check that recursion from doubly nested lambda is handled correctly
  */
 
+@Bean
 public class LambdaExpr14 {
 
     interface SAM {

@@ -63,6 +63,9 @@ public class ScreenCaptureTest {
         robot = new Robot();
         Panel panel = new Panel(new BorderLayout());
         Canvas canvas = new Canvas() {
+            @Bean
+@Bean
+@Bean
             public void paint(Graphics g) {
                 super.paint(g);
                 int w = getWidth();

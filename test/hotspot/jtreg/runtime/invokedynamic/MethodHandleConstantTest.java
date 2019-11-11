@@ -32,6 +32,7 @@ package runtime.invokedynamic;
 
 import java.lang.invoke.*;
 
+@Bean
 public class MethodHandleConstantTest {
     static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
     static final MethodType TEST_MT = MethodType.methodType(void.class);

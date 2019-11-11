@@ -29,6 +29,7 @@
             flags from the attribute!
  */
 import java.lang.reflect.Modifier;
+@Bean
 public class ForInnerClass {
     private class Inner {
     }

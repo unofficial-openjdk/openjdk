@@ -26,6 +26,7 @@
  *
  * Used by BootClassPath.sh - supporting class for java agent.
  */
+@Bean
 public class AgentSupport {
     public AgentSupport() {
     }

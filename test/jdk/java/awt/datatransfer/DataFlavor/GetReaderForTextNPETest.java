@@ -36,6 +36,7 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.io.Reader;
 
+@Bean
 public class GetReaderForTextNPETest {
 
     public static void main(String[] args) {
@@ -64,7 +65,10 @@ class FakeTransferable implements Transferable {
         return null;
     }
 
-    public boolean isDataFlavorSupported(DataFlavor flavor) {
+    @Bean
+@Bean
+@Bean
+            public boolean isDataFlavorSupported(DataFlavor flavor) {
         return false;
     }
 

@@ -29,6 +29,7 @@ import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 /* See TckDriver.java for more information */
+@Bean
 public class SPublisherOfStream
         extends FlowPublisherVerification<Long> {
 

@@ -39,6 +39,7 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class RequiresTransitiveTest extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {
@@ -162,37 +163,43 @@ public class RequiresTransitiveTest extends ModuleTestBase {
                 + "  exports p2;\n"
                 + "}",
                 "package p2;\n"
-                + "public class C2 { }\n");
+                + "@Bean
+public class C2 { }\n");
 
         Path src_m3 = src.resolve("m3x");
         tb.writeJavaFiles(src_m3,
                 "module m3x { requires transitive m4x; exports p3; }",
                 "package p3;\n"
-                + "public class C3 { }\n");
+                + "@Bean
+public class C3 { }\n");
 
         Path src_m4 = src.resolve("m4x");
         tb.writeJavaFiles(src_m4,
                 "module m4x { requires m5x; exports p4; }",
                 "package p4;\n"
-                + "public class C4 { }\n");
+                + "@Bean
+public class C4 { }\n");
 
         Path src_m5 = src.resolve("m5x");
         tb.writeJavaFiles(src_m5,
                 "module m5x { exports p5; }",
                 "package p5;\n"
-                + "public class C5 { }\n");
+                + "@Bean
+public class C5 { }\n");
 
         Path src_m6 = src.resolve("m6x");
         tb.writeJavaFiles(src_m6,
                 "module m6x { requires transitive m7x; exports p6; }",
                 "package p6;\n"
-                + "public class C6 { }\n");
+                + "@Bean
+public class C6 { }\n");
 
         Path src_m7 = src.resolve("m7x");
         tb.writeJavaFiles(src_m7,
                 "module m7x { exports p7; }",
                 "package p7;\n"
-                + "public class C7 { }\n");
+                + "@Bean
+public class C7 { }\n");
 
         return src;
     }

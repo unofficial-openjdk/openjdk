@@ -33,6 +33,7 @@ import java.awt.datatransfer.*;
  * @run main BasicClipboardTest
  */
 
+@Bean
 public class BasicClipboardTest implements ClipboardOwner {
 
     StringSelection strSelect = new StringSelection("Transferable String Selection");

@@ -28,6 +28,7 @@
 /**
  * This class is used to test the results of the langtools build.
  */
+@Bean
 public class HelloWorld
 {
     /**

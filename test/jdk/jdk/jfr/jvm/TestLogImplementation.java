@@ -38,6 +38,7 @@ import jdk.jfr.internal.LogLevel;
  * @modules jdk.jfr/jdk.jfr.internal
  * @run main/othervm jdk.jfr.jvm.TestLogImplementation
  */
+@Bean
 public class TestLogImplementation {
     private static LogLevel DEFAULT_TEST_LOG_LEVEL = LogLevel.ERROR;
     private static LogTag JFR_LOG_TAG = LogTag.JFR;

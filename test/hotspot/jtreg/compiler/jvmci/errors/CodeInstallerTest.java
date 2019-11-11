@@ -45,6 +45,7 @@ import org.junit.Assert;
 
 import java.lang.reflect.Method;
 
+@Bean
 public class CodeInstallerTest {
 
     protected final Architecture arch;
@@ -74,14 +75,22 @@ public class CodeInstallerTest {
         dummyMethod = (HotSpotResolvedJavaMethod) metaAccess.lookupJavaMethod(method);
     }
 
-    protected void installEmptyCode(Site[] sites, Assumption[] assumptions, Comment[] comments, int dataSectionAlignment, DataPatch[] dataSectionPatches, StackSlot deoptRescueSlot) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void installEmptyCode(Site[] sites, Assumption[] assumptions, Comment[] comments, int dataSectionAlignment, DataPatch[] dataSectionPatches, StackSlot deoptRescueSlot) {
         HotSpotCompiledCode code = new HotSpotCompiledNmethod("dummyMethod", new byte[0], 0, sites, assumptions, new ResolvedJavaMethod[]{dummyMethod}, comments, new byte[8], dataSectionAlignment,
                         dataSectionPatches, false, 0, deoptRescueSlot,
                         dummyMethod, 0, 1, 0L, false);
         codeCache.addCode(dummyMethod, code, null, null);
     }
 
-    protected Register getRegister(PlatformKind kind, int index) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected Register getRegister(PlatformKind kind, int index) {
         int idx = index;
         RegisterArray allRegs = arch.getAvailableValueRegisters();
         for (Register reg : allRegs) {

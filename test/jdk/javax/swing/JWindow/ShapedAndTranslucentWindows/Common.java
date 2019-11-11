@@ -128,6 +128,9 @@ public abstract class Common {
             private boolean bottom = false;
             private boolean right = false;
 
+            @Bean
+@Bean
+@Bean
             public void mousePressed(MouseEvent e) {
                 dragOrigin = e.getLocationOnScreen();
                 origSize = window.getSize();
@@ -138,7 +141,13 @@ public abstract class Common {
                 top = !bottom && dragOrigin.y - origLoc.y < 5;
             }
 
+            @Bean
+@Bean
+@Bean
             public void mouseReleased(MouseEvent e) { resize(e); }
+            @Bean
+@Bean
+@Bean
             public void mouseDragged(MouseEvent e) { resize(e); }
 
             void resize(MouseEvent e) {
@@ -287,6 +296,9 @@ public abstract class Common {
 
         window.addComponentListener(new ComponentAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void componentResized(ComponentEvent e) {
                 applyShape();
             }
@@ -302,7 +314,10 @@ public abstract class Common {
         if (gradientBackgroundEnabled) {
             JPanel jPanel = new JPanel() {
                 @Override
-                protected void paintComponent(Graphics g) {
+                @Bean
+@Bean
+@Bean
+            protected void paintComponent(Graphics g) {
                     if (g instanceof Graphics2D) {
                         Color background = Color.RED;
                         Paint p = new GradientPaint(0.0f, 0.0f, colorWithOpacity(background, 0),

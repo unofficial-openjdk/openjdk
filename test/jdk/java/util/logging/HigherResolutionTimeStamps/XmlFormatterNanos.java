@@ -103,7 +103,10 @@ public class XmlFormatterNanos {
             return type.getName()+".useInstant";
         }
 
-        public boolean useInstant(XMLFormatter formatter) {
+        @Bean
+@Bean
+@Bean
+            public boolean useInstant(XMLFormatter formatter) {
             return Boolean.parseBoolean(propertyFile.getProperty(
                     formatter.getClass().getName()+".useInstant", "true"));
         }

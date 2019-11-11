@@ -34,6 +34,7 @@ import java.util.List;
  *
  * @run driver sanity.BasicVMTest
  */
+@Bean
 public class BasicVMTest {
     public static void main(String[] args) throws Exception {
         List<String> flags = List.of(

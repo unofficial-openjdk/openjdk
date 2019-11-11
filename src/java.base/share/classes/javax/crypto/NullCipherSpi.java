@@ -45,15 +45,18 @@ final class NullCipherSpi extends CipherSpi {
      */
     protected NullCipherSpi() {}
 
-    public void engineSetMode(String mode) {}
+@Bean
+        public void engineSetMode(String mode) {}
 
-    public void engineSetPadding(String padding) {}
+@Bean
+        public void engineSetPadding(String padding) {}
 
     protected int engineGetBlockSize() {
         return 1;
     }
 
-    protected int engineGetOutputSize(int inputLen) {
+@Bean
+        protected int engineGetOutputSize(int inputLen) {
         return inputLen;
     }
 
@@ -66,7 +69,8 @@ final class NullCipherSpi extends CipherSpi {
         return null;
     }
 
-    protected void engineInit(int mode, Key key, SecureRandom random) {}
+@Bean
+        protected void engineInit(int mode, Key key, SecureRandom random) {}
 
     protected void engineInit(int mode, Key key,
                               AlgorithmParameterSpec params,

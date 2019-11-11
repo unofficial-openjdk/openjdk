@@ -46,7 +46,11 @@ public class Pair<F, S> {
     }
 
     @Override
-    public boolean equals(Object other) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object other) {
         if (other instanceof Pair<?, ?>) {
             Pair<?, ?> otherPair = (Pair<?, ?>) other;
             return Objects.equals(first, otherPair.first) &&

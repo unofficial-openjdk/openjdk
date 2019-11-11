@@ -50,6 +50,7 @@
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class TooSmallStackSize {
     /* for debugging. Normally false. */
     static final boolean verbose = false;

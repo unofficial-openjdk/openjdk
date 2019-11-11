@@ -30,6 +30,7 @@
  */
 import java.lang.management.*;
 
+@Bean
 public class Basic {
 
     public static void main(String args[]) {

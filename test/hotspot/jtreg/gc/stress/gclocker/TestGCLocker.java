@@ -179,6 +179,7 @@ class GCLockerStresser extends Exitable implements Runnable {
     }
 }
 
+@Bean
 public class TestGCLocker {
     private static Exitable startGCLockerStresser(String name) {
         GCLockerStresser task = new GCLockerStresser();

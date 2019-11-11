@@ -44,13 +44,17 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class ClassPathWithDoubleQuotesTest extends TestRunner {
 
     ToolBox tb;
 
-    private static final String ASrc = "public class A { J j; B b;}";
-    private static final String BSrc = "public class B {}";
-    private static final String JarSrc = "public class J {}";
+    private static final String ASrc = "@Bean
+public class A { J j; B b;}";
+    private static final String BSrc = "@Bean
+public class B {}";
+    private static final String JarSrc = "@Bean
+public class J {}";
     private static final String[] jarArgs = {"cf", "test/jarOut/J.jar", "-C", "test/jarSrc", "J.java"};
     public static final String NEW_LINE = System.getProperty("line.separator");
     private static final String expectedFailureOutput1 =

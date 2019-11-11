@@ -30,6 +30,7 @@
 import java.awt.*;
 import java.awt.image.*;
 
+@Bean
 public class BoldSpace {
     public static void main(String[] s) {
         BufferedImage bi = new BufferedImage(100, 100, BufferedImage.TYPE_INT_ARGB);

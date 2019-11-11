@@ -32,6 +32,7 @@ package java.lang;
  * @author     unascribed
  * @since      1.0
  */
+@Bean
 public class ClassCircularityError extends LinkageError {
     @java.io.Serial
     private static final long serialVersionUID = 1054362542914539689L;
@@ -39,7 +40,8 @@ public class ClassCircularityError extends LinkageError {
     /**
      * Constructs a {@code ClassCircularityError} with no detail message.
      */
-    public ClassCircularityError() {
+    @Bean
+public classCircularityError() {
         super();
     }
 
@@ -50,7 +52,8 @@ public class ClassCircularityError extends LinkageError {
      * @param  s
      *         The detail message
      */
-    public ClassCircularityError(String s) {
+    @Bean
+public classCircularityError(String s) {
         super(s);
     }
 }

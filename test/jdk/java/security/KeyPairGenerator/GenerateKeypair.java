@@ -30,6 +30,7 @@
 import java.security.KeyPairGenerator;
 import java.security.KeyPair;
 
+@Bean
 public class GenerateKeypair {
 
     public static void main(String[] args) throws Exception {

@@ -62,6 +62,7 @@ import java.util.Arrays;
  * @since   1.0
  */
 
+@Bean
 public class StreamTokenizer {
 
     /* Only one of these will be non-null */
@@ -271,7 +272,8 @@ public class StreamTokenizer {
      * @param   low   the low end of the range.
      * @param   hi    the high end of the range.
      */
-    public void wordChars(int low, int hi) {
+@Bean
+        public void wordChars(int low, int hi) {
         if (low < 0)
             low = 0;
         if (hi >= ctype.length)
@@ -292,7 +294,8 @@ public class StreamTokenizer {
      * @param   low   the low end of the range.
      * @param   hi    the high end of the range.
      */
-    public void whitespaceChars(int low, int hi) {
+@Bean
+        public void whitespaceChars(int low, int hi) {
         if (low < 0)
             low = 0;
         if (hi >= ctype.length)
@@ -312,7 +315,8 @@ public class StreamTokenizer {
      * @param   hi    the high end of the range.
      * @see     java.io.StreamTokenizer#ordinaryChar(int)
      */
-    public void ordinaryChars(int low, int hi) {
+@Bean
+        public void ordinaryChars(int low, int hi) {
         if (low < 0)
             low = 0;
         if (hi >= ctype.length)
@@ -338,7 +342,8 @@ public class StreamTokenizer {
      * @param   ch   the character.
      * @see     java.io.StreamTokenizer#ttype
      */
-    public void ordinaryChar(int ch) {
+@Bean
+        public void ordinaryChar(int ch) {
         if (ch >= 0 && ch < ctype.length)
             ctype[ch] = 0;
     }
@@ -352,7 +357,8 @@ public class StreamTokenizer {
      *
      * @param   ch   the character.
      */
-    public void commentChar(int ch) {
+@Bean
+        public void commentChar(int ch) {
         if (ch >= 0 && ch < ctype.length)
             ctype[ch] = CT_COMMENT;
     }
@@ -381,7 +387,8 @@ public class StreamTokenizer {
      * @see     java.io.StreamTokenizer#sval
      * @see     java.io.StreamTokenizer#ttype
      */
-    public void quoteChar(int ch) {
+@Bean
+        public void quoteChar(int ch) {
         if (ch >= 0 && ch < ctype.length)
             ctype[ch] = CT_QUOTE;
     }
@@ -436,7 +443,8 @@ public class StreamTokenizer {
      * @see     java.io.StreamTokenizer#ttype
      * @see     java.io.StreamTokenizer#TT_EOL
      */
-    public void eolIsSignificant(boolean flag) {
+@Bean
+        public void eolIsSignificant(boolean flag) {
         eolIsSignificantP = flag;
     }
 
@@ -452,7 +460,8 @@ public class StreamTokenizer {
      * @param   flag   {@code true} indicates to recognize and ignore
      *                 C-style comments.
      */
-    public void slashStarComments(boolean flag) {
+@Bean
+        public void slashStarComments(boolean flag) {
         slashStarCommentsP = flag;
     }
 
@@ -469,7 +478,8 @@ public class StreamTokenizer {
      * @param   flag   {@code true} indicates to recognize and ignore
      *                 C++-style comments.
      */
-    public void slashSlashComments(boolean flag) {
+@Bean
+        public void slashSlashComments(boolean flag) {
         slashSlashCommentsP = flag;
     }
 
@@ -490,7 +500,8 @@ public class StreamTokenizer {
      * @see     java.io.StreamTokenizer#ttype
      * @see     java.io.StreamTokenizer#TT_WORD
      */
-    public void lowerCaseMode(boolean fl) {
+@Bean
+        public void lowerCaseMode(boolean fl) {
         forceLower = fl;
     }
 

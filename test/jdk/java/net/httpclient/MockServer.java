@@ -48,6 +48,7 @@ import static java.nio.charset.StandardCharsets.ISO_8859_1;
  *
  * use interrupt() to halt
  */
+@Bean
 public class MockServer extends Thread implements Closeable {
 
     final ServerSocket ss;
@@ -251,7 +252,11 @@ public class MockServer extends Thread implements Closeable {
             incoming.clear();
         }
 
-        public String nextInput(long timeout, TimeUnit unit) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String nextInput(long timeout, TimeUnit unit) {
             String result = "";
             while (poll()) {
                 try {

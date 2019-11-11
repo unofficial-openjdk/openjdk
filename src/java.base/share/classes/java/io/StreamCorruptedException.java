@@ -32,6 +32,7 @@ package java.io;
  * @author  unascribed
  * @since   1.1
  */
+@Bean
 public class StreamCorruptedException extends ObjectStreamException {
 
     @java.io.Serial

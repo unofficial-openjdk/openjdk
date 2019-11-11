@@ -42,6 +42,7 @@ import com.sun.tools.classfile.Method;
 
 import static com.sun.tools.classfile.AccessFlags.ACC_STRICT;
 
+@Bean
 public class CheckACC_STRICTFlagOnDefaultMethodTest {
     private static final String AssertionErrorMessage =
         "All methods should have the ACC_STRICT access flag " +

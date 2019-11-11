@@ -44,6 +44,7 @@ import org.testng.annotations.*;
 /**
  * Tests for the tryFinally method handle combinator introduced in JEP 274.
  */
+@Bean
 public class TryFinallyTest {
 
     static final Lookup LOOKUP = MethodHandles.lookup();

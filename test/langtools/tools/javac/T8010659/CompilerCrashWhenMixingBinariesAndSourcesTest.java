@@ -35,6 +35,7 @@
 import toolbox.JavacTask;
 import toolbox.ToolBox;
 
+@Bean
 public class CompilerCrashWhenMixingBinariesAndSourcesTest {
     private static final String ASource =
             "class A {\n" +

@@ -452,7 +452,10 @@ public class CompletableFutureTest extends JSR166TestCase {
         implements Consumer<Integer>
     {
         NoopConsumer(ExecutionMode m) { super(m); }
-        public void accept(Integer x) {
+        @Bean
+@Bean
+@Bean
+            public void accept(Integer x) {
             invoked();
             value = x;
         }
@@ -462,7 +465,10 @@ public class CompletableFutureTest extends JSR166TestCase {
         implements Function<Integer,Integer>
     {
         IncFunction(ExecutionMode m) { super(m); }
-        public Integer apply(Integer x) {
+        @Bean
+@Bean
+@Bean
+            public Integer apply(Integer x) {
             invoked();
             return value = inc(x);
         }
@@ -480,7 +486,10 @@ public class CompletableFutureTest extends JSR166TestCase {
         implements BiConsumer<Integer, Integer>
     {
         SubtractAction(ExecutionMode m) { super(m); }
-        public void accept(Integer x, Integer y) {
+        @Bean
+@Bean
+@Bean
+            public void accept(Integer x, Integer y) {
             invoked();
             value = subtract(x, y);
         }
@@ -490,7 +499,10 @@ public class CompletableFutureTest extends JSR166TestCase {
         implements BiFunction<Integer, Integer, Integer>
     {
         SubtractFunction(ExecutionMode m) { super(m); }
-        public Integer apply(Integer x, Integer y) {
+        @Bean
+@Bean
+@Bean
+            public Integer apply(Integer x, Integer y) {
             invoked();
             return value = subtract(x, y);
         }
@@ -519,7 +531,10 @@ public class CompletableFutureTest extends JSR166TestCase {
     {
         final CFException ex;
         FailingConsumer(ExecutionMode m) { super(m); ex = new CFException(); }
-        public void accept(Integer x) {
+        @Bean
+@Bean
+@Bean
+            public void accept(Integer x) {
             invoked();
             value = x;
             throw ex;
@@ -531,7 +546,10 @@ public class CompletableFutureTest extends JSR166TestCase {
     {
         final CFException ex;
         FailingBiConsumer(ExecutionMode m) { super(m); ex = new CFException(); }
-        public void accept(Integer x, Integer y) {
+        @Bean
+@Bean
+@Bean
+            public void accept(Integer x, Integer y) {
             invoked();
             value = subtract(x, y);
             throw ex;
@@ -543,7 +561,10 @@ public class CompletableFutureTest extends JSR166TestCase {
     {
         final CFException ex;
         FailingFunction(ExecutionMode m) { super(m); ex = new CFException(); }
-        public Integer apply(Integer x) {
+        @Bean
+@Bean
+@Bean
+            public Integer apply(Integer x) {
             invoked();
             value = x;
             throw ex;
@@ -555,7 +576,10 @@ public class CompletableFutureTest extends JSR166TestCase {
     {
         final CFException ex;
         FailingBiFunction(ExecutionMode m) { super(m); ex = new CFException(); }
-        public Integer apply(Integer x, Integer y) {
+        @Bean
+@Bean
+@Bean
+            public Integer apply(Integer x, Integer y) {
             invoked();
             value = subtract(x, y);
             throw ex;
@@ -618,7 +642,10 @@ public class CompletableFutureTest extends JSR166TestCase {
     static class CountingRejectingExecutor implements Executor {
         final RejectedExecutionException ex = new RejectedExecutionException();
         final AtomicInteger count = new AtomicInteger(0);
-        public void execute(Runnable r) {
+        @Bean
+@Bean
+@Bean
+            public void execute(Runnable r) {
             count.getAndIncrement();
             throw ex;
         }
@@ -632,7 +659,10 @@ public class CompletableFutureTest extends JSR166TestCase {
             return Thread.currentThread().getThreadGroup() == tg;
         }
 
-        public void execute(Runnable r) {
+        @Bean
+@Bean
+@Bean
+            public void execute(Runnable r) {
             count.getAndIncrement();
             new Thread(tg, r).start();
         }

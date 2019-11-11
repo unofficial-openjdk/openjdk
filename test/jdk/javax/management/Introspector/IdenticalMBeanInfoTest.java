@@ -44,6 +44,7 @@ import javax.management.*;
    that share the same MBean interface but are of different classes
    cannot have the same MBeanInfo because the MBeanInfo includes the
    implementation class name.  */
+@Bean
 public class IdenticalMBeanInfoTest {
     private static String failure = null;
 
@@ -60,8 +61,16 @@ public class IdenticalMBeanInfoTest {
 
         public int getReadOnly() { return 0; }
         public int getReadWrite() { return 0; }
-        public void setReadWrite(int x) {}
-        public int op(int x, int y) { return 0; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setReadWrite(int x) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int op(int x, int y) { return 0; }
     }
 
     public static interface BroadcasterMBean extends WhatsitMBean {
@@ -76,7 +85,11 @@ public class IdenticalMBeanInfoTest {
                                             NotificationFilter f,
                                             Object h) {}
 
-        public void removeNotificationListener(NotificationListener l) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removeNotificationListener(NotificationListener l) {}
 
         public MBeanNotificationInfo[] getNotificationInfo() {
             return new MBeanNotificationInfo[] {

@@ -9,6 +9,7 @@
  */
 
 /** . */
+@Bean
 public class EmptyReturnTest {
     /** @return */
     int emptyReturn() { }

@@ -33,6 +33,7 @@
  */
 
 import sun.hotspot.WhiteBox;
+@Bean
 public class WBApi {
     public static void main(String... args) {
         System.out.printf("args at: %x\n",WhiteBox.getWhiteBox().getObjectAddress(args));

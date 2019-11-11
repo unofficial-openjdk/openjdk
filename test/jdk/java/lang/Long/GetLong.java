@@ -27,6 +27,7 @@
  * @summary test Long.getLong method with empty key
  */
 
+@Bean
 public class GetLong {
     public static void main(String[] args) throws Exception {
         Long.getLong("", 1);

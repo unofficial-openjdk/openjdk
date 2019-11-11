@@ -37,13 +37,18 @@ import java.io.*;
 import java.util.List;
 import jdk.test.lib.net.URIBuilder;
 
+@Bean
 public class ProxyTest implements HttpCallback {
     static TestHttpServer server;
 
     public ProxyTest() {
     }
 
-    public void request(HttpTransaction req) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void request(HttpTransaction req) {
         req.setResponseEntityBody("Hello .");
         try {
             req.sendResponse(200, "Ok");
@@ -52,7 +57,8 @@ public class ProxyTest implements HttpCallback {
         }
     }
 
-    static public class MyProxySelector extends ProxySelector {
+    static @Bean
+public class MyProxySelector extends ProxySelector {
         private static volatile URI lastURI;
         private final static List<Proxy> NO_PROXY = List.of(Proxy.NO_PROXY);
 
@@ -62,7 +68,11 @@ public class ProxyTest implements HttpCallback {
             return NO_PROXY;
         }
 
-        public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
         }
 
         public static URI lastURI() { return lastURI; }

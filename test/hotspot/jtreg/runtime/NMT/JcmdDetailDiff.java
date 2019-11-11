@@ -39,6 +39,7 @@ import jdk.test.lib.JDKToolFinder;
 
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class JcmdDetailDiff {
 
     public static WhiteBox wb = WhiteBox.getWhiteBox();

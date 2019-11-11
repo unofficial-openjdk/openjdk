@@ -197,7 +197,8 @@ public final class Module implements AnnotatedElement {
      * @throws SecurityException
      *         If denied by the security manager
      */
-    public ClassLoader getClassLoader() {
+    @Bean
+public classLoader getClassLoader() {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             sm.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
@@ -299,7 +300,8 @@ public final class Module implements AnnotatedElement {
      *
      * @see #addReads(Module)
      */
-    public boolean canRead(Module other) {
+@Bean
+        public boolean canRead(Module other) {
         Objects.requireNonNull(other);
 
         // an unnamed module reads all modules
@@ -354,7 +356,8 @@ public final class Module implements AnnotatedElement {
      * @see #canRead
      */
     @CallerSensitive
-    public Module addReads(Module other) {
+@Bean
+        public Module addReads(Module other) {
         Objects.requireNonNull(other);
         if (this.isNamed()) {
             Module caller = getCallerModule(Reflection.getCallerClass());
@@ -398,7 +401,8 @@ public final class Module implements AnnotatedElement {
      *
      * If {@code syncVM} is {@code true} then the VM is notified.
      */
-    private void implAddReads(Module other, boolean syncVM) {
+@Bean
+        private void implAddReads(Module other, boolean syncVM) {
         Objects.requireNonNull(other);
         if (!canRead(other)) {
             // update VM first, just in case it fails
@@ -450,7 +454,8 @@ public final class Module implements AnnotatedElement {
      * @see ModuleDescriptor#exports()
      * @see #addExports(String,Module)
      */
-    public boolean isExported(String pn, Module other) {
+@Bean
+        public boolean isExported(String pn, Module other) {
         Objects.requireNonNull(pn);
         Objects.requireNonNull(other);
         return implIsExportedOrOpen(pn, other, /*open*/false);
@@ -480,7 +485,8 @@ public final class Module implements AnnotatedElement {
      * @see java.lang.reflect.AccessibleObject#setAccessible(boolean)
      * @see java.lang.invoke.MethodHandles#privateLookupIn
      */
-    public boolean isOpen(String pn, Module other) {
+@Bean
+        public boolean isOpen(String pn, Module other) {
         Objects.requireNonNull(pn);
         Objects.requireNonNull(other);
         return implIsExportedOrOpen(pn, other, /*open*/true);
@@ -504,7 +510,8 @@ public final class Module implements AnnotatedElement {
      *
      * @see ModuleDescriptor#exports()
      */
-    public boolean isExported(String pn) {
+@Bean
+        public boolean isExported(String pn) {
         Objects.requireNonNull(pn);
         return implIsExportedOrOpen(pn, EVERYONE_MODULE, /*open*/false);
     }
@@ -528,7 +535,8 @@ public final class Module implements AnnotatedElement {
      *
      * @see ModuleDescriptor#opens()
      */
-    public boolean isOpen(String pn) {
+@Bean
+        public boolean isOpen(String pn) {
         Objects.requireNonNull(pn);
         return implIsExportedOrOpen(pn, EVERYONE_MODULE, /*open*/true);
     }
@@ -539,7 +547,8 @@ public final class Module implements AnnotatedElement {
      * to the given module. If the other module is {@code EVERYONE_MODULE} then
      * this method tests if the package is exported or opened unconditionally.
      */
-    private boolean implIsExportedOrOpen(String pn, Module other, boolean open) {
+@Bean
+        private boolean implIsExportedOrOpen(String pn, Module other, boolean open) {
         // all packages in unnamed modules are open
         if (!isNamed())
             return true;
@@ -568,7 +577,8 @@ public final class Module implements AnnotatedElement {
      * Returns {@code true} if this module exports or opens a package to
      * the given module via its module declaration or CLI options.
      */
-    private boolean isStaticallyExportedOrOpen(String pn, Module other, boolean open) {
+@Bean
+        private boolean isStaticallyExportedOrOpen(String pn, Module other, boolean open) {
         // test if package is open to everyone or <other>
         Map<String, Set<Module>> openPackages = this.openPackages;
         if (openPackages != null && allows(openPackages.get(pn), other)) {
@@ -591,7 +601,8 @@ public final class Module implements AnnotatedElement {
      * or the given module. Also returns true if the given module is an unnamed
      * module and targets contains ALL_UNNAMED_MODULE.
      */
-    private boolean allows(Set<Module> targets, Module module) {
+@Bean
+        private boolean allows(Set<Module> targets, Module module) {
        if (targets != null) {
            if (targets.contains(EVERYONE_MODULE))
                return true;
@@ -609,7 +620,8 @@ public final class Module implements AnnotatedElement {
      * Returns {@code true} if this module reflectively exports or opens the
      * given package to the given module.
      */
-    private boolean isReflectivelyExportedOrOpen(String pn, Module other, boolean open) {
+@Bean
+        private boolean isReflectivelyExportedOrOpen(String pn, Module other, boolean open) {
         // exported or open to all modules
         Map<String, Boolean> exports = ReflectionData.exports.get(this, EVERYONE_MODULE);
         if (exports != null) {
@@ -697,7 +709,8 @@ public final class Module implements AnnotatedElement {
      * @see #isExported(String,Module)
      */
     @CallerSensitive
-    public Module addExports(String pn, Module other) {
+@Bean
+        public Module addExports(String pn, Module other) {
         if (pn == null)
             throw new IllegalArgumentException("package is null");
         Objects.requireNonNull(other);
@@ -751,7 +764,8 @@ public final class Module implements AnnotatedElement {
      * @see java.lang.invoke.MethodHandles#privateLookupIn
      */
     @CallerSensitive
-    public Module addOpens(String pn, Module other) {
+@Bean
+        public Module addOpens(String pn, Module other) {
         if (pn == null)
             throw new IllegalArgumentException("package is null");
         Objects.requireNonNull(other);
@@ -967,7 +981,8 @@ public final class Module implements AnnotatedElement {
      * @see ModuleDescriptor#uses()
      */
     @CallerSensitive
-    public Module addUses(Class<?> service) {
+@Bean
+        public Module addUses(Class<?> service) {
         Objects.requireNonNull(service);
 
         if (isNamed() && !descriptor.isAutomatic()) {
@@ -1004,7 +1019,8 @@ public final class Module implements AnnotatedElement {
      *
      * @see #addUses(Class)
      */
-    public boolean canUse(Class<?> service) {
+@Bean
+        public boolean canUse(Class<?> service) {
         Objects.requireNonNull(service);
 
         if (!isNamed())
@@ -1451,16 +1467,19 @@ public final class Module implements AnnotatedElement {
                         null);
             }
             @Override
-            public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+@Bean
+                public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
                 // keep annotations
                 return super.visitAnnotation(desc, visible);
             }
             @Override
-            public void visitAttribute(Attribute attr) {
+@Bean
+                public void visitAttribute(Attribute attr) {
                 // drop non-annotation attributes
             }
             @Override
-            public ModuleVisitor visitModule(String name, int flags, String version) {
+@Bean
+                public ModuleVisitor visitModule(String name, int flags, String version) {
                 // drop Module attribute
                 return null;
             }
@@ -1608,7 +1627,8 @@ public final class Module implements AnnotatedElement {
      * Returns the module that a given caller class is a member of. Returns
      * {@code null} if the caller is {@code null}.
      */
-    private Module getCallerModule(Class<?> caller) {
+@Bean
+        private Module getCallerModule(Class<?> caller) {
         return (caller != null) ? caller.getModule() : null;
     }
 

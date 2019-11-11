@@ -36,6 +36,7 @@ import java.beans.SimpleBeanInfo;
 import java.beans.BeanDescriptor;
 import java.beans.PropertyChangeListener;
 
+@Bean
 public class Test6447751 {
 
     public static void main(String[] args) {
@@ -71,7 +72,11 @@ public class Test6447751 {
     public static class Automatic {
     }
     public static class AutomaticCustomizer extends Component implements Customizer {
-        public void setObject(Object bean) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setObject(Object bean) {
             throw new UnsupportedOperationException();
         }
     }
@@ -79,13 +84,25 @@ public class Test6447751 {
     public static class Illegal {
     }
     public static class IllegalCustomizer implements Customizer {
-        public void setObject(Object bean) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setObject(Object bean) {
             throw new UnsupportedOperationException();
         }
-        public void addPropertyChangeListener(PropertyChangeListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addPropertyChangeListener(PropertyChangeListener listener) {
             throw new UnsupportedOperationException();
         }
-        public void removePropertyChangeListener(PropertyChangeListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener listener) {
             throw new UnsupportedOperationException();
         }
     }

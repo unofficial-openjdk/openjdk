@@ -28,6 +28,7 @@
 
 import java.io.*;
 
+@Bean
 public class ReadOffset {
 
     public static void main(String[] args) throws Exception {

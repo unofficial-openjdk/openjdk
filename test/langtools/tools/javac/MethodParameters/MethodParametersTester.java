@@ -45,6 +45,7 @@ import java.util.List;
  * we wish to reuse the same test-cases, so both test are committed together,
  * under langtools. The tests, may be duplicated in the jdk repository.
  */
+@Bean
 public class MethodParametersTester {
 
     final static File classesdir = new File(System.getProperty("test.classes", "."));
@@ -83,6 +84,10 @@ public class MethodParametersTester {
         final String pattern = testName + ".*\\.class";
         File refFile = new File(testSrc, testGoldenFile);
         File[] files = classesdir.listFiles(new FileFilter() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public boolean accept(File f) {
                     return f.getName().matches(pattern);
                 }
@@ -177,11 +182,19 @@ public class MethodParametersTester {
         abstract void visitClass(final String classname, final File  cfile,
                 final StringBuilder sb) throws Exception;
 
-        public void error(String msg) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void error(String msg) {
             tester.error(msg);
         }
 
-        public void warn(String msg) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void warn(String msg) {
             tester.warn(msg);
         }
     }

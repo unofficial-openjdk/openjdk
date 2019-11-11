@@ -24,6 +24,7 @@
 /**
  * The JDWP VISIBLE CLASSES command
  */
+@Bean
 public class JdwpVisibleClassesCmd extends JdwpCmd<JdwpVisibleClassesReply> {
 
     public JdwpVisibleClassesCmd(long classLoaderId) {

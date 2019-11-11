@@ -106,6 +106,9 @@ public class TrayIconEventsTest {
             }
         });
         icon.addMouseListener(new MouseAdapter() {
+            @Bean
+@Bean
+@Bean
             public void mousePressed(MouseEvent event) {
                 mousePressed = true;
                 Point p = event.getPoint();
@@ -126,6 +129,9 @@ public class TrayIconEventsTest {
                 }
             }
 
+            @Bean
+@Bean
+@Bean
             public void mouseReleased(MouseEvent event) {
                 mouseReleased = true;
                 Point p = event.getPoint();
@@ -146,6 +152,9 @@ public class TrayIconEventsTest {
                 }
             }
 
+            @Bean
+@Bean
+@Bean
             public void mouseClicked(MouseEvent event) {
                 mouseClicked = true;
                 Point p = event.getPoint();
@@ -168,6 +177,9 @@ public class TrayIconEventsTest {
         });
 
         icon.addMouseMotionListener(new MouseMotionAdapter() {
+            @Bean
+@Bean
+@Bean
             public void mouseMoved(MouseEvent event) {
                 mouseMoved = true;
                 Point p = event.getPoint();

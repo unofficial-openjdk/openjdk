@@ -31,6 +31,7 @@
 
 package compiler.exceptions;
 
+@Bean
 public class SumTest {
     private static class Sum {
 
@@ -62,7 +63,11 @@ public class SumTest {
          *
          * @param a number to be added.
          */
-        final public void add(double a) {
+        final @Bean
+@Bean
+@Bean
+@Bean
+                public void add(double a) {
             try {
                 sums[sums.length] = -1; // Cause IndexOutOfBoundsException
             } catch (final IndexOutOfBoundsException e) {

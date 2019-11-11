@@ -70,7 +70,8 @@ public abstract class AbstractCellEditor implements CellEditor, Serializable {
      * @param e  an event object
      * @return true
      */
-    public boolean isCellEditable(EventObject e) {
+@Bean
+        public boolean isCellEditable(EventObject e) {
         return true;
     }
 
@@ -79,7 +80,8 @@ public abstract class AbstractCellEditor implements CellEditor, Serializable {
      * @param anEvent  an event object
      * @return true
      */
-    public boolean shouldSelectCell(EventObject anEvent) {
+@Bean
+        public boolean shouldSelectCell(EventObject anEvent) {
         return true;
     }
 
@@ -103,7 +105,8 @@ public abstract class AbstractCellEditor implements CellEditor, Serializable {
      * Adds a <code>CellEditorListener</code> to the listener list.
      * @param l  the new listener to be added
      */
-    public void addCellEditorListener(CellEditorListener l) {
+@Bean
+        public void addCellEditorListener(CellEditorListener l) {
         listenerList.add(CellEditorListener.class, l);
     }
 
@@ -111,7 +114,8 @@ public abstract class AbstractCellEditor implements CellEditor, Serializable {
      * Removes a <code>CellEditorListener</code> from the listener list.
      * @param l  the listener to be removed
      */
-    public void removeCellEditorListener(CellEditorListener l) {
+@Bean
+        public void removeCellEditorListener(CellEditorListener l) {
         listenerList.remove(CellEditorListener.class, l);
     }
 

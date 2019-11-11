@@ -32,6 +32,7 @@
 import java.util.*;
 import java.io.*;
 
+@Bean
 public class ArrayObjectMethods {
     int[] sizes = {0, 10, 100, 200, 1000};
 
@@ -402,10 +403,18 @@ class Rnd {
 class PrimitiveArrays {
     public static List<Long> asList(final long[] a) {
         return new AbstractList<Long>() {
-            public Long get(int i) { return a[i]; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Long get(int i) { return a[i]; }
             public int size()      { return a.length; }
 
-            public Long set(int i, Long e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Long set(int i, Long e) {
                 long oldVal = a[i];
                 a[i] = e;
                 return oldVal;
@@ -415,10 +424,18 @@ class PrimitiveArrays {
 
     public static List<Integer> asList(final int[] a) {
         return new AbstractList<Integer>() {
-            public Integer get(int i) { return a[i]; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Integer get(int i) { return a[i]; }
             public int size()         { return a.length; }
 
-            public Integer set(int i, Integer e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Integer set(int i, Integer e) {
                 int oldVal = a[i];
                 a[i] = e;
                 return oldVal;
@@ -428,10 +445,18 @@ class PrimitiveArrays {
 
     public static List<Short> asList(final short[] a) {
         return new AbstractList<Short>() {
-            public Short get(int i) { return a[i]; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Short get(int i) { return a[i]; }
             public int size()       { return a.length; }
 
-            public Short set(int i, Short e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Short set(int i, Short e) {
                 short oldVal = a[i];
                 a[i] = e;
                 return oldVal;
@@ -441,10 +466,18 @@ class PrimitiveArrays {
 
     public static List<Character> asList(final char[] a) {
         return new AbstractList<Character>() {
-            public Character get(int i) { return a[i]; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Character get(int i) { return a[i]; }
             public int size()           { return a.length; }
 
-            public Character set(int i, Character e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Character set(int i, Character e) {
                 Character oldVal = a[i];
                 a[i] = e;
                 return oldVal;
@@ -454,10 +487,18 @@ class PrimitiveArrays {
 
     public static List<Byte> asList(final byte[] a) {
         return new AbstractList<Byte>() {
-            public Byte get(int i) { return a[i]; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Byte get(int i) { return a[i]; }
             public int size()      { return a.length; }
 
-            public Byte set(int i, Byte e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Byte set(int i, Byte e) {
                 Byte oldVal = a[i];
                 a[i] = e;
                 return oldVal;
@@ -467,10 +508,18 @@ class PrimitiveArrays {
 
     public static List<Boolean> asList(final boolean[] a) {
         return new AbstractList<Boolean>() {
-            public Boolean get(int i) { return a[i]; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Boolean get(int i) { return a[i]; }
             public int size()         { return a.length; }
 
-            public Boolean set(int i, Boolean e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Boolean set(int i, Boolean e) {
                 Boolean oldVal = a[i];
                 a[i] = e;
                 return oldVal;
@@ -480,10 +529,18 @@ class PrimitiveArrays {
 
     public static List<Double> asList(final double[] a) {
         return new AbstractList<Double>() {
-            public Double get(int i) { return a[i]; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Double get(int i) { return a[i]; }
             public int size()        { return a.length; }
 
-            public Double set(int i, Double e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Double set(int i, Double e) {
                 Double oldVal = a[i];
                 a[i] = e;
                 return oldVal;
@@ -493,10 +550,18 @@ class PrimitiveArrays {
 
     public static List<Float> asList(final float[] a) {
         return new AbstractList<Float>() {
-            public Float get(int i) { return a[i]; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Float get(int i) { return a[i]; }
             public int size()       { return a.length; }
 
-            public Float set(int i, Float e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Float set(int i, Float e) {
                 Float oldVal = a[i];
                 a[i] = e;
                 return oldVal;

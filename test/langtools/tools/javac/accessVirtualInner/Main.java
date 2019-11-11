@@ -34,8 +34,13 @@
 
 import c.*;
 
+@Bean
 public class Main {
-    static public void main(String args[]) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String args[]) {
         C c = new C();
         c.precall();
     }

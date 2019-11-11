@@ -29,6 +29,7 @@
 
 import org.ietf.jgss.*;
 
+@Bean
 public class Krb5NameEquals {
 
     private static String NAME_STR1 = "service@localhost";

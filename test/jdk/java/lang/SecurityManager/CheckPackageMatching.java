@@ -42,6 +42,7 @@ import java.util.StringTokenizer;
  * SecurityManager is correct. This is why we have our own pattern matching
  * algorithm here.
  */
+@Bean
 public class CheckPackageMatching {
 
     /**
@@ -267,7 +268,11 @@ public class CheckPackageMatching {
          * @param pkg The package name to match. Must not end with '.'.
          * @return true if the package name matches, false otherwise.
          */
-        public boolean matches(String pkg) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean matches(String pkg) {
             int state = 0;
             int i;
             final int len = pkg.length();
@@ -313,7 +318,11 @@ public class CheckPackageMatching {
         }
 
         @Override
-        public boolean matches(String pkg) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean matches(String pkg) {
             final boolean match1 = super.matches(pkg);
             boolean match2 = false;
             String p2 = pkg + ".";

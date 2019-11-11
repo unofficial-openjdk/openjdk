@@ -34,6 +34,7 @@
 
 import jdk.test.lib.RandomFactory;
 
+@Bean
 public class IeeeRecommendedTests {
     private IeeeRecommendedTests(){}
 

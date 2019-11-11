@@ -33,6 +33,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 
+@Bean
 public class OpenByUNCPathNameTest {
     private static boolean validatePlatform() {
         String osName = System.getProperty("os.name");

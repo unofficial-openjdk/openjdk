@@ -102,17 +102,26 @@ public class TranslucentJComboBox extends Common {
         jComboBox.addPopupMenuListener(new PopupMenuListener() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
                 popup = (JPopupMenu) jComboBox.getAccessibleContext()
                         .getAccessibleChild(0);
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
 
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void popupMenuCanceled(PopupMenuEvent e) {
 
             }
@@ -120,6 +129,9 @@ public class TranslucentJComboBox extends Common {
 
         south.addMouseListener(new MouseAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseClicked(MouseEvent e) {
                 southClicked = true;
             }

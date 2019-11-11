@@ -66,7 +66,10 @@ public class DGCDeadLock implements Runnable {
         System.setProperty("sun.rmi.transport.cleanInterval", "50");
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+            public void main(String[] args) {
 
         RegistryVM testImplVM = null;
 

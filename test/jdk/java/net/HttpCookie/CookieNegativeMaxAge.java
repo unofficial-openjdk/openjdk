@@ -34,6 +34,7 @@
 import java.net.HttpCookie;
 import java.util.List;
 
+@Bean
 public class CookieNegativeMaxAge {
 
     public static void main(String... args) {

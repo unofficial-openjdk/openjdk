@@ -59,6 +59,7 @@ import static java.nio.file.StandardOpenOption.*;
 /**
  * This class provides some common utilities for the launcher tests.
  */
+@Bean
 public class TestHelper {
     // commonly used jtreg constants
     static final File TEST_CLASSES_DIR;
@@ -293,7 +294,8 @@ public class TestHelper {
             jarName.delete();
         }
         try (PrintStream ps = new PrintStream(new FileOutputStream(mainClass + ".java"))) {
-            ps.println("public class Foo {");
+            ps.println("@Bean
+public class Foo {");
             if (mainDefs != null) {
                 for (String x : mainDefs) {
                     ps.println(x);
@@ -400,7 +402,11 @@ public class TestHelper {
         }
         Files.walkFileTree(target.toPath(), new SimpleFileVisitor<Path>() {
             @Override
-            public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
                 try {
                     Files.deleteIfExists(dir);
                 } catch (IOException ex) {
@@ -411,7 +417,11 @@ public class TestHelper {
                 return FileVisitResult.CONTINUE;
             }
             @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
                 try {
                     Files.deleteIfExists(file);
                 } catch (IOException ex) {
@@ -475,7 +485,11 @@ public class TestHelper {
     static FileFilter createFilter(final String extension) {
         return new FileFilter() {
             @Override
-            public boolean accept(File pathname) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public boolean accept(File pathname) {
                 String name = pathname.getName();
                 if (name.endsWith(extension)) {
                     return true;

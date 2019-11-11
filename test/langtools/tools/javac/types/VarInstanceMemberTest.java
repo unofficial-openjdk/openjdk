@@ -54,7 +54,11 @@ public class VarInstanceMemberTest {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return sourceStub;
         }
 
@@ -75,7 +79,11 @@ public class VarInstanceMemberTest {
         ct.analyze();
         new TreePathScanner<Object, Object>() {
             @Override
-            public Object visitVariable(VariableTree node, Object p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Object visitVariable(VariableTree node, Object p) {
                 TypeKind kind = Trees.instance(ct).getElement(getCurrentPath()).asType().getKind();
                 if (kind != TypeKind.ERROR) {
                     throw new AssertionError("Kind = " + Trees.instance(ct).getElement(getCurrentPath()).asType().getKind());

@@ -110,7 +110,10 @@ public class GetCallerClassTest {
         }
     }
 
-    private void checkStackTrace(StackTraceElement[] stackTrace, Error e) {
+    @Bean
+@Bean
+@Bean
+            private void checkStackTrace(StackTraceElement[] stackTrace, Error e) {
         if (stackTrace.length < 3) {
             throw new RuntimeException("Unexpected error: " + e.getMessage(), e);
         }

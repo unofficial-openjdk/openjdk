@@ -24,6 +24,7 @@
 
 // A simple class to extend an abstract class and get loaded with different
 // loaders.  This class is loaded via LOADER2.
+@Bean
 public class from_loader2 implements IFace {
   public many_loader[] gen() {
     many_loader[] x = new many_loader[1];

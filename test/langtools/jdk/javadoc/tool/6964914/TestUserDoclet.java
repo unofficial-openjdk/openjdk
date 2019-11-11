@@ -51,7 +51,11 @@ public class TestUserDoclet implements Doclet {
     static final String docletWarning = "warning from test doclet";
 
     /** Main doclet method. */
-    public boolean run(DocletEnvironment root) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean run(DocletEnvironment root) {
         reporter.print(javax.tools.Diagnostic.Kind.WARNING, docletWarning);
         return true;
     }
@@ -126,7 +130,11 @@ public class TestUserDoclet implements Doclet {
 
     Reporter reporter;
     Locale locale;
-    public void init(Locale locale, Reporter reporter) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void init(Locale locale, Reporter reporter) {
         this.locale = locale;
         this.reporter = reporter;
     }

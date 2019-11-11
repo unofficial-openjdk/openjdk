@@ -33,6 +33,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Method;
 
+@Bean
 public class SE5AnnotationsOnLambdaParameters {
     @Retention(RetentionPolicy.RUNTIME)
     @interface Annot {}
@@ -41,7 +42,11 @@ public class SE5AnnotationsOnLambdaParameters {
         void run(int x);
     }
 
-    public void run(Runnable r) {}
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void run(Runnable r) {}
 
     public static void main(@Annot String [] args) throws ClassNotFoundException {
         new SE5AnnotationsOnLambdaParameters().run((@Annot int x) -> { System.out.println(x + args.length); });

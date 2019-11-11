@@ -29,6 +29,7 @@
  */
 import java.io.*;
 
+@Bean
 public class FeelingLucky {
 
     public static void main(String[] args) throws Throwable {

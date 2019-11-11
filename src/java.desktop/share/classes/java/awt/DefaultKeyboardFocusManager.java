@@ -83,7 +83,8 @@ public class DefaultKeyboardFocusManager extends KeyboardFocusManager {
     static {
         AWTAccessor.setDefaultKeyboardFocusManagerAccessor(
             new AWTAccessor.DefaultKeyboardFocusManagerAccessor() {
-                public void consumeNextKeyTyped(DefaultKeyboardFocusManager dkfm, KeyEvent e) {
+@Bean
+                    public void consumeNextKeyTyped(DefaultKeyboardFocusManager dkfm, KeyEvent e) {
                     dkfm.consumeNextKeyTyped(e);
                 }
             });
@@ -112,7 +113,8 @@ public class DefaultKeyboardFocusManager extends KeyboardFocusManager {
         }
     }
 
-    private Window getOwningFrameDialog(Window window) {
+@Bean
+        private Window getOwningFrameDialog(Window window) {
         while (window != null && !(window instanceof Frame ||
                                    window instanceof Dialog)) {
             window = (Window)window.getParent();
@@ -125,7 +127,8 @@ public class DefaultKeyboardFocusManager extends KeyboardFocusManager {
      * rejected focus or activation change. Rejections typically occur when
      * the user attempts to focus a non-focusable Component or Window.
      */
-    private void restoreFocus(FocusEvent fe, Window newFocusedWindow) {
+@Bean
+        private void restoreFocus(FocusEvent fe, Window newFocusedWindow) {
         Component realOppositeComponent = this.realOppositeComponentWR.get();
         Component vetoedComponent = fe.getComponent();
 
@@ -140,7 +143,8 @@ public class DefaultKeyboardFocusManager extends KeyboardFocusManager {
             clearGlobalFocusOwnerPriv();
         }
     }
-    private void restoreFocus(WindowEvent we) {
+@Bean
+        private void restoreFocus(WindowEvent we) {
         Window realOppositeWindow = this.realOppositeWindowWR.get();
         if (realOppositeWindow != null
             && restoreFocus(realOppositeWindow, null, false))
@@ -184,7 +188,8 @@ public class DefaultKeyboardFocusManager extends KeyboardFocusManager {
             return false;
         }
     }
-    private boolean restoreFocus(Component toFocus, boolean clearOnFailure) {
+@Bean
+        private boolean restoreFocus(Component toFocus, boolean clearOnFailure) {
         return doRestoreFocus(toFocus, null, clearOnFailure);
     }
     private boolean doRestoreFocus(Component toFocus, Component vetoedComponent,
@@ -337,7 +342,8 @@ public class DefaultKeyboardFocusManager extends KeyboardFocusManager {
      * get handled. This may lead to wrong focus behavior and in order to avoid it,
      * the focus window events are reposted to the end of the event queue. See 6981400.
      */
-    private boolean repostIfFollowsKeyEvents(WindowEvent e) {
+@Bean
+        private boolean repostIfFollowsKeyEvents(WindowEvent e) {
         if (!(e instanceof TimedWindowEvent)) {
             return false;
         }
@@ -375,7 +381,8 @@ public class DefaultKeyboardFocusManager extends KeyboardFocusManager {
      * @return {@code true} if this method dispatched the event;
      *         {@code false} otherwise
      */
-    public boolean dispatchEvent(AWTEvent e) {
+@Bean
+        public boolean dispatchEvent(AWTEvent e) {
         if (focusLog.isLoggable(PlatformLogger.Level.FINE) && (e instanceof WindowEvent || e instanceof FocusEvent)) {
             focusLog.fine("" + e);
         }
@@ -860,7 +867,8 @@ public class DefaultKeyboardFocusManager extends KeyboardFocusManager {
      * @return {@code true}
      * @see Component#dispatchEvent
      */
-    public boolean dispatchKeyEvent(KeyEvent e) {
+@Bean
+        public boolean dispatchKeyEvent(KeyEvent e) {
         Component focusOwner = (((AWTEvent)e).isPosted) ? getFocusOwner() : e.getComponent();
 
         if (focusOwner != null && focusOwner.isShowing() && focusOwner.canBeFocusOwner()) {
@@ -915,7 +923,8 @@ public class DefaultKeyboardFocusManager extends KeyboardFocusManager {
      * @see #dispatchKeyEvent
      * @see MenuShortcut
      */
-    public boolean postProcessKeyEvent(KeyEvent e) {
+@Bean
+        public boolean postProcessKeyEvent(KeyEvent e) {
         if (!e.isConsumed()) {
             Component target = e.getComponent();
             Container p = (Container)
@@ -976,7 +985,8 @@ public class DefaultKeyboardFocusManager extends KeyboardFocusManager {
         }
     }
 
-    private boolean typeAheadAssertions(Component target, AWTEvent e) {
+@Bean
+        private boolean typeAheadAssertions(Component target, AWTEvent e) {
 
         // Clear any pending events here as well as in the FOCUS_GAINED
         // handler. We need this call here in case a marker was removed in
@@ -1066,7 +1076,8 @@ public class DefaultKeyboardFocusManager extends KeyboardFocusManager {
      * in a markers' queue
      * @since 1.5
      */
-    private boolean hasMarker(Component comp) {
+@Bean
+        private boolean hasMarker(Component comp) {
         for (Iterator<TypeAheadMarker> iter = typeAheadMarkers.iterator(); iter.hasNext(); ) {
             if (iter.next().untilFocused == comp) {
                 return true;
@@ -1086,7 +1097,8 @@ public class DefaultKeyboardFocusManager extends KeyboardFocusManager {
     }
 
     @SuppressWarnings("deprecation")
-    private boolean preDispatchKeyEvent(KeyEvent ke) {
+@Bean
+        private boolean preDispatchKeyEvent(KeyEvent ke) {
         if (((AWTEvent) ke).isPosted) {
             Component focusOwner = getFocusOwner();
             ke.setSource(((focusOwner != null) ? focusOwner : getFocusedWindow()));
@@ -1143,11 +1155,13 @@ public class DefaultKeyboardFocusManager extends KeyboardFocusManager {
      * @param e is a KEY_PRESSED event that can be used
      *          to track the next KEY_TYPED related.
      */
-    private void consumeNextKeyTyped(KeyEvent e) {
+@Bean
+        private void consumeNextKeyTyped(KeyEvent e) {
         consumeNextKeyTyped = true;
     }
 
-    private void consumeTraversalKey(KeyEvent e) {
+@Bean
+        private void consumeTraversalKey(KeyEvent e) {
         e.consume();
         consumeNextKeyTyped = (e.getID() == KeyEvent.KEY_PRESSED) &&
                               !e.isActionKey();
@@ -1156,7 +1170,8 @@ public class DefaultKeyboardFocusManager extends KeyboardFocusManager {
     /*
      * return true if event was consumed
      */
-    private boolean consumeProcessedKeyEvent(KeyEvent e) {
+@Bean
+        private boolean consumeProcessedKeyEvent(KeyEvent e) {
         if ((e.getID() == KeyEvent.KEY_TYPED) && consumeNextKeyTyped) {
             e.consume();
             consumeNextKeyTyped = false;
@@ -1178,7 +1193,8 @@ public class DefaultKeyboardFocusManager extends KeyboardFocusManager {
      *        traversal key for the Component
      * @param e the event that may represent a focus traversal key
      */
-    public void processKeyEvent(Component focusedComponent, KeyEvent e) {
+@Bean
+        public void processKeyEvent(Component focusedComponent, KeyEvent e) {
         // consume processed event if needed
         if (consumeProcessedKeyEvent(e)) {
             return;
@@ -1398,7 +1414,8 @@ public class DefaultKeyboardFocusManager extends KeyboardFocusManager {
     //   * if 'start' is < 0, then this function does nothing
     //   * if 'end' is < 0, then all KeyEvents from 'start' to the end of the
     //     queue will be removed
-    private void purgeStampedEvents(long start, long end) {
+@Bean
+        private void purgeStampedEvents(long start, long end) {
         if (start < 0) {
             return;
         }
@@ -1426,7 +1443,8 @@ public class DefaultKeyboardFocusManager extends KeyboardFocusManager {
      * @see FocusTraversalPolicy
      * @see Component#transferFocusBackward
      */
-    public void focusPreviousComponent(Component aComponent) {
+@Bean
+        public void focusPreviousComponent(Component aComponent) {
         if (aComponent != null) {
             aComponent.transferFocusBackward();
         }
@@ -1441,7 +1459,8 @@ public class DefaultKeyboardFocusManager extends KeyboardFocusManager {
      * @see FocusTraversalPolicy
      * @see Component#transferFocus
      */
-    public void focusNextComponent(Component aComponent) {
+@Bean
+        public void focusNextComponent(Component aComponent) {
         if (aComponent != null) {
             aComponent.transferFocus();
         }
@@ -1459,7 +1478,8 @@ public class DefaultKeyboardFocusManager extends KeyboardFocusManager {
      *        traversal operation
      * @see Component#transferFocusUpCycle
      */
-    public void upFocusCycle(Component aComponent) {
+@Bean
+        public void upFocusCycle(Component aComponent) {
         if (aComponent != null) {
             aComponent.transferFocusUpCycle();
         }
@@ -1476,7 +1496,8 @@ public class DefaultKeyboardFocusManager extends KeyboardFocusManager {
      *        traversal operation
      * @see Container#transferFocusDownCycle
      */
-    public void downFocusCycle(Container aContainer) {
+@Bean
+        public void downFocusCycle(Container aContainer) {
         if (aContainer != null && aContainer.isFocusCycleRoot()) {
             aContainer.transferFocusDownCycle();
         }

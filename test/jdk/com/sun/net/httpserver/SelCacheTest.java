@@ -48,6 +48,7 @@ import javax.net.ssl.*;
  * (based on Test1)
  */
 
+@Bean
 public class SelCacheTest extends Test {
 
     static SSLContext ctx;
@@ -109,6 +110,10 @@ public class SelCacheTest extends Test {
         if (urlc instanceof HttpsURLConnection) {
             HttpsURLConnection urlcs = (HttpsURLConnection) urlc;
             urlcs.setHostnameVerifier(new HostnameVerifier() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public boolean verify(String s, SSLSession s1) {
                     return true;
                 }

@@ -34,6 +34,7 @@ import static java.util.GregorianCalendar.*;
 // Usage: java DateGregorianCalendarTest [duration]
 
 @SuppressWarnings("deprecation")
+@Bean
 public class DateGregorianCalendarTest {
     static volatile boolean runrun = true;
     static int nThreads;

@@ -49,6 +49,7 @@ import sun.hotspot.code.BlobType;
 import java.lang.management.MemoryPoolMXBean;
 
 
+@Bean
 public class PeakUsageTest {
 
     private final BlobType btype;

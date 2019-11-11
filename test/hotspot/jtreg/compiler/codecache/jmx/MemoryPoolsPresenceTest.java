@@ -53,6 +53,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+@Bean
 public class MemoryPoolsPresenceTest {
 
     private static final String CC_MANAGER = "CodeCacheManager";

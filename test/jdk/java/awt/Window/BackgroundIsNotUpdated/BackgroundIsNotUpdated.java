@@ -46,12 +46,18 @@ public final class BackgroundIsNotUpdated extends Window {
     }
 
     @Override
-    public void paint(final Graphics ignored) {
+    @Bean
+@Bean
+@Bean
+            public void paint(final Graphics ignored) {
         // Intentionally left blank
     }
 
     @Override
-    public void update(final Graphics ignored) {
+    @Bean
+@Bean
+@Bean
+            public void update(final Graphics ignored) {
         // Intentionally left blank
     }
 

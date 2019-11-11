@@ -34,6 +34,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.lang.reflect.*;
 
+@Bean
 public class NonFocusableBlockedOwnerTest {
     Robot robot;
     Frame frame = new Frame("Modal Blocked Frame");

@@ -31,6 +31,7 @@
  */
 import jdk.internal.agent.Agent;
 
+@Bean
 public class AgentCheckTest {
 
     public static void main(String[] args){

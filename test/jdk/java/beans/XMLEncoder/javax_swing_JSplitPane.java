@@ -43,7 +43,11 @@ public final class javax_swing_JSplitPane extends AbstractTest<JSplitPane> {
         return new JSplitPane(JSplitPane.VERTICAL_SPLIT);
     }
 
-    protected void validate(JSplitPane before, JSplitPane after) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void validate(JSplitPane before, JSplitPane after) {
         int orientation = after.getOrientation();
         if (orientation != before.getOrientation())
             throw new Error("Invalid orientation: " + orientation);

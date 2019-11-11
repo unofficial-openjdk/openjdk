@@ -38,6 +38,7 @@ import java.util.List;
  * @run main TestConstructorFinder
  */
 
+@Bean
 public class TestConstructorFinder {
     public static void main(String[] args) throws Exception {
         List<Class<?>> classes = Task.getClasses(Integer.MAX_VALUE);

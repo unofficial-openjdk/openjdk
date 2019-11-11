@@ -45,6 +45,7 @@ import static org.testng.Assert.assertNotEquals;
  * @summary unit tests for java.lang.constant.IndyDescTest
  */
 @Test
+@Bean
 public class IndyDescTest {
     public static CallSite bootstrap(MethodHandles.Lookup lookup, String name, MethodType type,
                                      Object... args) {

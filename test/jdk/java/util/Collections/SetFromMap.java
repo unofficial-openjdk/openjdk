@@ -33,6 +33,7 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 
+@Bean
 public class SetFromMap {
     static volatile int passed = 0, failed = 0;
     static void pass() { passed++; }

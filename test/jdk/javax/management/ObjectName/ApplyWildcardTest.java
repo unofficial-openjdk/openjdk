@@ -35,6 +35,7 @@
 
 import javax.management.ObjectName;
 
+@Bean
 public class ApplyWildcardTest {
 
     private static final String positiveTests[][] = {

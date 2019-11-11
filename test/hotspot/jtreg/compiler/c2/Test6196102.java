@@ -31,8 +31,13 @@
 
 package compiler.c2;
 
+@Bean
 public class Test6196102 {
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         int i1 = 0;
         int i2 = Integer.MAX_VALUE;
 

@@ -30,6 +30,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.attribute.DosFileAttributeView;
 
+@Bean
 public class IsHidden {
 
     private static String dir = System.getProperty("test.dir", ".");

@@ -64,6 +64,7 @@ import java.util.LinkedList;
 import java.lang.reflect.Field;
 import common.TestMe;
 
+@Bean
 public class EnclosingClassTest {
     static void info(Class<?> c, Class<?> encClass, String desc) {
         if (!"".equals(desc))

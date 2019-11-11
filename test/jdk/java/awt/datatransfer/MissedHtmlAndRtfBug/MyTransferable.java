@@ -41,7 +41,10 @@ class MyTransferable implements Transferable {
     }
 
     @Override
-    public boolean isDataFlavorSupported(DataFlavor flavor) {
+    @Bean
+@Bean
+@Bean
+            public boolean isDataFlavorSupported(DataFlavor flavor) {
         for (DataFlavor f : dataFlavors) {
             if (f.equals(flavor)) {
                 return true;

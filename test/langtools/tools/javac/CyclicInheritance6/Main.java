@@ -37,9 +37,12 @@
  *      necessary to prevent false cyclic dependencies involving imports.
  *      Example (due to Todd Turnbridge): Consider the following three files:
  *
- *      A.java: public class A extends B {}
- *      B.java: public class B extends C {}
- *      C.java: import A; public class C {}
+ *      A.java: @Bean
+public class A extends B {}
+ *      B.java: @Bean
+public class B extends C {}
+ *      C.java: import A; @Bean
+public class C {}
  *
  *      Now compile B.java. The (import A;) is not allowed to go beyond enter
  *      phase, or a false cycle will occur.

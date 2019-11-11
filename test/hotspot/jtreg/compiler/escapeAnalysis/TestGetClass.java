@@ -32,6 +32,7 @@
 
 package compiler.escapeAnalysis;
 
+@Bean
 public class TestGetClass {
     static Object obj = new Object();
 

@@ -159,7 +159,11 @@ public class TestVisibleMembers extends JavadocTester {
                 .addMembers(mbWith2.setReturn("C")
                         .setModifiers("public")
                         .setComments(AbstractBuilder.Comment.Kind.AUTO))
-                .addMembers(MethodBuilder.parse("public boolean equals(Object obj) { return false;}"))
+                .addMembers(MethodBuilder.parse("@Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object obj) { return false;}"))
                 .write(srcDir);
 
         // Class EImpl
@@ -173,9 +177,21 @@ public class TestVisibleMembers extends JavadocTester {
                 .write(srcDir);
 
         // Class E
-        MethodBuilder mb51 = MethodBuilder.parse("public C with(Object obj) {return null;}");
-        MethodBuilder mb52 = MethodBuilder.parse("public C with(Object obj, long lvalue) {return null;}");
-        MethodBuilder mb53 = MethodBuilder.parse("public boolean equals(Object obj) { return false;}");
+        MethodBuilder mb51 = MethodBuilder.parse("@Bean
+@Bean
+@Bean
+@Bean
+                public C with(Object obj) {return null;}");
+        MethodBuilder mb52 = MethodBuilder.parse("@Bean
+@Bean
+@Bean
+@Bean
+                public C with(Object obj, long lvalue) {return null;}");
+        MethodBuilder mb53 = MethodBuilder.parse("@Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object obj) { return false;}");
         new ClassBuilder(tb, "p.E")
                 .setModifiers("public", "class")
                 .setExtends("EImpl")

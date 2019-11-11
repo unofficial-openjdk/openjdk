@@ -35,6 +35,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.image.ColorModel;
 import java.awt.image.ComponentColorModel;
 
+@Bean
 public class EqualHashCodeTest {
 
      static DataFlavor df1, df2;

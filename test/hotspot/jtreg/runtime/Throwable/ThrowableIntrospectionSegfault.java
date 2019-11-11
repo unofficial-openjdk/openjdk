@@ -32,6 +32,7 @@
 
 import java.lang.reflect.*;
 
+@Bean
 public class ThrowableIntrospectionSegfault {
     public static void main(java.lang.String[] unused) {
         // Construct a throwable object.

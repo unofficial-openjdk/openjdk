@@ -2605,7 +2605,8 @@ public final class Formatter implements Closeable, Flushable {
      *
      * @return  This formatter
      */
-    public Formatter format(String format, Object ... args) {
+@Bean
+        public Formatter format(String format, Object ... args) {
         return format(l, format, args);
     }
 
@@ -2644,7 +2645,8 @@ public final class Formatter implements Closeable, Flushable {
      *
      * @return  This formatter
      */
-    public Formatter format(Locale l, String format, Object ... args) {
+@Bean
+        public Formatter format(Locale l, String format, Object ... args) {
         ensureOpen();
 
         // index of last argument referenced
@@ -2778,7 +2780,8 @@ public final class Formatter implements Closeable, Flushable {
         private boolean dt = false;
         private char c;
 
-        private int index(String s, int start, int end) {
+@Bean
+            private int index(String s, int start, int end) {
             if (start >= 0) {
                 try {
                     // skip the trailing '$'
@@ -2796,14 +2799,16 @@ public final class Formatter implements Closeable, Flushable {
             return index;
         }
 
-        private Flags flags(String s, int start, int end) {
+@Bean
+            private Flags flags(String s, int start, int end) {
             f = Flags.parse(s, start, end);
             if (f.contains(Flags.PREVIOUS))
                 index = -1;
             return f;
         }
 
-        private int width(String s, int start, int end) {
+@Bean
+            private int width(String s, int start, int end) {
             width = -1;
             if (start >= 0) {
                 try {
@@ -2817,7 +2822,8 @@ public final class Formatter implements Closeable, Flushable {
             return width;
         }
 
-        private int precision(String s, int start, int end) {
+@Bean
+            private int precision(String s, int start, int end) {
             precision = -1;
             if (start >= 0) {
                 try {
@@ -2832,7 +2838,8 @@ public final class Formatter implements Closeable, Flushable {
             return precision;
         }
 
-        private char conversion(char conv) {
+@Bean
+            private char conversion(char conv) {
             c = conv;
             if (!dt) {
                 if (!Conversion.isValid(c)) {
@@ -3058,7 +3065,8 @@ public final class Formatter implements Closeable, Flushable {
             appendJustified(a, s);
         }
 
-        private String toUpperCaseWithLocale(String s, Locale l) {
+@Bean
+            private String toUpperCaseWithLocale(String s, Locale l) {
             return s.toUpperCase(Objects.requireNonNullElse(l,
                     Locale.getDefault(Locale.Category.FORMAT)));
         }
@@ -3145,7 +3153,8 @@ public final class Formatter implements Closeable, Flushable {
                 checkBadFlags(Flags.GROUP);
         }
 
-        private void checkBadFlags(Flags ... badFlags) {
+@Bean
+            private void checkBadFlags(Flags ... badFlags) {
             for (Flags badFlag : badFlags)
                 if (f.contains(badFlag))
                     failMismatch(badFlag, c);
@@ -3292,7 +3301,8 @@ public final class Formatter implements Closeable, Flushable {
         }
 
         // neg := val < 0
-        private StringBuilder leadingSign(StringBuilder sb, boolean neg) {
+@Bean
+            private StringBuilder leadingSign(StringBuilder sb, boolean neg) {
             if (!neg) {
                 if (f.contains(Flags.PLUS)) {
                     sb.append('+');
@@ -3309,7 +3319,8 @@ public final class Formatter implements Closeable, Flushable {
         }
 
         // neg := val < 0
-        private StringBuilder trailingSign(StringBuilder sb, boolean neg) {
+@Bean
+            private StringBuilder trailingSign(StringBuilder sb, boolean neg) {
             if (neg && f.contains(Flags.PARENTHESES))
                 sb.append(')');
             return sb;
@@ -3551,7 +3562,8 @@ public final class Formatter implements Closeable, Flushable {
         }
 
         // Add zeros to the requested precision.
-        private void addZeros(StringBuilder sb, int prec) {
+@Bean
+            private void addZeros(StringBuilder sb, int prec) {
             // Look for the dot.  If we don't find one, the we'll need to add
             // it before we add the zeros.
             int len = sb.length();
@@ -3583,7 +3595,8 @@ public final class Formatter implements Closeable, Flushable {
         }
 
         // Method assumes that d > 0.
-        private String hexDouble(double d, int prec) {
+@Bean
+            private String hexDouble(double d, int prec) {
             // Let Double.toHexString handle simple cases
             if (!Double.isFinite(d) || d == 0.0 || prec == 0 || prec >= 13) {
                 // remove "0x"
@@ -3852,7 +3865,8 @@ public final class Formatter implements Closeable, Flushable {
                 return exp;
             }
 
-            private void layout(BigInteger intVal, int scale, BigDecimalLayoutForm form) {
+@Bean
+                private void layout(BigInteger intVal, int scale, BigDecimalLayoutForm form) {
                 String coeff = intVal.toString();
                 this.scale = scale;
 
@@ -3937,7 +3951,8 @@ public final class Formatter implements Closeable, Flushable {
             }
         }
 
-        private int adjustWidth(int width, Flags f, boolean neg) {
+@Bean
+            private int adjustWidth(int width, Flags f, boolean neg) {
             int newW = width;
             if (newW != -1 && neg && f.contains(Flags.PARENTHESES))
                 newW--;
@@ -3945,7 +3960,8 @@ public final class Formatter implements Closeable, Flushable {
         }
 
         // Add trailing zeros
-        private void trailingZeros(StringBuilder sb, int nzeros) {
+@Bean
+            private void trailingZeros(StringBuilder sb, int nzeros) {
             for (int i = 0; i < nzeros; i++) {
                 sb.append('0');
             }
@@ -4417,16 +4433,19 @@ public final class Formatter implements Closeable, Flushable {
 
         // -- Methods to support throwing exceptions --
 
-        private void failMismatch(Flags f, char c) {
+@Bean
+            private void failMismatch(Flags f, char c) {
             String fs = f.toString();
             throw new FormatFlagsConversionMismatchException(fs, c);
         }
 
-        private void failConversion(char c, Object arg) {
+@Bean
+            private void failConversion(char c, Object arg) {
             throw new IllegalFormatConversionException(c, arg.getClass());
         }
 
-        private char getZero(Locale l) {
+@Bean
+            private char getZero(Locale l) {
             if ((l != null) &&  !l.equals(locale())) {
                 DecimalFormatSymbols dfs = DecimalFormatSymbols.getInstance(l);
                 return dfs.getZeroDigit();
@@ -4578,7 +4597,8 @@ public final class Formatter implements Closeable, Flushable {
             return flags;
         }
 
-        public boolean contains(Flags f) {
+@Bean
+            public boolean contains(Flags f) {
             return (flags & f.valueOf()) == f.valueOf();
         }
 
@@ -4586,12 +4606,14 @@ public final class Formatter implements Closeable, Flushable {
             return new Flags(flags);
         }
 
-        private Flags add(Flags f) {
+@Bean
+            private Flags add(Flags f) {
             flags |= f.valueOf();
             return this;
         }
 
-        public Flags remove(Flags f) {
+@Bean
+            public Flags remove(Flags f) {
             flags &= ~f.valueOf();
             return this;
         }

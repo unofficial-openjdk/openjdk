@@ -45,7 +45,11 @@ import java.beans.XMLEncoder;
  * Move the first line of the XMLEncoder::mark(Statement method)
  * to the end of the method.
  * I.e. replace the mark() method in XMLEncoder with this:
- * <pre>private void mark(Statement stm) {
+ * <pre>@Bean
+@Bean
+@Bean
+@Bean
+                private void mark(Statement stm) {
  *     Object[] args = stm.getArguments();
  *     for (int i = 0; i < args.length; i++) {
  *         Object arg = args[i];
@@ -86,6 +90,7 @@ import java.beans.XMLEncoder;
  *  &lt;/object&gt;
  * &lt;/java&gt;</pre>
  */
+@Bean
 public class Test4679556 extends AbstractTest {
     public static void main(String[] args) {
         new Test4679556().test(true);
@@ -102,9 +107,17 @@ public class Test4679556 extends AbstractTest {
         return new A();
     }
 
-    protected void initialize(XMLEncoder encoder) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void initialize(XMLEncoder encoder) {
         encoder.setPersistenceDelegate(C.class, new DefaultPersistenceDelegate() {
-            protected Expression instantiate(Object oldInstance, Encoder out) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                protected Expression instantiate(Object oldInstance, Encoder out) {
                 C c = (C) oldInstance;
                 return new Expression(c, c.getX(), "createC", new Object[] {});
             }
@@ -118,7 +131,11 @@ public class Test4679556 extends AbstractTest {
             return this.x;
         }
 
-        public void setX(Object x) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(Object x) {
             this.x = x;
         }
     }

@@ -35,6 +35,7 @@ import java.util.function.*;
 import java.util.regex.*;
 import java.util.stream.*;
 
+@Bean
 public class TestCharsetMapping {
 
     private static final int BUFSIZ = 8192;     // Initial buffer size
@@ -148,13 +149,21 @@ public class TestCharsetMapping {
         }
 
         // shiftHackDBCS can add the leading/trailing shift bytesa
-        private void put(byte[] bs) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void put(byte[] bs) {
             if (refBytes.remaining() < bytesPerChar)
                 refBytes = expand(refBytes);
             refBytes.put(bs);
         }
 
-        private void put(byte[] bs, char[] cc) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void put(byte[] bs, char[] cc) {
             if (bs.length != bytesPerChar)
                 throw new IllegalArgumentException(bs.length
                                                    + " != "
@@ -321,7 +330,11 @@ public class TestCharsetMapping {
     // Find the test for the given bytes/char value,
     // expanding the test array if needed
     //
-    private Test testFor(int bpc) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Test testFor(int bpc) {
         if (bpc > maxBytesPerChar) {
             Test[] ts = new Test[bpc];
             System.arraycopy(tests, 0, ts, 0, maxBytesPerChar);
@@ -465,7 +478,11 @@ public class TestCharsetMapping {
             this.clzName = clzName;
         }
 
-        private Entry parse(Matcher m) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private Entry parse(Matcher m) {
             Entry e = new Entry();
             e.bb = Long.parseLong(m.group(G_BS), 16);
             if (e.bb < 0x100)

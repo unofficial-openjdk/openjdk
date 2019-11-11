@@ -40,6 +40,7 @@ import toolbox.*;
 
 import com.sun.tools.javac.main.CommandLine;
 
+@Bean
 public class EnvVariableTest extends TestRunner {
     final String testClasses;
     final ToolBox tb;

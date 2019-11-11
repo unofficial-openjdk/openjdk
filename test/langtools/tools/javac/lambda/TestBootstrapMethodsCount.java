@@ -70,6 +70,7 @@ import com.sun.tools.javac.util.Names;
 
 import static com.sun.tools.javac.jvm.ClassFile.*;
 
+@Bean
 public class TestBootstrapMethodsCount {
 
     public static void main(String... args) throws Exception {
@@ -83,7 +84,11 @@ public class TestBootstrapMethodsCount {
         dc = new DiagChecker();
     }
 
-    public void run(JavaCompiler comp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void run(JavaCompiler comp) {
         JavaSource source = new JavaSource();
         JavacTaskImpl ct = (JavacTaskImpl)comp.getTask(null, null, dc,
                 Arrays.asList("-g"), null, Arrays.asList(source));
@@ -153,7 +158,11 @@ public class TestBootstrapMethodsCount {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return source;
         }
     }
@@ -172,19 +181,31 @@ public class TestBootstrapMethodsCount {
         }
 
         @Override
-        public void started(TaskEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void started(TaskEvent e) {
             //do nothing
         }
 
         @Override
-        public void finished(TaskEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void finished(TaskEvent e) {
             if (e.getKind() == TaskEvent.Kind.ANALYZE) {
                 scan(e.getCompilationUnit(), null);
             }
         }
 
         @Override
-        public Void visitMethodInvocation(MethodInvocationTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitMethodInvocation(MethodInvocationTree node, Void p) {
             super.visitMethodInvocation(node, p);
             JCMethodInvocation apply = (JCMethodInvocation)node;
             JCIdent ident = (JCIdent)apply.meth;
@@ -197,7 +218,11 @@ public class TestBootstrapMethodsCount {
         }
 
         @Override
-        public Void visitMethod(MethodTree node, Void p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitMethod(MethodTree node, Void p) {
             super.visitMethod(node, p);
             if (node.getName().toString().equals("bsm")) {
                 bsm = ((JCMethodDecl)node).sym;
@@ -212,7 +237,11 @@ public class TestBootstrapMethodsCount {
         boolean diagFound;
         ArrayList<String> diags = new ArrayList<>();
 
-        public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
             diags.add(diagnostic.getMessage(Locale.getDefault()));
             diagFound = true;
         }

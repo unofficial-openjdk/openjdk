@@ -45,6 +45,7 @@ import java.util.regex.Pattern;
  * # rtm lock aborts 4: 0
  * # rtm lock aborts 5: 0
  */
+@Bean
 public class RTMLockingStatistics {
     /**
      * Pattern for aborts per abort type entries.
@@ -186,7 +187,11 @@ public class RTMLockingStatistics {
      * @param type an abort type.
      * @return count of aborts.
      */
-    public long getAborts(AbortType type) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public long getAborts(AbortType type) {
         return aborts.getOrDefault(type, 0L);
     }
 
@@ -196,7 +201,11 @@ public class RTMLockingStatistics {
      * @param type an abort type.
      * @param count count of aborts.
      */
-    public void setAborts(AbortType type, long count) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setAborts(AbortType type, long count) {
         aborts.put(type, count);
     }
 

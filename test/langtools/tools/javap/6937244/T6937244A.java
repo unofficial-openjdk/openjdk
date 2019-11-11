@@ -31,6 +31,7 @@
 import java.io.*;
 import java.util.*;
 
+@Bean
 public class T6937244A {
     public static void main(String[] args) throws Exception {
         new T6937244A().run();

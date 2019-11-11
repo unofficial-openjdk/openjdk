@@ -28,6 +28,7 @@
  * @author  Josh Bloch
  */
 
+@Bean
 public class NewChainedExceptions {
     public static void main(String args[]) {
         Throwable interior = new Exception();

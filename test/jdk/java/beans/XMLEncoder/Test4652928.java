@@ -37,6 +37,7 @@ import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 
+@Bean
 public class Test4652928 extends AbstractTest<List> {
     public static void main(String[] args) {
         new Test4652928().test(true);

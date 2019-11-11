@@ -43,6 +43,7 @@ import jdk.test.lib.process.OutputAnalyzer;
  * @run main/othervm TestMultiANewArray 52
  */
 
+@Bean
 public class TestMultiANewArray {
     public static void main(String... args) throws Exception {
         int cfv = Integer.parseInt(args[0]);

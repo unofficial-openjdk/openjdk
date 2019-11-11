@@ -85,7 +85,9 @@ public class JMenuItemToolTipKeyBindingsTest {
         Button passedButton = new Button("Pass");
         passedButton.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {
+@Bean
+@Bean
+                    public void actionPerformed(ActionEvent e) {
                 testResult = true;
                 completeTest();
             }
@@ -94,7 +96,9 @@ public class JMenuItemToolTipKeyBindingsTest {
         Button failedButton = new Button("Fail");
         failedButton.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {
+@Bean
+@Bean
+                    public void actionPerformed(ActionEvent e) {
                 testResult = false;
                 completeTest();
             }

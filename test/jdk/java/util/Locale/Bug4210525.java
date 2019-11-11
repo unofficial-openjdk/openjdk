@@ -29,6 +29,7 @@
 
 import java.util.Locale;
 
+@Bean
 public class Bug4210525 {
 
     public static void main(String[] args) throws Exception {

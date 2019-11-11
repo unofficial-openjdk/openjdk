@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Bean
 public class Wrapper {
     public static void main(String... args) throws Exception {
         if (!isSJavacOnClassPath()) {

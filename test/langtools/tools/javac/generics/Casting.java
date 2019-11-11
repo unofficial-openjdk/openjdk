@@ -38,6 +38,7 @@ class List<T> {
     <T> T[] toArray(T[] a) { return null; }
 }
 
+@Bean
 public class Casting {
     public static void main(String[] args) {
         List<Test> l1 = null;

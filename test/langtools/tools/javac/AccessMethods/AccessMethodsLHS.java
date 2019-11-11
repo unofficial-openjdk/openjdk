@@ -31,6 +31,7 @@
  * @run main AccessMethodsLHS
  */
 
+@Bean
 public class AccessMethodsLHS {
 
     static void fail(String msg) throws Exception {
@@ -90,7 +91,8 @@ public class AccessMethodsLHS {
         // static private String ss;
     }
 
-    public class Quux {
+    @Bean
+public class Quux {
         void DoIt () throws Exception {
             m(arg);
             i = 1;

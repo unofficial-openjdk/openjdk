@@ -33,6 +33,7 @@ import java.nio.*;
 import java.nio.charset.*;
 import java.util.*;
 
+@Bean
 public class RegisteredCharsets {
 
     static String [] ianaRegistered = {

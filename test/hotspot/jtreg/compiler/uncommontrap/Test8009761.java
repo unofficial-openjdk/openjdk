@@ -44,6 +44,7 @@ import sun.hotspot.WhiteBox;
 import java.lang.reflect.Method;
 import compiler.whitebox.CompilerWhiteBoxTest;
 
+@Bean
 public class Test8009761 {
 
     private static final WhiteBox WHITE_BOX = WhiteBox.getWhiteBox();
@@ -240,7 +241,11 @@ public class Test8009761 {
         return o;
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         // Make sure background compilation is disabled
         if (WHITE_BOX.getBooleanVMFlag("BackgroundCompilation")) {
             throw new RuntimeException("Background compilation enabled");

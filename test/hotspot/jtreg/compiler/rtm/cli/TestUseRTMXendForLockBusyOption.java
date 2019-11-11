@@ -34,6 +34,7 @@
 
 package compiler.rtm.cli;
 
+@Bean
 public class TestUseRTMXendForLockBusyOption
         extends RTMGenericCommandLineOptionTest {
     private static final String DEFAULT_VALUE = "true";

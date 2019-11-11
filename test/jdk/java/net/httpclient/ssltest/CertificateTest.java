@@ -63,6 +63,7 @@ import static java.net.http.HttpClient.Builder.NO_PROXY;
  * and therefore should be accepted by the cert checking code in the client.
  * For the "bad" run, the cert contains an invalid hostname, and should be rejected.
  */
+@Bean
 public class CertificateTest {
     static SSLContext ctx;
     static SSLParameters params;

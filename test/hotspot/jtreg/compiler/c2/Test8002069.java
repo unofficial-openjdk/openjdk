@@ -33,6 +33,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test8002069 {
     static abstract class O {
         int f;
@@ -43,7 +44,11 @@ public class Test8002069 {
 
         abstract void put(int i);
 
-        public int foo(int i) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int foo(int i) {
             put(i);
             return i;
         }
@@ -56,7 +61,11 @@ public class Test8002069 {
             a = new int[s];
         }
 
-        public void put(int i) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void put(int i) {
             a[i % a.length] = i;
         }
     }
@@ -70,7 +79,11 @@ public class Test8002069 {
             a = new int[s];
         }
 
-        public void put(int i) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void put(int i) {
             a[i % sz] = i;
         }
     }
@@ -88,7 +101,11 @@ public class Test8002069 {
 
     private O o;
 
-    private int foo(int i) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int foo(int i) {
         return o.foo(i);
     }
 

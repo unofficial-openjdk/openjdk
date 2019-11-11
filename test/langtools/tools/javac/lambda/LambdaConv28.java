@@ -7,7 +7,11 @@
 
 class LambdaConv28 {
 
-    public void test(A a) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void test(A a) {
         test(()-> {
             return new I() {
                 public <T> void t() {

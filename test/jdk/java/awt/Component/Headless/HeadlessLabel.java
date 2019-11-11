@@ -30,6 +30,7 @@ import java.awt.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessLabel
  */
 
+@Bean
 public class HeadlessLabel {
     public static void main(String args[]) {
         Label l;

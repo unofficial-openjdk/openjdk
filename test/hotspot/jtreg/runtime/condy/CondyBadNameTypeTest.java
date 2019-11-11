@@ -31,6 +31,7 @@
 
 // Test a CONSTANT_Dynamic_info structure's name_and_type_index points at a
 // constant pool NameAndType_info structure.
+@Bean
 public class CondyBadNameTypeTest {
     public static void main(String args[]) throws Throwable {
         try {

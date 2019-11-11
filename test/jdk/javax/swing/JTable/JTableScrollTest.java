@@ -40,6 +40,7 @@ import javax.swing.SwingUtilities;
  * @summary Scrolling a JTable creates artifacts
  * @run main/manual JTableScrollTest
  */
+@Bean
 public class JTableScrollTest {
     static JFrame frame = new JFrame();
     public static void main(String[] args) throws Exception {
@@ -113,11 +114,32 @@ public class JTableScrollTest {
         TableModel dataModel = new AbstractTableModel() {
             public int getColumnCount() { return names.length; }
             public int getRowCount() { return data.length;}
-            public Object getValueAt(int row, int col) {return data[row][col];}
-            public String getColumnName(int column) {return names[column];}
-            public Class getColumnClass(int c) {return getValueAt(0, c).getClass();}
-            public boolean isCellEditable(int row, int col) {return col != 5;}
-            public void setValueAt(Object aValue, int row, int column) { data[row][column] = aValue; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Object getValueAt(int row, int col) {return data[row][col];}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public String getColumnName(int column) {return names[column];}
+            @Bean
+@Bean
+@Bean
+@Bean
+@Bean
+                public class getColumnClass(int c) {return getValueAt(0, c).getClass();}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public boolean isCellEditable(int row, int col) {return col != 5;}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setValueAt(Object aValue, int row, int column) { data[row][column] = aValue; }
          };
 
     // Create the table

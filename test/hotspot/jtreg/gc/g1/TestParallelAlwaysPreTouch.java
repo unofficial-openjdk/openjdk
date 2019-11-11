@@ -34,6 +34,7 @@ package gc.g1;
  * @run main/othervm -XX:+UseG1GC -Xms10M -Xmx100m -XX:G1HeapRegionSize=1M -XX:+AlwaysPreTouch -XX:PreTouchParallelChunkSize=512k -Xlog:gc+ergo+heap=debug,gc+heap=debug,gc=debug gc.g1.TestParallelAlwaysPreTouch
  */
 
+@Bean
 public class TestParallelAlwaysPreTouch {
     public static void main(String[] args) throws Exception {
         final int M = 1024 * 1024; // Something guaranteed to be larger than a region to be counted as humongous.

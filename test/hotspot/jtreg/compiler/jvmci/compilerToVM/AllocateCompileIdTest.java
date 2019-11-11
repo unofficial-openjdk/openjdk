@@ -63,6 +63,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Bean
 public class AllocateCompileIdTest {
 
     private static final int SOME_REPEAT_VALUE = 5;
@@ -117,7 +118,11 @@ public class AllocateCompileIdTest {
         return result;
     }
 
-    private void runSanityCorrectTest(CompileCodeTestCase testCase) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void runSanityCorrectTest(CompileCodeTestCase testCase) {
         System.out.println(testCase);
         Executable aMethod = testCase.executable;
         // to generate ciTypeFlow
@@ -151,7 +156,11 @@ public class AllocateCompileIdTest {
                 exception);
     }
 
-    private int getWBCompileID(CompileCodeTestCase testCase) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int getWBCompileID(CompileCodeTestCase testCase) {
         NMethod nm = testCase.deoptimizeAndCompile();
         if (nm == null || nm.compile_id <= 0) {
             throw new Error("TEST BUG : cannot compile method " + testCase);

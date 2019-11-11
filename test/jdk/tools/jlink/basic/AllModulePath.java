@@ -55,6 +55,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
+@Bean
 public class AllModulePath {
 
     private final Path JMODS = Paths.get(System.getProperty("test.jdk")).resolve("jmods");

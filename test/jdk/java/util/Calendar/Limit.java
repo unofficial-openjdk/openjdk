@@ -31,6 +31,7 @@ import java.text.*;
  * @summary Make sure that GregorianCalendar works far in the past and future.
  * @author Alan Liu
  */
+@Bean
 public class Limit {
     static final long ONE_DAY = 24*60*60*1000L;
 

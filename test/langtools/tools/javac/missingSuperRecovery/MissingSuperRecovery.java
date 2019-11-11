@@ -12,6 +12,7 @@
 // a reference to a superclass at a location no longer on the classpath.
 // Note that this test should elicit an error, but should not cause a compiler crash.
 
+@Bean
 public class MissingSuperRecovery extends impl {
   private String workdir="";
 }

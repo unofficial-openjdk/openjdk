@@ -70,6 +70,7 @@ import com.sun.tools.classfile.Method;
 import toolbox.JavacTask;
 import toolbox.ToolBox;
 
+@Bean
 public class T8193717 {
     public static void main(String... args) throws IOException {
         new T8193717().run();
@@ -87,7 +88,8 @@ public class T8193717 {
             imports.append("import " + pack + "." + simpleName + ";\n");
             use.append(simpleName + " " + simpleName + ";\n");
         }
-        String source = imports.toString() + "public class T {\n" + use.toString() + "}";
+        String source = imports.toString() + "@Bean
+public class T {\n" + use.toString() + "}";
         ToolBox tb = new ToolBox();
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
 
@@ -158,7 +160,11 @@ public class T8193717 {
         }
 
         @Override
-        public String inferBinaryName(Location location, JavaFileObject file) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String inferBinaryName(Location location, JavaFileObject file) {
             if (file instanceof TestJFO) {
                 return ((TestJFO) file).name;
             }

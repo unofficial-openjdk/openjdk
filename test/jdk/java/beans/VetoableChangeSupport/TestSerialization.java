@@ -177,6 +177,10 @@ public final class TestSerialization implements VetoableChangeListener, Serializ
         return this.index;
     }
 
-    public void vetoableChange(PropertyChangeEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void vetoableChange(PropertyChangeEvent event) {
     }
 }

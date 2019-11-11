@@ -580,7 +580,8 @@ public final class NetworkInterface {
      *          {@code false} otherwise.
      * @see     java.net.InetAddress#getAddress()
      */
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (!(obj instanceof NetworkInterface)) {
             return false;
         }

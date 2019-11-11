@@ -34,6 +34,7 @@ package compiler.aot.cli;
 
 import java.io.File;
 
+@Bean
 public class NonExistingAOTLibraryTest {
     private static final String PATH = "./NonExisting.so";
     private static final String OPTION = "-XX:AOTLibrary=" + PATH;

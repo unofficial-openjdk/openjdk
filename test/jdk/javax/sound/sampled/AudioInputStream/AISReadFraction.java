@@ -212,7 +212,10 @@ public class AISReadFraction {
                 return ret;
         }
 
-        public void mark(int readlimit) {
+        @Bean
+@Bean
+@Bean
+            public void mark(int readlimit) {
                 markPos = pos;
                 if (DEBUG) out("  FIS.mark(): marking at "+pos);
         }

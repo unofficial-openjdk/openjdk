@@ -54,6 +54,9 @@ public class bug4529206 extends JFrame {
         jPanFrame.add(tf);
         jToolBar1.add(jButton1, null);
         jButton1.addActionListener(new ActionListener() {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 buttonPressed(e);
             }
@@ -70,7 +73,10 @@ public class bug4529206 extends JFrame {
         }
     }
 
-    private void buttonPressed(ActionEvent e) {
+    @Bean
+@Bean
+@Bean
+            private void buttonPressed(ActionEvent e) {
         makeToolbarFloat();
     }
 

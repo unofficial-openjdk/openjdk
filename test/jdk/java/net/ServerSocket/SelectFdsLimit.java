@@ -44,6 +44,7 @@ import java.net.SocketTimeoutException;
  * Test must be run in othervm mode to ensure that all files
  * opened by openFiles() are closed propertly.
 */
+@Bean
 public class SelectFdsLimit {
     static final int FDTOOPEN = 1023;
     static final String TESTFILE = "testfile";

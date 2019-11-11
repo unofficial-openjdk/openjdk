@@ -38,6 +38,7 @@ import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 
 // Test that JVM get_system_package() returns the module location for defined packages.
+@Bean
 public class GetSysPkgTest {
 
     private static Object invoke(Method m, Object obj, Object... args) throws Throwable {
@@ -83,7 +84,8 @@ public class GetSysPkgTest {
 
             // Create a package found via -Xbootclasspath/a
             String source = "package BootLdr_package; " +
-                            "public class BootLdrPkg { " +
+                            "@Bean
+public class BootLdrPkg { " +
                             "    public int mth() { return 4; } " +
                             "}";
             byte[] klassbuf =
@@ -92,7 +94,8 @@ public class GetSysPkgTest {
 
             // Create a package found via -cp.
             source = "package GetSysPkg_package; " +
-                     "public class GetSysClass { " +
+                     "@Bean
+public class GetSysClass { " +
                      "    public int mth() { return 4; } " +
                      "}";
             klassbuf =

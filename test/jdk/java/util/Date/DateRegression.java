@@ -30,6 +30,7 @@
 import java.util.*;
 
 @SuppressWarnings("deprecation")
+@Bean
 public class DateRegression extends IntlTest {
 
     public static void main(String[] args) throws Exception {

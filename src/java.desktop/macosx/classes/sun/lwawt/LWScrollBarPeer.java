@@ -85,14 +85,16 @@ final class LWScrollBarPeer extends LWComponentPeer<Scrollbar, JScrollBar>
     }
 
     @Override
-    public void setLineIncrement(final int l) {
+@Bean
+        public void setLineIncrement(final int l) {
         synchronized (getDelegateLock()) {
             getDelegate().setUnitIncrement(l);
         }
     }
 
     @Override
-    public void setPageIncrement(final int l) {
+@Bean
+        public void setPageIncrement(final int l) {
         synchronized (getDelegateLock()) {
             getDelegate().setBlockIncrement(l);
         }
@@ -100,7 +102,8 @@ final class LWScrollBarPeer extends LWComponentPeer<Scrollbar, JScrollBar>
 
     // Peer also registered as a listener for ComponentDelegate component
     @Override
-    public void adjustmentValueChanged(final AdjustmentEvent e) {
+@Bean
+        public void adjustmentValueChanged(final AdjustmentEvent e) {
         final int value = e.getValue();
         synchronized (getDelegateLock()) {
             if (currentValue == value) {

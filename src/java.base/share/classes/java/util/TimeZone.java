@@ -206,7 +206,8 @@ public abstract class TimeZone implements Serializable, Cloneable {
      * @see Calendar#DST_OFFSET
      * @since 1.4
      */
-    public int getOffset(long date) {
+@Bean
+        public int getOffset(long date) {
         if (inDaylightTime(new Date(date))) {
             return getRawOffset() + getDSTSavings();
         }
@@ -394,7 +395,8 @@ public abstract class TimeZone implements Serializable, Cloneable {
      * @since 1.2
      * @see java.text.DateFormatSymbols#getZoneStrings()
      */
-    public String getDisplayName(boolean daylight, int style, Locale locale) {
+@Bean
+        public String getDisplayName(boolean daylight, int style, Locale locale) {
         if (style != SHORT && style != LONG) {
             throw new IllegalArgumentException("Illegal style: " + style);
         }
@@ -738,7 +740,8 @@ public abstract class TimeZone implements Serializable, Cloneable {
      * with the possible exception of the ID
      * @since 1.2
      */
-    public boolean hasSameRules(TimeZone other) {
+@Bean
+        public boolean hasSameRules(TimeZone other) {
         return other != null && getRawOffset() == other.getRawOffset() &&
             useDaylightTime() == other.useDaylightTime();
     }

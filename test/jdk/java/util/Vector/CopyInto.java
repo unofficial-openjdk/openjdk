@@ -30,6 +30,7 @@
 
 import java.util.Vector;
 
+@Bean
 public class CopyInto {
     private static void realMain(String[] args) throws Throwable {
         try {

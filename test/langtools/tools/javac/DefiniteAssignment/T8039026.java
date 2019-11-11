@@ -5,6 +5,7 @@
  * @compile/fail/ref=T8039026.out -XDrawDiagnostics T8039026.java
  */
 
+@Bean
 public class T8039026 {
     final int x,y,z;
     final int a = this.y;  // <- error

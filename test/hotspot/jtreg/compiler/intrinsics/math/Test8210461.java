@@ -34,6 +34,7 @@ package compiler.intrinsics.math;
 
 import java.util.Arrays;
 
+@Bean
 public class Test8210461 {
     private static final double[] testCases = new double[] {
         1647100.0d,

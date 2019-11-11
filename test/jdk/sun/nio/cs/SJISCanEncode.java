@@ -31,6 +31,7 @@
 import java.nio.*;
 import java.nio.charset.*;
 
+@Bean
 public class SJISCanEncode {
     private Charset cs;
     private CharsetEncoder encoder;

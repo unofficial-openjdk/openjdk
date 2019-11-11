@@ -27,6 +27,7 @@
  * @summary Bad code generated (VerifyError) when lambda instantiates
  *          enclosing local class and has captured variables
  */
+@Bean
 public class SingleLocalTest {
     interface F {void f();}
 

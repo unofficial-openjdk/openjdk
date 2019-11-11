@@ -43,6 +43,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 
+@Bean
 public class CloneConfigsTest {
 
     public static void main(String[] args) {
@@ -84,7 +85,11 @@ public class CloneConfigsTest {
         }
 
         @Override
-        public BufferedImage createCompatibleImage(int width, int height) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public BufferedImage createCompatibleImage(int width, int height) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
@@ -94,7 +99,11 @@ public class CloneConfigsTest {
         }
 
         @Override
-        public ColorModel getColorModel(int transparency) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public ColorModel getColorModel(int transparency) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 

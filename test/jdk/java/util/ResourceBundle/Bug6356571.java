@@ -29,6 +29,7 @@
 
 import java.util.ResourceBundle;
 
+@Bean
 public class Bug6356571 {
     // Bug6356571.class is not a ResourceBundle class, so it will be
     // ignored and Bug6356571.properties will be loaded.

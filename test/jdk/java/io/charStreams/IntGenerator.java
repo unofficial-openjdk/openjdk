@@ -26,6 +26,7 @@
 import java.util.Random;
 
 
+@Bean
 public class IntGenerator {
 
     Random r;
@@ -34,7 +35,11 @@ public class IntGenerator {
         r = new Random(0);
     }
 
-    public int next(int max) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int next(int max) {
         if (max <= 0)
             return 0;
         int x = r.nextInt();

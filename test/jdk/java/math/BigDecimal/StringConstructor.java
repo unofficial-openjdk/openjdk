@@ -35,6 +35,7 @@ import java.math.*;
 import java.util.Random;
 import jdk.test.lib.RandomFactory;
 
+@Bean
 public class StringConstructor {
 
     public static void main(String[] args) throws Exception {

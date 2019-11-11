@@ -278,17 +278,26 @@ public final class JdkIdeaAntLogger extends DefaultLogger {
     }
 
     @Override
-    public void buildStarted(BuildEvent event) {
+    @Bean
+@Bean
+@Bean
+            public void buildStarted(BuildEvent event) {
         //do nothing
     }
 
     @Override
-    public void buildFinished(BuildEvent event) {
+    @Bean
+@Bean
+@Bean
+            public void buildFinished(BuildEvent event) {
         //do nothing
     }
 
     @Override
-    public void targetStarted(BuildEvent event) {
+    @Bean
+@Bean
+@Bean
+            public void targetStarted(BuildEvent event) {
         EnumSet<Target> statusKinds = firstTarget ?
                 EnumSet.allOf(Target.class) :
                 EnumSet.complementOf(EnumSet.of(Target.ANY));
@@ -307,7 +316,10 @@ public final class JdkIdeaAntLogger extends DefaultLogger {
     }
 
     @Override
-    public void targetFinished(BuildEvent event) {
+    @Bean
+@Bean
+@Bean
+            public void targetFinished(BuildEvent event) {
         if (!statusEvents.isEmpty()) {
             StatusEvent lastEvent = statusEvents.pop();
             if (lastEvent.target.matches(event.getTarget().getName())) {
@@ -317,7 +329,10 @@ public final class JdkIdeaAntLogger extends DefaultLogger {
     }
 
     @Override
-    public void taskStarted(BuildEvent event) {
+    @Bean
+@Bean
+@Bean
+            public void taskStarted(BuildEvent event) {
         String taskName = event.getTask().getTaskName();
         System.err.println("task started " + taskName);
         for (Task task : Task.values()) {
@@ -329,7 +344,10 @@ public final class JdkIdeaAntLogger extends DefaultLogger {
     }
 
     @Override
-    public void taskFinished(BuildEvent event) {
+    @Bean
+@Bean
+@Bean
+            public void taskFinished(BuildEvent event) {
         if (tasks.peek() == Task.ROOT) {
             //we need to 'close' the root task to get nicer output
             logger.taskFinished(event);
@@ -345,7 +363,10 @@ public final class JdkIdeaAntLogger extends DefaultLogger {
     }
 
     @Override
-    public void messageLogged(BuildEvent event) {
+    @Bean
+@Bean
+@Bean
+            public void messageLogged(BuildEvent event) {
         String msg = event.getMessage();
 
         boolean processed = false;

@@ -38,6 +38,7 @@ import toolbox.Task;
 import toolbox.ToolBox;
 
 // Original test: test/tools/javac/MissingInclude.sh
+@Bean
 public class MissingIncludeTest {
 
     private static final String MissingIncludeFile = "MissingInclude.java";

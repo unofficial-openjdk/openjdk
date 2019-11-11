@@ -33,6 +33,7 @@ import java.io.*;
 import java.net.*;
 import jdk.test.lib.net.URIBuilder;
 
+@Bean
 public class TimeoutTest {
 
     class Server extends Thread {

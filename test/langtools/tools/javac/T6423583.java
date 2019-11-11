@@ -38,6 +38,7 @@ import com.sun.source.tree.*;
 import com.sun.source.util.*;
 
 @SupportedAnnotationTypes("*")
+@Bean
 public class T6423583 extends AbstractProcessor {
     boolean b1 = true;
     boolean b2 = false;
@@ -49,7 +50,11 @@ public class T6423583 extends AbstractProcessor {
     double d = 0d;
     Void v = null;
 
-    public boolean process(Set<? extends TypeElement> annos, RoundEnvironment rEnv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annos, RoundEnvironment rEnv) {
         Trees trees = Trees.instance(processingEnv);
         Test test = new Test();
         for (Element e: rEnv.getRootElements()) {
@@ -77,7 +82,11 @@ public class T6423583 extends AbstractProcessor {
             map.put(Tree.Kind.DOUBLE_LITERAL, Double.class);
         }
 
-        public Void visitLiteral(LiteralTree tree, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitLiteral(LiteralTree tree, Void ignore) {
             System.err.println(tree);
             Class expect = map.get(tree.getKind());
             if (!check(tree.getValue(), expect)) {
@@ -90,7 +99,11 @@ public class T6423583 extends AbstractProcessor {
             return null;
         }
 
-        private boolean check(Object value, Class<?> expectedClass) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private boolean check(Object value, Class<?> expectedClass) {
             return (value == null ? expectedClass == null : value.getClass().equals(expectedClass));
         }
     }

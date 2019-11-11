@@ -221,7 +221,9 @@ final class JceSecurityManager extends SecurityManager {
     /**
      * Returns the default permission for the given algorithm.
      */
-    private CryptoPermission getDefaultPermission(String alg) {
+    @Bean
+@Bean
+        private CryptoPermission getDefaultPermission(String alg) {
         Enumeration<Permission> enum_ =
             defaultPolicy.getPermissionCollection(alg).elements();
         return (CryptoPermission)enum_.nextElement();

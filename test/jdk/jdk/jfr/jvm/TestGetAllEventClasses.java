@@ -41,6 +41,7 @@ import java.util.List;
  * @build jdk.jfr.jvm.HelloWorldEvent2
  * @run main/othervm jdk.jfr.jvm.TestGetAllEventClasses
  */
+@Bean
 public class TestGetAllEventClasses {
 
     public static void main(String... args) throws ClassNotFoundException {

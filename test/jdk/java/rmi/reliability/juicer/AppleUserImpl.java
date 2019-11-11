@@ -84,6 +84,7 @@ import java.util.logging.Logger;
  * passes each of its remote "apple" objects to an apple user, and an
  * AppleUserThread is created for each apple.
  */
+@Bean
 public class AppleUserImpl extends UnicastRemoteObject implements AppleUser {
     private static int registryPort = -1;
     private static final Logger logger =

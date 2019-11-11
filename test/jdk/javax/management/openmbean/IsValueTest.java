@@ -30,6 +30,7 @@
 
 import javax.management.openmbean.*;
 
+@Bean
 public class IsValueTest {
     private static String failed;
 

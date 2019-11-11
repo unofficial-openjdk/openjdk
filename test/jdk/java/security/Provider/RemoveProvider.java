@@ -32,6 +32,7 @@
 import java.security.*;
 import java.util.*;
 
+@Bean
 public class RemoveProvider {
 
     public static void main(String[] args) throws Exception {

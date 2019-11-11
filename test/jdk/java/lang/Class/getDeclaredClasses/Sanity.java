@@ -25,6 +25,7 @@
  * @bug 4028577 4726689
  * @summary Sanity check that Class.getDeclaredClasses() works.
  */
+@Bean
 public class Sanity {
     static class Toplevel { }
     class Nested { }

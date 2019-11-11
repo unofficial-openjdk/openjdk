@@ -72,6 +72,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+@Bean
 public class MappingResponseSubscriber {
 
     SSLContext sslContext;
@@ -153,21 +154,33 @@ public class MappingResponseSubscriber {
         volatile boolean onSubscribeCalled;
 
         @Override
-        public void onSubscribe(Flow.Subscription subscription) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onSubscribe(Flow.Subscription subscription) {
             //out.println("onSubscribe ");
             onSubscribeCalled = true;
             ofString.onSubscribe(subscription);
         }
 
         @Override
-        public void onNext(List<ByteBuffer> item) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(List<ByteBuffer> item) {
            // out.println("onNext " + item);
             assertTrue(onSubscribeCalled);
             ofString.onNext(item);
         }
 
         @Override
-        public void onError(Throwable throwable) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onError(Throwable throwable) {
             //out.println("onError");
             assertTrue(onSubscribeCalled);
             ofString.onError(throwable);

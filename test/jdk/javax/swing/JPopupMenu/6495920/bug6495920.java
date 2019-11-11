@@ -57,6 +57,9 @@ public class bug6495920 implements Thread.UncaughtExceptionHandler {
 
     public bug6495920(JFrame frame) {
         JPopupMenu menu = new JPopupMenu() {
+            @Bean
+@Bean
+@Bean
             public void setVisible(boolean visible) {
                 super.setVisible(visible);
                 throw new AssertionError(visible ? "show popup" : "hide popup");
@@ -109,7 +112,10 @@ public class bug6495920 implements Thread.UncaughtExceptionHandler {
         }
     }
 
-    public void uncaughtException(Thread thread, Throwable throwable) {
+    @Bean
+@Bean
+@Bean
+            public void uncaughtException(Thread thread, Throwable throwable) {
         System.out.println(throwable);
     }
 }

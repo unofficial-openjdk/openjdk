@@ -51,6 +51,7 @@ import javax.swing.SwingUtilities;
  * @author Steve Wilson
  * @author Alexander Kouznetsov
  */
+@Bean
 public class UISwitchListener implements PropertyChangeListener {
 
     JComponent componentToSwitch;
@@ -59,7 +60,11 @@ public class UISwitchListener implements PropertyChangeListener {
         componentToSwitch = c;
     }
 
-    public void propertyChange(PropertyChangeEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void propertyChange(PropertyChangeEvent e) {
         String name = e.getPropertyName();
         if (name.equals("lookAndFeel")) {
             SwingUtilities.updateComponentTreeUI(componentToSwitch);

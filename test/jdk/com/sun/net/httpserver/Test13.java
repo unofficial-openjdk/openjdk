@@ -46,6 +46,7 @@ import jdk.test.lib.net.URIBuilder;
  *      - same as Test12, but with 64 threads
  */
 
+@Bean
 public class Test13 extends Test {
 
     static SSLContext ctx;

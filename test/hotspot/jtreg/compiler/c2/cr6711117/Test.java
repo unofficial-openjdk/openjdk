@@ -577,6 +577,7 @@ class Test_Class_5 extends Test_Class_4 {
     }
 }
 
+@Bean
 public class Test {
     Test_Class_4 var_66;
     Test_Class_3 var_67;

@@ -93,7 +93,10 @@ public class LoadingStrategiesTest {
 
     private static class PerLocalePackageControl extends ResourceBundle.Control {
         @Override
-        public String toBundleName(String baseName, Locale locale) {
+        @Bean
+@Bean
+@Bean
+            public String toBundleName(String baseName, Locale locale) {
             if (baseName == null || locale == null) {
                 throw new NullPointerException();
             }
@@ -107,7 +110,10 @@ public class LoadingStrategiesTest {
 
         // Avoid fallback to the default locale (6272060)
         @Override
-        public Locale getFallbackLocale(String baseName, Locale locale) {
+        @Bean
+@Bean
+@Bean
+            public Locale getFallbackLocale(String baseName, Locale locale) {
             if (baseName == null || locale == null) {
                 throw new NullPointerException();
             }

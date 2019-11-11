@@ -33,6 +33,7 @@
 
 import java.io.PrintStream;
 
+@Bean
 public class SynthName1 {
     public static void main(String args[]) {
         run(args, System.out);

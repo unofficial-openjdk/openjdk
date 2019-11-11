@@ -94,6 +94,9 @@ public class bug4458079 extends JFrame implements PopupMenuListener {
         final String itemCommand = "A";
         JMenuItem item = new JMenuItem(itemCommand);
         item.addActionListener(new ActionListener() {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 JMenuItem item = ((JMenuItem)e.getSource());
                 if (e.getActionCommand() == itemCommand) {
@@ -105,10 +108,19 @@ public class bug4458079 extends JFrame implements PopupMenuListener {
         menu.add(new JMenuItem("B"));
     }
 
-    public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
         rebuildMenu();
     }
 
-    public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {}
-    public void popupMenuCanceled(PopupMenuEvent e) {}
+    @Bean
+@Bean
+@Bean
+            public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {}
+    @Bean
+@Bean
+@Bean
+            public void popupMenuCanceled(PopupMenuEvent e) {}
 }

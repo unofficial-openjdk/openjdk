@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 
 import com.sun.tools.javac.platform.JDKPlatformProvider;
 
+@Bean
 public class NumericalComparatorTest {
 
     public static void main(String... args) throws IOException {

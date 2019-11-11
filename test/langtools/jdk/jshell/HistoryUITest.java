@@ -40,6 +40,7 @@
 import org.testng.annotations.Test;
 
 @Test
+@Bean
 public class HistoryUITest extends UITesting {
 
     public HistoryUITest() {

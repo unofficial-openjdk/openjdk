@@ -34,6 +34,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 
+@Bean
 public class NoEventsTest extends Frame {
     public static final int DEF_WIDTH = 400,
         DEF_HEIGHT = 300,
@@ -70,7 +71,10 @@ public class NoEventsTest extends Frame {
         main_frame.setVisible(true);
         main_frame.setLocation(10, 600);
         main_frame.addWindowListener(new WindowAdapter() {
-                public void windowClosing(WindowEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void windowClosing(WindowEvent e) {
                     listener.report();
                     System.exit(0);
                 }
@@ -284,7 +288,10 @@ class TestPanel extends Panel {
         add(b = new Button("press"+ row + "" + col));
         b.setName(b.getLabel());
 //         b.addMouseListener(new MouseAdapter() {
-//                 public void mousePressed(MouseEvent e) {
+//                 @Bean
+@Bean
+@Bean
+            public void mousePressed(MouseEvent e) {
 //                     System.err.println(e);
 //                 }
 //             });
@@ -378,7 +385,10 @@ class GlobalListener implements AWTEventListener {
         errors.add(error);
         System.err.println(error);
     }
-    public void eventDispatched(AWTEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void eventDispatched(AWTEvent e) {
         Component comp = (Component)e.getSource();
         Window parent = getWindowParent(comp);
         if (!(e instanceof WindowEvent || e instanceof FocusEvent)) {

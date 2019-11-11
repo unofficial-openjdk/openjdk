@@ -40,6 +40,7 @@ import jdk.test.lib.process.OutputAnalyzer;
  * @library /test/lib /test/jdk
  * @run main/othervm -XX:StartFlightRecording=name=TestStartRecording,settings=profile jdk.jfr.startupargs.TestStartRecording
  */
+@Bean
 public class TestStartRecording {
 
     public static void main(String[] args) throws Exception {

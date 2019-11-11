@@ -42,6 +42,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.*;
 import java.io.*;
 
+@Bean
 public class AttachWithStalePidFile {
   public static void main(String... args) throws Exception {
 

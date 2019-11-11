@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 
+@Bean
 public class TargetPanel extends Panel implements DropTargetListener {
 
 
@@ -46,29 +47,44 @@ public class TargetPanel extends Panel implements DropTargetListener {
         setDropTarget(new DropTarget(this, this));
     }
 
-    public void dragEnter(DropTargetDragEvent dtde) {
+    @Bean
+@Bean
+@Bean
+            public void dragEnter(DropTargetDragEvent dtde) {
         if (dtde.isDataFlavorSupported(dataFlavor)) {
             dtde.acceptDrag(DnDConstants.ACTION_COPY_OR_MOVE);
         }
     }
 
-    public void dragOver(DropTargetDragEvent dtde) {
+    @Bean
+@Bean
+@Bean
+            public void dragOver(DropTargetDragEvent dtde) {
         if (dtde.isDataFlavorSupported(dataFlavor)) {
             dtde.acceptDrag(DnDConstants.ACTION_COPY_OR_MOVE);
         }
     }
 
-    public void dropActionChanged(DropTargetDragEvent dtde) {
+    @Bean
+@Bean
+@Bean
+            public void dropActionChanged(DropTargetDragEvent dtde) {
         if (dtde.isDataFlavorSupported(dataFlavor)) {
             dtde.acceptDrag(DnDConstants.ACTION_COPY_OR_MOVE);
         }
     }
 
-    public void dragExit(DropTargetEvent dte) {
+    @Bean
+@Bean
+@Bean
+            public void dragExit(DropTargetEvent dte) {
 
     }
 
-    public void drop(DropTargetDropEvent dtde) {
+    @Bean
+@Bean
+@Bean
+            public void drop(DropTargetDropEvent dtde) {
         dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
         if (dtde.isDataFlavorSupported(dataFlavor)) {
             String result = null;

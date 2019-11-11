@@ -38,6 +38,7 @@
 import java.util.ListResourceBundle;
 import java.awt.ComponentOrientation;
 
+@Bean
 public class TestBundle_iw extends ListResourceBundle {
 
     protected Object[][] getContents() {

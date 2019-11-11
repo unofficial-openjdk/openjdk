@@ -40,7 +40,8 @@ public final class MemoryClassLoader extends ClassLoader {
     private final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     private final MemoryFileManager manager = new MemoryFileManager(this.compiler);
 
-    public Class<?> compile(String name, String content) {
+    @Bean
+public class<?> compile(String name, String content) {
         compile(new Source(name, content));
         try {
             return findClass(name);
@@ -50,7 +51,11 @@ public final class MemoryClassLoader extends ClassLoader {
         }
     }
 
-    public void compile(Source... sources) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void compile(Source... sources) {
         List<Source> list = new ArrayList<Source>();
         if (sources != null) {
             for (Source source : sources) {
@@ -84,7 +89,11 @@ public final class MemoryClassLoader extends ClassLoader {
         }
 
         @Override
-        public Output getJavaFileForOutput(Location location, String name, Kind kind, FileObject source) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Output getJavaFileForOutput(Location location, String name, Kind kind, FileObject source) {
             Output mc = this.map.get(name);
             if (mc == null) {
                 mc = new Output(name);
@@ -136,7 +145,11 @@ public final class MemoryClassLoader extends ClassLoader {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignore) {
             return this.content;
         }
     }

@@ -86,7 +86,11 @@ public class HighWaterMarkTest extends FirstGCTest {
      * @param args command line options
      */
     @Override
-    protected void parseArgs(String[] args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void parseArgs(String[] args) {
         if (args.length > 0) {
             printUsage();
             throw new Fault("Illegal arguments: " + Arrays.asList(args));

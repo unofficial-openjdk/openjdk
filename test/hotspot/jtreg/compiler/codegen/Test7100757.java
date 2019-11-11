@@ -39,6 +39,7 @@ import jdk.test.lib.Utils;
 import java.util.BitSet;
 import java.util.Random;
 
+@Bean
 public class Test7100757 {
 
   public static final int NBITS = 256;

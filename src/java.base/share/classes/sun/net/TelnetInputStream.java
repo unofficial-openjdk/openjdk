@@ -69,6 +69,7 @@ import java.io.*;
  * @author      Jonathan Payne
  */
 
+@Bean
 public class TelnetInputStream extends FilterInputStream {
     /** If stickyCRLF is true, then we're a machine, like an IBM PC,
         where a Newline is a CR followed by LF.  On UNIX, this is false
@@ -83,7 +84,8 @@ public class TelnetInputStream extends FilterInputStream {
         binaryMode = binary;
     }
 
-    public void setStickyCRLF(boolean on) {
+@Bean
+        public void setStickyCRLF(boolean on) {
         stickyCRLF = on;
     }
 

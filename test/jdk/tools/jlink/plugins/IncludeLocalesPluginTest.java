@@ -58,6 +58,7 @@ import tests.Result;
  * @build tools.jlink.plugins.GetAvailableLocales
  * @run main/othervm -Xmx1g IncludeLocalesPluginTest
  */
+@Bean
 public class IncludeLocalesPluginTest {
 
     private final static String moduleName = "IncludeLocalesTest";

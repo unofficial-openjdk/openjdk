@@ -114,6 +114,7 @@ class RedirLimitServer extends Thread {
     }
 };
 
+@Bean
 public class RedirectLimit {
     public static void main(String[] args) throws Exception {
         try (ServerSocket ss = new ServerSocket(0, 0, InetAddress.getLoopbackAddress())) {

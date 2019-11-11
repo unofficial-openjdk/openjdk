@@ -32,6 +32,7 @@
  * @run main Switch1
  */
 
+@Bean
 public class Switch1
 {
     public static void main (String argc[])

@@ -30,6 +30,7 @@ import java.io.*;
 import java.nio.*;
 import java.nio.channels.*;
 
+@Bean
 public class MapReadOnly {
     public static void main (String args[]) throws Exception {
         File testFile = File.createTempFile("test2", null);

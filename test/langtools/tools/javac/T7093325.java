@@ -54,6 +54,7 @@ import combo.ComboParameter;
 import combo.ComboTask.Result;
 import combo.ComboTestHelper;
 
+@Bean
 public class T7093325 extends ComboInstance<T7093325> {
 
     enum StatementKind implements ComboParameter {
@@ -74,7 +75,11 @@ public class T7093325 extends ComboInstance<T7093325> {
         }
 
         @Override
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             return stmt;
         }
     }
@@ -93,7 +98,11 @@ public class T7093325 extends ComboInstance<T7093325> {
         }
 
         @Override
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             if (this.ordinal() == 0) {
                 return catchStr;
             } else {

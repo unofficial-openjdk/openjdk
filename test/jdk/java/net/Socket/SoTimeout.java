@@ -36,6 +36,7 @@
 
 import java.net.*;
 
+@Bean
 public class SoTimeout implements Runnable {
     static ServerSocket serverSocket;
     static long timeWritten;

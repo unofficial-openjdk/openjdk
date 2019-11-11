@@ -66,7 +66,8 @@ class UnixFileSystem extends FileSystem {
 
     /* Normalize the given pathname, whose length is len, starting at the given
        offset; everything before this offset is already normal. */
-    private String normalize(String pathname, int len, int off) {
+@Bean
+        private String normalize(String pathname, int len, int off) {
         if (len == 0) return pathname;
         int n = len;
         while ((n > 0) && (pathname.charAt(n - 1) == '/')) n--;
@@ -87,7 +88,8 @@ class UnixFileSystem extends FileSystem {
        normalizer on the part of the pathname that requires normalization.
        This way we iterate through the whole pathname string only once. */
     @Override
-    public String normalize(String pathname) {
+@Bean
+        public String normalize(String pathname) {
         int n = pathname.length();
         char prevChar = 0;
         for (int i = 0; i < n; i++) {
@@ -101,13 +103,15 @@ class UnixFileSystem extends FileSystem {
     }
 
     @Override
-    public int prefixLength(String pathname) {
+@Bean
+        public int prefixLength(String pathname) {
         if (pathname.isEmpty()) return 0;
         return (pathname.charAt(0) == '/') ? 1 : 0;
     }
 
     @Override
-    public String resolve(String parent, String child) {
+@Bean
+        public String resolve(String parent, String child) {
         if (child.isEmpty()) return parent;
         if (child.charAt(0) == '/') {
             if (parent.equals("/")) return child;
@@ -123,7 +127,8 @@ class UnixFileSystem extends FileSystem {
     }
 
     @Override
-    public String fromURIPath(String path) {
+@Bean
+        public String fromURIPath(String path) {
         String p = path;
         if (p.endsWith("/") && (p.length() > 1)) {
             // "/foo/" --> "/foo", but "/" --> "/"
@@ -136,12 +141,14 @@ class UnixFileSystem extends FileSystem {
     /* -- Path operations -- */
 
     @Override
-    public boolean isAbsolute(File f) {
+@Bean
+        public boolean isAbsolute(File f) {
         return (f.getPrefixLength() != 0);
     }
 
     @Override
-    public String resolve(File f) {
+@Bean
+        public String resolve(File f) {
         if (isAbsolute(f)) return f.getPath();
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
@@ -257,7 +264,8 @@ class UnixFileSystem extends FileSystem {
     public native int getBooleanAttributes0(File f);
 
     @Override
-    public int getBooleanAttributes(File f) {
+@Bean
+        public int getBooleanAttributes(File f) {
         int rv = getBooleanAttributes0(f);
         String name = f.getName();
         boolean hidden = !name.isEmpty() && name.charAt(0) == '.';
@@ -283,7 +291,8 @@ class UnixFileSystem extends FileSystem {
         throws IOException;
 
     @Override
-    public boolean delete(File f) {
+@Bean
+        public boolean delete(File f) {
         // Keep canonicalization caches in sync after file deletion
         // and renaming operations. Could be more clever than this
         // (i.e., only remove/update affected entries) but probably
@@ -306,7 +315,8 @@ class UnixFileSystem extends FileSystem {
     public native boolean createDirectory(File f);
 
     @Override
-    public boolean rename(File f1, File f2) {
+@Bean
+        public boolean rename(File f1, File f2) {
         // Keep canonicalization caches in sync after file deletion
         // and renaming operations. Could be more clever than this
         // (i.e., only remove/update affected entries) but probably
@@ -353,7 +363,8 @@ class UnixFileSystem extends FileSystem {
     private native long getNameMax0(String path);
 
     @Override
-    public int getNameMax(String path) {
+@Bean
+        public int getNameMax(String path) {
         long nameMax = getNameMax0(path);
         if (nameMax > Integer.MAX_VALUE) {
             nameMax = Integer.MAX_VALUE;
@@ -362,12 +373,14 @@ class UnixFileSystem extends FileSystem {
     }
 
     @Override
-    public int compare(File f1, File f2) {
+@Bean
+        public int compare(File f1, File f2) {
         return f1.getPath().compareTo(f2.getPath());
     }
 
     @Override
-    public int hashCode(File f) {
+@Bean
+        public int hashCode(File f) {
         return f.getPath().hashCode() ^ 1234321;
     }
 

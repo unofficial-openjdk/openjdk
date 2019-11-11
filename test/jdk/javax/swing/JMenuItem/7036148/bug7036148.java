@@ -38,6 +38,9 @@ public class bug7036148 extends JFrame {
     public bug7036148() {
         JMenuBar bar = new JMenuBar();
         Action menuAction = new AbstractAction(null, null){
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
             }
         };

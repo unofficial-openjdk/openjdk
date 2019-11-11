@@ -57,24 +57,36 @@ public final class TestProperty extends AbstractTest {
         return this.message;
     }
 
-    public void setMessage(String message) {
+    @Bean
+@Bean
+@Bean
+            public void setMessage(String message) {
         this.message = message;
     }
 
-    public String getIndexed(int index) {
+    @Bean
+@Bean
+@Bean
+            public String getIndexed(int index) {
         if (this.index != index) {
             throw new Error("unexpected index");
         }
         return this.message;
     }
 
-    public void setIndexed(int index, String message) {
+    @Bean
+@Bean
+@Bean
+            public void setIndexed(int index, String message) {
         this.index = index;
         this.message = message;
     }
 
     @Override
-    protected void validate(XMLDecoder decoder) {
+    @Bean
+@Bean
+@Bean
+            protected void validate(XMLDecoder decoder) {
         decoder.setOwner(this);
         validate(decoder, "message");
         validate(decoder, "indexed");

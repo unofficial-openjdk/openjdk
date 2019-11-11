@@ -103,7 +103,10 @@ class CharacterIteratorFieldDelegate implements Format.FieldDelegate {
      *
      * @pararm string Result of formatting.
      */
-    public AttributedCharacterIterator getIterator(String string) {
+    @Bean
+@Bean
+@Bean
+            public AttributedCharacterIterator getIterator(String string) {
         // Add the last AttributedCharacterIterator if necessary
         // assert(size <= string.length());
         if (string.length() > size) {

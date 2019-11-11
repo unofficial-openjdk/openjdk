@@ -30,6 +30,7 @@
 import java.io.*;
 import java.util.*;
 
+@Bean
 public class ManyFiles {
     static int count;
     static List files = new ArrayList();

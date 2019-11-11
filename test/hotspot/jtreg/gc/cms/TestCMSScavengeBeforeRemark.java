@@ -32,6 +32,7 @@ package gc.cms;
  * @run main/othervm -XX:+UseConcMarkSweepGC -XX:+CMSScavengeBeforeRemark -XX:+ExplicitGCInvokesConcurrent -Xmx256m -Xlog:gc=debug gc.cms.TestCMSScavengeBeforeRemark
  */
 
+@Bean
 public class TestCMSScavengeBeforeRemark {
     public static void main(String args[]) throws Exception {
         System.gc();

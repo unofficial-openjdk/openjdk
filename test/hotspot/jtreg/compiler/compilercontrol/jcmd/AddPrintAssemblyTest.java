@@ -41,6 +41,7 @@ import compiler.compilercontrol.share.SingleCommand;
 import compiler.compilercontrol.share.scenario.Command;
 import compiler.compilercontrol.share.scenario.Scenario;
 
+@Bean
 public class AddPrintAssemblyTest {
     public static void main(String[] args) {
         new SingleCommand(Command.PRINT, Scenario.Type.JCMD)

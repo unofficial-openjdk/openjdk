@@ -8,6 +8,7 @@
 import java.util.List;
 import java.util.Set;
 
+@Bean
 public class T7126754 {
   public static void main(String[] args) {
     List<Set<? extends String>> a = null;

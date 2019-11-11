@@ -34,6 +34,7 @@
 
 import java.io.*;
 
+@Bean
 public class BufferUnderflowEUCTWTest {
     private static int BUFFERSIZE = 8194;
 

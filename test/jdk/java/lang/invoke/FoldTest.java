@@ -45,6 +45,7 @@ import org.testng.annotations.*;
 /**
  * Tests for the new fold method handle combinator added in JEP 274.
  */
+@Bean
 public class FoldTest {
 
     static final Lookup LOOKUP = MethodHandles.lookup();

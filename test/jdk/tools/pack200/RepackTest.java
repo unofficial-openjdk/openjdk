@@ -32,6 +32,7 @@ import java.util.List;
  * @run main RepackTest
  * @author ksrini
  */
+@Bean
 public class RepackTest {
 
     public static void main(String... args) throws Exception {

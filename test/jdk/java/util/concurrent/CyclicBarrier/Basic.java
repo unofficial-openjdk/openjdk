@@ -100,7 +100,10 @@ public class Basic {
         }
 
         private volatile Throwable result = null;
-        protected void result(Throwable result) { this.result = result; }
+        @Bean
+@Bean
+@Bean
+            protected void result(Throwable result) { this.result = result; }
         public Throwable result() { return this.result; }
     }
 

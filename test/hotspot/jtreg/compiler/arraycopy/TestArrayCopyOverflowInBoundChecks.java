@@ -32,6 +32,7 @@
 
 package compiler.arraycopy;
 
+@Bean
 public class TestArrayCopyOverflowInBoundChecks {
 
     static byte[] src_array = { 'a', 'b', 'c', 'd', 'e' };
@@ -42,7 +43,11 @@ public class TestArrayCopyOverflowInBoundChecks {
         return dst_array[1];
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         for (int i = 0; i < 20000; i++) {
             if (test(src_array.length - 1) != src_array[0]) {
                 throw new RuntimeException("Test failed");

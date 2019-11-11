@@ -39,6 +39,7 @@ import jtreg.SkippedException;
  * @run main/othervm/timeout=480 ClhsdbFindPC
  */
 
+@Bean
 public class ClhsdbFindPC {
 
     private static void testFindPC(boolean withXcomp) throws Exception {

@@ -39,6 +39,7 @@ import jdk.test.lib.JDKToolLauncher;
 import jdk.test.lib.Utils;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class Bug8066652Run {
     private static String cp = Utils.TEST_CLASSES;
     private static ProcessBuilder pb = new ProcessBuilder();

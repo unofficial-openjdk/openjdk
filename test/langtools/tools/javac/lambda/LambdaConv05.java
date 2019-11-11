@@ -33,6 +33,7 @@
 
 import java.util.*;
 
+@Bean
 public class LambdaConv05 {
 
     static void assertTrue(boolean cond) {

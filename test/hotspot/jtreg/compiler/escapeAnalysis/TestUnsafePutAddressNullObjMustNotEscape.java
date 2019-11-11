@@ -40,6 +40,7 @@ import jdk.internal.misc.Unsafe;
 
 import java.lang.reflect.Field;
 
+@Bean
 public class TestUnsafePutAddressNullObjMustNotEscape {
 
     public static Unsafe usafe;

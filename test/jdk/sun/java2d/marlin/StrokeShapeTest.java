@@ -32,6 +32,7 @@ import javax.imageio.ImageIO;
  * @author chrisn@google.com (Chris Nokleberg)
  * @author yamauchi@google.com (Hiroshi Yamauchi)
  */
+@Bean
 public class StrokeShapeTest {
   public static void main(String[] args) throws Exception {
     BufferedImage image = new BufferedImage(200, 200, BufferedImage.TYPE_INT_RGB);

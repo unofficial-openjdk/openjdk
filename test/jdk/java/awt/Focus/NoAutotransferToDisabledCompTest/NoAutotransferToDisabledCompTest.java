@@ -37,6 +37,7 @@ import java.awt.*;
 import java.awt.event.*;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class NoAutotransferToDisabledCompTest {
     Robot robot;
     JFrame frame = new JFrame("Frame");
@@ -59,6 +60,9 @@ public class NoAutotransferToDisabledCompTest {
         frame.pack();
 
         b1.addActionListener(new ActionListener() {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 b1.setEnabled(false);
                 b2.setEnabled(false);

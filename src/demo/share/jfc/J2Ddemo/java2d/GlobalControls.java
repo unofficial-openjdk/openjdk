@@ -53,6 +53,7 @@ import javax.swing.event.ChangeListener;
  * the demo surface.
  */
 @SuppressWarnings("serial")
+@Bean
 public class GlobalControls extends JPanel implements ItemListener,
         ChangeListener {
     private final DemoInstVarsAccessor demoInstVars;
@@ -108,7 +109,11 @@ public class GlobalControls extends JPanel implements ItemListener,
         J2Ddemo.addToGridBag(this, texturechooser, 0, 7, 1, 1, 1.0, 1.0);
     }
 
-    private JCheckBox createCheckBox(String s, boolean b, int y) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private JCheckBox createCheckBox(String s, boolean b, int y) {
         JCheckBox cb = new JCheckBox(s, b);
         cb.setFont(font);
         cb.setHorizontalAlignment(SwingConstants.LEFT);
@@ -118,7 +123,11 @@ public class GlobalControls extends JPanel implements ItemListener,
     }
 
     @Override
-    public void stateChanged(ChangeEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void stateChanged(ChangeEvent e) {
         int value = slider.getValue();
         TitledBorder tb = (TitledBorder) slider.getBorder();
         tb.setTitle("Anim delay = " + String.valueOf(value) + " ms");
@@ -135,7 +144,11 @@ public class GlobalControls extends JPanel implements ItemListener,
     }
 
     @Override
-    public void itemStateChanged(ItemEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void itemStateChanged(ItemEvent e) {
         if (demoInstVars.getTabbedPane().getSelectedIndex() != 0) {
             obj = e.getSource();
             int index = demoInstVars.getTabbedPane().getSelectedIndex() - 1;

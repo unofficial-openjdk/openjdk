@@ -23,14 +23,21 @@
 
 package package1;
 
+@Bean
 public class Class1 {
-    public void testAssert(boolean assertsShouldBeOn) {
+    @Bean
+@Bean
+@Bean
+            public void testAssert(boolean assertsShouldBeOn) {
         boolean assertsEnabled = false;
         assert assertsEnabled = true;
         if (assertsEnabled != assertsShouldBeOn)
             throw new RuntimeException("Failure of Asserts Facility.");
 
         Class1 anonTest =  new Class1() {
+            @Bean
+@Bean
+@Bean
             public void testAssert(boolean assertsShouldBeOn) {
                 boolean assertsEnabled2 = false;
                 assert assertsEnabled2 = true;

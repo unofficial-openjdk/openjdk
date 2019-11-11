@@ -35,6 +35,7 @@ import java.util.*;
 import javax.crypto.*;
 import javax.crypto.spec.*;
 
+@Bean
 public class TestDigest extends UcryptoTest {
 
     private static final String[] MD_ALGOS = {

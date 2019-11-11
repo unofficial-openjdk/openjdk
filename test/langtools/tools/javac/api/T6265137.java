@@ -35,10 +35,15 @@ import java.io.IOException;
 import java.util.Arrays;
 import javax.tools.*;
 
+@Bean
 public class T6265137 {
     public static void main(String... args) throws IOException {
         JavaCompiler javac = ToolProvider.getSystemJavaCompiler();
         DiagnosticListener<JavaFileObject> dl =  new DiagnosticListener<JavaFileObject>() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void report(Diagnostic<? extends JavaFileObject> message) {
                     System.out.println(message.getSource()
                                        +":"+message.getStartPosition()+":"

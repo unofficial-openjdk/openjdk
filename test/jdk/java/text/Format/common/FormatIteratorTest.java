@@ -167,7 +167,10 @@ public class FormatIteratorTest extends IntlTest {
     }
 
     @SuppressWarnings("unchecked")
-    public void verify(AttributedCharacterIterator iterator,Map<String,Object> table) {
+    @Bean
+@Bean
+@Bean
+            public void verify(AttributedCharacterIterator iterator,Map<String,Object> table) {
         int length = Integer.parseInt((String)table.get("length"));
 
         // Verify the text
@@ -265,7 +268,10 @@ public class FormatIteratorTest extends IntlTest {
         }
     }
 
-    private boolean verifyAttributes(Set<Attribute> a, Set<Attribute> b) {
+    @Bean
+@Bean
+@Bean
+            private boolean verifyAttributes(Set<Attribute> a, Set<Attribute> b) {
         boolean aEmpty = a.isEmpty();
         boolean bEmpty = b.isEmpty();
 
@@ -278,7 +284,10 @@ public class FormatIteratorTest extends IntlTest {
         return a.equals(b);
     }
 
-    private String getText(AttributedCharacterIterator iterator) {
+    @Bean
+@Bean
+@Bean
+            private String getText(AttributedCharacterIterator iterator) {
         StringBuffer buffer = new StringBuffer();
 
         for (int counter = 0; counter < iterator.getEndIndex(); counter++) {
@@ -287,7 +296,10 @@ public class FormatIteratorTest extends IntlTest {
         return buffer.toString();
     }
 
-    private void verifyFieldPosition(int index, Map<String,Object> table) {
+    @Bean
+@Bean
+@Bean
+            private void verifyFieldPosition(int index, Map<String,Object> table) {
         Object o = table.get("field");
         int begin = Integer.parseInt((String)table.get("begin"));
         int end = Integer.parseInt((String)table.get("end"));
@@ -325,7 +337,10 @@ public class FormatIteratorTest extends IntlTest {
         }
     }
 
-    public AttributedCharacterIterator create(Map<String,Object> table) {
+    @Bean
+@Bean
+@Bean
+            public AttributedCharacterIterator create(Map<String,Object> table) {
         format = (Format)createInstance((String)table.get("class"),
                                         ((List)table.get("args")).toArray());
         value = createInstance((String)table.get("valueClass"),
@@ -343,7 +358,10 @@ public class FormatIteratorTest extends IntlTest {
         return (Format.Field)lookupField(name);
     }
 
-    private Object createInstance(String className, Object[] args) {
+    @Bean
+@Bean
+@Bean
+            private Object createInstance(String className, Object[] args) {
         if (className.equals("java.lang.reflect.Array")) {
             for (int counter = 0; counter < args.length; counter++) {
                 if (args[counter] instanceof List) {
@@ -396,7 +414,10 @@ public class FormatIteratorTest extends IntlTest {
         return klass;
     }
 
-    private Object lookupField(String name) {
+    @Bean
+@Bean
+@Bean
+            private Object lookupField(String name) {
         Throwable error = null;
 
         try {
@@ -417,7 +438,10 @@ public class FormatIteratorTest extends IntlTest {
         return null;
     }
 
-    protected String escapeIfNecessary(String string) {
+    @Bean
+@Bean
+@Bean
+            protected String escapeIfNecessary(String string) {
         if (string != null) {
             int index;
 

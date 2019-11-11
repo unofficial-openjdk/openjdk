@@ -43,7 +43,10 @@ public final class TestFloat extends AbstractTest {
     }
 
     @Override
-    protected void validate(XMLDecoder decoder) {
+    @Bean
+@Bean
+@Bean
+            protected void validate(XMLDecoder decoder) {
         validate(0.0f, decoder.readObject());
         validate(100.0f, decoder.readObject());
         validate(-1e15f, decoder.readObject());

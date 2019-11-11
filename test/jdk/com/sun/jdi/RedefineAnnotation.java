@@ -204,6 +204,7 @@ class Constants {
     String value();
 }
 
+@Bean
 public class RedefineAnnotation extends JdbTest {
 
     public static void main(String argv[]) {

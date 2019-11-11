@@ -51,6 +51,7 @@ import javax.management.MBeanFeatureInfo;
  * It is used to check serial compatibility with later version of the
  * JDK.
  **/
+@Bean
 public class MBeanFeatureInfoSerialStore {
 
     // The serial object store.

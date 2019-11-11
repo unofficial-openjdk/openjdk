@@ -127,6 +127,9 @@ public class bug4846413 {
         layeredPane.addContainerListener(new ContainerAdapter() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void componentAdded(ContainerEvent e) {
                 isTooltipAdded = true;
             }

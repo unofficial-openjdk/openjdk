@@ -34,6 +34,7 @@
 
 import javax.management.*;
 
+@Bean
 public class ObjectNameGetInstanceTest {
     public static void main(String[] args) throws Exception {
         System.out.println("Test that ObjectName.getInstance(ObjectName) " +

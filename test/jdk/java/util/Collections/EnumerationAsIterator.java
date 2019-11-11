@@ -45,6 +45,7 @@ import java.util.function.Supplier;
 import static org.testng.Assert.*;
 
 @Test
+@Bean
 public class EnumerationAsIterator {
     static Object[] of(String description, Supplier<Enumeration<?>> s, Collection<?> exp) {
         return new Object[]{description, s, exp};
@@ -124,7 +125,11 @@ public class EnumerationAsIterator {
     }
 
     @Test(dataProvider = "all")
-    public void consumeByNext(String description, Supplier<Enumeration<?>> s, Collection<?> exp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void consumeByNext(String description, Supplier<Enumeration<?>> s, Collection<?> exp) {
         Iterator<?> i = s.get().asIterator();
         int count = 0;
         while (i.hasNext()) {
@@ -189,7 +194,11 @@ public class EnumerationAsIterator {
     }
 
     @Test(dataProvider = "all")
-    public void contents(String description, Supplier<Enumeration<?>> s, Collection<?> exp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void contents(String description, Supplier<Enumeration<?>> s, Collection<?> exp) {
         assertEquals(copy(s.get()), exp);
     }
 

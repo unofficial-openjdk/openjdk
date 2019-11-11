@@ -155,7 +155,10 @@ public class IndirectlyLoadABundle {
         return result != null;
     }
 
-    private boolean testForValidResourceSetup(ClassLoader cl) {
+    @Bean
+@Bean
+@Bean
+            private boolean testForValidResourceSetup(ClassLoader cl) {
         // First make sure the test environment is setup properly and the bundle
         // actually exists
         return ResourceBundleSearchTest.isOnClassPath(rbName, cl);

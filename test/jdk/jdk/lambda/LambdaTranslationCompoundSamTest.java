@@ -31,6 +31,7 @@ import static org.testng.Assert.assertEquals;
  * @author Brian Goetz
  */
 @Test
+@Bean
 public class LambdaTranslationCompoundSamTest {
     interface Accepts<T> {
         void accept(T t);

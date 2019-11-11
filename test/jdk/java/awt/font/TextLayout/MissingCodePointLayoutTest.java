@@ -29,6 +29,7 @@ import java.awt.Font;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
 
+@Bean
 public class MissingCodePointLayoutTest {
     public static void main(String[] args) {
         Font font = new Font("Tahoma", Font.PLAIN, 12);

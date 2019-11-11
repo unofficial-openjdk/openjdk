@@ -41,6 +41,7 @@ import static java.lang.System.out;
  *  works as expected for the PBKDF2 algorithms.
  */
 
+@Bean
 public class PBKDF2TranslateTest {
 
     private static final String PASS_PHRASE = "some hidden string";

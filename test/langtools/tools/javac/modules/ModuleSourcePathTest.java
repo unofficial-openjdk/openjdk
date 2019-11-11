@@ -53,6 +53,7 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class ModuleSourcePathTest extends ModuleTestBase {
 
     public static final char PATH_SEP = File.pathSeparatorChar;

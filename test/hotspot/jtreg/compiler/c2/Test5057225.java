@@ -36,6 +36,7 @@
 package compiler.c2;
 import jdk.test.lib.Utils;
 
+@Bean
 public class Test5057225 {
     static byte[]  ba = new byte[]  { -1 };
     static short[] sa = new short[] { -1 };

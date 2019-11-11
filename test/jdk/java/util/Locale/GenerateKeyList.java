@@ -30,6 +30,7 @@ import java.util.ResourceBundle;
 import java.util.Enumeration;
 import java.io.PrintStream;
 
+@Bean
 public class GenerateKeyList {
     public static void main(String[] args) throws Exception {
         doOutputFor("sun.util.resources", "CalendarData", System.out);

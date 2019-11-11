@@ -42,6 +42,7 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class BadClassFileDuringImport {
     public static void main(String... args) throws Exception {
         new BadClassFileDuringImport().run();
@@ -52,8 +53,10 @@ public class BadClassFileDuringImport {
     void run() throws Exception {
         new JavacTask(tb)
           .outdir(".")
-          .sources("package p; public class A { }",
-                   "package p; public class B { public static class I { } }")
+          .sources("package p; @Bean
+public class A { }",
+                   "package p; @Bean
+public class B { public static class I { } }")
           .run()
           .writeAll();
 
@@ -144,7 +147,8 @@ public class BadClassFileDuringImport {
     void doTest(String importText, String useText, String... expectedOutput) {
         List<String> log = new JavacTask(tb)
                 .classpath(".")
-                .sources("\n" + importText + " public class Test { " + useText + " }")
+                .sources("\n" + importText + " @Bean
+public class Test { " + useText + " }")
                 .options("-XDrawDiagnostics")
                 .run(expectedOutput != null ? Task.Expect.FAIL : Task.Expect.SUCCESS)
                 .writeAll()

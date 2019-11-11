@@ -30,6 +30,7 @@ import java.util.List;
 /**
  * This class provides access to the input arguments to the VM.
  */
+@Bean
 public class InputArguments {
     private static final List<String> args;
 

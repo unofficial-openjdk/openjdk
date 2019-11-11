@@ -34,6 +34,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.*;
 import java.io.*;
 
+@Bean
 public class Links {
 
     static final boolean isWindows =

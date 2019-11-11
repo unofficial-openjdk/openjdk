@@ -29,19 +29,26 @@
  * @run compile/fail StandaloneQualifiedSuper.java
  */
 
+@Bean
 public class StandaloneQualifiedSuper {
 
-    public class AS { }
+    @Bean
+public class AS { }
 
-    public class BS { }
+    @Bean
+public class BS { }
 
-    public class CS { }
+    @Bean
+public class CS { }
 
-    public class A extends AS {
+    @Bean
+public class A extends AS {
         A() { super(); }
-        public class B extends BS {
+        @Bean
+public class B extends BS {
             B() { super(); }
-            public class C extends CS {
+            @Bean
+public class C extends CS {
                 C() { super(); }
                 void test() {
                     // '<class>.super' must qualify another field or

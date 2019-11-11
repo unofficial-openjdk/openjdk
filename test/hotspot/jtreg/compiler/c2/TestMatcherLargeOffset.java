@@ -31,6 +31,7 @@
  */
 package compiler.c2;
 
+@Bean
 public class TestMatcherLargeOffset {
     public static final int N = 400;
     public static int iArrFld[] = new int[N];

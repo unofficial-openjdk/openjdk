@@ -36,6 +36,7 @@ import java.awt.event.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class FocusOwnerFrameOnClick {
     Robot robot;
     Frame frame = new Frame("Frame");

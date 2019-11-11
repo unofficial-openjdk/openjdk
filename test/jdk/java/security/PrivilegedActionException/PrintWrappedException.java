@@ -30,6 +30,7 @@
 import java.io.*;
 import java.security.*;
 
+@Bean
 public class PrintWrappedException {
 
     public static void main(String[] args) throws Exception {

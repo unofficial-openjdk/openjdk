@@ -41,6 +41,7 @@ import java.util.List;
 import jdk.internal.misc.Unsafe; // for ADDRESS_SIZE
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class TestShrinkAuxiliaryData {
 
     private static final int REGION_SIZE = 1024 * 1024;
@@ -110,7 +111,11 @@ public class TestShrinkAuxiliaryData {
         output.shouldHaveExitValue(0);
     }
 
-    private void printTestInfo(int maxCacheSize) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void printTestInfo(int maxCacheSize) {
 
         DecimalFormat grouped = new DecimalFormat("000,000");
         DecimalFormatSymbols formatSymbols = grouped.getDecimalFormatSymbols();
@@ -207,7 +212,11 @@ public class TestShrinkAuxiliaryData {
                 payload.add(new byte[size]);
             }
 
-            public void addRef(GarbageObject g) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void addRef(GarbageObject g) {
                 ref.add(g);
             }
 

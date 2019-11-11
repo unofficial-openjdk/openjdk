@@ -35,6 +35,7 @@ import java.awt.event.*;
 import java.util.EmptyStackException;
 import sun.awt.SunToolkit;
 
+@Bean
 public class PushPopTest {
 
     public static Frame frame;

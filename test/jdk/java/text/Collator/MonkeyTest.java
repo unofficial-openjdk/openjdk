@@ -47,6 +47,7 @@ import java.text.Collator;
 import java.text.RuleBasedCollator;
 import java.text.CollationKey;
 
+@Bean
 public class MonkeyTest extends CollatorTest
 {
     public static void main(String[] args) throws Exception {

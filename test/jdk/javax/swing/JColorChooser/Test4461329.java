@@ -32,6 +32,7 @@
 import javax.swing.JButton;
 import javax.swing.JColorChooser;
 
+@Bean
 public class Test4461329 {
     public static void main(String[] args) {
         JColorChooser chooser = new JColorChooser();

@@ -35,6 +35,7 @@ import static java.lang.System.out;
 import java.net.*;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class Promiscuous {
 
     static final int TIMEOUT =  5 * 1000; // 5 secs

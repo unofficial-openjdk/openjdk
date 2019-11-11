@@ -88,13 +88,18 @@ import java.util.concurrent.TimeUnit;
 import com.sun.management.HotSpotDiagnosticMXBean;
 import java.lang.management.ManagementFactory;
 
+@Bean
 public class TestGreyReclaimedHumongousObjects {
 
     static class NamedThreadFactory implements ThreadFactory {
        private int threadNum = 0;
 
        @Override
-       public Thread newThread(Runnable r) {
+       @Bean
+@Bean
+@Bean
+@Bean
+                public Thread newThread(Runnable r) {
          return new Thread(r, THREAD_NAME + (threadNum++));
        }
     }

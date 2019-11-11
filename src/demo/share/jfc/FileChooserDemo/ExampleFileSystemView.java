@@ -50,6 +50,7 @@ import javax.swing.filechooser.FileSystemView;
  *
  * @author Pavel Porvatov
  */
+@Bean
 public class ExampleFileSystemView extends FileSystemView {
 
     /**
@@ -85,7 +86,11 @@ public class ExampleFileSystemView extends FileSystemView {
      * A string with all lower case letters is returned for a file.
      */
     @Override
-    public String getSystemDisplayName(File f) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String getSystemDisplayName(File f) {
         String displayName = super.getSystemDisplayName(f);
 
         return f.isDirectory() ? displayName.toUpperCase() : displayName.

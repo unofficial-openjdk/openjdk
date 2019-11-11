@@ -337,12 +337,18 @@ public class SSLSessionFinalizeTest {
         }
 
         @Override
-        public void valueBound(SSLSessionBindingEvent event) {
+        @Bean
+@Bean
+@Bean
+            public void valueBound(SSLSessionBindingEvent event) {
             System.out.printf(" valueBound: %s%n", event.getName());
         }
 
         @Override
-        public void valueUnbound(SSLSessionBindingEvent event) {
+        @Bean
+@Bean
+@Bean
+            public void valueUnbound(SSLSessionBindingEvent event) {
             System.out.printf(" valueUnbound: %s%n", event.getName());
             unboundNotified++;
         }

@@ -49,6 +49,7 @@ import java.util.zip.*;
  * the non-existent EXT header, and at that position in the file is some
  * arbitrary and incorrect value.
  */
+@Bean
 public class DataDescriptor {
     static void copyZip(ZipInputStream in, ZipOutputStream out) throws IOException {
         byte[] buffer = new byte[1 << 14];

@@ -96,7 +96,11 @@ public class FieldAccessWatch {
             Arrays.stream(this.getClass().getDeclaredFields()).forEach(f -> verify(f));
         }
 
-        private void verify(Field f) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void verify(Field f) {
             try {
                 if (!f.getBoolean(this)) {
                     throw new RuntimeException(f.getName() + " notification is missed");

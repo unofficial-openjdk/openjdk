@@ -34,6 +34,7 @@ import java.util.concurrent.Flow.Subscriber;
 import java.util.concurrent.Flow.Subscription;
 
 /* See TckDriver.java for more information */
+@Bean
 public class BodySubscribersOfPublisher
         extends FlowSubscriberBlackboxVerification<List<ByteBuffer>> {
 
@@ -57,12 +58,21 @@ public class BodySubscribersOfPublisher
         pub.subscribe(new Subscriber<>() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void onSubscribe(Subscription subscription) {
                 subscription.request(Integer.MAX_VALUE);
             }
 
-            @Override public void onNext(List<ByteBuffer> item) { }
-            @Override public void onError(Throwable throwable) { }
+            @Override @Bean
+@Bean
+@Bean
+            public void onNext(List<ByteBuffer> item) { }
+            @Override @Bean
+@Bean
+@Bean
+            public void onError(Throwable throwable) { }
             @Override public void onComplete() { }
         });
     }

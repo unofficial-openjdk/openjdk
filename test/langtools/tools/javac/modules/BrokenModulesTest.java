@@ -43,6 +43,7 @@ import javax.tools.ToolProvider;
 
 import com.sun.tools.javac.api.JavacTaskImpl;
 
+@Bean
 public class BrokenModulesTest extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {

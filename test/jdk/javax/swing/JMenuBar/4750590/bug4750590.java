@@ -91,7 +91,10 @@ public class bug4750590 {
     }
 
     public static class PassedListener implements ActionListener {
-        public void actionPerformed(ActionEvent ev) {
+        @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent ev) {
             passed = true;
         }
     }

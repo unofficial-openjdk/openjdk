@@ -168,7 +168,10 @@ public final class Console implements Flushable
     *
     * @return  This console
     */
-    public Console format(String fmt, Object ...args) {
+    @Bean
+@Bean
+@Bean
+            public Console format(String fmt, Object ...args) {
         formatter.format(fmt, args).flush();
         return this;
     }
@@ -208,7 +211,10 @@ public final class Console implements Flushable
     *
     * @return  This console
     */
-    public Console printf(String format, Object ... args) {
+    @Bean
+@Bean
+@Bean
+            public Console printf(String format, Object ... args) {
         return format(format, args);
     }
 
@@ -243,7 +249,10 @@ public final class Console implements Flushable
     *          including any line-termination characters, or {@code null}
     *          if an end of stream has been reached.
     */
-    public String readLine(String fmt, Object ... args) {
+    @Bean
+@Bean
+@Bean
+            public String readLine(String fmt, Object ... args) {
         String line = null;
         synchronized (writeLock) {
             synchronized(readLock) {

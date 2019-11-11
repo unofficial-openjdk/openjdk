@@ -38,6 +38,7 @@ import java.net.*;
 import java.util.*;
 import jdk.test.lib.net.URIBuilder;
 
+@Bean
 public class EmptyCookieHeader {
 
     public static void main(String[] args) throws Exception {
@@ -100,6 +101,10 @@ public class EmptyCookieHeader {
         }
 
         @Override
-        public void put(URI uri, Map<String,List<String >> respH) { }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void put(URI uri, Map<String,List<String >> respH) { }
     }
 }

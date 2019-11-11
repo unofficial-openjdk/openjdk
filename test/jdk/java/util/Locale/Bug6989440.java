@@ -37,6 +37,7 @@ import java.util.spi.TimeZoneNameProvider;
 
 import sun.util.locale.provider.LocaleServiceProviderPool;
 
+@Bean
 public class Bug6989440 {
     static volatile boolean failed;  // false
     static final int THREADS = 50;

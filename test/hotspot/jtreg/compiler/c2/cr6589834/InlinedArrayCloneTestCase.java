@@ -23,6 +23,7 @@
 
 package compiler.c2.cr6589834;
 
+@Bean
 public class InlinedArrayCloneTestCase implements Runnable {
     private Test_ia32 executionController;
 

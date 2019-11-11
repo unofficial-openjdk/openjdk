@@ -95,7 +95,11 @@ public final class TestListeners implements VetoableChangeListener {
         this.index = index;
     }
 
-    public void vetoableChange(PropertyChangeEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void vetoableChange(PropertyChangeEvent event) {
         if (this.index < 0)
             throw new Error("Unexpected listener: " + this.index);
 
@@ -105,7 +109,11 @@ public final class TestListeners implements VetoableChangeListener {
     }
 
     @Override
-    public boolean equals(Object object) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object object) {
         if (object instanceof TestListeners) {
             TestListeners test = (TestListeners)object;
             return test.index == this.index;

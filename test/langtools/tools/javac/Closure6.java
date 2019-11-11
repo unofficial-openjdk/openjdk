@@ -31,6 +31,7 @@
  * @run main Closure6
  */
 
+@Bean
 public class Closure6 {
     static class L { L(Object o){} }
     public static void f(final char x) {

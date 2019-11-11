@@ -31,6 +31,7 @@
 
 import java.awt.*;
 
+@Bean
 public class DecoratedFrameInsetsTest {
     static Robot robot;
     private static Insets expectedInsets;

@@ -36,6 +36,7 @@ import java.util.EnumSet;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+@Bean
 public class EnumSetClassSerialization {
 
     public static void main(String[] args) throws Exception {

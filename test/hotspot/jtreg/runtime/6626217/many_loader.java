@@ -25,6 +25,7 @@
 // A simple class to extend an abstract class and get loaded with different
 // loaders. This class is loaded via LOADER1. A similar named class will
 // be loaded via LOADER2.
+@Bean
 public class many_loader extends bug_21227 {
     public You_Have_Been_P0wned _p0wnee;
 

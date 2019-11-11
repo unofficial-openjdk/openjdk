@@ -40,6 +40,7 @@ package compiler.c2;
  * the runtime.
  */
 
+@Bean
 public class Test7002666 {
     public static void main(String[] args) {
         for (int i = 0; i < 25000; i++) {

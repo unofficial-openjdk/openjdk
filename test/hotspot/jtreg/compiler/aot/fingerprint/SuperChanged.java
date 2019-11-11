@@ -78,6 +78,7 @@ class Foo extends Bar {
     }
 }
 
+@Bean
 public class SuperChanged {
     public static void main(String args[]) throws Throwable {
         Foo f = new Foo();

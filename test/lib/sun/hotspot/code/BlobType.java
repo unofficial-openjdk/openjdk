@@ -33,7 +33,11 @@ public enum BlobType {
     // Execution level 1 and 4 (non-profiled) nmethods (including native nmethods)
     MethodNonProfiled(0, "CodeHeap 'non-profiled nmethods'", "NonProfiledCodeHeapSize") {
         @Override
-        public boolean allowTypeWhenOverflow(BlobType type) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean allowTypeWhenOverflow(BlobType type) {
             return super.allowTypeWhenOverflow(type)
                     || type == BlobType.MethodProfiled;
         }
@@ -41,7 +45,11 @@ public enum BlobType {
     // Execution level 2 and 3 (profiled) nmethods
     MethodProfiled(1, "CodeHeap 'profiled nmethods'", "ProfiledCodeHeapSize") {
         @Override
-        public boolean allowTypeWhenOverflow(BlobType type) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean allowTypeWhenOverflow(BlobType type) {
             return super.allowTypeWhenOverflow(type)
                     || type == BlobType.MethodNonProfiled;
         }
@@ -49,7 +57,11 @@ public enum BlobType {
     // Non-nmethods like Buffers, Adapters and Runtime Stubs
     NonNMethod(2, "CodeHeap 'non-nmethods'", "NonNMethodCodeHeapSize") {
         @Override
-        public boolean allowTypeWhenOverflow(BlobType type) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean allowTypeWhenOverflow(BlobType type) {
             return super.allowTypeWhenOverflow(type)
                     || type == BlobType.MethodNonProfiled
                     || type == BlobType.MethodProfiled;
@@ -78,7 +90,11 @@ public enum BlobType {
         return null;
     }
 
-    public boolean allowTypeWhenOverflow(BlobType type) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean allowTypeWhenOverflow(BlobType type) {
         return type == this;
     }
 

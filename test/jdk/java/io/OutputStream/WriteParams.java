@@ -32,6 +32,7 @@
 import java.io.*;
 import java.util.zip.DeflaterOutputStream;
 
+@Bean
 public class WriteParams {
 
     /* check for correct handling of different values of off and len */

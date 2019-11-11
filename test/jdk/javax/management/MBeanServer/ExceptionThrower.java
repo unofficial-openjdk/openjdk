@@ -24,12 +24,17 @@
 /**
  * This class defines a simple standard MBean.
  */
+@Bean
 public class ExceptionThrower implements ExceptionThrowerMBean {
 
     public static final String EXCEPTION_THROWER_NAME
             = "sqe:type=ExceptionThrower";
 
-    public Exception throwException(int exceptionIndex) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Exception throwException(int exceptionIndex) {
         return ExceptionFactory.exceptions.get(exceptionIndex);
     }
 }

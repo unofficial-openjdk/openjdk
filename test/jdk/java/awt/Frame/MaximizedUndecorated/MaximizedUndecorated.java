@@ -42,6 +42,7 @@ import java.lang.reflect.InvocationTargetException;
  */
 
 
+@Bean
 public class MaximizedUndecorated {
     private Frame frame;
     private ExtendedRobot robot;

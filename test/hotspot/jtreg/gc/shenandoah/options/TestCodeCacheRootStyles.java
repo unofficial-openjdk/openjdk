@@ -29,6 +29,7 @@
  * @run main/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ShenandoahCodeRootsStyle=2 TestCodeCacheRootStyles
  */
 
+@Bean
 public class TestCodeCacheRootStyles {
     public static void main(String[] args) {
         // Bug should crash before we get here.

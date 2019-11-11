@@ -47,6 +47,7 @@ import combo.ComboParameter;
 import combo.ComboTask.Result;
 import combo.ComboTestHelper;
 
+@Bean
 public class LambdaParserTest extends ComboInstance<LambdaParserTest> {
 
     enum LambdaKind implements ComboParameter {
@@ -66,7 +67,11 @@ public class LambdaParserTest extends ComboInstance<LambdaParserTest> {
         }
 
         @Override
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             return lambdaTemplate;
         }
 
@@ -101,7 +106,11 @@ public class LambdaParserTest extends ComboInstance<LambdaParserTest> {
         }
 
         @Override
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             return nameStr;
         }
     }
@@ -152,7 +161,11 @@ public class LambdaParserTest extends ComboInstance<LambdaParserTest> {
         }
 
         @Override
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             return parameterType;
         }
 
@@ -184,7 +197,11 @@ public class LambdaParserTest extends ComboInstance<LambdaParserTest> {
         }
 
         @Override
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             return modifier;
         }
     }
@@ -204,7 +221,11 @@ public class LambdaParserTest extends ComboInstance<LambdaParserTest> {
         }
 
         @Override
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             return expressionTemplate;
         }
     }
@@ -224,7 +245,11 @@ public class LambdaParserTest extends ComboInstance<LambdaParserTest> {
         }
 
         @Override
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             return subExpression;
         }
     }

@@ -36,6 +36,7 @@ import java.security.cert.*;
 import java.security.cert.PKIXRevocationChecker.Option;
 import java.util.*;
 
+@Bean
 public class UnitTest {
 
     public static void main(String[] args) throws Exception {

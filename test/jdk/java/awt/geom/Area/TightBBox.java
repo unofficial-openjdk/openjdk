@@ -35,6 +35,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.QuadCurve2D;
 import java.awt.geom.Rectangle2D;
 
+@Bean
 public class TightBBox {
     public static void main(String argv[]) {
         Point2D points[] = {

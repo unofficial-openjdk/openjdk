@@ -52,6 +52,7 @@ import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.lang.model.SourceVersion;
 
 @SupportedAnnotationTypes("*")
+@Bean
 public class TestGetScope extends AbstractProcessor {
     public static void main(String... args) throws IOException {
         new TestGetScope().run();
@@ -75,7 +76,11 @@ public class TestGetScope extends AbstractProcessor {
     }
 
     @Override
-    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         Trees trees = Trees.instance(processingEnv);
         if (round++ == 0) {
             for (Element e: roundEnv.getRootElements()) {
@@ -95,7 +100,11 @@ public class TestGetScope extends AbstractProcessor {
 
     static class Scanner extends TreePathScanner<Void,Trees> {
         @Override
-        public Void visitIdentifier(IdentifierTree t, Trees trees) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitIdentifier(IdentifierTree t, Trees trees) {
             System.err.println("visitIdentifier: " + t);
             trees.getScope(getCurrentPath());
             return null;

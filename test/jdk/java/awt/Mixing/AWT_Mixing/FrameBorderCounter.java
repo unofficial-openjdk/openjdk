@@ -50,7 +50,10 @@ public class FrameBorderCounter {
                 background.setBounds(100, 100, 300, 300);
                 background.addMouseListener(new MouseAdapter() {
                     @Override
-                    public void mouseEntered(MouseEvent e) {
+                    @Bean
+@Bean
+@Bean
+            public void mouseEntered(MouseEvent e) {
                         entered = e.getLocationOnScreen();
                         System.err.println("[ENTERED] : " + entered);
                     }

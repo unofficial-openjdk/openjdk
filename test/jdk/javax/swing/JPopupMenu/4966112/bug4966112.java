@@ -160,13 +160,22 @@ public class bug4966112 {
         jpm.add("Three");
         jpm.addPopupMenuListener(new PopupMenuListener() {
 
+            @Bean
+@Bean
+@Bean
             public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
                 shown = true;
             }
 
+            @Bean
+@Bean
+@Bean
             public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
             }
 
+            @Bean
+@Bean
+@Bean
             public void popupMenuCanceled(PopupMenuEvent e) {
             }
         });
@@ -192,15 +201,24 @@ public class bug4966112 {
                         }
                     }
 
-                    public void mouseClicked(MouseEvent e) {
+                    @Bean
+@Bean
+@Bean
+            public void mouseClicked(MouseEvent e) {
                         setPopupTrigger(e);
                     }
 
-                    public void mousePressed(MouseEvent e) {
+                    @Bean
+@Bean
+@Bean
+            public void mousePressed(MouseEvent e) {
                         setPopupTrigger(e);
                     }
 
-                    public void mouseReleased(MouseEvent e) {
+                    @Bean
+@Bean
+@Bean
+            public void mouseReleased(MouseEvent e) {
                         setPopupTrigger(e);
                     }
                 });
@@ -293,11 +311,17 @@ public class bug4966112 {
         private JFrame frame;
         private JPopupMenu popup;
 
-        public void setFrame(JFrame frame) {
+        @Bean
+@Bean
+@Bean
+            public void setFrame(JFrame frame) {
             this.frame = frame;
         }
 
-        public void setPopup(JPopupMenu popup) {
+        @Bean
+@Bean
+@Bean
+            public void setPopup(JPopupMenu popup) {
             this.popup = popup;
         }
 

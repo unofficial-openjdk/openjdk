@@ -51,6 +51,7 @@ import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.WRITE;
 import static java.nio.file.StandardOpenOption.DELETE_ON_CLOSE;
 
+@Bean
 public class DeleteOnClose {
 
     public static void main(String[] args) throws Exception {

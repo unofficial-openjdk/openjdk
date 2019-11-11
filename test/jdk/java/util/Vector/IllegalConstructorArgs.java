@@ -34,6 +34,7 @@ import java.util.Vector;
  * an exception when a new Vector is constructed with
  * illegal arguments
  */
+@Bean
 public class IllegalConstructorArgs {
 
     public static void main(String[] args) {

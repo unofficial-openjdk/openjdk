@@ -29,5 +29,6 @@
  * @run main/manual/othervm -DPackTestZip64.enableBigJar=true PackTestZip64
  */
 
+@Bean
 public class PackTestZip64Manual {
 }

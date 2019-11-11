@@ -482,7 +482,8 @@ public class ImageWriteParam extends IIOParam {
      * @see #setTiling
      * @see #getTilingMode
      */
-    public void setTilingMode(int mode) {
+@Bean
+        public void setTilingMode(int mode) {
         if (canWriteTiles() == false) {
             throw new UnsupportedOperationException("Tiling not supported!");
         }
@@ -825,7 +826,8 @@ public class ImageWriteParam extends IIOParam {
      *
      * @see #getProgressiveMode
      */
-    public void setProgressiveMode(int mode) {
+@Bean
+        public void setProgressiveMode(int mode) {
         if (!canWriteProgressive()) {
             throw new UnsupportedOperationException(
                 "Progressive output not supported");
@@ -909,7 +911,8 @@ public class ImageWriteParam extends IIOParam {
      *
      * @see #getCompressionMode
      */
-    public void setCompressionMode(int mode) {
+@Bean
+        public void setCompressionMode(int mode) {
         if (!canWriteCompressed()) {
             throw new UnsupportedOperationException(
                 "Compression not supported.");
@@ -1012,7 +1015,8 @@ public class ImageWriteParam extends IIOParam {
      * @see #getCompressionType
      * @see #unsetCompression
      */
-    public void setCompressionType(String compressionType) {
+@Bean
+        public void setCompressionType(String compressionType) {
         if (!canWriteCompressed()) {
             throw new UnsupportedOperationException(
                 "Compression not supported");
@@ -1230,7 +1234,8 @@ public class ImageWriteParam extends IIOParam {
      *
      * @see #getCompressionQuality
      */
-    public void setCompressionQuality(float quality) {
+@Bean
+        public void setCompressionQuality(float quality) {
         if (!canWriteCompressed()) {
             throw new UnsupportedOperationException(
                 "Compression not supported");
@@ -1327,7 +1332,8 @@ public class ImageWriteParam extends IIOParam {
      * @exception IllegalArgumentException if {@code quality} is
      * not between {@code 0} and {@code 1}, inclusive.
      */
-    public float getBitRate(float quality) {
+@Bean
+        public float getBitRate(float quality) {
         if (!canWriteCompressed()) {
             throw new UnsupportedOperationException(
                 "Compression not supported.");

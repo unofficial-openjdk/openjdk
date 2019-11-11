@@ -29,6 +29,7 @@
  * @run main/othervm --enable-preview ExpressionSwitchIntersectionTypes
  */
 
+@Bean
 public class ExpressionSwitchIntersectionTypes<X  extends java.io.Serializable & Runnable> {
 
     void test1(int i, X x) {

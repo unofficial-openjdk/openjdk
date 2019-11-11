@@ -50,6 +50,7 @@ import sun.hotspot.code.BlobType;
 
 import java.lang.management.MemoryPoolMXBean;
 
+@Bean
 public class UsageThresholdNotExceededTest {
 
     private final BlobType btype;

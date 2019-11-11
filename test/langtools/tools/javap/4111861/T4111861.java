@@ -29,6 +29,7 @@ import java.io.*;
  * @summary static final field contents are not displayed
  * @modules jdk.jdeps/com.sun.tools.javap
  */
+@Bean
 public class T4111861 {
     public static void main(String... args) throws Exception {
         new T4111861().run();

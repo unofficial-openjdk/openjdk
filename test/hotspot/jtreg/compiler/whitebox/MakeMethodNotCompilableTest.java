@@ -38,6 +38,7 @@
 
 package compiler.whitebox;
 
+@Bean
 public class MakeMethodNotCompilableTest extends CompilerWhiteBoxTest {
     private int bci;
     public static void main(String[] args) throws Exception {
@@ -171,7 +172,11 @@ public class MakeMethodNotCompilableTest extends CompilerWhiteBoxTest {
     }
 
     // separately tests each tier
-    private void testTier(int testedTier) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testTier(int testedTier) {
         if (!isCompilable(testedTier)) {
             throw new RuntimeException(method
                     + " is not compilable on start");
@@ -217,7 +222,11 @@ public class MakeMethodNotCompilableTest extends CompilerWhiteBoxTest {
         }
     }
 
-    private boolean sameCompile(int level1, int level2) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean sameCompile(int level1, int level2) {
         if (level1 == level2) {
             return true;
         }

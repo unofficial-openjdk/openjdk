@@ -28,6 +28,7 @@
  *  check that synthetic casts from outer environment are not inserted twice
  * @run main LambdaExpr18
  */
+@Bean
 public class LambdaExpr18 {
 
     static int assertionCount = 0;

@@ -27,6 +27,7 @@
  */
 import java.net.DatagramPacket;
 
+@Bean
 public class CheckBoundaries {
     public static void main(String[] args) {
         boolean exception = false;

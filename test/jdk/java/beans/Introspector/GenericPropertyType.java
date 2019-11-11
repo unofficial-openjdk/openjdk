@@ -35,7 +35,11 @@ public final class GenericPropertyType {
     /// Nothing is overridden
     static class ParentNo<T> {
         public T getValue() {return null;}
-        public void setValue(T value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(T value) {}
     }
 
     static class ChildNoO extends ParentNo<Object> {}
@@ -44,68 +48,116 @@ public final class GenericPropertyType {
 
     /// no get(), set is overridden
     static class ParentNoGet<T> {
-        protected void setValue(T value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void setValue(T value) {}
     }
 
     static class ChildNoGetO extends ParentNoGet<Object> {
         @Override
-        public void setValue(Object value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(Object value) {}
     }
 
     static class ChildNoGetA extends ParentNoGet<ArithmeticException> {
         @Override
-        public void setValue(ArithmeticException value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(ArithmeticException value) {}
     }
 
     static class ChildNoGetS extends ParentNoGet<String> {
         @Override
-        public void setValue(String value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(String value) {}
     }
 
     /// get() exists, set is overridden
     static class ParentGet<T> {
         public final T getValue() {return null;}
-        protected void setValue(T value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void setValue(T value) {}
     }
 
     static class ChildGetO extends ParentGet<Object> {
         @Override
-        public void setValue(Object value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(Object value) {}
     }
 
     static class ChildGetA extends ParentGet<ArithmeticException> {
         @Override
-        public void setValue(ArithmeticException value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(ArithmeticException value) {}
     }
 
     static class ChildGetS extends ParentGet<String> {
         @Override
-        public void setValue(String value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(String value) {}
     }
 
     /// Both set/get are overridden
     static class ParentAll<T> {
         protected T getValue() {return null;}
-        protected void setValue(T value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void setValue(T value) {}
     }
 
     static class ChildAllO extends ParentAll<Object> {
         @Override
-        public void setValue(Object value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(Object value) {}
         @Override
         public Object getValue() {return null;}
     }
 
     static class ChildAllA extends ParentAll<ArithmeticException> {
         @Override
-        public void setValue(ArithmeticException value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(ArithmeticException value) {}
         @Override
         public ArithmeticException getValue() {return null;}
     }
 
     static class ChildAllS extends ParentAll<String> {
         @Override
-        public void setValue(String value) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(String value) {}
         @Override
         public String getValue() {return null;}
     }

@@ -36,12 +36,20 @@ class TestHelpers {
 
         static int sm(int  x) { return 0; }
         default int m(int x) { return 0; }
-        private int pm(int x) { return 0; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                private int pm(int x) { return 0; }
         private static int psm(int x) { return 0; }
     }
 
     static class TestSuperclass {
-        public int m(int x) { return -1; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int m(int x) { return -1; }
     }
 
     static class TestClass extends TestSuperclass implements TestInterface {
@@ -53,8 +61,16 @@ class TestHelpers {
         public TestClass()  {}
 
         public static int sm(int x) { return x; }
-        public int m(int x) { return x; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int m(int x) { return x; }
         private static int psm(int x) { return x; }
-        private int pm(int x) { return x; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                private int pm(int x) { return x; }
     }
 }

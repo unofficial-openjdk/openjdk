@@ -65,6 +65,7 @@ import javax.swing.border.TitledBorder;
  * Tracks Memory allocated & used, displayed in graph form.
  */
 @SuppressWarnings("serial")
+@Bean
 public class MemoryMonitor extends JPanel {
 
     private final JCheckBox dateStampCB = new JCheckBox("Output Date Stamp");
@@ -95,7 +96,11 @@ public class MemoryMonitor extends JPanel {
         addMouseListener(new MouseAdapter() {
 
             @Override
-            public void mouseClicked(MouseEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void mouseClicked(MouseEvent e) {
                 removeAll();
                 if ((doControls = !doControls)) {
                     surf.stop();
@@ -115,7 +120,8 @@ public class MemoryMonitor extends JPanel {
     }
 
 
-    public class Surface extends JPanel implements Runnable {
+    @Bean
+public class Surface extends JPanel implements Runnable {
 
         public Thread thread;
         public long sleepAmount = 1000;
@@ -141,6 +147,10 @@ public class MemoryMonitor extends JPanel {
             addMouseListener(new MouseAdapter() {
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void mouseClicked(MouseEvent e) {
                     if (thread == null) {
                         start();
@@ -167,7 +177,11 @@ public class MemoryMonitor extends JPanel {
         }
 
         @Override
-        public void paint(Graphics g) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(Graphics g) {
 
             if (big == null) {
                 return;
@@ -342,17 +356,29 @@ public class MemoryMonitor extends JPanel {
         WindowListener l = new WindowAdapter() {
 
             @Override
-            public void windowClosing(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosing(WindowEvent e) {
                 System.exit(0);
             }
 
             @Override
-            public void windowDeiconified(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowDeiconified(WindowEvent e) {
                 demo.surf.start();
             }
 
             @Override
-            public void windowIconified(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowIconified(WindowEvent e) {
                 demo.surf.stop();
             }
         };

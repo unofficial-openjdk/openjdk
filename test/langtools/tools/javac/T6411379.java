@@ -38,6 +38,7 @@ import com.sun.source.tree.*;
 import com.sun.source.util.*;
 
 @SupportedAnnotationTypes("*")
+@Bean
 public class T6411379 extends AbstractProcessor {
 
     public boolean process(Set<? extends TypeElement> annoElems,
@@ -63,7 +64,11 @@ public class T6411379 extends AbstractProcessor {
         return SourceVersion.latest();
     }
 
-    public void checkNull(Object o) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void checkNull(Object o) {
         if (o != null)
             throw new AssertionError("expected null");
     }

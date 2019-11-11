@@ -35,18 +35,27 @@
 
 import javax.management.*;
 
+@Bean
 public class MXBeanPreRegisterTest {
     public static interface EmptyMBean {}
 
     public static interface EmptyMXBean extends EmptyMBean {}
 
     public static class Base implements MBeanRegistration {
-        public ObjectName preRegister(MBeanServer mbs, ObjectName n) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public ObjectName preRegister(MBeanServer mbs, ObjectName n) {
             count++;
             return n;
         }
 
-        public void postRegister(Boolean done) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void postRegister(Boolean done) {
             count++;
         }
 

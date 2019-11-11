@@ -40,13 +40,19 @@ public class bug6953396 {
                 BasicViewportUI ui = new BasicViewportUI() {
 
                     @Override
-                    protected void installDefaults(JComponent c) {
+                    @Bean
+@Bean
+@Bean
+            protected void installDefaults(JComponent c) {
                         super.installDefaults(c);
                         flag = true;
                     }
 
                     @Override
-                    protected void uninstallDefaults(JComponent c) {
+                    @Bean
+@Bean
+@Bean
+            protected void uninstallDefaults(JComponent c) {
                         super.uninstallDefaults(c);
                         flag = false;
                     }

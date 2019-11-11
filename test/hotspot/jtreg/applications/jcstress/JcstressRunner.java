@@ -43,6 +43,7 @@ import java.util.List;
  */
 @Artifact(organization = "org.openjdk.jcstress", name = "jcstress-tests-all",
         revision = "0.5", extension = "jar", unpack = false)
+@Bean
 public class JcstressRunner {
 
     public static final String MAIN_CLASS = "org.openjdk.jcstress.Main";

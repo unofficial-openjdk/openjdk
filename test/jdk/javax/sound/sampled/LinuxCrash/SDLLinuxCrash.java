@@ -101,7 +101,10 @@ public class SDLLinuxCrash implements Runnable {
         DataLine.Info info = new DataLine.Info(SourceDataLine.class, format);
         SourceDataLine sdl = (SourceDataLine) AudioSystem.getLine(info);
         sdl.addLineListener(new LineListener() {
-                public void update(LineEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void update(LineEvent e) {
                     if (e.getType() == LineEvent.Type.STOP) {
                         out("    calling close() from event dispatcher thread");
                         ((SourceDataLine) e.getSource()).close();

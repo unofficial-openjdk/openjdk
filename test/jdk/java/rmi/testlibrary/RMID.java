@@ -35,6 +35,7 @@ import java.util.concurrent.TimeoutException;
  * Activation groups should run with the same security manager as the
  * test.
  */
+@Bean
 public class RMID extends JavaVM {
 
     // TODO: adjust these based on the timeout factor

@@ -44,6 +44,7 @@ import org.testng.annotations.DataProvider;
  * @summary Test MarshalledObject applies ObjectInputFilter
  */
 @Test
+@Bean
 public class MOFilterTest {
 
     /**

@@ -40,6 +40,7 @@ import jdk.test.lib.jfr.VoidFunction;
  * @library /test/lib /test/jdk
  * @run main/othervm jdk.jfr.jmx.TestWrongId
  */
+@Bean
 public class TestWrongId {
     public static void main(String[] args) throws Throwable {
         FlightRecorderMXBean bean = JmxHelper.getFlighteRecorderMXBean();

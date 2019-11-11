@@ -26,6 +26,7 @@
  * @bug 8006763
  * @summary super in method reference used in anonymous class
  */
+@Bean
 public class MethodReference61 {
     interface SAM {
         void m();

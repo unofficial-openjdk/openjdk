@@ -83,7 +83,9 @@ public class SliderDemoTest {
         disabled(frame, VERTICAL_DISABLED_SLIDER);
     }
 
-    private void plain(JFrameOperator jfo, String accessibleName) {
+@Bean
+@Bean
+            private void plain(JFrameOperator jfo, String accessibleName) {
         JSliderOperator jso = new JSliderOperator(jfo,
                 new AccessibleNameChooser(accessibleName));
         if (accessibleName.equals(HORIZONTAL_PLAIN_SLIDER)) {
@@ -96,7 +98,9 @@ public class SliderDemoTest {
         checkMoveForward(jso, 10);
     }
 
-    private void majorTicks(JFrameOperator jfo, String accessibleName) {
+@Bean
+@Bean
+            private void majorTicks(JFrameOperator jfo, String accessibleName) {
         JSliderOperator jso = new JSliderOperator(jfo,
                 new AccessibleNameChooser(accessibleName));
         checkMoveForward(jso, 40);
@@ -104,7 +108,9 @@ public class SliderDemoTest {
         assertEquals(100, jso.getMajorTickSpacing());
     }
 
-    private void minorTicks(JFrameOperator jfo, String accessibleName) {
+@Bean
+@Bean
+            private void minorTicks(JFrameOperator jfo, String accessibleName) {
         JSliderOperator jso = new JSliderOperator(jfo,
                 new AccessibleNameChooser(accessibleName));
         if (accessibleName.equals(HORIZONTAL_MINOR_TICKS_SLIDER)) {
@@ -137,17 +143,23 @@ public class SliderDemoTest {
         assertEquals(initialvalue, jso.getValue());
     }
 
-    private void checkMaximum(JSliderOperator jso, int maxValue) {
+@Bean
+@Bean
+            private void checkMaximum(JSliderOperator jso, int maxValue) {
         jso.scrollToMaximum();
         waitSliderValue(jso, jSlider -> jSlider.getValue() == maxValue);
     }
 
-    private void checkMinimum(JSliderOperator jso, int minValue) {
+@Bean
+@Bean
+            private void checkMinimum(JSliderOperator jso, int minValue) {
         jso.scrollToMinimum();
         waitSliderValue(jso, jSlider -> jSlider.getValue() == minValue);
     }
 
-    private void checkKeyboard(JSliderOperator jso) {
+@Bean
+@Bean
+            private void checkKeyboard(JSliderOperator jso) {
         boolean isMotif = LookAndFeel.isMotif();
         checkKeyPress(jso, KeyEvent.VK_HOME,
                 jSlider -> jSlider.getValue() == jso.getMinimum());
@@ -197,7 +209,9 @@ public class SliderDemoTest {
     private void waitSliderValue(JSliderOperator jso,
             Predicate<JSliderOperator> predicate) {
         jso.waitState(new ComponentChooser() {
-            public boolean checkComponent(Component comp) {
+@Bean
+@Bean
+                    public boolean checkComponent(Component comp) {
                 return predicate.test(jso);
             }
 
@@ -207,7 +221,9 @@ public class SliderDemoTest {
         });
     }
 
-    private void checkMoveForward(JSliderOperator jso, int value) {
+@Bean
+@Bean
+            private void checkMoveForward(JSliderOperator jso, int value) {
         jso.setValue(jso.getMinimum());
         int finalValue = jso.getValue() + value;
         jso.scrollToValue(finalValue);
@@ -222,7 +238,9 @@ public class SliderDemoTest {
         jso.releaseMouse();
     }
 
-    private void checkMouse(JSliderOperator jso) {
+@Bean
+@Bean
+            private void checkMouse(JSliderOperator jso) {
         // Check mouse dragging by pressing on the center of Slider and then
         // dragging the mouse till the end of the track.
         // We set the initial value of the slider as 45,

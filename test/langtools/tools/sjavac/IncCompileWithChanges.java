@@ -41,6 +41,7 @@ import java.nio.file.*;
 
 import toolbox.ToolBox;
 
+@Bean
 public class IncCompileWithChanges extends SJavacTester {
     public static void main(String... args) throws Exception {
         IncCompileWithChanges wc = new IncCompileWithChanges();
@@ -72,9 +73,14 @@ public class IncCompileWithChanges extends SJavacTester {
         System.out.println("A.java updated to trigger a recompile");
         System.out.println("Generated native header should not be updated since native api of B was not modified");
         tb.writeFile(GENSRC.resolve("alfa/omega/A.java"),
-                     "package alfa.omega; public class A implements AINT { " +
+                     "package alfa.omega; @Bean
+public class A implements AINT { " +
                      "public final static int DEFINITION = 18;" +
-                     "public void aint() { } private void foo() { } }");
+                     "@Bean
+@Bean
+@Bean
+@Bean
+                public void aint() { } private void foo() { } }");
 
         compile(GENSRC.toString(),
                 "-d", BIN.toString(),

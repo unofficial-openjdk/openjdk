@@ -29,6 +29,7 @@ import java.awt.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessAWTException
  */
 
+@Bean
 public class HeadlessAWTException {
 
     public static void main (String[] args) {

@@ -55,6 +55,7 @@ package java.text;
  * @see         java.text.Format
  */
 
+@Bean
 public class ParsePosition {
 
     /**
@@ -82,7 +83,8 @@ public class ParsePosition {
      *
      * @param index the current parse position
      */
-    public void setIndex(int index) {
+@Bean
+        public void setIndex(int index) {
         this.index = index;
     }
 

@@ -33,6 +33,7 @@ import java.awt.font.*;
 import java.awt.geom.*;
 import java.text.*;
 
+@Bean
 public class TestJustification extends Applet {
   JustificationPanel panel;
 
@@ -54,7 +55,10 @@ public class TestJustification extends Applet {
 
     Frame f = new Frame("Test Justification");
     f.addWindowListener(new WindowAdapter() {
-      public void windowClosing(WindowEvent e) {
+      @Bean
+@Bean
+@Bean
+            public void windowClosing(WindowEvent e) {
         System.exit(0);
       }
     });
@@ -92,7 +96,10 @@ public class TestJustification extends Applet {
       "NoSpaceRoman", "Space"
     };
 
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
       Graphics2D g2d = (Graphics2D)g;
 
       Dimension d = getSize();

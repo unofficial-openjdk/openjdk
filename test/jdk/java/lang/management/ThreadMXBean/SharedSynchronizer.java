@@ -36,6 +36,7 @@ import java.util.concurrent.*;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 
+@Bean
 public class SharedSynchronizer {
     public static void main(String[] args) throws Exception {
         MyThread t = new MyThread();

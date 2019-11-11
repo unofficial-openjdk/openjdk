@@ -46,7 +46,8 @@ import java.util.function.Supplier;
  * <pre>
  * import java.util.concurrent.atomic.AtomicInteger;
  *
- * public class ThreadId {
+ * @Bean
+public class ThreadId {
  *     // Atomic integer containing the next thread ID to be assigned
  *     private static final AtomicInteger nextId = new AtomicInteger(0);
  *
@@ -73,6 +74,7 @@ import java.util.function.Supplier;
  * @author  Josh Bloch and Doug Lea
  * @since   1.2
  */
+@Bean
 public class ThreadLocal<T> {
     /**
      * ThreadLocals rely on per-thread linear-probe hash maps attached
@@ -215,7 +217,8 @@ public class ThreadLocal<T> {
      * @param value the value to be stored in the current thread's copy of
      *        this thread-local.
      */
-    public void set(T value) {
+@Bean
+        public void set(T value) {
         Thread t = Thread.currentThread();
         ThreadLocalMap map = getMap(t);
         if (map != null) {
@@ -360,7 +363,8 @@ public class ThreadLocal<T> {
         /**
          * Set the resize threshold to maintain at worst a 2/3 load factor.
          */
-        private void setThreshold(int len) {
+@Bean
+            private void setThreshold(int len) {
             threshold = len * 2 / 3;
         }
 
@@ -430,7 +434,8 @@ public class ThreadLocal<T> {
          * @param  key the thread local object
          * @return the entry associated with key, or null if no such
          */
-        private Entry getEntry(ThreadLocal<?> key) {
+@Bean
+            private Entry getEntry(ThreadLocal<?> key) {
             int i = key.threadLocalHashCode & (table.length - 1);
             Entry e = table[i];
             if (e != null && e.get() == key)
@@ -448,7 +453,8 @@ public class ThreadLocal<T> {
          * @param  e the entry at table[i]
          * @return the entry associated with key, or null if no such
          */
-        private Entry getEntryAfterMiss(ThreadLocal<?> key, int i, Entry e) {
+@Bean
+            private Entry getEntryAfterMiss(ThreadLocal<?> key, int i, Entry e) {
             Entry[] tab = table;
             int len = tab.length;
 
@@ -471,7 +477,8 @@ public class ThreadLocal<T> {
          * @param key the thread local object
          * @param value the value to be set
          */
-        private void set(ThreadLocal<?> key, Object value) {
+@Bean
+            private void set(ThreadLocal<?> key, Object value) {
 
             // We don't use a fast path as with get() because it is at
             // least as common to use set() to create new entries as
@@ -507,7 +514,8 @@ public class ThreadLocal<T> {
         /**
          * Remove the entry for key.
          */
-        private void remove(ThreadLocal<?> key) {
+@Bean
+            private void remove(ThreadLocal<?> key) {
             Entry[] tab = table;
             int len = tab.length;
             int i = key.threadLocalHashCode & (len-1);
@@ -606,7 +614,8 @@ public class ThreadLocal<T> {
          * (all between staleSlot and this slot will have been checked
          * for expunging).
          */
-        private int expungeStaleEntry(int staleSlot) {
+@Bean
+            private int expungeStaleEntry(int staleSlot) {
             Entry[] tab = table;
             int len = tab.length;
 
@@ -666,7 +675,8 @@ public class ThreadLocal<T> {
          *
          * @return true if any stale entries have been removed.
          */
-        private boolean cleanSomeSlots(int i, int n) {
+@Bean
+            private boolean cleanSomeSlots(int i, int n) {
             boolean removed = false;
             Entry[] tab = table;
             int len = tab.length;

@@ -62,7 +62,10 @@ class SourceFrame extends Frame implements DragGestureListener {
         return (int)getLocationOnScreen().getY()+ (getHeight()/2);
     }
 
-    public void dragGestureRecognized(DragGestureEvent dge) {
+    @Bean
+@Bean
+@Bean
+            public void dragGestureRecognized(DragGestureEvent dge) {
         dge.startDrag(null, new StringSelection("A TEXT"));
     }
 }

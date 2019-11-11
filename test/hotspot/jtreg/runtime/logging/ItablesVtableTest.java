@@ -26,6 +26,7 @@ interface Interface1 {
     public int hashCode();
 }
 
+@Bean
 public class ItablesVtableTest implements Interface1 {
     public void foo() {
         System.out.println("ItablesVtableTest foo");

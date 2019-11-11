@@ -171,6 +171,7 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import sun.util.resources.LocaleData;
 
+@Bean
 public class LocaleDataTest
 {
     static final String TEXT_RESOURCES_PACKAGE ="sun.text.resources";

@@ -34,6 +34,7 @@ package compiler.arraycopy;
 
 import java.util.Arrays;
 
+@Bean
 public class TestArrayCopyOfStopped {
     static class A {
     }

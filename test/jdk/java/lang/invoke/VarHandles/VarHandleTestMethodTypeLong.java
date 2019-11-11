@@ -42,6 +42,7 @@ import static org.testng.Assert.*;
 
 import static java.lang.invoke.MethodType.*;
 
+@Bean
 public class VarHandleTestMethodTypeLong extends VarHandleBaseTest {
     static final long static_final_v = 0x0123456789ABCDEFL;
 

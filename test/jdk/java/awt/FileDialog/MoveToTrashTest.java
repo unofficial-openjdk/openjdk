@@ -35,6 +35,7 @@ import java.awt.Robot;
 import java.io.IOException;
 import java.awt.AWTException;
 
+@Bean
 public class MoveToTrashTest {
     private static File file = null;
     private static boolean fileStatus = false;

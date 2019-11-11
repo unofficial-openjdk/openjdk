@@ -32,6 +32,7 @@
 
 package p1;
 
+@Bean
 public class A {
     public static char c = 'A';
 }

@@ -41,6 +41,7 @@ import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
 
 @SuppressWarnings({"unchecked","serial"})
+@Bean
 public class CheckedNull {
 
     void test(String[] args) throws Throwable {
@@ -52,6 +53,10 @@ public class CheckedNull {
                            new HashSet<String>(), String.class));
 
         final Comparator nullLow = new Comparator() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public int compare(Object x, Object y) {
                     return x == y ?  0 :
                         x == null ? -1 :
@@ -152,7 +157,11 @@ public class CheckedNull {
                 new F(){void f(){ m.putAll(singletonMap(1, "foo")); }});
 
             final Collection cheater = new ArrayList() {
-                    public boolean contains(Object o) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean contains(Object o) {
                         if (o instanceof Map.Entry)
                             ((Map.Entry)o).setValue(1);
                         return false; }};

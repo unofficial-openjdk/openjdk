@@ -57,6 +57,7 @@ import org.testng.annotations.Test;
  *        -Djava.security.properties=${test.src}/java.security-extra1
  *        RegistryFilterTest
  */
+@Bean
 public class RegistryFilterTest {
     private static Registry impl;
     private static int port;

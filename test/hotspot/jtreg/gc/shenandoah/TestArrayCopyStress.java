@@ -30,6 +30,7 @@ import java.util.concurrent.*;
  *
  * @run main/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:TieredStopAtLevel=0 -Xmx16m TestArrayCopyStress
  */
+@Bean
 public class TestArrayCopyStress {
 
     private static final int ARRAY_SIZE = 1000;

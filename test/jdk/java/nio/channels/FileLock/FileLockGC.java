@@ -40,6 +40,7 @@ import jdk.test.lib.util.FileUtils;
  * @build jdk.test.lib.util.FileUtils
  * @run main/othervm FileLockGC
  */
+@Bean
 public class FileLockGC {
     public enum TestType {
         NO_GC_NO_RELEASE(true),

@@ -38,6 +38,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 
 import jdk.internal.misc.Unsafe;
 
+@Bean
 public class ProblematicFrameTest {
     private static class Crasher {
         public static void main(String[] args) {

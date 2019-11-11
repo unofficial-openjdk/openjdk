@@ -31,6 +31,7 @@ import java.awt.Shape;
 import java.awt.geom.Arc2D;
 import java.awt.geom.Rectangle2D;
 
+@Bean
 public class Arc2DIntersectsTest {
 
     static Shape[][] trues = {

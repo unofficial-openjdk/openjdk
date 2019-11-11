@@ -35,6 +35,7 @@ import jdk.test.lib.Asserts;
 
 import java.io.FilePermission;
 
+@Bean
 public class Invalid {
 
     public static void main(String args[]) throws Exception {

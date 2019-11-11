@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 import jdk.test.lib.util.FileUtils;
 
+@Bean
 public class LauncherMessageTest {
 
     public static void main(String[] args) throws Exception {
@@ -72,7 +73,8 @@ public class LauncherMessageTest {
 
         File classA = new File(srcA.getPath(), "ClassA.java");
         srcContent.clear();
-        srcContent.add("package pkgA; public class ClassA { }");
+        srcContent.add("package pkgA; @Bean
+public class ClassA { }");
         TestHelper.createFile(classA, srcContent);
 
         File modBinfo = new File(srcB.getPath(), "module-info.java");
@@ -84,7 +86,8 @@ public class LauncherMessageTest {
         srcContent.clear();
         srcContent.add("package pkgB;");
         srcContent.add("import pkgA.ClassA;");
-        srcContent.add("public class ClassB extends ClassA {");
+        srcContent.add("@Bean
+public class ClassB extends ClassA {");
         srcContent.add("public static void main(String[] args) { } }");
         TestHelper.createFile(classB, srcContent);
 

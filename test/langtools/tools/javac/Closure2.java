@@ -34,6 +34,7 @@
 // Make sure the closure is present when the superclass is constructed.
 // Specifically, inner2 must have its Closure2.this initialized when inner calls go().
 
+@Bean
 public class Closure2 {
     private int mValue;
 

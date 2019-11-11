@@ -64,6 +64,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.JDKToolFinder;
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class TestElfDirectRead {
   public static void main(String args[]) throws Exception {
     WhiteBox wb = WhiteBox.getWhiteBox();

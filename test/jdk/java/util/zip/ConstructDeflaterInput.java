@@ -30,6 +30,7 @@
 import java.io.*;
 import java.util.zip.*;
 
+@Bean
 public class ConstructDeflaterInput {
 
     static class MyDeflater extends Deflater {

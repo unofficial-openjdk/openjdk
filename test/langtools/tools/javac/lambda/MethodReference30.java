@@ -28,6 +28,7 @@
  *  check that non-static qualifier of static method reference is eagerly evaluated
  */
 
+@Bean
 public class MethodReference30 {
 
     static int assertionCount = 0;

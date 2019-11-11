@@ -31,6 +31,7 @@ import java.net.*;
 import java.util.List;
 import java.util.Locale;
 
+@Bean
 public class B6791927 {
     public static final void main( String[] aaParamters ) throws Exception{
         Locale reservedLocale = Locale.getDefault();

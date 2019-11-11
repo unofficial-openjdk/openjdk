@@ -43,6 +43,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import javax.swing.SwingUtilities;
 
+@Bean
 public class JRobot extends java.awt.Robot {
     private static int DEFAULT_DELAY = 550;
     private static int INTERNAL_DELAY = 250;
@@ -88,7 +89,11 @@ public class JRobot extends java.awt.Robot {
      * Press and release a key.
      * @param keycode which key to press. For example, KeyEvent.VK_DOWN
      */
-    public void hitKey(int keycode) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void hitKey(int keycode) {
         keyPress(keycode);
         keyRelease(keycode);
         delay();
@@ -101,7 +106,11 @@ public class JRobot extends java.awt.Robot {
      * modifiers. For example, to press Ctrl+Shift+T, call:
      * hitKey(KeyEvent.VK_CONTROL, KeyEvent.VK_SHIFT, KeyEvent.VK_T);
      */
-    public void hitKey(int... keys) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void hitKey(int... keys) {
         for (int i = 0; i < keys.length; i++) {
             keyPress(keys[i]);
         }
@@ -116,7 +125,11 @@ public class JRobot extends java.awt.Robot {
      * Move mouse cursor to the center of the Component.
      * @param c Component the mouse is placed over
      */
-    public void moveMouseTo(Component c) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void moveMouseTo(Component c) {
         Point p = c.getLocationOnScreen();
         Dimension size = c.getSize();
         p.x += size.width / 2;
@@ -128,7 +141,11 @@ public class JRobot extends java.awt.Robot {
     /**
      * Move mouse smoothly from (x0, y0) to (x1, y1).
      */
-    public void glide(int x0, int y0, int x1, int y1) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void glide(int x0, int y0, int x1, int y1) {
         float dmax = (float)Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
         float dx = (x1 - x0) / dmax;
         float dy = (y1 - y0) / dmax;
@@ -145,7 +162,11 @@ public class JRobot extends java.awt.Robot {
      * @param buttons mouse button(s).
      *                For example, MouseEvent.BUTTON1_MASK
      */
-    public void clickMouse(int buttons) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void clickMouse(int buttons) {
         mousePress(buttons);
         mouseRelease(buttons);
         delay();
@@ -163,7 +184,11 @@ public class JRobot extends java.awt.Robot {
      * @param c the Component to click on
      * @param buttons mouse button(s).
      */
-    public void clickMouseOn(Component c, int buttons) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void clickMouseOn(Component c, int buttons) {
         moveMouseTo(c);
         clickMouse(buttons);
     }
@@ -172,7 +197,11 @@ public class JRobot extends java.awt.Robot {
      * Click the first mouse button in the center of the given Component
      * @param c the Component to click on
      */
-    public void clickMouseOn(Component c) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void clickMouseOn(Component c) {
         clickMouseOn(c, InputEvent.BUTTON1_MASK);
     }
 
@@ -201,7 +230,11 @@ public class JRobot extends java.awt.Robot {
     /**
      * Set the delay amount, in milliseconds
      */
-    public void setDelay(int delay) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setDelay(int delay) {
         this.delay = delay;
     }
 
@@ -221,7 +254,11 @@ public class JRobot extends java.awt.Robot {
      * @param r a non-null Rectangle
      * @return a new Point object containing coordinates of r's center
      */
-    public Point centerOf(Rectangle r) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Point centerOf(Rectangle r) {
         return new Point(r.x + r.width / 2, r.y + r.height / 2);
     }
 
@@ -231,7 +268,11 @@ public class JRobot extends java.awt.Robot {
      * @param p a non-null Point that receives coordinates of r's center
      * @return p
      */
-    public Point centerOf(Rectangle r, Point p) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Point centerOf(Rectangle r, Point p) {
         p.x = r.x + r.width / 2;
         p.y = r.y + r.height / 2;
         return p;
@@ -243,7 +284,11 @@ public class JRobot extends java.awt.Robot {
      * @param r a non-null Rectangle
      * @param c a Component whose coordinate system is used for conversion
      */
-    public void convertRectToScreen(Rectangle r, Component c) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void convertRectToScreen(Rectangle r, Component c) {
         Point p = new Point(r.x, r.y);
         SwingUtilities.convertPointToScreen(p, c);
         r.x = p.x;
@@ -256,7 +301,11 @@ public class JRobot extends java.awt.Robot {
      * @param r1 the second area
      * return true if all pixels in the two areas are identical
      */
-    public boolean compareRects(Rectangle r0, Rectangle r1) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean compareRects(Rectangle r0, Rectangle r1) {
         int xShift = r1.x - r0.x;
         int yShift = r1.y - r0.y;
 
@@ -276,7 +325,11 @@ public class JRobot extends java.awt.Robot {
      * @param p1 the second point
      * return true if the two points have the same color
      */
-    public boolean comparePixels(Point p0, Point p1) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean comparePixels(Point p0, Point p1) {
         return comparePixels(p0.x, p0.y, p1.x, p1.y);
     }
 
@@ -288,7 +341,11 @@ public class JRobot extends java.awt.Robot {
      * @param y1 the y coordinate of the second point
      * return true if the two points have the same color
      */
-    public boolean comparePixels(int x0, int y0, int x1, int y1) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean comparePixels(int x0, int y0, int x1, int y1) {
         return (getPixelColor(x0, y0).equals(getPixelColor(x1, y1)));
     }
 }

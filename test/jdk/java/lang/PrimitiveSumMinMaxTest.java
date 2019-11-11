@@ -42,6 +42,7 @@ import java.util.function.LongBinaryOperator;
  * @author Brian Goetz
  */
 @Test
+@Bean
 public class PrimitiveSumMinMaxTest {
 
     public void testBooleanMethods() {

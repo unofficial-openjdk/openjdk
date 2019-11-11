@@ -41,11 +41,19 @@ public abstract class EditorTestBase extends ReplToolTesting {
     public abstract void cancel();
     public abstract void shutdownEditor();
 
-    public void testEditor(ReplTest... tests) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testEditor(ReplTest... tests) {
         testEditor(false, new String[]{"--no-startup"}, tests);
     }
 
-    public void testEditor(boolean defaultStartup, String[] args, ReplTest... tests) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testEditor(boolean defaultStartup, String[] args, ReplTest... tests) {
         test(defaultStartup, args, tests);
     }
 

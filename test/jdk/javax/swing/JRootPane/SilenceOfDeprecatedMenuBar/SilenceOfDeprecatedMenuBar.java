@@ -82,7 +82,10 @@ public final class SilenceOfDeprecatedMenuBar implements Runnable {
                     throw new RuntimeException("Should not be here");
                 }
                 @Override
-                public void setMenuBar(final JMenuBar menu) {
+                @Bean
+@Bean
+@Bean
+            public void setMenuBar(final JMenuBar menu) {
                     throw new RuntimeException("Should not be here");
                 }
             };

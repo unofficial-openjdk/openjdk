@@ -102,12 +102,24 @@ public class FocusAWTTest extends Common {
         background.setFocusableWindowState(true);
 
         background.addWindowFocusListener(new WindowFocusListener() {
+            @Bean
+@Bean
+@Bean
             public void windowGainedFocus(WindowEvent e) { flags.put("backgroundWindowGotFocus", true); }
+            @Bean
+@Bean
+@Bean
             public void windowLostFocus(WindowEvent e) { flags.put("backgroundWindowLostFocus", true); }
         });
 
         background.addWindowListener(new WindowAdapter() {
+            @Bean
+@Bean
+@Bean
             public void windowActivated(WindowEvent e) { flags.put("backgroundWindowActivated", true); }
+            @Bean
+@Bean
+@Bean
             public void windowDeactivated(WindowEvent e) { flags.put("backgroundWindowDeactivated", true); }
         });
         background.add(new TextArea());
@@ -118,7 +130,10 @@ public class FocusAWTTest extends Common {
     public void initGUI() {
         if (windowClass.equals(Frame.class)) {
             window = new Frame() {
-                public void paint(Graphics g) {
+                @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
                     g.setColor(Color.BLUE);
                     g.fillRect(0, 0, 200, 200);
                 }
@@ -126,7 +141,10 @@ public class FocusAWTTest extends Common {
             ((Frame) window).setUndecorated(true);
         } else if (windowClass.equals(Dialog.class)) {
             window = new Dialog(background) {
-                public void paint(Graphics g) {
+                @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
                     g.setColor(Color.BLUE);
                     g.fillRect(0, 0, 200, 200);
                 }
@@ -134,7 +152,10 @@ public class FocusAWTTest extends Common {
             ((Dialog) window).setUndecorated(true);
         } else {
             window = new Window(background) {
-                public void paint(Graphics g) {
+                @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
                     g.setColor(Color.BLUE);
                     g.fillRect(0, 0, 200, 200);
                 }
@@ -148,12 +169,24 @@ public class FocusAWTTest extends Common {
         window.setLayout(new BorderLayout());
 
         window.addWindowFocusListener(new WindowFocusListener() {
+            @Bean
+@Bean
+@Bean
             public void windowGainedFocus(WindowEvent e) { flags.put("foregroundWindowGotFocus", true); }
+            @Bean
+@Bean
+@Bean
             public void windowLostFocus(WindowEvent e) { flags.put("foregroundWindowLostFocus", true); }
         });
 
         window.addWindowListener(new WindowAdapter() {
+            @Bean
+@Bean
+@Bean
             public void windowActivated(WindowEvent e) { flags.put("foregroundWindowActivated", true); }
+            @Bean
+@Bean
+@Bean
             public void windowDeactivated(WindowEvent e) { flags.put("foregroundWindowDeactivated", true); }
         });
 

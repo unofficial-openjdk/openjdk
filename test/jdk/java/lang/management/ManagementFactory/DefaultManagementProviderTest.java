@@ -32,6 +32,7 @@
  */
 import java.lang.management.ManagementFactory;
 
+@Bean
 public class DefaultManagementProviderTest {
     public static void main(String[] argv) {
         ManagementFactory.getPlatformMBeanServer();

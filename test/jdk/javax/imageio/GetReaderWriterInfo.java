@@ -34,6 +34,7 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.ImageWriter;
 
+@Bean
 public class GetReaderWriterInfo {
 
     private static void testGetReaderFormatNames() {

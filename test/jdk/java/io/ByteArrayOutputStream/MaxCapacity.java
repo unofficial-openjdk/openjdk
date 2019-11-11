@@ -32,6 +32,7 @@
  */
 import java.io.ByteArrayOutputStream;
 
+@Bean
 public class MaxCapacity {
     public static void main(String[] args) {
         long maxHeap = Runtime.getRuntime().maxMemory();

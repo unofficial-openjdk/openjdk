@@ -43,6 +43,7 @@ import java.util.LinkedList;
 
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class TestNoEagerReclaimOfHumongousRegions {
     // Helper class to keep reference to humongous byte[].
     static class LargeRef {

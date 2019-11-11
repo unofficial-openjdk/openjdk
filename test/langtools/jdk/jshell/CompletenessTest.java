@@ -38,6 +38,7 @@ import jdk.jshell.SourceCodeAnalysis.Completeness;
 import static jdk.jshell.SourceCodeAnalysis.Completeness.*;
 
 @Test
+@Bean
 public class CompletenessTest extends KullaTesting {
 
     // Add complete units that end with semicolon to complete_with_semi (without
@@ -205,7 +206,11 @@ public class CompletenessTest extends KullaTesting {
         statusToCases.put(DEFINITELY_INCOMPLETE, definitely_incomplete);
     }
 
-    private void assertStatus(String input, Completeness status, String source) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertStatus(String input, Completeness status, String source) {
         String augSrc;
         switch (status) {
             case COMPLETE_WITH_SEMI:
@@ -232,7 +237,11 @@ public class CompletenessTest extends KullaTesting {
         assertAnalyze(input, status, augSrc);
     }
 
-    private void assertStatus(String[] ins, Completeness status) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertStatus(String[] ins, Completeness status) {
         for (String input : ins) {
             assertStatus(input, status, input);
         }
@@ -283,7 +292,11 @@ public class CompletenessTest extends KullaTesting {
         }
     }
 
-    private void assertSourceByStatus(String first) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertSourceByStatus(String first) {
         for (Map.Entry<Completeness, String[]> e : statusToCases.entrySet()) {
             for (String in : e.getValue()) {
                 String input = first + in;

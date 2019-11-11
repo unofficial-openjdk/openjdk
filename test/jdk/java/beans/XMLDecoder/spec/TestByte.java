@@ -42,7 +42,10 @@ public final class TestByte extends AbstractTest {
     }
 
     @Override
-    protected void validate(XMLDecoder decoder) {
+    @Bean
+@Bean
+@Bean
+            protected void validate(XMLDecoder decoder) {
         validate((byte) 0, decoder.readObject());
         validate(Byte.MAX_VALUE, decoder.readObject());
         validate(Byte.MIN_VALUE, decoder.readObject());

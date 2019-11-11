@@ -47,6 +47,7 @@ interface Hello extends java.rmi.Remote {
     String sayHello();
 }
 
+@Bean
 public class DataFlavorRemoteTest {
 
     public static void main(String[] args) throws Exception {
@@ -104,7 +105,10 @@ class Producer implements Transferable {
     }
 
     @Override
-    public boolean isDataFlavorSupported(DataFlavor flavor) {
+    @Bean
+@Bean
+@Bean
+            public boolean isDataFlavorSupported(DataFlavor flavor) {
         return flavor.equals(dataFlavor);
     }
 

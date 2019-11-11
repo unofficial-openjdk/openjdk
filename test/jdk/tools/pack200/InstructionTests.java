@@ -32,6 +32,7 @@ import java.util.List;
  * @run main InstructionTests
  * @author ksrini
  */
+@Bean
 public class InstructionTests {
     public static void main(String... args) throws Exception {
         testInvokeOpCodes();

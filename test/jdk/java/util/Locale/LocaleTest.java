@@ -82,6 +82,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.MissingResourceException;
 
+@Bean
 public class LocaleTest extends IntlTest {
     public LocaleTest() {
     }
@@ -301,7 +302,11 @@ public class LocaleTest extends IntlTest {
         Locale.setDefault(saveDefault);
     }
 
-    private void doTestDisplayNames(Locale inLocale, int compareIndex, boolean defaultIsFrench) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void doTestDisplayNames(Locale inLocale, int compareIndex, boolean defaultIsFrench) {
         String language = Locale.getDefault().getLanguage();
 
         if (defaultIsFrench && !language.equals("fr")) {
@@ -593,7 +598,11 @@ test commented out pending API-change approval
     }
 */
 
-    private boolean searchStringArrayFor(String s, String[] array) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean searchStringArrayFor(String s, String[] array) {
         for (int i = 0; i < array.length; i++)
             if (s.equals(array[i]))
                 return true;

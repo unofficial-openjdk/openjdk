@@ -34,6 +34,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test7179138_1 {
     public static void main(String[] args) throws Exception {
         System.out.println("Java Version: " + System.getProperty("java.vm.version"));

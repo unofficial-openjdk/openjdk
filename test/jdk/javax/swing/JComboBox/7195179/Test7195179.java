@@ -58,7 +58,10 @@ public class Test7195179 {
                     private final BasicComboBoxRenderer renderer = new BasicComboBoxRenderer();
 
                     @Override
-                    public Component getListCellRendererComponent(JList<? extends Integer> list, Integer value, int index, boolean isSelected, boolean cellHasFocus) {
+                    @Bean
+@Bean
+@Bean
+            public Component getListCellRendererComponent(JList<? extends Integer> list, Integer value, int index, boolean isSelected, boolean cellHasFocus) {
                         return this.renderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                     }
                 });

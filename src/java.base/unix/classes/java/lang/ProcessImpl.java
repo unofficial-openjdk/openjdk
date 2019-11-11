@@ -502,7 +502,8 @@ final class ProcessImpl extends Process {
         return exitcode;
     }
 
-    private void destroy(boolean force) {
+@Bean
+        private void destroy(boolean force) {
         switch (platform) {
             case LINUX:
             case BSD:

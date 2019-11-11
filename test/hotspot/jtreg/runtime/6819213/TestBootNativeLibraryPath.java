@@ -47,6 +47,7 @@ import java.util.logging.Logger;
 import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
 
+@Bean
 public class TestBootNativeLibraryPath {
 
     private static final String TESTFILE = "Test6";
@@ -54,7 +55,8 @@ public class TestBootNativeLibraryPath {
     static void createTestClass() throws IOException {
         FileOutputStream fos = new FileOutputStream(TESTFILE + ".java");
         PrintStream ps = new PrintStream(fos);
-        ps.println("public class " + TESTFILE + "{");
+        ps.println("@Bean
+public class " + TESTFILE + "{");
         ps.println("public static void main(String[] args) {\n");
         ps.println("System.out.println(System.getProperty(\"sun.boot.library.path\"));\n");
         ps.println("}}\n");

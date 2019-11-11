@@ -86,6 +86,9 @@ public class ShortcutNotDisplayedTest {
         passBtn.setActionCommand(PASS_COMMAND);
         JButton failBtn = new JButton("Fail");
         ActionListener listener = new ActionListener() {
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 if (e.getActionCommand().equals(PASS_COMMAND)) {
                     pass = true;

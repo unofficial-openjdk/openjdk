@@ -34,6 +34,7 @@
 
 package compiler.gcbarriers;
 
+@Bean
 public class G1CrashTest {
     static Object[] set = new Object[11];
 

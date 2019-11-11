@@ -57,6 +57,9 @@ public class RemovedComponentMouseListener extends JFrame {
 
         button.addMouseListener(new MouseAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void mousePressed(MouseEvent e) {
                 buttonPanel.remove(button);
                 panel.add(button);
@@ -65,6 +68,9 @@ public class RemovedComponentMouseListener extends JFrame {
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseReleased(MouseEvent e) {
                 mouseReleasedReceived = true;
             }

@@ -53,13 +53,18 @@ import java.net.*;
  * @author Jeff Dinkins
  */
 
+@Bean
 public class SwingSet2Applet extends JApplet {
     public void init() {
         getContentPane().setLayout(new BorderLayout());
         getContentPane().add(new SwingSet2(this), BorderLayout.CENTER);
     }
 
-    public URL getURL(String filename) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public URL getURL(String filename) {
         URL codeBase = this.getCodeBase();
         URL url = null;
 

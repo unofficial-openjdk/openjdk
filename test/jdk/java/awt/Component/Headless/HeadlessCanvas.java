@@ -30,6 +30,7 @@ import java.awt.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessCanvas
  */
 
+@Bean
 public class HeadlessCanvas {
     public static void main(String args[]) {
         Canvas c = new Canvas();

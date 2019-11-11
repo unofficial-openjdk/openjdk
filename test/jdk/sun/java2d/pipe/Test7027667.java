@@ -35,6 +35,7 @@ import java.awt.geom.*;
 import java.awt.image.*;
 import static java.awt.RenderingHints.*;
 
+@Bean
 public class Test7027667 {
     public static void main(String[] args) throws Exception {
         BufferedImage bImg = new BufferedImage(512, 512, BufferedImage.TYPE_INT_RGB);

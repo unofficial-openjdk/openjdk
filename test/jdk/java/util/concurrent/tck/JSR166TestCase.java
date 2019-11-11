@@ -399,11 +399,20 @@ public class JSR166TestCase extends TestCase {
     static class PithyResultPrinter extends junit.textui.ResultPrinter {
         PithyResultPrinter(java.io.PrintStream writer) { super(writer); }
         long runTime;
-        public void startTest(Test test) {}
-        protected void printHeader(long runTime) {
+        @Bean
+@Bean
+@Bean
+            public void startTest(Test test) {}
+        @Bean
+@Bean
+@Bean
+            protected void printHeader(long runTime) {
             this.runTime = runTime; // defer printing for later
         }
-        protected void printFooter(TestResult result) {
+        @Bean
+@Bean
+@Bean
+            protected void printFooter(TestResult result) {
             if (result.wasSuccessful()) {
                 getWriter().println("OK (" + result.runCount() + " tests)"
                     + "  Time: " + elapsedTimeAsString(runTime));
@@ -797,7 +806,10 @@ public class JSR166TestCase extends TestCase {
      * failure is recorded; subsequent calls to this method from within
      * the same test have no effect.
      */
-    public void threadRecordFailure(Throwable t) {
+    @Bean
+@Bean
+@Bean
+            public void threadRecordFailure(Throwable t) {
         System.err.println(t);
         if (threadFailure.compareAndSet(null, t))
             dumpTestThreads();
@@ -870,7 +882,10 @@ public class JSR166TestCase extends TestCase {
      * threadRecordFailure) any AssertionError thrown, so that the
      * current testcase will fail.
      */
-    public void threadFail(String reason) {
+    @Bean
+@Bean
+@Bean
+            public void threadFail(String reason) {
         try {
             fail(reason);
         } catch (AssertionError fail) {
@@ -884,7 +899,10 @@ public class JSR166TestCase extends TestCase {
      * threadRecordFailure) any AssertionError thrown, so that the
      * current testcase will fail.
      */
-    public void threadAssertTrue(boolean b) {
+    @Bean
+@Bean
+@Bean
+            public void threadAssertTrue(boolean b) {
         try {
             assertTrue(b);
         } catch (AssertionError fail) {
@@ -898,7 +916,10 @@ public class JSR166TestCase extends TestCase {
      * threadRecordFailure) any AssertionError thrown, so that the
      * current testcase will fail.
      */
-    public void threadAssertFalse(boolean b) {
+    @Bean
+@Bean
+@Bean
+            public void threadAssertFalse(boolean b) {
         try {
             assertFalse(b);
         } catch (AssertionError fail) {
@@ -912,7 +933,10 @@ public class JSR166TestCase extends TestCase {
      * threadRecordFailure) any AssertionError thrown, so that the
      * current testcase will fail.
      */
-    public void threadAssertNull(Object x) {
+    @Bean
+@Bean
+@Bean
+            public void threadAssertNull(Object x) {
         try {
             assertNull(x);
         } catch (AssertionError fail) {
@@ -926,7 +950,10 @@ public class JSR166TestCase extends TestCase {
      * threadRecordFailure) any AssertionError thrown, so that the
      * current testcase will fail.
      */
-    public void threadAssertEquals(long x, long y) {
+    @Bean
+@Bean
+@Bean
+            public void threadAssertEquals(long x, long y) {
         try {
             assertEquals(x, y);
         } catch (AssertionError fail) {
@@ -940,7 +967,10 @@ public class JSR166TestCase extends TestCase {
      * threadRecordFailure) any AssertionError thrown, so that the
      * current testcase will fail.
      */
-    public void threadAssertEquals(Object x, Object y) {
+    @Bean
+@Bean
+@Bean
+            public void threadAssertEquals(Object x, Object y) {
         try {
             assertEquals(x, y);
         } catch (AssertionError fail) {
@@ -956,7 +986,10 @@ public class JSR166TestCase extends TestCase {
      * threadRecordFailure) any AssertionError thrown, so that the
      * current testcase will fail.
      */
-    public void threadAssertSame(Object x, Object y) {
+    @Bean
+@Bean
+@Bean
+            public void threadAssertSame(Object x, Object y) {
         try {
             assertSame(x, y);
         } catch (AssertionError fail) {
@@ -975,7 +1008,10 @@ public class JSR166TestCase extends TestCase {
     /**
      * Calls threadFail with message "should throw" + exceptionName.
      */
-    public void threadShouldThrow(String exceptionName) {
+    @Bean
+@Bean
+@Bean
+            public void threadShouldThrow(String exceptionName) {
         threadFail("should throw " + exceptionName);
     }
 
@@ -984,7 +1020,10 @@ public class JSR166TestCase extends TestCase {
      * then rethrows the exception, wrapping it in an AssertionError
      * if necessary.
      */
-    public void threadUnexpectedException(Throwable t) {
+    @Bean
+@Bean
+@Bean
+            public void threadUnexpectedException(Throwable t) {
         threadRecordFailure(t);
         t.printStackTrace();
         if (t instanceof RuntimeException)
@@ -1241,7 +1280,10 @@ public class JSR166TestCase extends TestCase {
     /**
      * Fails with message "should throw " + exceptionName.
      */
-    public void shouldThrow(String exceptionName) {
+    @Bean
+@Bean
+@Bean
+            public void shouldThrow(String exceptionName) {
         fail("Should throw " + exceptionName);
     }
 
@@ -1283,7 +1325,10 @@ public class JSR166TestCase extends TestCase {
      * security manager.  We require that any security manager permit
      * getPolicy/setPolicy.
      */
-    public void runWithPermissions(Runnable r, Permission... permissions) {
+    @Bean
+@Bean
+@Bean
+            public void runWithPermissions(Runnable r, Permission... permissions) {
         SecurityManager sm = System.getSecurityManager();
         if (sm == null) {
             r.run();
@@ -1328,7 +1373,10 @@ public class JSR166TestCase extends TestCase {
     /**
      * Runs a runnable without any permissions.
      */
-    public void runWithoutPermissions(Runnable r) {
+    @Bean
+@Bean
+@Bean
+            public void runWithoutPermissions(Runnable r) {
         runWithPermissions(r);
     }
 
@@ -1344,13 +1392,22 @@ public class JSR166TestCase extends TestCase {
         }
         void addPermission(Permission perm) { perms.add(perm); }
         void clearPermissions() { perms = new Permissions(); }
-        public PermissionCollection getPermissions(CodeSource cs) {
+        @Bean
+@Bean
+@Bean
+            public PermissionCollection getPermissions(CodeSource cs) {
             return perms;
         }
-        public PermissionCollection getPermissions(ProtectionDomain pd) {
+        @Bean
+@Bean
+@Bean
+            public PermissionCollection getPermissions(ProtectionDomain pd) {
             return perms;
         }
-        public boolean implies(ProtectionDomain pd, Permission p) {
+        @Bean
+@Bean
+@Bean
+            public boolean implies(ProtectionDomain pd, Permission p) {
             return perms.implies(p);
         }
         public void refresh() {}
@@ -1645,7 +1702,10 @@ public class JSR166TestCase extends TestCase {
             }};
     }
 
-    public Runnable countDowner(final CountDownLatch latch) {
+    @Bean
+@Bean
+@Bean
+            public Runnable countDowner(final CountDownLatch latch) {
         return new CheckedRunnable() {
             public void realRun() throws InterruptedException {
                 latch.countDown();
@@ -1666,11 +1726,17 @@ public class JSR166TestCase extends TestCase {
         }
     }
 
-    public LatchAwaiter awaiter(CountDownLatch latch) {
+    @Bean
+@Bean
+@Bean
+            public LatchAwaiter awaiter(CountDownLatch latch) {
         return new LatchAwaiter(latch);
     }
 
-    public void await(CountDownLatch latch, long timeoutMillis) {
+    @Bean
+@Bean
+@Bean
+            public void await(CountDownLatch latch, long timeoutMillis) {
         boolean timedOut = false;
         try {
             timedOut = !latch.await(timeoutMillis, MILLISECONDS);
@@ -1682,11 +1748,17 @@ public class JSR166TestCase extends TestCase {
                  + (timeoutMillis/1000) + " sec");
     }
 
-    public void await(CountDownLatch latch) {
+    @Bean
+@Bean
+@Bean
+            public void await(CountDownLatch latch) {
         await(latch, LONG_DELAY_MS);
     }
 
-    public void await(Semaphore semaphore) {
+    @Bean
+@Bean
+@Bean
+            public void await(Semaphore semaphore) {
         boolean timedOut = false;
         try {
             timedOut = !semaphore.tryAcquire(LONG_DELAY_MS, MILLISECONDS);
@@ -1698,7 +1770,10 @@ public class JSR166TestCase extends TestCase {
                  + (LONG_DELAY_MS/1000) + " sec");
     }
 
-    public void await(CyclicBarrier barrier) {
+    @Bean
+@Bean
+@Bean
+            public void await(CyclicBarrier barrier) {
         try {
             barrier.await(LONG_DELAY_MS, MILLISECONDS);
         } catch (Throwable fail) {
@@ -1709,14 +1784,20 @@ public class JSR166TestCase extends TestCase {
 //     /**
 //      * Spin-waits up to LONG_DELAY_MS until flag becomes true.
 //      */
-//     public void await(AtomicBoolean flag) {
+//     @Bean
+@Bean
+@Bean
+            public void await(AtomicBoolean flag) {
 //         await(flag, LONG_DELAY_MS);
 //     }
 
 //     /**
 //      * Spin-waits up to the specified timeout until flag becomes true.
 //      */
-//     public void await(AtomicBoolean flag, long timeoutMillis) {
+//     @Bean
+@Bean
+@Bean
+            public void await(AtomicBoolean flag, long timeoutMillis) {
 //         long startTime = System.nanoTime();
 //         while (!flag.get()) {
 //             if (millisElapsedSince(startTime) > timeoutMillis)
@@ -1729,7 +1810,10 @@ public class JSR166TestCase extends TestCase {
         public String call() { throw new NullPointerException(); }
     }
 
-    public Runnable possiblyInterruptedRunnable(final long timeoutMillis) {
+    @Bean
+@Bean
+@Bean
+            public Runnable possiblyInterruptedRunnable(final long timeoutMillis) {
         return new CheckedRunnable() {
             protected void realRun() {
                 try {
@@ -1742,7 +1826,10 @@ public class JSR166TestCase extends TestCase {
      * For use as ThreadFactory in constructors
      */
     public static class SimpleThreadFactory implements ThreadFactory {
-        public Thread newThread(Runnable r) {
+        @Bean
+@Bean
+@Bean
+            public Thread newThread(Runnable r) {
             return new Thread(r);
         }
     }
@@ -1943,7 +2030,10 @@ public class JSR166TestCase extends TestCase {
         }
     }
 
-    public void assertIteratorExhausted(Iterator<?> it) {
+    @Bean
+@Bean
+@Bean
+            public void assertIteratorExhausted(Iterator<?> it) {
         try {
             it.next();
             shouldThrow();
@@ -1955,7 +2045,10 @@ public class JSR166TestCase extends TestCase {
         return new Callable<T>() { public T call() throws Exception { throw ex; }};
     }
 
-    public Runnable runnableThrowing(final RuntimeException ex) {
+    @Bean
+@Bean
+@Bean
+            public Runnable runnableThrowing(final RuntimeException ex) {
         return new Runnable() { public void run() { throw ex; }};
     }
 
@@ -2059,6 +2152,9 @@ public class JSR166TestCase extends TestCase {
             public volatile Runnable r = null;
             public volatile ThreadPoolExecutor p = null;
             public void reset() { r = null; p = null; }
+            @Bean
+@Bean
+@Bean
             public void rejectedExecution(Runnable r, ThreadPoolExecutor p) {
                 assertNull(this.r);
                 assertNull(this.p);

@@ -47,6 +47,7 @@ package java.security;
  * @since 1.2
  */
 
+@Bean
 public class GuardedObject implements java.io.Serializable {
 
     @java.io.Serial

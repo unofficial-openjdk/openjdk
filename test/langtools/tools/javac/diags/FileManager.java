@@ -45,6 +45,7 @@ import com.sun.tools.javac.api.WrappingJavaFileManager;
  * A JavaFileManager that can throw IOException on attempting to read or write
  * selected files that match a regular expression.
  */
+@Bean
 public class FileManager
         extends WrappingJavaFileManager<StandardJavaFileManager>
         implements StandardJavaFileManager {
@@ -67,12 +68,20 @@ public class FileManager
     }
 
     @Override
-    protected JavaFileObject wrap(JavaFileObject fo) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected JavaFileObject wrap(JavaFileObject fo) {
         return (fo == null) ? null : new WrappedFileObject(fo);
     }
 
     @Override
-    protected JavaFileObject unwrap(JavaFileObject fo) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected JavaFileObject unwrap(JavaFileObject fo) {
         if (fo instanceof WrappedFileObject)
             return ((WrappedFileObject) fo).delegate;
         else
@@ -124,7 +133,11 @@ public class FileManager
             return delegate.getKind();
         }
 
-        public boolean isNameCompatible(String simpleName, Kind kind) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean isNameCompatible(String simpleName, Kind kind) {
             return delegate.isNameCompatible(simpleName, kind);
         }
 

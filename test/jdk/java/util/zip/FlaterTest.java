@@ -39,6 +39,7 @@ import java.util.zip.*;
  * validating that the deflated & then inflated data matches the original
  * data.
  */
+@Bean
 public class FlaterTest extends Thread {
     private static final int DATA_LEN = 1024 * 128;
 
@@ -152,7 +153,11 @@ public class FlaterTest extends Thread {
         }
 
         /** Returns a copy of {@code data} in deflated form. */
-        private ByteBuffer DeflateData(int length) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private ByteBuffer DeflateData(int length) {
             Deflater deflater = new Deflater();
             if (srcMode == 0) {
                 deflater.setInput(dataHeap.array());

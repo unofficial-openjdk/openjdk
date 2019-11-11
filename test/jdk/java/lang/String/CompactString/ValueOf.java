@@ -71,7 +71,10 @@ public class ValueOf {
      *            expected result
      */
     @Test(dataProvider = "valueOfs")
-    public void testValueOf(String res, String expected) {
+    @Bean
+@Bean
+@Bean
+            public void testValueOf(String res, String expected) {
         assertEquals(res, expected);
     }
 

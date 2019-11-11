@@ -45,11 +45,17 @@ public class GetAllDescriptorsTest {
             return number;
         }
 
-        public void setNumber(int n) {
+        @Bean
+@Bean
+@Bean
+            public void setNumber(int n) {
             number = n;
         }
 
-        public int addOne(int x) {
+        @Bean
+@Bean
+@Bean
+            public int addOne(int x) {
             return x + 1;
         }
 
@@ -58,7 +64,10 @@ public class GetAllDescriptorsTest {
         }
 
         // doesn't look like an attribute so not seen by caching logic
-        public void tweakArray(Object[] array) {
+        @Bean
+@Bean
+@Bean
+            public void tweakArray(Object[] array) {
             this.array = (Object[]) array.clone();
         }
 

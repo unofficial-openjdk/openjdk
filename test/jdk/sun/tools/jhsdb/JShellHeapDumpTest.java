@@ -46,6 +46,7 @@ import jdk.test.lib.hprof.parser.HprofReader;
 
 import jdk.jshell.JShell;
 
+@Bean
 public class JShellHeapDumpTest {
 
     static Process jShellProcess;

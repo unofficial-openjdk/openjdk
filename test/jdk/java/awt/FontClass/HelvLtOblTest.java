@@ -43,6 +43,7 @@ import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.image.BufferedImage;
 
+@Bean
 public class HelvLtOblTest extends JComponent {
 
     static Font helvFont = null;
@@ -84,7 +85,11 @@ public class HelvLtOblTest extends JComponent {
       return new Dimension(400,400);
     }
 
-    public void paintComponent(Graphics g) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void paintComponent(Graphics g) {
          super.paintComponent(g);
          Graphics2D g2 = (Graphics2D)g;
          FontRenderContext frc = new FontRenderContext(null, true, true);

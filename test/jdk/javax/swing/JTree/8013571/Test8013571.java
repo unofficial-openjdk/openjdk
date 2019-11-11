@@ -55,7 +55,10 @@ public class Test8013571 extends DefaultTreeModel {
         super(root);
     }
 
-    private void fireTreeChanged(Object source) {
+    @Bean
+@Bean
+@Bean
+            private void fireTreeChanged(Object source) {
         fireTreeNodesInserted(source, null, null, null);
         fireTreeNodesChanged(source, null, null, null);
         fireTreeNodesRemoved(source, null, null, null);

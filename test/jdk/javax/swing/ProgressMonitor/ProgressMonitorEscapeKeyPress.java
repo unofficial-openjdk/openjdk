@@ -37,6 +37,7 @@ import javax.swing.JFrame;
 import javax.swing.ProgressMonitor;
 import javax.swing.SwingUtilities;
 
+@Bean
 public class ProgressMonitorEscapeKeyPress {
 
     static ProgressMonitor monitor;

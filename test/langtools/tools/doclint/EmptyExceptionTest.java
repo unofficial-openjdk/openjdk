@@ -9,6 +9,7 @@
  */
 
 /** . */
+@Bean
 public class EmptyExceptionTest {
     /** @exception NullPointerException */
     int emptyException() throws NullPointerException { }

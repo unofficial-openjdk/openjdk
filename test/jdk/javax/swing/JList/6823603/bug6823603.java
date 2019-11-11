@@ -113,6 +113,9 @@ public class bug6823603 {
                 throw new UnsupportedOperationException("Not supported yet.");
             }
 
+            @Bean
+@Bean
+@Bean
             public Object getElementAt(int index) {
                 throw new UnsupportedOperationException("Not supported yet.");
             }
@@ -197,6 +200,9 @@ public class bug6823603 {
                 throw new UnsupportedOperationException("Not supported yet.");
             }
 
+            @Bean
+@Bean
+@Bean
             public String getElementAt(int index) {
                 throw new UnsupportedOperationException("Not supported yet.");
             }
@@ -209,6 +215,9 @@ public class bug6823603 {
                 throw new UnsupportedOperationException("Not supported yet.");
             }
 
+            @Bean
+@Bean
+@Bean
             public E getElementAt(int index) {
                 throw new UnsupportedOperationException("Not supported yet.");
             }

@@ -30,6 +30,7 @@
  * @run main VTableTest
  */
 
+@Bean
 public class VTableTest {
 
     interface Intf {

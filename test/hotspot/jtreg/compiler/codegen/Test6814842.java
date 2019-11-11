@@ -33,6 +33,7 @@
 
 package compiler.codegen;
 
+@Bean
 public class Test6814842 {
     static final short[] sa = new short[] { (short) 0xF1F2 };
     static final char[]  ca = new char[]  { (char) 0xF3F4  };

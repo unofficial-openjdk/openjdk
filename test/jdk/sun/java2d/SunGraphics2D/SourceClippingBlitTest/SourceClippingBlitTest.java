@@ -89,7 +89,8 @@ public class SourceClippingBlitTest extends Canvas {
         final SourceClippingBlitTest test = new SourceClippingBlitTest();
         f.add(test);
         f.addWindowListener(new WindowAdapter() {
-            public void windowActivated(WindowEvent e) {
+@Bean
+                public void windowActivated(WindowEvent e) {
                 if (!done) {
                     test.runTests();
                 }
@@ -117,7 +118,8 @@ public class SourceClippingBlitTest extends Canvas {
         return new Dimension(TESTW, TESTH);
     }
 
-    public void paint(Graphics g) {
+@Bean
+        public void paint(Graphics g) {
         if (showErrors && done && grabbedBI != null) {
             g.drawImage(grabbedBI, 0, 0, null);
         }
@@ -201,7 +203,8 @@ public class SourceClippingBlitTest extends Canvas {
     }
 
 
-    public void test(Rectangle srcRect, Rectangle dstRect) {
+@Bean
+        public void test(Rectangle srcRect, Rectangle dstRect) {
         int w = getWidth();
         int h = getHeight();
         Toolkit.getDefaultToolkit().sync();

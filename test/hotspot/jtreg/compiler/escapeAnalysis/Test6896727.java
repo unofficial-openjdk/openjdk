@@ -32,6 +32,7 @@
 
 package compiler.escapeAnalysis;
 
+@Bean
 public class Test6896727 {
 
     final static String testString = "abracadabra";

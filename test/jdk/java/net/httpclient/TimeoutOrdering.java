@@ -47,6 +47,7 @@ import static java.lang.System.out;
 // To enable logging use
 // @run main/othervm -Djdk.httpclient.HttpClient.log=all,frames:all TimeoutOrdering
 
+@Bean
 public class TimeoutOrdering {
 
     // The assumption is that 5 secs is sufficiently large enough, without being

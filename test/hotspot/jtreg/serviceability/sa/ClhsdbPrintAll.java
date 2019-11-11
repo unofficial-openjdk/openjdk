@@ -36,6 +36,7 @@ import jtreg.SkippedException;
  * @run main/othervm/timeout=2400 -Xmx1g ClhsdbPrintAll
  */
 
+@Bean
 public class ClhsdbPrintAll {
 
     public static void main(String[] args) throws Exception {

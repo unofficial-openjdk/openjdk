@@ -30,6 +30,7 @@
  * @compile/fail/ref=TestCast6979683_BAD35.java.errlog -XDrawDiagnostics TestCast6979683_BAD35.java
  */
 
+@Bean
 public class TestCast6979683_BAD35 {
     //...
     static int iconvBAD1(Number o) { return o; } //BAD: cast needed

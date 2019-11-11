@@ -50,6 +50,7 @@ import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertTrue;
 
+@Bean
 public class TransitiveDeps {
     private static final String TEST_SRC = System.getProperty("test.src");
 

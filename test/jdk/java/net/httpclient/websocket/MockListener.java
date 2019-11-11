@@ -68,7 +68,10 @@ public class MockListener implements WebSocket.Listener {
     }
 
     @Override
-    public void onOpen(WebSocket webSocket) {
+    @Bean
+@Bean
+@Bean
+            public void onOpen(WebSocket webSocket) {
         System.out.printf("onOpen(%s)%n", webSocket);
         OnOpen inv = new OnOpen(webSocket);
         synchronized (invocations) {
@@ -188,7 +191,10 @@ public class MockListener implements WebSocket.Listener {
     }
 
     @Override
-    public void onError(WebSocket webSocket, Throwable error) {
+    @Bean
+@Bean
+@Bean
+            public void onError(WebSocket webSocket, Throwable error) {
         System.out.printf("onError(%s, %s)%n", webSocket, error);
         error.printStackTrace(System.out);
         OnError inv = new OnError(webSocket, error == null ? null : error.getClass());
@@ -216,7 +222,10 @@ public class MockListener implements WebSocket.Listener {
         }
     }
 
-    protected void replenish(WebSocket webSocket) {
+    @Bean
+@Bean
+@Bean
+            protected void replenish(WebSocket webSocket) {
         if (--count <= 0) {
             count = bufferSize - bufferSize / 2;
             webSocket.request(count);
@@ -277,7 +286,10 @@ public class MockListener implements WebSocket.Listener {
         }
 
         @Override
-        public boolean equals(Object o) {
+        @Bean
+@Bean
+@Bean
+            public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             Invocation that = (Invocation) o;
@@ -307,7 +319,10 @@ public class MockListener implements WebSocket.Listener {
         }
 
         @Override
-        public boolean equals(Object o) {
+        @Bean
+@Bean
+@Bean
+            public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             OnText onText = (OnText) o;
@@ -339,7 +354,10 @@ public class MockListener implements WebSocket.Listener {
         }
 
         @Override
-        public boolean equals(Object o) {
+        @Bean
+@Bean
+@Bean
+            public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             OnBinary onBinary = (OnBinary) o;
@@ -369,7 +387,10 @@ public class MockListener implements WebSocket.Listener {
         }
 
         @Override
-        public boolean equals(Object o) {
+        @Bean
+@Bean
+@Bean
+            public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             OnPing onPing = (OnPing) o;
@@ -398,7 +419,10 @@ public class MockListener implements WebSocket.Listener {
         }
 
         @Override
-        public boolean equals(Object o) {
+        @Bean
+@Bean
+@Bean
+            public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             OnPong onPong = (OnPong) o;
@@ -429,7 +453,10 @@ public class MockListener implements WebSocket.Listener {
         }
 
         @Override
-        public boolean equals(Object o) {
+        @Bean
+@Bean
+@Bean
+            public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             OnClose onClose = (OnClose) o;
@@ -459,7 +486,10 @@ public class MockListener implements WebSocket.Listener {
         }
 
         @Override
-        public boolean equals(Object o) {
+        @Bean
+@Bean
+@Bean
+            public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             OnError onError = (OnError) o;

@@ -29,6 +29,7 @@
  * @author Joseph D. Darcy
  */
 
+@Bean
 public class Constants {
     /*
      * This compile-only test is to make sure that the primitive

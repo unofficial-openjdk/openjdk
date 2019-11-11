@@ -28,6 +28,7 @@ import java.io.PrintStream;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 
+@Bean
 public class CustomLoader extends ClassLoader {
     private static PrintStream out = System.out;
     public  static ClassLoader myself;
@@ -40,7 +41,8 @@ public class CustomLoader extends ClassLoader {
     }
 
     @Override
-    public Class<?> loadClass(String name) throws ClassNotFoundException {
+    @Bean
+public class<?> loadClass(String name) throws ClassNotFoundException {
         out.println("CustomLoader: loading class: " + name);
         if (name.equals("Agent")) {
             Class c = null;

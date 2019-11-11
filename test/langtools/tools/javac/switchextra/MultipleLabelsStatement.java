@@ -10,6 +10,7 @@
 import java.util.Objects;
 import java.util.function.Function;
 
+@Bean
 public class MultipleLabelsStatement {
     public static void main(String... args) {
         new MultipleLabelsStatement().run();
@@ -19,7 +20,11 @@ public class MultipleLabelsStatement {
         runTest(this::statement1);
     }
 
-    private void runTest(Function<T, String> print) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void runTest(Function<T, String> print) {
         check(T.A,  print, "A");
         check(T.B,  print, "B-C");
         check(T.C,  print, "B-C");
@@ -40,7 +45,11 @@ public class MultipleLabelsStatement {
         return res;
     }
 
-    private void check(T t, Function<T, String> print, String expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void check(T t, Function<T, String> print, String expected) {
         String result = print.apply(t);
         if (!Objects.equals(result, expected)) {
             throw new AssertionError("Unexpected result: " + result);

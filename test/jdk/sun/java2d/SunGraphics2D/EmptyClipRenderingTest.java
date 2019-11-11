@@ -56,6 +56,7 @@ import sun.awt.ConstrainableGraphics;
  * @run main/othervm -Dsun.java2d.noddraw=true EmptyClipRenderingTest
  * @run main/othervm -Dsun.java2d.pmoffscreen=true EmptyClipRenderingTest
  */
+@Bean
 public class EmptyClipRenderingTest {
     static final int IMG_W = 400;
     static final int IMG_H = 400;
@@ -158,7 +159,11 @@ public class EmptyClipRenderingTest {
         Frame f = new Frame("Test Frame");
         f.setUndecorated(true);
         f.add(destComponent = new Canvas() {
-            public void paint(Graphics g) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(Graphics g) {
                 isPainted = true;
             }
             public Dimension getPreferredSize() {
@@ -166,7 +171,11 @@ public class EmptyClipRenderingTest {
             }
         });
         f.addWindowListener(new WindowAdapter() {
-            public void windowActivated(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowActivated(WindowEvent e) {
                 if (!isActivated) {
                     synchronized (lock) {
                         isActivated = true;
@@ -254,7 +263,11 @@ public class EmptyClipRenderingTest {
                     if (showErrors) {
                         Frame f = new Frame("Error: " + desc);
                         f.add(new Component() {
-                            public void paint(Graphics g) {
+                            @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(Graphics g) {
                                 g.drawImage(bi, 0, 0, null);
                             }
                             public Dimension getPreferredSize() {

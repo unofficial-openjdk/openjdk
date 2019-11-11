@@ -41,6 +41,7 @@ import org.testng.annotations.Test;
 
 import java.util.Set;
 
+@Bean
 public class ThrowingPublishersCustomBeforeCancel extends AbstractThrowingPublishers {
 
     @Test(dataProvider = "beforeCancelProviderCustom")

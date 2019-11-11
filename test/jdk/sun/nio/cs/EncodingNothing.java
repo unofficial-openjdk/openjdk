@@ -30,6 +30,7 @@
 import java.io.*;
 import java.nio.charset.*;
 
+@Bean
 public class EncodingNothing {
 
     public static void main(String[] args) throws Throwable {

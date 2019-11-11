@@ -46,6 +46,7 @@ import sun.security.tools.keytool.CertAndKeyGen;
 import sun.security.util.KeyUtil;
 import sun.security.x509.X500Name;
 
+@Bean
 public class ShortRSAKeyWithinTLS {
 
     /*

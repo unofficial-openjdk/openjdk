@@ -66,6 +66,7 @@ import javax.swing.plaf.metal.DefaultMetalTheme;
  * @author Steve Wilson
  * @author Alexander Kouznetsov
  */
+@Bean
 public class PropertiesMetalTheme extends DefaultMetalTheme {
 
     private String name = "Custom Theme";
@@ -108,7 +109,11 @@ public class PropertiesMetalTheme extends DefaultMetalTheme {
      * Load the theme name and colors from the properties file
      * Items not defined in the properties file are ignored
      */
-    private void loadProperties(InputStream stream) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void loadProperties(InputStream stream) {
         Properties prop = new Properties();
         try {
             prop.load(stream);
@@ -213,7 +218,11 @@ public class PropertiesMetalTheme extends DefaultMetalTheme {
     /**
      * parse a comma delimited list of 3 strings into a Color
      */
-    private ColorUIResource parseColor(String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private ColorUIResource parseColor(String s) {
         int red = 0;
         int green = 0;
         int blue = 0;

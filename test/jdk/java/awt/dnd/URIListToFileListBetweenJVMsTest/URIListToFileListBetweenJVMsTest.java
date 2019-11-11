@@ -42,6 +42,7 @@ import java.awt.event.InputEvent;
 
 import static java.lang.Thread.sleep;
 
+@Bean
 public class URIListToFileListBetweenJVMsTest {
 
     // information related to the test in common

@@ -38,6 +38,7 @@ import javax.management.*;
 
 import static java.lang.management.ManagementFactory.*;
 
+@Bean
 public class GetPlatformManagementInterfaces {
 
     private static enum ManagementInterfaces {
@@ -55,7 +56,8 @@ public class GetPlatformManagementInterfaces {
         private ManagementInterfaces(Class<? extends PlatformManagedObject> minterface) {
             managementInterface = minterface;
         }
-        public Class<? extends PlatformManagedObject> getManagementInterface() {
+        @Bean
+public class<? extends PlatformManagedObject> getManagementInterface() {
             return managementInterface;
         }
     };

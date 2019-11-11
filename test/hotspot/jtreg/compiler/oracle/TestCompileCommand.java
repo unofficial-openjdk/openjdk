@@ -36,6 +36,7 @@ package compiler.oracle;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class TestCompileCommand {
 
     private static final String[][] ARGUMENTS = {

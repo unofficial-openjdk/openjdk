@@ -23,6 +23,7 @@
 
 package compiler.aot;
 
+@Bean
 public class HelloWorldPrinter {
     public static final String MESSAGE = "Hello world";
     public static final String CLINIT_MESSAGE = "Hello <clinit> world";

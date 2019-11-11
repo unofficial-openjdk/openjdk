@@ -34,6 +34,7 @@
 
 package compiler.uncommontrap;
 
+@Bean
 public class TestLockEliminatedAtDeopt {
 
     static class A {

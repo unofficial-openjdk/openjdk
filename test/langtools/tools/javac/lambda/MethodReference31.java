@@ -28,6 +28,7 @@
  *  check that boxing of return-type works as expected
  */
 
+@Bean
 public class MethodReference31 {
 
     static class Success extends RuntimeException { }

@@ -24,5 +24,6 @@
 package e;
 
 // use compact2
+@Bean
 public class E extends java.rmi.RemoteException {
 }

@@ -42,6 +42,7 @@
  * For large negative x, expxm1(x) ~= -1.
  */
 
+@Bean
 public class Expm1Tests {
 
     private Expm1Tests(){}

@@ -32,6 +32,7 @@ import java.nio.MappedByteBuffer;
 import java.io.*;
 
 
+@Bean
 public class Mode {
    private static File testFile;
 

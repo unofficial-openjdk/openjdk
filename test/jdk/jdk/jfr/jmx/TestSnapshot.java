@@ -41,6 +41,7 @@ import jdk.test.lib.jfr.SimpleEvent;
  * @library /test/lib /test/jdk
  * @run main/othervm jdk.jfr.jmx.TestSnapshot
  */
+@Bean
 public class TestSnapshot {
 
     public static void main(String[] args) throws Exception {

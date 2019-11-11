@@ -34,6 +34,7 @@
 import java.util.Locale;
 import javax.management.modelmbean.DescriptorSupport;
 
+@Bean
 public class DescriptorSupportXMLLocaleTest {
 
     public static void main(String[] args) throws Exception {

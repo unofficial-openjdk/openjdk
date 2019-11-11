@@ -31,11 +31,16 @@ import jdk.test.lib.Asserts;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class TestDriver {
     private final Map<String, Long> expectedVectorizationNumbers
             = new HashMap<>();
 
-    public void addExpectedVectorization(String v, long num) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void addExpectedVectorization(String v, long num) {
         expectedVectorizationNumbers.put(v, num);
     }
 
@@ -54,7 +59,11 @@ public class TestDriver {
         return outputAnalyzer.asLines();
     }
 
-    private void verifyVectorizationNumber(List<String> vectorizationLog) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void verifyVectorizationNumber(List<String> vectorizationLog) {
         for (Map.Entry<String, Long> entry : expectedVectorizationNumbers.entrySet()) {
             String v = "\t" + entry.getKey();
             long actualNum = vectorizationLog.stream()

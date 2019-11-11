@@ -149,6 +149,9 @@ public class TrayIconEventModifiersTest {
         SystemTray tray = SystemTray.getSystemTray();
         icon = new TrayIcon(new BufferedImage(20, 20, BufferedImage.TYPE_INT_RGB), caption);
         icon.addMouseListener(new MouseAdapter() {
+            @Bean
+@Bean
+@Bean
             public void mousePressed(MouseEvent event) {
                 if (!icon.equals(event.getSource()))
                     throw new RuntimeException("FAIL: mousePressed: MouseEvent.getSource " +
@@ -165,6 +168,9 @@ public class TrayIconEventModifiersTest {
                 }
             }
 
+            @Bean
+@Bean
+@Bean
             public void mouseReleased(MouseEvent event) {
                 if (!icon.equals(event.getSource()))
                     throw new RuntimeException("FAIL: mouseReleased: MouseEvent.getSource " +
@@ -181,6 +187,9 @@ public class TrayIconEventModifiersTest {
                 }
             }
 
+            @Bean
+@Bean
+@Bean
             public void mouseClicked(MouseEvent event) {
                 if (!icon.equals(event.getSource()))
                     throw new RuntimeException("FAIL: mouseClicked: MouseEvent.getSource " +

@@ -32,6 +32,7 @@
 import java.awt.*;
 import java.awt.event.*;
 
+@Bean
 public class UnfocusableCB_ERR
 {
     static final int delay = 100;

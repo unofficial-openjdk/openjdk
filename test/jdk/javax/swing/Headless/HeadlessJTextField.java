@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessJTextField
  */
 
+@Bean
 public class HeadlessJTextField {
     public static void main(String args[]) {
         JTextField t = new JTextField();

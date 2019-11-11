@@ -28,6 +28,7 @@ import java.util.List;
  */
 
 // Test class
+@Bean
 public class IdentifierTest {
     class _UnderscorePrefix {}
     class Underscore_Infix {}
@@ -46,7 +47,11 @@ public class IdentifierTest {
             in_fix = _;
         }
 
-        public void testClassMembersAccess(String[] _args) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void testClassMembersAccess(String[] _args) {
             // Instance creation
             _ _ = new _();
             //Method invocation
@@ -72,7 +77,11 @@ public class IdentifierTest {
             this._ = 5;
         }
 
-        public void testClassMemberAccess(String[] args) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void testClassMemberAccess(String[] args) {
             // Instance creation
             TestMisc _ = new TestMisc();
             //Field access
@@ -121,7 +130,11 @@ public class IdentifierTest {
         }
         // Element-Value pair
         @_(_name ="m",_id=1)
-        public void m(int arg) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void m(int arg) {}
 
         //Annotation with _ as one of the elements
         @interface MyAnno {

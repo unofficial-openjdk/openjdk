@@ -27,6 +27,7 @@ import jdk.vm.ci.services.JVMCIServiceLocator;
 import jdk.vm.ci.hotspot.HotSpotJVMCIRuntime;
 import jdk.vm.ci.hotspot.HotSpotVMEventListener;
 
+@Bean
 public class JvmciShutdownEventListener extends JVMCIServiceLocator implements HotSpotVMEventListener {
     public static final String MESSAGE = "Shutdown notified";
     public static final String GOT_INTERNAL_ERROR = "Got internal error";

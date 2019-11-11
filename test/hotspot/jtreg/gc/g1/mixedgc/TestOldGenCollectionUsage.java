@@ -47,6 +47,7 @@ import java.lang.management.*;
 // 8195115 says that for the "G1 Old Gen" MemoryPool, CollectionUsage.used
 // is zero for G1 after a mixed collection, which is incorrect.
 
+@Bean
 public class TestOldGenCollectionUsage {
 
     private String poolName = "G1 Old Gen";
@@ -153,7 +154,8 @@ public class TestOldGenCollectionUsage {
      * -Xmx12M -XX:G1MixedGCLiveThresholdPercent=100 -XX:G1HeapWastePercent=0
      * -XX:G1HeapRegionSize=1m
      */
-    public class MixedGCProvoker {
+    @Bean
+public class MixedGCProvoker {
         private final WhiteBox WB = WhiteBox.getWhiteBox();
         private final List<byte[]> liveOldObjects = new ArrayList<>();
         private final List<byte[]> newObjects = new ArrayList<>();
@@ -186,7 +188,11 @@ public class TestOldGenCollectionUsage {
          * @param wb  Whitebox instance
          * @param sleepTime sleep time
          */
-        private void waitTillCMCFinished(int sleepTime) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void waitTillCMCFinished(int sleepTime) {
             while (WB.g1InConcurrentMark()) {
                 if (sleepTime > -1) {
                     try {

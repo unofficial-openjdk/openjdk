@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 
+@Bean
 public class FailingConstructors {
     static final String fileName = "FailingConstructorsTest";
     static final String UNSUPPORTED_CHARSET = "unknownCharset";

@@ -35,6 +35,7 @@ package compiler.escapeAnalysis;
 
 import java.lang.reflect.Array;
 
+@Bean
 public class Test6689060 {
     static class Point {
         int x;

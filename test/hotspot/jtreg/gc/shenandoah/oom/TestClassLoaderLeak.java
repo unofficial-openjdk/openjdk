@@ -38,6 +38,7 @@ import java.nio.file.*;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class TestClassLoaderLeak {
 
     static final int SIZE = 1 * 1024 * 1024;
@@ -56,7 +57,8 @@ public class TestClassLoaderLeak {
             this.path = path;
         }
 
-        public Class<?> loadClass(String name) throws ClassNotFoundException {
+        @Bean
+public class<?> loadClass(String name) throws ClassNotFoundException {
             try {
                 File f = new File(path, name + ".class");
                 if (!f.exists()) {

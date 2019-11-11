@@ -40,6 +40,7 @@ import jdk.test.lib.jfr.CommonHelper;
  * @library /test/lib /test/jdk
  * @run main/othervm -XX:StartFlightRecording=name=TestStartMaxAgeSize,maxage=10s,maxsize=1000000 jdk.jfr.startupargs.TestStartMaxAgeSize
  */
+@Bean
 public class TestStartMaxAgeSize {
 
     public static void main(String[] args) throws Exception {

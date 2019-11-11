@@ -35,6 +35,7 @@
 import java.util.Arrays;
 import javax.management.*;
 
+@Bean
 public class InvokeGettersTest {
     public static interface ThingMBean {
         public int getWhatsit();
@@ -47,7 +48,11 @@ public class InvokeGettersTest {
             return whatsit;
         }
 
-        public void setWhatsit(int x) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setWhatsit(int x) {
             whatsit = x;
         }
 

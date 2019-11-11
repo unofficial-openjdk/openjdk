@@ -32,6 +32,7 @@
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
+@Bean
 public class UIManagerSetLookAndFeelNPETest {
     public static void main(String[] args)
             throws ClassNotFoundException, UnsupportedLookAndFeelException,

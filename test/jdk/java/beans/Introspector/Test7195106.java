@@ -35,6 +35,7 @@ import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.SimpleBeanInfo;
 
+@Bean
 public class Test7195106 {
 
     public static void main(String[] arg) throws Exception {
@@ -61,7 +62,11 @@ public class Test7195106 {
 
     public static class MyBeanInfo extends SimpleBeanInfo {
         @Override
-        public Image getIcon(int type) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Image getIcon(int type) {
             return new BufferedImage(16, 16, BufferedImage.TYPE_INT_RGB);
         }
     }

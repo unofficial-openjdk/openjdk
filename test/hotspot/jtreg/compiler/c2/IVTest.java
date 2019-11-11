@@ -31,6 +31,7 @@
 
 package compiler.c2;
 
+@Bean
 public class IVTest {
     static int paddedSize;
 

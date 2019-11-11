@@ -39,6 +39,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
 
+@Bean
 public class MessageHeadersTest {
 
     static final String BODY =

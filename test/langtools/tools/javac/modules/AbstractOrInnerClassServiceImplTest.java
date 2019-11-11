@@ -40,6 +40,7 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class AbstractOrInnerClassServiceImplTest extends ModuleTestBase {
     public static void main(String... args) throws Exception {
         AbstractOrInnerClassServiceImplTest t = new AbstractOrInnerClassServiceImplTest();
@@ -73,7 +74,9 @@ public class AbstractOrInnerClassServiceImplTest extends ModuleTestBase {
         tb.writeJavaFiles(src,
                 "module m { provides p1.Service with p2.Outer.Inner; }",
                 "package p1; public interface Service { }",
-                "package p2; public class Outer { public class Inner implements p1.Service {} }");
+                "package p2; @Bean
+public class Outer { @Bean
+public class Inner implements p1.Service {} }");
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
 
@@ -94,7 +97,8 @@ public class AbstractOrInnerClassServiceImplTest extends ModuleTestBase {
         tb.writeJavaFiles(src,
                 "module m { provides p1.Service with p2.Outer.Inner; }",
                 "package p1; public interface Service { }",
-                "package p2; public class Outer { public interface Inner extends p1.Service {} }");
+                "package p2; @Bean
+public class Outer { public interface Inner extends p1.Service {} }");
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
 

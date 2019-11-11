@@ -42,6 +42,7 @@ import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class TestSmallInitialHeapWithLargePageAndNUMA {
 
   private static final String MSG_EXIT_TOO_SMALL_HEAP = "Failed initializing NUMA with large pages. Too small heap size";

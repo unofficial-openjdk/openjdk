@@ -32,6 +32,7 @@
 
 import java.nio.*;
 
+@Bean
 public class CopyDirectMemory
     extends Basic
 {

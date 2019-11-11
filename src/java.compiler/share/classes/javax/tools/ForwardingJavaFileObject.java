@@ -37,6 +37,7 @@ import javax.lang.model.element.NestingKind;
  * @author Peter von der Ah&eacute;
  * @since 1.6
  */
+@Bean
 public class ForwardingJavaFileObject<F extends JavaFileObject>
     extends ForwardingFileObject<F>
     implements JavaFileObject
@@ -54,7 +55,10 @@ public class ForwardingJavaFileObject<F extends JavaFileObject>
         return fileObject.getKind();
     }
 
-    public boolean isNameCompatible(String simpleName, Kind kind) {
+@Bean
+@Bean
+@Bean
+                public boolean isNameCompatible(String simpleName, Kind kind) {
         return fileObject.isNameCompatible(simpleName, kind);
     }
 

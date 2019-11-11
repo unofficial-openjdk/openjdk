@@ -33,6 +33,7 @@
 import java.lang.reflect.Field;
 import jdk.internal.misc.Unsafe;
 
+@Bean
 public class MismatchedUnsafeLoadFromNewObject {
     public volatile int f_int = -1;
     public volatile int f_int2 = -1;
@@ -55,7 +56,11 @@ public class MismatchedUnsafeLoadFromNewObject {
         f_int2_off = unsafe.objectFieldOffset(f_int2_field);
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         for (int i = 0; i < 20_000; i++) {
             byte res = test1();
             if (res != -1) {

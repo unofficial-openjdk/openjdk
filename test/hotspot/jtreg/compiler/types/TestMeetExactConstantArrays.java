@@ -31,6 +31,7 @@
 
 package compiler.types;
 
+@Bean
 public class TestMeetExactConstantArrays {
     public abstract static class NumbersHolder {
         public Number[] getNumbers() {

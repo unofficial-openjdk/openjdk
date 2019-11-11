@@ -44,6 +44,7 @@ import javax.net.ssl.*;
  * Test pipe-lining (no block)
  */
 
+@Bean
 public class Test5 extends Test {
     static int count = 1;
     public static void main (String[] args) throws Exception {

@@ -64,7 +64,10 @@ public class bug4449413 extends JApplet {
                     box.addItemListener(new ItemListener() {
 
                         @Override
-                        public void itemStateChanged(ItemEvent e) {
+                        @Bean
+@Bean
+@Bean
+            public void itemStateChanged(ItemEvent e) {
                             if (e.getStateChange() == ItemEvent.SELECTED) {
                                 MetalLookAndFeel.setCurrentTheme(oceanTheme);
                             } else {

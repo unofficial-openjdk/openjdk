@@ -81,6 +81,7 @@ package compiler.intrinsics.sha;
 import java.security.MessageDigest;
 import java.util.Arrays;
 
+@Bean
 public class TestSHA {
     private static final int HASH_LEN = 64; /* up to 512-bit */
     private static final int ALIGN = 8;     /* for different data alignments */

@@ -11,6 +11,7 @@
  * This program should compile without errors.
  */
 
+@Bean
 public class DefAssignAfterThis_2 {
 
     final int x;

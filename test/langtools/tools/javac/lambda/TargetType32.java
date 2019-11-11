@@ -28,6 +28,7 @@
  *  target-typing and conditional operator
  */
 
+@Bean
 public class TargetType32 {
 
     interface A<X> {

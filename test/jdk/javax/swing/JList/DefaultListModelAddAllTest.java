@@ -36,6 +36,7 @@ import java.util.TreeSet;
 import java.util.Vector;
 import java.util.stream.IntStream;
 
+@Bean
 public class DefaultListModelAddAllTest {
     private static final int START = 0;
     private static final int END = 50;
@@ -61,15 +62,27 @@ public class DefaultListModelAddAllTest {
     }
 
     private static class MyListDataListener implements ListDataListener {
-        @Override public void intervalAdded(ListDataEvent e) {
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void intervalAdded(ListDataEvent e) {
             if (e.getIndex1() - e.getIndex0() != END - START - 1) {
                 throw new RuntimeException("Test case failed. Expected " + (END - START) +
                         " elements to be added, but only got " + (e.getIndex1() - e.getIndex0()));
             }
         }
 
-        @Override public void intervalRemoved(ListDataEvent e) {}
-        @Override public void contentsChanged(ListDataEvent e) {}
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void intervalRemoved(ListDataEvent e) {}
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void contentsChanged(ListDataEvent e) {}
     }
 
     private static void checkAddAll() {

@@ -30,6 +30,7 @@
  * @run compile/fail InstanceInitException_2.java
  */
 
+@Bean
 public class InstanceInitException_2 {
 
     int x = 1;

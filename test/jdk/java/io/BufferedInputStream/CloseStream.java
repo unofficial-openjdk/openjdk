@@ -32,6 +32,7 @@ import java.io.*;
  * properly
  */
 
+@Bean
 public class CloseStream {
 
     public static void main( String argv[] ) throws Exception {

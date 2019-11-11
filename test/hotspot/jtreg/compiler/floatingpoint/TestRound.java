@@ -30,6 +30,7 @@
 
 package compiler.floatingpoint;
 
+@Bean
 public class TestRound {
     public static void main(String[] args) {
         // Note: it's really only necessary to run this loop 8 times to

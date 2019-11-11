@@ -43,6 +43,7 @@ import javax.security.auth.x500.X500Principal;
 
 import sun.security.x509.InvalidityDateExtension;
 
+@Bean
 public class Basic {
 
     public static void main(String[] args) throws Exception {

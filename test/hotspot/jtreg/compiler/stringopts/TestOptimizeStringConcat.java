@@ -34,6 +34,7 @@
 
 package compiler.stringopts;
 
+@Bean
 public class TestOptimizeStringConcat {
 
     static boolean checkArgumentSyntax(String value, String allowedchars, String notallowedchars, String logmsg) {

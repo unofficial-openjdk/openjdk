@@ -35,6 +35,7 @@ class MethodReferenceStaticNotAccessibleTest_Foo {
     private static void m(MethodReferenceStaticNotAccessibleTest_Foo foo1, MethodReferenceStaticNotAccessibleTest_Foo foo2) {}
 }
 
+@Bean
 public class MethodReferenceStaticNotAccessibleTest {
     <T> void m(T t, BinaryOperator<T> binop) {}
 

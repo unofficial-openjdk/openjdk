@@ -450,7 +450,8 @@ public final class Short extends Number implements Comparable<Short> {
      * @return          {@code true} if the objects are the same;
      *                  {@code false} otherwise.
      */
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (obj instanceof Short) {
             return value == ((Short)obj).shortValue();
         }
@@ -470,7 +471,8 @@ public final class Short extends Number implements Comparable<Short> {
      *           comparison).
      * @since   1.2
      */
-    public int compareTo(Short anotherShort) {
+@Bean
+        public int compareTo(Short anotherShort) {
         return compare(this.value, anotherShort.value);
     }
 

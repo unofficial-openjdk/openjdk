@@ -46,7 +46,11 @@ public final class Test4950122 {
             super(new String[] {"boolean", "integer"});
         }
 
-        public Expression instantiate(Object oldInstance, Encoder out) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Expression instantiate(Object oldInstance, Encoder out) {
             return super.instantiate(oldInstance, out);
         }
     }
@@ -68,7 +72,11 @@ public final class Test4950122 {
             return this.i;
         }
 
-        public void exceptionThrown(Exception exception) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void exceptionThrown(Exception exception) {
             throw new Error("unexpected exception", exception);
         }
     }

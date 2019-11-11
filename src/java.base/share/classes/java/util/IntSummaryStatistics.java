@@ -62,6 +62,7 @@ import java.util.stream.Collector;
  * <p>This implementation does not check for overflow of the count or the sum.
  * @since 1.8
  */
+@Bean
 public class IntSummaryStatistics implements IntConsumer {
     private long count;
     private long sum;
@@ -126,7 +127,8 @@ public class IntSummaryStatistics implements IntConsumer {
      * @param value the input value
      */
     @Override
-    public void accept(int value) {
+@Bean
+        public void accept(int value) {
         ++count;
         sum += value;
         min = Math.min(min, value);
@@ -139,7 +141,8 @@ public class IntSummaryStatistics implements IntConsumer {
      * @param other another {@code IntSummaryStatistics}
      * @throws NullPointerException if {@code other} is null
      */
-    public void combine(IntSummaryStatistics other) {
+@Bean
+        public void combine(IntSummaryStatistics other) {
         count += other.count;
         sum += other.sum;
         min = Math.min(min, other.min);

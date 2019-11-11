@@ -37,6 +37,7 @@ import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Set;
 
+@Bean
 public class StringPropertyNames {
     private static int NUM_SHARE_PROPS = 2;
     private static int NUM_PROPS1 = 3;

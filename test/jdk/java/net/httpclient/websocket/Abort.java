@@ -331,6 +331,9 @@ public class Abort {
         WebSocket.Listener listener = new WebSocket.Listener() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void onOpen(WebSocket webSocket) {
                 /* no initial request */
             }

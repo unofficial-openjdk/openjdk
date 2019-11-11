@@ -53,6 +53,7 @@ import java.util.zip.ZipFile;
 
 import static org.testng.Assert.*;
 
+@Bean
 public class Basic extends MRTestBase {
 
     @Test
@@ -259,7 +260,8 @@ public class Basic extends MRTestBase {
     }
 
     @Test
-    // META-INF/versions/9 contains an extra public class
+    // META-INF/versions/9 contains an extra @Bean
+public class
     public void test05() throws Throwable {
         String jarfile = "test.jar";
 
@@ -274,7 +276,8 @@ public class Basic extends MRTestBase {
         jarTool("cf", jarfile, "-C", classes.resolve("base").toString(), ".",
                 "--release", "9", "-C", classes.resolve("v9").toString(), ".")
                 .shouldNotHaveExitValue(SUCCESS)
-                .shouldContain("contains a new public class");
+                .shouldContain("contains a new @Bean
+public class");
 
         FileUtils.deleteFileIfExistsWithRetry(Paths.get(jarfile));
         FileUtils.deleteFileTreeWithRetry(Paths.get(usr, "classes"));
@@ -427,7 +430,8 @@ public class Basic extends MRTestBase {
         assertTrue(output.size() == 3);
         assertTrue(output.get(0).contains("an isolated nested class"),
                 output.get(0));
-        assertTrue(output.get(1).contains("contains a new public class"),
+        assertTrue(output.get(1).contains("contains a new @Bean
+public class"),
                 output.get(1));
         assertTrue(output.get(2).contains("an isolated nested class"),
                 output.get(2));
@@ -440,7 +444,8 @@ public class Basic extends MRTestBase {
         assertTrue(output.size() == 3);
         assertTrue(output.get(0).contains("an isolated nested class"),
                 output.get(0));
-        assertTrue(output.get(1).contains("contains a new public class"),
+        assertTrue(output.get(1).contains("contains a new @Bean
+public class"),
                 output.get(1));
         assertTrue(output.get(2).contains("invalid multi-release jar file"),
                output.get(2));

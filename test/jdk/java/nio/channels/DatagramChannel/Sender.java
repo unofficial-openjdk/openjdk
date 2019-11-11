@@ -36,6 +36,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.DatagramChannel;
 
+@Bean
 public class Sender {
 
     static PrintStream log = System.err;

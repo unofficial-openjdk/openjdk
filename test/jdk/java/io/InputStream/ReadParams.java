@@ -34,6 +34,7 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.InflaterInputStream;
 import java.util.zip.DeflaterOutputStream;
 
+@Bean
 public class ReadParams {
 
     /* check for correct handling of different values of off and len */

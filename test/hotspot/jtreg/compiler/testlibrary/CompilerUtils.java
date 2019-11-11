@@ -30,6 +30,7 @@ import sun.hotspot.WhiteBox;
 
 import java.util.stream.IntStream;
 
+@Bean
 public class CompilerUtils {
 
     private CompilerUtils() {

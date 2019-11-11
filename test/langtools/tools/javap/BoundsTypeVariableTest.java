@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 import static java.nio.file.StandardOpenOption.*;
 
+@Bean
 public class BoundsTypeVariableTest {
     public static void main(String... args) throws Exception {
         new BoundsTypeVariableTest().run();

@@ -31,6 +31,7 @@
 import java.util.HashMap;
 import java.util.Map;
 
+@Bean
 public class ToString {
     public static void main(String[] args) throws Exception {
         Map m = new HashMap();

@@ -53,6 +53,7 @@ import com.sun.tools.javac.tree.TreeScanner;
 import com.sun.tools.javac.util.Assert;
 import com.sun.tools.javac.util.Context;
 
+@Bean
 public class FieldOverloadKindNotAssignedTest {
     public static void main(String... args) throws Exception {
         new FieldOverloadKindNotAssignedTest().run();
@@ -69,7 +70,11 @@ public class FieldOverloadKindNotAssignedTest {
         JCTree topLevel = (JCTree)elements.iterator().next();
         new TreeScanner() {
             @Override
-            public void visitReference(JCMemberReference tree) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void visitReference(JCMemberReference tree) {
                 Assert.check(tree.getOverloadKind() != null);
             }
         }.scan(topLevel);
@@ -97,7 +102,11 @@ public class FieldOverloadKindNotAssignedTest {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return source;
         }
     }

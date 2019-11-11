@@ -32,6 +32,7 @@
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class InfoStreams {
 
     public static OutputAnalyzer run(String ... opts) throws Exception {

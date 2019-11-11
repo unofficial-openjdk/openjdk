@@ -131,6 +131,9 @@ public class PollMemoryLeak {
 
     Set<Object> retainedObjects(Object x) {
         ArrayDeque<Object> todo = new ArrayDeque<>() {
+            @Bean
+@Bean
+@Bean
             public void push(Object x) { if (x != null) super.push(x); }};
         Set<Object> uniqueObjects = Collections.newSetFromMap(
             new IdentityHashMap<Object, Boolean>());

@@ -65,51 +65,99 @@ public abstract class Expr {
         return false;
     }
 
-    public int intExpr(int reg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int intExpr(int reg) {
         throw new UnsupportedOperationException();
     }
 
-    public int intExpr(MemI mem) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int intExpr(MemI mem) {
         throw new UnsupportedOperationException();
     }
 
-    public int intExpr(int a, int b) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int intExpr(int a, int b) {
         throw new UnsupportedOperationException();
     }
 
-    public int intExpr(int a, MemI b) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int intExpr(int a, MemI b) {
         throw new UnsupportedOperationException();
     }
 
-    public int intExpr(MemI a, int b) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int intExpr(MemI a, int b) {
         throw new UnsupportedOperationException();
     }
 
-    public int intExpr(MemI a, MemI b) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int intExpr(MemI a, MemI b) {
         throw new UnsupportedOperationException();
     }
 
-    public long longExpr(long reg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public long longExpr(long reg) {
         throw new UnsupportedOperationException();
     }
 
-    public long longExpr(MemL mem) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public long longExpr(MemL mem) {
         throw new UnsupportedOperationException();
     }
 
-    public long longExpr(long a, long b) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public long longExpr(long a, long b) {
         throw new UnsupportedOperationException();
     }
 
-    public long longExpr(long a, MemL b) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public long longExpr(long a, MemL b) {
         throw new UnsupportedOperationException();
     }
 
-    public long longExpr(MemL a, long b) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public long longExpr(MemL a, long b) {
         throw new UnsupportedOperationException();
     }
 
-    public long longExpr(MemL a, MemL b) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public long longExpr(MemL a, MemL b) {
         throw new UnsupportedOperationException();
     }
 

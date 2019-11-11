@@ -39,6 +39,7 @@ import java.util.Arrays;
  * @run main AnonymousClassBeanPropertyTest
  */
 //TODO in final revision each test should have only one checkInfo/checkAlternate
+@Bean
 public class AnonymousClassBeanPropertyTest {
 
     private final static String  DESCRIPTION = "TEST";
@@ -255,7 +256,11 @@ public class AnonymousClassBeanPropertyTest {
             public double getX() { return X; }
 
             public void addPropertyChangeListener(PropertyChangeListener l)    {}
-            public void removePropertyChangeListener(PropertyChangeListener l) {}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
         };
         ok = checkInfo(testPublic.getClass(), "IPublic", true);
         System.out.println("OK = " + ok);
@@ -278,7 +283,11 @@ public class AnonymousClassBeanPropertyTest {
             public double getX() { return X; }
 
             public void addPropertyChangeListener(PropertyChangeListener l)    {}
-            public void removePropertyChangeListener(PropertyChangeListener l) {}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
         };
         ok = checkInfo(testGet.getClass(), "IGet", true);
         System.out.println("OK = " + ok);
@@ -300,10 +309,18 @@ public class AnonymousClassBeanPropertyTest {
                 visualUpdate = UPDATE,
                 enumerationValues = {V_NAME})
             @Override
-            public void setX(double v) { x = v; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(double v) { x = v; }
 
             public void addPropertyChangeListener(PropertyChangeListener l)    {}
-            public void removePropertyChangeListener(PropertyChangeListener l) {}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
         };
         ok = checkInfo(testSet.getClass(), "ISet", true);
         System.out.println("OK = " + ok);
@@ -325,10 +342,18 @@ public class AnonymousClassBeanPropertyTest {
                 visualUpdate = UPDATE,
                 enumerationValues = {V_NAME})
             @Override
-            public double getX(int i) { return x[i]; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public double getX(int i) { return x[i]; }
 
             public void addPropertyChangeListener(PropertyChangeListener l)    {}
-            public void removePropertyChangeListener(PropertyChangeListener l) {}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
         };
         ok = checkInfo(testGetByIndex.getClass(), "IGetByIndex", true);
         System.out.println("OK = " + ok);
@@ -350,10 +375,18 @@ public class AnonymousClassBeanPropertyTest {
                 visualUpdate = UPDATE,
                 enumerationValues = {V_NAME})
             @Override
-            public void setX(int i, double v) { x[i] = v; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(int i, double v) { x[i] = v; }
 
             public void addPropertyChangeListener(PropertyChangeListener l)    {}
-            public void removePropertyChangeListener(PropertyChangeListener l) {}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
         };
         ok = checkInfo(testSetByIndex.getClass(), "ISetByIndex", true);
         System.out.println("OK = " + ok);
@@ -380,7 +413,11 @@ public class AnonymousClassBeanPropertyTest {
             public double[] getX() { return x; }
 
             public void addPropertyChangeListener(PropertyChangeListener l)    {}
-            public void removePropertyChangeListener(PropertyChangeListener l) {}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
         };
         ok = checkInfo(testGetArray.getClass(), "IGetArray", true);
         System.out.println("OK = " + ok);
@@ -405,10 +442,18 @@ public class AnonymousClassBeanPropertyTest {
                 visualUpdate = UPDATE,
                 enumerationValues = {V_NAME})
             @Override
-            public void setX(double a[]) { x = Arrays.copyOf(a, a.length); }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(double a[]) { x = Arrays.copyOf(a, a.length); }
 
             public void addPropertyChangeListener(PropertyChangeListener l)    {}
-            public void removePropertyChangeListener(PropertyChangeListener l) {}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
         };
         ok = checkInfo(testSetArray.getClass(), "ISetArray", true);
         System.out.println("OK = " + ok);
@@ -431,12 +476,20 @@ public class AnonymousClassBeanPropertyTest {
                 visualUpdate = UPDATE,
                 enumerationValues = {V_NAME})
             @Override
-            public double getX(int i) { return x[i]; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public double getX(int i) { return x[i]; }
             @Override
             public double[] getX() { return x; }
 
             public void addPropertyChangeListener(PropertyChangeListener l)    {}
-            public void removePropertyChangeListener(PropertyChangeListener l) {}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
         };
         ok = checkInfo(testGetBoth_1.getClass(), "IGetBoth-1", true);
         System.out.println("OK = " + ok);
@@ -449,7 +502,11 @@ public class AnonymousClassBeanPropertyTest {
             private final double x[] = {X, X};
 
             @Override
-            public double getX(int i) { return x[i]; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public double getX(int i) { return x[i]; }
             @BeanProperty(
                 description  = DESCRIPTION,
                 bound        = BOUND,
@@ -463,7 +520,11 @@ public class AnonymousClassBeanPropertyTest {
             public double[] getX() { return x; }
 
             public void addPropertyChangeListener(PropertyChangeListener l)    {}
-            public void removePropertyChangeListener(PropertyChangeListener l) {}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
         };
         ok = checkInfo(testGetBoth_2.getClass(), "IGetBoth-2", true);
         System.out.println("OK = " + ok);
@@ -486,7 +547,11 @@ public class AnonymousClassBeanPropertyTest {
                 visualUpdate = UPDATE,
                 enumerationValues = {V_NAME})
             @Override
-            public double getX(int i) { return x[i]; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public double getX(int i) { return x[i]; }
             @BeanProperty(
                 description  = DESCRIPTION_2,
                 bound        = !BOUND,
@@ -499,7 +564,11 @@ public class AnonymousClassBeanPropertyTest {
             public double[] getX() { return x; }
 
             public void addPropertyChangeListener(PropertyChangeListener l)    {}
-            public void removePropertyChangeListener(PropertyChangeListener l) {}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
         };
         ok = checkInfo(testGetBoth_3.getClass(), "IGetBoth-3", true);
         System.out.println("OK = " + ok);
@@ -524,12 +593,24 @@ public class AnonymousClassBeanPropertyTest {
                 visualUpdate = UPDATE,
                 enumerationValues = {V_NAME})
             @Override
-            public void setX(int i, double v) { x[i] = v; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(int i, double v) { x[i] = v; }
             @Override
-            public void setX(double[] a) { x = Arrays.copyOf(a, a.length); }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(double[] a) { x = Arrays.copyOf(a, a.length); }
 
             public void addPropertyChangeListener(PropertyChangeListener l)    {}
-            public void removePropertyChangeListener(PropertyChangeListener l) {}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
         };
         ok = checkInfo(testSetBoth_1.getClass(), "ISetBoth-1", true);
         System.out.println("OK = " + ok);
@@ -542,7 +623,11 @@ public class AnonymousClassBeanPropertyTest {
             private double x[] = new double[3];
 
             @Override
-            public void setX(int i, double v) { x[i] = v; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(int i, double v) { x[i] = v; }
             @BeanProperty(
                 description  = DESCRIPTION,
                 bound        = BOUND,
@@ -553,10 +638,18 @@ public class AnonymousClassBeanPropertyTest {
                 visualUpdate = UPDATE,
                 enumerationValues = {V_NAME})
             @Override
-            public void setX(double[] a) { x = Arrays.copyOf(a, a.length); }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(double[] a) { x = Arrays.copyOf(a, a.length); }
 
             public void addPropertyChangeListener(PropertyChangeListener l)    {}
-            public void removePropertyChangeListener(PropertyChangeListener l) {}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
         };
         ok = checkInfo(testSetBoth_2.getClass(), "ISetBoth-2", true);
         System.out.println("OK = " + ok);
@@ -579,7 +672,11 @@ public class AnonymousClassBeanPropertyTest {
                 visualUpdate = UPDATE,
                 enumerationValues = {V_NAME})
             @Override
-            public void setX(int i, double v) { x[i] = v; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(int i, double v) { x[i] = v; }
             @BeanProperty(
                 description  = DESCRIPTION_2,
                 bound        = !BOUND,
@@ -589,10 +686,18 @@ public class AnonymousClassBeanPropertyTest {
                 required     = !REQUIRED,
                 visualUpdate = !UPDATE)
             @Override
-            public void setX(double[] a) { x = Arrays.copyOf(a, a.length); }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(double[] a) { x = Arrays.copyOf(a, a.length); }
 
             public void addPropertyChangeListener(PropertyChangeListener l)    {}
-            public void removePropertyChangeListener(PropertyChangeListener l) {}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
         };
         ok = checkInfo(testSetBoth_3.getClass(), "ISetBoth-3", true);
         System.out.println("OK = " + ok);
@@ -619,10 +724,18 @@ public class AnonymousClassBeanPropertyTest {
             @Override
             public double getX() { return x; }
             @Override
-            public void setX(double v) { x = v; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(double v) { x = v; }
 
             public void addPropertyChangeListener(PropertyChangeListener l)    {}
-            public void removePropertyChangeListener(PropertyChangeListener l) {}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
         };
         ok = checkInfo(testGetSet_1.getClass(), "IGetSet-1", true);
         System.out.println("OK = " + ok);
@@ -645,10 +758,18 @@ public class AnonymousClassBeanPropertyTest {
                 visualUpdate = UPDATE,
                 enumerationValues = {V_NAME})
             @Override
-            public void setX(double v) { x = v; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(double v) { x = v; }
 
             public void addPropertyChangeListener(PropertyChangeListener l)    {}
-            public void removePropertyChangeListener(PropertyChangeListener l) {}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
         };
         ok = checkInfo(testGetSet_2.getClass(), "IGetSet-2", true);
         System.out.println("OK = " + ok);
@@ -678,10 +799,18 @@ public class AnonymousClassBeanPropertyTest {
                 required     = !REQUIRED,
                 visualUpdate = !UPDATE)
             @Override
-            public void setX(double v) { x = v; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(double v) { x = v; }
 
             public void addPropertyChangeListener(PropertyChangeListener l)    {}
-            public void removePropertyChangeListener(PropertyChangeListener l) {}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
         };
         ok = checkInfo(testGetSet_3.getClass(), "IGetSet-3", true);
         System.out.println("OK = " + ok);
@@ -703,12 +832,24 @@ public class AnonymousClassBeanPropertyTest {
                 visualUpdate = UPDATE,
                 enumerationValues = {V_NAME})
             @Override
-            public double getX(int i) { return x[i]; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public double getX(int i) { return x[i]; }
             @Override
-            public void setX(int i, double v) { x[i] = v; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(int i, double v) { x[i] = v; }
 
             public void addPropertyChangeListener(PropertyChangeListener l)    {}
-            public void removePropertyChangeListener(PropertyChangeListener l) {}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
         };
         ok = checkInfo(testGetSetByIndex_1.getClass(), "IGetSetByIndex-1", true);
         System.out.println("OK = " + ok);
@@ -720,7 +861,11 @@ public class AnonymousClassBeanPropertyTest {
             private final double x[] = {X, X};
 
             @Override
-            public double getX(int i) { return x[i]; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public double getX(int i) { return x[i]; }
             @BeanProperty(
                 description  = DESCRIPTION,
                 bound        = BOUND,
@@ -731,10 +876,18 @@ public class AnonymousClassBeanPropertyTest {
                 visualUpdate = UPDATE,
                 enumerationValues = {V_NAME})
             @Override
-            public void setX(int i, double v) { x[i] = v; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(int i, double v) { x[i] = v; }
 
             public void addPropertyChangeListener(PropertyChangeListener l)    {}
-            public void removePropertyChangeListener(PropertyChangeListener l) {}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
         };
         ok = checkInfo(testGetSetByIndex_2.getClass(), "IGetSetByIndex-2", true);
         System.out.println("OK = " + ok);
@@ -754,7 +907,11 @@ public class AnonymousClassBeanPropertyTest {
                 visualUpdate = UPDATE,
                 enumerationValues = {V_NAME})
             @Override
-            public double getX(int i) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public double getX(int i) {
                 return x[i];
             }
             @BeanProperty(
@@ -766,12 +923,20 @@ public class AnonymousClassBeanPropertyTest {
                 required     = !REQUIRED,
                 visualUpdate = !UPDATE)
             @Override
-            public void setX(int i, double v) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(int i, double v) {
                 x[i] = v;
             }
 
             public void addPropertyChangeListener(PropertyChangeListener l)    {}
-            public void removePropertyChangeListener(PropertyChangeListener l) {}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
         };
         ok = checkInfo(testGetSetByIndex_3.getClass(), "IGetSetByIndex-3", true);
         System.out.println("OK = " + ok);
@@ -786,7 +951,11 @@ public class AnonymousClassBeanPropertyTest {
             private double x[] = {X, X};
 
             @Override
-            public double getX(int i) { return x[i]; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public double getX(int i) { return x[i]; }
             @BeanProperty(
                 description  = DESCRIPTION,
                 bound        = BOUND,
@@ -799,12 +968,24 @@ public class AnonymousClassBeanPropertyTest {
             @Override
             public double[] getX() { return x; }
             @Override
-            public void setX(int i, double v) { x[i] = v; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(int i, double v) { x[i] = v; }
             @Override
-            public void setX(double[] a) { x = Arrays.copyOf(a, a.length); }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(double[] a) { x = Arrays.copyOf(a, a.length); }
 
             public void addPropertyChangeListener(PropertyChangeListener l)    {}
-            public void removePropertyChangeListener(PropertyChangeListener l) {}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
         };
         ok = checkInfo(testGetSetBoth_1.getClass(), "IGetSetBoth-1", true);
         System.out.println("OK = " + ok);
@@ -818,11 +999,19 @@ public class AnonymousClassBeanPropertyTest {
             private double x[] = {X, X};
 
             @Override
-            public double getX(int i) { return x[i]; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public double getX(int i) { return x[i]; }
             @Override
             public double[] getX() { return x; }
             @Override
-            public void setX(int i, double v) { x[i] = v; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(int i, double v) { x[i] = v; }
             @BeanProperty(
                 description  = DESCRIPTION,
                 bound        = BOUND,
@@ -833,10 +1022,18 @@ public class AnonymousClassBeanPropertyTest {
                 visualUpdate = UPDATE,
                 enumerationValues = {V_NAME})
             @Override
-            public void setX(double[] a) { x = Arrays.copyOf(a, a.length); }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(double[] a) { x = Arrays.copyOf(a, a.length); }
 
             public void addPropertyChangeListener(PropertyChangeListener l)    {}
-            public void removePropertyChangeListener(PropertyChangeListener l) {}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
         };
         ok = checkInfo(testGetSetBoth_2.getClass(), "IGetSetBoth-2", true);
         System.out.println("OK = " + ok);
@@ -859,11 +1056,19 @@ public class AnonymousClassBeanPropertyTest {
                 visualUpdate = UPDATE,
                 enumerationValues = {V_NAME})
             @Override
-            public double getX(int i) { return x[i]; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public double getX(int i) { return x[i]; }
             @Override
             public double[] getX() { return x; }
             @Override
-            public void setX(int i, double v) { x[i] = v; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(int i, double v) { x[i] = v; }
             @BeanProperty(
                 description  = DESCRIPTION_2,
                 bound        = !BOUND,
@@ -873,10 +1078,18 @@ public class AnonymousClassBeanPropertyTest {
                 required     = !REQUIRED,
                 visualUpdate = !UPDATE)
             @Override
-            public void setX(double[] a) { x = Arrays.copyOf(a, a.length); }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(double[] a) { x = Arrays.copyOf(a, a.length); }
 
             public void addPropertyChangeListener(PropertyChangeListener l)    {}
-            public void removePropertyChangeListener(PropertyChangeListener l) {}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
         };
         ok = checkInfo(testGetSetBoth_3.getClass(), "IGetSetBoth-3", true);
         System.out.println("OK = " + ok);
@@ -902,7 +1115,11 @@ public class AnonymousClassBeanPropertyTest {
             public boolean isX() { return false; }
 
             public void addPropertyChangeListener(PropertyChangeListener l)    {}
-            public void removePropertyChangeListener(PropertyChangeListener l) {}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
         };
         ok = checkInfo(testIs_1.getClass(), "IIs-1", false);
         System.out.println("OK = " + ok);
@@ -924,10 +1141,18 @@ public class AnonymousClassBeanPropertyTest {
                 preferred    = PREFERRED,
                 required     = REQUIRED,
                 visualUpdate = UPDATE)
-            public void setX(boolean v) { b = v; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(boolean v) { b = v; }
 
             public void addPropertyChangeListener(PropertyChangeListener l)    {}
-            public void removePropertyChangeListener(PropertyChangeListener l) {}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
         };
         ok = checkInfo(testIs_2.getClass(), "IIs-2", false);
         System.out.println("OK = " + ok);
@@ -958,7 +1183,11 @@ public class AnonymousClassBeanPropertyTest {
             public boolean getX() { return false; }
 
             public void addPropertyChangeListener(PropertyChangeListener l)    {}
-            public void removePropertyChangeListener(PropertyChangeListener l) {}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
         };
         ok = checkInfo(testIs_3.getClass(), "IIs-3", false);
         System.out.println("OK = " + ok);
@@ -989,10 +1218,18 @@ public class AnonymousClassBeanPropertyTest {
                 preferred    = !PREFERRED,
                 required     = !REQUIRED,
                 visualUpdate = !UPDATE)
-            public void setX(boolean v) { b = v; }
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setX(boolean v) { b = v; }
 
             public void addPropertyChangeListener(PropertyChangeListener l)    {}
-            public void removePropertyChangeListener(PropertyChangeListener l) {}
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void removePropertyChangeListener(PropertyChangeListener l) {}
         };
         ok = checkInfo(testIs_4.getClass(), "IIs-4", false);
         System.out.println("OK = " + ok);

@@ -85,6 +85,7 @@ class TestHumongousCodeCacheRootsHelper {
     }
 }
 
+@Bean
 public class TestHumongousCodeCacheRoots {
 
   /**

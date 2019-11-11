@@ -101,7 +101,11 @@ public class TestRelativeLinks extends JavadocTester {
             "<a href=\"./pkg/relative-package-link.html\">relative package link</a>");
     }
 
-    private void touch(String file) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void touch(String file) {
         File f = new File(outputDir, file);
         out.println("touch " + f);
         try (FileOutputStream fos = new FileOutputStream(f)) {

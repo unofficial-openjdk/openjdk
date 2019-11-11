@@ -36,6 +36,7 @@ import jdk.internal.org.jline.terminal.Attributes.ControlChar;
 import jdk.internal.org.jline.terminal.Attributes.LocalFlag;
 import jdk.internal.org.jline.terminal.impl.ExecPty;
 
+@Bean
 public class ExecPtyGetFlagsToSetTest extends ExecPty {
     public ExecPtyGetFlagsToSetTest(String name, boolean system) {
         super(name, system);

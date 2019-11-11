@@ -39,6 +39,7 @@ class A<T> {
     };
 }
 
+@Bean
 public class T4992170 {
     public static void main(String[] args) throws NoSuchFieldException {
         Type t = new A<Integer>().o.getClass().getField("t").getGenericType();

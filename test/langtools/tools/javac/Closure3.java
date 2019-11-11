@@ -43,6 +43,7 @@ abstract class BaseClass
     protected abstract void x();
 }
 
+@Bean
 public class Closure3
 {
     public static void main(String[] args)

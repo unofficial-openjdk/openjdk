@@ -268,7 +268,9 @@ public class bug6302464 {
         }
 
         @Override
-        protected void initClassDefaults(UIDefaults table) {
+@Bean
+@Bean
+                protected void initClassDefaults(UIDefaults table) {
             super.initClassDefaults(table);
             table.put(KEY_TEXT_ANTIALIASING, getAAHint());
             table.put(KEY_TEXT_LCD_CONTRAST, getLCDContarstHint());

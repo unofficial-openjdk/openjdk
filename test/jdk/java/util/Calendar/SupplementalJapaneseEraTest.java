@@ -41,6 +41,7 @@ import java.util.Locale;
  *           executes tests with an invalid property value
  */
 
+@Bean
 public class SupplementalJapaneseEraTest {
     private static final Locale WAREKI_LOCALE = Locale.forLanguageTag("ja-JP-u-ca-japanese");
     private static final String SUP_ERA_NAME = "SupEra";

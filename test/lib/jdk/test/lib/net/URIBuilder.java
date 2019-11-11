@@ -46,22 +46,38 @@ public class URIBuilder {
 
     private URIBuilder() {}
 
-    public URIBuilder scheme(String scheme) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public URIBuilder scheme(String scheme) {
         this.scheme = scheme;
         return this;
     }
 
-    public URIBuilder userInfo(String userInfo) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public URIBuilder userInfo(String userInfo) {
         this.userInfo = userInfo;
         return this;
     }
 
-    public URIBuilder host(String host) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public URIBuilder host(String host) {
         this.host = host;
         return this;
     }
 
-    public URIBuilder host(InetAddress address) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public URIBuilder host(InetAddress address) {
         String hostaddr = address.isAnyLocalAddress()
                ? "localhost" : address.getHostAddress();
         return host(hostaddr);
@@ -71,22 +87,38 @@ public class URIBuilder {
         return host(InetAddress.getLoopbackAddress().getHostAddress());
     }
 
-    public URIBuilder port(int port) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public URIBuilder port(int port) {
         this.port = port;
         return this;
     }
 
-    public URIBuilder path(String path) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public URIBuilder path(String path) {
         this.path = path;
         return this;
     }
 
-    public URIBuilder query(String query) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public URIBuilder query(String query) {
         this.query = query;
         return this;
     }
 
-    public URIBuilder fragment(String fragment) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public URIBuilder fragment(String fragment) {
         this.fragment = fragment;
         return this;
     }

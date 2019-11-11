@@ -44,6 +44,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.spi.ToolProvider;
 
+@Bean
 public class SourceMode extends TestHelper {
 
     public static void main(String... args) throws Exception {
@@ -173,7 +174,8 @@ public class SourceMode extends TestHelper {
         Path base = Files.createDirectories(Paths.get("testClasspath"));
         Path otherJava = base.resolve("Other.java");
         createFile(otherJava, List.of(
-            "public class Other {",
+            "@Bean
+public class Other {",
             "  public static String join(String[] args) {",
             "    return String.join(\"-\", args);",
             "  }",
@@ -203,7 +205,8 @@ public class SourceMode extends TestHelper {
         starting("testAddExports");
         Path exportJava = Paths.get("Export.java");
         createFile(exportJava, List.of(
-            "public class Export {",
+            "@Bean
+public class Export {",
             "  public static void main(String[] args) {",
             "    new com.sun.tools.javac.main.Main(\"demo\").compile(args);",
             "  }",
@@ -395,7 +398,11 @@ public class SourceMode extends TestHelper {
 
     //--------------------------------------------------------------------------
 
-    private void starting(String label) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void starting(String label) {
         System.out.println();
         System.out.println("*** Starting: " + label + " (stdout)");
 
@@ -403,7 +410,11 @@ public class SourceMode extends TestHelper {
         System.err.println("*** Starting: " + label + " (stderr)");
     }
 
-    private void show(TestResult tr) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void show(TestResult tr) {
         log.println("*** Test Output:");
         for (String line: tr.testOutput) {
             log.println(line);
@@ -420,7 +431,8 @@ public class SourceMode extends TestHelper {
         if (!Files.exists(file)) {
             createFile(file, List.of(
                 (shebang ? "#!" + shebangJavaCmd + " --source=" + thisVersion: ""),
-                "public class Simple {",
+                "@Bean
+public class Simple {",
                 "  public static void main(String[] args) {",
                 "    System.out.println(java.util.Arrays.toString(args));",
                 "  }}"));
@@ -450,7 +462,11 @@ public class SourceMode extends TestHelper {
         return file;
     }
 
-    private void error(TestResult tr, String message) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void error(TestResult tr, String message) {
         show(tr);
         throw new RuntimeException(message);
     }

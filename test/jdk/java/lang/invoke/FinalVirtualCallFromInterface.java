@@ -39,6 +39,7 @@ import java.lang.invoke.*;
  *
  * The nestmate update under 8010319 fixes that bug.
  */
+@Bean
 public class FinalVirtualCallFromInterface {
 
     static class Final {

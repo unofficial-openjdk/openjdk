@@ -37,6 +37,7 @@ import java.security.PrivilegedExceptionAction;
 import java.util.PropertyPermission;
 import org.testng.annotations.Test;
 
+@Bean
 public class LimitedDoPrivilegedWithNullPerms {
 
     AccessControlContext acc = AccessController.getContext();

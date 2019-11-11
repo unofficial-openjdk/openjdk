@@ -33,6 +33,7 @@
 
 package compiler.interpreter;
 
+@Bean
 public class Test6539464 {
     static double log_value = 17197;
     static double log_result = Math.log(log_value);

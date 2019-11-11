@@ -29,6 +29,7 @@ import javax.script.*;
 import java.util.*;
 import java.io.*;
 
+@Bean
 public class MyContext  implements ScriptContext {
 
     public static final int APP_SCOPE = 125;
@@ -54,7 +55,11 @@ public class MyContext  implements ScriptContext {
         errorWriter = new PrintWriter(System.err, true);
     }
 
-    public void setBindings(Bindings bindings, int scope) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setBindings(Bindings bindings, int scope) {
 
         switch (scope) {
             case APP_SCOPE:
@@ -78,7 +83,11 @@ public class MyContext  implements ScriptContext {
         }
     }
 
-    public Object getAttribute(String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Object getAttribute(String name) {
         if (engineScope.containsKey(name)) {
             return getAttribute(name, ENGINE_SCOPE);
         } else if (appScope.containsKey(name)) {
@@ -90,7 +99,11 @@ public class MyContext  implements ScriptContext {
         return null;
     }
 
-    public Object getAttribute(String name, int scope) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Object getAttribute(String name, int scope) {
 
         switch (scope) {
             case APP_SCOPE:
@@ -110,7 +123,11 @@ public class MyContext  implements ScriptContext {
         }
     }
 
-    public Object removeAttribute(String name, int scope) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Object removeAttribute(String name, int scope) {
 
         switch (scope) {
             case APP_SCOPE:
@@ -137,7 +154,11 @@ public class MyContext  implements ScriptContext {
         }
     }
 
-    public void setAttribute(String name, Object value, int scope) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setAttribute(String name, Object value, int scope) {
 
         switch (scope) {
             case APP_SCOPE:
@@ -167,11 +188,19 @@ public class MyContext  implements ScriptContext {
         return reader;
     }
 
-    public void setReader(Reader reader) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setReader(Reader reader) {
         this.reader = reader;
     }
 
-    public void setWriter(Writer writer) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setWriter(Writer writer) {
         this.writer = writer;
     }
 
@@ -179,11 +208,19 @@ public class MyContext  implements ScriptContext {
         return errorWriter;
     }
 
-    public void setErrorWriter(Writer writer) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setErrorWriter(Writer writer) {
         this.errorWriter = writer;
     }
 
-    public int getAttributesScope(String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int getAttributesScope(String name) {
         if (engineScope.containsKey(name)) {
             return ENGINE_SCOPE;
         } else if (appScope.containsKey(name)) {
@@ -195,7 +232,11 @@ public class MyContext  implements ScriptContext {
         }
     }
 
-    public Bindings getBindings(int scope) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Bindings getBindings(int scope) {
         if (scope == ENGINE_SCOPE) {
             return engineScope;
         } else if (scope == APP_SCOPE) {

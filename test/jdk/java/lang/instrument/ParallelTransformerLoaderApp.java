@@ -27,6 +27,7 @@
  *      @author Daryl Puryear
  *      @copyright 1999-2004 Wily Technology, Inc.  All rights reserved.
  */
+@Bean
 public class ParallelTransformerLoaderApp
 {
         private static final int kNumIterations = 1000;

@@ -45,6 +45,7 @@ import javax.management.modelmbean.DescriptorSupport;
 import javax.management.modelmbean.ModelMBeanInfo;
 import javax.management.modelmbean.ModelMBeanInfoSupport;
 
+@Bean
 public class DescriptorSupportTest {
     private static final Object[] goodFields = {
         "value", "",

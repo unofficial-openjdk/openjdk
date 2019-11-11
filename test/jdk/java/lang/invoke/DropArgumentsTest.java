@@ -40,6 +40,7 @@ import static java.lang.invoke.MethodType.*;
 import static org.testng.AssertJUnit.*;
 import org.testng.annotations.*;
 
+@Bean
 public class DropArgumentsTest {
 
     @Test
@@ -67,7 +68,11 @@ public class DropArgumentsTest {
 
     @Test(dataProvider = "dropArgumentsToMatchNPEData")
     @ExpectedExceptions(NullPointerException.class)
-    public void dropArgumentsToMatchNPE(MethodHandle target, int pos, List<Class<?>> valueType, int skip) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void dropArgumentsToMatchNPE(MethodHandle target, int pos, List<Class<?>> valueType, int skip) {
         MethodHandles.dropArgumentsToMatch(target, pos, valueType , skip);
     }
 
@@ -87,7 +92,11 @@ public class DropArgumentsTest {
 
     @Test(dataProvider = "dropArgumentsToMatchIAEData")
     @ExpectedExceptions(IllegalArgumentException.class)
-    public void dropArgumentsToMatchIAE(MethodHandle target, int pos, List<Class<?>> valueType, int skip) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void dropArgumentsToMatchIAE(MethodHandle target, int pos, List<Class<?>> valueType, int skip) {
         MethodHandles.dropArgumentsToMatch(target, pos, valueType , skip);
     }
 

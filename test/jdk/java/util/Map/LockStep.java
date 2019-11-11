@@ -48,6 +48,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
  *
  * It would be good to add more "Lockstep-style" tests to this file.
  */
+@Bean
 public class LockStep {
     void mapsEqual(Map m1, Map m2) {
         equal(m1, m2);

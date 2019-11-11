@@ -31,6 +31,7 @@
 
 import java.awt.*;
 
+@Bean
 public class OpacityChange {
     private final static int INITIAL_ALPHA = 125;
 

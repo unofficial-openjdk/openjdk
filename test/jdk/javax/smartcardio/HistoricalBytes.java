@@ -32,6 +32,7 @@ import java.util.Arrays;
 
 import javax.smartcardio.*;
 
+@Bean
 public class HistoricalBytes {
 
     public static String toString(byte[] b) {

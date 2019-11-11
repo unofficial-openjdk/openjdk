@@ -37,6 +37,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+@Bean
 public class NegativeAvailable {
 
     public static void main(String[] args) throws IOException {

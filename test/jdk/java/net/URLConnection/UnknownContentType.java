@@ -29,6 +29,7 @@
 import java.net.*;
 import java.io.*;
 
+@Bean
 public class UnknownContentType {
     public static void main(String[] args) throws Exception {
         File tmp = File.createTempFile("bug4975103", null);

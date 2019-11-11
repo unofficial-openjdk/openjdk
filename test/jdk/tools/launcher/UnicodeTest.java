@@ -52,6 +52,7 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.util.Locale;
 
+@Bean
 public class UnicodeTest extends TestHelper {
     static final File UnicodeTestSrc        = new File("UnicodeTest-src");
     static final File UnicodeTestClasses    = new File("UnicodeTest-classes");
@@ -244,7 +245,8 @@ public class UnicodeTest extends TestHelper {
     private static void generateSource(String thisClass, String otherClass) throws Exception {
         File file = new File(UnicodeTestSrc, thisClass + JAVA_FILE_EXT);
         OutputStreamWriter out = new OutputStreamWriter(new FileOutputStream(file), "UTF-8");
-        out.write("public class " + thisClass + " {\n");
+        out.write("@Bean
+public class " + thisClass + " {\n");
         out.write("    public static void main(String[] args) {\n");
         out.write("        if (!" + otherClass + "." + otherClass.toLowerCase() + "().equals(\"" + otherClass + "\")) {\n");
         out.write("            throw new RuntimeException();\n");

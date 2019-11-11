@@ -56,6 +56,7 @@ import org.junit.Test;
 /**
  * Tests for errors in the code installer.
  */
+@Bean
 public class TestInvalidCompilationResult extends CodeInstallerTest {
 
     private static class InvalidAssumption extends Assumption {
@@ -80,7 +81,11 @@ public class TestInvalidCompilationResult extends CodeInstallerTest {
         }
 
         @Override
-        public boolean equals(Object obj) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object obj) {
             return false;
         }
     }

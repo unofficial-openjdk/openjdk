@@ -57,6 +57,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static jdk.test.lib.process.ProcessTools.executeCommand;
 import static org.testng.Assert.*;
 
+@Bean
 public class ImageModules {
     private static final String JAVA_HOME = System.getProperty("java.home");
     private static final Path JDK_JMODS = Paths.get(JAVA_HOME, "jmods");

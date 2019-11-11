@@ -28,6 +28,7 @@
 
 import java.io.PrintWriter;
 
+@Bean
 public class OversynchronizedTest extends Thread {
     private static PrintWriter writer = new PrintWriter(System.out);
     private static TestObj testObj = new TestObj("This is a test.", writer);

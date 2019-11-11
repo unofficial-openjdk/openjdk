@@ -32,6 +32,7 @@
 
 import java.nio.*;
 
+@Bean
 public class OrderLong extends Order {
     private static void ckLongBuffer(LongBuffer buf, ByteOrder expected) {
         ck(buf.asReadOnlyBuffer().order(), expected);

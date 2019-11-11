@@ -34,6 +34,7 @@ import java.util.concurrent.Flow.Publisher;
 import java.util.concurrent.atomic.AtomicLong;
 
 /* See TckDriver.java for more information */
+@Bean
 public class BodyPublishersOfFile
         extends FlowPublisherVerification<ByteBuffer> {
 

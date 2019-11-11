@@ -38,6 +38,7 @@ import static java.awt.DisplayMode.REFRESH_RATE_UNKNOWN;
  * @run main/othervm NonExistentDisplayModeTest
  * @run main/othervm -Dsun.java2d.noddraw=true NonExistentDisplayModeTest
  */
+@Bean
 public class NonExistentDisplayModeTest {
 
     public static void main(String[] args) {

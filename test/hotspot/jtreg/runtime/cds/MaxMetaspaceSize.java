@@ -37,6 +37,7 @@ import jdk.test.lib.cds.CDSTestUtils;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.Platform;
 
+@Bean
 public class MaxMetaspaceSize {
   public static void main(String[] args) throws Exception {
     ArrayList<String> processArgs = new ArrayList<>();

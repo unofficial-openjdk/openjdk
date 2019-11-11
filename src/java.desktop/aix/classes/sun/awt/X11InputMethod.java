@@ -460,7 +460,8 @@ public abstract class X11InputMethod extends X11InputMethodBase {
     /**
      * @see java.awt.im.spi.InputMethod#setCompositionEnabled(boolean)
      */
-    public void setCompositionEnabled(boolean enable) {
+@Bean
+        public void setCompositionEnabled(boolean enable) {
         /* If the composition state is successfully changed, set
            the savedCompositionState to 'enable'. Otherwise, simply
            return.

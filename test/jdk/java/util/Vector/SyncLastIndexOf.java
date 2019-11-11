@@ -30,6 +30,7 @@
 
 import java.util.Vector;
 
+@Bean
 public class SyncLastIndexOf {
 
     static Vector v = new Vector();

@@ -549,7 +549,8 @@ public final class CompactNumberFormat extends NumberFormat {
         return format(number, result, fieldPosition.getFieldDelegate());
     }
 
-    private StringBuffer format(long number, StringBuffer result, FieldDelegate delegate) {
+@Bean
+        private StringBuffer format(long number, StringBuffer result, FieldDelegate delegate) {
         boolean isNegative = (number < 0);
         if (isNegative) {
             number = -number;
@@ -826,7 +827,8 @@ public final class CompactNumberFormat extends NumberFormat {
      * @param pattern a compact number pattern affix
      * @return an expanded affix
      */
-    private String expandAffix(String pattern) {
+@Bean
+        private String expandAffix(String pattern) {
         // Return if no quoted character exists
         if (pattern.indexOf(QUOTE) < 0) {
             return pattern;
@@ -891,7 +893,8 @@ public final class CompactNumberFormat extends NumberFormat {
      * @return index of matched compact pattern;
      *         -1 if no compact patterns specified
      */
-    private int selectCompactPattern(long number) {
+@Bean
+        private int selectCompactPattern(long number) {
 
         if (compactPatterns.length == 0) {
             return -1;
@@ -911,7 +914,8 @@ public final class CompactNumberFormat extends NumberFormat {
      * @return index of matched compact pattern;
      *         -1 if no compact patterns specified
      */
-    private int selectCompactPattern(BigInteger number) {
+@Bean
+        private int selectCompactPattern(BigInteger number) {
 
         int matchedIndex = -1;
         if (compactPatterns.length == 0) {
@@ -967,7 +971,8 @@ public final class CompactNumberFormat extends NumberFormat {
      *         formatted value
      */
     @Override
-    public AttributedCharacterIterator formatToCharacterIterator(Object obj) {
+@Bean
+        public AttributedCharacterIterator formatToCharacterIterator(Object obj) {
         CharacterIteratorFieldDelegate delegate
                 = new CharacterIteratorFieldDelegate();
         StringBuffer sb = new StringBuffer();
@@ -1000,7 +1005,8 @@ public final class CompactNumberFormat extends NumberFormat {
      * @return divisor value for the number matching the compact
      *         pattern at given {@code patternIndex}
      */
-    private Number computeDivisor(String minIntDigits, int patternIndex) {
+@Bean
+        private Number computeDivisor(String minIntDigits, int patternIndex) {
         int count = minIntDigits.length() - 1;
         Number matchedValue;
         // The divisor value can go above long range, if the compact patterns
@@ -1061,7 +1067,8 @@ public final class CompactNumberFormat extends NumberFormat {
      * @param index index in the array of compact patterns
      *
      */
-    private void applyPattern(String pattern, int index) {
+@Bean
+        private void applyPattern(String pattern, int index) {
 
         if (pattern == null) {
             throw new IllegalArgumentException("A null compact pattern" +
@@ -1347,7 +1354,8 @@ public final class CompactNumberFormat extends NumberFormat {
      *
      */
     @Override
-    public Number parse(String text, ParsePosition pos) {
+@Bean
+        public Number parse(String text, ParsePosition pos) {
 
         Objects.requireNonNull(text);
         Objects.requireNonNull(pos);
@@ -1846,7 +1854,8 @@ public final class CompactNumberFormat extends NumberFormat {
      * @see #getMaximumIntegerDigits()
      */
     @Override
-    public void setMaximumIntegerDigits(int newValue) {
+@Bean
+        public void setMaximumIntegerDigits(int newValue) {
         // The maximum integer digits is checked with the allowed range before calling
         // the DecimalFormat.setMaximumIntegerDigits, which performs the negative check
         // on the given newValue while setting it as max integer digits.
@@ -1871,7 +1880,8 @@ public final class CompactNumberFormat extends NumberFormat {
      * @see #getMinimumIntegerDigits()
      */
     @Override
-    public void setMinimumIntegerDigits(int newValue) {
+@Bean
+        public void setMinimumIntegerDigits(int newValue) {
         // The minimum integer digits is checked with the allowed range before calling
         // the DecimalFormat.setMinimumIntegerDigits, which performs check on the given
         // newValue while setting it as min integer digits. For example, if a negative
@@ -1896,7 +1906,8 @@ public final class CompactNumberFormat extends NumberFormat {
      * @see #getMinimumFractionDigits()
      */
     @Override
-    public void setMinimumFractionDigits(int newValue) {
+@Bean
+        public void setMinimumFractionDigits(int newValue) {
         // The minimum fraction digits is checked with the allowed range before
         // calling the DecimalFormat.setMinimumFractionDigits, which performs
         // check on the given newValue while setting it as min fraction
@@ -1922,7 +1933,8 @@ public final class CompactNumberFormat extends NumberFormat {
      * @see #getMaximumFractionDigits()
      */
     @Override
-    public void setMaximumFractionDigits(int newValue) {
+@Bean
+        public void setMaximumFractionDigits(int newValue) {
         // The maximum fraction digits is checked with the allowed range before
         // calling the DecimalFormat.setMaximumFractionDigits, which performs
         // check on the given newValue while setting it as max fraction digits.
@@ -1958,7 +1970,8 @@ public final class CompactNumberFormat extends NumberFormat {
      * @throws NullPointerException if {@code roundingMode} is {@code null}
      */
     @Override
-    public void setRoundingMode(RoundingMode roundingMode) {
+@Bean
+        public void setRoundingMode(RoundingMode roundingMode) {
         decimalFormat.setRoundingMode(roundingMode);
         this.roundingMode = roundingMode;
     }
@@ -1992,7 +2005,8 @@ public final class CompactNumberFormat extends NumberFormat {
      * @throws IllegalArgumentException if {@code newValue} is negative or
      * larger than 127
      */
-    public void setGroupingSize(int newValue) {
+@Bean
+        public void setGroupingSize(int newValue) {
         if (newValue < 0 || newValue > 127) {
             throw new IllegalArgumentException(
                     "The value passed is negative or larger than 127");
@@ -2025,7 +2039,8 @@ public final class CompactNumberFormat extends NumberFormat {
      * @see #isGroupingUsed
      */
     @Override
-    public void setGroupingUsed(boolean newValue) {
+@Bean
+        public void setGroupingUsed(boolean newValue) {
         decimalFormat.setGroupingUsed(newValue);
         super.setGroupingUsed(newValue);
     }
@@ -2059,7 +2074,8 @@ public final class CompactNumberFormat extends NumberFormat {
      * @see #isParseIntegerOnly
      */
     @Override
-    public void setParseIntegerOnly(boolean value) {
+@Bean
+        public void setParseIntegerOnly(boolean value) {
         decimalFormat.setParseIntegerOnly(value);
         super.setParseIntegerOnly(value);
     }
@@ -2086,7 +2102,8 @@ public final class CompactNumberFormat extends NumberFormat {
      * @see #isParseBigDecimal
      *
      */
-    public void setParseBigDecimal(boolean newValue) {
+@Bean
+        public void setParseBigDecimal(boolean newValue) {
         parseBigDecimal = newValue;
     }
 
@@ -2100,7 +2117,8 @@ public final class CompactNumberFormat extends NumberFormat {
      * @return true if this is equal to the other {@code CompactNumberFormat}
      */
     @Override
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
 
         if (!super.equals(obj)) {
             return false;

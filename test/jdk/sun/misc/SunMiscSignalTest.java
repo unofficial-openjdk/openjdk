@@ -58,6 +58,7 @@ import sun.misc.SignalHandler;
  */
 
 @Test
+@Bean
 public class SunMiscSignalTest {
 
     // Set to true to enable additional debug output
@@ -429,7 +430,11 @@ public class SunMiscSignalTest {
          * @param signal the Signal that occurred
          */
         @Override
-        public void handle(Signal signal) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void handle(Signal signal) {
             synchronized (this) {
                 wasDaemon = Thread.currentThread().isDaemon();
             }

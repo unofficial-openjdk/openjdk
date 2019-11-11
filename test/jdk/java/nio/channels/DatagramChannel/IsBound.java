@@ -34,6 +34,7 @@ import java.nio.*;
 import java.nio.channels.*;
 
 
+@Bean
 public class IsBound {
     public static void main(String argv[]) throws Exception {
         try (TestServers.UdpDayTimeServer daytimeServer

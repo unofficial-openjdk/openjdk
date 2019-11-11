@@ -69,6 +69,7 @@
 
 package compiler.c2.aarch64;
 
+@Bean
 public class TestVolatilesCMSCondMark {
     public static void main(String args[]) throws Throwable
     {

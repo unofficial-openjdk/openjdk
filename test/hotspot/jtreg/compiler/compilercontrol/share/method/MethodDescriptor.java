@@ -63,7 +63,8 @@ public class MethodDescriptor {
     /**
      * Sets custom strings for each element
      */
-    public void setStrings(Triple<String, String, String> strings) {
+@Bean
+        public void setStrings(Triple<String, String, String> strings) {
         aClass.setElement(strings.getFirst());
         aMethod.setElement(strings.getSecond());
         aSignature.setElement(strings.getThird());

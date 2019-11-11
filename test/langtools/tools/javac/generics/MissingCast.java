@@ -33,6 +33,7 @@
 
 import java.util.*;
 
+@Bean
 public class MissingCast {
     protected Vector<String> v = null;
 

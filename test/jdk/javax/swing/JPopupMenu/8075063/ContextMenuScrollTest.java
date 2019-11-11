@@ -116,6 +116,9 @@ public class ContextMenuScrollTest extends JPopupMenu
         undo.setAccelerator(KeyStroke.getKeyStroke("control Z"));
         undo.addActionListener(new ActionListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent event) {
             }
         });
@@ -127,6 +130,9 @@ public class ContextMenuScrollTest extends JPopupMenu
         redo.setAccelerator(KeyStroke.getKeyStroke("control Y"));
         redo.addActionListener(new ActionListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent event) {
             }
         });
@@ -139,6 +145,9 @@ public class ContextMenuScrollTest extends JPopupMenu
         cut.setAccelerator(KeyStroke.getKeyStroke("control X"));
         cut.addActionListener(new ActionListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent event) {
             }
         });
@@ -150,6 +159,9 @@ public class ContextMenuScrollTest extends JPopupMenu
         copy.setAccelerator(KeyStroke.getKeyStroke("control C"));
         copy.addActionListener(new ActionListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent event) {
             }
         });
@@ -161,6 +173,9 @@ public class ContextMenuScrollTest extends JPopupMenu
         paste.setAccelerator(KeyStroke.getKeyStroke("control V"));
         paste.addActionListener(new ActionListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent event) {
             }
         });
@@ -172,6 +187,9 @@ public class ContextMenuScrollTest extends JPopupMenu
         delete.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
         delete.addActionListener(new ActionListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent event) {
             }
         });
@@ -185,6 +203,9 @@ public class ContextMenuScrollTest extends JPopupMenu
         selectAll.setAccelerator(KeyStroke.getKeyStroke("control A"));
         selectAll.addActionListener(new ActionListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent event) {
             }
         });

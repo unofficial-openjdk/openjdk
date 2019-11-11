@@ -26,6 +26,7 @@
   This is test case run by debuggee for running LibprocClient.java.
 */
 
+@Bean
 public class LibprocTest {
    public static void main(String[] args) throws Exception {
       String myStr = "";

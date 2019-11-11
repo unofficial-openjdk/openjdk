@@ -32,6 +32,7 @@ import tools.javac.combo.JavacTemplateTestBase;
 import static java.util.stream.Collectors.toList;
 
 @Test
+@Bean
 public class ExpSwitchNestingTest extends JavacTemplateTestBase {
     private static final String RUNNABLE = "Runnable r = () -> { # };";
     private static final String INT_FN = "java.util.function.IntSupplier r = () -> { # };";
@@ -69,7 +70,11 @@ public class ExpSwitchNestingTest extends JavacTemplateTestBase {
             = List.of(FOR, WHILE, DO, SSWITCH, IF, BLOCK);
 
     @AfterMethod
-    public void dumpTemplateIfError(ITestResult result) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void dumpTemplateIfError(ITestResult result) {
         // Make sure offending template ends up in log file on failure
         if (!result.isSuccess()) {
             System.err.printf("Diagnostics: %s%nTemplate: %s%n", diags.errorKeys(), sourceFiles.stream().map(p -> p.snd).collect(toList()));
@@ -79,14 +84,22 @@ public class ExpSwitchNestingTest extends JavacTemplateTestBase {
     private static String[] PREVIEW_OPTIONS = {"--enable-preview", "-source",
                                                Integer.toString(Runtime.version().feature())};
 
-    private void program(String... constructs) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void program(String... constructs) {
         String s = "class C { static boolean cond = false; static int x = 0; void m() { # } }";
         for (String c : constructs)
             s = s.replace("#", c);
         addSourceFile("C.java", new StringTemplate(s));
     }
 
-    private void assertOK(String... constructs) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertOK(String... constructs) {
         reset();
         addCompileOptions(PREVIEW_OPTIONS);
         program(constructs);
@@ -99,7 +112,11 @@ public class ExpSwitchNestingTest extends JavacTemplateTestBase {
         assertCompileSucceeded();
     }
 
-    private void assertOKWithWarning(String warning, String... constructs) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertOKWithWarning(String warning, String... constructs) {
         reset();
         addCompileOptions(PREVIEW_OPTIONS);
         program(constructs);
@@ -112,7 +129,11 @@ public class ExpSwitchNestingTest extends JavacTemplateTestBase {
         assertCompileSucceededWithWarning(warning);
     }
 
-    private void assertFail(String expectedDiag, String... constructs) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertFail(String expectedDiag, String... constructs) {
         reset();
         addCompileOptions(PREVIEW_OPTIONS);
         program(constructs);

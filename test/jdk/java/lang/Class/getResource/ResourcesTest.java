@@ -41,6 +41,7 @@ import static org.testng.Assert.*;
  */
 
 @Test
+@Bean
 public class ResourcesTest {
 
     private static final String TEST_SRC = System.getProperty("test.src");

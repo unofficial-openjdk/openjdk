@@ -46,7 +46,10 @@ public class bug6940863 {
     private static JScrollPane scrollPane;
 
     private static final Timer timer = new Timer(1000, new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
             boolean failed = scrollPane.getVerticalScrollBar().isShowing() ||
                     scrollPane.getHorizontalScrollBar().isShowing();
 

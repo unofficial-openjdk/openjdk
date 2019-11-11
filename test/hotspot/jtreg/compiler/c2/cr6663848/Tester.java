@@ -286,6 +286,7 @@ class Tester_Class_1 {
 
 }
 
+@Bean
 public class Tester {
     final static long var_36 = (4.4957056E37F < Tester_Class_1.var_22 + 281107777128915968L ? (Tester_Class_1.var_26 = 't') : (char)Tester_Class_1.var_28) - (4654994097042818048L | (byte)(Tester_Class_0.var_2 = (short)(Tester_Class_1.var_26 = ']'))) ^ 349774342780012544L;
 

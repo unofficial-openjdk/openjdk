@@ -41,6 +41,7 @@ import java.nio.CharBuffer;
  * You may think that so elaborate testing for such a part is not necessary.
  * But I actually detected a bug by this program during my porting work.
  */
+@Bean
 public class NormalizerAPITest extends IntlTest {
 
     //

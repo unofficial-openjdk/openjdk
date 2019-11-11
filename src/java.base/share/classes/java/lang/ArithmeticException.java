@@ -38,6 +38,7 @@ package java.lang;
  * @author  unascribed
  * @since   1.0
  */
+@Bean
 public class ArithmeticException extends RuntimeException {
     @java.io.Serial
     private static final long serialVersionUID = 2256477558314496007L;

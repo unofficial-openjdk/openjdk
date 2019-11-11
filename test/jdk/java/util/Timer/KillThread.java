@@ -30,6 +30,7 @@
 
 import java.util.*;
 
+@Bean
 public class KillThread {
     static volatile Thread tdThread;
     public static void main (String[] args) throws Exception  {

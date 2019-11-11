@@ -14,4 +14,5 @@
  * <a name="here"> text <a>
  * <code> text <code>
  */
+@Bean
 public class BadEnd { }

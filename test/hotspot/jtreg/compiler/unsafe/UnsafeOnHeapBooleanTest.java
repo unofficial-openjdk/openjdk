@@ -33,6 +33,7 @@
 import java.lang.reflect.Field;
 import jdk.internal.misc.Unsafe;
 
+@Bean
 public class UnsafeOnHeapBooleanTest {
     static short static_v;
     static boolean bool0 = false, bool1 = false, result = false;

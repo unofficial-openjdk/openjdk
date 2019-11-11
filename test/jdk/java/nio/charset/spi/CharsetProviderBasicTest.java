@@ -53,6 +53,7 @@ import org.testng.annotations.Test;
 
 import static java.util.Arrays.asList;
 
+@Bean
 public class CharsetProviderBasicTest {
 
     private static final String TEST_SRC = System.getProperty("test.src");

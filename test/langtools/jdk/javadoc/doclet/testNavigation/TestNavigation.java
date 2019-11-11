@@ -54,7 +54,11 @@ public class TestNavigation extends JavadocTester {
     }
 
     @Test
-    public void test(Path ignore) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void test(Path ignore) {
         javadoc("-d", "out",
                 "-overview", testSrc("overview.html"),
                 "-sourcepath", testSrc,

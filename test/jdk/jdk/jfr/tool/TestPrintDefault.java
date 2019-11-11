@@ -41,6 +41,7 @@ import jdk.test.lib.process.OutputAnalyzer;
  *
  * @run main/othervm jdk.jfr.tool.TestPrintDefault
  */
+@Bean
 public class TestPrintDefault {
 
     public static void main(String... args) throws Throwable {

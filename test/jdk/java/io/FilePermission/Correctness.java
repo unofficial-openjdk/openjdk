@@ -34,6 +34,7 @@ import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+@Bean
 public class Correctness {
 
     static boolean err = false;

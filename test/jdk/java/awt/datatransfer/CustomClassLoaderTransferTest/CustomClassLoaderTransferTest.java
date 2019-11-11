@@ -18,6 +18,7 @@ import java.io.*;
 import java.net.URL;
 import java.net.URLClassLoader;
 
+@Bean
 public class CustomClassLoaderTransferTest {
     public static class DFTransferable implements Transferable {
         private final DataFlavor df;
@@ -43,7 +44,10 @@ public class CustomClassLoaderTransferTest {
         }
 
         @Override
-        public boolean isDataFlavorSupported(DataFlavor flavor) {
+        @Bean
+@Bean
+@Bean
+            public boolean isDataFlavorSupported(DataFlavor flavor) {
             return df.equals(flavor);
         }
     }

@@ -79,6 +79,7 @@ import java.io.FileInputStream;
  * defining ClassLoader would be the same even though the initiating
  * loader differered, and the resource would only be cached once.
  */
+@Bean
 public class TestBug4179766 extends RBTestFmwk {
     //hash code used by class loaders when sameHash is true
     private static final int SAME_HASH_CODE = 0;
@@ -181,7 +182,11 @@ public class TestBug4179766 extends RBTestFmwk {
      * Print information about an object
      * [message][object's identity][object's class][object's loader][loaders hash][loaders identity]
      */
-    private void printIDInfo(String message, Object o) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void printIDInfo(String message, Object o) {
         if (o == null) {
             return;
         }
@@ -202,7 +207,8 @@ public class TestBug4179766 extends RBTestFmwk {
      * set to be either the loaders identity or 0, allowing several
      * loaders to have the same hashCode value.
      */
-    public class Loader extends ClassLoader {
+    @Bean
+public class Loader extends ClassLoader {
         private int thisHashCode;
 
         /**
@@ -301,7 +307,11 @@ public class TestBug4179766 extends RBTestFmwk {
          * Print information about a class that was loaded
          * [loader identity][message][class identity]
          */
-        private void printInfo(String message, Class c) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void printInfo(String message, Class c) {
             if (c != null) {
                 logln(""+System.identityHashCode(this)+"  "+message+"  "+System.identityHashCode(c));
             } else {

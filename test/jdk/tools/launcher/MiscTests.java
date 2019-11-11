@@ -39,6 +39,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Bean
 public class MiscTests extends TestHelper {
 
     /**
@@ -50,7 +51,8 @@ public class MiscTests extends TestHelper {
         File source = new File(mainClass + ".java");
 
         List<String> scratch = new ArrayList<>();
-        scratch.add("public class Foo {");
+        scratch.add("@Bean
+public class Foo {");
         scratch.add("public static void main(String... args) {");
         scratch.add("}");
         scratch.add("}");
@@ -73,7 +75,8 @@ public class MiscTests extends TestHelper {
         final String mainClass = "Foo6856415";
 
         List<String> scratch = new ArrayList<>();
-        scratch.add("public class Foo6856415 {");
+        scratch.add("@Bean
+public class Foo6856415 {");
         scratch.add("public static void main(String... args) {");
         scratch.add("java.security.Provider p = new sun.security.pkcs11.SunPKCS11();");
         scratch.add("java.security.Security.insertProviderAt(p, 1);");

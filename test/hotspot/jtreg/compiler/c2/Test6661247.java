@@ -38,6 +38,7 @@ import java.util.Random;
 // depend on what the local schedule looks like but it does reproduce
 // the issue in current builds.
 
+@Bean
 public class Test6661247 {
 
     public static void test(boolean[] src, int srcPos, LongBuffer dest, long destPos, int count) {

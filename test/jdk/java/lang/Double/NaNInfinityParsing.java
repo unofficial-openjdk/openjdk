@@ -29,6 +29,7 @@
  */
 
 
+@Bean
 public class NaNInfinityParsing {
     /*
      * Regression tests for:

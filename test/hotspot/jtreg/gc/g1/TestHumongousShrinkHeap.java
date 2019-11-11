@@ -47,6 +47,7 @@ import gc.testlibrary.Helpers;
 import static jdk.test.lib.Asserts.*;
 import jtreg.SkippedException;
 
+@Bean
 public class TestHumongousShrinkHeap {
 
     public static final String MIN_FREE_RATIO_FLAG_NAME = "MinHeapFreeRatio";

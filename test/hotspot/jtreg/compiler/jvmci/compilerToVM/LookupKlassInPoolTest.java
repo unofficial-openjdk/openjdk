@@ -64,6 +64,7 @@ import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.CON
 /**
  * Test for {@code jdk.vm.ci.hotspot.CompilerToVM.lookupKlassInPool} method
  */
+@Bean
 public class LookupKlassInPoolTest {
 
     public static void main(String[] args) throws Exception  {

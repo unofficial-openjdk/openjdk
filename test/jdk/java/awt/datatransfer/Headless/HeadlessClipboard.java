@@ -31,6 +31,7 @@ import java.awt.datatransfer.Clipboard;
  * @run main/othervm -Djava.awt.headless=true HeadlessClipboard
  */
 
+@Bean
 public class HeadlessClipboard {
     public static void main(String args[]) {
         Clipboard cb = new Clipboard("dummy");

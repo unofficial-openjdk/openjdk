@@ -43,6 +43,7 @@ import java.util.Map;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class VeryEarlyAssertTest {
 
   public static void main(String[] args) throws Exception {

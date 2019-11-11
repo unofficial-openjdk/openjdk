@@ -33,6 +33,7 @@ import java.util.Date;
 import java.util.TimeZone;
 import java.text.SimpleDateFormat;
 
+@Bean
 public class TimeZoneLastModified {
     // Tue, 04 Jun 2002 13:56:50.002 GMT
     private static final long TIME = 1023199010002L;

@@ -34,6 +34,7 @@ import java.util.jar.*;
 import java.util.spi.ToolProvider;
 import java.util.zip.ZipFile;
 
+@Bean
 public class MetaInf {
     static final ToolProvider JAR_TOOL = ToolProvider.findFirst("jar")
         .orElseThrow(() ->

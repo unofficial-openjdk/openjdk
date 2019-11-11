@@ -41,6 +41,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+@Bean
 public class Bug8179071 {
 
     // Deprecated and Legacy tags.

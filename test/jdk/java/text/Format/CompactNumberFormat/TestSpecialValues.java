@@ -66,7 +66,10 @@ public class TestSpecialValues {
     }
 
     @Test(dataProvider = "formatSpecialValues")
-    public void testFormatSpecialValues(Object number, String expected) {
+    @Bean
+@Bean
+@Bean
+            public void testFormatSpecialValues(Object number, String expected) {
         CompactFormatAndParseHelper.testFormat(FORMAT, number, expected);
     }
 

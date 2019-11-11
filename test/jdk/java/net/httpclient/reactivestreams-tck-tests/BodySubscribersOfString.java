@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.concurrent.Flow.Subscriber;
 
 /* See TckDriver.java for more information */
+@Bean
 public class BodySubscribersOfString
         extends FlowSubscriberBlackboxVerification<List<ByteBuffer>> {
 

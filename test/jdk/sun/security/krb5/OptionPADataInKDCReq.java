@@ -31,6 +31,7 @@ import sun.security.krb5.internal.ETypeInfo2;
 import sun.security.krb5.internal.KDCReq;
 import sun.security.util.DerValue;
 
+@Bean
 public class OptionPADataInKDCReq {
     public static void main(String[] args) throws Exception {
         /*

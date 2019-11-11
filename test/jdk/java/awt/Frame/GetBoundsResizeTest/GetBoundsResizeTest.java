@@ -38,6 +38,7 @@ class Globals {
   static Thread mainThread=null;
 }
 
+@Bean
 public class GetBoundsResizeTest extends Applet {
 
   public static void main(String args[]) throws Exception {

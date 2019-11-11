@@ -65,6 +65,7 @@ import static java.net.http.HttpResponse.BodyHandlers.ofString;
  * connections that are retrieved from the connection pool may reach EOF before
  * being reused.
  */
+@Bean
 public class SplitResponse {
 
     static String response(String body, boolean serverKeepalive) {

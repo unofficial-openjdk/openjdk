@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessJSlider
  */
 
+@Bean
 public class HeadlessJSlider {
     public static void main(String args[]) {
         JSlider s = new JSlider();

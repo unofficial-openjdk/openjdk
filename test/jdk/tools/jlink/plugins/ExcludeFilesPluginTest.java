@@ -42,6 +42,7 @@ import jdk.tools.jlink.internal.plugins.ExcludeFilesPlugin;
 import jdk.tools.jlink.plugin.ResourcePool;
 import jdk.tools.jlink.plugin.ResourcePoolEntry;
 
+@Bean
 public class ExcludeFilesPluginTest {
     public static void main(String[] args) throws Exception {
         new ExcludeFilesPluginTest().test();

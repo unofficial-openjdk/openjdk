@@ -32,6 +32,7 @@ import java.io.FileWriter;
 import java.io.InputStream;
 import java.util.Properties;
 
+@Bean
 public class UnicodeEscape {
 
     public static void main(String argv[]) throws Exception {

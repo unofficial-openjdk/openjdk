@@ -48,6 +48,7 @@ import java.util.Objects;
 import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
 
+@Bean
 public class DefaultParamNames {
 
     public static void main(String[] args) {

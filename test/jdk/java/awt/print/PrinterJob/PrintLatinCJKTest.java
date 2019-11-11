@@ -81,7 +81,10 @@ public class PrintLatinCJKTest implements Printable, ActionListener {
         return Printable.PAGE_EXISTS;
     }
 
-    public void actionPerformed(ActionEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
         try {
             PrinterJob job = PrinterJob.getPrinterJob();
             job.setPrintable(testInstance);

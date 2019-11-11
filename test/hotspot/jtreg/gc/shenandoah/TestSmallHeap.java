@@ -34,6 +34,7 @@
  * @run main/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -Xmx4m  TestSmallHeap
  */
 
+@Bean
 public class TestSmallHeap {
 
     public static void main(String[] args) throws Exception {

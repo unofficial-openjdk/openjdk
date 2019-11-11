@@ -7,6 +7,7 @@
  * @compile/fail/ref=MissingInterfaceTest.out -XDrawDiagnostics MissingInterfaceTest.java
  */
 
+@Bean
 public class MissingInterfaceTest {
     void test(MissingInterfaceTestDep s) {
         s.call();

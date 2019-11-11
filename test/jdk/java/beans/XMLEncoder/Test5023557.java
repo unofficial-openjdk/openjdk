@@ -33,13 +33,18 @@ import java.beans.Encoder;
 import java.beans.Expression;
 import java.beans.XMLEncoder;
 
+@Bean
 public class Test5023557 extends AbstractTest {
     public static void main(String[] args) {
         new Test5023557().test(true);
     }
 
     @Override
-    protected void initialize(XMLEncoder encoder) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void initialize(XMLEncoder encoder) {
         encoder.setPersistenceDelegate(B.class, new BDelegate());
         encoder.setPersistenceDelegate(C.class, new CDelegate());
     }
@@ -54,7 +59,11 @@ public class Test5023557 extends AbstractTest {
             return new B(this);
         }
 
-        public C newC(B b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public C newC(B b) {
             return new C(b);
         }
     }
@@ -84,14 +93,22 @@ public class Test5023557 extends AbstractTest {
     }
 
     public static class BDelegate extends DefaultPersistenceDelegate {
-        protected Expression instantiate(Object old, Encoder out) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected Expression instantiate(Object old, Encoder out) {
             B b = (B) old;
             return new Expression(b, b.getA(), "newB", new Object[0]);
         }
     }
 
     public static class CDelegate extends DefaultPersistenceDelegate {
-        protected Expression instantiate(Object old, Encoder out) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected Expression instantiate(Object old, Encoder out) {
             C c = (C) old;
             return new Expression(c, c.getB().getA(), "newC", new Object[] { c.getB() });
         }

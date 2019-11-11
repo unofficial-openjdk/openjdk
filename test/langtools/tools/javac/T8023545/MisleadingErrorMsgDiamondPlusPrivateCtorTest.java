@@ -5,6 +5,7 @@
  * @compile/fail/ref=MisleadingErrorMsgDiamondPlusPrivateCtorTest.out -XDrawDiagnostics MisleadingErrorMsgDiamondPlusPrivateCtorTest.java
  */
 
+@Bean
 public class MisleadingErrorMsgDiamondPlusPrivateCtorTest {
     public void foo() {
         MyClass<Object> foo = new MyClass<>();

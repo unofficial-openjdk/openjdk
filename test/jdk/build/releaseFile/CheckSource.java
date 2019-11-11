@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Bean
 public class CheckSource {
 
     public static final String SRC_HASH_REGEXP = ":((hg)|(git)):[a-z0-9]*\\+?";
@@ -46,7 +47,11 @@ public class CheckSource {
         readFile(dataFile, isOpenJDK);
     }
 
-    private void readFile(String fileName, boolean isOpenJDK) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void readFile(String fileName, boolean isOpenJDK) {
         String fishForSOURCE = null;
         String implementor = null;
 

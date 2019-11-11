@@ -48,6 +48,7 @@ class NullLocalVariableTarg {
     }
 }
 
+@Bean
 public class NullLocalVariable extends JdbTest {
     public static void main(String argv[]) {
         new NullLocalVariable().run();

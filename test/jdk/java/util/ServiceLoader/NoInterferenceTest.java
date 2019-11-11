@@ -50,6 +50,7 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
+@Bean
 public class NoInterferenceTest {
 
     private static final String TEST_SRC = System.getProperty("test.src");

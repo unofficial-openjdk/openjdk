@@ -29,6 +29,7 @@
 import java.text.*;
 import java.util.*;
 
+@Bean
 public class Bug7200119 {
     public static void main(String[] args) {
         List<Locale> avail = Arrays.asList(Collator.getAvailableLocales());

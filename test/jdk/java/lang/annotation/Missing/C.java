@@ -24,6 +24,7 @@
 /**
  * Class to have a missing annotation applied for running MissingTest.
  */
+@Bean
 public class C {
     public void method1(@Missing @Marker Object param1) {
         return;

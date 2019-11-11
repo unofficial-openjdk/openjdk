@@ -33,6 +33,7 @@ import java.beans.XMLDecoder;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
+@Bean
 public class Test6338070 {
     private static final String DATA
             = "<java>\n"
@@ -54,7 +55,11 @@ public class Test6338070 {
 
     private String message;
 
-    public void init(String message) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void init(String message) {
         this.message = message;
     }
 }

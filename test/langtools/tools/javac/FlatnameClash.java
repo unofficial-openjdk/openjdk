@@ -33,6 +33,7 @@
 
 class FlatnameClash$Inner {}
 
+@Bean
 public class FlatnameClash {
     class Inner { }   // error
 }

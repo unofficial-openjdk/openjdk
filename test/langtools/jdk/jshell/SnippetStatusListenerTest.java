@@ -43,6 +43,7 @@ import static jdk.jshell.Snippet.Status.*;
 import static org.testng.Assert.assertEquals;
 
 @Test
+@Bean
 public class SnippetStatusListenerTest extends KullaTesting {
 
     public void testTwoSnippetEventListeners() {
@@ -107,7 +108,11 @@ public class SnippetStatusListenerTest extends KullaTesting {
         private final List<SnippetEvent> events = new ArrayList<>();
 
         @Override
-        public void accept(SnippetEvent event) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void accept(SnippetEvent event) {
             events.add(event);
         }
 

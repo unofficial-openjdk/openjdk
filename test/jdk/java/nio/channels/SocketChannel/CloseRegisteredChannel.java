@@ -32,6 +32,7 @@ import java.nio.*;
 import java.nio.channels.*;
 import java.net.*;
 
+@Bean
 public class CloseRegisteredChannel {
     public static void main(String[] args) throws Exception {
         ServerSocketChannel server = ServerSocketChannel.open();

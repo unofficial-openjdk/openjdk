@@ -9,6 +9,7 @@ import java.util.*;
  * @summary ensure we can't ping external hosts via loopback if
  */
 
+@Bean
 public class IsReachableViaLoopbackTest {
     public static void main(String[] args) {
         try {

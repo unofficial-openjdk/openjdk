@@ -56,6 +56,7 @@ import static org.testng.Assert.assertEquals;
  * @run testng/othervm LineSubscribersAndSurrogatesTest
  */
 
+@Bean
 public class LineSubscribersAndSurrogatesTest {
 
 
@@ -307,11 +308,19 @@ public class LineSubscribersAndSurrogatesTest {
         protected volatile String text;
         protected volatile RuntimeException error;
 
-        public void onSubscribe(Flow.Subscription subscription) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onSubscribe(Flow.Subscription subscription) {
             this.subscription = subscription;
             subscription.request(Long.MAX_VALUE);
         }
-        public void onError(Throwable throwable) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onError(Throwable throwable) {
             System.out.println(this + " onError: " + throwable);
             error = new RuntimeException(throwable);
         }
@@ -331,7 +340,11 @@ public class LineSubscribersAndSurrogatesTest {
     static class StringSubscriber extends AbstractSubscriber
             implements Flow.Subscriber<String>, Supplier<String>
     {
-        @Override public void onNext(String item) {
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(String item) {
             System.out.println(this + " onNext: \""
                     + item.replace("\n","\\n")
                           .replace("\r", "\\r")
@@ -344,7 +357,11 @@ public class LineSubscribersAndSurrogatesTest {
     static class CharSequenceSubscriber extends AbstractSubscriber
             implements Flow.Subscriber<CharSequence>, Supplier<String>
     {
-        @Override public void onNext(CharSequence item) {
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(CharSequence item) {
             System.out.println(this + " onNext: \""
                     + item.toString().replace("\n","\\n")
                     .replace("\r", "\\r")
@@ -357,7 +374,11 @@ public class LineSubscribersAndSurrogatesTest {
     static class ObjectSubscriber extends AbstractSubscriber
             implements Flow.Subscriber<Object>, Supplier<String>
     {
-        @Override public void onNext(Object item) {
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(Object item) {
             System.out.println(this + " onNext: \""
                     + item.toString().replace("\n","\\n")
                     .replace("\r", "\\r")

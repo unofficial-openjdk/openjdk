@@ -38,6 +38,7 @@ package compiler.unsafe;
 
 import jdk.internal.misc.Unsafe;
 
+@Bean
 public class TestUnsafeLoadWithZeroAddress {
     static final Unsafe UNSAFE = Unsafe.getUnsafe();
     static boolean f;
@@ -74,7 +75,11 @@ public class TestUnsafeLoadWithZeroAddress {
         }
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         test1();
         test2();
         test3();

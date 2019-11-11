@@ -105,7 +105,8 @@ public class T6550655 {
 
         String keyToIgnore = "compiler.err.attribute.value.must.be.constant";
 
-        public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+@Bean
+            public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
             String expectedCode = expectedKeys[actionKind.ordinal()][testKind.ordinal()];
             if (!diagnostic.getCode().equals(keyToIgnore) &&
                     !diagnostic.getCode().equals(expectedCode)) {
@@ -184,7 +185,8 @@ public class T6550655 {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+@Bean
+            public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return source;
         }
     }

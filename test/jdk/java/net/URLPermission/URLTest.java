@@ -41,6 +41,7 @@ import com.sun.net.httpserver.*;
 import javax.net.ssl.*;
 import jdk.test.lib.net.SimpleSSLContext;
 
+@Bean
 public class URLTest {
 
     static boolean failed;
@@ -294,15 +295,27 @@ public class URLTest {
             perms.add(new RuntimePermission("setFactory"));
         }
 
-        public PermissionCollection getPermissions(ProtectionDomain domain) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public PermissionCollection getPermissions(ProtectionDomain domain) {
             return perms;
         }
 
-        public PermissionCollection getPermissions(CodeSource codesource) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public PermissionCollection getPermissions(CodeSource codesource) {
             return perms;
         }
 
-        public boolean implies(ProtectionDomain domain, Permission perm) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean implies(ProtectionDomain domain, Permission perm) {
             return perms.implies(perm) || DEFAULT_POLICY.implies(domain, perm);
         }
     }

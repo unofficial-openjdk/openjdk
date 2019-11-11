@@ -50,6 +50,7 @@ import sun.hotspot.code.BlobType;
 
 import java.util.ArrayList;
 
+@Bean
 public class RandomAllocationTest implements Runnable {
     private static final long CODE_CACHE_SIZE
             = Helper.WHITE_BOX.getUintxVMFlag("ReservedCodeCacheSize");

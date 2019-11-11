@@ -49,6 +49,7 @@ import javax.tools.SimpleJavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 
+@Bean
 public class TestGetElementReference {
 
     public static void main(String... args) throws IOException {
@@ -102,7 +103,11 @@ public class TestGetElementReference {
         final TreePath[] result = new TreePath[1];
 
         new TreePathScanner<Void, Void>() {
-            @Override public Void scan(Tree node, Void p) {
+            @Override @Bean
+@Bean
+@Bean
+@Bean
+                public Void scan(Tree node, Void p) {
                 if (   node != null
                     && trees.getSourcePositions().getStartPosition(cut, node) <= pos
                     && pos <= trees.getSourcePositions().getEndPosition(cut, node)) {
@@ -131,7 +136,11 @@ public class TestGetElementReference {
             super(URI.create("myfo:/Test.java"), JavaFileObject.Kind.SOURCE);
             this.text = text;
         }
-        @Override public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return text;
         }
     }

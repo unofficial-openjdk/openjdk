@@ -28,6 +28,7 @@
  */
 import java.text.*;
 
+@Bean
 public class Bug7041232 {
 
     public static void main(String[] args) {

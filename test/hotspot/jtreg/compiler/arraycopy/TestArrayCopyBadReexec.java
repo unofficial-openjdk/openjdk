@@ -32,6 +32,7 @@
 
 package compiler.arraycopy;
 
+@Bean
 public class TestArrayCopyBadReexec {
 
     static int val;
@@ -49,7 +50,11 @@ public class TestArrayCopyBadReexec {
         return dest;
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         int[] src = new int[10];
         int[] res = null;
         boolean success = true;

@@ -42,6 +42,7 @@ import java.util.Set;
 import javax.management.Descriptor;
 import javax.management.ImmutableDescriptor;
 
+@Bean
 public class ImmutableDescriptorSerialTest {
     public static void main(String[] args) throws Exception {
         System.out.println("Test that ImmutableDescriptor.EMPTY_DESCRIPTOR " +

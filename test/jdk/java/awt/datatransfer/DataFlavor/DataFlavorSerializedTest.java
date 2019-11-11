@@ -33,6 +33,7 @@
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 
+@Bean
 public class DataFlavorSerializedTest {
      public static boolean finished = false;
      static DataFlavor df = null;

@@ -31,6 +31,7 @@ import java.net.InetSocketAddress;
 import com.sun.net.httpserver.HttpServer;
 
 
+@Bean
 public class StopNoStartTest {
 
     public static void main(String[] args) throws Exception {

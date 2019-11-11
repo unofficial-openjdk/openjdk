@@ -170,7 +170,11 @@
  *
  *     class Example {
  *         // override equals
- *         public boolean equals(Object x) {
+ *         @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object x) {
  *              // call Object's version of equals
  *              return super.equals(x);
  *         }
@@ -254,7 +258,11 @@ public class Generator extends AbstractGenerator {
         super(args);
     }
 
-    protected Checker getChecker(Class paramClass, Class targetClass) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected Checker getChecker(Class paramClass, Class targetClass) {
         return new Checker(paramClass, targetClass);
     }
 

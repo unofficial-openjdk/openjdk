@@ -46,6 +46,7 @@ import java.util.spi.ToolProvider;
 import static jdk.test.lib.Asserts.assertEquals;
 import static jdk.test.lib.Asserts.assertTrue;
 
+@Bean
 public class JImageExtractTest extends JImageCliTest {
     private static final ToolProvider JLINK_TOOL = ToolProvider.findFirst("jlink")
         .orElseThrow(() ->

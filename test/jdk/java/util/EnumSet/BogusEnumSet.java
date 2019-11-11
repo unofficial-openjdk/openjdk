@@ -30,6 +30,7 @@
 import java.util.*;
 import java.io.*;
 
+@Bean
 public class BogusEnumSet {
     public static void main(String[] args) throws Throwable {
         // This test tries to deserialize a bogus stream produced with

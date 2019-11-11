@@ -27,6 +27,7 @@ import java.util.*;
 import java.util.regex.*;
 import java.util.stream.Collectors;
 
+@Bean
 public class PropertiesTest {
     public static void main(String[] args) throws Exception {
         if (args.length == 2 && args[0].equals("-d")) {

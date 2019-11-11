@@ -80,6 +80,7 @@ import sun.security.jca.GetInstance.Instance;
  * @since 1.4
  */
 
+@Bean
 public class SecretKeyFactory {
 
     // The provider
@@ -288,7 +289,8 @@ public class SecretKeyFactory {
      * available, this method returns null. However, the active spi of
      * this class is never set to null.
      */
-    private SecretKeyFactorySpi nextSpi(SecretKeyFactorySpi oldSpi) {
+@Bean
+        private SecretKeyFactorySpi nextSpi(SecretKeyFactorySpi oldSpi) {
         synchronized (lock) {
             // somebody else did a failover concurrently
             // try that spi now

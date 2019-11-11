@@ -26,6 +26,7 @@
  * @bug 8004102
  * @summary Add support for array constructor references
  */
+@Bean
 public class MethodReference59 {
 
     static int assertionCount = 0;

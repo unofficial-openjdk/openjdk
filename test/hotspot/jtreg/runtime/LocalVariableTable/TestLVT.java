@@ -36,6 +36,7 @@ import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 import java.util.*;
 
+@Bean
 public class TestLVT {
     public static void main(String[] args) throws Exception {
         test();  // Test good LVT in this test

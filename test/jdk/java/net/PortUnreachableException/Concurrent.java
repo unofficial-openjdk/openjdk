@@ -31,6 +31,7 @@
  */
 import java.net.*;
 
+@Bean
 public class Concurrent implements Runnable {
 
     DatagramSocket s;

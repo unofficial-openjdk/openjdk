@@ -30,6 +30,7 @@ import java.io.File;
  * @run main/othervm -Djava.library.path=. VMThreadDlopen
  */
 
+@Bean
 public class VMThreadDlopen {
     public static void main(String[] args) throws Exception {
         File file = new File("libbroken.so");

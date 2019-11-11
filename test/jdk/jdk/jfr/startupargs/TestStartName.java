@@ -37,6 +37,7 @@ import jdk.test.lib.process.ProcessTools;
  * @library /test/lib /test/jdk
  * @run main jdk.jfr.startupargs.TestStartName
  */
+@Bean
 public class TestStartName {
 
     public static class TestName {

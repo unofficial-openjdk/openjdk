@@ -36,6 +36,7 @@
 
 package gc.epsilon;
 
+@Bean
 public class TestAlwaysPretouch {
   public static void main(String[] args) throws Exception {
     // everything should happen before entry point

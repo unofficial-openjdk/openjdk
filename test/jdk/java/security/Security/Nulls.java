@@ -32,6 +32,7 @@ import java.util.*;
 
 import java.security.*;
 
+@Bean
 public class Nulls {
 
     public static void main(String[] args) throws Exception {

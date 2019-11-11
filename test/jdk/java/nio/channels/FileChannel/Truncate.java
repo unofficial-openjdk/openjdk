@@ -40,6 +40,7 @@ import java.util.Random;
  * Testing FileChannel's truncate method.
  */
 
+@Bean
 public class Truncate {
     private static final Random generator = new Random();
 

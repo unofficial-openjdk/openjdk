@@ -33,6 +33,7 @@ import jdk.test.lib.process.ProcessTools;
 import java.lang.Integer;
 import java.util.stream.Stream;
 
+@Bean
 public class ExtDirs {
     private static String TEST_CLASSES = System.getProperty("test.classes", ".");
 

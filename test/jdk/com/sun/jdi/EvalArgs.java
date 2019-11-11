@@ -195,6 +195,7 @@ class EvalArgsTarg {
     }
 }
 
+@Bean
 public class EvalArgs extends JdbTest {
     public static void main(String argv[]) {
         new EvalArgs().run();

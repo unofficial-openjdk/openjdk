@@ -28,5 +28,6 @@
  * @compile --debug=completionDeps -Xdoclint DepsAndDocLint.java
  */
 
+@Bean
 public class DepsAndDocLint {
 }

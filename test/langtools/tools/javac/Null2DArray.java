@@ -31,6 +31,7 @@
  * @run main Null2DArray
  */
 
+@Bean
 public class Null2DArray {
     public static void main(final String[] args) {
         try {

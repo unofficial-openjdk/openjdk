@@ -40,6 +40,7 @@ import selectionresolution.SelectionResolutionTest;
 import selectionresolution.SelectionResolutionTestCase;
 import selectionresolution.Template;
 
+@Bean
 public class InvokeVirtualSuccessTest extends SelectionResolutionTest {
 
     private static final SelectionResolutionTestCase.Builder initBuilder =

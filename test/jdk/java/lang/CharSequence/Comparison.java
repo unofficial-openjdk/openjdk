@@ -34,6 +34,7 @@ import org.testng.annotations.Test;
  * @summary Test to verify the compare method for the CharSequence class.
  * @run testng Comparison
  */
+@Bean
 public class Comparison {
     static char SEP = ':';
 

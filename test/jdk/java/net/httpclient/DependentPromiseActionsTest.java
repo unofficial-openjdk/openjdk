@@ -92,6 +92,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+@Bean
 public class DependentPromiseActionsTest implements HttpServerAdapters {
 
     SSLContext sslContext;
@@ -131,7 +132,11 @@ public class DependentPromiseActionsTest implements HttpServerAdapters {
         }
 
         @Override
-        public void execute(Runnable command) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void execute(Runnable command) {
             long id = tasks.incrementAndGet();
             executor.execute(() -> {
                 try {
@@ -373,6 +378,10 @@ public class DependentPromiseActionsTest implements HttpServerAdapters {
         public Consumer<Where> select(Consumer<Where> consumer) {
             return new Consumer<Where>() {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void accept(Where where) {
                     if (Where.this == where) {
                         consumer.accept(where);
@@ -556,7 +565,11 @@ public class DependentPromiseActionsTest implements HttpServerAdapters {
     static final class SemaphoreStaller implements Staller {
         final Semaphore sem = new Semaphore(1);
         @Override
-        public void accept(Where where) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void accept(Where where) {
             sem.acquireUninterruptibly();
         }
 
@@ -612,7 +625,11 @@ public class DependentPromiseActionsTest implements HttpServerAdapters {
         }
 
         @Override
-        public void onSubscribe(Flow.Subscription subscription) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onSubscribe(Flow.Subscription subscription) {
             //out.println("onSubscribe ");
             onSubscribeCalled = true;
             stalling.accept(Where.ON_SUBSCRIBE);
@@ -620,7 +637,11 @@ public class DependentPromiseActionsTest implements HttpServerAdapters {
         }
 
         @Override
-        public void onNext(List<ByteBuffer> item) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(List<ByteBuffer> item) {
             // out.println("onNext " + item);
             assertTrue(onSubscribeCalled);
             stalling.accept(Where.ON_NEXT);
@@ -628,7 +649,11 @@ public class DependentPromiseActionsTest implements HttpServerAdapters {
         }
 
         @Override
-        public void onError(Throwable throwable) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onError(Throwable throwable) {
             //out.println("onError");
             assertTrue(onSubscribeCalled);
             stalling.accept(Where.ON_ERROR);

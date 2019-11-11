@@ -34,7 +34,8 @@ import java.util.concurrent.CyclicBarrier;
  * <li>
  *     Extend RacingThreadsTest class in order to provide the test
  *     specific variables and/or code, e.g., <br>
- *     public class MyRacingThreadsTest extends RacingThreadsTest
+ *     @Bean
+public class MyRacingThreadsTest extends RacingThreadsTest
  * <li>
  *     Use
  *     "new MyRacingThreadsTest(name, n_threads, n_loops, n_secs)"
@@ -151,6 +152,7 @@ import java.util.concurrent.CyclicBarrier;
  * is printed, a "Test FAILed" message is printed and a RuntimeException
  * is thrown.
  */
+@Bean
 public class RacingThreadsTest {
     /**
      * name of the test
@@ -239,7 +241,11 @@ public class RacingThreadsTest {
      * Set done flag to specified value.
      * @param v the new done flag value
      */
-    public void setDone(boolean v) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setDone(boolean v) {
         done = v;
     }
 
@@ -287,7 +293,11 @@ public class RacingThreadsTest {
      * Set verbose flag to specified value.
      * @param v the new verbose flag value
      */
-    public void setVerbose(boolean v) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setVerbose(boolean v) {
         verbose = v;
     }
 
@@ -298,7 +308,11 @@ public class RacingThreadsTest {
      * @param workers the WorkerThreads for executing the race
      * @exception RuntimeException the test has failed
      */
-    public void runTest(DriverThread driver, WorkerThread[] workers) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void runTest(DriverThread driver, WorkerThread[] workers) {
         driver.run(workers);
 
         try {
@@ -323,7 +337,11 @@ public class RacingThreadsTest {
      * @param t the Thread that caught the exception
      * @param e the Exception that was caught
      */
-    public void unexpectedException(Thread t, Exception e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void unexpectedException(Thread t, Exception e) {
         System.err.println(t.getName() + ": ERROR: unexpected exception: " + e);
         incAndGetFailCnt();  // ignore return
     }
@@ -338,7 +356,11 @@ public class RacingThreadsTest {
      * Called by the DriverThread before WorkerThreads are started.
      * @param dt the DriverThread
      */
-    public void oneTimeDriverInit(DriverThread dt) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void oneTimeDriverInit(DriverThread dt) {
         if (verbose)
             System.out.println(dt.getName() + ": oneTimeDriverInit() called");
     }
@@ -352,7 +374,11 @@ public class RacingThreadsTest {
      * WorkerThread's perRaceWorkerInit() call.
      * @param wt the WorkerThread
      */
-    public void oneTimeWorkerInit(WorkerThread wt) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void oneTimeWorkerInit(WorkerThread wt) {
         if (verbose)
             System.out.println(wt.getName() + ": oneTimeWorkerInit() called");
     }
@@ -365,7 +391,11 @@ public class RacingThreadsTest {
      * execute in parallel with perRaceWorkerEpilog().
      * @param dt the DriverThread
      */
-    public void perRaceDriverInit(DriverThread dt) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void perRaceDriverInit(DriverThread dt) {
         if (verbose)
             System.out.println(dt.getName() + ": perRaceDriverInit() called");
     }
@@ -382,7 +412,11 @@ public class RacingThreadsTest {
      * perRaceWorkerEpilog() call.
      * @param wt the WorkerThread
      */
-    public void perRaceWorkerInit(WorkerThread wt) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void perRaceWorkerInit(WorkerThread wt) {
         if (verbose)
             System.out.println(wt.getName() + ": perRaceWorkerInit() called");
     }
@@ -392,7 +426,11 @@ public class RacingThreadsTest {
      * after it has been released from startBarrier.
      * @param wt the WorkerThread
      */
-    public void executeRace(WorkerThread wt) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void executeRace(WorkerThread wt) {
         if (verbose)
             System.out.println(wt.getName() + ": executeRace() called");
     }
@@ -403,7 +441,11 @@ public class RacingThreadsTest {
      * DriverThread checks in with resetBarrier.
      * @param dt the DriverThread
      */
-    public void checkRaceResults(DriverThread dt) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void checkRaceResults(DriverThread dt) {
         if (verbose)
             System.out.println(dt.getName() + ": checkRaceResults() called");
     }
@@ -418,7 +460,11 @@ public class RacingThreadsTest {
      * oneTimeWorkerEpilog().
      * @param dt the DriverThread
      */
-    public void perRaceDriverEpilog(DriverThread dt) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void perRaceDriverEpilog(DriverThread dt) {
         if (verbose)
             System.out.println(dt.getName() + ": perRaceDriverEpilog() called");
     }
@@ -435,7 +481,11 @@ public class RacingThreadsTest {
      * WorkerThread's oneTimeWorkerEpilog() call.
      * @param wt the WorkerThread
      */
-    public void perRaceWorkerEpilog(WorkerThread wt) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void perRaceWorkerEpilog(WorkerThread wt) {
         if (verbose)
             System.out.println(wt.getName() + ": perRaceWorkerEpilog() called");
     }
@@ -449,7 +499,11 @@ public class RacingThreadsTest {
      * oneTimeWorkerEpilog() call.
      * @param wt the WorkerThread
      */
-    public void oneTimeWorkerEpilog(WorkerThread wt) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void oneTimeWorkerEpilog(WorkerThread wt) {
         if (verbose)
             System.out.println(wt.getName() + ": oneTimeWorkerEpilog() called");
     }
@@ -460,7 +514,11 @@ public class RacingThreadsTest {
      * oneTimeWorkerEpilog().
      * @param dt the DriverThread
      */
-    public void oneTimeDriverEpilog(DriverThread dt) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void oneTimeDriverEpilog(DriverThread dt) {
         if (verbose)
             System.out.println(dt.getName() + ": oneTimeDriverEpilog() called");
     }
@@ -484,7 +542,11 @@ public class RacingThreadsTest {
             this.test = test;
         }
 
-        private void run(WorkerThread[] workers) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void run(WorkerThread[] workers) {
             System.out.println(getName() + ": is starting.");
             System.out.println(getName() + ": # WorkerThreads: " + test.N_THREADS);
             System.out.println(getName() + ": max # loops: " + test.N_LOOPS);

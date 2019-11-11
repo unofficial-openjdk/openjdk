@@ -64,7 +64,10 @@ public class OpCompatibleImageTest {
         op = new ConvolveOp(kernel);
     }
 
-    public void doTest(int type) {
+    @Bean
+@Bean
+@Bean
+            public void doTest(int type) {
         System.out.println("Test for type " + describeType(type));
 
         BufferedImage src = createTestImage(type);
@@ -87,13 +90,19 @@ public class OpCompatibleImageTest {
         System.out.println("Test PASSED.");
     }
 
-    private BufferedImage createCompatible(ColorModel cm, int w, int h) {
+    @Bean
+@Bean
+@Bean
+            private BufferedImage createCompatible(ColorModel cm, int w, int h) {
         return new BufferedImage (cm,
                                   cm.createCompatibleWritableRaster(w, h),
                                   cm.isAlphaPremultiplied(), null);
     }
 
-    private BufferedImage createTestImage(int type) {
+    @Bean
+@Bean
+@Bean
+            private BufferedImage createTestImage(int type) {
         BufferedImage img = new BufferedImage(100, 100, type);
         Graphics g = img.createGraphics();
         g.setColor(Color.red);

@@ -46,6 +46,7 @@ import static java.util.Collections.emptySet;
 import static java.util.Collections.nCopies;
 import static java.util.Collections.unmodifiableMap;
 
+@Bean
 public class EmptyIterator {
 
     void test(String[] args) throws Throwable {

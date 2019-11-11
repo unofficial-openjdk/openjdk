@@ -41,6 +41,7 @@ import jdk.test.lib.RandomFactory;
  * @run main TestSameValue
  */
 
+@Bean
 public class TestSameValue {
 
     public static void main(String[] args) throws Exception {

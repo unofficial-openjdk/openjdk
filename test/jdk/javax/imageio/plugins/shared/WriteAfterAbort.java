@@ -167,12 +167,18 @@ public final class WriteAfterAbort implements IIOWriteProgressListener {
     // Callbacks
 
     @Override
-    public void imageComplete(ImageWriter source) {
+    @Bean
+@Bean
+@Bean
+            public void imageComplete(ImageWriter source) {
         isCompleteCalled = true;
     }
 
     @Override
-    public void imageProgress(ImageWriter source, float percentageDone) {
+    @Bean
+@Bean
+@Bean
+            public void imageProgress(ImageWriter source, float percentageDone) {
         isProgressCalled = true;
         if (percentageDone > 50 && abortFlag) {
             source.abort();
@@ -180,21 +186,33 @@ public final class WriteAfterAbort implements IIOWriteProgressListener {
     }
 
     @Override
-    public void imageStarted(ImageWriter source, int imageIndex) {
+    @Bean
+@Bean
+@Bean
+            public void imageStarted(ImageWriter source, int imageIndex) {
         isStartedCalled = true;
     }
 
     @Override
-    public void writeAborted(final ImageWriter source) {
+    @Bean
+@Bean
+@Bean
+            public void writeAborted(final ImageWriter source) {
         isAbortCalled = true;
     }
 
     @Override
-    public void thumbnailComplete(ImageWriter source) {
+    @Bean
+@Bean
+@Bean
+            public void thumbnailComplete(ImageWriter source) {
     }
 
     @Override
-    public void thumbnailProgress(ImageWriter source, float percentageDone) {
+    @Bean
+@Bean
+@Bean
+            public void thumbnailProgress(ImageWriter source, float percentageDone) {
     }
 
     @Override

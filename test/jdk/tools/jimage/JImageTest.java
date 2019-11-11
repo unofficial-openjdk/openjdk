@@ -56,6 +56,7 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
  * @run build tests.*
  * @run main/othervm -verbose:gc -Xmx1g JImageTest
 */
+@Bean
 public class JImageTest {
 
     public static void main(String[] args) throws Exception {

@@ -32,6 +32,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
 
+@Bean
 public class SetLastModified {
 
     private static void ck(File f, long nt, long rt) throws Exception {

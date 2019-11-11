@@ -31,6 +31,7 @@ import java.lang.ref.*;
 import java.util.Vector;
 
 
+@Bean
 public class Basic {
 
     static ReferenceQueue q = new ReferenceQueue();

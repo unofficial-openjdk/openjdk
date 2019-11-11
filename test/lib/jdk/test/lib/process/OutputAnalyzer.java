@@ -179,7 +179,11 @@ public final class OutputAnalyzer {
      * @param expectedString String that buffer should contain
      * @throws RuntimeException If the string was not found
      */
-    public OutputAnalyzer shouldContain(String expectedString) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public OutputAnalyzer shouldContain(String expectedString) {
         String stdout = getStdout();
         String stderr = getStderr();
         if (!stdout.contains(expectedString) && !stderr.contains(expectedString)) {
@@ -195,7 +199,11 @@ public final class OutputAnalyzer {
      * @param expectedString String that buffer should contain
      * @throws RuntimeException If the string was not found
      */
-    public OutputAnalyzer stdoutShouldContain(String expectedString) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public OutputAnalyzer stdoutShouldContain(String expectedString) {
         String stdout = getStdout();
         if (!stdout.contains(expectedString)) {
             reportDiagnosticSummary();
@@ -210,7 +218,11 @@ public final class OutputAnalyzer {
      * @param expectedString String that buffer should contain
      * @throws RuntimeException If the string was not found
      */
-    public OutputAnalyzer stderrShouldContain(String expectedString) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public OutputAnalyzer stderrShouldContain(String expectedString) {
         String stderr = getStderr();
         if (!stderr.contains(expectedString)) {
             reportDiagnosticSummary();
@@ -225,7 +237,11 @@ public final class OutputAnalyzer {
      * @param notExpectedString String that the buffer should not contain
      * @throws RuntimeException If the string was found
      */
-    public OutputAnalyzer shouldNotContain(String notExpectedString) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public OutputAnalyzer shouldNotContain(String notExpectedString) {
         String stdout = getStdout();
         String stderr = getStderr();
         if (stdout.contains(notExpectedString)) {
@@ -264,7 +280,11 @@ public final class OutputAnalyzer {
      * @param notExpectedString String that the buffer should not contain
      * @throws RuntimeException If the string was found
      */
-    public OutputAnalyzer stdoutShouldNotContain(String notExpectedString) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public OutputAnalyzer stdoutShouldNotContain(String notExpectedString) {
         String stdout = getStdout();
         if (stdout.contains(notExpectedString)) {
             reportDiagnosticSummary();
@@ -279,7 +299,11 @@ public final class OutputAnalyzer {
      * @param notExpectedString String that the buffer should not contain
      * @throws RuntimeException If the string was found
      */
-    public OutputAnalyzer stderrShouldNotContain(String notExpectedString) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public OutputAnalyzer stderrShouldNotContain(String notExpectedString) {
         String stderr = getStderr();
         if (stderr.contains(notExpectedString)) {
             reportDiagnosticSummary();
@@ -295,7 +319,11 @@ public final class OutputAnalyzer {
      * @param regexp
      * @throws RuntimeException If the pattern was not found
      */
-    public OutputAnalyzer shouldMatch(String regexp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public OutputAnalyzer shouldMatch(String regexp) {
         String stdout = getStdout();
         String stderr = getStderr();
         Pattern pattern = Pattern.compile(regexp, Pattern.MULTILINE);
@@ -316,7 +344,11 @@ public final class OutputAnalyzer {
      * @param regexp
      * @throws RuntimeException If the pattern was not found
      */
-    public OutputAnalyzer stdoutShouldMatch(String regexp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public OutputAnalyzer stdoutShouldMatch(String regexp) {
         String stdout = getStdout();
         Matcher matcher = Pattern.compile(regexp, Pattern.MULTILINE).matcher(stdout);
         if (!matcher.find()) {
@@ -334,7 +366,11 @@ public final class OutputAnalyzer {
      * @param pattern
      * @throws RuntimeException If the pattern was not found
      */
-    public OutputAnalyzer stderrShouldMatch(String pattern) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public OutputAnalyzer stderrShouldMatch(String pattern) {
         String stderr = getStderr();
         Matcher matcher = Pattern.compile(pattern, Pattern.MULTILINE).matcher(stderr);
         if (!matcher.find()) {
@@ -352,7 +388,11 @@ public final class OutputAnalyzer {
      * @param regexp
      * @throws RuntimeException If the pattern was found
      */
-    public OutputAnalyzer shouldNotMatch(String regexp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public OutputAnalyzer shouldNotMatch(String regexp) {
         String stdout = getStdout();
         Pattern pattern = Pattern.compile(regexp, Pattern.MULTILINE);
         Matcher matcher = pattern.matcher(stdout);
@@ -380,7 +420,11 @@ public final class OutputAnalyzer {
      * @param regexp
      * @throws RuntimeException If the pattern was found
      */
-    public OutputAnalyzer stdoutShouldNotMatch(String regexp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public OutputAnalyzer stdoutShouldNotMatch(String regexp) {
         String stdout = getStdout();
         Matcher matcher = Pattern.compile(regexp, Pattern.MULTILINE).matcher(stdout);
         if (matcher.find()) {
@@ -398,7 +442,11 @@ public final class OutputAnalyzer {
      * @param regexp
      * @throws RuntimeException If the pattern was found
      */
-    public OutputAnalyzer stderrShouldNotMatch(String regexp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public OutputAnalyzer stderrShouldNotMatch(String regexp) {
         String stderr = getStderr();
         Matcher matcher = Pattern.compile(regexp, Pattern.MULTILINE).matcher(stderr);
         if (matcher.find()) {
@@ -417,7 +465,11 @@ public final class OutputAnalyzer {
      * @param group The group to capture
      * @return The matched string or null if no match was found
      */
-    public String firstMatch(String regexp, int group) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String firstMatch(String regexp, int group) {
         Pattern pattern = Pattern.compile(regexp, Pattern.MULTILINE);
         String stderr = getStderr();
         Matcher stderrMatcher = pattern.matcher(stderr);
@@ -439,7 +491,11 @@ public final class OutputAnalyzer {
      * @param pattern The multi-line pattern to match
      * @return The matched string or null if no match was found
      */
-    public String firstMatch(String pattern) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String firstMatch(String pattern) {
         return firstMatch(pattern, 0);
     }
 
@@ -449,7 +505,11 @@ public final class OutputAnalyzer {
      * @param expectedExitValue Expected exit value from process
      * @throws RuntimeException If the exit value from the process did not match the expected value
      */
-    public OutputAnalyzer shouldHaveExitValue(int expectedExitValue) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public OutputAnalyzer shouldHaveExitValue(int expectedExitValue) {
         if (getExitValue() != expectedExitValue) {
             reportDiagnosticSummary();
             throw new RuntimeException("Expected to get exit value of ["
@@ -464,7 +524,11 @@ public final class OutputAnalyzer {
      * @param notExpectedExitValue Unexpected exit value from process
      * @throws RuntimeException If the exit value from the process did match the expected value
      */
-    public OutputAnalyzer shouldNotHaveExitValue(int notExpectedExitValue) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public OutputAnalyzer shouldNotHaveExitValue(int notExpectedExitValue) {
         if (getExitValue() == notExpectedExitValue) {
             reportDiagnosticSummary();
             throw new RuntimeException("Unexpected to get exit value of ["
@@ -496,7 +560,11 @@ public final class OutputAnalyzer {
      *
      * @return this OutputAnalyzer
      */
-    public OutputAnalyzer outputTo(PrintStream out) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public OutputAnalyzer outputTo(PrintStream out) {
         out.println(getStdout());
         return this;
     }
@@ -506,7 +574,11 @@ public final class OutputAnalyzer {
      *
      * @return this OutputAnalyzer
      */
-    public OutputAnalyzer errorTo(PrintStream out) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public OutputAnalyzer errorTo(PrintStream out) {
         out.println(getStderr());
         return this;
     }
@@ -591,7 +663,11 @@ public final class OutputAnalyzer {
      * @param pattern
      * @throws RuntimeException If the pattern was not found
      */
-    public OutputAnalyzer stderrShouldMatchIgnoreVMWarnings(String pattern) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public OutputAnalyzer stderrShouldMatchIgnoreVMWarnings(String pattern) {
         String stderr = getStderr().replaceAll(jvmwarningmsg + "\\R", "");
         Matcher matcher = Pattern.compile(pattern, Pattern.MULTILINE).matcher(stderr);
         if (!matcher.find()) {
@@ -617,28 +693,44 @@ public final class OutputAnalyzer {
     /**
      * @see #shouldMatchByLine(String, String, String)
      */
-    public OutputAnalyzer shouldMatchByLine(String pattern) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public OutputAnalyzer shouldMatchByLine(String pattern) {
         return shouldMatchByLine(null, null, pattern);
     }
 
     /**
      * @see #stdoutShouldMatchByLine(String, String, String)
      */
-    public OutputAnalyzer stdoutShouldMatchByLine(String pattern) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public OutputAnalyzer stdoutShouldMatchByLine(String pattern) {
         return stdoutShouldMatchByLine(null, null, pattern);
     }
 
     /**
      * @see #shouldMatchByLine(String, String, String)
      */
-    public OutputAnalyzer shouldMatchByLineFrom(String from, String pattern) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public OutputAnalyzer shouldMatchByLineFrom(String from, String pattern) {
         return shouldMatchByLine(from, null, pattern);
     }
 
     /**
      * @see #shouldMatchByLine(String, String, String)
      */
-    public OutputAnalyzer shouldMatchByLineTo(String to, String pattern) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public OutputAnalyzer shouldMatchByLineTo(String to, String pattern) {
         return shouldMatchByLine(null, to, pattern);
     }
 
@@ -656,7 +748,11 @@ public final class OutputAnalyzer {
      * @param pattern
      *            Matching pattern
      */
-    public OutputAnalyzer shouldMatchByLine(String from, String to, String pattern) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public OutputAnalyzer shouldMatchByLine(String from, String to, String pattern) {
         return shouldMatchByLine(getOutput(), from, to, pattern);
     }
 
@@ -674,11 +770,19 @@ public final class OutputAnalyzer {
      * @param pattern
      *            Matching pattern
      */
-    public OutputAnalyzer stdoutShouldMatchByLine(String from, String to, String pattern) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public OutputAnalyzer stdoutShouldMatchByLine(String from, String to, String pattern) {
         return shouldMatchByLine(getStdout(), from, to, pattern);
     }
 
-    private OutputAnalyzer shouldMatchByLine(String buffer, String from, String to, String pattern) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private OutputAnalyzer shouldMatchByLine(String buffer, String from, String to, String pattern) {
         List<String> lines = asLines(buffer);
 
         int fromIndex = 0;
@@ -715,7 +819,11 @@ public final class OutputAnalyzer {
      * @param fromIndex Start matching after so many lines skipped
      * @return Index of first matching line
      */
-    private int indexOf(List<String> lines, String regexp, int fromIndex) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int indexOf(List<String> lines, String regexp, int fromIndex) {
         Pattern pattern = Pattern.compile(regexp);
         for (int i = fromIndex; i < lines.size(); i++) {
             if (pattern.matcher(lines.get(i)).matches()) {

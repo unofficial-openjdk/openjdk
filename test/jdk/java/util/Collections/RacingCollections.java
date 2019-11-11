@@ -69,6 +69,7 @@ import static java.util.Collections.unmodifiableList;
 import static java.util.Collections.unmodifiableMap;
 import static java.util.Collections.unmodifiableSet;
 
+@Bean
 public class RacingCollections {
     /**
      * How long to run each "race" (in milliseconds).
@@ -233,7 +234,11 @@ public class RacingCollections {
         list.add(new HashMap<Integer, Boolean>());
         list.add(new TreeMap<Integer, Boolean>());
         Comparator<Integer> cmp = new Comparator<>() {
-            public int compare(Integer x, Integer y) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public int compare(Integer x, Integer y) {
                 return x - y;
             }};
         list.add(new TreeMap<Integer, Boolean>(Collections.reverseOrder(cmp)));

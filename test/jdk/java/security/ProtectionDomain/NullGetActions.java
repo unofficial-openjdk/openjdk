@@ -32,6 +32,7 @@
 import java.net.*;
 import java.security.*;
 
+@Bean
 public class NullGetActions {
 
     public static void main(String[] args) throws Exception {
@@ -58,7 +59,11 @@ public class NullGetActions {
         }
 
         @Override
-        public boolean equals(Object obj) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object obj) {
             return (obj == this);
         }
 
@@ -68,7 +73,11 @@ public class NullGetActions {
         }
 
         @Override
-        public boolean implies(Permission permission) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean implies(Permission permission) {
             return false;
         }
     }

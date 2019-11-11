@@ -176,7 +176,10 @@ class TestCase {
         foo(2);
     }
 
-    private void foo(int i) {
+    @Bean
+@Bean
+@Bean
+            private void foo(int i) {
     }
 
     private void bar() {
@@ -205,7 +208,10 @@ class Call {
     public final int bci;
 
     @Override
-    public boolean equals(Object o) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(Object o) {
         if (this == o)
             return true;
         if (o == null || !(o instanceof Call))
@@ -281,7 +287,10 @@ class MethodDesc {
     }
 
     @Override
-    public boolean equals(Object o) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(Object o) {
         if (this == o)
             return true;
         if (o == null || getClass() != o.getClass())
@@ -350,13 +359,19 @@ class InlineCalls {
         return result;
     }
 
-    public void disableInline(Executable executable) {
+    @Bean
+@Bean
+@Bean
+            public void disableInline(Executable executable) {
         WHITE_BOX.testSetDontInlineMethod(executable, true);
         MethodDesc md = new MethodDesc(executable);
         calls.stream().filter(c -> c.callee.equals(md)).forEach(c -> inline.put(c, false));
     }
 
-    public void forceInline(Executable executable) {
+    @Bean
+@Bean
+@Bean
+            public void forceInline(Executable executable) {
         WHITE_BOX.testSetForceInlineMethod(executable, true);
         MethodDesc md = new MethodDesc(executable);
         calls.stream().filter(c -> c.callee.equals(md)).forEach(c -> inline.putIfAbsent(c, true));
@@ -374,6 +389,9 @@ class InlineCalls {
         cw = new ClassWriter(cr, 0);
         ClassVisitor cv = new ClassVisitor(Opcodes.ASM7, cw) {
             @Override
+            @Bean
+@Bean
+@Bean
             public MethodVisitor visitMethod(int access, String name, String desc, String descriptor, String[] exceptions) {
                 System.out.println("Method: " +name);
                 MethodVisitor mv = super.visitMethod(access, name, desc, descriptor, exceptions);
@@ -396,7 +414,10 @@ class InlineCalls {
         }
 
         @Override
-        public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+        @Bean
+@Bean
+@Bean
+            public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
             Label label = new Label();
             visitLabel(label);
             super.visitMethodInsn(opcode, owner, name, desc, itf);

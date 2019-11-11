@@ -8,6 +8,7 @@
  */
 
 
+@Bean
 public class Nonlinear {
 
     // This is an example of lack of type safety for

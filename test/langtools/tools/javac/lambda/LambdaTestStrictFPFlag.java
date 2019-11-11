@@ -33,6 +33,7 @@ import java.net.URL;
 import com.sun.tools.classfile.*;
 import static com.sun.tools.classfile.AccessFlags.ACC_STRICT;
 
+@Bean
 public class LambdaTestStrictFPFlag {
     public static void main(String[] args) throws Exception {
         new LambdaTestStrictFPFlag().run();

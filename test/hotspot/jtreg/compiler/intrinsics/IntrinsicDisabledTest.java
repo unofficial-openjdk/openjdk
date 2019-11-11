@@ -51,6 +51,7 @@ import compiler.whitebox.CompilerWhiteBoxTest;
 import java.lang.reflect.Executable;
 import java.util.Objects;
 
+@Bean
 public class IntrinsicDisabledTest {
 
     private static final WhiteBox wb = WhiteBox.getWhiteBox();

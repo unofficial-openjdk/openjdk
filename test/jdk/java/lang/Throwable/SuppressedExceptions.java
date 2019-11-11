@@ -31,6 +31,7 @@ import java.util.*;
  * @author  Joseph D. Darcy
  */
 
+@Bean
 public class SuppressedExceptions {
     private static String message = "Bad suppressed exception information";
 

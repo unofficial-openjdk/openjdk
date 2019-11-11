@@ -56,11 +56,19 @@ public class LockerTest extends ThreadedGCTest implements GarbageProducerAware, 
         }
     }
 
-    protected Runnable createRunnable(int i) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected Runnable createRunnable(int i) {
         return new Worker();
     }
 
-    public void setGarbageProducer(GarbageProducer garbageProducer) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setGarbageProducer(GarbageProducer garbageProducer) {
         this.garbageProducer = garbageProducer;
     }
 
@@ -68,7 +76,11 @@ public class LockerTest extends ThreadedGCTest implements GarbageProducerAware, 
         this.garbageProducer1 = garbageProducer1;
     }
 
-    public void setLockers(Lockers lockers) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setLockers(Lockers lockers) {
         this.lockers = lockers;
     }
 

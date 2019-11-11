@@ -33,6 +33,7 @@ package gc.epsilon;
  * @run main/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseEpsilonGC -Xlog:gc -XX:EpsilonPrintHeapSteps=1000 gc.epsilon.TestPrintHeapSteps
  */
 
+@Bean
 public class TestPrintHeapSteps {
   public static void main(String[] args) throws Exception {
     System.out.println("Hello World");

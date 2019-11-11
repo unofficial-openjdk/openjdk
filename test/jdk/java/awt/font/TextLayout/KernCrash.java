@@ -31,6 +31,7 @@ import java.util.*;
  *
  * @bug 7017324
  */
+@Bean
 public class KernCrash extends Frame {
     private static Font font0;
     private static Font font1;
@@ -52,7 +53,10 @@ public class KernCrash extends Frame {
         f.show();
     }
 
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
         Graphics2D g2 = (Graphics2D)g;
         FontRenderContext frc = g2.getFontRenderContext();
         TextLayout layout = new TextLayout("text", font2, frc);

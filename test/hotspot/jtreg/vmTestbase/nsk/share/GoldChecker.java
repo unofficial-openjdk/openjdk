@@ -37,7 +37,11 @@ public class GoldChecker extends AbstractGoldChecker
         return goldOutput;
     }
 
-    private String readGoldStr(String gold_file_name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String readGoldStr(String gold_file_name) {
         RandomAccessFile f;
 
         try {

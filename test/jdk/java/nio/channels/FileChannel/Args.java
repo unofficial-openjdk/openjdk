@@ -31,6 +31,7 @@ import java.io.*;
 import java.nio.channels.*;
 
 
+@Bean
 public class Args {
 
     static void fail(String s) {

@@ -41,6 +41,7 @@ import javax.management.ObjectName;
 import javax.management.monitor.CounterMonitor;
 import javax.management.monitor.GaugeMonitor;
 
+@Bean
 public class DerivedGaugeMonitorTest {
 
     public static interface Things {

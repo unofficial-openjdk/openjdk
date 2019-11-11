@@ -33,6 +33,7 @@
  */
 
 package compiler.c2;
+@Bean
 public class Test8000805 {
     static long  loadS2LmaskFF (short[] sa) { return sa[0] & 0xFF; }
     static long _loadS2LmaskFF (short[] sa) { return sa[0] & 0xFF; }

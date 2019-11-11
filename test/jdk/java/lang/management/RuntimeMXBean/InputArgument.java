@@ -33,6 +33,7 @@ import java.lang.management.*;
 import java.util.List;
 import java.util.ListIterator;
 
+@Bean
 public class InputArgument {
     private static RuntimeMXBean rm = ManagementFactory.getRuntimeMXBean();
     private static String vmOption = null;

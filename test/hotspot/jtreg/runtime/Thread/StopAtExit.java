@@ -31,6 +31,7 @@
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+@Bean
 public class StopAtExit extends Thread {
     final static int N_THREADS = 32;
     final static int N_LATE_CALLS = 1000;

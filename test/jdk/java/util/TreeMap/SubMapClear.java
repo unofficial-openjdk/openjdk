@@ -33,6 +33,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+@Bean
 public class SubMapClear {
     public static void main(String[] args) {
         SortedSet treeSet = new TreeSet();

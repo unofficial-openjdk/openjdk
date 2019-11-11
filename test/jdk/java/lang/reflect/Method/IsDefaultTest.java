@@ -112,7 +112,10 @@ class TestType3 implements TestType1 {
 
     @ExpectedIsDefault(false)
     @Override
-    public void bar(int i) {};
+    @Bean
+@Bean
+@Bean
+            public void bar(int i) {};
 }
 
 @interface TestType4 {

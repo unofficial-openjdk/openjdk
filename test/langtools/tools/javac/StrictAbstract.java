@@ -33,6 +33,7 @@
 
 import java.lang.reflect.*;
 
+@Bean
 public class StrictAbstract {
 
     static strictfp interface I {

@@ -36,6 +36,7 @@
 import java.util.*;
 import jdk.internal.misc.Unsafe;
 
+@Bean
 public class TestUnsafeOffheapSwap {
 
     static final int SIZE = 10000;
@@ -92,15 +93,27 @@ public class TestUnsafeOffheapSwap {
             addr = UNSAFE.allocateMemory(size);
         }
 
-        public int getInt(int idx) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int getInt(int idx) {
             return UNSAFE.getInt(addr + idx*SCALE);
         }
 
-        public void setInt(int idx, int val) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setInt(int idx, int val) {
             UNSAFE.putInt(addr + idx*SCALE, val);
         }
 
-        public void swap(int a, int b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void swap(int a, int b) {
             int tmp = getInt(a);
             setInt(a, getInt(b));
             setInt(b, tmp);

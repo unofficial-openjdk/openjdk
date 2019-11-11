@@ -35,6 +35,7 @@
 import java.awt.*;
 import java.io.*;
 
+@Bean
 public class DesktopGtkLoadTest {
     public static class RunDesktop {
         public static void main(String[] args) {

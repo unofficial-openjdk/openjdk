@@ -28,6 +28,7 @@ package apple.laf;
 import apple.laf.JRSUIConstants.*;
 
 @SuppressWarnings("unchecked")
+@Bean
 public class JRSUIState {
 //    static HashSet<JRSUIState> states = new HashSet<JRSUIState>();
 
@@ -70,21 +71,25 @@ public class JRSUIState {
         derivedEncodedState = encodedState;
     }
 
-    public void set(final Property property) {
+@Bean
+        public void set(final Property property) {
         derivedEncodedState = property.apply(derivedEncodedState);
     }
 
-    public void apply(final JRSUIControl control) {
+@Bean
+        public void apply(final JRSUIControl control) {
         control.setEncodedState(encodedState);
     }
 
     @Override
-    public boolean equals(final Object obj) {
+@Bean
+        public boolean equals(final Object obj) {
         if (!(obj instanceof JRSUIState)) return false;
         return encodedState == ((JRSUIState)obj).encodedState && getClass().equals(obj.getClass());
     }
 
-    public boolean is(Property property) {
+@Bean
+        public boolean is(Property property) {
         return (byte)((derivedEncodedState & property.encoding.mask) >> property.encoding.shift) == property.ordinal;
     }
 
@@ -118,18 +123,21 @@ public class JRSUIState {
             derivedAnimationFrame = animationFrame;
         }
 
-        public void setAnimationFrame(final int frame) {
+@Bean
+            public void setAnimationFrame(final int frame) {
             this.derivedAnimationFrame = frame;
         }
 
         @Override
-        public void apply(final JRSUIControl control) {
+@Bean
+            public void apply(final JRSUIControl control) {
             super.apply(control);
             control.set(Key.ANIMATION_FRAME, animationFrame);
         }
 
         @Override
-        public boolean equals(final Object obj) {
+@Bean
+            public boolean equals(final Object obj) {
             if (!(obj instanceof AnimationFrameState)) return false;
             return animationFrame == ((AnimationFrameState)obj).animationFrame && super.equals(obj);
         }
@@ -165,18 +173,21 @@ public class JRSUIState {
             derivedValue = value;
         }
 
-        public void setValue(final double value) {
+@Bean
+            public void setValue(final double value) {
             derivedValue = value;
         }
 
         @Override
-        public void apply(final JRSUIControl control) {
+@Bean
+            public void apply(final JRSUIControl control) {
             super.apply(control);
             control.set(Key.VALUE, value);
         }
 
         @Override
-        public boolean equals(final Object obj) {
+@Bean
+            public boolean equals(final Object obj) {
             if (!(obj instanceof ValueState)) return false;
             return value == ((ValueState)obj).value && super.equals(obj);
         }
@@ -199,7 +210,8 @@ public class JRSUIState {
         }
 
         @Override
-        public void apply(final JRSUIControl control) {
+@Bean
+            public void apply(final JRSUIControl control) {
             super.apply(control);
             control.set(Key.WINDOW_TITLE_BAR_HEIGHT, value);
         }
@@ -234,23 +246,27 @@ public class JRSUIState {
             derivedThumbStart = thumbStart;
         }
 
-        public void setThumbPercent(final double thumbPercent) {
+@Bean
+            public void setThumbPercent(final double thumbPercent) {
             derivedThumbProportion = thumbPercent;
         }
 
-        public void setThumbStart(final double thumbStart) {
+@Bean
+            public void setThumbStart(final double thumbStart) {
             derivedThumbStart = thumbStart;
         }
 
         @Override
-        public void apply(final JRSUIControl control) {
+@Bean
+            public void apply(final JRSUIControl control) {
             super.apply(control);
             control.set(Key.THUMB_PROPORTION, thumbProportion);
             control.set(Key.THUMB_START, thumbStart);
         }
 
         @Override
-        public boolean equals(final Object obj) {
+@Bean
+            public boolean equals(final Object obj) {
             if (!(obj instanceof ScrollBarState)) return false;
             return (thumbProportion == ((ScrollBarState)obj).thumbProportion) && (thumbStart == ((ScrollBarState)obj).thumbStart) && super.equals(obj);
         }

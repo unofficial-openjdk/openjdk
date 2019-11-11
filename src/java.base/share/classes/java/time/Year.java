@@ -366,7 +366,8 @@ public final class Year
      * @return true if the field is supported on this year, false if not
      */
     @Override
-    public boolean isSupported(TemporalField field) {
+@Bean
+        public boolean isSupported(TemporalField field) {
         if (field instanceof ChronoField) {
             return field == YEAR || field == YEAR_OF_ERA || field == ERA;
         }
@@ -400,7 +401,8 @@ public final class Year
      * @return true if the unit can be added/subtracted, false if not
      */
     @Override
-    public boolean isSupported(TemporalUnit unit) {
+@Bean
+        public boolean isSupported(TemporalUnit unit) {
         if (unit instanceof ChronoUnit) {
             return unit == YEARS || unit == DECADES || unit == CENTURIES || unit == MILLENNIA || unit == ERAS;
         }
@@ -432,7 +434,8 @@ public final class Year
      * @throws UnsupportedTemporalTypeException if the field is not supported
      */
     @Override
-    public ValueRange range(TemporalField field) {
+@Bean
+        public ValueRange range(TemporalField field) {
         if (field == YEAR_OF_ERA) {
             return (year <= 0 ? ValueRange.of(1, MAX_VALUE + 1) : ValueRange.of(1, MAX_VALUE));
         }
@@ -466,7 +469,8 @@ public final class Year
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override  // override for Javadoc
-    public int get(TemporalField field) {
+@Bean
+        public int get(TemporalField field) {
         return range(field).checkValidIntValue(getLong(field), field);
     }
 
@@ -494,7 +498,8 @@ public final class Year
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public long getLong(TemporalField field) {
+@Bean
+        public long getLong(TemporalField field) {
         if (field instanceof ChronoField) {
             switch ((ChronoField) field) {
                 case YEAR_OF_ERA: return (year < 1 ? 1 - year : year);
@@ -538,7 +543,8 @@ public final class Year
      * @param monthDay  the month-day to validate, null returns false
      * @return true if the month and day are valid for this year
      */
-    public boolean isValidMonthDay(MonthDay monthDay) {
+@Bean
+        public boolean isValidMonthDay(MonthDay monthDay) {
         return monthDay != null && monthDay.isValidYear(year);
     }
 
@@ -571,7 +577,8 @@ public final class Year
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public Year with(TemporalAdjuster adjuster) {
+@Bean
+        public Year with(TemporalAdjuster adjuster) {
         return (Year) adjuster.adjustInto(this);
     }
 
@@ -617,7 +624,8 @@ public final class Year
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public Year with(TemporalField field, long newValue) {
+@Bean
+        public Year with(TemporalField field, long newValue) {
         if (field instanceof ChronoField) {
             ChronoField f = (ChronoField) field;
             f.checkValidValue(newValue);
@@ -653,7 +661,8 @@ public final class Year
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public Year plus(TemporalAmount amountToAdd) {
+@Bean
+        public Year plus(TemporalAmount amountToAdd) {
         return (Year) amountToAdd.addTo(this);
     }
 
@@ -706,7 +715,8 @@ public final class Year
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public Year plus(long amountToAdd, TemporalUnit unit) {
+@Bean
+        public Year plus(long amountToAdd, TemporalUnit unit) {
         if (unit instanceof ChronoUnit) {
             switch ((ChronoUnit) unit) {
                 case YEARS: return plusYears(amountToAdd);
@@ -729,7 +739,8 @@ public final class Year
      * @return a {@code Year} based on this year with the years added, not null
      * @throws DateTimeException if the result exceeds the supported range
      */
-    public Year plusYears(long yearsToAdd) {
+@Bean
+        public Year plusYears(long yearsToAdd) {
         if (yearsToAdd == 0) {
             return this;
         }
@@ -758,7 +769,8 @@ public final class Year
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public Year minus(TemporalAmount amountToSubtract) {
+@Bean
+        public Year minus(TemporalAmount amountToSubtract) {
         return (Year) amountToSubtract.subtractFrom(this);
     }
 
@@ -782,7 +794,8 @@ public final class Year
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public Year minus(long amountToSubtract, TemporalUnit unit) {
+@Bean
+        public Year minus(long amountToSubtract, TemporalUnit unit) {
         return (amountToSubtract == Long.MIN_VALUE ? plus(Long.MAX_VALUE, unit).plus(1, unit) : plus(-amountToSubtract, unit));
     }
 
@@ -795,7 +808,8 @@ public final class Year
      * @return a {@code Year} based on this year with the year subtracted, not null
      * @throws DateTimeException if the result exceeds the supported range
      */
-    public Year minusYears(long yearsToSubtract) {
+@Bean
+        public Year minusYears(long yearsToSubtract) {
         return (yearsToSubtract == Long.MIN_VALUE ? plusYears(Long.MAX_VALUE).plusYears(1) : plusYears(-yearsToSubtract));
     }
 
@@ -856,7 +870,8 @@ public final class Year
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public Temporal adjustInto(Temporal temporal) {
+@Bean
+        public Temporal adjustInto(Temporal temporal) {
         if (Chronology.from(temporal).equals(IsoChronology.INSTANCE) == false) {
             throw new DateTimeException("Adjustment only supported on ISO date-time");
         }
@@ -911,7 +926,8 @@ public final class Year
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public long until(Temporal endExclusive, TemporalUnit unit) {
+@Bean
+        public long until(Temporal endExclusive, TemporalUnit unit) {
         Year end = Year.from(endExclusive);
         if (unit instanceof ChronoUnit) {
             long yearsUntil = ((long) end.year) - year;  // no overflow
@@ -936,7 +952,8 @@ public final class Year
      * @return the formatted year string, not null
      * @throws DateTimeException if an error occurs during printing
      */
-    public String format(DateTimeFormatter formatter) {
+@Bean
+        public String format(DateTimeFormatter formatter) {
         Objects.requireNonNull(formatter, "formatter");
         return formatter.format(this);
     }
@@ -954,7 +971,8 @@ public final class Year
      * @throws DateTimeException if the day of year is zero or less, 366 or greater or equal
      *  to 366 and this is not a leap year
      */
-    public LocalDate atDay(int dayOfYear) {
+@Bean
+        public LocalDate atDay(int dayOfYear) {
         return LocalDate.ofYearDay(year, dayOfYear);
     }
 
@@ -972,7 +990,8 @@ public final class Year
      * @param month  the month-of-year to use, not null
      * @return the year-month formed from this year and the specified month, not null
      */
-    public YearMonth atMonth(Month month) {
+@Bean
+        public YearMonth atMonth(Month month) {
         return YearMonth.of(year, month);
     }
 
@@ -991,7 +1010,8 @@ public final class Year
      * @return the year-month formed from this year and the specified month, not null
      * @throws DateTimeException if the month is invalid
      */
-    public YearMonth atMonth(int month) {
+@Bean
+        public YearMonth atMonth(int month) {
         return YearMonth.of(year, month);
     }
 
@@ -1006,7 +1026,8 @@ public final class Year
      * @param monthDay  the month-day to use, not null
      * @return the local date formed from this year and the specified month-day, not null
      */
-    public LocalDate atMonthDay(MonthDay monthDay) {
+@Bean
+        public LocalDate atMonthDay(MonthDay monthDay) {
         return monthDay.atYear(year);
     }
 
@@ -1021,7 +1042,8 @@ public final class Year
      * @return the comparator value, negative if less, positive if greater
      */
     @Override
-    public int compareTo(Year other) {
+@Bean
+        public int compareTo(Year other) {
         return year - other.year;
     }
 
@@ -1031,7 +1053,8 @@ public final class Year
      * @param other  the other year to compare to, not null
      * @return true if this is after the specified year
      */
-    public boolean isAfter(Year other) {
+@Bean
+        public boolean isAfter(Year other) {
         return year > other.year;
     }
 
@@ -1041,7 +1064,8 @@ public final class Year
      * @param other  the other year to compare to, not null
      * @return true if this point is before the specified year
      */
-    public boolean isBefore(Year other) {
+@Bean
+        public boolean isBefore(Year other) {
         return year < other.year;
     }
 
@@ -1055,7 +1079,8 @@ public final class Year
      * @return true if this is equal to the other year
      */
     @Override
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (this == obj) {
             return true;
         }

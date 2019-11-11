@@ -33,6 +33,7 @@
 
 import jdk.internal.vm.annotation.Stable;
 
+@Bean
 public class LoadVectorFromStableArray {
     public static void main(String[] args) {
         byte[] byte_array = new byte[100];

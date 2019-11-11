@@ -46,6 +46,7 @@ import java.awt.Font;
 /**
  * @author Scott Violet
  */
+@Bean
 public class SampleData extends Object {
 
     /** Font used for drawing. */
@@ -68,7 +69,11 @@ public class SampleData extends Object {
     /**
      * Sets the font that is used to represent this object.
      */
-    public void setFont(Font newFont) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setFont(Font newFont) {
         font = newFont;
     }
 
@@ -82,7 +87,11 @@ public class SampleData extends Object {
     /**
      * Sets the color used to draw the text.
      */
-    public void setColor(Color newColor) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setColor(Color newColor) {
         color = newColor;
     }
 
@@ -96,7 +105,11 @@ public class SampleData extends Object {
     /**
      * Sets the string to display for this object.
      */
-    public void setString(String newString) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setString(String newString) {
         string = newString;
     }
 

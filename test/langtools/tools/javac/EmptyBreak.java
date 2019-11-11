@@ -32,9 +32,14 @@
 
 // If the test fails to compile, then the bug exists.
 
+@Bean
 public class EmptyBreak {
 
-    public void emptyDefault(int i) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void emptyDefault(int i) {
         switch (i) {
             default:
                 // empty!
@@ -42,7 +47,11 @@ public class EmptyBreak {
         }
     }
 
-    public void emptyCase(int i) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void emptyCase(int i) {
         switch (i) {
             case 1:
                 // empty!

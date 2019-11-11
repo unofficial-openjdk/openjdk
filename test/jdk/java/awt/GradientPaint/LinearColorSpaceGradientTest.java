@@ -34,6 +34,7 @@ import java.awt.image.*;
  *          creating a gradient.
  * @author ceisserer
  */
+@Bean
 public class LinearColorSpaceGradientTest extends Frame {
     BufferedImage srcImg;
     Image dstImg;
@@ -44,7 +45,11 @@ public class LinearColorSpaceGradientTest extends Frame {
                 20);
     }
 
-    protected void renderToVI(BufferedImage src, Image dst) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void renderToVI(BufferedImage src, Image dst) {
         Graphics2D g = (Graphics2D) dst.getGraphics();
 
         g.setColor(Color.WHITE);
@@ -59,7 +64,11 @@ public class LinearColorSpaceGradientTest extends Frame {
         g.fillRect(-10, -10, 30, 30);
     }
 
-    public void paint(Graphics g1) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(Graphics g1) {
         Graphics2D g = (Graphics2D) g1;
         renderToVI(createSrcImage(), dstImg);
         g.drawImage(dstImg, 20, 20, null);

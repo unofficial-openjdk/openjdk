@@ -52,6 +52,7 @@ import sun.hotspot.WhiteBox;
  * @run driver gc.logging.TestMetaSpaceLog
  */
 
+@Bean
 public class TestMetaSpaceLog {
   private static Pattern metaSpaceRegexp;
 

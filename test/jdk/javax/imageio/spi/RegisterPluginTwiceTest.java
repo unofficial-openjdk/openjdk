@@ -38,6 +38,7 @@ import javax.imageio.spi.IIORegistry;
 import javax.imageio.spi.ServiceRegistry;
 import javax.imageio.stream.ImageInputStream;
 
+@Bean
 public class RegisterPluginTwiceTest {
 
     public RegisterPluginTwiceTest() throws Exception {
@@ -118,7 +119,11 @@ public class RegisterPluginTwiceTest {
                   );
         }
 
-        public String getDescription(Locale locale) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String getDescription(Locale locale) {
             return "Standard BMP image reader";
         }
 
@@ -143,16 +148,28 @@ public class RegisterPluginTwiceTest {
                     b[7] == (byte)10);
         }
 
-        public ImageReader createReaderInstance(Object extension) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public ImageReader createReaderInstance(Object extension) {
             //return new PNGImageReader(this);
             return null;
         }
-        public void onRegistration(ServiceRegistry sr, Class<?> category) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onRegistration(ServiceRegistry sr, Class<?> category) {
             //System.out.println("Registered "+category);
             super.onRegistration(sr, category);
         }
 
-        public void onDeregistration(ServiceRegistry sr, Class<?> category) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onDeregistration(ServiceRegistry sr, Class<?> category) {
             //System.out.println("De-Registered "+category);
             //super.onRegistration(sr, category);
         }

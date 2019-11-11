@@ -144,7 +144,8 @@ class BreakDictionary {
         }
     }
 
-    private void setupDictionary(String dictionaryName, byte[] dictionaryData) {
+@Bean
+        private void setupDictionary(String dictionaryName, byte[] dictionaryData) {
         ByteBuffer bb = ByteBuffer.wrap(dictionaryData);
 
         // check version
@@ -270,7 +271,8 @@ class BreakDictionary {
      * Given (logical) row and column numbers, returns true if the
      * cell in that position is populated
      */
-    private boolean cellIsPopulated(int row, int col) {
+@Bean
+        private boolean cellIsPopulated(int row, int col) {
         // look up the entry in the bitmap index for the specified row.
         // If it's a negative number, it's the column number of the only
         // populated cell in the row
@@ -297,7 +299,8 @@ class BreakDictionary {
      * @param col The PHYSICAL column number of the cell
      * @return The value stored in the cell
      */
-    private short internalAt(int row, int col) {
+@Bean
+        private short internalAt(int row, int col) {
         // the table is a one-dimensional array, so this just does the math necessary
         // to treat it as a two-dimensional array (we don't just use a two-dimensional
         // array because two-dimensional arrays are inefficient in Java)

@@ -38,6 +38,7 @@ import javax.tools.*;
 import static javax.tools.StandardLocation.CLASS_OUTPUT;
 import static javax.tools.JavaFileObject.Kind.CLASS;
 
+@Bean
 public class Sibling {
     public static void main(String... args) throws IOException {
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();

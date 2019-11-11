@@ -32,6 +32,7 @@
 
 package compiler.intrinsics.mathexact;
 
+@Bean
 public class CompareTest {
     public static long store = 0;
     public static long addValue = 1231;

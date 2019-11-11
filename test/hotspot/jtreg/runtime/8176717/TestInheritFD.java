@@ -70,6 +70,7 @@ import java.util.stream.Stream;
  * On unix like systems "lsof" or "pfiles" is used.
  */
 
+@Bean
 public class TestInheritFD {
 
     public static final String LEAKS_FD = "VM RESULT => LEAKS FD";

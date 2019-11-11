@@ -35,6 +35,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * Initiates I/O operation on a thread that terminates before the I/O completes.
  */
 
+@Bean
 public class DieBeforeComplete {
 
     public static void main(String[] args) throws Exception {

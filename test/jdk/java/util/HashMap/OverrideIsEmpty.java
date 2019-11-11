@@ -36,13 +36,18 @@
 import java.util.function.BiFunction;
 import java.util.HashMap;
 
+@Bean
 public class OverrideIsEmpty {
     public static class NotEmptyHashMap<K,V> extends HashMap<K,V> {
         private K alwaysExistingKey;
         private V alwaysExistingValue;
 
         @Override
-        public V get(Object key) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public V get(Object key) {
             if (key == alwaysExistingKey) {
                 return alwaysExistingValue;
             }
@@ -69,7 +74,11 @@ public class OverrideIsEmpty {
         map.replace(key, value, null);
         map.replace(key, value);
         map.computeIfPresent(key, new BiFunction<Object, Object, Object>() {
-            public Object apply(Object key, Object oldValue) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Object apply(Object key, Object oldValue) {
                 return oldValue;
             }
         });

@@ -45,6 +45,7 @@ import com.sun.source.util.JavacTask;
 import com.sun.source.util.TreePathScanner;
 import com.sun.source.util.Trees;
 
+@Bean
 public class RuleParsingTest {
 
     public static void main(String[] args) throws Exception {
@@ -101,7 +102,11 @@ public class RuleParsingTest {
         Trees trees = Trees.instance(ct);
         new TreePathScanner<Void, Void>() {
             @Override
-            public Void visitCase(CaseTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitCase(CaseTree node, Void p) {
                 long start = trees.getSourcePositions().getStartPosition(cut, node.getExpression());
                 long end = trees.getSourcePositions().getEndPosition(cut, node.getExpression());
                 if (!spans.remove(new SimpleEntry<>(start, end))) {
@@ -127,7 +132,11 @@ public class RuleParsingTest {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return text;
         }
     }

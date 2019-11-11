@@ -38,6 +38,7 @@ import java.util.*;
 import java.util.regex.*;
 
 
+@Bean
 public class Check {
 
     private static PrintStream log = System.err;
@@ -84,7 +85,10 @@ public class Check {
             throw new RuntimeException("100 errors occurred (there might be more)");
     }
 
-    private void mismatch(String s, byte[] expected, byte[] got) {
+    @Bean
+@Bean
+@Bean
+            private void mismatch(String s, byte[] expected, byte[] got) {
         log.println("Encoding mismatch on \""
                     + Util.toString(s)
                     + "\": Expected {"
@@ -95,7 +99,10 @@ public class Check {
         error();
     }
 
-    private void mismatch(int i, byte[] ba, String expected, String got) {
+    @Bean
+@Bean
+@Bean
+            private void mismatch(int i, byte[] ba, String expected, String got) {
         log.println("Decoding mismatch on \""
                     + Util.toString((char)i)
                     + "\", input {"

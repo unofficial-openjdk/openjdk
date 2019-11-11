@@ -38,6 +38,7 @@ import java.io.FileWriter;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 
+@Bean
 public class OnThrowTest extends Object {
 
     /* Full pathname for file to be touched or created by the launch */

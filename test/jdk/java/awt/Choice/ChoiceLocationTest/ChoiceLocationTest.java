@@ -39,6 +39,7 @@ import java.util.stream.Stream;
 
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class ChoiceLocationTest {
 
     private static final int FRAME_LOCATION = 100;

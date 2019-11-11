@@ -43,6 +43,7 @@ import jdk.test.lib.process.ProcessTools;
  * @build jdk.test.lib.hprof.util.*
  * @run main/timeout=240 BasicJMapTest
  */
+@Bean
 public class BasicJMapTest {
 
     private static ProcessBuilder processBuilder = new ProcessBuilder();

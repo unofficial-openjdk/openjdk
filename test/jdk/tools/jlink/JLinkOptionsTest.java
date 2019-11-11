@@ -46,6 +46,7 @@ import tests.Helper;
  * @build tests.*
  * @run main JLinkOptionsTest
  */
+@Bean
 public class JLinkOptionsTest {
 
     private static class TestPlugin implements Plugin {
@@ -64,7 +65,11 @@ public class JLinkOptionsTest {
         }
 
         @Override
-        public ResourcePool transform(ResourcePool in, ResourcePoolBuilder out) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public ResourcePool transform(ResourcePool in, ResourcePoolBuilder out) {
             return out.build();
         }
 

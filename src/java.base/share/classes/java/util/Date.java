@@ -130,6 +130,7 @@ import sun.util.calendar.ZoneInfo;
  * @see     java.util.TimeZone
  * @since   1.0
  */
+@Bean
 public class Date
     implements java.io.Serializable, Cloneable, Comparable<Date>
 {
@@ -667,7 +668,8 @@ public class Date
      * replaced by {@code Calendar.set(Calendar.YEAR, year + 1900)}.
      */
     @Deprecated
-    public void setYear(int year) {
+@Bean
+        public void setYear(int year) {
         getCalendarDate().setNormalizedYear(year + 1900);
     }
 
@@ -702,7 +704,8 @@ public class Date
      * replaced by {@code Calendar.set(Calendar.MONTH, int month)}.
      */
     @Deprecated
-    public void setMonth(int month) {
+@Bean
+        public void setMonth(int month) {
         int y = 0;
         if (month >= 12) {
             y = month / 12;
@@ -751,7 +754,8 @@ public class Date
      * replaced by {@code Calendar.set(Calendar.DAY_OF_MONTH, int date)}.
      */
     @Deprecated
-    public void setDate(int date) {
+@Bean
+        public void setDate(int date) {
         getCalendarDate().setDayOfMonth(date);
     }
 
@@ -804,7 +808,8 @@ public class Date
      * replaced by {@code Calendar.set(Calendar.HOUR_OF_DAY, int hours)}.
      */
     @Deprecated
-    public void setHours(int hours) {
+@Bean
+        public void setHours(int hours) {
         getCalendarDate().setHours(hours);
     }
 
@@ -836,7 +841,8 @@ public class Date
      * replaced by {@code Calendar.set(Calendar.MINUTE, int minutes)}.
      */
     @Deprecated
-    public void setMinutes(int minutes) {
+@Bean
+        public void setMinutes(int minutes) {
         getCalendarDate().setMinutes(minutes);
     }
 
@@ -869,7 +875,8 @@ public class Date
      * replaced by {@code Calendar.set(Calendar.SECOND, int seconds)}.
      */
     @Deprecated
-    public void setSeconds(int seconds) {
+@Bean
+        public void setSeconds(int seconds) {
         getCalendarDate().setSeconds(seconds);
     }
 
@@ -897,7 +904,8 @@ public class Date
      *
      * @param   time   the number of milliseconds.
      */
-    public void setTime(long time) {
+@Bean
+        public void setTime(long time) {
         fastTime = time;
         cdate = null;
     }
@@ -912,7 +920,8 @@ public class Date
      *          {@code false} otherwise.
      * @throws    NullPointerException if {@code when} is null.
      */
-    public boolean before(Date when) {
+@Bean
+        public boolean before(Date when) {
         return getMillisOf(this) < getMillisOf(when);
     }
 
@@ -926,7 +935,8 @@ public class Date
      *          {@code false} otherwise.
      * @throws    NullPointerException if {@code when} is null.
      */
-    public boolean after(Date when) {
+@Bean
+        public boolean after(Date when) {
         return getMillisOf(this) > getMillisOf(when);
     }
 
@@ -945,7 +955,8 @@ public class Date
      *          {@code false} otherwise.
      * @see     java.util.Date#getTime()
      */
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         return obj instanceof Date && getTime() == ((Date) obj).getTime();
     }
 
@@ -975,7 +986,8 @@ public class Date
      * @since   1.2
      * @throws    NullPointerException if {@code anotherDate} is null.
      */
-    public int compareTo(Date anotherDate) {
+@Bean
+        public int compareTo(Date anotherDate) {
         long thisTime = getMillisOf(this);
         long anotherTime = getMillisOf(anotherDate);
         return (thisTime<anotherTime ? -1 : (thisTime==anotherTime ? 0 : 1));

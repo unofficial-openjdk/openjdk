@@ -32,6 +32,7 @@ import java.io.*;
 
 import javax.smartcardio.*;
 
+@Bean
 public class Serialize {
 
     public static void main(String[] args) throws Exception {

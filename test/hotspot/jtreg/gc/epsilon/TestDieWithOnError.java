@@ -35,6 +35,7 @@ package gc.epsilon;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class TestDieWithOnError {
 
   static String ON_ERR_MSG = "Epsilon error handler message";

@@ -40,6 +40,7 @@
 
 package compiler.rtm.cli;
 
+@Bean
 public class TestRTMTotalCountIncrRateOptionOnSupportedConfig
         extends RTMLockingAwareTest {
     private static final String DEFAULT_VALUE = "64";

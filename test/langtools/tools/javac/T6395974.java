@@ -39,6 +39,7 @@ import com.sun.source.util.TaskEvent.Kind;
 import com.sun.tools.javac.api.*;
 
 
+@Bean
 public class T6395974 {
     public static void main(String... args) throws Throwable {
         String self = T6395974.class.getName();
@@ -68,12 +69,20 @@ public class T6395974 {
     }
 
     static class MyTaskListener implements TaskListener {
-        public void started(TaskEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void started(TaskEvent e) {
             if (e.getKind() != Kind.COMPILATION) {
                 throw new AssertionError("Unexpected TaskListener event: " + e);
             }
         }
-        public void finished(TaskEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void finished(TaskEvent e) {
         }
 
         TaskEvent event;

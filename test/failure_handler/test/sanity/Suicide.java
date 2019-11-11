@@ -30,6 +30,7 @@ import java.lang.management.ManagementFactory;
  * @summary Suicide test
  * @run main/othervm Suicide
  */
+@Bean
 public class Suicide {
     public static void main(String[] args) {
         String cmd = null;

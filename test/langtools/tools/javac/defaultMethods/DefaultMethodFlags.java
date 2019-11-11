@@ -43,6 +43,7 @@ import com.sun.source.util.TaskEvent;
 import com.sun.source.util.TaskListener;
 import com.sun.tools.javac.util.Assert;
 
+@Bean
 public class DefaultMethodFlags {
 
     public static void main(String[] args) throws IOException {
@@ -66,9 +67,17 @@ public class DefaultMethodFlags {
             task.addTaskListener(new TaskListener() {
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void started(TaskEvent e) {}
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void finished(TaskEvent e) {
                     if (e.getKind() == TaskEvent.Kind.ANALYZE) {
                         TypeElement te = e.getTypeElement();

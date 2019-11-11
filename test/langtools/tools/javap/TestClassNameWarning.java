@@ -52,6 +52,7 @@ import toolbox.Task;
 import toolbox.TestRunner;
 import toolbox.ToolBox;
 
+@Bean
 public class TestClassNameWarning extends TestRunner {
     public static void main(String... args) throws Exception {
         new TestClassNameWarning().runTests(m -> new Object[] { Paths.get(m.getName()) });
@@ -222,7 +223,11 @@ public class TestClassNameWarning extends TestRunner {
     /**
      * Check that the output does, or does not, contain lines matching a regex.
      */
-    private void checkOutput(List<String> log, boolean expect, String regex) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkOutput(List<String> log, boolean expect, String regex) {
         Pattern p = Pattern.compile(regex);
         List<String> matches = log.stream()
                 .filter(line -> p.matcher(line).find())

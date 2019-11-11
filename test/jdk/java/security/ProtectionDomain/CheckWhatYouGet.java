@@ -32,6 +32,7 @@
 import java.util.Enumeration;
 import java.security.*;
 
+@Bean
 public class CheckWhatYouGet {
     public static void main(String[] args) throws Exception {
 

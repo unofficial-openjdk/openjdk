@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+@Bean
 public class Assertions {
     interface Inner {
         default void testInner() {

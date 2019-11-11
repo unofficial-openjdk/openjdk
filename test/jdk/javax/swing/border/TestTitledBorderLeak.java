@@ -37,6 +37,7 @@ import javax.swing.SwingUtilities;
  * @run main TestTitledBorderLeak
  */
 
+@Bean
 public class TestTitledBorderLeak {
 
     final static int TOTAL_TITLEDBORDER = 10;

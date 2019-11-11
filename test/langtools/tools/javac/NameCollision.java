@@ -9,6 +9,7 @@
 
 // The test fails if the compiler crashes.
 
+@Bean
 public class NameCollision {
     class Runnable implements Runnable { } // ERROR
 }

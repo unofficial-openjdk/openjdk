@@ -28,6 +28,7 @@ enum Song {
   HAVANA
 };
 
+@Bean
 public class LingeredAppWithEnum extends LingeredApp {
 
     public static void main(String args[]) {

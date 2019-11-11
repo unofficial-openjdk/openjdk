@@ -33,6 +33,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import javax.swing.UIManager;
 
+@Bean
 public class Test6860438
 {
     static final String KEY = "Test6860438.key";

@@ -41,6 +41,7 @@ import java.lang.reflect.Method;
 import sun.hotspot.WhiteBox;
 import jdk.test.lib.Asserts;
 
+@Bean
 public class TestAnonSymbolLeak {
     static String className = "p1.AnonSymbolLeak";
 

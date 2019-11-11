@@ -34,6 +34,7 @@ import static org.testng.Assert.assertTrue;
  * @author Brian Goetz
  */
 @Test
+@Bean
 public class ArrayCtorRefTest {
     interface ArrayMaker<T> {
         public T[] make(int size);

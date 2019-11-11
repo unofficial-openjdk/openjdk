@@ -77,7 +77,10 @@ public class SynchronousQueueTest extends JSR166TestCase {
      */
     public void testEmptyFull()      { testEmptyFull(false); }
     public void testEmptyFull_fair() { testEmptyFull(true); }
-    public void testEmptyFull(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testEmptyFull(boolean fair) {
         final SynchronousQueue q = new SynchronousQueue(fair);
         assertTrue(q.isEmpty());
         assertEquals(0, q.size());
@@ -90,7 +93,10 @@ public class SynchronousQueueTest extends JSR166TestCase {
      */
     public void testOffer()      { testOffer(false); }
     public void testOffer_fair() { testOffer(true); }
-    public void testOffer(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testOffer(boolean fair) {
         SynchronousQueue q = new SynchronousQueue(fair);
         assertFalse(q.offer(one));
     }
@@ -100,7 +106,10 @@ public class SynchronousQueueTest extends JSR166TestCase {
      */
     public void testAdd()      { testAdd(false); }
     public void testAdd_fair() { testAdd(true); }
-    public void testAdd(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testAdd(boolean fair) {
         SynchronousQueue q = new SynchronousQueue(fair);
         assertEquals(0, q.remainingCapacity());
         try {
@@ -144,7 +153,10 @@ public class SynchronousQueueTest extends JSR166TestCase {
      */
     public void testBlockingPut()      { testBlockingPut(false); }
     public void testBlockingPut_fair() { testBlockingPut(true); }
-    public void testBlockingPut(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testBlockingPut(boolean fair) {
         final SynchronousQueue q = new SynchronousQueue(fair);
         final CountDownLatch pleaseInterrupt = new CountDownLatch(1);
         Thread t = newStartedThread(new CheckedRunnable() {
@@ -176,7 +188,10 @@ public class SynchronousQueueTest extends JSR166TestCase {
      */
     public void testPutWithTake()      { testPutWithTake(false); }
     public void testPutWithTake_fair() { testPutWithTake(true); }
-    public void testPutWithTake(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testPutWithTake(boolean fair) {
         final SynchronousQueue q = new SynchronousQueue(fair);
         final CountDownLatch pleaseTake = new CountDownLatch(1);
         final CountDownLatch pleaseInterrupt = new CountDownLatch(1);
@@ -252,7 +267,10 @@ public class SynchronousQueueTest extends JSR166TestCase {
      */
     public void testPoll()      { testPoll(false); }
     public void testPoll_fair() { testPoll(true); }
-    public void testPoll(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testPoll(boolean fair) {
         final SynchronousQueue q = new SynchronousQueue(fair);
         assertNull(q.poll());
     }
@@ -333,7 +351,10 @@ public class SynchronousQueueTest extends JSR166TestCase {
      */
     public void testPeek()      { testPeek(false); }
     public void testPeek_fair() { testPeek(true); }
-    public void testPeek(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testPeek(boolean fair) {
         final SynchronousQueue q = new SynchronousQueue(fair);
         assertNull(q.peek());
     }
@@ -343,7 +364,10 @@ public class SynchronousQueueTest extends JSR166TestCase {
      */
     public void testElement()      { testElement(false); }
     public void testElement_fair() { testElement(true); }
-    public void testElement(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testElement(boolean fair) {
         final SynchronousQueue q = new SynchronousQueue(fair);
         try {
             q.element();
@@ -356,7 +380,10 @@ public class SynchronousQueueTest extends JSR166TestCase {
      */
     public void testRemove()      { testRemove(false); }
     public void testRemove_fair() { testRemove(true); }
-    public void testRemove(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testRemove(boolean fair) {
         final SynchronousQueue q = new SynchronousQueue(fair);
         try {
             q.remove();
@@ -369,7 +396,10 @@ public class SynchronousQueueTest extends JSR166TestCase {
      */
     public void testContains()      { testContains(false); }
     public void testContains_fair() { testContains(true); }
-    public void testContains(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testContains(boolean fair) {
         final SynchronousQueue q = new SynchronousQueue(fair);
         assertFalse(q.contains(zero));
     }
@@ -379,7 +409,10 @@ public class SynchronousQueueTest extends JSR166TestCase {
      */
     public void testClear()      { testClear(false); }
     public void testClear_fair() { testClear(true); }
-    public void testClear(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testClear(boolean fair) {
         final SynchronousQueue q = new SynchronousQueue(fair);
         q.clear();
         assertTrue(q.isEmpty());
@@ -390,7 +423,10 @@ public class SynchronousQueueTest extends JSR166TestCase {
      */
     public void testContainsAll()      { testContainsAll(false); }
     public void testContainsAll_fair() { testContainsAll(true); }
-    public void testContainsAll(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testContainsAll(boolean fair) {
         final SynchronousQueue q = new SynchronousQueue(fair);
         Integer[] empty = new Integer[0];
         assertTrue(q.containsAll(Arrays.asList(empty)));
@@ -403,7 +439,10 @@ public class SynchronousQueueTest extends JSR166TestCase {
      */
     public void testRetainAll()      { testRetainAll(false); }
     public void testRetainAll_fair() { testRetainAll(true); }
-    public void testRetainAll(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testRetainAll(boolean fair) {
         final SynchronousQueue q = new SynchronousQueue(fair);
         Integer[] empty = new Integer[0];
         assertFalse(q.retainAll(Arrays.asList(empty)));
@@ -416,7 +455,10 @@ public class SynchronousQueueTest extends JSR166TestCase {
      */
     public void testRemoveAll()      { testRemoveAll(false); }
     public void testRemoveAll_fair() { testRemoveAll(true); }
-    public void testRemoveAll(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testRemoveAll(boolean fair) {
         final SynchronousQueue q = new SynchronousQueue(fair);
         Integer[] empty = new Integer[0];
         assertFalse(q.removeAll(Arrays.asList(empty)));
@@ -429,7 +471,10 @@ public class SynchronousQueueTest extends JSR166TestCase {
      */
     public void testToArray()      { testToArray(false); }
     public void testToArray_fair() { testToArray(true); }
-    public void testToArray(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testToArray(boolean fair) {
         final SynchronousQueue q = new SynchronousQueue(fair);
         Object[] o = q.toArray();
         assertEquals(0, o.length);
@@ -474,7 +519,10 @@ public class SynchronousQueueTest extends JSR166TestCase {
      */
     public void testIterator()      { testIterator(false); }
     public void testIterator_fair() { testIterator(true); }
-    public void testIterator(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testIterator(boolean fair) {
         assertIteratorExhausted(new SynchronousQueue(fair).iterator());
     }
 
@@ -483,7 +531,10 @@ public class SynchronousQueueTest extends JSR166TestCase {
      */
     public void testIteratorRemove()      { testIteratorRemove(false); }
     public void testIteratorRemove_fair() { testIteratorRemove(true); }
-    public void testIteratorRemove(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testIteratorRemove(boolean fair) {
         final SynchronousQueue q = new SynchronousQueue(fair);
         Iterator it = q.iterator();
         try {
@@ -497,7 +548,10 @@ public class SynchronousQueueTest extends JSR166TestCase {
      */
     public void testToString()      { testToString(false); }
     public void testToString_fair() { testToString(true); }
-    public void testToString(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testToString(boolean fair) {
         final SynchronousQueue q = new SynchronousQueue(fair);
         String s = q.toString();
         assertNotNull(s);
@@ -508,7 +562,10 @@ public class SynchronousQueueTest extends JSR166TestCase {
      */
     public void testOfferInExecutor()      { testOfferInExecutor(false); }
     public void testOfferInExecutor_fair() { testOfferInExecutor(true); }
-    public void testOfferInExecutor(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testOfferInExecutor(boolean fair) {
         final SynchronousQueue q = new SynchronousQueue(fair);
         final CheckedBarrier threadsStarted = new CheckedBarrier(2);
         final ExecutorService executor = Executors.newFixedThreadPool(2);
@@ -535,7 +592,10 @@ public class SynchronousQueueTest extends JSR166TestCase {
      */
     public void testPollInExecutor()      { testPollInExecutor(false); }
     public void testPollInExecutor_fair() { testPollInExecutor(true); }
-    public void testPollInExecutor(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testPollInExecutor(boolean fair) {
         final SynchronousQueue q = new SynchronousQueue(fair);
         final CheckedBarrier threadsStarted = new CheckedBarrier(2);
         final ExecutorService executor = Executors.newFixedThreadPool(2);
@@ -582,7 +642,10 @@ public class SynchronousQueueTest extends JSR166TestCase {
      */
     public void testDrainTo()      { testDrainTo(false); }
     public void testDrainTo_fair() { testDrainTo(true); }
-    public void testDrainTo(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testDrainTo(boolean fair) {
         final SynchronousQueue q = new SynchronousQueue(fair);
         ArrayList l = new ArrayList();
         q.drainTo(l);
@@ -595,7 +658,10 @@ public class SynchronousQueueTest extends JSR166TestCase {
      */
     public void testDrainToWithActivePut()      { testDrainToWithActivePut(false); }
     public void testDrainToWithActivePut_fair() { testDrainToWithActivePut(true); }
-    public void testDrainToWithActivePut(boolean fair) {
+    @Bean
+@Bean
+@Bean
+            public void testDrainToWithActivePut(boolean fair) {
         final SynchronousQueue q = new SynchronousQueue(fair);
         Thread t = newStartedThread(new CheckedRunnable() {
             public void realRun() throws InterruptedException {

@@ -49,6 +49,7 @@ class Y extends AX.Z {
     }
 }
 
+@Bean
 public class CyclicInheritance4 {
     public static void main(String[] args) {
         new Y();

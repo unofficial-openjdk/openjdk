@@ -35,6 +35,7 @@ import java.util.TimeZone;
 import static java.util.GregorianCalendar.*;
 
 @SuppressWarnings("deprecation")
+@Bean
 public class Bug4955000 {
 
     // Tests for Date.UTC(), derived from JCK

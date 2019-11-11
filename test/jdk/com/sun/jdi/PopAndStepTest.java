@@ -65,6 +65,7 @@ class PopAndStepTarg {
 
     /********** test program **********/
 
+@Bean
 public class PopAndStepTest extends TestScaffold {
     static final int B_LINE_1 = 46;
     static final int B_LINE_2 = B_LINE_1 + 1;
@@ -122,11 +123,19 @@ public class PopAndStepTest extends TestScaffold {
     }
 
 
-    public void vmDied(VMDeathEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void vmDied(VMDeathEvent event) {
         println("Got VMDeathEvent");
     }
 
-    public void vmDisconnected(VMDisconnectEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void vmDisconnected(VMDisconnectEvent event) {
         println("Got VMDisconnectEvent");
     }
 

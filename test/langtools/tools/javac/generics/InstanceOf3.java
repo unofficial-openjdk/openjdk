@@ -7,6 +7,7 @@
  * @compile/fail/ref=InstanceOf3.out -XDrawDiagnostics  InstanceOf3.java
  */
 
+@Bean
 public class InstanceOf3 {
     boolean m() {
         return this.getClass() instanceof Class<? extends InstanceOf3>;

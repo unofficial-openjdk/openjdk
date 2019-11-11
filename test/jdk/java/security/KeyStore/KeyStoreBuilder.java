@@ -38,6 +38,7 @@ import java.security.cert.Certificate;
 
 import javax.security.auth.callback.*;
 
+@Bean
 public class KeyStoreBuilder {
 
     private final static String DIR = System.getProperty("test.src", ".");
@@ -158,49 +159,97 @@ public class KeyStoreBuilder {
     }
 
     private static class BaseKeyStoreSpi extends KeyStoreSpi {
-        public Key engineGetKey(String alias, char[] password) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Key engineGetKey(String alias, char[] password) {
             return null;
         }
         public Certificate[] engineGetCertificateChain(String alias) {
             return null;
         }
-        public Certificate engineGetCertificate(String alias) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Certificate engineGetCertificate(String alias) {
             return null;
         }
-        public Date engineGetCreationDate(String alias) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Date engineGetCreationDate(String alias) {
             return null;
         }
-        public void engineSetKeyEntry(String alias, Key key, char[] password, Certificate[] certs) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void engineSetKeyEntry(String alias, Key key, char[] password, Certificate[] certs) {
             //
         }
-        public void engineSetKeyEntry(String alias, byte[] key, Certificate[] certs) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void engineSetKeyEntry(String alias, byte[] key, Certificate[] certs) {
             //
         }
-        public void engineSetCertificateEntry(String alias, Certificate cert) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void engineSetCertificateEntry(String alias, Certificate cert) {
             //
         }
-        public void engineDeleteEntry(String alias) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void engineDeleteEntry(String alias) {
             //
         }
         public Enumeration<String> engineAliases() {
             return new Vector<String>().elements();
         }
-        public boolean engineContainsAlias(String alias) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean engineContainsAlias(String alias) {
             return false;
         }
         public int engineSize() {
             return 0;
         }
-        public boolean engineIsKeyEntry(String alias) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean engineIsKeyEntry(String alias) {
             return false;
         }
-        public boolean engineIsCertificateEntry(String alias) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean engineIsCertificateEntry(String alias) {
             return false;
         }
-        public String engineGetCertificateAlias(Certificate cert) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String engineGetCertificateAlias(Certificate cert) {
             return null;
         }
-        public void engineStore(OutputStream stream, char[] password) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void engineStore(OutputStream stream, char[] password) {
             //
         }
         public void engineLoad(InputStream stream, char[] password) throws IOException {

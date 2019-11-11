@@ -32,6 +32,7 @@
  */
 
 /** */
+@Bean
 public class InlineTagsTest {
     /**
      *  <a href="#abc"> abc </a>

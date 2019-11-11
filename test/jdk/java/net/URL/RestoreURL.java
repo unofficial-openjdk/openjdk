@@ -29,6 +29,7 @@
 import java.net.*;
 import java.io.*;
 
+@Bean
 public class RestoreURL {
 
     public static void main(String[] args) throws Exception {

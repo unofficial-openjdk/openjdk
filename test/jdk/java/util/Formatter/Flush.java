@@ -32,14 +32,27 @@ import java.io.Flushable;
 import java.util.Formatter;
 import java.util.FormatterClosedException;
 
+@Bean
 public class Flush {
 
     private static class ExpectedException extends RuntimeException {}
 
     private static class F implements Appendable, Closeable, Flushable {
-        public Appendable append(CharSequence csq) { return null; }
-        public Appendable append(char c) { return null; }
-        public Appendable append(CharSequence csq, int s, int e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Appendable append(CharSequence csq) { return null; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Appendable append(char c) { return null; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Appendable append(CharSequence csq, int s, int e) {
             return null;
         }
         public void close() {}
@@ -50,9 +63,21 @@ public class Flush {
     }
 
     private static class NF implements Appendable, Closeable {
-        public Appendable append(CharSequence csq) { return null; }
-        public Appendable append(char c) { return null; }
-        public Appendable append(CharSequence csq, int s, int e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Appendable append(CharSequence csq) { return null; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Appendable append(char c) { return null; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Appendable append(CharSequence csq, int s, int e) {
             return null;
         }
         public void close() {}

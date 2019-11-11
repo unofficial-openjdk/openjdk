@@ -121,12 +121,18 @@ public class WriterReuseTest implements IIOWriteProgressListener {
         isWritingCompleted = false;
     }
 
-    public void imageComplete(ImageWriter source) {
+    @Bean
+@Bean
+@Bean
+            public void imageComplete(ImageWriter source) {
         System.out.println("Image Completed");
         this.isWritingCompleted = true;
     }
 
-    public void imageProgress(ImageWriter source, float percentageDone) {
+    @Bean
+@Bean
+@Bean
+            public void imageProgress(ImageWriter source, float percentageDone) {
         System.out.println("Image Progress "+percentageDone);
         if (percentageDone > 50 && isFirst) {
             isFirst = false;
@@ -134,7 +140,10 @@ public class WriterReuseTest implements IIOWriteProgressListener {
         }
     }
 
-    public void imageStarted(ImageWriter source, int imageIndex) {
+    @Bean
+@Bean
+@Bean
+            public void imageStarted(ImageWriter source, int imageIndex) {
         System.out.println("Image Started "+imageIndex);
     }
 
@@ -142,15 +151,24 @@ public class WriterReuseTest implements IIOWriteProgressListener {
         System.out.println("Thubnail completed");
     }
 
-    public void thumbnailProgress(ImageWriter source, float percentageDone) {
+    @Bean
+@Bean
+@Bean
+            public void thumbnailProgress(ImageWriter source, float percentageDone) {
         System.out.println("Thubnail Progress " + percentageDone);
     }
 
-    public void thumbnailStarted(ImageWriter source, int imageIndex, int thumbnailIndex) {
+    @Bean
+@Bean
+@Bean
+            public void thumbnailStarted(ImageWriter source, int imageIndex, int thumbnailIndex) {
         System.out.println("Thubnail started " + imageIndex);
     }
 
-    public void writeAborted(ImageWriter source) {
+    @Bean
+@Bean
+@Bean
+            public void writeAborted(ImageWriter source) {
         System.out.println("Writing Aborted");
         this.isWritingAborted = true;
     }

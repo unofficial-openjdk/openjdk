@@ -40,6 +40,7 @@ import com.sun.tools.classfile.*;
 /**
  * Compare string constants in javadoc classes against keys in javadoc resource bundles.
  */
+@Bean
 public class CheckResourceKeys {
     /**
      * Main program.

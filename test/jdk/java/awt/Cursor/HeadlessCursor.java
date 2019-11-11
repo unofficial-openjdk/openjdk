@@ -30,6 +30,7 @@ import java.awt.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessCursor
  */
 
+@Bean
 public class HeadlessCursor {
     public static void main(String args[]) {
         Cursor c;

@@ -41,6 +41,7 @@
 import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
 
+@Bean
 public class ReleaseMBeanServerTest {
 
     private static final String DOMAIN = "TestDomain";

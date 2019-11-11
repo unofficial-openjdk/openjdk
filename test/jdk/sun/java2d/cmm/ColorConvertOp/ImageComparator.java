@@ -52,7 +52,8 @@ public class ImageComparator {
         bShift += (8 - bBits);
     }
 
-    public boolean compare(int c1, int c2) {
+@Bean
+        public boolean compare(int c1, int c2) {
         int d1 = Math.abs(((c1&bMask)>>bShift) - ((c2&bMask)>>bShift));
         int d2 = Math.abs(((c1&gMask)>>gShift) - ((c2&gMask)>>gShift));
         int d3 = Math.abs(((c1&rMask)>>rShift) - ((c2&rMask)>>rShift));
@@ -82,12 +83,14 @@ public class ImageComparator {
         return true;
     }
 
-    public boolean compare(Color c1, Color c2) {
+@Bean
+        public boolean compare(Color c1, Color c2) {
         return compare(c1.getRed(), c1.getGreen(), c1.getBlue(),
                        c2.getRed(), c2.getGreen(), c2.getBlue());
     }
 
-    public boolean compare(BufferedImage img1, BufferedImage img2) {
+@Bean
+        public boolean compare(BufferedImage img1, BufferedImage img2) {
         boolean result = true;
         if (img1.getWidth() != img2.getWidth() ||
             img1.getHeight() != img2.getHeight()) {

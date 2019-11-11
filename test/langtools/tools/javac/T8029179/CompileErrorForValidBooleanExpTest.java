@@ -28,6 +28,7 @@
  * @compile CompileErrorForValidBooleanExpTest.java
  */
 
+@Bean
 public class CompileErrorForValidBooleanExpTest {
     static int a, b, c, d;
 

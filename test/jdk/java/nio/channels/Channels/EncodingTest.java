@@ -45,6 +45,7 @@ import org.testng.annotations.Test;
  * as the existing method that takes a charset name.
  * @run testng EncodingTest
  */
+@Bean
 public class EncodingTest {
     static final int ITERATIONS = 2;
     public static final String CS_UTF8 = StandardCharsets.UTF_8.name();

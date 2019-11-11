@@ -28,6 +28,7 @@
  * @summary Unassigned char values should have no numeric properties.
  */
 
+@Bean
 public class TestUndefinedNumeric {
     static int endValue = 0xFFFF;
 

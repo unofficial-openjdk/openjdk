@@ -49,6 +49,7 @@ import jdk.test.lib.net.URIBuilder;
  * @run main/othervm LargeResponseContent
  */
 
+@Bean
 public class LargeResponseContent {
     final ServerSocket server;
     final int port;
@@ -116,13 +117,21 @@ public class LargeResponseContent {
         }
 
         @Override
-        public void onSubscribe(Flow.Subscription subscription) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onSubscribe(Flow.Subscription subscription) {
             this.subscription = subscription;
             subscription.request(Long.MAX_VALUE);
         }
 
         @Override
-        public void onNext(List<ByteBuffer> item) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(List<ByteBuffer> item) {
             long v = 0;
             for (ByteBuffer b : item)
                 v+= b.remaining();
@@ -130,7 +139,11 @@ public class LargeResponseContent {
         }
 
         @Override
-        public void onError(Throwable throwable) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onError(Throwable throwable) {
             throwable.printStackTrace();
         }
 

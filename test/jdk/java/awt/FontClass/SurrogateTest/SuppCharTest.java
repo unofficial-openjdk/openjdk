@@ -33,6 +33,7 @@ import java.awt.*;
 import java.awt.font.*;
 import javax.swing.*;
 
+@Bean
 public class SuppCharTest {
 
    static String str = "ABC\uD840\uDC01\uD840\uDC00AB";
@@ -100,7 +101,10 @@ class SuppCharComp extends Component {
     this.font = font;
     this.str = str;
   }
-  public void paint(Graphics g) {
+  @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
      Graphics2D g2d = (Graphics2D)g.create();
      g2d.setColor(Color.white);
      g2d.fillRect(0,0,w,h);

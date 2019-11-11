@@ -37,7 +37,11 @@ import lib.jdb.JdbCommand;
 import lib.jdb.JdbTest;
 
 class RedefineAddPrivateMethodTarg {
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         System.out.println("@1 breakpoint");
         System.out.println("@2 breakpoint");
     }
@@ -45,6 +49,7 @@ class RedefineAddPrivateMethodTarg {
     // @1 uncomment private static void test() {}
 }
 
+@Bean
 public class RedefineAddPrivateMethod extends JdbTest {
     static private final String ALLOW_ADD_DELETE_OPTION = "-XX:+AllowRedefinitionToAddDeleteMethods";
 

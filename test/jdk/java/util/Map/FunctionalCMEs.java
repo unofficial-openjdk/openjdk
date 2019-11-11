@@ -43,6 +43,7 @@ import org.testng.annotations.DataProvider;
  * @build Defaults
  * @run testng FunctionalCMEs
  */
+@Bean
 public class FunctionalCMEs {
     static final String KEY = "key";
 
@@ -59,7 +60,11 @@ public class FunctionalCMEs {
     }
 
     @Test(dataProvider = "Maps")
-    public void testComputeIfAbsent(Map<String,String> map, boolean expectCME) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testComputeIfAbsent(Map<String,String> map, boolean expectCME) {
         checkCME(() -> {
             map.computeIfAbsent(KEY, k -> {
                 putToForceRehash(map);
@@ -69,14 +74,22 @@ public class FunctionalCMEs {
     }
 
     @Test(dataProvider = "Maps")
-    public void testCompute(Map<String,String> map, boolean expectCME) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testCompute(Map<String,String> map, boolean expectCME) {
         checkCME(() -> {
             map.compute(KEY, mkBiFunc(map));
         }, expectCME);
     }
 
     @Test(dataProvider = "Maps")
-    public void testComputeWithKeyMapped(Map<String,String> map, boolean expectCME) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testComputeWithKeyMapped(Map<String,String> map, boolean expectCME) {
         map.put(KEY, "firstValue");
         checkCME(() -> {
             map.compute(KEY, mkBiFunc(map));
@@ -84,7 +97,11 @@ public class FunctionalCMEs {
     }
 
     @Test(dataProvider = "Maps")
-    public void testComputeIfPresent(Map<String,String> map, boolean expectCME) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testComputeIfPresent(Map<String,String> map, boolean expectCME) {
         map.put(KEY, "firstValue");
         checkCME(() -> {
            map.computeIfPresent(KEY, mkBiFunc(map));
@@ -92,7 +109,11 @@ public class FunctionalCMEs {
     }
 
     @Test(dataProvider = "Maps")
-    public void testMerge(Map<String,String> map, boolean expectCME) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testMerge(Map<String,String> map, boolean expectCME) {
         map.put(KEY, "firstValue");
         checkCME(() -> {
             map.merge(KEY, "nextValue", mkBiFunc(map));
@@ -100,7 +121,11 @@ public class FunctionalCMEs {
     }
 
     @Test(dataProvider = "Maps")
-    public void testForEach(Map<String,String> map, boolean ignored) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testForEach(Map<String,String> map, boolean ignored) {
         checkCME(() -> {
             map.put(KEY, "firstValue");
             putToForceRehash(map);
@@ -111,7 +136,11 @@ public class FunctionalCMEs {
     }
 
     @Test(dataProvider = "Maps")
-    public void testReplaceAll(Map<String,String> map, boolean ignored) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testReplaceAll(Map<String,String> map, boolean ignored) {
         checkCME(() -> {
             map.put(KEY, "firstValue");
             putToForceRehash(map);

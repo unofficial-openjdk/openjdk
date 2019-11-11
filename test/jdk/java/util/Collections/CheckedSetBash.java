@@ -48,6 +48,7 @@ import java.util.function.Supplier;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
+@Bean
 public class CheckedSetBash {
     static final int numItr = 100;
     static final int setSize = 100;

@@ -43,6 +43,7 @@ package compiler.rtm.cli;
 import jdk.test.lib.process.ExitCode;
 import jdk.test.lib.cli.CommandLineOptionTest;
 
+@Bean
 public class TestUseRTMForStackLocksOptionOnUnsupportedConfig
         extends RTMGenericCommandLineOptionTest {
     private static final String DEFAULT_VALUE = "false";

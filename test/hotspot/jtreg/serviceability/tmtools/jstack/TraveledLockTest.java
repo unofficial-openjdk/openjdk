@@ -114,7 +114,11 @@ public class TraveledLockTest {
     }
 
     // Analyzsing the outputs from the 3 jstack runs
-    public void analyse(String results1, String results2, String results3) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void analyse(String results1, String results2, String results3) {
 
         String jstackStr1 = results1;
         String jstackStr2 = results2;
@@ -181,7 +185,11 @@ public class TraveledLockTest {
         System.out.println("All monitors found - passed");
     }
 
-    private MonitorInfo haveToHaveOneLock(MethodInfo mi) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private MonitorInfo haveToHaveOneLock(MethodInfo mi) {
         if (mi.getLocks().size() == 1) {
             System.out.println("Method \"" + mi.getName()
                     + "\" contain 1 lock - correct");
@@ -193,7 +201,11 @@ public class TraveledLockTest {
         }
     }
 
-    private void haveToBeEmpty(MethodInfo mi) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void haveToBeEmpty(MethodInfo mi) {
         if (mi.getLocks().size() == 0) {
             System.out.println("Method \"" + mi.getName()
                     + "\" does not lock anything - correct");

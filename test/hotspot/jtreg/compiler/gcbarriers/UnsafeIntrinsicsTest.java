@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Random;
 import sun.misc.Unsafe;
 
+@Bean
 public class UnsafeIntrinsicsTest {
 
     /*
@@ -70,7 +71,11 @@ public class UnsafeIntrinsicsTest {
 
     }
 
-    public void testWithLocalData(Runner.OperationType optype) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testWithLocalData(Runner.OperationType optype) {
         System.out.println("Testing " + optype.name() + " with " + thread_count +" thread and " + node_count + " nodes");
 
         // start mutator threads
@@ -88,7 +93,11 @@ public class UnsafeIntrinsicsTest {
         countNodes();
     }
 
-    public void testWithSharedData(Runner.OperationType optype) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testWithSharedData(Runner.OperationType optype) {
         System.out.println("Testing " + optype.name() + " with " + thread_count +" thread and " + node_count + " nodes");
 
         setup(); // All nodes are shared between threads
@@ -104,7 +113,11 @@ public class UnsafeIntrinsicsTest {
         countNodes();
     }
 
-    public void waitForCompletion(ArrayList<Thread> thread_list) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void waitForCompletion(ArrayList<Thread> thread_list) {
         // do some waiting
         try {
             Thread.sleep(time*1000);
@@ -232,7 +245,11 @@ class Runner implements Runnable {
      *  All mergeImpl*-method are prevented from being inlined.
      */
 
-    private Node merge(Node startNode, Node expectedNext, Node head, boolean test_fail) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Node merge(Node startNode, Node expectedNext, Node head, boolean test_fail) {
         switch (type) {
             case Load:
                 return mergeImplLoad(startNode, expectedNext, head);
@@ -261,19 +278,31 @@ class Runner implements Runnable {
         }
     }
 
-    private Node mergeImplLoad(Node startNode, Node expectedNext, Node head) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Node mergeImplLoad(Node startNode, Node expectedNext, Node head) {
         // Atomic load version
         Node temp = (Node) UNSAFE.getReference(startNode, offset);
         startNode.setNext(head);
         return temp;
     }
 
-    private Node mergeImplSwap(Node startNode, Node expectedNext, Node head) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Node mergeImplSwap(Node startNode, Node expectedNext, Node head) {
         // Swap version
         return (Node) UNSAFE.getAndSetReference(startNode, offset, head);
     }
 
-    private Node mergeImplCAS(Node startNode, Node expectedNext, Node head) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Node mergeImplCAS(Node startNode, Node expectedNext, Node head) {
         // CAS - should always be true within a single thread - no other thread can have overwritten
         if (!UNSAFE.compareAndSetReference(startNode, offset, expectedNext, head)) {
             throw new Error("CAS should always succeed on thread local objects, check you barrier implementation");
@@ -281,7 +310,11 @@ class Runner implements Runnable {
         return expectedNext; // continue on old circle
     }
 
-    private Node mergeImplCASFail(Node startNode, Node expectedNext, Node head) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Node mergeImplCASFail(Node startNode, Node expectedNext, Node head) {
         // Force a fail
         if (UNSAFE.compareAndSetReference(startNode, offset, "fail", head)) {
             throw new Error("This CAS should always fail, check you barrier implementation");
@@ -292,7 +325,11 @@ class Runner implements Runnable {
         return current;
     }
 
-    private Node mergeImplWeakCAS(Node startNode, Node expectedNext, Node head) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Node mergeImplWeakCAS(Node startNode, Node expectedNext, Node head) {
         // Weak CAS - should always be true within a single thread - no other thread can have overwritten
         if (!UNSAFE.weakCompareAndSetReference(startNode, offset, expectedNext, head)) {
             throw new Error("Weak CAS should always succeed on thread local objects, check you barrier implementation");
@@ -300,7 +337,11 @@ class Runner implements Runnable {
         return expectedNext; // continue on old circle
     }
 
-    private Node mergeImplWeakCASFail(Node startNode, Node expectedNext, Node head) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Node mergeImplWeakCASFail(Node startNode, Node expectedNext, Node head) {
         // Force a fail
         if (UNSAFE.weakCompareAndSetReference(startNode, offset, "fail", head)) {
             throw new Error("This weak CAS should always fail, check you barrier implementation");
@@ -311,7 +352,11 @@ class Runner implements Runnable {
         return current;
     }
 
-    private Node mergeImplCMPX(Node startNode, Node expectedNext, Node head) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Node mergeImplCMPX(Node startNode, Node expectedNext, Node head) {
         // CmpX - should always be true within a single thread - no other thread can have overwritten
         Object res = UNSAFE.compareAndExchangeReference(startNode, offset, expectedNext, head);
         if (!res.equals(expectedNext)) {
@@ -320,7 +365,11 @@ class Runner implements Runnable {
         return expectedNext; // continue on old circle
     }
 
-    private Node mergeImplCMPXFail(Node startNode, Node expectedNext, Node head) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Node mergeImplCMPXFail(Node startNode, Node expectedNext, Node head) {
         Object res = UNSAFE.compareAndExchangeReference(startNode, offset, head, head);
         if (startNode.next() != expectedNext) {
             throw new Error("Shouldn't have changed");
@@ -339,7 +388,11 @@ class Runner implements Runnable {
     }
 
     // Create a new branch that will replace a part of the circle
-    public Node makeBranch(Node end_node, int count) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Node makeBranch(Node end_node, int count) {
         Node head = end_node;
         for (int i = 0; i < count; i++) {
             head = new Node(head);
@@ -356,7 +409,11 @@ class Node {
         return number;
     }
 
-    public void setNumber(int v) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setNumber(int v) {
         number = v;
     }
 
@@ -367,7 +424,11 @@ class Node {
         next = link;
     }
 
-    public void setNext(Node next) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setNext(Node next) {
         this.next = next;
     }
     public Node next() {

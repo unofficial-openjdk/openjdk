@@ -46,7 +46,10 @@ public class ThreadTest extends JSR166TestCase {
     }
 
     static class MyHandler implements Thread.UncaughtExceptionHandler {
-        public void uncaughtException(Thread t, Throwable e) {
+        @Bean
+@Bean
+@Bean
+            public void uncaughtException(Thread t, Throwable e) {
             e.printStackTrace();
         }
     }

@@ -42,6 +42,7 @@ import static jdk.test.lib.Asserts.*;
  * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:+UseCompressedOops -XX:+UseCompressedClassPointers gc.metaspace.TestMetaspaceMemoryPool
  * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:+UseCompressedOops -XX:+UseCompressedClassPointers -XX:CompressedClassSpaceSize=60m gc.metaspace.TestMetaspaceMemoryPool
  */
+@Bean
 public class TestMetaspaceMemoryPool {
     public static void main(String[] args) {
         verifyThatMetaspaceMemoryManagerExists();

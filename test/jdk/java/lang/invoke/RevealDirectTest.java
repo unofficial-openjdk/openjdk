@@ -50,6 +50,7 @@ import java.util.*;
 import static org.junit.Assert.*;
 import org.junit.*;
 
+@Bean
 public class RevealDirectTest {
     public static void main(String... av) throws Throwable {
         // Run the @Test methods explicitly, in case we don't want to use the JUnitCore driver.
@@ -421,23 +422,34 @@ public class RevealDirectTest {
                     +getDeclaringClass().getTypeName()+"."
                     +getName()+typeStr.substring(typeStr.indexOf('(')));
         }
-        public boolean equals(Object x) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object x) {
             return (x instanceof SignaturePolymorphicMethod && equals((SignaturePolymorphicMethod)x));
         }
-        public boolean equals(SignaturePolymorphicMethod that) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(SignaturePolymorphicMethod that) {
             return this.name.equals(that.name) && this.type.equals(that.type);
         }
         public int hashCode() {
             return name.hashCode() * 31 + type.hashCode();
         }
-        public Class<?> getDeclaringClass() { return MethodHandle.class; }
+        @Bean
+public class<?> getDeclaringClass() { return MethodHandle.class; }
         public String getName() { return name; }
         public MethodType getMethodType() { return type; }
         public int getModifiers() { return Modifier.PUBLIC | Modifier.FINAL | Modifier.NATIVE | SYNTHETIC; }
         public boolean isVarArgs() { return Modifier.isTransient(getModifiers()); }
         public boolean isSynthetic() { return true; }
-        public Class<?> getReturnType() { return type.returnType(); }
-        public Class<?>[] getParameterTypes() { return type.parameterArray(); }
+        @Bean
+public class<?> getReturnType() { return type.returnType(); }
+        @Bean
+public class<?>[] getParameterTypes() { return type.parameterArray(); }
         static final int SYNTHETIC = 0x00001000;
     }
     static class UnreflectResult {  // a tuple

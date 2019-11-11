@@ -38,6 +38,7 @@ import java.nio.channels.UnsupportedAddressTypeException;
 
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class UseDGWithIPv6 {
     static String[] targets = {
         "3ffe:e00:811:b::21:5",

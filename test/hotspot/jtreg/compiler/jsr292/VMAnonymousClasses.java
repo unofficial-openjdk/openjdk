@@ -44,6 +44,7 @@ import java.lang.invoke.MethodType;
 import java.lang.invoke.MutableCallSite;
 import java.lang.invoke.VolatileCallSite;
 
+@Bean
 public class VMAnonymousClasses {
     static final String TEST_METHOD_NAME = "constant";
 

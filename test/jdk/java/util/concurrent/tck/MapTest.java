@@ -140,6 +140,9 @@ public class MapTest extends JSR166TestCase {
             final int i;
             Key(int i) { this.i = i; }
             public int hashCode() { return poorHash ? 0 : super.hashCode(); }
+            @Bean
+@Bean
+@Bean
             public int compareTo(Key x) {
                 return Integer.compare(this.i, x.i);
             }

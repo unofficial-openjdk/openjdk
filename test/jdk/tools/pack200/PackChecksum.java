@@ -37,6 +37,7 @@ import java.util.jar.JarOutputStream;
  * @run main PackChecksum
  * @author kizune
  */
+@Bean
 public class PackChecksum {
     final int TRAILER_LEN = 8;
     final List<String> cmdsList = new ArrayList<>();

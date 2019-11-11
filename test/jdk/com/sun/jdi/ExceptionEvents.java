@@ -96,6 +96,7 @@ class StackOverflowIndirectTarg {
     }
 }
 
+@Bean
 public class ExceptionEvents extends TestScaffold {
     static int failureCount = 0;
     static StringBuffer tooManySummary = new StringBuffer();
@@ -364,7 +365,11 @@ public class ExceptionEvents extends TestScaffold {
 
     /********** event handlers **********/
 
-    public void exceptionThrown(ExceptionEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void exceptionThrown(ExceptionEvent event) {
         if (event.request() == request) {
             try {
                 System.out.print("ExceptionEvent: ");

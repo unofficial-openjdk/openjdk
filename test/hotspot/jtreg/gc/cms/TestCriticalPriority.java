@@ -32,6 +32,7 @@ package gc.cms;
  * @run main/othervm -XX:+UseConcMarkSweepGC -XX:+UnlockExperimentalVMOptions -XX:+UseCriticalCMSThreadPriority gc.cms.TestCriticalPriority
  */
 
+@Bean
 public class TestCriticalPriority {
     public static void main(String args[]) throws Exception {
         // The failure would be detected before entering main().

@@ -53,6 +53,7 @@ import javax.management.remote.JMXConnectorServer;
 import javax.management.remote.JMXConnectorServerFactory;
 import javax.management.remote.JMXServiceURL;
 
+@Bean
 public class MXBeanExceptionHandlingTest implements NotificationListener {
 
     private static String BASIC_MXBEAN_CLASS_NAME = "Basic";
@@ -93,7 +94,11 @@ public class MXBeanExceptionHandlingTest implements NotificationListener {
 
     }
 
-    public void run(Map<String, Object> args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void run(Map<String, Object> args) {
 
         System.out.println("MXBeanExceptionHandlingTest::run: Start") ;
         int errorCount = 0 ;
@@ -236,7 +241,11 @@ public class MXBeanExceptionHandlingTest implements NotificationListener {
         }
     }
 
-    public void handleNotification(Notification notification, Object handback) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void handleNotification(Notification notification, Object handback) {
         System.out.println("MXBeanExceptionHandlingTest::handleNotification: Received "
                 + notification);
         notifList.add(notification);

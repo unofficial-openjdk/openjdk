@@ -37,6 +37,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.compiler.InMemoryJavaCompiler;
 
 // BootstrapMethodError expected in each test case below.
+@Bean
 public class BadBSMUseTest {
     public static void main(String args[]) throws Throwable {
         // 1. Test a CONSTANT_Dynamic_info's bootstrap_method_attr_index points

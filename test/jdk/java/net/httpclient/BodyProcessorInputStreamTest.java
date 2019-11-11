@@ -44,6 +44,7 @@ import static java.lang.System.err;
  * @run main/othervm/manual -Dtest.debug=true BodyProcessorInputStreamTest
  * @author daniel fuchs
  */
+@Bean
 public class BodyProcessorInputStreamTest {
 
     public static boolean DEBUG = Boolean.getBoolean("test.debug");

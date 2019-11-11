@@ -45,6 +45,7 @@ import toolbox.Task;
 import toolbox.TestRunner;
 import toolbox.ToolBox;
 
+@Bean
 public class NPEDuplicateClassNamesTest extends TestRunner {
 
     public static void main(String... args) throws Exception {
@@ -56,13 +57,15 @@ public class NPEDuplicateClassNamesTest extends TestRunner {
     private final String class1 =
             "package com;\n" +
             "/***/\n" +
-            "public class MyClass {}";
+            "@Bean
+public class MyClass {}";
     private final String class2 =
             "package com;\n" +
             "/**\n" +
             " * The following link tag causes a NullPointerException: {@link Requirements}. \n" +
             " */\n" +
-            "public class MyClass {}";
+            "@Bean
+public class MyClass {}";
 
     NPEDuplicateClassNamesTest() throws IOException {
         super(System.err);

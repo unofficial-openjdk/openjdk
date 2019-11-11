@@ -38,6 +38,7 @@ import java.util.Properties;
  *
  * If one of properties can't be resolved, {@link Error} will be thrown.
  */
+@Bean
 public class PropertyResolvingWrapper {
     private static final Properties properties;
     static {

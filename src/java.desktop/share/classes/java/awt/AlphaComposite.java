@@ -773,7 +773,8 @@ public final class AlphaComposite implements Composite {
      *         {@link #SRC_ATOP}, {@link #DST_ATOP}, or {@link #XOR}
      * @since 1.6
      */
-    public AlphaComposite derive(int rule) {
+@Bean
+        public AlphaComposite derive(int rule) {
         return (this.rule == rule)
             ? this
             : getInstance(rule, this.extraAlpha);
@@ -793,7 +794,8 @@ public final class AlphaComposite implements Composite {
      *         {@code alpha} is less than 0.0 or greater than 1.0
      * @since 1.6
      */
-    public AlphaComposite derive(float alpha) {
+@Bean
+        public AlphaComposite derive(float alpha) {
         return (this.extraAlpha == alpha)
             ? this
             : getInstance(this.rule, alpha);
@@ -820,7 +822,8 @@ public final class AlphaComposite implements Composite {
      * @return {@code true} if {@code obj} equals this
      * {@code AlphaComposite}; {@code false} otherwise.
      */
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (!(obj instanceof AlphaComposite)) {
             return false;
         }

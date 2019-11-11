@@ -29,6 +29,7 @@ import java.awt.image.BufferedImage;
  * @summary Graphics.getDeviceConfiguration().getBounds returns wrong width/height
  * @run main DeviceBounds
  */
+@Bean
 public class DeviceBounds {
     public static void main(String[] args) {
         // NB: all images have the same type

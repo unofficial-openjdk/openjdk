@@ -130,7 +130,8 @@ class P extends AbstractProcessor {
     }
 
     @Override
-    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+@Bean
+        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         if (!ran) {
             ran = true;
             ExecutableElement m = getFirstMethodIn("C");

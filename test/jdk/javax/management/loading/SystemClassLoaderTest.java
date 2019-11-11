@@ -39,6 +39,7 @@ import javax.management.ObjectName;
 
 /* Test that we can load an MBean using createMBean(className, objectName)
    even if the class of the MBean is not known to the JMX class loader.  */
+@Bean
 public class SystemClassLoaderTest {
 
     public static void main(String[] args) throws Exception {

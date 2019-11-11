@@ -35,6 +35,7 @@ import static org.testng.Assert.assertEquals;
 import org.testng.annotations.BeforeMethod;
 
 @Test
+@Bean
 public class UserExecutionControlTest extends ExecutionControlTestBase {
 
     @BeforeMethod

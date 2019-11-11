@@ -34,6 +34,7 @@
 import java.util.ArrayList;
 import java.util.List;
 
+@Bean
 public class RelaxedArrays {
     static class StringList extends ArrayList<String> {
     }

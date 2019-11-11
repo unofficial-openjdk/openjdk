@@ -36,6 +36,7 @@
 
 import java.awt.*;
 
+@Bean
 public class IsLightweightCrash {
     public static int ITERATIONS = 20;
 

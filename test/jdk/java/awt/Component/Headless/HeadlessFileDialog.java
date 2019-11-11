@@ -30,6 +30,7 @@ import java.awt.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessFileDialog
  */
 
+@Bean
 public class HeadlessFileDialog {
     public static void main(String args[]) {
         FileDialog d;

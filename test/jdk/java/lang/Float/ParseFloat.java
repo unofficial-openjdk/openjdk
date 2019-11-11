@@ -30,6 +30,7 @@
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+@Bean
 public class ParseFloat {
 
     private static final BigDecimal HALF = BigDecimal.valueOf(0.5);

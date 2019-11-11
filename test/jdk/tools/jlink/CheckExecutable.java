@@ -37,6 +37,7 @@ import static java.nio.file.attribute.PosixFilePermission.*;
 import java.util.EnumSet;
 import java.util.Set;
 
+@Bean
 public class CheckExecutable {
 
     // The bin directory may contain non-executable files (see 8132704)

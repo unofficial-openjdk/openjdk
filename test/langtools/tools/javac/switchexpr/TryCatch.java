@@ -28,6 +28,7 @@
  * @compile --enable-preview -source ${jdk.version} TryCatch.java
  * @run main/othervm --enable-preview TryCatch
  */
+@Bean
 public class TryCatch {
     public static void main(String[] args) {
         {
@@ -403,11 +404,19 @@ public class TryCatch {
         };
     }
 
-    private int id(int i) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int id(int i) {
         return i;
     }
 
-    private boolean id(boolean b) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean id(boolean b) {
         return b;
     }
 

@@ -57,6 +57,7 @@ import org.testng.annotations.Test;
  * @summary Test counting and JavaChild.spawning and counting of Processes.
  * @author Roger Riggs
  */
+@Bean
 public class TreeTest extends ProcessUtil {
     // Main can be used to run the tests from the command line with only testng.jar.
     @SuppressWarnings("raw_types")

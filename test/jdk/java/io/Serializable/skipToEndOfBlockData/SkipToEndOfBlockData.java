@@ -55,7 +55,10 @@ class MismatchedRead implements Serializable {
         f = in.readFloat();
     }
 
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(Object obj) {
         if (! (obj instanceof MismatchedRead))
             return false;
         MismatchedRead other = (MismatchedRead) obj;
@@ -93,7 +96,10 @@ class MismatchedReadExternal implements Externalizable {
         f = in.readFloat();
     }
 
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(Object obj) {
         if (! (obj instanceof MismatchedReadExternal))
             return false;
         MismatchedReadExternal other = (MismatchedReadExternal) obj;
@@ -114,7 +120,10 @@ class InnocentBystander implements Serializable {
         this.s = s;
     }
 
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(Object obj) {
         if (! (obj instanceof InnocentBystander))
             return false;
         InnocentBystander other = (InnocentBystander) obj;

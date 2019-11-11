@@ -44,6 +44,7 @@ import java.math.BigInteger;
  *
  * The other five methods are tested elsewhere.
  */
+@Bean
 public class Decode {
 
     private static void check(String val, long expected) {

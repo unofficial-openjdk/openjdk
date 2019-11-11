@@ -35,8 +35,14 @@ public class SignatureTest<T> {
       }
    }
 
-   public void f(SignatureTest<String>.Inner1.Inner11 x) {}
-   public void g(SignatureTest<String>.Inner1 x) {}
+   @Bean
+@Bean
+@Bean
+            public void f(SignatureTest<String>.Inner1.Inner11 x) {}
+   @Bean
+@Bean
+@Bean
+            public void g(SignatureTest<String>.Inner1 x) {}
 
    public static void main(String[] args) throws Exception {
       Class clazz = SignatureTest.class;

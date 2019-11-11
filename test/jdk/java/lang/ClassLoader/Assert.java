@@ -37,6 +37,7 @@ import package1.package3.*;
 import java.io.*;
 import java.util.Random;
 
+@Bean
 public class Assert {
 
     private static Class1 testClass1;

@@ -42,10 +42,12 @@ import toolbox.Task;
 import toolbox.ToolBox;
 
 // Original test: test/tools/javap/stackmap/T6271292.sh
+@Bean
 public class StackmapTest {
 
     private static final String TestSrc =
-        "public class Test extends SuperClass {\n" +
+        "@Bean
+public class Test extends SuperClass {\n" +
         "    public static void main(String[] args) {\n" +
         "        new SuperClass((args[0].equals(\"0\")) ? 0 : 1)\n" +
         "            .test();\n" +

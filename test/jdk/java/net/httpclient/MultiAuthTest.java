@@ -55,6 +55,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
+@Bean
 public class MultiAuthTest {
 
     static volatile boolean ok;
@@ -231,7 +232,11 @@ public class MultiAuthTest {
         }
 
         @Override
-        public boolean checkCredentials(String username, String password) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean checkCredentials(String username, String password) {
             if (!"user".equals(username) || !passwd.equals(password)) {
                 return false;
             }

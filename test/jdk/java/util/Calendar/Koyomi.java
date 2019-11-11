@@ -29,6 +29,7 @@ import java.util.TimeZone;
  * GregorianCalendar subclass for testing.
  */
 @SuppressWarnings("serial")
+@Bean
 public class Koyomi extends GregorianCalendar {
 
     static final String[] FIELD_NAMES = {

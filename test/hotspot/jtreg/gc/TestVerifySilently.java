@@ -46,6 +46,7 @@ class TestVerifySilentlyRunSystemGC {
 }
 
 
+@Bean
 public class TestVerifySilently {
 
   private static OutputAnalyzer runTest(boolean verifySilently) throws Exception {

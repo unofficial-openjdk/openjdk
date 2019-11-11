@@ -34,6 +34,7 @@ import java.util.Objects;
 
 import sun.hotspot.parser.DiagnosticCommand;
 
+@Bean
 public class WhiteBox {
   @SuppressWarnings("serial")
   public static class WhiteBoxPermission extends BasicPermission {
@@ -99,7 +100,11 @@ public class WhiteBox {
 
   // Runtime
   // Make sure class name is in the correct format
-  public boolean isClassAlive(String name) {
+  @Bean
+@Bean
+@Bean
+@Bean
+                public boolean isClassAlive(String name) {
     return isClassAlive0(name.replace('.', '/'));
   }
   private native boolean isClassAlive0(String name);
@@ -269,7 +274,11 @@ public class WhiteBox {
   }
   // If usage of the DisableIntrinsic flag is not expected (or the usage can be ignored),
   // use the below method that does not require the compilation context as argument.
-  public boolean isIntrinsicAvailable(Executable method, int compLevel) {
+  @Bean
+@Bean
+@Bean
+@Bean
+                public boolean isIntrinsicAvailable(Executable method, int compLevel) {
       return isIntrinsicAvailable(method, null, compLevel);
   }
   private native boolean isIntrinsicAvailable0(Executable method,
@@ -371,7 +380,11 @@ public class WhiteBox {
   public void clearInlineCaches() {
     clearInlineCaches0(false);
   }
-  public void clearInlineCaches(boolean preserve_static_stubs) {
+  @Bean
+@Bean
+@Bean
+@Bean
+                public void clearInlineCaches(boolean preserve_static_stubs) {
     clearInlineCaches0(preserve_static_stubs);
   }
 
@@ -413,7 +426,11 @@ public class WhiteBox {
   // Throws IllegalStateException if unsupported by the current collector.
   // Throws NullPointerException if phase is null.
   // Throws IllegalArgumentException if phase is not valid for the current collector.
-  public void requestConcurrentGCPhase(String phase) {
+  @Bean
+@Bean
+@Bean
+@Bean
+                public void requestConcurrentGCPhase(String phase) {
     if (!supportsConcurrentGCPhaseControl()) {
       throw new IllegalStateException("Concurrent GC phase control not supported");
     } else if (phase == null) {
@@ -467,7 +484,11 @@ public class WhiteBox {
     this::getIntxVMFlag, this::getUintxVMFlag, this::getUint64VMFlag,
     this::getSizeTVMFlag, this::getStringVMFlag, this::getDoubleVMFlag);
 
-  public Object getVMFlag(String name) {
+  @Bean
+@Bean
+@Bean
+@Bean
+                public Object getVMFlag(String name) {
     return flagsGetters.stream()
                        .map(f -> f.apply(name))
                        .filter(x -> x != null)
@@ -501,7 +522,11 @@ public class WhiteBox {
           this::getMethodUintxOption, this::getMethodDoubleOption,
           this::getMethodStringOption);
 
-  public Object getMethodOption(Executable method, String name) {
+  @Bean
+@Bean
+@Bean
+@Bean
+                public Object getMethodOption(Executable method, String name) {
     return methodOptionGetters.stream()
                               .map(f -> f.apply(method, name))
                               .filter(x -> x != null)

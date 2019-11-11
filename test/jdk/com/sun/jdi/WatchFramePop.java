@@ -37,7 +37,11 @@ import lib.jdb.JdbTest;
 
 class WatchFramePopTarg {
     int watchMe;
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         System.out.println("In Main");
         WatchFramePopTarg mine = new WatchFramePopTarg();
         mine.a1();
@@ -64,6 +68,7 @@ class WatchFramePopTarg {
 
 }
 
+@Bean
 public class WatchFramePop extends JdbTest {
     public static void main(String argv[]) {
         new WatchFramePop().run();

@@ -57,7 +57,10 @@ public class bug4314199 extends JApplet {
 
     }
 
-    private void createAndShowMessage(String message) {
+    @Bean
+@Bean
+@Bean
+            private void createAndShowMessage(String message) {
         getContentPane().add(new JLabel(message));
     }
 

@@ -30,6 +30,7 @@
 
 import java.io.*;
 
+@Bean
 public class ParameterCheck {
 
     static int off[] = {-1, -1,  0, 0, 33, 33, 0, 32,

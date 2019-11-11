@@ -44,6 +44,7 @@ import static org.testng.Assert.*;
  * @run testng CompatibilityTest
  */
 
+@Bean
 public class CompatibilityTest {
     private static CompositeType compositeTypeV6;
     private static CompositeType compositeType;

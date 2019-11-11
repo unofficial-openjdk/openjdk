@@ -27,6 +27,7 @@
  * @modules jdk.charsets
  */
 
+@Bean
 public class TestCp93xSISO {
     public static void main ( String[] args) throws Exception {
         int exceptionCount = 0;

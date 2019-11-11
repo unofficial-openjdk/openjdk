@@ -44,7 +44,8 @@ import static javax.tools.Diagnostic.Kind.*;
 public class T6350057 extends JavacTestingAbstractProcessor {
     static class LocalVarAllergy extends ElementKindVisitor<Boolean, Void> {
         @Override
-        public Boolean visitTypeAsEnum(TypeElement e, Void v) {
+@Bean
+            public Boolean visitTypeAsEnum(TypeElement e, Void v) {
             System.out.println("visitTypeAsEnum: " + e.getSimpleName().toString());
             for(Element el: e.getEnclosedElements() )
                 this.visit(el);

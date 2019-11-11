@@ -31,6 +31,7 @@
 import java.util.Locale;
 import java.util.spi.CurrencyNameProvider;
 
+@Bean
 public class Bug6807534 {
 
     static final CurrencyNameProvider cnp = new CurrencyNameProviderImpl();
@@ -71,7 +72,11 @@ public class Bug6807534 {
 
     static class CurrencyNameProviderImpl extends CurrencyNameProvider {
         // dummy implementation
-        public String getSymbol(String currencyCode, Locale locale) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String getSymbol(String currencyCode, Locale locale) {
             return "";
         }
 

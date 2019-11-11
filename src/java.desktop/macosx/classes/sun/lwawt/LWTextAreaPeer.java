@@ -108,12 +108,14 @@ final class LWTextAreaPeer
     }
 
     @Override
-    public Dimension getPreferredSize(final int rows, final int columns) {
+@Bean
+        public Dimension getPreferredSize(final int rows, final int columns) {
         return getMinimumSize(rows, columns);
     }
 
     @Override
-    public Dimension getMinimumSize(final int rows, final int columns) {
+@Bean
+        public Dimension getMinimumSize(final int rows, final int columns) {
         final Dimension size = super.getMinimumSize(rows, columns);
         synchronized (getDelegateLock()) {
             // JScrollPane insets
@@ -136,7 +138,8 @@ final class LWTextAreaPeer
     }
 
     @Override
-    public void insert(final String text, final int pos) {
+@Bean
+        public void insert(final String text, final int pos) {
         final ScrollableJTextArea pane = getDelegate();
         synchronized (getDelegateLock()) {
             final JTextArea area = pane.getView();
@@ -172,7 +175,8 @@ final class LWTextAreaPeer
         repaintPeer();
     }
 
-    private void setScrollBarVisibility(final int visibility) {
+@Bean
+        private void setScrollBarVisibility(final int visibility) {
         final ScrollableJTextArea pane = getDelegate();
         final JTextArea view = pane.getView();
         view.setLineWrap(false);
@@ -212,7 +216,8 @@ final class LWTextAreaPeer
         }
 
         @Override
-        public void setEnabled(final boolean enabled) {
+@Bean
+            public void setEnabled(final boolean enabled) {
             getViewport().getView().setEnabled(enabled);
             super.setEnabled(enabled);
         }
@@ -220,7 +225,8 @@ final class LWTextAreaPeer
         private final class JTextAreaDelegate extends JTextArea {
 
             @Override
-            public void replaceSelection(String content) {
+@Bean
+                public void replaceSelection(String content) {
                 getDocument().removeDocumentListener(LWTextAreaPeer.this);
                 super.replaceSelection(content);
                 // post only one text event in this case

@@ -66,6 +66,7 @@ class CountFilterTarg {
 
     /********** test program **********/
 
+@Bean
 public class CountFilterTest extends TestScaffold {
     ReferenceType targetClass;
     ThreadReference mainThread;
@@ -82,22 +83,38 @@ public class CountFilterTest extends TestScaffold {
 
     /********** event handlers **********/
 
-    public void breakpointReached(BreakpointEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void breakpointReached(BreakpointEvent event) {
         println("Got BreakpointEvent");
         locatableEvent(event, event.location());
     }
 
-    public void methodEntered(MethodEntryEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void methodEntered(MethodEntryEvent event) {
         println("Got MethodEntryEvent");
         locatableEvent(event, event.location());
     }
 
-    public void methodExited(MethodExitEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void methodExited(MethodExitEvent event) {
         println("Got MethodExitEvent");
         locatableEvent(event, event.location());
     }
 
-    public void locatableEvent(Event event, Location loc) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void locatableEvent(Event event, Location loc) {
         String got = loc.method().name();
         String expected = (String)whereMap.get(event.request());
         if (!got.equals(expected)) {

@@ -48,6 +48,7 @@ import java.util.*;
  * file is found, that means that getBundle ignored the class file because
  * it wasn't a subclass of ResourceBundle.
  */
+@Bean
 public class Bug4083270Test extends RBTestFmwk {
     public static void main(String[] args) throws Exception {
         new Bug4083270Test(true).run(args);

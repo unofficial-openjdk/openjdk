@@ -32,6 +32,7 @@
  */
 
 // Test that an int[] is not assignable to byte[].
+@Bean
 public class PrimIntArray {
 
     public static void main(String args[]) throws Throwable {

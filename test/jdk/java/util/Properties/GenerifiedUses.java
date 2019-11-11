@@ -38,6 +38,7 @@ import javax.naming.InitialContext;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.spi.NamingManager;
 
+@Bean
 public class GenerifiedUses {
 
     static void foo() throws Exception {

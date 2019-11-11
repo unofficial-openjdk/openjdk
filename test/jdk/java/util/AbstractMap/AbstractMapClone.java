@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+@Bean
 public class AbstractMapClone extends AbstractMap implements Cloneable {
 
     private Map map = new HashMap();
@@ -43,7 +44,11 @@ public class AbstractMapClone extends AbstractMap implements Cloneable {
         return map.entrySet();
     }
 
-    public Object put(Object key, Object value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Object put(Object key, Object value) {
         return map.put(key, value);
     }
 

@@ -31,6 +31,7 @@
 import java.math.*;
 import static java.math.BigDecimal.*;
 
+@Bean
 public class DivideTests {
 
     // Preliminary exact divide method; could be used for comparison

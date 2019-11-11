@@ -46,6 +46,7 @@
 
 package compiler.intrinsics.string;
 
+@Bean
 public class TestStringCompareToSameLength {
     private final int size;
 
@@ -77,7 +78,11 @@ public class TestStringCompareToSameLength {
         this.size = size;
     }
 
-    private void testCompareTo(int mismatchIdx) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testCompareTo(int mismatchIdx) {
         // Create Latin1 strings: latin1, latin2, which are different at index.
         // Case of index == size is a case of equal strings
         char latinSrc[] = new char[size];
@@ -121,7 +126,11 @@ public class TestStringCompareToSameLength {
         }
     }
 
-    private void checkCase(int mismatchIdx, String str1, String str2, String caseName) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkCase(int mismatchIdx, String str1, String str2, String caseName) {
         int expected;
         if (mismatchIdx != size) {
             expected = str1.charAt(mismatchIdx) - str2.charAt(mismatchIdx);

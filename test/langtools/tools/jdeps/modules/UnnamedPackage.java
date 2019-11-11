@@ -35,6 +35,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
 
+@Bean
 public class UnnamedPackage {
     private static final Path TEST_CLASSES = Paths.get(System.getProperty("test.classes"));
     private static final Path FOO_JAR_FILE = Paths.get("foo.jar");

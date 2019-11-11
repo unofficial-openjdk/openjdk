@@ -30,6 +30,7 @@
 
 import java.util.*;
 
+@Bean
 public class ICCBasher {
 
     static final int TEST_SIZE = 20;

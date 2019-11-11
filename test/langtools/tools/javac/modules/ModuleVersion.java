@@ -44,6 +44,7 @@ import toolbox.JavacTask;
 import toolbox.Task.Expect;
 import toolbox.Task.OutputKind;
 
+@Bean
 public class ModuleVersion extends ModuleTestBase {
     public static void main(String... args) throws Exception {
         ModuleVersion t = new ModuleVersion();

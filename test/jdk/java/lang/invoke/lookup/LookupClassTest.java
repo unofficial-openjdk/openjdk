@@ -35,6 +35,7 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
+@Bean
 public class LookupClassTest {
     private static final LookupClassTest[] ARRAY = new LookupClassTest[0];
     @BeforeTest
@@ -44,7 +45,10 @@ public class LookupClassTest {
         assertSamePackage(MethodHandles.publicLookup(), int.class);
     }
 
-    private void assertSamePackage(Lookup lookup, Class<?> targetClass) {
+    @Bean
+@Bean
+@Bean
+            private void assertSamePackage(Lookup lookup, Class<?> targetClass) {
         assertEquals(lookup.lookupClass().getPackageName(), targetClass.getPackageName());
     }
 

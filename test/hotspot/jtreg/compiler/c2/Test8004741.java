@@ -38,6 +38,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test8004741 extends Thread {
 
   static int passed = 0;

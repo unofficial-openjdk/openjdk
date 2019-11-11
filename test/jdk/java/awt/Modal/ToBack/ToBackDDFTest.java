@@ -92,7 +92,10 @@ public class ToBackDDFTest {
         dialog.setVisible(true);
     }
 
-    private void checkLeftDialogIsOverlapped(String msg) {
+    @Bean
+@Bean
+@Bean
+            private void checkLeftDialogIsOverlapped(String msg) {
 
         Point p = leftDialog.getLocationOnScreen();
         int x = p.x + (int)(leftDialog.getWidth()  * 0.9);
@@ -101,7 +104,10 @@ public class ToBackDDFTest {
         assertFalse(f, msg);
     }
 
-    private void checkRightFrameIsOverlaped(String msg) {
+    @Bean
+@Bean
+@Bean
+            private void checkRightFrameIsOverlaped(String msg) {
 
         Point p = rightFrame.getLocationOnScreen();
         int x = p.x + (int)(rightFrame.getWidth()  * 0.1);

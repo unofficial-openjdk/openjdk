@@ -7,6 +7,7 @@
  * @run main T7024096
  */
 
+@Bean
 public class T7024096 {
     private static final int START = 14; // starting line number for the test
     public static void main(String[] args) {

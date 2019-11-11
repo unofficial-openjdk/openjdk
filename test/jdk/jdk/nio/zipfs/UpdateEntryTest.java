@@ -50,6 +50,7 @@ import static org.testng.Assert.*;
  * @run testng UpdateEntryTest
  */
 @Test
+@Bean
 public class UpdateEntryTest {
 
     private static final Path HERE = Path.of(".");

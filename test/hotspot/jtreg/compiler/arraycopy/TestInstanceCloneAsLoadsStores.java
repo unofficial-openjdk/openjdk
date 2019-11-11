@@ -42,6 +42,7 @@
 
 package compiler.arraycopy;
 
+@Bean
 public class TestInstanceCloneAsLoadsStores extends TestInstanceCloneUtils {
 
     // Should be compiled as loads/stores

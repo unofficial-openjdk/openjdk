@@ -27,5 +27,6 @@
  */
 @MissingWrapper(@Missing)
 @Marker
+@Bean
 public class B {
 }

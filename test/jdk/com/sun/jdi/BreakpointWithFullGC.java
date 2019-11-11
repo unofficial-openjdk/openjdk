@@ -61,6 +61,7 @@ class BreakpointWithFullGCTarg {
     }
 }
 
+@Bean
 public class BreakpointWithFullGC extends JdbTest {
     public static void main(String argv[]) {
         new BreakpointWithFullGC().run();

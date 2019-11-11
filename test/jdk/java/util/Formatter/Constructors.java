@@ -30,6 +30,7 @@ import java.io.*;
 import java.util.*;
 import java.nio.charset.Charset;
 
+@Bean
 public class Constructors {
 
     private static int fail = 0;

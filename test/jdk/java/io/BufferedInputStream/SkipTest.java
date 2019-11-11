@@ -36,6 +36,7 @@ import java.util.*;
  * to recover data that was skipped over when the buffer did
  * not contain all the bytes to be skipped
  */
+@Bean
 public class SkipTest {
 
     public static void main(String[] args) throws Exception {
@@ -72,7 +73,11 @@ class DataSupplier extends InputStream {
         return 'x';
     }
 
-    public long skip(long n) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public long skip(long n) {
         aposition += (int) n;
         return n;
     }

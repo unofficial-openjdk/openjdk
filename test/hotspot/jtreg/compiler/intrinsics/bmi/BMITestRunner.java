@@ -42,6 +42,7 @@ import java.util.Random;
  * JVMs being started in different modes - one in int and other in comp
  * with C2 and disabled tiered compilation.
  */
+@Bean
 public class BMITestRunner {
 
     enum VMMode {

@@ -36,6 +36,7 @@
 import javax.management.*;
 import java.util.Arrays;
 
+@Bean
 public class ChangingNotifsTest {
     public static interface EmptyMBean {}
 

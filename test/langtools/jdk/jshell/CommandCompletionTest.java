@@ -57,13 +57,18 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
+@Bean
 public class CommandCompletionTest extends ReplToolTesting {
 
 
     private JShellTool repl;
 
     @Override
-    protected void testRawRun(Locale locale, String[] args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void testRawRun(Locale locale, String[] args) {
         repl = ((JShellToolBuilder) builder(locale))
                 .rawTool();
         try {
@@ -73,7 +78,11 @@ public class CommandCompletionTest extends ReplToolTesting {
         }
     }
 
-    public void assertCompletion(boolean after, String code, boolean isSmart, String... expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertCompletion(boolean after, String code, boolean isSmart, String... expected) {
         if (!after) {
             setCommandInput("\n");
         } else {
@@ -81,7 +90,11 @@ public class CommandCompletionTest extends ReplToolTesting {
         }
     }
 
-    public void assertCompletion(String code, boolean isSmart, String... expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void assertCompletion(String code, boolean isSmart, String... expected) {
         List<String> completions = computeCompletions(code, isSmart);
         assertEquals(completions, Arrays.asList(expected), "Command: " + code + ", output: " +
                 completions.toString());
@@ -313,7 +326,8 @@ public class CommandCompletionTest extends ReplToolTesting {
         Files.createDirectories(outDir.resolve("dir"));
         createIfNeeded(outDir.resolve("test.jar"));
         createIfNeeded(outDir.resolve("test.zip"));
-        compiler.compile(outDir, "package pkg; public class A { public String toString() { return \"A\"; } }");
+        compiler.compile(outDir, "package pkg; @Bean
+public class A { public String toString() { return \"A\"; } }");
         String jarName = "test.jar";
         compiler.jar(outDir, jarName, "pkg/A.class");
         compiler.getPath(outDir).resolve(jarName);

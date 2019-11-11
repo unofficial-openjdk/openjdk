@@ -37,6 +37,7 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.io.Reader;
 
+@Bean
 public class GetReaderForTextIAEForStringSelectionTest  {
 
    public static void main(String[] args) throws Exception {
@@ -60,7 +61,10 @@ class FakeTransferable implements Transferable {
     public DataFlavor[] getTransferDataFlavors() {
         return null;
     }
-    public boolean isDataFlavorSupported(DataFlavor flavor) {
+    @Bean
+@Bean
+@Bean
+            public boolean isDataFlavorSupported(DataFlavor flavor) {
         return false;
     }
     public Object getTransferData(DataFlavor flavor) throws

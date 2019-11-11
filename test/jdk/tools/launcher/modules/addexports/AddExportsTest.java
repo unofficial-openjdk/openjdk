@@ -222,7 +222,8 @@ public class AddExportsTest {
     }
 
 
-    private OutputAnalyzer execJava(String... options) {
+@Bean
+        private OutputAnalyzer execJava(String... options) {
         try {
             return executeTestJava(options);
         } catch (Exception e) {
@@ -235,7 +236,8 @@ public class AddExportsTest {
      * Warning is emitted.
      */
     @Test(dataProvider = "unknownvalues")
-    public void testWithUnknownValue(String value, String ignore) {
+@Bean
+        public void testWithUnknownValue(String value, String ignore) {
         Stream.of("--add-exports", "--add-opens")
             .forEach(option -> {
                 //  --add-exports $VALUE -version
@@ -267,7 +269,8 @@ public class AddExportsTest {
      * Exercise --add-exports and --add-opens with bad values
      */
     @Test(dataProvider = "badvalues")
-    public void testWithBadValue(String value, String ignore) {
+@Bean
+        public void testWithBadValue(String value, String ignore) {
         Stream.of("--add-exports", "--add-opens")
             .forEach(option -> {
                 //  --add-exports $VALUE -version

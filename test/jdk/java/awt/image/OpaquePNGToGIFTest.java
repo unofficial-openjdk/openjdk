@@ -151,7 +151,11 @@ public final class OpaquePNGToGIFTest extends Frame {
         startTestButton.setActionCommand("Start Test");
         startTestButton.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 try {
                     startButtonClicked = true;
                     imageFrame = new Frame();
@@ -208,7 +212,11 @@ public final class OpaquePNGToGIFTest extends Frame {
                     imageFrame.setVisible(true);
                     imageFrame.addWindowListener(new WindowAdapter() {
                         @Override
-                        public void windowClosing(WindowEvent e) {
+                        @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosing(WindowEvent e) {
                             try {
                                 img.flush();
                                 instructionFrame.dispose();
@@ -236,7 +244,11 @@ public final class OpaquePNGToGIFTest extends Frame {
         passButton.setActionCommand("Pass");
         passButton.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 try {
                     if (img != null) {
                         img.flush();
@@ -263,7 +275,11 @@ public final class OpaquePNGToGIFTest extends Frame {
         failButton.setActionCommand("Fail");
         failButton.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 try {
                     if (img != null) {
                         img.flush();
@@ -307,7 +323,11 @@ public final class OpaquePNGToGIFTest extends Frame {
 
         dialog.addWindowListener(new WindowAdapter() {
             @Override
-            public void windowClosing(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosing(WindowEvent e) {
                 try {
                     if (img != null) {
                         img.flush();
@@ -371,7 +391,11 @@ public final class OpaquePNGToGIFTest extends Frame {
         }
     }
 
-    public GIFImageMetadata setAnimationProperties(IIOMetadata data) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public GIFImageMetadata setAnimationProperties(IIOMetadata data) {
         ArrayList appIDs = new ArrayList();
         appIDs.add(new String("NETSCAPE").getBytes());
         ArrayList authCodes = new ArrayList();
@@ -401,7 +425,11 @@ public final class OpaquePNGToGIFTest extends Frame {
 
         Image im = null;
 
-        public void setImage(Image img) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setImage(Image img) {
             im = img;
         }
 
@@ -410,7 +438,11 @@ public final class OpaquePNGToGIFTest extends Frame {
             repaint();
         }
 
-        public void paint(Graphics g) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(Graphics g) {
             Graphics2D g2d = (Graphics2D) g;
 
             if (im != null) {

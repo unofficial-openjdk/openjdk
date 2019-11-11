@@ -38,6 +38,7 @@
 import java.rmi.Naming;
 import java.rmi.registry.Registry;
 
+@Bean
 public class LookupNameWithColon {
     public static void main(String[] args) throws Exception {
         String[] names = {

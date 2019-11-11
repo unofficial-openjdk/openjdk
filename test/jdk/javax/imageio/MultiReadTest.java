@@ -41,6 +41,7 @@ import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 
+@Bean
 public class MultiReadTest {
 
     private static final File pwd = new File(".");

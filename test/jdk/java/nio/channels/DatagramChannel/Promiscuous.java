@@ -45,6 +45,7 @@ import java.util.stream.Collectors;
 import jdk.test.lib.NetworkConfiguration;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class Promiscuous {
 
     static final Random rand = new Random();

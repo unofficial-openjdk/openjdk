@@ -35,6 +35,7 @@ import java.net.*;
 import java.io.*;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class TestAfterClose
 {
     static int failCount;

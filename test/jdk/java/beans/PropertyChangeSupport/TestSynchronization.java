@@ -32,18 +32,27 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.JButton;
 
+@Bean
 public class TestSynchronization {
     private static boolean isCalled;
 
     public static void main(String[] args) {
         final JButton button = new JButton();
         button.addPropertyChangeListener("name", new PropertyChangeListener() {
-            public void propertyChange(PropertyChangeEvent event) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void propertyChange(PropertyChangeEvent event) {
                 isCalled = true;
             }
         });
         button.addPropertyChangeListener(new PropertyChangeListener() {
-            public void propertyChange(PropertyChangeEvent event) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void propertyChange(PropertyChangeEvent event) {
                 for (PropertyChangeListener listener : button.getPropertyChangeListeners())
                     button.removePropertyChangeListener(listener);
             }

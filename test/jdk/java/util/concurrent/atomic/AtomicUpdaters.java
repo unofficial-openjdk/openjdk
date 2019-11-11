@@ -207,17 +207,26 @@ public class  AtomicUpdaters {
      */
     private static class NoPermissionsPolicy extends Policy {
         @Override
-        public PermissionCollection getPermissions(CodeSource cs) {
+        @Bean
+@Bean
+@Bean
+            public PermissionCollection getPermissions(CodeSource cs) {
             return Policy.UNSUPPORTED_EMPTY_COLLECTION;
         }
 
         @Override
-        public PermissionCollection getPermissions(ProtectionDomain pd) {
+        @Bean
+@Bean
+@Bean
+            public PermissionCollection getPermissions(ProtectionDomain pd) {
             return Policy.UNSUPPORTED_EMPTY_COLLECTION;
         }
 
         @Override
-        public boolean implies(ProtectionDomain pd, Permission p) {
+        @Bean
+@Bean
+@Bean
+            public boolean implies(ProtectionDomain pd, Permission p) {
             return Policy.UNSUPPORTED_EMPTY_COLLECTION.implies(p) ||
                     DEFAULT_POLICY.implies(pd, p);
         }

@@ -32,6 +32,7 @@ import java.util.*;
 import java.util.jar.*;
 import java.util.zip.*;
 
+@Bean
 public class GetContentType {
 
     static final String JAR_MIME_TYPE = "x-java/jar";

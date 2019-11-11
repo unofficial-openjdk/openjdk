@@ -34,6 +34,7 @@
 
 package compiler.rtm.cli;
 
+@Bean
 public class TestRTMLockingCalculationDelayOption
         extends RTMGenericCommandLineOptionTest {
     private static final String DEFAULT_VALUE = "0";

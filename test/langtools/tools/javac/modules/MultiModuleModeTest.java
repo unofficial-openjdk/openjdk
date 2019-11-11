@@ -42,6 +42,7 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class MultiModuleModeTest extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {

@@ -38,6 +38,7 @@ import javax.lang.model.element.*;
 import javax.tools.*;
 
 @SupportedOptions({"errKind", "msgrWarnKind", "javaWarnKind"})
+@Bean
 public class TestWarnErrorCount extends JavacTestingAbstractProcessor {
     public static void main(String... args) throws Exception {
         new TestWarnErrorCount().run(args);
@@ -294,7 +295,11 @@ public class TestWarnErrorCount extends JavacTestingAbstractProcessor {
     int round = 0;
 
     @Override
-    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         round++;
 
         ErrorKind ek = ErrorKind.valueOf(options.get("errKind"));

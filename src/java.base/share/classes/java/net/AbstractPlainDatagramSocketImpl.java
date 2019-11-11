@@ -38,7 +38,8 @@ import sun.security.action.GetPropertyAction;
 
 /**
  * Abstract datagram and multicast socket implementation base class.
- * Note: This is not a public class, so that applets cannot call
+ * Note: This is not a @Bean
+public class, so that applets cannot call
  * into the implementation directly and hence cannot bypass the
  * security checks present in the DatagramSocket and MulticastSocket
  * classes.

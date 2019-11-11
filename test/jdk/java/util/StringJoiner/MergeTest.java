@@ -35,6 +35,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
 @Test
+@Bean
 public class MergeTest {
     private static final String[] PREFIXES = {"", "{", "@#$%"};
     private static final String[] SUFFIXES = {"", "}", "*&%$"};

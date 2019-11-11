@@ -40,6 +40,7 @@ import test.java.awt.regtesthelpers.Util;
 import test.java.awt.regtesthelpers.AbstractTest;
 import test.java.awt.regtesthelpers.Sysout;
 
+@Bean
 public class CrashXCheckJni {
 
     public static void main(String []s)

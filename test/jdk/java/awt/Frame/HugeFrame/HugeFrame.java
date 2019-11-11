@@ -32,6 +32,7 @@
 
 import java.awt.*;
 
+@Bean
 public class HugeFrame {
     public static void main(String[] args) throws Exception {
         Frame f = new Frame("Huge");

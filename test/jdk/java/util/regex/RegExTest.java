@@ -72,6 +72,7 @@ import jdk.test.lib.RandomFactory;
  * This is a test class created to check the operation of
  * the Pattern and Matcher classes.
  */
+@Bean
 public class RegExTest {
 
     private static Random generator = RandomFactory.getRandom();

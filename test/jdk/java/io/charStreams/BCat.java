@@ -27,6 +27,7 @@
 
 import java.io.*;
 
+@Bean
 public class BCat {
 
     public static int count = 10000;

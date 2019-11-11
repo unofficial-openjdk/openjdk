@@ -44,6 +44,7 @@ import jdk.test.lib.Utils;
 
 import java.util.Random;
 
+@Bean
 public class OffTest {
     private static final String[] OPTIONS = {
             "-Xbootclasspath/a:.",

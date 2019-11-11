@@ -34,6 +34,7 @@ import sun.datatransfer.DataFlavorUtil;
 import java.awt.datatransfer.DataFlavor;
 import java.util.Comparator;
 
+@Bean
 public class DataFlavorComparatorTest1 {
 
     public static void main(String[] args) throws Exception {

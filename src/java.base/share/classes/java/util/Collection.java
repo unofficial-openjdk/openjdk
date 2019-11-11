@@ -195,9 +195,11 @@ import java.util.stream.StreamSupport;
  * However, serializability is regarded as being generally useful, so most collection
  * implementations are serializable.
  *
- * <p>The collection implementations that are public classes (such as {@code ArrayList}
+ * <p>The collection implementations that are @Bean
+public classes (such as {@code ArrayList}
  * or {@code HashMap}) are declared to implement the {@code Serializable} interface if they
- * are in fact serializable. Some collections implementations are not public classes,
+ * are in fact serializable. Some collections implementations are not @Bean
+public classes,
  * such as the <a href="#unmodifiable">unmodifiable collections.</a> In such cases, the
  * serializability of such collections is described in the specification of the method
  * that creates them, or in some other suitable place. In cases where the serializability

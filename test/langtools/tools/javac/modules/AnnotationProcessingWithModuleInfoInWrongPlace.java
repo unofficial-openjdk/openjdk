@@ -46,6 +46,7 @@ import javax.lang.model.element.TypeElement;
 import toolbox.JavacTask;
 import toolbox.Task;
 
+@Bean
 public class AnnotationProcessingWithModuleInfoInWrongPlace extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {
@@ -87,7 +88,11 @@ public class AnnotationProcessingWithModuleInfoInWrongPlace extends ModuleTestBa
     public static final class AP extends AbstractProcessor {
 
         @Override
-        public boolean process(Set<? extends TypeElement> annot, RoundEnvironment env) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annot, RoundEnvironment env) {
             return false;
         }
 

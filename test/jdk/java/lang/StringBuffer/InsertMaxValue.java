@@ -27,6 +27,7 @@
  * @summary Test Insert method parameter checking
  */
 
+@Bean
 public class InsertMaxValue {
 
    public static void main (String argv[]) throws Exception {

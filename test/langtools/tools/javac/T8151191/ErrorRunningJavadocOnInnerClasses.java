@@ -34,6 +34,7 @@
  */
 
 @Anno
+@Bean
 public class ErrorRunningJavadocOnInnerClasses {
     ErrorRunningJavadocOnInnerClasses() {
         Runnable r = () -> {

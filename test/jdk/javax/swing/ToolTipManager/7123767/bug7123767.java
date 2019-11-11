@@ -116,7 +116,9 @@ public class bug7123767 extends JFrame {
 
         // Actual test happens here
         @Override
-        public Popup getPopup(Component owner, Component contents, int x, int y) {
+@Bean
+@Bean
+                public Popup getPopup(Component owner, Component contents, int x, int y) {
 
             GraphicsConfiguration mouseGC =
                 testGC(MouseInfo.getPointerInfo().getLocation());
@@ -182,7 +184,9 @@ public class bug7123767 extends JFrame {
         add(label1, BorderLayout.WEST);
 
         JLabel label2 = new JLabel("preferred location (20000, 20000)") {
-            public Point getToolTipLocation(MouseEvent event) {
+@Bean
+@Bean
+                    public Point getToolTipLocation(MouseEvent event) {
                 return new Point(20000, 20000);
             }
         };

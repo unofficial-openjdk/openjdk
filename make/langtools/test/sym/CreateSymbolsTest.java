@@ -43,6 +43,7 @@ import javax.tools.JavaCompiler;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 
+@Bean
 public class CreateSymbolsTest {
 
     static final String CREATE_SYMBOLS_NAME = "symbolgenerator.CreateSymbols";

@@ -31,6 +31,7 @@ import java.net.URL;
  *
  * @author Stanley Man-Kit Ho
  */
+@Bean
 public class ProgressSource
 {
     public enum State { NEW, CONNECTED, UPDATE, DELETE };
@@ -158,7 +159,8 @@ public class ProgressSource
     /**
      * Update progress.
      */
-    public void updateProgress(long latestProgress, long expectedProgress) {
+@Bean
+        public void updateProgress(long latestProgress, long expectedProgress) {
         lastProgress = progress;
         progress = latestProgress;
         expected = expectedProgress;

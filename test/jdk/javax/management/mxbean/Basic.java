@@ -48,6 +48,7 @@ import javax.management.ObjectName;
  * Class Basic
  * Basic Description
  */
+@Bean
 public class Basic implements BasicMXBean, NotificationEmitter,
                               MBeanRegistration {
 
@@ -95,7 +96,11 @@ public class Basic implements BasicMXBean, NotificationEmitter,
     /**
      * Set int attribute
      */
-    public void setIntAtt(int value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setIntAtt(int value) {
         intAtt = value;
     }
 
@@ -109,7 +114,11 @@ public class Basic implements BasicMXBean, NotificationEmitter,
     /**
      * Set Integer attribute
      */
-    public void setIntegerAtt(Integer value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setIntegerAtt(Integer value) {
         integerAtt = value;
     }
 
@@ -123,7 +132,11 @@ public class Basic implements BasicMXBean, NotificationEmitter,
     /**
      * Set boolean attribute
      */
-    public void setBoolAtt(boolean value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setBoolAtt(boolean value) {
         boolAtt = value;
     }
 
@@ -137,7 +150,11 @@ public class Basic implements BasicMXBean, NotificationEmitter,
     /**
      * Set Boolean attribute
      */
-    public void setBooleanAtt(Boolean value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setBooleanAtt(Boolean value) {
         booleanAtt = value;
     }
 
@@ -151,7 +168,11 @@ public class Basic implements BasicMXBean, NotificationEmitter,
     /**
      * Set String attribute
      */
-    public void setStringAtt(String value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setStringAtt(String value) {
         stringAtt = value;
     }
 
@@ -165,7 +186,11 @@ public class Basic implements BasicMXBean, NotificationEmitter,
     /**
      * Set Date attribute
      */
-    public void setDateAtt(Date value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setDateAtt(Date value) {
         dateAtt = value;
     }
 
@@ -179,7 +204,11 @@ public class Basic implements BasicMXBean, NotificationEmitter,
     /**
      * Set ObjectName attribute
      */
-    public void setObjectNameAtt(ObjectName value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setObjectNameAtt(ObjectName value) {
         objectNameAtt = value;
     }
 
@@ -198,7 +227,11 @@ public class Basic implements BasicMXBean, NotificationEmitter,
     /**
      * Set SqeParameter attribute
      */
-    public void setSqeParameterAtt(SqeParameter value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setSqeParameterAtt(SqeParameter value) {
         sqeParameterAtt = value;
     }
 
@@ -223,7 +256,11 @@ public class Basic implements BasicMXBean, NotificationEmitter,
      * As we plan to test our custom Descriptor finds its way into
      * the metadata of emitted notifications, String is good enough.
      */
-    public void setNotifDescriptorAsMapAtt(Map<String, String> value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setNotifDescriptorAsMapAtt(Map<String, String> value) {
         notifDescriptorAsMapAtt = new HashMap<String, String>(value);
         notifDescriptorAtt = new ImmutableDescriptor(value);
     }
@@ -238,7 +275,11 @@ public class Basic implements BasicMXBean, NotificationEmitter,
     /**
      * Do take SqeParameter as a parameter
      */
-    public void doWeird(SqeParameter param) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void doWeird(SqeParameter param) {
     }
 
     /**
@@ -297,7 +338,11 @@ public class Basic implements BasicMXBean, NotificationEmitter,
         }
     }
 
-    public void postRegister(Boolean registrationDone) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void postRegister(Boolean registrationDone) {
         // Do nothing
     }
 
@@ -312,7 +357,11 @@ public class Basic implements BasicMXBean, NotificationEmitter,
     /**
      * Send one Notification of the provided notifType type.
      */
-    public void sendNotification(String notifType) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void sendNotification(String notifType) {
         Notification notification = null;
 
         if (notifType.equals(NOTIF_TYPE_0)) {
@@ -376,11 +425,19 @@ public class Basic implements BasicMXBean, NotificationEmitter,
         }
     }
 
-    public void setNumOfNotificationSenders(int value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setNumOfNotificationSenders(int value) {
         numOfNotificationSenders = value;
     }
 
-    public void setNumOfNotificationSenderLoops(int value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setNumOfNotificationSenderLoops(int value) {
         numOfNotificationSenderLoops = value;
     }
 

@@ -196,7 +196,8 @@ class Random implements java.io.Serializable {
      *         generator's sequence
      * @since  1.1
      */
-    protected int next(int bits) {
+@Bean
+        protected int next(int bits) {
         long oldseed, nextseed;
         AtomicLong seed = this.seed;
         do {
@@ -214,7 +215,8 @@ class Random implements java.io.Serializable {
      * <p>The method {@code nextBytes} is implemented by class {@code Random}
      * as if by:
      *  <pre> {@code
-     * public void nextBytes(byte[] bytes) {
+     *@Bean
+     public void nextBytes(byte[] bytes) {
      *   for (int i = 0; i < bytes.length; )
      *     for (int rnd = nextInt(), n = Math.min(bytes.length - i, 4);
      *          n-- > 0; rnd >>= 8)
@@ -225,7 +227,8 @@ class Random implements java.io.Serializable {
      * @throws NullPointerException if the byte array is null
      * @since  1.1
      */
-    public void nextBytes(byte[] bytes) {
+@Bean
+        public void nextBytes(byte[] bytes) {
         for (int i = 0, len = bytes.length; i < len; )
             for (int rnd = nextInt(),
                      n = Math.min(len - i, Integer.SIZE/Byte.SIZE);
@@ -340,7 +343,8 @@ class Random implements java.io.Serializable {
      * probability.  The method {@code nextInt(int bound)} is implemented by
      * class {@code Random} as if by:
      *  <pre> {@code
-     * public int nextInt(int bound) {
+     *@Bean
+     public int nextInt(int bound) {
      *   if (bound <= 0)
      *     throw new IllegalArgumentException("bound must be positive");
      *
@@ -384,7 +388,8 @@ class Random implements java.io.Serializable {
      * @throws IllegalArgumentException if bound is not positive
      * @since 1.2
      */
-    public int nextInt(int bound) {
+@Bean
+        public int nextInt(int bound) {
         if (bound <= 0)
             throw new IllegalArgumentException(BadBound);
 
@@ -616,7 +621,8 @@ class Random implements java.io.Serializable {
      *         less than zero
      * @since 1.8
      */
-    public IntStream ints(long streamSize) {
+@Bean
+        public IntStream ints(long streamSize) {
         if (streamSize < 0L)
             throw new IllegalArgumentException(BadSize);
         return StreamSupport.intStream
@@ -722,7 +728,8 @@ class Random implements java.io.Serializable {
      *         is greater than or equal to {@code randomNumberBound}
      * @since 1.8
      */
-    public IntStream ints(int randomNumberOrigin, int randomNumberBound) {
+@Bean
+        public IntStream ints(int randomNumberOrigin, int randomNumberBound) {
         if (randomNumberOrigin >= randomNumberBound)
             throw new IllegalArgumentException(BadRange);
         return StreamSupport.intStream
@@ -744,7 +751,8 @@ class Random implements java.io.Serializable {
      *         less than zero
      * @since 1.8
      */
-    public LongStream longs(long streamSize) {
+@Bean
+        public LongStream longs(long streamSize) {
         if (streamSize < 0L)
             throw new IllegalArgumentException(BadSize);
         return StreamSupport.longStream
@@ -860,7 +868,8 @@ class Random implements java.io.Serializable {
      *         is greater than or equal to {@code randomNumberBound}
      * @since 1.8
      */
-    public LongStream longs(long randomNumberOrigin, long randomNumberBound) {
+@Bean
+        public LongStream longs(long randomNumberOrigin, long randomNumberBound) {
         if (randomNumberOrigin >= randomNumberBound)
             throw new IllegalArgumentException(BadRange);
         return StreamSupport.longStream
@@ -883,7 +892,8 @@ class Random implements java.io.Serializable {
      *         less than zero
      * @since 1.8
      */
-    public DoubleStream doubles(long streamSize) {
+@Bean
+        public DoubleStream doubles(long streamSize) {
         if (streamSize < 0L)
             throw new IllegalArgumentException(BadSize);
         return StreamSupport.doubleStream
@@ -979,7 +989,8 @@ class Random implements java.io.Serializable {
      *         is greater than or equal to {@code randomNumberBound}
      * @since 1.8
      */
-    public DoubleStream doubles(double randomNumberOrigin, double randomNumberBound) {
+@Bean
+        public DoubleStream doubles(double randomNumberOrigin, double randomNumberBound) {
         if (!(randomNumberOrigin < randomNumberBound))
             throw new IllegalArgumentException(BadRange);
         return StreamSupport.doubleStream
@@ -1023,7 +1034,8 @@ class Random implements java.io.Serializable {
                     Spliterator.NONNULL | Spliterator.IMMUTABLE);
         }
 
-        public boolean tryAdvance(IntConsumer consumer) {
+@Bean
+            public boolean tryAdvance(IntConsumer consumer) {
             if (consumer == null) throw new NullPointerException();
             long i = index, f = fence;
             if (i < f) {
@@ -1034,7 +1046,8 @@ class Random implements java.io.Serializable {
             return false;
         }
 
-        public void forEachRemaining(IntConsumer consumer) {
+@Bean
+            public void forEachRemaining(IntConsumer consumer) {
             if (consumer == null) throw new NullPointerException();
             long i = index, f = fence;
             if (i < f) {
@@ -1078,7 +1091,8 @@ class Random implements java.io.Serializable {
                     Spliterator.NONNULL | Spliterator.IMMUTABLE);
         }
 
-        public boolean tryAdvance(LongConsumer consumer) {
+@Bean
+            public boolean tryAdvance(LongConsumer consumer) {
             if (consumer == null) throw new NullPointerException();
             long i = index, f = fence;
             if (i < f) {
@@ -1089,7 +1103,8 @@ class Random implements java.io.Serializable {
             return false;
         }
 
-        public void forEachRemaining(LongConsumer consumer) {
+@Bean
+            public void forEachRemaining(LongConsumer consumer) {
             if (consumer == null) throw new NullPointerException();
             long i = index, f = fence;
             if (i < f) {
@@ -1134,7 +1149,8 @@ class Random implements java.io.Serializable {
                     Spliterator.NONNULL | Spliterator.IMMUTABLE);
         }
 
-        public boolean tryAdvance(DoubleConsumer consumer) {
+@Bean
+            public boolean tryAdvance(DoubleConsumer consumer) {
             if (consumer == null) throw new NullPointerException();
             long i = index, f = fence;
             if (i < f) {
@@ -1145,7 +1161,8 @@ class Random implements java.io.Serializable {
             return false;
         }
 
-        public void forEachRemaining(DoubleConsumer consumer) {
+@Bean
+            public void forEachRemaining(DoubleConsumer consumer) {
             if (consumer == null) throw new NullPointerException();
             long i = index, f = fence;
             if (i < f) {
@@ -1225,7 +1242,8 @@ class Random implements java.io.Serializable {
                 (Random.class.getDeclaredField("seed"));
         } catch (Exception ex) { throw new Error(ex); }
     }
-    private void resetSeed(long seedVal) {
+@Bean
+        private void resetSeed(long seedVal) {
         unsafe.putReferenceVolatile(this, seedOffset, new AtomicLong(seedVal));
     }
 }

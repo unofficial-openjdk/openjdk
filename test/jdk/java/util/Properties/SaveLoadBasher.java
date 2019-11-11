@@ -41,6 +41,7 @@ import java.util.Random;
  * can successfully save and load properties
  * using character encoding
  */
+@Bean
 public class SaveLoadBasher {
 
     private static String keyValueSeparators = "=: \t\r\n\f#!\\";

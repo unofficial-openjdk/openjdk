@@ -57,6 +57,7 @@ import toolbox.ModuleBuilder;
 import toolbox.Task;
 import toolbox.Task.Expect;
 
+@Bean
 public class CompileModulePatchTest extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {
@@ -125,11 +126,13 @@ public class CompileModulePatchTest extends ModuleTestBase {
         Path m3 = msp.resolve("m3x");
         tb.writeJavaFiles(m3,
                           "module m3x { }",
-                          "package m3; public class Test { }");
+                          "package m3; @Bean
+public class Test { }");
         Path m4 = msp.resolve("m4x");
         tb.writeJavaFiles(m4,
                           "module m4x { }",
-                          "package m4; public class Test { }");
+                          "package m4; @Bean
+public class Test { }");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
@@ -159,11 +162,13 @@ public class CompileModulePatchTest extends ModuleTestBase {
         Path m1 = src.resolve("m1x");
         tb.writeJavaFiles(m1,
                           "module m1x { }",
-                          "package m1; public class Test { }");
+                          "package m1; @Bean
+public class Test { }");
         Path m2 = src.resolve("m2x");
         tb.writeJavaFiles(m2,
                           "module m2x { }",
-                          "package m2; public class Test { }");
+                          "package m2; @Bean
+public class Test { }");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
@@ -332,10 +337,12 @@ public class CompileModulePatchTest extends ModuleTestBase {
     public void testUnnamedIsolation(Path base) throws Exception {
         //note: avoiding use of java.base, as that gets special handling on some places:
         Path sourcePath = base.resolve("source-path");
-        tb.writeJavaFiles(sourcePath, "package src; public class Src {}");
+        tb.writeJavaFiles(sourcePath, "package src; @Bean
+public class Src {}");
 
         Path classPathSrc = base.resolve("class-path-src");
-        tb.writeJavaFiles(classPathSrc, "package cp; public class CP { }");
+        tb.writeJavaFiles(classPathSrc, "package cp; @Bean
+public class CP { }");
         Path classPath = base.resolve("classPath");
         tb.createDirectories(classPath);
 
@@ -352,7 +359,8 @@ public class CompileModulePatchTest extends ModuleTestBase {
         Path modulePathSrc = base.resolve("module-path-src");
         tb.writeJavaFiles(modulePathSrc,
                           "module m {}",
-                          "package m; public class M {}");
+                          "package m; @Bean
+public class M {}");
         Path modulePath = base.resolve("modulePath");
         tb.createDirectories(modulePath.resolve("m"));
 
@@ -367,7 +375,8 @@ public class CompileModulePatchTest extends ModuleTestBase {
             throw new Exception("expected output not found: " + modLog);
 
         Path src = base.resolve("src");
-        tb.writeJavaFiles(src, "package m; public class Extra { }");
+        tb.writeJavaFiles(src, "package m; @Bean
+public class Extra { }");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
@@ -393,7 +402,11 @@ public class CompileModulePatchTest extends ModuleTestBase {
     public static final class CheckModuleContentProcessing extends AbstractProcessor {
 
         @Override
-        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             Symtab syms = Symtab.instance(((JavacProcessingEnvironment) processingEnv).getContext());
             Elements elements = processingEnv.getElementUtils();
             ModuleElement unnamedModule = syms.unnamedModule;
@@ -476,12 +489,15 @@ public class CompileModulePatchTest extends ModuleTestBase {
         Path src1ma = src1.resolve("ma");
         tb.writeJavaFiles(src1ma,
                           "module ma { exports ma; }",
-                          "package ma; public class C1 { public static void method() { } }",
-                          "package ma.impl; public class C2 { }");
+                          "package ma; @Bean
+public class C1 { public static void method() { } }",
+                          "package ma.impl; @Bean
+public class C2 { }");
         Path src1mb = src1.resolve("mb");
         tb.writeJavaFiles(src1mb,
                           "module mb { requires ma; }",
-                          "package mb.impl; public class C2 { public static void method() { } }");
+                          "package mb.impl; @Bean
+public class C2 { public static void method() { } }");
         Path src1mc = src1.resolve("mc");
         tb.writeJavaFiles(src1mc,
                           "module mc { }");
@@ -500,21 +516,28 @@ public class CompileModulePatchTest extends ModuleTestBase {
         Path src2 = base.resolve("src2");
         Path src2ma = src2.resolve("ma");
         tb.writeJavaFiles(src2ma,
-                          "package ma.impl; public class C2 { public static void extra() { ma.C1.method(); } }",
-                          "package ma.impl; public class C3 { public void test() { C2.extra(); } }");
+                          "package ma.impl; @Bean
+public class C2 { public static void extra() { ma.C1.method(); } }",
+                          "package ma.impl; @Bean
+public class C3 { public void test() { C2.extra(); } }");
         Path src2mb = src2.resolve("mb");
         tb.writeJavaFiles(src2mb,
-                          "package mb.impl; public class C3 { public void test() { C2.method(); ma.C1.method(); ma.impl.C2.extra(); } }");
+                          "package mb.impl; @Bean
+public class C3 { public void test() { C2.method(); ma.C1.method(); ma.impl.C2.extra(); } }");
         Path src2mc = src2.resolve("mc");
         tb.writeJavaFiles(src2mc,
-                          "package mc.impl; public class C2 { public static void test() { } }",
+                          "package mc.impl; @Bean
+public class C2 { public static void test() { } }",
                           //will require --add-reads ma:
-                          "package mc.impl; public class C3 { public static void test() { ma.impl.C2.extra(); } }");
+                          "package mc.impl; @Bean
+public class C3 { public static void test() { ma.impl.C2.extra(); } }");
         Path src2mt = src2.resolve("mt");
         tb.writeJavaFiles(src2mt,
                           "module mt { requires ma; requires mb; }",
-                          "package mt.impl; public class C2 { public static void test() { mb.impl.C2.method(); ma.impl.C2.extra(); } }",
-                          "package mt.impl; public class C3 { public static void test() { C2.test(); mc.impl.C2.test(); } }");
+                          "package mt.impl; @Bean
+public class C2 { public static void test() { mb.impl.C2.method(); ma.impl.C2.extra(); } }",
+                          "package mt.impl; @Bean
+public class C3 { public static void test() { C2.test(); mc.impl.C2.test(); } }");
         Path classes2 = base.resolve("classes2");
         tb.createDirectories(classes2);
         tb.cleanDirectory(classes2);
@@ -541,9 +564,11 @@ public class CompileModulePatchTest extends ModuleTestBase {
 
         //incremental compilation (C2 mustn't be compiled, C3 must):
         tb.writeJavaFiles(src2ma,
-                          "package ma.impl; public class C3 { public void test() { ma.C1.method(); C2.extra(); } }");
+                          "package ma.impl; @Bean
+public class C3 { public void test() { ma.C1.method(); C2.extra(); } }");
         tb.writeJavaFiles(src2mt,
-                          "package mt.impl; public class C3 { public static void test() { mc.impl.C2.test(); C2.test(); } }");
+                          "package mt.impl; @Bean
+public class C3 { public static void test() { mc.impl.C2.test(); C2.test(); } }");
 
         List<String> log = new JavacTask(tb)
             .options("--module-path", classes1.toString(),
@@ -580,7 +605,11 @@ public class CompileModulePatchTest extends ModuleTestBase {
         }
     }
 
-    private void checkFileExists(Path dir, String path) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkFileExists(Path dir, String path) {
         Path toCheck = dir.resolve(path.replace("/", dir.getFileSystem().getSeparator()));
 
         if (!Files.exists(toCheck)) {

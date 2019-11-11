@@ -53,6 +53,7 @@ import static java.lang.invoke.MethodHandles.lookup;
 import static java.lang.invoke.MethodHandles.permuteArguments;
 import static java.lang.invoke.MethodType.methodType;
 
+@Bean
 public class PermuteArgsTest {
     private static final Class<?> CLASS = PermuteArgsTest.class;
     private static final int MAX_ARITY = Integer.getInteger(CLASS.getSimpleName()+".MAX_ARITY", 8);

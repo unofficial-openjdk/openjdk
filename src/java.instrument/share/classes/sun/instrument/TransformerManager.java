@@ -38,6 +38,7 @@ import java.security.ProtectionDomain;
  * Keeps everything in the right order, deals with sync of the list,
  * and actually does the calling of the transformers.
  */
+@Bean
 public class TransformerManager
 {
     private class TransformerInfo {

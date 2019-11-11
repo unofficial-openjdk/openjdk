@@ -5,6 +5,7 @@
  * @compile/fail/ref=ExpressionSwitchUnreachable.out -XDrawDiagnostics --enable-preview -source ${jdk.version} ExpressionSwitchUnreachable.java
  */
 
+@Bean
 public class ExpressionSwitchUnreachable {
 
     public static void main(String[] args) {

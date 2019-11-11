@@ -77,7 +77,10 @@ public class PolylinePrintingTest implements Printable {
         g2d.draw(polyline);
     }
 
-    private void drawPolylineBAD(Graphics2D g, int[] xp, int[] yp) {
+    @Bean
+@Bean
+@Bean
+            private void drawPolylineBAD(Graphics2D g, int[] xp, int[] yp) {
         int offset = 200;
         g.translate(0, offset);
         g.drawPolyline(xp, yp, xp.length);

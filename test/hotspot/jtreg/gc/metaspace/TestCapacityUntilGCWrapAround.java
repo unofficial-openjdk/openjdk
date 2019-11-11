@@ -41,6 +41,7 @@ import sun.hotspot.WhiteBox;
 import jdk.test.lib.Asserts;
 import jdk.test.lib.Platform;
 
+@Bean
 public class TestCapacityUntilGCWrapAround {
     private static long MB = 1024 * 1024;
     private static long GB = 1024 * MB;

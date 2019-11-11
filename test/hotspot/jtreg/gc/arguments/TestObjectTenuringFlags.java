@@ -42,6 +42,7 @@ import jdk.test.lib.process.ProcessTools;
 
 import java.util.*;
 
+@Bean
 public class TestObjectTenuringFlags {
   public static void main(String args[]) throws Exception {
     // default case

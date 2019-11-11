@@ -28,6 +28,7 @@
  * @author Peter von der Ah\u00e9
  */
 
+@Bean
 public class T5105890 {
     public static final String str1  = (false ? "YYY" : null  );
     public static final String str2  = (true  ? null  : "YYY" );

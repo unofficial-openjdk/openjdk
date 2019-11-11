@@ -238,9 +238,21 @@ public class TestOrdering extends JavadocTester {
             "public void   add(int i, float f){}",
             "public void   add(float f, int i){}",
             "public void   add(double d, byte b){}",
-            "public Double add(Double d) {return (double) 22/7;}",
-            "public double add(double d1, double d2) {return d1 + d2;}",
-            "public double add(double d1, Double  d2) {return d1 + d2;}",
+            "@Bean
+@Bean
+@Bean
+@Bean
+                public Double add(Double d) {return (double) 22/7;}",
+            "@Bean
+@Bean
+@Bean
+@Bean
+                public double add(double d1, double d2) {return d1 + d2;}",
+            "@Bean
+@Bean
+@Bean
+@Bean
+                public double add(double d1, Double  d2) {return d1 + d2;}",
             "public Float  add(float f) {return (float) 22/7;}",
             "public void   add(int i){}",
             "public int    add(Integer i) {return 0;}"

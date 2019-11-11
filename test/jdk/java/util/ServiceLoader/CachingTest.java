@@ -42,6 +42,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
+@Bean
 public class CachingTest {
 
     // service type
@@ -65,7 +66,11 @@ public class CachingTest {
         this.testClassLoader = CachingTest.class.getClassLoader();
     }
 
-    private void checkLists(List<?> list1, List<?> list2) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkLists(List<?> list1, List<?> list2) {
         assertTrue(list1.size() == 2);
         assertTrue(list2.size() == 2);
         Iterator<?> iterator1 = list1.iterator();

@@ -46,6 +46,7 @@ import jdk.test.lib.Utils;
 
 import java.lang.reflect.Executable;
 
+@Bean
 public class AddAndRemoveTest extends AbstractTestBase {
     private static final int AMOUNT = Integer.getInteger(
             "compiler.compilercontrol.jcmd.AddAndRemoveTest.amount", 10);

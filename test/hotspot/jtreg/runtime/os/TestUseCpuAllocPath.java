@@ -35,6 +35,7 @@ import jdk.test.lib.process.OutputAnalyzer;
  * @library /test/lib
  * @run driver TestUseCpuAllocPath
  */
+@Bean
 public class TestUseCpuAllocPath {
 
     static final String SUCCESS_STRING = "active_processor_count: using dynamic path (forced)";

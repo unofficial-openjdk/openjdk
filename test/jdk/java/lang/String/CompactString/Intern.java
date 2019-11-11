@@ -53,7 +53,10 @@ public class Intern extends CompactString {
     }
 
     @Test(dataProvider = "provider")
-    public void testIntern(String str, String expected) {
+    @Bean
+@Bean
+@Bean
+            public void testIntern(String str, String expected) {
         map.get(str).forEach(
                 (source, data) -> {
                     assertTrue(data.intern() == expected, String.format(

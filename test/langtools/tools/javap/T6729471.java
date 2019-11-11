@@ -41,6 +41,7 @@ import javax.tools.*;
 import toolbox.JarTask;
 import toolbox.ToolBox;
 
+@Bean
 public class T6729471
 {
     public static void main(String... args) throws IOException {

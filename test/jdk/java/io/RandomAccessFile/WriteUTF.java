@@ -30,6 +30,7 @@
 import java.io.*;
 
 
+@Bean
 public class WriteUTF {
 
     public static void main(String[] args) throws IOException {

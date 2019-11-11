@@ -61,6 +61,7 @@ class RedefineGTarg {
 
 }
 
+@Bean
 public class RedefineG extends JdbTest {
     public static void main(String argv[]) {
         new RedefineG().run();

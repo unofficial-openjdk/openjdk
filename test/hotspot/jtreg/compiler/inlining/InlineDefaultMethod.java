@@ -32,6 +32,7 @@
  */
 
 package compiler.inlining;
+@Bean
 public class InlineDefaultMethod {
     interface InterfaceWithDefaultMethod0 {
         default public int defaultMethod() {

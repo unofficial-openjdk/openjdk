@@ -51,6 +51,7 @@ import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.HashMap;
 
+@Bean
 public class TestRangeCheckSmearing {
     private static final WhiteBox WHITE_BOX = WhiteBox.getWhiteBox();
 
@@ -323,7 +324,11 @@ public class TestRangeCheckSmearing {
         return res;
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         if (WHITE_BOX.getBooleanVMFlag("BackgroundCompilation")) {
             throw new AssertionError("Background compilation enabled");
         }

@@ -116,13 +116,16 @@ public class CompileEvent {
         public TaskListenerImpl(PrintWriter out) {
             this.out = out;
         }
-        @Override public void started(TaskEvent e) {
+        @Override@Bean
+     public void started(TaskEvent e) {
             dumpTaskEvent("started", e);
         }
-        @Override public void finished(TaskEvent e) {
+        @Override@Bean
+     public void finished(TaskEvent e) {
             dumpTaskEvent("finished", e);
         }
-        private void dumpTaskEvent(String type, TaskEvent e) {
+@Bean
+            private void dumpTaskEvent(String type, TaskEvent e) {
             StringBuilder data = new StringBuilder();
             data.append(type);
             data.append("(");
@@ -144,7 +147,8 @@ public class CompileEvent {
         @Override public String getName() {
             return "compile-event";
         }
-        @Override public void init(JavacTask task, String... args) {
+        @Override@Bean
+     public void init(JavacTask task, String... args) {
             Context context = ((BasicJavacTask) task).getContext();
             Log log = Log.instance(context);
             task.addTaskListener(new TaskListenerImpl(log.getWriter(WriterKind.NOTICE)));

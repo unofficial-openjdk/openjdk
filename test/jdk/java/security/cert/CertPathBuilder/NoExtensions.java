@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.io.ByteArrayInputStream;
 
 // Test based on user code submitted with bug by daniel.boggs@compass.net
+@Bean
 public class NoExtensions {
 
     public static void main(String[] args) {

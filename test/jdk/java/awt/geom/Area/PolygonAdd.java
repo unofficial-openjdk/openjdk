@@ -33,6 +33,7 @@ import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 
+@Bean
 public class PolygonAdd {
     public static void main(String argv[]) {
         // Original shapes: 4 touching rectangles

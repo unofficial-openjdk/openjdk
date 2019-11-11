@@ -36,6 +36,7 @@ import java.security.GeneralSecurityException;
  * @since 1.4
  */
 
+@Bean
 public class ShortBufferException extends GeneralSecurityException {
 
     @java.io.Serial

@@ -36,6 +36,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.Platform;
 import jdk.internal.misc.Unsafe;
 
+@Bean
 public class CreateCoredumpOnCrash {
     private static class Crasher {
         public static void main(String[] args) {

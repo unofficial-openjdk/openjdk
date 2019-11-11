@@ -31,6 +31,7 @@
  * @run main NullQualifiedNew2
  */
 
+@Bean
 public class NullQualifiedNew2 {
     class Inner {
         Inner(int i) {}

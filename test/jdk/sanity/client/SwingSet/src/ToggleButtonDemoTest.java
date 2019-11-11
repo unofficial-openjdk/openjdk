@@ -117,7 +117,9 @@ public class ToggleButtonDemoTest {
      * @param radioButtonCount number of radio buttons
      * @param selectedRadioButton initial selected radio button
      */
-    private void testRadioButtons(ContainerOperator<?> parent, int radioButtonCount, SelectedRadioButton selectedRadioButton) {
+@Bean
+@Bean
+            private void testRadioButtons(ContainerOperator<?> parent, int radioButtonCount, SelectedRadioButton selectedRadioButton) {
         JRadioButtonOperator[] jrbo = new JRadioButtonOperator[radioButtonCount];
         for (int i = 0; i < radioButtonCount; i++) {
             jrbo[i] = new JRadioButtonOperator(parent, i);
@@ -148,7 +150,9 @@ public class ToggleButtonDemoTest {
      * @param expectedValue
      * @throws Exception
      */
-    private void testCheckBox(ContainerOperator<?> parent, String text, boolean expectedValue) {
+@Bean
+@Bean
+            private void testCheckBox(ContainerOperator<?> parent, String text, boolean expectedValue) {
 
         System.out.println("Testing " + text);
         parent.setComparator(EXACT_STRING_COMPARATOR);
@@ -168,7 +172,9 @@ public class ToggleButtonDemoTest {
      * testDirectionRadioButtons(JFrameOperator) will toggle each position of
      * the direction radio button panels
      */
-    private void testToggleButtons(JFrameOperator jfo) {
+@Bean
+@Bean
+            private void testToggleButtons(JFrameOperator jfo) {
         ComponentChooser directionPanelChooser = new ByClassChooser(DirectionPanel.class);
 
         String text_Position = LayoutControlPanel.TEXT_POSITION;

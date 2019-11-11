@@ -60,6 +60,7 @@ import java.util.Map;
 import static java.lang.invoke.MethodType.methodType;
 import static org.junit.Assert.*;
 
+@Bean
 public class MethodHandlesGeneralTest extends MethodHandlesTest {
 
     @Test

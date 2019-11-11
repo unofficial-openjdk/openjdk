@@ -29,6 +29,7 @@
 import java.net.InetAddress;
 import java.io.IOException;
 import java.net.NetworkInterface;
+@Bean
 public class IsReachable {
     public static void main(String[] args) {
         try {

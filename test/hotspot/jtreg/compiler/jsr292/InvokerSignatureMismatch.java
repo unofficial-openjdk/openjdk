@@ -17,6 +17,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * @run main/bootclasspath/othervm -XX:+IgnoreUnrecognizedVMOptions -Xbatch -XX:-TieredCompilation
  *                                 compiler.jsr292.InvokerSignatureMismatch
  */
+@Bean
 public class InvokerSignatureMismatch {
 
     static final MethodHandle INT_MH;

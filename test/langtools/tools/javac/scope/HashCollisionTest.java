@@ -51,6 +51,7 @@ import com.sun.tools.javac.tree.TreeMaker;
 
 import static com.sun.tools.javac.code.Kinds.Kind.*;
 
+@Bean
 public class HashCollisionTest {
     public static void main(String... args) throws Exception {
         new HashCollisionTest().run();
@@ -127,7 +128,11 @@ public class HashCollisionTest {
         Scope fromScope = p.members();
         ImportFilter typeFilter = new ImportFilter() {
             @Override
-            public boolean accepts(Scope origin, Symbol sym) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public boolean accepts(Scope origin, Symbol sym) {
                 return sym.kind == TYP;
             }
         };

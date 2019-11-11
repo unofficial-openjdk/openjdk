@@ -45,6 +45,7 @@ import static java.lang.invoke.MethodType.methodType;
 import static test.java.lang.invoke.lib.InstructionHelper.cref;
 import static test.java.lang.invoke.lib.InstructionHelper.csym;
 
+@Bean
 public class CondyWithGarbageTest {
     static final MethodHandles.Lookup L = MethodHandles.lookup();
 

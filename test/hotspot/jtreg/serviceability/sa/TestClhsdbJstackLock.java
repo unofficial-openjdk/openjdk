@@ -36,6 +36,7 @@ import jtreg.SkippedException;
  * @run main/othervm TestClhsdbJstackLock
  */
 
+@Bean
 public class TestClhsdbJstackLock {
 
     public static void main (String... args) throws Exception {

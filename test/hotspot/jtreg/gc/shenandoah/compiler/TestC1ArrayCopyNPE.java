@@ -28,6 +28,7 @@
  * @run main/othervm -XX:TieredStopAtLevel=1 -XX:+UnlockDiagnosticVMOptions -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ShenandoahGCHeuristics=aggressive TestC1ArrayCopyNPE
  */
 
+@Bean
 public class TestC1ArrayCopyNPE {
 
     private static final int NUM_RUNS = 10000;

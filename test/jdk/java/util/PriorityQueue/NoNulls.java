@@ -48,11 +48,16 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 
+@Bean
 public class NoNulls {
     void test(String[] args) throws Throwable {
         final Comparator<String> nullTolerantComparator
             = new Comparator<>() {
-            public int compare(String x, String y) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public int compare(String x, String y) {
                 return (x == null ? -1 :
                         y == null ? 1 :
                         x.compareTo(y));

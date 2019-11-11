@@ -46,6 +46,7 @@ import javax.management.ObjectName;
 import javax.management.monitor.CounterMonitor;
 import javax.management.monitor.CounterMonitorMBean;
 
+@Bean
 public class CounterMonitorDeadlockTest {
 
     public static void main(String[] args) throws Exception {
@@ -116,7 +117,11 @@ public class CounterMonitorDeadlockTest {
             if (when == When.IN_NOTIFY) {
                 final AtomicInteger notifCount = new AtomicInteger();
                 final NotificationListener listener = new NotificationListener() {
-                    public void handleNotification(Notification n, Object h) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public void handleNotification(Notification n, Object h) {
                         Thread t = new Thread(sensitiveThing);
                         t.start();
                         try {
@@ -207,7 +212,11 @@ public class CounterMonitorDeadlockTest {
             return thing;
         }
 
-        public void setThing(int thing) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setThing(int thing) {
             this.thing = thing;
         }
 

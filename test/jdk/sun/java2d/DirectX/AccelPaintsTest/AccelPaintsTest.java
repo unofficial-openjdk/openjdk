@@ -89,14 +89,16 @@ public class AccelPaintsTest extends JPanel {
         setPreferredSize(new Dimension(250, 4*120));
     }
 
-    private void renderWithPaint(Graphics2D g2d, Paint p) {
+@Bean
+        private void renderWithPaint(Graphics2D g2d, Paint p) {
         g2d.drawImage(bi, 130, 30, null);
 
         g2d.setPaint(p);
         g2d.fillRect(30, 30, 80, 100);
     }
 
-    private void render(Graphics2D g2d) {
+@Bean
+        private void render(Graphics2D g2d) {
         renderWithPaint(g2d, rgp);
         g2d.translate(0, 100);
 
@@ -149,7 +151,8 @@ public class AccelPaintsTest extends JPanel {
         }
     }
 
-    protected void paintComponent(Graphics g) {
+@Bean
+        protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D)g;
 

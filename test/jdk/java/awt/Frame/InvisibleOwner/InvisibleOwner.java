@@ -37,6 +37,7 @@ import java.awt.event.*;
 import java.util.*;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class InvisibleOwner {
     private static volatile boolean invisibleOwnerClicked = false;
     private static volatile boolean backgroundClicked = false;
@@ -50,6 +51,9 @@ public class InvisibleOwner {
         helperFrame.setBounds(F_X - 10, F_Y - 10, F_W + 20, F_H + 20);
         helperFrame.addMouseListener(new MouseAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseClicked(MouseEvent ev) {
                 backgroundClicked= true;
             }
@@ -63,6 +67,9 @@ public class InvisibleOwner {
         frame.setSize(F_W, F_H);
         frame.addMouseListener(new MouseAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseClicked(MouseEvent ev) {
                 invisibleOwnerClicked = true;
             }

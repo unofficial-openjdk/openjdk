@@ -34,6 +34,7 @@ import sun.java2d.opengl.CGLVolatileSurfaceManager;
  * platform-specific instance of a particular SurfaceManager.  Each platform
  * (Windows, Unix, etc.) has its own specialized SurfaceManagerFactory.
  */
+@Bean
 public class MacosxSurfaceManagerFactory extends SurfaceManagerFactory {
 
     /**

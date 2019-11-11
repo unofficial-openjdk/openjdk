@@ -37,6 +37,7 @@ import java.io.*;
 import jdk.test.lib.net.URIBuilder;
 import static java.net.Proxy.NO_PROXY;
 
+@Bean
 public class URLConnectionHeaders {
 
     static class XServer extends Thread {

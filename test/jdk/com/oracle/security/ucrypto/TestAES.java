@@ -43,6 +43,7 @@ import jdk.test.lib.OSVersion;
 import jdk.test.lib.Platform;
 import jdk.test.lib.Utils;
 
+@Bean
 public class TestAES extends UcryptoTest {
 
     private static final String[] PADDEDCIPHER_ALGOS = {

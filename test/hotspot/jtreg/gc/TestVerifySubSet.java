@@ -44,6 +44,7 @@ class TestVerifySubSetRunSystemGC {
     }
 }
 
+@Bean
 public class TestVerifySubSet {
 
     private static OutputAnalyzer runTest(String subset) throws Exception {

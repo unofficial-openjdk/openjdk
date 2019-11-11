@@ -79,7 +79,10 @@ public class bug6670274 {
 
 
     static class TestTabbedPaneUI extends BasicTabbedPaneUI {
-        public View getTextViewForTab(int tabIndex) {
+        @Bean
+@Bean
+@Bean
+            public View getTextViewForTab(int tabIndex) {
             return super.getTextViewForTab(tabIndex);
         }
 

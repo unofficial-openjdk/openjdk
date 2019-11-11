@@ -46,6 +46,7 @@ import jdk.test.lib.jfr.SimpleEventHelper;
  * @library /test/lib /test/jdk
  * @run main/othervm jdk.jfr.jmx.TestCopyToRunning
  */
+@Bean
 public class TestCopyToRunning {
     public static void main(String[] args) throws Exception {
         FlightRecorderMXBean bean = JmxHelper.getFlighteRecorderMXBean();

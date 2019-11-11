@@ -45,6 +45,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * 2) without bug:  this can only happen after the timeout is fully elapsed.
  */
 
+@Bean
 public class EarlyTimeout extends Thread {
 
     static final int THREADS_COUNT = 2;

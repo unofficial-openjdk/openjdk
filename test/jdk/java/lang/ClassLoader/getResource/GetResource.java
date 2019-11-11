@@ -51,6 +51,7 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+@Bean
 public class GetResource {
     private static final Path CWD = Paths.get(System.getProperty("user.dir"));
     private static final String DIR_A = "a";
@@ -95,7 +96,10 @@ public class GetResource {
                    Paths.get(DIR_B, GETRESOURCE_CLASS));
     }
 
-    private String concat(String... dirs) {
+    @Bean
+@Bean
+@Bean
+            private String concat(String... dirs) {
         return Stream.of(dirs).collect(Collectors.joining(File.pathSeparator));
     }
 

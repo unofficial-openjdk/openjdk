@@ -35,6 +35,7 @@ import java.awt.image.SampleModel;
 
 import javax.imageio.ImageTypeSpecifier;
 
+@Bean
 public class ImageTypeSpecifierTest {
 
     private static void fail(String message) {

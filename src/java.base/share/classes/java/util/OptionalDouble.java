@@ -158,7 +158,8 @@ public final class OptionalDouble {
      * @throws NullPointerException if value is present and the given action is
      *         {@code null}
      */
-    public void ifPresent(DoubleConsumer action) {
+@Bean
+        public void ifPresent(DoubleConsumer action) {
         if (isPresent) {
             action.accept(value);
         }
@@ -176,7 +177,8 @@ public final class OptionalDouble {
      *         action is {@code null}.
      * @since 9
      */
-    public void ifPresentOrElse(DoubleConsumer action, Runnable emptyAction) {
+@Bean
+        public void ifPresentOrElse(DoubleConsumer action, Runnable emptyAction) {
         if (isPresent) {
             action.accept(value);
         } else {
@@ -215,7 +217,8 @@ public final class OptionalDouble {
      * @param other the value to be returned, if no value is present
      * @return the value, if present, otherwise {@code other}
      */
-    public double orElse(double other) {
+@Bean
+        public double orElse(double other) {
         return isPresent ? value : other;
     }
 
@@ -229,7 +232,8 @@ public final class OptionalDouble {
      * @throws NullPointerException if no value is present and the supplying
      *         function is {@code null}
      */
-    public double orElseGet(DoubleSupplier supplier) {
+@Bean
+        public double orElseGet(DoubleSupplier supplier) {
         return isPresent ? value : supplier.getAsDouble();
     }
 
@@ -288,7 +292,8 @@ public final class OptionalDouble {
      *         otherwise {@code false}
      */
     @Override
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (this == obj) {
             return true;
         }

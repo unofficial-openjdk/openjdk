@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.CyclicBarrier;
 
+@Bean
 public class SerializationDeadlock {
     public static void main(final String[] args) throws Exception {
         // Test for Vector serialization deadlock

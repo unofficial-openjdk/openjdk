@@ -68,6 +68,7 @@ import java.util.Map;
  *
  * @author Jeff Dinkins
  */
+@Bean
 public class ExampleFileView extends FileView {
 
     private final Map<String, Icon> icons = new HashMap<String, Icon>();
@@ -82,14 +83,22 @@ public class ExampleFileView extends FileView {
      * @see FileView#getName
      */
     @Override
-    public String getName(File f) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String getName(File f) {
         return null;
     }
 
     /**
      * Adds a human readable description of the file.
      */
-    public void putDescription(File f, String fileDescription) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void putDescription(File f, String fileDescription) {
         fileDescriptions.put(f, fileDescription);
     }
 
@@ -99,7 +108,11 @@ public class ExampleFileView extends FileView {
      * @see FileView#getDescription
      */
     @Override
-    public String getDescription(File f) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String getDescription(File f) {
         return fileDescriptions.get(f);
     }
 
@@ -107,7 +120,11 @@ public class ExampleFileView extends FileView {
      * Adds a human readable type description for files. Based on "dot"
      * extension strings, e.g: ".gif". Case is ignored.
      */
-    public void putTypeDescription(String extension, String typeDescription) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void putTypeDescription(String extension, String typeDescription) {
         typeDescriptions.put(extension, typeDescription);
     }
 
@@ -116,7 +133,11 @@ public class ExampleFileView extends FileView {
      * the passed in file. Based on "dot" extension strings, e.g: ".gif".
      * Case is ignored.
      */
-    public void putTypeDescription(File f, String typeDescription) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void putTypeDescription(File f, String typeDescription) {
         putTypeDescription(getExtension(f), typeDescription);
     }
 
@@ -126,7 +147,11 @@ public class ExampleFileView extends FileView {
      * @see FileView#getTypeDescription
      */
     @Override
-    public String getTypeDescription(File f) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String getTypeDescription(File f) {
         return typeDescriptions.get(getExtension(f));
     }
 
@@ -134,7 +159,11 @@ public class ExampleFileView extends FileView {
      * Convenience method that returns the "dot" extension for the
      * given file.
      */
-    private String getExtension(File f) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String getExtension(File f) {
         String name = f.getName();
         if (name != null) {
             int extensionIndex = name.lastIndexOf('.');
@@ -150,7 +179,11 @@ public class ExampleFileView extends FileView {
      * Adds an icon based on the file type "dot" extension
      * string, e.g: ".gif". Case is ignored.
      */
-    public void putIcon(String extension, Icon icon) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void putIcon(String extension, Icon icon) {
         icons.put(extension, icon);
     }
 
@@ -162,7 +195,11 @@ public class ExampleFileView extends FileView {
      * @see FileView#getIcon
      */
     @Override
-    public Icon getIcon(File f) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Icon getIcon(File f) {
         Icon icon = null;
         String extension = getExtension(f);
         if (extension != null) {
@@ -184,7 +221,11 @@ public class ExampleFileView extends FileView {
      * @see FileView#isTraversable
      */
     @Override
-    public Boolean isTraversable(File f) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Boolean isTraversable(File f) {
         // if (some_reason) {
         //    return Boolean.FALSE;
         // }

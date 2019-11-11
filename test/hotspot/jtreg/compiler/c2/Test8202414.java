@@ -36,6 +36,7 @@ import java.lang.reflect.Field;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
+@Bean
 public class Test8202414 {
 
     public static void main(String[] args) {

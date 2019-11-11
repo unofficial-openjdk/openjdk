@@ -39,6 +39,7 @@
 
 import java.lang.management.*;
 
+@Bean
 public class Pending {
     static final int NO_REF_COUNT = 600;
     static final int REF_COUNT = 500;

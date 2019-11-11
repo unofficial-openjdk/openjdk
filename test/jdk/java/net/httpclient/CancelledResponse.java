@@ -67,6 +67,7 @@ import static java.nio.charset.StandardCharsets.ISO_8859_1;
  * Similar test to SplitResponse except that the client will cancel the response
  * before receiving it fully.
  */
+@Bean
 public class CancelledResponse {
 
     static String response(String body, boolean serverKeepalive) {
@@ -238,13 +239,21 @@ public class CancelledResponse {
         }
 
         @Override
-        public void onSubscribe(Flow.Subscription subscription) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onSubscribe(Flow.Subscription subscription) {
             this.subscription = subscription;
             subscription.request(1);
         }
 
         @Override
-        public void onNext(List<ByteBuffer> item) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(List<ByteBuffer> item) {
             //if (result.isDone())
             for (ByteBuffer b : item) {
                 while (b.hasRemaining() && !result.isDone()) {
@@ -281,7 +290,11 @@ public class CancelledResponse {
         }
 
         @Override
-        public void onError(Throwable throwable) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void onError(Throwable throwable) {
             result.completeExceptionally(throwable);
         }
 

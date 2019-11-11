@@ -32,6 +32,7 @@
 
 import java.net.*;
 
+@Bean
 public class UninitializedParent {
     private static ClassLoader loader;
     public static void main(String[] args) throws Exception {

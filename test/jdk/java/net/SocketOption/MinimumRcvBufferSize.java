@@ -33,6 +33,7 @@ import java.nio.channels.*;
 import java.net.*;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class MinimumRcvBufferSize {
 
     public static void main(String args[]) throws Exception {

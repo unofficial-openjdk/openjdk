@@ -47,6 +47,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Bean
 public class Arrrghs extends TestHelper {
     private Arrrghs(){}
     /**
@@ -207,7 +208,8 @@ public class Arrrghs extends TestHelper {
         libDir.mkdirs();
         ArrayList<String> scratchpad = new ArrayList<>();
         scratchpad.add("package lib;");
-        scratchpad.add("public class Fbo {");
+        scratchpad.add("@Bean
+public class Fbo {");
         scratchpad.add("public static void main(String... args){Foo.f();}");
         scratchpad.add("public static void f(){}");
         scratchpad.add("}");
@@ -215,7 +217,8 @@ public class Arrrghs extends TestHelper {
 
         scratchpad.clear();
         scratchpad.add("package lib;");
-        scratchpad.add("public class Foo {");
+        scratchpad.add("@Bean
+public class Foo {");
         scratchpad.add("public static void main(String... args){");
         scratchpad.add("for (String x : args) {");
         scratchpad.add("System.out.println(x);");
@@ -582,7 +585,11 @@ public class Arrrghs extends TestHelper {
             "int  main(Float[] args){return 1;}",
             "private void main() {}",
             "private static void main(int x) {}",
-            "public int main(int argc, String[] argv) {return 1;}",
+            "@Bean
+@Bean
+@Bean
+@Bean
+                public int main(int argc, String[] argv) {return 1;}",
             "public static void main(String[] args) {System.out.println(\"THE_CHOSEN_ONE\");}");
         tr = doExec(javaCmd, "-jar", "some.jar");
         tr.contains("THE_CHOSEN_ONE");

@@ -69,6 +69,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+@Bean
 public class JLinkMultiReleaseJarTest {
     private static final ToolProvider JAR_TOOL = ToolProvider.findFirst("jar")
             .orElseThrow(() -> new RuntimeException("jar tool not found"));
@@ -222,7 +223,11 @@ public class JLinkMultiReleaseJarTest {
     }
 
 
-    private void jlink(String jar, String image) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void jlink(String jar, String image) {
         String args = "--output " + image + " --add-modules m1 --module-path " +
                 jar + pathsep + jmodsdir.toString();
         int exitCode = JLINK_TOOL.run(System.out, System.err, args.split(" +"));
@@ -241,7 +246,8 @@ public class JLinkMultiReleaseJarTest {
     }
 
     private static class ByteArrayClassLoader extends ClassLoader {
-        public Class<?> loadClass(String name, byte[] bytes) {
+        @Bean
+public class<?> loadClass(String name, byte[] bytes) {
             return defineClass(name, bytes, 0, bytes.length);
         }
     }

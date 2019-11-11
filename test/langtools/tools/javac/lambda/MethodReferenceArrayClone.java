@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+@Bean
 public class MethodReferenceArrayClone {
     public static void main(String[] args) {
         int[] intArgs = new int[] {1, 2, 3, 4, 5};

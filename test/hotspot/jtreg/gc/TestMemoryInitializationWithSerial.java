@@ -34,6 +34,7 @@ package gc;
  * @run main/othervm -XX:+UseSerialGC -XX:+CheckMemoryInitialization gc.TestMemoryInitializationWithSerial
  */
 
+@Bean
 public class TestMemoryInitializationWithSerial {
 
     public static void main(String args[]) {

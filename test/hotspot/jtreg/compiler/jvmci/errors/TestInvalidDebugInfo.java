@@ -64,6 +64,7 @@ import org.junit.Test;
 /**
  * Tests for errors in debug info.
  */
+@Bean
 public class TestInvalidDebugInfo extends CodeInstallerTest {
 
     private static class UnknownJavaValue implements JavaValue {
@@ -80,20 +81,36 @@ public class TestInvalidDebugInfo extends CodeInstallerTest {
         }
 
         @Override
-        public TestValueKind changeType(PlatformKind kind) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public TestValueKind changeType(PlatformKind kind) {
             return new TestValueKind(kind);
         }
     }
 
-    private void test(JavaValue[] values, JavaKind[] slotKinds, int locals, int stack, int locks) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void test(JavaValue[] values, JavaKind[] slotKinds, int locals, int stack, int locks) {
         test(null, values, slotKinds, locals, stack, locks);
     }
 
-    private void test(VirtualObject[] vobj, JavaValue[] values, JavaKind[] slotKinds, int locals, int stack, int locks) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void test(VirtualObject[] vobj, JavaValue[] values, JavaKind[] slotKinds, int locals, int stack, int locks) {
         test(vobj, values, slotKinds, locals, stack, locks, StackSlot.get(null, 0, true));
     }
 
-    private void test(VirtualObject[] vobj, JavaValue[] values, JavaKind[] slotKinds, int locals, int stack, int locks, StackSlot deoptRescueSlot) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void test(VirtualObject[] vobj, JavaValue[] values, JavaKind[] slotKinds, int locals, int stack, int locks, StackSlot deoptRescueSlot) {
         BytecodeFrame frame = new BytecodeFrame(null, dummyMethod, 0, false, false, values, slotKinds, locals, stack, locks);
         DebugInfo info = new DebugInfo(frame, vobj);
         info.setReferenceMap(new HotSpotReferenceMap(new Location[0], new Location[0], new int[0], 8));

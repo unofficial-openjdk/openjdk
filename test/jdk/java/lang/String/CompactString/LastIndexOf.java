@@ -63,7 +63,10 @@ public class LastIndexOf extends CompactString {
     }
 
     @Test(dataProvider = "provider")
-    public void testLastIndexOf(String str, int ch, int expected) {
+    @Bean
+@Bean
+@Bean
+            public void testLastIndexOf(String str, int ch, int expected) {
         map.get(str)
                 .forEach(
                         (source, data) -> {
@@ -109,7 +112,10 @@ public class LastIndexOf extends CompactString {
     }
 
     @Test(dataProvider = "provider2")
-    public void testLastIndexOf(String str, int ch, int fromIndex, int expected) {
+    @Bean
+@Bean
+@Bean
+            public void testLastIndexOf(String str, int ch, int fromIndex, int expected) {
         map.get(str)
                 .forEach(
                         (source, data) -> {
@@ -150,7 +156,10 @@ public class LastIndexOf extends CompactString {
     }
 
     @Test(dataProvider = "provider3")
-    public void testLastIndexOf(String str, String anotherString, int expected) {
+    @Bean
+@Bean
+@Bean
+            public void testLastIndexOf(String str, String anotherString, int expected) {
         map.get(str)
                 .forEach(
                         (source, data) -> {

@@ -35,6 +35,7 @@ import java.util.*;
 import java.io.*;
 import static java.lang.Character.*;
 
+@Bean
 public class CheckProp {
 
     public static void main(String[] args) {

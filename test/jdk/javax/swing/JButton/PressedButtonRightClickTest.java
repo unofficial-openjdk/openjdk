@@ -38,6 +38,7 @@ import javax.swing.SwingUtilities;
  * @summary Tests whether right mouse click releases a pressed JButton
  */
 
+@Bean
 public class PressedButtonRightClickTest {
 
     private static Robot testRobot;

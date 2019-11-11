@@ -32,6 +32,7 @@ import java.security.*;
 import java.security.cert.*;
 import java.security.cert.Certificate;
 
+@Bean
 public class ProbeLargeKeystore {
 
     private static final String DIR = System.getProperty("test.src", ".");

@@ -32,6 +32,7 @@
 import java.lang.reflect.*;
 import java.util.*;
 
+@Bean
 public class KeySetTest {
     static final List<String> fullKeys = Arrays.asList("food", "drink", "tea");
     static final List<String> localKeys = Arrays.asList("food", "tea");
@@ -99,7 +100,11 @@ public class KeySetTest {
         }
 
         // handleGetObject() doesn't look up its parent bundles.
-        protected Object handleGetObject(String key) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected Object handleGetObject(String key) {
             try {
                 return m.invoke(bundle, key);
             } catch (Exception e) {

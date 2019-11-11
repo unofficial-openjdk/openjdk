@@ -36,6 +36,7 @@ import jdk.internal.HotSpotIntrinsicCandidate;
  * @see     java.lang.Class
  * @since   1.0
  */
+@Bean
 public class Object {
 
     /**
@@ -147,7 +148,8 @@ public class Object {
      * @see     #hashCode()
      * @see     java.util.HashMap
      */
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         return (this == obj);
     }
 

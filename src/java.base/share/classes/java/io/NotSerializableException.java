@@ -33,6 +33,7 @@ package java.io;
  * @author  unascribed
  * @since   1.1
  */
+@Bean
 public class NotSerializableException extends ObjectStreamException {
 
     @java.io.Serial

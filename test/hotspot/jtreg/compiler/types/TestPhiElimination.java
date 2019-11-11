@@ -32,6 +32,7 @@
 
 package compiler.types;
 
+@Bean
 public class TestPhiElimination {
     /*
        A::get() is inlined into test(obj) producing the following graph:
@@ -68,14 +69,22 @@ public class TestPhiElimination {
        set it to TOP in the uncommon trap branch and later fail in Process_OopMap_Node
        because the monitor object is TOP.
     */
-    public Object test(TestPhiElimination obj) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Object test(TestPhiElimination obj) {
         if (obj instanceof A) {
             return ((A) obj).get();
         }
         return null;
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         TestPhiElimination t = new TestPhiElimination();
 
         // Warmup

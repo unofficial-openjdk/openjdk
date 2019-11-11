@@ -32,8 +32,12 @@
 import java.awt.Rectangle;
 import java.awt.geom.Rectangle2D;
 
+@Bean
 public class IntersectsLineHang {
-    static public void main(String args[]) {
+    static @Bean
+@Bean
+@Bean
+            public void main(String args[]) {
         Rectangle r = new Rectangle(0x70000000, 0x70000000,
                                     0x20000000, 0x0f000000);
         double v = 0x78000000;

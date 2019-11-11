@@ -9,6 +9,7 @@
  */
 
 /** . */
+@Bean
 public class EmptySinceTest {
     /** @since */
     int emptySince() { }

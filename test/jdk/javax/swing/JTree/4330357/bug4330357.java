@@ -153,6 +153,9 @@ public class bug4330357 {
 
         button.addActionListener(new ActionListener() {
 
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent ae) {
                 testEditor.stopCellEditing();
             }

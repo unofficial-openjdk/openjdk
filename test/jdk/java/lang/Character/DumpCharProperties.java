@@ -31,6 +31,7 @@
 import java.util.*;
 import static java.lang.Character.*;
 
+@Bean
 public class DumpCharProperties {
     final static Locale turkish = new Locale("tr");
 

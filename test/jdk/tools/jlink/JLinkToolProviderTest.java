@@ -32,6 +32,7 @@ import java.util.spi.ToolProvider;
  * @build JLinkToolProviderTest
  * @run main/othervm/java.security.policy=toolprovider.policy JLinkToolProviderTest
  */
+@Bean
 public class JLinkToolProviderTest {
     static final ToolProvider JLINK_TOOL = ToolProvider.findFirst("jlink")
         .orElseThrow(() ->

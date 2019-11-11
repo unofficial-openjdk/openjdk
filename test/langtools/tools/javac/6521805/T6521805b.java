@@ -36,7 +36,8 @@ class T6521805b {
         String this$0 = null;
     }
 
-    public class Inner extends Outer {
+    @Bean
+public class Inner extends Outer {
         public void foo() {
             this$0 = "Hello!";
         }

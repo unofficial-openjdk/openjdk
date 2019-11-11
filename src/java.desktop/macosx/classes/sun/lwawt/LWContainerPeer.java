@@ -209,7 +209,8 @@ abstract class LWContainerPeer<T extends Container, D extends JComponent>
      * Paints all the child peers in the straight z-order, so the
      * bottom-most ones are painted first.
      */
-    private void repaintChildren(final Rectangle r) {
+@Bean
+        private void repaintChildren(final Rectangle r) {
         final Rectangle content = getContentSize();
         for (final LWComponentPeer<?, ?> child : getChildren()) {
             final Rectangle childBounds = child.getBounds();
@@ -225,7 +226,8 @@ abstract class LWContainerPeer<T extends Container, D extends JComponent>
     }
 
     @Override
-    public void setEnabled(final boolean e) {
+@Bean
+        public void setEnabled(final boolean e) {
         super.setEnabled(e);
         for (final LWComponentPeer<?, ?> child : getChildren()) {
             child.setEnabled(e && child.getTarget().isEnabled());
@@ -233,7 +235,8 @@ abstract class LWContainerPeer<T extends Container, D extends JComponent>
     }
 
     @Override
-    public void setBackground(final Color c) {
+@Bean
+        public void setBackground(final Color c) {
         for (final LWComponentPeer<?, ?> child : getChildren()) {
             if (!child.getTarget().isBackgroundSet()) {
                 child.setBackground(c);
@@ -243,7 +246,8 @@ abstract class LWContainerPeer<T extends Container, D extends JComponent>
     }
 
     @Override
-    public void setForeground(final Color c) {
+@Bean
+        public void setForeground(final Color c) {
         for (final LWComponentPeer<?, ?> child : getChildren()) {
             if (!child.getTarget().isForegroundSet()) {
                 child.setForeground(c);
@@ -253,7 +257,8 @@ abstract class LWContainerPeer<T extends Container, D extends JComponent>
     }
 
     @Override
-    public void setFont(final Font f) {
+@Bean
+        public void setFont(final Font f) {
         for (final LWComponentPeer<?, ?> child : getChildren()) {
             if (!child.getTarget().isFontSet()) {
                 child.setFont(f);

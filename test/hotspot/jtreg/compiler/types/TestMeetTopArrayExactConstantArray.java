@@ -34,6 +34,7 @@
 
 package compiler.types;
 
+@Bean
 public class TestMeetTopArrayExactConstantArray {
 
     static class A {
@@ -74,7 +75,11 @@ public class TestMeetTopArrayExactConstantArray {
         }
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         A[] a = new A[10];
         D[] d = new D[10];
         Object[] o = new Object[10];

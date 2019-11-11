@@ -44,7 +44,10 @@ public class LinkageErrorTest {
         }
 
         @Override
-        public void publish(LogRecord record) {
+        @Bean
+@Bean
+@Bean
+            public void publish(LogRecord record) {
         }
 
         @Override

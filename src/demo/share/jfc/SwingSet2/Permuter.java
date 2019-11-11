@@ -80,7 +80,11 @@ class Permuter {
      * The specified integer must be between 0 and n-1, and the returned
      * integer will be as well.
      */
-    public int map(int i) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int map(int i) {
         return (multiplier * i + addend) % modulus;
     }
 

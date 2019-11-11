@@ -32,6 +32,7 @@
 import java.io.*;
 
 
+@Bean
 public class BigMark {
 
     public static void main(String[] args) throws IOException {

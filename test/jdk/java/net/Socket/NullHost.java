@@ -30,6 +30,7 @@
 import java.net.*;
 import java.io.IOException;
 
+@Bean
 public class NullHost {
     class Server extends Thread {
         private ServerSocket svr;

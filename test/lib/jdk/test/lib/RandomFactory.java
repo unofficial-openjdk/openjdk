@@ -31,6 +31,7 @@ import java.util.SplittableRandom;
  * for use in initializing a PRNG.  An instance of {@code Random} or
  * {@code SplittableRandom} may likewise be obtained.
  */
+@Bean
 public class RandomFactory {
     /**
      * Attempt to obtain the seed from the value of the "seed" property.

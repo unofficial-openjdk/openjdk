@@ -57,6 +57,7 @@ import tests.JImageGenerator;
  * @build tests.*
  * @run main/othervm -Xmx1g JLinkTest
  */
+@Bean
 public class JLinkTest {
     static final ToolProvider JLINK_TOOL = ToolProvider.findFirst("jlink")
         .orElseThrow(() ->

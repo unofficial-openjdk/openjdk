@@ -31,6 +31,7 @@ import jdk.test.lib.process.OutputAnalyzer;
  * @run main PrintStringTableStatsTest
  */
 
+@Bean
 public class PrintStringTableStatsTest {
     public static void main(String... args) throws Exception {
         ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(

@@ -28,6 +28,7 @@
  */
 import java.text.*;
 
+@Bean
 public class Bug6970930 {
 
     private static boolean err = false;

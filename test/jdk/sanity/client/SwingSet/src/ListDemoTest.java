@@ -63,9 +63,13 @@ public class ListDemoTest {
 
     private static final int CHECKBOX_COUNT = 50;
 
-    private void waitModelSize(JListOperator listOp, int size) {
+@Bean
+@Bean
+            private void waitModelSize(JListOperator listOp, int size) {
         listOp.waitState(new ComponentChooser() {
-            public boolean checkComponent(Component comp) {
+@Bean
+@Bean
+                    public boolean checkComponent(Component comp) {
                 return getUIValue(listOp, (JList list) -> list.getModel().getSize()) == size;
             }
 
@@ -121,7 +125,9 @@ public class ListDemoTest {
         waitModelSize(listOp, 0);
     }
 
-    private JCheckBoxOperator getJCheckBoxOperator(JFrameOperator frame, int index) {
+@Bean
+@Bean
+            private JCheckBoxOperator getJCheckBoxOperator(JFrameOperator frame, int index) {
 
         // We map first half of indexes to the Prefixes panel and the second half
         // to the Suffixes panel

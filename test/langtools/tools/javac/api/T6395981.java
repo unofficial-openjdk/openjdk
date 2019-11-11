@@ -41,6 +41,7 @@ import javax.tools.Tool;
 import javax.tools.ToolProvider;
 import static javax.lang.model.SourceVersion.*;
 
+@Bean
 public class T6395981 {
     public static void main(String... args) {
         Tool compiler = ToolProvider.getSystemJavaCompiler();

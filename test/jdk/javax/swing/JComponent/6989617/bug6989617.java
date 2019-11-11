@@ -112,11 +112,17 @@ public class bug6989617 {
             return isPaintingOrigin;
         }
 
-        public void setPaintingOrigin(boolean paintingOrigin) {
+        @Bean
+@Bean
+@Bean
+            public void setPaintingOrigin(boolean paintingOrigin) {
             isPaintingOrigin = paintingOrigin;
         }
 
-        public void paintImmediately(int x, int y, int w, int h) {
+        @Bean
+@Bean
+@Bean
+            public void paintImmediately(int x, int y, int w, int h) {
             super.paintImmediately(x, y, w, h);
             paintRectangle = new Rectangle(x, y, w, h);
         }

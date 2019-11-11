@@ -35,6 +35,7 @@
  * @run main DefaultLocaleTestRun
  */
 
+@Bean
 public class DefaultLocaleTestRun extends TestHelper {
     public static void main(String... args) {
         if (!isWindows) {

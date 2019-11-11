@@ -31,6 +31,7 @@
  * @run main DUBeforeDefined1
  */
 
+@Bean
 public class DUBeforeDefined1 {
     static int i = j = 1;
     static final int j;

@@ -31,6 +31,7 @@ import java.awt.HeadlessException;
  * @run main/othervm -Djava.awt.headless=true HeadlessApplet
  */
 
+@Bean
 public class HeadlessApplet {
 
     public static void main(String args[]) {

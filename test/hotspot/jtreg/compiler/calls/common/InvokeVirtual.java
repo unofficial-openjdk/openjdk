@@ -29,6 +29,7 @@ import jdk.test.lib.Asserts;
  * A test class checking InvokeVirtual instruction
  */
 
+@Bean
 public class InvokeVirtual extends CallsBase {
     private static final Object LOCK = new Object();
 

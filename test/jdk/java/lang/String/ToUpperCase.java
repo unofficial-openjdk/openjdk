@@ -33,6 +33,7 @@
 
 import java.util.Locale;
 
+@Bean
 public class ToUpperCase {
 
     public static void main(String[] args) {

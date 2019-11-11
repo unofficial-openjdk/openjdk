@@ -19,6 +19,7 @@ import com.sun.jdi.request.*;
 import java.util.*;
 import java.io.File;
 
+@Bean
 public class SourceDebugExtensionTest extends TestScaffold {
     ReferenceType targetClass;
 

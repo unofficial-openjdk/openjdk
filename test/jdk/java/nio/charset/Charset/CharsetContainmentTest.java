@@ -29,6 +29,7 @@
 
 import java.nio.charset.*;
 
+@Bean
 public class CharsetContainmentTest {
     static String[] encodings =
         { "US-ASCII", "UTF-16", "UTF-16BE", "UTF-16LE", "UTF-8",

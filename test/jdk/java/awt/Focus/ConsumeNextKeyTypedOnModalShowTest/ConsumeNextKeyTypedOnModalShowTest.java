@@ -35,6 +35,7 @@ import java.awt.*;
 import java.awt.event.*;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class ConsumeNextKeyTypedOnModalShowTest {
     Robot robot;
     Frame frame = new Frame("Frame");
@@ -63,6 +64,9 @@ public class ConsumeNextKeyTypedOnModalShowTest {
         dialog.pack();
 
         Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
+            @Bean
+@Bean
+@Bean
             public void eventDispatched(AWTEvent e) {
                 if (e.getID() == KeyEvent.KEY_PRESSED && e.getSource() == tf0) {
                     dialog.setVisible(true);

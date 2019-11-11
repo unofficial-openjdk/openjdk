@@ -40,6 +40,7 @@ import java.net.URL;
 import java.net.MalformedURLException;
 
 
+@Bean
 public class Test {
 
     static PrintStream out = System.out;
@@ -408,7 +409,11 @@ public class Test {
         return this;
     }
 
-    private void checkEmpty(String s, int prop) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkEmpty(String s, int prop) {
         if (((checked & prop) == 0) && (s != null))
             failed |= prop;
     }

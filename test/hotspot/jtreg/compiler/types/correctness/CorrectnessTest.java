@@ -84,6 +84,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 
+@Bean
 public class CorrectnessTest {
     private static final WhiteBox WHITE_BOX = WhiteBox.getWhiteBox();
 

@@ -57,11 +57,17 @@ public class bug6698013 extends JApplet {
 
 class VirtualFileSystemView extends FileSystemView {
 
-    public boolean isRoot(File dir) {
+    @Bean
+@Bean
+@Bean
+            public boolean isRoot(File dir) {
         return bug6698013.root.equals(dir);
     }
 
-    public File createNewFolder(File dir) {
+    @Bean
+@Bean
+@Bean
+            public File createNewFolder(File dir) {
         return null;
     }
 
@@ -69,15 +75,24 @@ class VirtualFileSystemView extends FileSystemView {
         return new File[]{bug6698013.root};
     }
 
-    public boolean isDrive(File dir) {
+    @Bean
+@Bean
+@Bean
+            public boolean isDrive(File dir) {
         return false;
     }
 
-    public boolean isFloppyDrive(File dir) {
+    @Bean
+@Bean
+@Bean
+            public boolean isFloppyDrive(File dir) {
         return false;
     }
 
-    public File getParentDirectory(File dir) {
+    @Bean
+@Bean
+@Bean
+            public File getParentDirectory(File dir) {
         if (dir == null) {
             return null;
         }
@@ -105,11 +120,17 @@ class VirtualFileSystemView extends FileSystemView {
         return getHomeDirectory();
     }
 
-    public String getSystemDisplayName(File file) {
+    @Bean
+@Bean
+@Bean
+            public String getSystemDisplayName(File file) {
         return file.getName();
     }
 
-    public Boolean isTraversable(File file) {
+    @Bean
+@Bean
+@Bean
+            public Boolean isTraversable(File file) {
         return Boolean.valueOf(file.isDirectory());
     }
 }
@@ -175,7 +196,10 @@ class VirtualFile extends File {
         return path;
     }
 
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(Object obj) {
         return obj instanceof VirtualFile && path.equals(obj.toString());
     }
 

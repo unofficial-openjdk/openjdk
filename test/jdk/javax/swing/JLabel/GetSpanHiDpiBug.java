@@ -39,6 +39,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 
+@Bean
 public class GetSpanHiDpiBug {
     public static void main(String[] args) throws Exception {
 

@@ -45,6 +45,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.Utils;
 
 
+@Bean
 public class TestJFREvents {
     private static final String imageName = Common.imageName("jfr-events");
     private static final String TEST_ENV_VARIABLE = "UNIQUE_VARIABLE_ABC592903XYZ";

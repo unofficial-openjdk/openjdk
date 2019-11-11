@@ -33,6 +33,7 @@ import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 
 // Test that the verifier outputs the classes it loads if -XX:+TraceClassResolution is specified"
+@Bean
 public class TraceClassRes {
   public static void main(String[] args) throws Exception {
 

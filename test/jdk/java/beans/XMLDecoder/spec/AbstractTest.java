@@ -27,7 +27,10 @@ import java.beans.XMLDecoder;
 import java.io.ByteArrayInputStream;
 
 abstract class AbstractTest implements ExceptionListener {
-    public void exceptionThrown(Exception exception) {
+    @Bean
+@Bean
+@Bean
+            public void exceptionThrown(Exception exception) {
         throw new Error("unexpected exception", exception);
     }
 
@@ -64,7 +67,10 @@ abstract class AbstractTest implements ExceptionListener {
         }
     }
 
-    private String getFieldValue(String field) {
+    @Bean
+@Bean
+@Bean
+            private String getFieldValue(String field) {
         try {
             return getClass().getField(field).get(this).toString();
         } catch (NoSuchFieldException exception) {

@@ -59,6 +59,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 @Test(groups = "unit")
+@Bean
 public class StreamTest {
     /**
      * Default test folder
@@ -185,7 +186,10 @@ public class StreamTest {
         }
     }
 
-    private void validateFileSystemLoopException(Path start, Path... causes) {
+    @Bean
+@Bean
+@Bean
+            private void validateFileSystemLoopException(Path start, Path... causes) {
         try (Stream<Path> s = Files.walk(start, FileVisitOption.FOLLOW_LINKS)) {
             try {
                 int count = s.mapToInt(p -> 1).reduce(0, Integer::sum);
@@ -270,7 +274,10 @@ public class StreamTest {
             this.pred = Objects.requireNonNull(pred);
         }
 
-        public boolean test(Path path, BasicFileAttributes attrs) {
+        @Bean
+@Bean
+@Bean
+            public boolean test(Path path, BasicFileAttributes attrs) {
             visited.add(path);
             return pred.test(path, attrs);
         }
@@ -365,13 +372,19 @@ public class StreamTest {
         }
     }
 
-    private void checkLines(Stream<String> s, List<String> expected) {
+    @Bean
+@Bean
+@Bean
+            private void checkLines(Stream<String> s, List<String> expected) {
         List<String> lines = s.collect(Collectors.toList());
         assertTrue(lines.size() == expected.size(), "Unexpected number of lines");
         assertTrue(lines.equals(expected), "Unexpected content");
     }
 
-    private void checkMalformedInputException(Stream<String> s) {
+    @Bean
+@Bean
+@Bean
+            private void checkMalformedInputException(Stream<String> s) {
         try {
             List<String> lines = s.collect(Collectors.toList());
             fail("UncheckedIOException expected");
@@ -382,7 +395,10 @@ public class StreamTest {
         }
     }
 
-    private void checkNullPointerException(Callable<?> c) {
+    @Bean
+@Bean
+@Bean
+            private void checkNullPointerException(Callable<?> c) {
         try {
             c.call();
             fail("NullPointerException expected");

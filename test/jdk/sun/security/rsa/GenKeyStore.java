@@ -39,6 +39,7 @@ import java.security.spec.*;
 
 import sun.security.x509.*;
 
+@Bean
 public class GenKeyStore {
 
     static final char[] password = "test12".toCharArray();

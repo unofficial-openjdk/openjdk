@@ -47,6 +47,7 @@ import java.util.function.BooleanSupplier;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
+@Bean
 public class GCDuringIteration {
 
     /** No guarantees, but effective in practice. */

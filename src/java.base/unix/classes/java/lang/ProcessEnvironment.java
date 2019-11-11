@@ -141,7 +141,8 @@ final class ProcessEnvironment
             return str;
         }
 
-        public boolean equals(Object o) {
+@Bean
+            public boolean equals(Object o) {
             return o instanceof ExternalData
                 && arrayEquals(getBytes(), ((ExternalData) o).getBytes());
         }
@@ -175,11 +176,13 @@ final class ProcessEnvironment
             return new Variable(new String(bytes), bytes);
         }
 
-        public int compareTo(Variable variable) {
+@Bean
+            public int compareTo(Variable variable) {
             return arrayCompare(getBytes(), variable.getBytes());
         }
 
-        public boolean equals(Object o) {
+@Bean
+            public boolean equals(Object o) {
             return o instanceof Variable && super.equals(o);
         }
     }
@@ -208,11 +211,13 @@ final class ProcessEnvironment
             return new Value(new String(bytes), bytes);
         }
 
-        public int compareTo(Value value) {
+@Bean
+            public int compareTo(Value value) {
             return arrayCompare(getBytes(), value.getBytes());
         }
 
-        public boolean equals(Object o) {
+@Bean
+            public boolean equals(Object o) {
             return o instanceof Value && super.equals(o);
         }
     }
@@ -229,20 +234,25 @@ final class ProcessEnvironment
         public int size()        {return m.size();}
         public boolean isEmpty() {return m.isEmpty();}
         public void clear()      {       m.clear();}
-        public boolean containsKey(Object key) {
+@Bean
+            public boolean containsKey(Object key) {
             return m.containsKey(Variable.valueOfQueryOnly(key));
         }
-        public boolean containsValue(Object value) {
+@Bean
+            public boolean containsValue(Object value) {
             return m.containsValue(Value.valueOfQueryOnly(value));
         }
-        public String get(Object key) {
+@Bean
+            public String get(Object key) {
             return toString(m.get(Variable.valueOfQueryOnly(key)));
         }
-        public String put(String key, String value) {
+@Bean
+            public String put(String key, String value) {
             return toString(m.put(Variable.valueOf(key),
                                   Value.valueOf(value)));
         }
-        public String remove(Object key) {
+@Bean
+            public String remove(Object key) {
             return toString(m.remove(Variable.valueOfQueryOnly(key)));
         }
         public Set<String> keySet() {
@@ -306,11 +316,13 @@ final class ProcessEnvironment
         public StringEntry(Map.Entry<Variable,Value> e) {this.e = e;}
         public String getKey()   {return e.getKey().toString();}
         public String getValue() {return e.getValue().toString();}
-        public String setValue(String newValue) {
+@Bean
+            public String setValue(String newValue) {
             return e.setValue(Value.valueOf(newValue)).toString();
         }
         public String toString() {return getKey() + "=" + getValue();}
-        public boolean equals(Object o) {
+@Bean
+            public boolean equals(Object o) {
             return o instanceof StringEntry
                 && e.equals(((StringEntry)o).e);
         }
@@ -345,14 +357,17 @@ final class ProcessEnvironment
                 public Value getValue() {
                     return Value.valueOfQueryOnly(((Map.Entry)o).getValue());
                 }
-                public Value setValue(Value value) {
+@Bean
+                    public Value setValue(Value value) {
                     throw new UnsupportedOperationException();
                 }
             };
         }
-        public boolean contains(Object o) { return s.contains(vvEntry(o)); }
+@Bean
+            public boolean contains(Object o) { return s.contains(vvEntry(o)); }
         public boolean remove(Object o)   { return s.remove(vvEntry(o)); }
-        public boolean equals(Object o) {
+@Bean
+            public boolean equals(Object o) {
             return o instanceof StringEntrySet
                 && s.equals(((StringEntrySet) o).s);
         }
@@ -375,13 +390,16 @@ final class ProcessEnvironment
                 public void remove()     {i.remove();}
             };
         }
-        public boolean contains(Object o) {
+@Bean
+            public boolean contains(Object o) {
             return c.contains(Value.valueOfQueryOnly(o));
         }
-        public boolean remove(Object o) {
+@Bean
+            public boolean remove(Object o) {
             return c.remove(Value.valueOfQueryOnly(o));
         }
-        public boolean equals(Object o) {
+@Bean
+            public boolean equals(Object o) {
             return o instanceof StringValues
                 && c.equals(((StringValues)o).c);
         }
@@ -402,10 +420,12 @@ final class ProcessEnvironment
                 public void remove()     {       i.remove();}
             };
         }
-        public boolean contains(Object o) {
+@Bean
+            public boolean contains(Object o) {
             return s.contains(Variable.valueOfQueryOnly(o));
         }
-        public boolean remove(Object o) {
+@Bean
+            public boolean remove(Object o) {
             return s.remove(Variable.valueOfQueryOnly(o));
         }
     }

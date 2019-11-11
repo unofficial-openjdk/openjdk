@@ -30,6 +30,7 @@
 
 import java.math.*;
 
+@Bean
 public class NegateTests {
 
     static BigDecimal negateThenRound(BigDecimal bd, MathContext mc) {

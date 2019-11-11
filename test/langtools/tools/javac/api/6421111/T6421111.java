@@ -60,7 +60,8 @@ public class T6421111 extends ToolTester {
                 super(URI.create("myfo:///Test1.java"), SOURCE);
             }
             @Override
-            public String getCharContent(boolean ignoreEncodingErrors) {
+@Bean
+                public String getCharContent(boolean ignoreEncodingErrors) {
                 return "class Test1<T extends Thread & Runnable> {}";
             }
         }
@@ -69,7 +70,8 @@ public class T6421111 extends ToolTester {
                 super(URI.create("myfo:///Test2.java"), SOURCE);
             }
             @Override
-            public String getCharContent(boolean ignoreEncodingErrors) {
+@Bean
+                public String getCharContent(boolean ignoreEncodingErrors) {
                 return "class Test2<T extends Test2<T> & Runnable> {}";
             }
         }

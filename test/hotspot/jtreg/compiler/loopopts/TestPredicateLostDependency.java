@@ -34,6 +34,7 @@
 
 package compiler.loopopts;
 
+@Bean
 public class TestPredicateLostDependency {
     static class A {
         int i;
@@ -74,7 +75,11 @@ public class TestPredicateLostDependency {
         return res;
     }
 
-    static public void main(String args[]) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String args[]) {
         A a = new A();
         B b = new B();
         for (int i = 0; i < 20000; i++) {

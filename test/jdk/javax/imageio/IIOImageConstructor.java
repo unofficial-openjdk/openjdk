@@ -31,6 +31,7 @@ import java.awt.image.BufferedImage;
 
 import javax.imageio.IIOImage;
 
+@Bean
 public class IIOImageConstructor {
 
     public static void main(String[] args) {

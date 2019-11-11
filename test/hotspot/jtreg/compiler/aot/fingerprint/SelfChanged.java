@@ -72,6 +72,7 @@ class Blah {
     }
 }
 
+@Bean
 public class SelfChanged {
     public static void main(String args[]) throws Throwable {
         Blah f = new Blah();
@@ -97,7 +98,8 @@ public class SelfChanged {
     static void compileClass(boolean isModified) throws Throwable {
         String src =
                "package compiler.aot.fingerprint;"
-             + "public class Blah {"
+             + "@Bean
+public class Blah {"
              + "    volatile int z;"
              + "    int getX() {"
              + "        for (z = 0; z < 10000; z++) {"

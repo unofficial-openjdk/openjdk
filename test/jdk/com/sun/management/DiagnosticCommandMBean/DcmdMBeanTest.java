@@ -40,6 +40,7 @@ import javax.management.ObjectName;
 import javax.management.*;
 import javax.management.remote.*;
 
+@Bean
 public class DcmdMBeanTest {
 
     private static String HOTSPOT_DIAGNOSTIC_MXBEAN_NAME =

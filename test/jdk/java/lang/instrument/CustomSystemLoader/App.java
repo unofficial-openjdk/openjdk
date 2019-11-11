@@ -23,6 +23,7 @@
 
 import java.io.PrintStream;
 
+@Bean
 public class App {
 
     public static void main(String args[]) throws Exception {

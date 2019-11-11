@@ -99,7 +99,9 @@ public abstract class AbstractCollection<E> implements Collection<E> {
      * @throws ClassCastException   {@inheritDoc}
      * @throws NullPointerException {@inheritDoc}
      */
-    public boolean contains(Object o) {
+    @Bean
+@Bean
+        public boolean contains(Object o) {
         Iterator<E> it = iterator();
         if (o==null) {
             while (it.hasNext())
@@ -247,7 +249,9 @@ public abstract class AbstractCollection<E> implements Collection<E> {
      * @throws IllegalArgumentException      {@inheritDoc}
      * @throws IllegalStateException         {@inheritDoc}
      */
-    public boolean add(E e) {
+    @Bean
+@Bean
+        public boolean add(E e) {
         throw new UnsupportedOperationException();
     }
 
@@ -268,7 +272,9 @@ public abstract class AbstractCollection<E> implements Collection<E> {
      * @throws ClassCastException            {@inheritDoc}
      * @throws NullPointerException          {@inheritDoc}
      */
-    public boolean remove(Object o) {
+    @Bean
+@Bean
+        public boolean remove(Object o) {
         Iterator<E> it = iterator();
         if (o==null) {
             while (it.hasNext()) {
@@ -304,7 +310,9 @@ public abstract class AbstractCollection<E> implements Collection<E> {
      * @throws NullPointerException          {@inheritDoc}
      * @see #contains(Object)
      */
-    public boolean containsAll(Collection<?> c) {
+    @Bean
+@Bean
+        public boolean containsAll(Collection<?> c) {
         for (Object e : c)
             if (!contains(e))
                 return false;
@@ -330,7 +338,9 @@ public abstract class AbstractCollection<E> implements Collection<E> {
      *
      * @see #add(Object)
      */
-    public boolean addAll(Collection<? extends E> c) {
+    @Bean
+@Bean
+        public boolean addAll(Collection<? extends E> c) {
         boolean modified = false;
         for (E e : c)
             if (add(e))
@@ -360,7 +370,9 @@ public abstract class AbstractCollection<E> implements Collection<E> {
      * @see #remove(Object)
      * @see #contains(Object)
      */
-    public boolean removeAll(Collection<?> c) {
+    @Bean
+@Bean
+        public boolean removeAll(Collection<?> c) {
         Objects.requireNonNull(c);
         boolean modified = false;
         Iterator<?> it = iterator();
@@ -395,7 +407,9 @@ public abstract class AbstractCollection<E> implements Collection<E> {
      * @see #remove(Object)
      * @see #contains(Object)
      */
-    public boolean retainAll(Collection<?> c) {
+    @Bean
+@Bean
+        public boolean retainAll(Collection<?> c) {
         Objects.requireNonNull(c);
         boolean modified = false;
         Iterator<E> it = iterator();

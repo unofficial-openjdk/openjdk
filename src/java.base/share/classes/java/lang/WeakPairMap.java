@@ -57,7 +57,8 @@ final class WeakPairMap<K1, K2, V> {
      * as determined by the identity comparison; false otherwise
      * @throws NullPointerException if any of the specified keys is null
      */
-    public boolean containsKeyPair(K1 k1, K2 k2) {
+@Bean
+        public boolean containsKeyPair(K1 k1, K2 k2) {
         expungeStaleAssociations();
         return map.containsKey(Pair.lookup(k1, k2));
     }
@@ -79,7 +80,8 @@ final class WeakPairMap<K1, K2, V> {
      * this map contains no mapping for the key pair
      * @throws NullPointerException if any of the specified keys is null
      */
-    public V get(K1 k1, K2 k2) {
+@Bean
+        public V get(K1 k1, K2 k2) {
         expungeStaleAssociations();
         return map.get(Pair.lookup(k1, k2));
     }
@@ -99,7 +101,8 @@ final class WeakPairMap<K1, K2, V> {
      * there was no mapping for key pair
      * @throws NullPointerException if any of the specified keys or value is null
      */
-    public V put(K1 k1, K2 k2, V v) {
+@Bean
+        public V put(K1 k1, K2 k2, V v) {
         expungeStaleAssociations();
         return map.put(Pair.weak(k1, k2, queue), v);
     }
@@ -118,7 +121,8 @@ final class WeakPairMap<K1, K2, V> {
      * there was no mapping for key pair
      * @throws NullPointerException if any of the specified keys or value is null
      */
-    public V putIfAbsent(K1 k1, K2 k2, V v) {
+@Bean
+        public V putIfAbsent(K1 k1, K2 k2, V v) {
         expungeStaleAssociations();
         return map.putIfAbsent(Pair.weak(k1, k2, queue), v);
     }
@@ -289,7 +293,8 @@ final class WeakPairMap<K1, K2, V> {
             }
 
             @Override
-            public boolean equals(Object obj) {
+@Bean
+                public boolean equals(Object obj) {
                 return this == obj ||
                        (obj instanceof Pair &&
                         Pair.equals(first(), second(), (Pair<?, ?>) obj));
@@ -330,7 +335,8 @@ final class WeakPairMap<K1, K2, V> {
             }
 
             @Override
-            public boolean equals(Object obj) {
+@Bean
+                public boolean equals(Object obj) {
                 return obj instanceof Pair &&
                        Pair.equals(k1, k2, (Pair<?, ?>) obj);
             }

@@ -93,7 +93,10 @@ public class EncodeSubImageTest {
 
     private static final int subImageOffset = 10;
 
-    private void verify(File f, boolean isSubsampled) {
+    @Bean
+@Bean
+@Bean
+            private void verify(File f, boolean isSubsampled) {
         BufferedImage dst = null;
         try {
             dst = ImageIO.read(f);

@@ -36,6 +36,7 @@ import java.net.*;
 import java.util.Enumeration;
 import jdk.test.lib.NetworkConfiguration;
 
+@Bean
 public class Test {
 
     static Object[][] getTestCombinations() {

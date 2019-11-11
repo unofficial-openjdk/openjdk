@@ -40,6 +40,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.*;
 import java.util.Arrays;
 
+@Bean
 public class bug8038000 {
 
     public static void main(String[] args) throws Exception {
@@ -105,7 +106,11 @@ public class bug8038000 {
      *  fills their pixels with identical data, applies the RasterOp to both rasters
      *  and checks that the result is the same
      */
-    private void checkOp(WritableRaster wr1, WritableRaster wr2, RasterOp op) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkOp(WritableRaster wr1, WritableRaster wr2, RasterOp op) {
         System.out.println("Checking " + op + " with rasters: \n    " + wr1 +
                 "\n    " + wr2);
         try {
@@ -117,7 +122,11 @@ public class bug8038000 {
         }
     }
 
-    private WritableRaster fillRaster(WritableRaster wr) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private WritableRaster fillRaster(WritableRaster wr) {
         int c = 0;
         for(int x = wr.getMinX(); x < wr.getMinX() + wr.getWidth(); x++) {
             for(int y = wr.getMinY(); y < wr.getMinY() + wr.getHeight(); y++) {
@@ -129,7 +138,11 @@ public class bug8038000 {
         return wr;
     }
 
-    private void compareRasters(Raster r1, Raster r2) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void compareRasters(Raster r1, Raster r2) {
         Rectangle bounds = r1.getBounds();
         if (!bounds.equals(r2.getBounds())) {
             throw new RuntimeException("Bounds differ.");

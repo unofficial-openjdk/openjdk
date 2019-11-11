@@ -68,6 +68,7 @@ import javax.swing.event.ChangeListener;
  * Loads all the demos found in the demos/Fonts directory.
  */
 @SuppressWarnings("serial")
+@Bean
 public class DemoGroup extends JPanel
         implements ChangeListener, ActionListener {
     private final DemoInstVarsAccessor demoInstVars;
@@ -105,7 +106,11 @@ public class DemoGroup extends JPanel
         MouseAdapter mouseListener = new MouseAdapter() {
 
             @Override
-            public void mouseClicked(MouseEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void mouseClicked(MouseEvent e) {
                 DemoGroup.this.mouseClicked(e.getComponent());
             }
         };
@@ -132,7 +137,11 @@ public class DemoGroup extends JPanel
         add(p);
     }
 
-    public void mouseClicked(Component component) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void mouseClicked(Component component) {
         String className = component.toString();
 
         if (tabbedPane == null) {
@@ -190,7 +199,11 @@ public class DemoGroup extends JPanel
     }
 
     @Override
-    public void actionPerformed(ActionEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
         JButton b = (JButton) e.getSource();
         if (b.getToolTipText().startsWith("Clone")) {
             cloneDemo();
@@ -201,7 +214,11 @@ public class DemoGroup extends JPanel
     private int index;
 
     @Override
-    public void stateChanged(ChangeEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void stateChanged(ChangeEvent e) {
         shutDown((JPanel) tabbedPane.getComponentAt(index));
         index = tabbedPane.getSelectedIndex();
         setup(false);
@@ -215,7 +232,11 @@ public class DemoGroup extends JPanel
         }
     }
 
-    public void setup(boolean issueRepaint) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setup(boolean issueRepaint) {
 
         JPanel p = getPanel();
 
@@ -269,7 +290,11 @@ public class DemoGroup extends JPanel
         revalidate();
     }
 
-    public void shutDown(JPanel p) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void shutDown(JPanel p) {
         for (int i = 0; i < p.getComponentCount(); i++) {
             ((DemoPanel) p.getComponent(i)).stop();
         }
@@ -310,7 +335,11 @@ public class DemoGroup extends JPanel
         panel.revalidate();
     }
 
-    public void removeClone(Component theClone) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void removeClone(Component theClone) {
         JPanel panel = clonePanels[tabbedPane.getSelectedIndex() - 1];
         if (panel.getComponentCount() == 2) {
             Component cmp = panel.getComponent(0);
@@ -338,7 +367,11 @@ public class DemoGroup extends JPanel
         class DemoInstVarsAccessorImpl extends DemoInstVarsAccessorImplBase {
             private volatile JCheckBoxMenuItem ccthreadCB;
 
-            public void setCcthreadCB(JCheckBoxMenuItem ccthreadCB) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setCcthreadCB(JCheckBoxMenuItem ccthreadCB) {
                 this.ccthreadCB = ccthreadCB;
             }
 
@@ -353,17 +386,29 @@ public class DemoGroup extends JPanel
         f.addWindowListener(new WindowAdapter() {
 
             @Override
-            public void windowClosing(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosing(WindowEvent e) {
                 System.exit(0);
             }
 
             @Override
-            public void windowDeiconified(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowDeiconified(WindowEvent e) {
                 group.setup(false);
             }
 
             @Override
-            public void windowIconified(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowIconified(WindowEvent e) {
                 group.shutDown(group.getPanel());
             }
         });

@@ -33,6 +33,7 @@ package java.util;
  *
  * @since 1.5
  */
+@Bean
 public class IllegalFormatException extends IllegalArgumentException {
 
     @java.io.Serial

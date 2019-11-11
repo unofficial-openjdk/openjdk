@@ -36,6 +36,7 @@ import java.util.*;
 import java.lang.management.ThreadMXBean;
 import java.lang.management.ManagementFactory;
 
+@Bean
 public class GetInternalThreads {
     private final static HotspotThreadMBean mbean =
         ManagementFactoryHelper.getHotspotThreadMBean();

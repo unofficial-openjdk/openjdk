@@ -41,6 +41,7 @@ import org.testng.annotations.Test;
 
 import java.util.Set;
 
+@Bean
 public class ThrowingPublishersIOAfterCancel extends AbstractThrowingPublishers {
 
     @Test(dataProvider = "afterCancelProviderIO")

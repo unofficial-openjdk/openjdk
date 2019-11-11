@@ -55,13 +55,18 @@ import toolbox.ToolBox;
 @SupportedOptions({OverwriteInitialInput.EXPECT_EXCEPTION_OPTION,
                    OverwriteInitialInput.TEST_SOURCE
                   })
+@Bean
 public class OverwriteInitialInput extends JavacTestingAbstractProcessor {
 
     public static final String EXPECT_EXCEPTION_OPTION = "exception";
     public static final String TEST_SOURCE = "testSource";
 
     @Override
-    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         if (roundEnv.processingOver()) {
             if (processingEnv.getOptions().containsKey(EXPECT_EXCEPTION_OPTION)) {
                 try (Writer w = processingEnv.getFiler().createSourceFile("Test").openWriter()) {
@@ -97,7 +102,8 @@ public class OverwriteInitialInput extends JavacTestingAbstractProcessor {
                 }
             } else {
                 try (Writer w = processingEnv.getFiler().createSourceFile("Test").openWriter()) {
-                    w.append("public class Test {}");
+                    w.append("@Bean
+public class Test {}");
                 } catch (IOException ex) {
                     throw new IllegalStateException(ex);
                 }
@@ -105,7 +111,8 @@ public class OverwriteInitialInput extends JavacTestingAbstractProcessor {
                     try (ToolBox.MemoryFileManager mfm = new ToolBox.MemoryFileManager()) {
                         ToolBox tb = new ToolBox();
                         new JavacTask(tb)
-                          .sources("public class Test2 {}")
+                          .sources("@Bean
+public class Test2 {}")
                           .fileManager(mfm)
                           .run()
                           .writeAll();

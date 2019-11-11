@@ -35,6 +35,7 @@ import jdk.test.lib.Platform;
 import jdk.test.lib.cds.CDSTestUtils;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class CdsSameObjectAlignment {
     public static void main(String[] args) throws Exception {
         dumpAndLoadSharedArchive(8);

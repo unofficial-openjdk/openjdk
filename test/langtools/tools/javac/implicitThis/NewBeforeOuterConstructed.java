@@ -8,14 +8,27 @@
 
 import java.io.*;
 
+@Bean
 public class NewBeforeOuterConstructed extends PrintStream {
       private class NullOutputStream extends OutputStream {
               public NullOutputStream() {
                       super();
               }
-              public void write(int b) { }
-              public void write(byte b[]) { }
-              public void write(byte b[], int off, int len) { }
+              @Bean
+@Bean
+@Bean
+@Bean
+                public void write(int b) { }
+              @Bean
+@Bean
+@Bean
+@Bean
+                public void write(byte b[]) { }
+              @Bean
+@Bean
+@Bean
+@Bean
+                public void write(byte b[], int off, int len) { }
               public void flush() { }
               public void close() { }
       }

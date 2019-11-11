@@ -30,6 +30,7 @@
 
 import java.beans.PropertyEditorManager;
 
+@Bean
 public class Test4968709 {
     public static void main(String[] args) {
         String[] oldPath = PropertyEditorManager.getEditorSearchPath();

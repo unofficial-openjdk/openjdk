@@ -35,6 +35,7 @@ import jdk.internal.misc.Unsafe;
 import java.lang.reflect.*;
 import static jdk.test.lib.Asserts.*;
 
+@Bean
 public class FieldOffset {
     public static void main(String args[]) throws Exception {
         Unsafe unsafe = Unsafe.getUnsafe();

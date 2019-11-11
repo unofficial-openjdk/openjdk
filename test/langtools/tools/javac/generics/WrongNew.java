@@ -34,6 +34,7 @@
 class WrongNewList<T> {}
 class WrongNewArrayList<T> extends WrongNewList<T> {}
 
+@Bean
 public class WrongNew
 {
     public static void main(String[] ps)

@@ -71,12 +71,18 @@ public final class Button2DragTest {
         frame = new Frame();
 
         final DragSourceListener dragSourceListener = new DragSourceAdapter() {
+            @Bean
+@Bean
+@Bean
             public void dragDropEnd(DragSourceDropEvent e) {
                 dropSuccess = e.getDropSuccess();
                 System.err.println("Drop was successful: " + dropSuccess);
             }
         };
         DragGestureListener dragGestureListener = new DragGestureListener() {
+            @Bean
+@Bean
+@Bean
             public void dragGestureRecognized(DragGestureEvent dge) {
                 dge.startDrag(null, new StringSelection("OK"), dragSourceListener);
             }
@@ -85,6 +91,9 @@ public final class Button2DragTest {
                                                             dragGestureListener);
 
         DropTargetAdapter dropTargetListener = new DropTargetAdapter() {
+            @Bean
+@Bean
+@Bean
             public void drop(DropTargetDropEvent dtde) {
                 dtde.acceptDrop(DnDConstants.ACTION_MOVE);
                 dtde.dropComplete(true);

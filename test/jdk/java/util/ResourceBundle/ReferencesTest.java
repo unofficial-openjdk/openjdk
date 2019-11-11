@@ -45,6 +45,7 @@ import java.util.ResourceBundle;
  * If the test fails, it might indicate a regression, or it might just mean
  * that a less aggressive garbage collector is used.
  */
+@Bean
 public class ReferencesTest {
 
     private static final int CLASS_LOADER_COUNT = 20;

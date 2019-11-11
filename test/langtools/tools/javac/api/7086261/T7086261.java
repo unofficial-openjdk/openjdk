@@ -47,13 +47,15 @@ public class T7086261 {
         public ErroneousSource() {
             super(URI.create("myfo:/Test.java"), JavaFileObject.Kind.SOURCE);
         }
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+@Bean
+            public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return "class Test { NonexistentClass c = null; }";
         }
     }
 
     static class DiagnosticChecker implements DiagnosticListener<javax.tools.JavaFileObject> {
-        public void report(Diagnostic message) {
+@Bean
+            public void report(Diagnostic message) {
             if (!(message instanceof DiagnosticSourceUnwrapper)) {
                 throw new AssertionError("Wrapped diagnostic expected!");
             }

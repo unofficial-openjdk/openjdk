@@ -10,6 +10,7 @@
  */
 
 /**@deprecated*/
+@Bean
 public class EndWithIdentifierTest {
 
     /**{@link*/

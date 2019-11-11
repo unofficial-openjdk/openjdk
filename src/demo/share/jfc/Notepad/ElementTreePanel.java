@@ -78,6 +78,7 @@ import javax.swing.tree.TreePath;
  * @author Scott Violet
  */
 @SuppressWarnings("serial")
+@Bean
 public class ElementTreePanel extends JPanel implements CaretListener,
         DocumentListener, PropertyChangeListener, TreeSelectionListener {
 
@@ -190,7 +191,11 @@ public class ElementTreePanel extends JPanel implements CaretListener,
      * Resets the JTextComponent to <code>editor</code>. This will update
      * the tree accordingly.
      */
-    public void setEditor(JTextComponent editor) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setEditor(JTextComponent editor) {
         if (this.editor == editor) {
             return;
         }
@@ -222,7 +227,11 @@ public class ElementTreePanel extends JPanel implements CaretListener,
      * Invoked when a property changes. We are only interested in when the
      * Document changes to reset the DocumentListener.
      */
-    public void propertyChange(PropertyChangeEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void propertyChange(PropertyChangeEvent e) {
         if (e.getSource() == getEditor() && e.getPropertyName().equals(
                 "document")) {
             Document oldDoc = (Document) e.getOldValue();
@@ -245,7 +254,11 @@ public class ElementTreePanel extends JPanel implements CaretListener,
      *
      * @param e the document event
      */
-    public void insertUpdate(DocumentEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void insertUpdate(DocumentEvent e) {
         updateTree(e);
     }
 
@@ -256,7 +269,11 @@ public class ElementTreePanel extends JPanel implements CaretListener,
      *
      * @param e the document event
      */
-    public void removeUpdate(DocumentEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void removeUpdate(DocumentEvent e) {
         updateTree(e);
     }
 
@@ -265,7 +282,11 @@ public class ElementTreePanel extends JPanel implements CaretListener,
      *
      * @param e the document event
      */
-    public void changedUpdate(DocumentEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void changedUpdate(DocumentEvent e) {
         updateTree(e);
     }
 
@@ -274,7 +295,11 @@ public class ElementTreePanel extends JPanel implements CaretListener,
      * Messaged when the selection in the editor has changed. Will update
      * the selection in the tree.
      */
-    public void caretUpdate(CaretEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void caretUpdate(CaretEvent e) {
         if (!updatingSelection) {
             int selBegin = Math.min(e.getDot(), e.getMark());
             int end = Math.max(e.getDot(), e.getMark());
@@ -325,7 +350,11 @@ public class ElementTreePanel extends JPanel implements CaretListener,
      * Called whenever the value of the selection changes.
      * @param e the event that characterizes the change.
      */
-    public void valueChanged(TreeSelectionEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void valueChanged(TreeSelectionEvent e) {
 
         if (!updatingSelection && tree.getSelectionCount() == 1) {
             TreePath selPath = tree.getSelectionPath();
@@ -371,7 +400,11 @@ public class ElementTreePanel extends JPanel implements CaretListener,
      * Updates the tree based on the event type. This will invoke either
      * updateTree with the root element, or handleChange.
      */
-    protected void updateTree(DocumentEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void updateTree(DocumentEvent event) {
         updatingSelection = true;
         try {
             TreeModel model = getTreeModel();
@@ -394,7 +427,11 @@ public class ElementTreePanel extends JPanel implements CaretListener,
      * changed.
      * @param element Current element to check for changes against.
      */
-    protected void updateTree(DocumentEvent event, Element element) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void updateTree(DocumentEvent event, Element element) {
         DocumentEvent.ElementChange ec = event.getChange(element);
 
         if (ec != null) {
@@ -499,7 +536,11 @@ public class ElementTreePanel extends JPanel implements CaretListener,
          * @return  the child of <I>parent</I> at index <I>index</I>
          */
         @Override
-        public Object getChild(Object parent, int index) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Object getChild(Object parent, int index) {
             if (parent == root) {
                 return rootElements[index];
             }
@@ -516,7 +557,11 @@ public class ElementTreePanel extends JPanel implements CaretListener,
          * @return  the number of children of the node <I>parent</I>
          */
         @Override
-        public int getChildCount(Object parent) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int getChildCount(Object parent) {
             if (parent == root) {
                 return rootElements.length;
             }
@@ -534,7 +579,11 @@ public class ElementTreePanel extends JPanel implements CaretListener,
          * @return  true if <I>node</I> is a leaf
          */
         @Override
-        public boolean isLeaf(Object node) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean isLeaf(Object node) {
             if (node == root) {
                 return false;
             }
@@ -545,7 +594,11 @@ public class ElementTreePanel extends JPanel implements CaretListener,
          * Returns the index of child in parent.
          */
         @Override
-        public int getIndexOfChild(Object parent, Object child) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int getIndexOfChild(Object parent, Object child) {
             if (parent == root) {
                 for (int counter = rootElements.length - 1; counter >= 0;
                         counter--) {
@@ -563,7 +616,11 @@ public class ElementTreePanel extends JPanel implements CaretListener,
          * represented in the tree.
          */
         @Override
-        public void nodeChanged(TreeNode node) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void nodeChanged(TreeNode node) {
             if (listenerList != null && node != null) {
                 TreeNode parent = node.getParent();
 

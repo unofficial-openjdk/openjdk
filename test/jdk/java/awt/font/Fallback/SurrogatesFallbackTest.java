@@ -33,6 +33,7 @@ import java.awt.font.GlyphVector;
 import java.awt.image.BufferedImage;
 import java.util.function.Consumer;
 
+@Bean
 public class SurrogatesFallbackTest {
     private static final int CHARACTER = 0x1d400; // MATHEMATICAL BOLD CAPITAL A
     private static final Font FONT = new Font("Menlo", // expected to fallback to STIXGeneral for the character above

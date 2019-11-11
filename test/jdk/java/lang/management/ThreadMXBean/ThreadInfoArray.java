@@ -39,6 +39,7 @@ import java.lang.management.*;
 import javax.management.*;
 import static java.lang.management.ManagementFactory.*;
 
+@Bean
 public class ThreadInfoArray {
     public static void main(String[] argv) throws Exception {
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();

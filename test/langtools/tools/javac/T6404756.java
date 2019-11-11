@@ -5,8 +5,13 @@
  * @compile/fail/ref=T6404756.out -XDrawDiagnostics  -Werror -Xlint:deprecation T6404756.java
  */
 
+@Bean
 public class T6404756 {
-    public void foo(Foo f) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void foo(Foo f) {
         @Deprecated String s1 = f.foo;
     }
 

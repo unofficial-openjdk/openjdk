@@ -32,6 +32,7 @@ package a;
 import a.T7101822A.B.C;
 import z.T7101822Z;
 
+@Bean
 public class T7101822A {
 
     class B extends T7101822Z {

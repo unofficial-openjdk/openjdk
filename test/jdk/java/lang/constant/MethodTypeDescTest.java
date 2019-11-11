@@ -45,6 +45,7 @@ import static org.testng.Assert.fail;
  * @summary unit tests for java.lang.constant.MethodTypeDesc
  */
 @Test
+@Bean
 public class MethodTypeDescTest extends SymbolicDescTest {
 
     private void testMethodTypeDesc(MethodTypeDesc r) throws ReflectiveOperationException {
@@ -153,7 +154,11 @@ public class MethodTypeDescTest extends SymbolicDescTest {
         badInsertParametersTypes(CD_void, paramDescs);
     }
 
-    private void badInsertParametersTypes(ClassDesc returnType, String... paramDescTypes) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void badInsertParametersTypes(ClassDesc returnType, String... paramDescTypes) {
         ClassDesc[] paramTypes =
                 IntStream.rangeClosed(0, paramDescTypes.length - 1)
                         .mapToObj(i -> ClassDesc.ofDescriptor(paramDescTypes[i])).toArray(ClassDesc[]::new);
@@ -201,7 +206,11 @@ public class MethodTypeDescTest extends SymbolicDescTest {
         }
     }
 
-    private void badDropParametersTypes(ClassDesc returnType, String... paramDescTypes) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void badDropParametersTypes(ClassDesc returnType, String... paramDescTypes) {
         ClassDesc[] paramTypes =
                 IntStream.rangeClosed(0, paramDescTypes.length - 1)
                         .mapToObj(i -> ClassDesc.ofDescriptor(paramDescTypes[i])).toArray(ClassDesc[]::new);

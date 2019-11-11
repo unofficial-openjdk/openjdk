@@ -15,4 +15,5 @@
  * </p>
  * <h2> <b> text </h2>
  */
+@Bean
 public class MissingTag { }

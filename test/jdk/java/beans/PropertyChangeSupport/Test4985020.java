@@ -34,6 +34,7 @@ import java.beans.PropertyChangeSupport;
 import java.beans.VetoableChangeListener;
 import java.beans.VetoableChangeSupport;
 
+@Bean
 public class Test4985020 implements PropertyChangeListener, VetoableChangeListener {
     private static final String NAME = new String("Property Name");
     private static boolean failed;
@@ -196,12 +197,20 @@ public class Test4985020 implements PropertyChangeListener, VetoableChangeListen
         failed = true;
     }
 
-    public void propertyChange(PropertyChangeEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void propertyChange(PropertyChangeEvent event) {
         System.out.println("* propertyChange(event) event is " + event.getPropertyName());
         throw new Error("shouldn't be any listeners");
     }
 
-    public void vetoableChange(PropertyChangeEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void vetoableChange(PropertyChangeEvent event) {
         System.out.println("* vetoableChange(event) event is " + event.getPropertyName());
         throw new Error("shouldn't be any listeners");
     }

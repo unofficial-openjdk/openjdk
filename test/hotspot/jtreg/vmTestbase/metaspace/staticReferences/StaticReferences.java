@@ -177,7 +177,11 @@ public class StaticReferences extends GCTestBase {
                 return clazz;
         }
 
-    private void checkStaticFields(Class clazz) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkStaticFields(Class clazz) {
         for (Field field : clazz.getFields()) {
             try {
                 if (Modifier.isStatic(field.getModifiers())) {
@@ -215,7 +219,11 @@ public class StaticReferences extends GCTestBase {
         return InMemoryJavaCompiler.compile(sources).values().iterator().next();
     }
 
-    private StringBuffer generateSource(int[] fieldQuantities) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private StringBuffer generateSource(int[] fieldQuantities) {
         StringBuffer result = new StringBuffer("public class A { \n");
         int fieldsCounter = 0;
         for (int i = 0; i < typesArray.length; i++) {
@@ -227,7 +235,11 @@ public class StaticReferences extends GCTestBase {
         return result;
     }
 
-    private void setupFields(Class clazz) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void setupFields(Class clazz) {
         for (Field field : clazz.getFields()) {
             try {
                 if (Modifier.isStatic(field.getModifiers())) {

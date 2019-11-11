@@ -355,6 +355,7 @@ class Tester_Class_3 extends Tester_Class_2 implements Tester_Interface_0 {
     }
 }
 
+@Bean
 public class Tester {
     static double var_36 = 2.679028326789642E307;
     float var_37;

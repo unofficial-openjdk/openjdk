@@ -33,6 +33,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 
+@Bean
 public class RemoveAllShrinkTest {
 
     public static void main(String[] args) {

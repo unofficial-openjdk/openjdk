@@ -139,7 +139,10 @@ class TitledBorder implements Runnable {
                 failButton.setActionCommand("Fail");
                 failButton.addActionListener(new ActionListener() {
                     @Override
-                    public void actionPerformed(ActionEvent e) {
+                    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                         System.out.println("Fail Button pressed!");
                         testResult = false;
                         mainFrame.dispose();

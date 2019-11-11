@@ -37,6 +37,7 @@ import java.awt.Frame;
 
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class FrameMinimizeTest {
     public static void main(String args[]) throws Exception {
         Frame frame = new Frame("Frame Minimize Test");

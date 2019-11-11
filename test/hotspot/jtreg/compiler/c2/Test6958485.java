@@ -33,6 +33,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test6958485 {
 
     public static void init(Object src[], boolean[] dst) {

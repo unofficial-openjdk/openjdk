@@ -40,11 +40,16 @@ class MyIIOMetadataFormatImpl extends IIOMetadataFormatImpl {
         addObjectValue("root", byte.class, 123, 321);
     }
 
-    public boolean canNodeAppear(String nodeName, ImageTypeSpecifier type) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean canNodeAppear(String nodeName, ImageTypeSpecifier type) {
         return true;
     }
 }
 
+@Bean
 public class ObjectArrayMaxLength {
 
     public static void main(String[] args) {

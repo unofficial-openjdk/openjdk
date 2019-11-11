@@ -42,6 +42,7 @@ import java.util.*;
 import javax.management.*;
 import javax.management.loading.*;
 
+@Bean
 public class ClassLeakTest {
     public static void main(String[] args) throws Exception {
         System.out.println("Testing that registering and unregistering a " +
@@ -141,6 +142,10 @@ public class ClassLeakTest {
 
         public void bogus() {}
         public int getA() {return 0;}
-        public void setA(int a) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setA(int a) {}
     }
 }

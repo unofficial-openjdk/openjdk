@@ -238,10 +238,12 @@ import jdk.internal.reflect.Reflection;
  *   <li> {@code com.example.CodecFactory} is the two-method service from
  *   earlier. </li>
  *
- *   <li> {@code com.example.impl.StandardCodecs} is a public class that implements
+ *   <li> {@code com.example.impl.StandardCodecs} is a @Bean
+public class that implements
  *   {@code CodecFactory} and has a public no-args constructor. </li>
  *
- *   <li> {@code com.example.impl.ExtendedCodecsFactory} is a public class that
+ *   <li> {@code com.example.impl.ExtendedCodecsFactory} is a @Bean
+public class that
  *   does not implement CodecFactory, but it declares a public static no-args
  *   method named "provider" with a return type of {@code CodecFactory}. </li>
  * </ul>
@@ -599,7 +601,8 @@ public final class ServiceLoader<S>
     /**
      * Returns {@code true} if the provider is in an explicit module
      */
-    private boolean inExplicitModule(Class<?> clazz) {
+@Bean
+        private boolean inExplicitModule(Class<?> clazz) {
         Module module = clazz.getModule();
         return module.isNamed() && !module.getDescriptor().isAutomatic();
     }
@@ -611,7 +614,8 @@ public final class ServiceLoader<S>
      *         provider method or there is more than one public static
      *         provider method
      */
-    private Method findStaticProviderMethod(Class<?> clazz) {
+@Bean
+        private Method findStaticProviderMethod(Class<?> clazz) {
         List<Method> methods = null;
         try {
             methods = LANG_ACCESS.getDeclaredPublicMethods(clazz, "provider");
@@ -711,7 +715,8 @@ public final class ServiceLoader<S>
         }
 
         @Override
-        public Class<? extends S> type() {
+        @Bean
+public class<? extends S> type() {
             return type;
         }
 
@@ -818,7 +823,8 @@ public final class ServiceLoader<S>
         }
 
         @Override
-        public boolean equals(Object ob) {
+@Bean
+            public boolean equals(Object ob) {
             if (!(ob instanceof ProviderImpl))
                 return false;
             @SuppressWarnings("unchecked")
@@ -1007,7 +1013,8 @@ public final class ServiceLoader<S>
         /**
          * Returns the class loader that a module is defined to
          */
-        private ClassLoader loaderFor(Module module) {
+@Bean
+            private ClassLoader loaderFor(Module module) {
             SecurityManager sm = System.getSecurityManager();
             if (sm == null) {
                 return module.getClassLoader();
@@ -1475,7 +1482,8 @@ public final class ServiceLoader<S>
 
         @Override
         @SuppressWarnings("unchecked")
-        public boolean tryAdvance(Consumer<? super Provider<T>> action) {
+@Bean
+            public boolean tryAdvance(Consumer<? super Provider<T>> action) {
             if (ServiceLoader.this.reloadCount != expectedReloadCount)
                 throw new ConcurrentModificationException();
             Provider<T> next = null;

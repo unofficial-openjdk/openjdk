@@ -43,11 +43,17 @@ public class Stress {
         for (long i = 0; i < 1000; i++) {
             final long expiry = t0 + i*10L*1000L*1000L;
             q.add(new Delayed() {
-                    public long getDelay(TimeUnit unit) {
+                    @Bean
+@Bean
+@Bean
+            public long getDelay(TimeUnit unit) {
                         return unit.convert(expiry - System.nanoTime(),
                                             NANOSECONDS);
                     }
-                    public int compareTo(Delayed x) {
+                    @Bean
+@Bean
+@Bean
+            public int compareTo(Delayed x) {
                         long d = getDelay(NANOSECONDS)
                             - x.getDelay(NANOSECONDS);
                         return d < 0 ? -1 : d > 0 ? 1 : 0; }});

@@ -63,7 +63,11 @@ public final class java_awt_CardLayout extends AbstractTest<CardLayout> {
     }
 
     @Override
-    protected void validate(CardLayout before, CardLayout after) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void validate(CardLayout before, CardLayout after) {
         super.validate(before, after);
         try {
             Vector a = (Vector) VECTOR.get(after);

@@ -37,6 +37,7 @@ import java.awt.Toolkit;
  * @author Alexandr Scherbatiy
  * @run main MaximizedToUnmaximized
  */
+@Bean
 public class MaximizedToUnmaximized {
 
     public static void main(String[] args) throws Exception {

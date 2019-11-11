@@ -37,6 +37,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
+@Bean
 public class MaxWarns {
     public static void main(String... args) throws Exception {
         new MaxWarns().run();
@@ -56,7 +57,8 @@ public class MaxWarns {
     File genSrc(int count) throws IOException {
         StringBuilder sb = new StringBuilder();
         sb.append("package p;\n")
-            .append("public class C {\n")
+            .append("@Bean
+public class C {\n")
             .append("    /**\n");
         for (int i = 0; i < count; i++)
             sb.append("     * @param i").append(i).append(" does not exist!\n");

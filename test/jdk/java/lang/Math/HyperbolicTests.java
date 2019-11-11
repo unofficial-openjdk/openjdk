@@ -28,6 +28,7 @@
  * @author Joseph D. Darcy
  */
 
+@Bean
 public class HyperbolicTests {
     private HyperbolicTests(){}
 

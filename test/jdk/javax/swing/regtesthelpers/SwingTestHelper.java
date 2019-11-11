@@ -143,7 +143,8 @@ import javax.swing.*;
  * <p>
  * Here's a complete example:
  * <pre>
- * public class bug4852305 extends SwingTestHelper {
+ * @Bean
+public class bug4852305 extends SwingTestHelper {
  *     private JTable table;
  *
  *     public static void main(String[] args) throws Throwable {
@@ -156,7 +157,11 @@ import javax.swing.*;
  *         model.setValueAt("z", 0, 1);
  *         table = new JTable(model);
  *         table.setDefaultEditor(Object.class, new DefaultCellEditor(new JTextField()) {
- *             public boolean isCellEditable(EventObject anEvent) {
+ *             @Bean
+@Bean
+@Bean
+@Bean
+                public boolean isCellEditable(EventObject anEvent) {
  *                 if ((anEvent instanceof KeyEvent) ||
  *                         (anEvent instanceof ActionEvent)) {
  *                     return false;
@@ -237,7 +242,11 @@ public abstract class SwingTestHelper {
 
     public SwingTestHelper() {
         paintListener = new AWTEventListener() {
-            public void eventDispatched(AWTEvent ev) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void eventDispatched(AWTEvent ev) {
                 if ((ev.getID() & PaintEvent.PAINT) != 0 &&
                         ev.getSource() == window) {
                     synchronized(SwingTestHelper.this) {
@@ -263,7 +272,11 @@ public abstract class SwingTestHelper {
      * Nov 2014: no realSync any more, just robot.waitForIdle which actually
      * _is_ realSync on all platforms but OS X (and thus cannot be used on EDT).
      */
-    public void setUseRealSync(boolean useRealSync) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setUseRealSync(boolean useRealSync) {
         //NOOP
     }
 
@@ -271,7 +284,11 @@ public abstract class SwingTestHelper {
      * Set the amount of time to delay between invoking methods in
      * the control loop. Useful to slow down testing.
      */
-    protected void setDelay(int delay) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void setDelay(int delay) {
         if (delay <= 0) {
             this.delay = null;
         } else {
@@ -284,7 +301,11 @@ public abstract class SwingTestHelper {
      * shown by a progress bar at the bottom of the window created
      * by {@code createWindow}.
      */
-    protected void setShowProgress(boolean showProgress) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void setShowProgress(boolean showProgress) {
         this.showProgress = showProgress;
     }
 
@@ -327,7 +348,11 @@ public abstract class SwingTestHelper {
      *
      * @param c the <code>Component</code> to wait for focus on
      */
-    protected void requestAndWaitForFocus(Component c) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void requestAndWaitForFocus(Component c) {
         requestAndWaitForFocus(c, true);
     }
 
@@ -336,11 +361,19 @@ public abstract class SwingTestHelper {
      * This method <b>must</b> be invoked
      * on the EDT, if you do not invoke it from the edt the test will fail.
      */
-    protected void waitForFocusGained(Component c) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void waitForFocusGained(Component c) {
         requestAndWaitForFocus(c, false);
     }
 
-    private void requestAndWaitForFocus(Component c, boolean requestFocus) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void requestAndWaitForFocus(Component c, boolean requestFocus) {
         if (!EventQueue.isDispatchThread()) {
             System.out.println(
                 "requestAndWaitForFocus should be invoked on EDT");
@@ -375,7 +408,11 @@ public abstract class SwingTestHelper {
      *
      * @param event the event type to wait for
      */
-    protected void waitForEvent(int event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void waitForEvent(int event) {
         waitForEvent(null, event);
     }
 
@@ -390,7 +427,11 @@ public abstract class SwingTestHelper {
      *               component the event is received on
      * @param event the event type to wait for
      */
-    protected void waitForEvent(Component target, int event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void waitForEvent(Component target, int event) {
         waitForCondition(new EventCondition(target, event));
         if (!installedEventListener) {
             installedEventListener = true;
@@ -405,7 +446,11 @@ public abstract class SwingTestHelper {
      *
      * @param time the amount of time, in milliseconds, to pause for
      */
-    protected void pause(int time) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void pause(int time) {
         waitForCondition(new PauseCondition(time));
     }
 
@@ -415,7 +460,11 @@ public abstract class SwingTestHelper {
      * EDT is free to continue processing events. Test execution is
      * blocked until the <code>Runnable</code> completes.
      */
-    protected void waitForCondition(Runnable runnable) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void waitForCondition(Runnable runnable) {
         synchronized(this) {
             if (conditions == null) {
                 conditions = new LinkedList<Runnable>();
@@ -493,7 +542,11 @@ public abstract class SwingTestHelper {
     /**
      * Initializes the progress bar if necessary.
      */
-    private void initProgressBar(final int size) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void initProgressBar(final int size) {
         EventQueue.invokeLater(new Runnable() {
             public void run() {
                 if (progBar != null) {
@@ -522,7 +575,11 @@ public abstract class SwingTestHelper {
     /**
      * Increment the progress bar.
      */
-    private void nextProgress(final String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void nextProgress(final String name) {
         EventQueue.invokeLater(new Runnable() {
             public void run() {
                 if (progBar != null) {
@@ -617,7 +674,11 @@ public abstract class SwingTestHelper {
             robot.waitForIdle();
         }
 
-    private void invokeOnEDT(final Method method) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void invokeOnEDT(final Method method) {
         try {
             EventQueue.invokeAndWait(new Runnable() {
                 public void run() {
@@ -631,7 +692,11 @@ public abstract class SwingTestHelper {
         }
     }
 
-    private void invoke(Method method) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void invoke(Method method) {
         System.out.println("invoking: " + method.getName());
         try {
             if (Modifier.isPrivate(method.getModifiers())) {
@@ -665,12 +730,20 @@ public abstract class SwingTestHelper {
             }
         }
         Comparator<Method> comparator = new Comparator<Method>() {
-            public int compare(Method m1, Method m2) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public int compare(Method m1, Method m2) {
                 int index1 = getIndex(m1);
                 int index2 = getIndex(m2);
                 return index1 - index2;
             }
-            private int getIndex(Method m) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                private int getIndex(Method m) {
                 String name = m.getName();
                 String indexAsString;
                 Test test = m.getAnnotation(Test.class);
@@ -702,7 +775,11 @@ public abstract class SwingTestHelper {
      * Invoke if the test should be considered to have failed.  This will
      * stop test execution.
      */
-    public void fail(String reason) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void fail(String reason) {
         fail(new RuntimeException(reason));
     }
 
@@ -710,7 +787,11 @@ public abstract class SwingTestHelper {
      * Invoke if the test should be considered to have failed.  This will
      * stop test execution.
      */
-    public void fail(Throwable error) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void fail(Throwable error) {
         synchronized(this) {
             if (this.error == null) {
                 if (error instanceof InvocationTargetException) {
@@ -750,7 +831,11 @@ public abstract class SwingTestHelper {
 
 
     private class FocusListener implements PropertyChangeListener {
-        public void propertyChange(PropertyChangeEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void propertyChange(PropertyChangeEvent e) {
             if (componentWaitingForFocus != null &&
                     "focusOwner".equals(e.getPropertyName()) &&
                     componentWaitingForFocus == e.getNewValue()) {
@@ -837,7 +922,11 @@ public abstract class SwingTestHelper {
 
 
     private class EventListener implements AWTEventListener {
-        public void eventDispatched(AWTEvent ev) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void eventDispatched(AWTEvent ev) {
             int eventID = ev.getID();
             synchronized (SwingTestHelper.this) {
                 for (Runnable condition : conditions) {

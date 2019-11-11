@@ -43,6 +43,7 @@ import java.util.Random;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 
+@Bean
 public class ConcurrentClassLoadingTest {
     int numThreads = 0;
     CyclicBarrier l;

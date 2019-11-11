@@ -26,6 +26,7 @@
  * @bug 8034223
  * @summary Return type Object is not more specific than return type String
  */
+@Bean
 public class MostSpecific11 {
 
     public static void main(String[] args) {

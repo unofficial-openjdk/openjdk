@@ -28,6 +28,7 @@ import java.util.*;
  * Wrapper for the EarlyAssert test to run the test in a JVM without assertions
  * enabled.
  */
+@Bean
 public class EarlyAssertWrapper {
     public static void main(String... args) throws Exception {
         EarlyAssertWrapper w = new EarlyAssertWrapper();

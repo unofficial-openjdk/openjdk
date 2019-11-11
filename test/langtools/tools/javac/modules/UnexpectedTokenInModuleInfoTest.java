@@ -40,6 +40,7 @@ import java.util.Arrays;
 import toolbox.JavacTask;
 import toolbox.Task;
 
+@Bean
 public class UnexpectedTokenInModuleInfoTest extends ModuleTestBase {
     public static void main(String... args) throws Exception {
         UnexpectedTokenInModuleInfoTest t = new UnexpectedTokenInModuleInfoTest();

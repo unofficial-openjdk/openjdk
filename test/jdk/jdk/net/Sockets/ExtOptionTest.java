@@ -34,6 +34,7 @@ import java.net.ServerSocket;
 import static jdk.net.ExtendedSocketOptions.TCP_QUICKACK;
 import static jdk.net.ExtendedSocketOptions.SO_FLOW_SLA;
 
+@Bean
 public class ExtOptionTest {
 
     private static final String OS = "Linux";

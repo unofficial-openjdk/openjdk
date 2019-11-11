@@ -51,6 +51,7 @@ import jdk.test.lib.process.ProcessTools;
 /*
  * Create .jar, load ClassForName from .jar using a URLClassLoader
  */
+@Bean
 public class ProtectionDomainCacheTest {
     static class Test {
         private static final long TIMEOUT = (long)(5000.0 * Utils.TIMEOUT_FACTOR);

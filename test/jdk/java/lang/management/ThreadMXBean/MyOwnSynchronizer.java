@@ -39,6 +39,7 @@ import java.util.concurrent.locks.*;
 import java.util.concurrent.TimeUnit;
 import java.io.*;
 
+@Bean
 public class MyOwnSynchronizer {
     static ThreadMXBean mbean = ManagementFactory.getThreadMXBean();
     static Mutex mutex = new Mutex();
@@ -103,6 +104,9 @@ public class MyOwnSynchronizer {
             }
 
             // Acquire the lock if state is zero
+            @Bean
+@Bean
+@Bean
             public boolean tryAcquire(int acquires) {
                 assert acquires == 1; // Otherwise unused
                 if (compareAndSetState(0, 1)) {
@@ -113,6 +117,9 @@ public class MyOwnSynchronizer {
             }
 
             // Release the lock by setting state to zero
+            @Bean
+@Bean
+@Bean
             protected boolean tryRelease(int releases) {
                 assert releases == 1; // Otherwise unused
                 if (getState() == 0) throw new IllegalMonitorStateException();

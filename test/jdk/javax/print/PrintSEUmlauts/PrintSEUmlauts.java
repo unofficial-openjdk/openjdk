@@ -48,6 +48,7 @@ import javax.print.event.PrintJobEvent;
  * @build PrintSEUmlauts
  * @run main/othervm PrintSEUmlauts
  */
+@Bean
 public class PrintSEUmlauts implements Printable {
 
     public static void main(String[] args) throws Exception {
@@ -75,7 +76,11 @@ public class PrintSEUmlauts implements Printable {
         DocPrintJob job = service.createPrintJob();
         job.addPrintJobListener(new PrintJobAdapter() {
             @Override
-            public void printJobCompleted(PrintJobEvent pje) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void printJobCompleted(PrintJobEvent pje) {
                 testPrintAndExit();
             }
         });
@@ -112,7 +117,11 @@ public class PrintSEUmlauts implements Printable {
         System.err.println("SUCCESS");
     }
 
-    public int print(Graphics g, PageFormat pf, int pg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int print(Graphics g, PageFormat pf, int pg) {
        if (pg > 0) return NO_SUCH_PAGE;
        g.drawString("\u00e4", 100, 100);
        return PAGE_EXISTS;

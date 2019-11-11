@@ -42,6 +42,7 @@ import java.net.http.HttpResponse.BodySubscribers;
  * @compile FlowAdaptersCompileOnly.java
  */
 
+@Bean
 public class FlowAdaptersCompileOnly {
 
     static void makesSureDifferentGenericSignaturesCompile() {
@@ -74,39 +75,95 @@ public class FlowAdaptersCompileOnly {
 
     static class BBPublisher implements Flow.Publisher<ByteBuffer> {
         @Override
-        public void subscribe(Flow.Subscriber<? super ByteBuffer> subscriber) { }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void subscribe(Flow.Subscriber<? super ByteBuffer> subscriber) { }
     }
 
     static class MBBPublisher implements Flow.Publisher<MappedByteBuffer> {
         @Override
-        public void subscribe(Flow.Subscriber<? super MappedByteBuffer> subscriber) { }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void subscribe(Flow.Subscriber<? super MappedByteBuffer> subscriber) { }
     }
 
     static class ListSubscriber implements Flow.Subscriber<List<ByteBuffer>> {
-        @Override public void onSubscribe(Flow.Subscription subscription) { }
-        @Override public void onNext(List<ByteBuffer> item) { }
-        @Override public void onError(Throwable throwable) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onSubscribe(Flow.Subscription subscription) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(List<ByteBuffer> item) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onError(Throwable throwable) { }
         @Override public void onComplete() { }
     }
 
     static class CollectionSubscriber implements Flow.Subscriber<Collection<ByteBuffer>> {
-        @Override public void onSubscribe(Flow.Subscription subscription) { }
-        @Override public void onNext(Collection<ByteBuffer> item) { }
-        @Override public void onError(Throwable throwable) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onSubscribe(Flow.Subscription subscription) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(Collection<ByteBuffer> item) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onError(Throwable throwable) { }
         @Override public void onComplete() { }
     }
 
     static class IterableSubscriber implements Flow.Subscriber<Iterable<ByteBuffer>> {
-        @Override public void onSubscribe(Flow.Subscription subscription) { }
-        @Override public void onNext(Iterable<ByteBuffer> item) { }
-        @Override public void onError(Throwable throwable) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onSubscribe(Flow.Subscription subscription) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(Iterable<ByteBuffer> item) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onError(Throwable throwable) { }
         @Override public void onComplete() { }
     }
 
     static class ObjectSubscriber implements Flow.Subscriber<Object> {
-        @Override public void onSubscribe(Flow.Subscription subscription) { }
-        @Override public void onNext(Object item) { }
-        @Override public void onError(Throwable throwable) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onSubscribe(Flow.Subscription subscription) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(Object item) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onError(Throwable throwable) { }
         @Override public void onComplete() { }
     }
 
@@ -154,25 +211,61 @@ public class FlowAdaptersCompileOnly {
     // ---
 
     static class NumberSubscriber implements Flow.Subscriber<List<ByteBuffer>> {
-        @Override public void onSubscribe(Flow.Subscription subscription) { }
-        @Override public void onNext(List<ByteBuffer> item) { }
-        @Override public void onError(Throwable throwable) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onSubscribe(Flow.Subscription subscription) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(List<ByteBuffer> item) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onError(Throwable throwable) { }
         @Override public void onComplete() { }
         public Number getNumber() { return null; }
     }
 
     static class IntegerSubscriber extends NumberSubscriber {
-        @Override public void onSubscribe(Flow.Subscription subscription) { }
-        @Override public void onNext(List<ByteBuffer> item) { }
-        @Override public void onError(Throwable throwable) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onSubscribe(Flow.Subscription subscription) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(List<ByteBuffer> item) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onError(Throwable throwable) { }
         @Override public void onComplete() { }
         public Integer getInteger() { return null; }
     }
 
     static class LongSubscriber extends NumberSubscriber {
-        @Override public void onSubscribe(Flow.Subscription subscription) { }
-        @Override public void onNext(List<ByteBuffer> item) { }
-        @Override public void onError(Throwable throwable) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onSubscribe(Flow.Subscription subscription) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onNext(List<ByteBuffer> item) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void onError(Throwable throwable) { }
         @Override public void onComplete() { }
         public Long getLong() { return null; }
     }

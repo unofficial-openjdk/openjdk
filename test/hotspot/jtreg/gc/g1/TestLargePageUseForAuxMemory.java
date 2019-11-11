@@ -45,6 +45,7 @@ import jdk.test.lib.Platform;
 import jtreg.SkippedException;
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class TestLargePageUseForAuxMemory {
     static final long HEAP_REGION_SIZE = 1 * 1024 * 1024;
     static long largePageSize;

@@ -32,6 +32,7 @@
 
 import java.awt.*;
 
+@Bean
 public class Revalidate {
     private static Frame frame = new Frame();
     private static Panel panel = new Panel() {

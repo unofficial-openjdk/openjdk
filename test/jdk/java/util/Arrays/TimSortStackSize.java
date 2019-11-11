@@ -29,6 +29,7 @@
 import java.util.Arrays;
 import java.util.ArrayDeque;
 
+@Bean
 public class TimSortStackSize {
 
     public static void main(String[] args) {

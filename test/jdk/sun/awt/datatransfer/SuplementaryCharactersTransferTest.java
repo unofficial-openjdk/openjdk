@@ -39,6 +39,7 @@ import sun.awt.datatransfer.*;
 import sun.awt.datatransfer.DataTransferer.ReencodingInputStream;
 import sun.datatransfer.DataFlavorUtil;
 
+@Bean
 public class SuplementaryCharactersTransferTest {
 
     public static final long TEXT_FORMAT = 13;
@@ -80,7 +81,11 @@ public class SuplementaryCharactersTransferTest {
             return new DataFlavor[]{dataFlavor};
         }
 
-        public boolean isDataFlavorSupported(DataFlavor flavor) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean isDataFlavorSupported(DataFlavor flavor) {
             return flavor.equals(dataFlavor);
         }
 
@@ -101,7 +106,11 @@ public class SuplementaryCharactersTransferTest {
             }
         }
 
-        public void lostOwnership(Clipboard clipboard, Transferable contents) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void lostOwnership(Clipboard clipboard, Transferable contents) {
         }
     }
 
@@ -113,27 +122,47 @@ public class SuplementaryCharactersTransferTest {
         }
 
         @Override
-        public boolean isLocaleDependentTextFormat(long format) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean isLocaleDependentTextFormat(long format) {
             return false;
         }
 
         @Override
-        public boolean isFileFormat(long format) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean isFileFormat(long format) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override
-        public boolean isImageFormat(long format) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean isImageFormat(long format) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override
-        protected Long getFormatForNativeAsLong(String str) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected Long getFormatForNativeAsLong(String str) {
             return TEXT_FORMAT;
         }
 
         @Override
-        protected String getNativeForFormat(long format) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected String getNativeForFormat(long format) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 

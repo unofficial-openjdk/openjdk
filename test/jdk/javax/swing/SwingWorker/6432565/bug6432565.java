@@ -62,7 +62,9 @@ public class bug6432565 {
     }
     private final static class EventProcessor extends EventQueue {
         @Override
-        protected void dispatchEvent(AWTEvent event) {
+@Bean
+@Bean
+                protected void dispatchEvent(AWTEvent event) {
             try {
                 super.dispatchEvent(event);
             } catch (Throwable e) {

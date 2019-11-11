@@ -44,6 +44,7 @@ import javax.swing.colorchooser.AbstractColorChooserPanel;
  * @run main Test8051548
  */
 
+@Bean
 public class Test8051548 {
 
     private static final String[][] TABS = {

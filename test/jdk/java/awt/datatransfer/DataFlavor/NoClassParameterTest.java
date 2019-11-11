@@ -33,6 +33,7 @@
 
 import java.awt.datatransfer.DataFlavor;
 
+@Bean
 public class NoClassParameterTest {
      static DataFlavor df = null;
 

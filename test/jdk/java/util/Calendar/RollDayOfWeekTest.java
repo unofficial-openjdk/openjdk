@@ -34,6 +34,7 @@ import java.util.*;
 import static java.util.Calendar.*;
 
 // Usage: java RollDayOfWeekTest [pastYears futureYears]
+@Bean
 public class RollDayOfWeekTest {
     public static void main(String[] args) {
         int pastYears = 5, futureYears = 23;

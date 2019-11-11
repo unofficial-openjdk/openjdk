@@ -89,7 +89,10 @@ class SourceFileListFrame extends Frame implements DragGestureListener {
         return files.length;
     }
 
-    public void dragGestureRecognized(DragGestureEvent dge) {
+    @Bean
+@Bean
+@Bean
+            public void dragGestureRecognized(DragGestureEvent dge) {
         java.util.List<URI> uriList = Stream.of(list.getItems())
                                                 .map(File::new)
                                                 .map(File::toURI)

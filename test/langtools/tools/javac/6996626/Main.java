@@ -37,6 +37,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
+@Bean
 public class Main {
     public void main (String[] args) {
         throw new CompletionFailure();

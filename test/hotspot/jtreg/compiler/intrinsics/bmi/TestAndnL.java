@@ -42,6 +42,7 @@ package compiler.intrinsics.bmi;
 
 import sun.hotspot.cpuinfo.CPUInfo;
 
+@Bean
 public class TestAndnL {
 
     public static void main(String args[]) throws Throwable {
@@ -59,11 +60,19 @@ public class TestAndnL {
 
     public static class AndnLExpr extends Expr.BMIBinaryLongExpr {
 
-        public long longExpr(long src1, long src2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long longExpr(long src1, long src2) {
             return ~src1 & src2;
         }
 
-        public long longExpr(long src1, Expr.MemL src2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long longExpr(long src1, Expr.MemL src2) {
             if (src2 != null) {
                 return ~src1 & src2.value;
             } else {
@@ -71,7 +80,11 @@ public class TestAndnL {
             }
         }
 
-        public long longExpr(Expr.MemL src1, long src2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long longExpr(Expr.MemL src1, long src2) {
             if (src1 != null) {
                 return ~src1.value & src2;
             } else {
@@ -79,7 +92,11 @@ public class TestAndnL {
             }
         }
 
-        public long longExpr(Expr.MemL src1, Expr.MemL src2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long longExpr(Expr.MemL src1, Expr.MemL src2) {
             if (src1 != null && src2 != null) {
                 return ~src1.value & src2.value;
             } else {
@@ -92,11 +109,19 @@ public class TestAndnL {
 
     public static class AndnLCommutativeExpr extends Expr.BMIBinaryLongExpr {
 
-        public long longExpr(long src1, long src2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long longExpr(long src1, long src2) {
             return src1 & ~src2;
         }
 
-        public long longExpr(long src1, Expr.MemL src2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long longExpr(long src1, Expr.MemL src2) {
             if (src2 != null) {
                 return src1 & ~src2.value;
             } else {
@@ -104,7 +129,11 @@ public class TestAndnL {
             }
         }
 
-        public long longExpr(Expr.MemL src1, long src2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long longExpr(Expr.MemL src1, long src2) {
             if (src1 != null) {
                 return src1.value & ~src2;
             } else {
@@ -112,7 +141,11 @@ public class TestAndnL {
             }
         }
 
-        public long longExpr(Expr.MemL src1, Expr.MemL src2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long longExpr(Expr.MemL src1, Expr.MemL src2) {
             if (src1 != null && src2 != null) {
                 return src1.value & ~src2.value;
             } else {

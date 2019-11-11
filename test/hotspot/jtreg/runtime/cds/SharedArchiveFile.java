@@ -39,6 +39,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 // NOTE: This test serves as a sanity test and also as an example for simple
 // use of SharedArchiveFile argument. For this reason it DOES NOT use the utility
 // methods to form command line to create/use shared archive.
+@Bean
 public class SharedArchiveFile {
     public static void main(String[] args) throws Exception {
         ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(true,

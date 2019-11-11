@@ -31,6 +31,7 @@
 import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
 
+@Bean
 public class PolygonSubtract {
     public static void main(String argv[]) {
         Area area = new Area();

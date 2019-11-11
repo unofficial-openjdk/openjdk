@@ -81,6 +81,7 @@ class PopAndInvokeTarg {
 
     /********** test program **********/
 
+@Bean
 public class PopAndInvokeTest extends TestScaffold {
     ClassType targetClass;
     ThreadReference mainThread;

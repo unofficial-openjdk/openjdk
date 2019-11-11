@@ -309,7 +309,8 @@ public abstract class URLConnection {
                 private FileNameMap internalMap =
                     sun.net.www.MimeTable.loadTable();
 
-                public String getContentTypeFor(String fileName) {
+@Bean
+                    public String getContentTypeFor(String fileName) {
                     return internalMap.getContentTypeFor(fileName);
                 }
             };
@@ -385,7 +386,8 @@ public abstract class URLConnection {
      * @see #connect()
      * @since 1.5
      */
-    public void setConnectTimeout(int timeout) {
+@Bean
+        public void setConnectTimeout(int timeout) {
         if (timeout < 0) {
             throw new IllegalArgumentException("timeout can not be negative");
         }
@@ -428,7 +430,8 @@ public abstract class URLConnection {
      * @see InputStream#read()
      * @since 1.5
      */
-    public void setReadTimeout(int timeout) {
+@Bean
+        public void setReadTimeout(int timeout) {
         if (timeout < 0) {
             throw new IllegalArgumentException("timeout can not be negative");
         }
@@ -577,7 +580,8 @@ public abstract class URLConnection {
      * @return  the value of the named header field, or {@code null}
      *          if there is no such field in the header.
      */
-    public String getHeaderField(String name) {
+@Bean
+        public String getHeaderField(String name) {
         return null;
     }
 
@@ -609,7 +613,8 @@ public abstract class URLConnection {
      *          {@code Default} value is returned if the field is
      *          missing or malformed.
      */
-    public int getHeaderFieldInt(String name, int Default) {
+@Bean
+        public int getHeaderFieldInt(String name, int Default) {
         String value = getHeaderField(name);
         try {
             return Integer.parseInt(value);
@@ -632,7 +637,8 @@ public abstract class URLConnection {
      *          missing or malformed.
      * @since 1.7
      */
-    public long getHeaderFieldLong(String name, long Default) {
+@Bean
+        public long getHeaderFieldLong(String name, long Default) {
         String value = getHeaderField(name);
         try {
             return Long.parseLong(value);
@@ -657,7 +663,8 @@ public abstract class URLConnection {
      *          missing or malformed.
      */
     @SuppressWarnings("deprecation")
-    public long getHeaderFieldDate(String name, long Default) {
+@Bean
+        public long getHeaderFieldDate(String name, long Default) {
         String value = getHeaderField(name);
         try {
             return Date.parse(value);
@@ -674,7 +681,8 @@ public abstract class URLConnection {
      *          or {@code null} if there are fewer than {@code n+1}
      *          fields.
      */
-    public String getHeaderFieldKey(int n) {
+@Bean
+        public String getHeaderFieldKey(int n) {
         return null;
     }
 
@@ -692,7 +700,8 @@ public abstract class URLConnection {
      *          or {@code null} if there are fewer than {@code n+1} fields
      * @see     java.net.URLConnection#getHeaderFieldKey(int)
      */
-    public String getHeaderField(int n) {
+@Bean
+        public String getHeaderField(int n) {
         return null;
     }
 
@@ -875,7 +884,8 @@ public abstract class URLConnection {
      * @see     java.net.URLConnection#doInput
      * @see #getDoInput()
      */
-    public void setDoInput(boolean doinput) {
+@Bean
+        public void setDoInput(boolean doinput) {
         checkConnected();
         doInput = doinput;
     }
@@ -904,7 +914,8 @@ public abstract class URLConnection {
      * @throws IllegalStateException if already connected
      * @see #getDoOutput()
      */
-    public void setDoOutput(boolean dooutput) {
+@Bean
+        public void setDoOutput(boolean dooutput) {
         checkConnected();
         doOutput = dooutput;
     }
@@ -929,7 +940,8 @@ public abstract class URLConnection {
      * @throws IllegalStateException if already connected
      * @see     #getAllowUserInteraction()
      */
-    public void setAllowUserInteraction(boolean allowuserinteraction) {
+@Bean
+        public void setAllowUserInteraction(boolean allowuserinteraction) {
         checkConnected();
         allowUserInteraction = allowuserinteraction;
     }
@@ -992,7 +1004,8 @@ public abstract class URLConnection {
      * @throws IllegalStateException if already connected
      * @see #getUseCaches()
      */
-    public void setUseCaches(boolean usecaches) {
+@Bean
+        public void setUseCaches(boolean usecaches) {
         checkConnected();
         useCaches = usecaches;
     }
@@ -1017,7 +1030,8 @@ public abstract class URLConnection {
      * @throws IllegalStateException if already connected
      * @see     #getIfModifiedSince()
      */
-    public void setIfModifiedSince(long ifmodifiedsince) {
+@Bean
+        public void setIfModifiedSince(long ifmodifiedsince) {
         checkConnected();
         ifModifiedSince = ifmodifiedsince;
     }
@@ -1057,7 +1071,8 @@ public abstract class URLConnection {
      * @param   defaultusecaches   the new value.
      * @see     #getDefaultUseCaches()
      */
-    public void setDefaultUseCaches(boolean defaultusecaches) {
+@Bean
+        public void setDefaultUseCaches(boolean defaultusecaches) {
         defaultUseCaches = defaultusecaches;
     }
 
@@ -1114,7 +1129,8 @@ public abstract class URLConnection {
      * @throws NullPointerException if key is {@code null}
      * @see #getRequestProperty(java.lang.String)
      */
-    public void setRequestProperty(String key, String value) {
+@Bean
+        public void setRequestProperty(String key, String value) {
         checkConnected();
         if (key == null)
             throw new NullPointerException ("key is null");
@@ -1138,7 +1154,8 @@ public abstract class URLConnection {
      * @see #getRequestProperties()
      * @since 1.4
      */
-    public void addRequestProperty(String key, String value) {
+@Bean
+        public void addRequestProperty(String key, String value) {
         checkConnected();
         if (key == null)
             throw new NullPointerException ("key is null");
@@ -1160,7 +1177,8 @@ public abstract class URLConnection {
      * @throws IllegalStateException if already connected
      * @see #setRequestProperty(java.lang.String, java.lang.String)
      */
-    public String getRequestProperty(String key) {
+@Bean
+        public String getRequestProperty(String key) {
         checkConnected();
 
         if (requests == null)
@@ -1341,7 +1359,8 @@ public abstract class URLConnection {
      *     YoyoDyne.experimental.text.plain
      * </pre>
      */
-    private ContentHandler lookupContentHandlerClassFor(String contentType) {
+@Bean
+        private ContentHandler lookupContentHandlerClassFor(String contentType) {
         String contentHandlerClassName = typeToPackageName(contentType);
 
         String contentHandlerPkgPrefixes = getContentHandlerPkgPrefixes();
@@ -1374,7 +1393,8 @@ public abstract class URLConnection {
         return UnknownContentHandler.INSTANCE;
     }
 
-    private ContentHandler lookupContentHandlerViaProvider(String contentType) {
+@Bean
+        private ContentHandler lookupContentHandlerViaProvider(String contentType) {
         return AccessController.doPrivileged(
                 new PrivilegedAction<>() {
                     @Override
@@ -1411,7 +1431,8 @@ public abstract class URLConnection {
      * pair of class name components.  For example: "text/html" would
      * be returned as "text.html"
      */
-    private String typeToPackageName(String contentType) {
+@Bean
+        private String typeToPackageName(String contentType) {
         // make sure we canonicalize the class name: all lower case
         contentType = contentType.toLowerCase();
         int len = contentType.length();

@@ -41,6 +41,7 @@ import test.java.awt.regtesthelpers.Util;
 import java.awt.*;
 import java.awt.event.*;
 
+@Bean
 public class ItemStateChangeTest extends Frame {
 
     int events = 0;
@@ -63,7 +64,10 @@ public class ItemStateChangeTest extends Frame {
 
             addWindowListener(new WindowAdapter() {
                 @Override
-                public void windowClosing(WindowEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void windowClosing(WindowEvent e) {
                     System.exit(0);
                 }
             });
@@ -73,7 +77,10 @@ public class ItemStateChangeTest extends Frame {
             choice.add("B");
             choice.addItemListener(new ItemListener() {
                 @Override
-                public void itemStateChanged(ItemEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void itemStateChanged(ItemEvent e) {
                     ++events;
                 }
             });

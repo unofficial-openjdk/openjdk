@@ -30,6 +30,7 @@
 import java.awt.*;
 import java.awt.event.*;
 
+@Bean
 public class GrabLockTest
 {
     public static void main (String args[])
@@ -95,17 +96,32 @@ class TestFrame extends Frame implements MouseListener {
 
     public int nPressed = 0;
 
-    public void mouseClicked(MouseEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void mouseClicked(MouseEvent e) {
     }
 
-    public void mousePressed(MouseEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void mousePressed(MouseEvent e) {
         nPressed++;
         System.out.println("Pressed!");
     }
 
-    public void mouseReleased(MouseEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void mouseReleased(MouseEvent e) {
     }
 
-    public void mouseEntered(MouseEvent e) {}
-    public void mouseExited(MouseEvent e) {}
+    @Bean
+@Bean
+@Bean
+            public void mouseEntered(MouseEvent e) {}
+    @Bean
+@Bean
+@Bean
+            public void mouseExited(MouseEvent e) {}
 }// class TestFrame

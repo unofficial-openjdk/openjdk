@@ -81,6 +81,7 @@ import jdk.internal.access.SharedSecrets;
  * @since   1.2
  */
 
+@Bean
 public class Collections {
     // Suppresses default constructor, ensuring non-instantiability.
     private Collections() {
@@ -1051,30 +1052,37 @@ public class Collections {
                     throw new UnsupportedOperationException();
                 }
                 @Override
-                public void forEachRemaining(Consumer<? super E> action) {
+@Bean
+                    public void forEachRemaining(Consumer<? super E> action) {
                     // Use backing collection version
                     i.forEachRemaining(action);
                 }
             };
         }
 
-        public boolean add(E e) {
+@Bean
+            public boolean add(E e) {
             throw new UnsupportedOperationException();
         }
-        public boolean remove(Object o) {
+@Bean
+            public boolean remove(Object o) {
             throw new UnsupportedOperationException();
         }
 
-        public boolean containsAll(Collection<?> coll) {
+@Bean
+            public boolean containsAll(Collection<?> coll) {
             return c.containsAll(coll);
         }
-        public boolean addAll(Collection<? extends E> coll) {
+@Bean
+            public boolean addAll(Collection<? extends E> coll) {
             throw new UnsupportedOperationException();
         }
-        public boolean removeAll(Collection<?> coll) {
+@Bean
+            public boolean removeAll(Collection<?> coll) {
             throw new UnsupportedOperationException();
         }
-        public boolean retainAll(Collection<?> coll) {
+@Bean
+            public boolean retainAll(Collection<?> coll) {
             throw new UnsupportedOperationException();
         }
         public void clear() {
@@ -1083,11 +1091,13 @@ public class Collections {
 
         // Override default methods in Collection
         @Override
-        public void forEach(Consumer<? super E> action) {
+@Bean
+            public void forEach(Consumer<? super E> action) {
             c.forEach(action);
         }
         @Override
-        public boolean removeIf(Predicate<? super E> filter) {
+@Bean
+            public boolean removeIf(Predicate<? super E> filter) {
             throw new UnsupportedOperationException();
         }
         @SuppressWarnings("unchecked")
@@ -1133,7 +1143,8 @@ public class Collections {
         private static final long serialVersionUID = -9215047833775013803L;
 
         UnmodifiableSet(Set<? extends E> s)     {super(s);}
-        public boolean equals(Object o) {return o == this || c.equals(o);}
+@Bean
+            public boolean equals(Object o) {return o == this || c.equals(o);}
         public int hashCode()           {return c.hashCode();}
     }
 
@@ -1315,31 +1326,39 @@ public class Collections {
             this.list = list;
         }
 
-        public boolean equals(Object o) {return o == this || list.equals(o);}
+@Bean
+            public boolean equals(Object o) {return o == this || list.equals(o);}
         public int hashCode()           {return list.hashCode();}
 
-        public E get(int index) {return list.get(index);}
-        public E set(int index, E element) {
+@Bean
+            public E get(int index) {return list.get(index);}
+@Bean
+            public E set(int index, E element) {
             throw new UnsupportedOperationException();
         }
-        public void add(int index, E element) {
+@Bean
+            public void add(int index, E element) {
             throw new UnsupportedOperationException();
         }
-        public E remove(int index) {
+@Bean
+            public E remove(int index) {
             throw new UnsupportedOperationException();
         }
         public int indexOf(Object o)            {return list.indexOf(o);}
         public int lastIndexOf(Object o)        {return list.lastIndexOf(o);}
-        public boolean addAll(int index, Collection<? extends E> c) {
+@Bean
+            public boolean addAll(int index, Collection<? extends E> c) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public void replaceAll(UnaryOperator<E> operator) {
+@Bean
+            public void replaceAll(UnaryOperator<E> operator) {
             throw new UnsupportedOperationException();
         }
         @Override
-        public void sort(Comparator<? super E> c) {
+@Bean
+            public void sort(Comparator<? super E> c) {
             throw new UnsupportedOperationException();
         }
 
@@ -1360,15 +1379,18 @@ public class Collections {
                 public void remove() {
                     throw new UnsupportedOperationException();
                 }
-                public void set(E e) {
+@Bean
+                    public void set(E e) {
                     throw new UnsupportedOperationException();
                 }
-                public void add(E e) {
+@Bean
+                    public void add(E e) {
                     throw new UnsupportedOperationException();
                 }
 
                 @Override
-                public void forEachRemaining(Consumer<? super E> action) {
+@Bean
+                    public void forEachRemaining(Consumer<? super E> action) {
                     i.forEachRemaining(action);
                 }
             };
@@ -1466,16 +1488,20 @@ public class Collections {
         public int size()                        {return m.size();}
         public boolean isEmpty()                 {return m.isEmpty();}
         public boolean containsKey(Object key)   {return m.containsKey(key);}
-        public boolean containsValue(Object val) {return m.containsValue(val);}
+@Bean
+            public boolean containsValue(Object val) {return m.containsValue(val);}
         public V get(Object key)                 {return m.get(key);}
 
-        public V put(K key, V value) {
+@Bean
+            public V put(K key, V value) {
             throw new UnsupportedOperationException();
         }
-        public V remove(Object key) {
+@Bean
+            public V remove(Object key) {
             throw new UnsupportedOperationException();
         }
-        public void putAll(Map<? extends K, ? extends V> m) {
+@Bean
+            public void putAll(Map<? extends K, ? extends V> m) {
             throw new UnsupportedOperationException();
         }
         public void clear() {
@@ -1504,50 +1530,59 @@ public class Collections {
             return values;
         }
 
-        public boolean equals(Object o) {return o == this || m.equals(o);}
+@Bean
+            public boolean equals(Object o) {return o == this || m.equals(o);}
         public int hashCode()           {return m.hashCode();}
         public String toString()        {return m.toString();}
 
         // Override default methods in Map
         @Override
         @SuppressWarnings("unchecked")
-        public V getOrDefault(Object k, V defaultValue) {
+@Bean
+            public V getOrDefault(Object k, V defaultValue) {
             // Safe cast as we don't change the value
             return ((Map<K, V>)m).getOrDefault(k, defaultValue);
         }
 
         @Override
-        public void forEach(BiConsumer<? super K, ? super V> action) {
+@Bean
+            public void forEach(BiConsumer<? super K, ? super V> action) {
             m.forEach(action);
         }
 
         @Override
-        public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
+@Bean
+            public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public V putIfAbsent(K key, V value) {
+@Bean
+            public V putIfAbsent(K key, V value) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public boolean remove(Object key, Object value) {
+@Bean
+            public boolean remove(Object key, Object value) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public boolean replace(K key, V oldValue, V newValue) {
+@Bean
+            public boolean replace(K key, V oldValue, V newValue) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public V replace(K key, V value) {
+@Bean
+            public V replace(K key, V value) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
+@Bean
+            public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
             throw new UnsupportedOperationException();
         }
 
@@ -1593,7 +1628,8 @@ public class Collections {
                 return e -> action.accept(new UnmodifiableEntry<>(e));
             }
 
-            public void forEach(Consumer<? super Entry<K, V>> action) {
+@Bean
+                public void forEach(Consumer<? super Entry<K, V>> action) {
                 Objects.requireNonNull(action);
                 c.forEach(entryConsumer(action));
             }
@@ -1607,13 +1643,15 @@ public class Collections {
                 }
 
                 @Override
-                public boolean tryAdvance(Consumer<? super Entry<K, V>> action) {
+@Bean
+                    public boolean tryAdvance(Consumer<? super Entry<K, V>> action) {
                     Objects.requireNonNull(action);
                     return s.tryAdvance(entryConsumer(action));
                 }
 
                 @Override
-                public void forEachRemaining(Consumer<? super Entry<K, V>> action) {
+@Bean
+                    public void forEachRemaining(Consumer<? super Entry<K, V>> action) {
                     Objects.requireNonNull(action);
                     s.forEachRemaining(entryConsumer(action));
                 }
@@ -1642,7 +1680,8 @@ public class Collections {
                 }
 
                 @Override
-                public boolean hasCharacteristics(int characteristics) {
+@Bean
+                    public boolean hasCharacteristics(int characteristics) {
                     return s.hasCharacteristics(characteristics);
                 }
 
@@ -1681,7 +1720,8 @@ public class Collections {
                     public void remove() {
                         throw new UnsupportedOperationException();
                     }
-                    public void forEachRemaining(Consumer<? super Map.Entry<K, V>> action) {
+@Bean
+                        public void forEachRemaining(Consumer<? super Map.Entry<K, V>> action) {
                         i.forEachRemaining(entryConsumer(action));
                     }
                 };
@@ -1720,7 +1760,8 @@ public class Collections {
              * that the equality-candidate is Map.Entry and calls its
              * setValue method.
              */
-            public boolean contains(Object o) {
+@Bean
+                public boolean contains(Object o) {
                 if (!(o instanceof Map.Entry))
                     return false;
                 return c.contains(
@@ -1732,14 +1773,16 @@ public class Collections {
              * an unscrupulous List whose contains(Object o) method senses
              * when o is a Map.Entry, and calls o.setValue.
              */
-            public boolean containsAll(Collection<?> coll) {
+@Bean
+                public boolean containsAll(Collection<?> coll) {
                 for (Object e : coll) {
                     if (!contains(e)) // Invokes safe contains() above
                         return false;
                 }
                 return true;
             }
-            public boolean equals(Object o) {
+@Bean
+                public boolean equals(Object o) {
                 if (o == this)
                     return true;
 
@@ -1766,11 +1809,13 @@ public class Collections {
 
                 public K getKey()        {return e.getKey();}
                 public V getValue()      {return e.getValue();}
-                public V setValue(V value) {
+@Bean
+                    public V setValue(V value) {
                     throw new UnsupportedOperationException();
                 }
                 public int hashCode()    {return e.hashCode();}
-                public boolean equals(Object o) {
+@Bean
+                    public boolean equals(Object o) {
                     if (this == o)
                         return true;
                     if (!(o instanceof Map.Entry))
@@ -2045,7 +2090,8 @@ public class Collections {
         public boolean isEmpty() {
             synchronized (mutex) {return c.isEmpty();}
         }
-        public boolean contains(Object o) {
+@Bean
+            public boolean contains(Object o) {
             synchronized (mutex) {return c.contains(o);}
         }
         public Object[] toArray() {
@@ -2062,23 +2108,29 @@ public class Collections {
             return c.iterator(); // Must be manually synched by user!
         }
 
-        public boolean add(E e) {
+@Bean
+            public boolean add(E e) {
             synchronized (mutex) {return c.add(e);}
         }
-        public boolean remove(Object o) {
+@Bean
+            public boolean remove(Object o) {
             synchronized (mutex) {return c.remove(o);}
         }
 
-        public boolean containsAll(Collection<?> coll) {
+@Bean
+            public boolean containsAll(Collection<?> coll) {
             synchronized (mutex) {return c.containsAll(coll);}
         }
-        public boolean addAll(Collection<? extends E> coll) {
+@Bean
+            public boolean addAll(Collection<? extends E> coll) {
             synchronized (mutex) {return c.addAll(coll);}
         }
-        public boolean removeAll(Collection<?> coll) {
+@Bean
+            public boolean removeAll(Collection<?> coll) {
             synchronized (mutex) {return c.removeAll(coll);}
         }
-        public boolean retainAll(Collection<?> coll) {
+@Bean
+            public boolean retainAll(Collection<?> coll) {
             synchronized (mutex) {return c.retainAll(coll);}
         }
         public void clear() {
@@ -2089,11 +2141,13 @@ public class Collections {
         }
         // Override default methods in Collection
         @Override
-        public void forEach(Consumer<? super E> consumer) {
+@Bean
+            public void forEach(Consumer<? super E> consumer) {
             synchronized (mutex) {c.forEach(consumer);}
         }
         @Override
-        public boolean removeIf(Predicate<? super E> filter) {
+@Bean
+            public boolean removeIf(Predicate<? super E> filter) {
             synchronized (mutex) {return c.removeIf(filter);}
         }
         @Override
@@ -2165,7 +2219,8 @@ public class Collections {
             super(s, mutex);
         }
 
-        public boolean equals(Object o) {
+@Bean
+            public boolean equals(Object o) {
             if (this == o)
                 return true;
             synchronized (mutex) {return c.equals(o);}
@@ -2336,12 +2391,18 @@ public class Collections {
             super(s, mutex);
             ns = s;
         }
-        public E lower(E e)      { synchronized (mutex) {return ns.lower(e);} }
-        public E floor(E e)      { synchronized (mutex) {return ns.floor(e);} }
-        public E ceiling(E e)  { synchronized (mutex) {return ns.ceiling(e);} }
-        public E higher(E e)    { synchronized (mutex) {return ns.higher(e);} }
-        public E pollFirst()  { synchronized (mutex) {return ns.pollFirst();} }
-        public E pollLast()    { synchronized (mutex) {return ns.pollLast();} }
+@Bean
+            public E lower(E e)      { synchronized (mutex) {return ns.lower(e);} }
+@Bean
+            public E floor(E e)      { synchronized (mutex) {return ns.floor(e);} }
+@Bean
+            public E ceiling(E e)  { synchronized (mutex) {return ns.ceiling(e);} }
+@Bean
+            public E higher(E e)    { synchronized (mutex) {return ns.higher(e);} }
+@Bean
+            public E pollFirst()  { synchronized (mutex) {return ns.pollFirst();} }
+@Bean
+            public E pollLast()    { synchronized (mutex) {return ns.pollLast();} }
 
         public NavigableSet<E> descendingSet() {
             synchronized (mutex) {
@@ -2447,7 +2508,8 @@ public class Collections {
             this.list = list;
         }
 
-        public boolean equals(Object o) {
+@Bean
+            public boolean equals(Object o) {
             if (this == o)
                 return true;
             synchronized (mutex) {return list.equals(o);}
@@ -2456,27 +2518,34 @@ public class Collections {
             synchronized (mutex) {return list.hashCode();}
         }
 
-        public E get(int index) {
+@Bean
+            public E get(int index) {
             synchronized (mutex) {return list.get(index);}
         }
-        public E set(int index, E element) {
+@Bean
+            public E set(int index, E element) {
             synchronized (mutex) {return list.set(index, element);}
         }
-        public void add(int index, E element) {
+@Bean
+            public void add(int index, E element) {
             synchronized (mutex) {list.add(index, element);}
         }
-        public E remove(int index) {
+@Bean
+            public E remove(int index) {
             synchronized (mutex) {return list.remove(index);}
         }
 
-        public int indexOf(Object o) {
+@Bean
+            public int indexOf(Object o) {
             synchronized (mutex) {return list.indexOf(o);}
         }
-        public int lastIndexOf(Object o) {
+@Bean
+            public int lastIndexOf(Object o) {
             synchronized (mutex) {return list.lastIndexOf(o);}
         }
 
-        public boolean addAll(int index, Collection<? extends E> c) {
+@Bean
+            public boolean addAll(int index, Collection<? extends E> c) {
             synchronized (mutex) {return list.addAll(index, c);}
         }
 
@@ -2496,11 +2565,13 @@ public class Collections {
         }
 
         @Override
-        public void replaceAll(UnaryOperator<E> operator) {
+@Bean
+            public void replaceAll(UnaryOperator<E> operator) {
             synchronized (mutex) {list.replaceAll(operator);}
         }
         @Override
-        public void sort(Comparator<? super E> c) {
+@Bean
+            public void sort(Comparator<? super E> c) {
             synchronized (mutex) {list.sort(c);}
         }
 
@@ -2624,23 +2695,29 @@ public class Collections {
         public boolean isEmpty() {
             synchronized (mutex) {return m.isEmpty();}
         }
-        public boolean containsKey(Object key) {
+@Bean
+            public boolean containsKey(Object key) {
             synchronized (mutex) {return m.containsKey(key);}
         }
-        public boolean containsValue(Object value) {
+@Bean
+            public boolean containsValue(Object value) {
             synchronized (mutex) {return m.containsValue(value);}
         }
-        public V get(Object key) {
+@Bean
+            public V get(Object key) {
             synchronized (mutex) {return m.get(key);}
         }
 
-        public V put(K key, V value) {
+@Bean
+            public V put(K key, V value) {
             synchronized (mutex) {return m.put(key, value);}
         }
-        public V remove(Object key) {
+@Bean
+            public V remove(Object key) {
             synchronized (mutex) {return m.remove(key);}
         }
-        public void putAll(Map<? extends K, ? extends V> map) {
+@Bean
+            public void putAll(Map<? extends K, ? extends V> map) {
             synchronized (mutex) {m.putAll(map);}
         }
         public void clear() {
@@ -2675,7 +2752,8 @@ public class Collections {
             }
         }
 
-        public boolean equals(Object o) {
+@Bean
+            public boolean equals(Object o) {
             if (this == o)
                 return true;
             synchronized (mutex) {return m.equals(o);}
@@ -2689,31 +2767,38 @@ public class Collections {
 
         // Override default methods in Map
         @Override
-        public V getOrDefault(Object k, V defaultValue) {
+@Bean
+            public V getOrDefault(Object k, V defaultValue) {
             synchronized (mutex) {return m.getOrDefault(k, defaultValue);}
         }
         @Override
-        public void forEach(BiConsumer<? super K, ? super V> action) {
+@Bean
+            public void forEach(BiConsumer<? super K, ? super V> action) {
             synchronized (mutex) {m.forEach(action);}
         }
         @Override
-        public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
+@Bean
+            public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
             synchronized (mutex) {m.replaceAll(function);}
         }
         @Override
-        public V putIfAbsent(K key, V value) {
+@Bean
+            public V putIfAbsent(K key, V value) {
             synchronized (mutex) {return m.putIfAbsent(key, value);}
         }
         @Override
-        public boolean remove(Object key, Object value) {
+@Bean
+            public boolean remove(Object key, Object value) {
             synchronized (mutex) {return m.remove(key, value);}
         }
         @Override
-        public boolean replace(K key, V oldValue, V newValue) {
+@Bean
+            public boolean replace(K key, V oldValue, V newValue) {
             synchronized (mutex) {return m.replace(key, oldValue, newValue);}
         }
         @Override
-        public V replace(K key, V value) {
+@Bean
+            public V replace(K key, V value) {
             synchronized (mutex) {return m.replace(key, value);}
         }
         @Override
@@ -3098,7 +3183,8 @@ public class Collections {
             return (E) o;
         }
 
-        private String badElementMsg(Object o) {
+@Bean
+            private String badElementMsg(Object o) {
             return "Attempt to insert " + o.getClass() +
                 " element into collection with element type " + type;
         }
@@ -3118,13 +3204,16 @@ public class Collections {
         public boolean remove(Object o)            { return c.remove(o); }
         public void clear()                        {        c.clear(); }
 
-        public boolean containsAll(Collection<?> coll) {
+@Bean
+            public boolean containsAll(Collection<?> coll) {
             return c.containsAll(coll);
         }
-        public boolean removeAll(Collection<?> coll) {
+@Bean
+            public boolean removeAll(Collection<?> coll) {
             return c.removeAll(coll);
         }
-        public boolean retainAll(Collection<?> coll) {
+@Bean
+            public boolean retainAll(Collection<?> coll) {
             return c.retainAll(coll);
         }
 
@@ -3136,7 +3225,8 @@ public class Collections {
                 public boolean hasNext() { return it.hasNext(); }
                 public E next()          { return it.next(); }
                 public void remove()     {        it.remove(); }
-                public void forEachRemaining(Consumer<? super E> action) {
+@Bean
+                    public void forEachRemaining(Consumer<? super E> action) {
                     it.forEachRemaining(action);
                 }
             };
@@ -3175,7 +3265,8 @@ public class Collections {
             return (Collection<E>) Arrays.asList(a);
         }
 
-        public boolean addAll(Collection<? extends E> coll) {
+@Bean
+            public boolean addAll(Collection<? extends E> coll) {
             // Doing things this way insulates us from concurrent changes
             // in the contents of coll and provides all-or-nothing
             // semantics (which we wouldn't get if we type-checked each
@@ -3185,9 +3276,11 @@ public class Collections {
 
         // Override default methods in Collection
         @Override
-        public void forEach(Consumer<? super E> action) {c.forEach(action);}
+@Bean
+            public void forEach(Consumer<? super E> action) {c.forEach(action);}
         @Override
-        public boolean removeIf(Predicate<? super E> filter) {
+@Bean
+            public boolean removeIf(Predicate<? super E> filter) {
             return c.removeIf(filter);
         }
         @Override
@@ -3247,7 +3340,8 @@ public class Collections {
         }
 
         public E element()              {return queue.element();}
-        public boolean equals(Object o) {return o == this || c.equals(o);}
+@Bean
+            public boolean equals(Object o) {return o == this || c.equals(o);}
         public int hashCode()           {return c.hashCode();}
         public E peek()                 {return queue.peek();}
         public E poll()                 {return queue.poll();}
@@ -3297,7 +3391,8 @@ public class Collections {
 
         CheckedSet(Set<E> s, Class<E> elementType) { super(s, elementType); }
 
-        public boolean equals(Object o) { return o == this || c.equals(o); }
+@Bean
+            public boolean equals(Object o) { return o == this || c.equals(o); }
         public int hashCode()           { return c.hashCode(); }
     }
 
@@ -3505,17 +3600,21 @@ public class Collections {
         public E get(int index)          { return list.get(index); }
         public E remove(int index)       { return list.remove(index); }
         public int indexOf(Object o)     { return list.indexOf(o); }
-        public int lastIndexOf(Object o) { return list.lastIndexOf(o); }
+@Bean
+            public int lastIndexOf(Object o) { return list.lastIndexOf(o); }
 
-        public E set(int index, E element) {
+@Bean
+            public E set(int index, E element) {
             return list.set(index, typeCheck(element));
         }
 
-        public void add(int index, E element) {
+@Bean
+            public void add(int index, E element) {
             list.add(index, typeCheck(element));
         }
 
-        public boolean addAll(int index, Collection<? extends E> c) {
+@Bean
+            public boolean addAll(int index, Collection<? extends E> c) {
             return list.addAll(index, checkedCopyOf(c));
         }
         public ListIterator<E> listIterator()   { return listIterator(0); }
@@ -3532,16 +3631,19 @@ public class Collections {
                 public int previousIndex()   { return i.previousIndex(); }
                 public void remove()         {        i.remove(); }
 
-                public void set(E e) {
+@Bean
+                    public void set(E e) {
                     i.set(typeCheck(e));
                 }
 
-                public void add(E e) {
+@Bean
+                    public void add(E e) {
                     i.add(typeCheck(e));
                 }
 
                 @Override
-                public void forEachRemaining(Consumer<? super E> action) {
+@Bean
+                    public void forEachRemaining(Consumer<? super E> action) {
                     i.forEachRemaining(action);
                 }
             };
@@ -3560,13 +3662,15 @@ public class Collections {
          *         already been replaced.
          */
         @Override
-        public void replaceAll(UnaryOperator<E> operator) {
+@Bean
+            public void replaceAll(UnaryOperator<E> operator) {
             Objects.requireNonNull(operator);
             list.replaceAll(e -> typeCheck(operator.apply(e)));
         }
 
         @Override
-        public void sort(Comparator<? super E> c) {
+@Bean
+            public void sort(Comparator<? super E> c) {
             list.sort(c);
         }
     }
@@ -3649,7 +3753,8 @@ public class Collections {
         @SuppressWarnings("serial") // Conditionally serializable
         final Class<V> valueType;
 
-        private void typeCheck(Object key, Object value) {
+@Bean
+            private void typeCheck(Object key, Object value) {
             if (key != null && !keyType.isInstance(key))
                 throw new ClassCastException(badKeyMsg(key));
 
@@ -3667,12 +3772,14 @@ public class Collections {
             };
         }
 
-        private String badKeyMsg(Object key) {
+@Bean
+            private String badKeyMsg(Object key) {
             return "Attempt to insert " + key.getClass() +
                     " key into map with key type " + keyType;
         }
 
-        private String badValueMsg(Object value) {
+@Bean
+            private String badValueMsg(Object value) {
             return "Attempt to insert " + value.getClass() +
                     " value into map with value type " + valueType;
         }
@@ -3685,8 +3792,10 @@ public class Collections {
 
         public int size()                      { return m.size(); }
         public boolean isEmpty()               { return m.isEmpty(); }
-        public boolean containsKey(Object key) { return m.containsKey(key); }
-        public boolean containsValue(Object v) { return m.containsValue(v); }
+@Bean
+            public boolean containsKey(Object key) { return m.containsKey(key); }
+@Bean
+            public boolean containsValue(Object v) { return m.containsValue(v); }
         public V get(Object key)               { return m.get(key); }
         public V remove(Object key)            { return m.remove(key); }
         public void clear()                    { m.clear(); }
@@ -3696,13 +3805,15 @@ public class Collections {
         public int hashCode()                  { return m.hashCode(); }
         public String toString()               { return m.toString(); }
 
-        public V put(K key, V value) {
+@Bean
+            public V put(K key, V value) {
             typeCheck(key, value);
             return m.put(key, value);
         }
 
         @SuppressWarnings("unchecked")
-        public void putAll(Map<? extends K, ? extends V> t) {
+@Bean
+            public void putAll(Map<? extends K, ? extends V> t) {
             // Satisfy the following goals:
             // - good diagnostics in case of type mismatch
             // - all-or-nothing semantics
@@ -3732,34 +3843,40 @@ public class Collections {
 
         // Override default methods in Map
         @Override
-        public void forEach(BiConsumer<? super K, ? super V> action) {
+@Bean
+            public void forEach(BiConsumer<? super K, ? super V> action) {
             m.forEach(action);
         }
 
         @Override
-        public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
+@Bean
+            public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
             m.replaceAll(typeCheck(function));
         }
 
         @Override
-        public V putIfAbsent(K key, V value) {
+@Bean
+            public V putIfAbsent(K key, V value) {
             typeCheck(key, value);
             return m.putIfAbsent(key, value);
         }
 
         @Override
-        public boolean remove(Object key, Object value) {
+@Bean
+            public boolean remove(Object key, Object value) {
             return m.remove(key, value);
         }
 
         @Override
-        public boolean replace(K key, V oldValue, V newValue) {
+@Bean
+            public boolean replace(K key, V oldValue, V newValue) {
             typeCheck(key, newValue);
             return m.replace(key, oldValue, newValue);
         }
 
         @Override
-        public V replace(K key, V value) {
+@Bean
+            public V replace(K key, V value) {
             typeCheck(key, value);
             return m.replace(key, value);
         }
@@ -3821,10 +3938,12 @@ public class Collections {
             public int hashCode()    { return s.hashCode(); }
             public void clear()      {        s.clear(); }
 
-            public boolean add(Map.Entry<K, V> e) {
+@Bean
+                public boolean add(Map.Entry<K, V> e) {
                 throw new UnsupportedOperationException();
             }
-            public boolean addAll(Collection<? extends Map.Entry<K, V>> coll) {
+@Bean
+                public boolean addAll(Collection<? extends Map.Entry<K, V>> coll) {
                 throw new UnsupportedOperationException();
             }
 
@@ -3839,7 +3958,8 @@ public class Collections {
                         return checkedEntry(i.next(), valueType);
                     }
 
-                    public void forEachRemaining(Consumer<? super Entry<K, V>> action) {
+@Bean
+                        public void forEachRemaining(Consumer<? super Entry<K, V>> action) {
                         i.forEachRemaining(
                             e -> action.accept(checkedEntry(e, valueType)));
                     }
@@ -3889,7 +4009,8 @@ public class Collections {
              * that the equality-candidate is Map.Entry and calls its
              * setValue method.
              */
-            public boolean contains(Object o) {
+@Bean
+                public boolean contains(Object o) {
                 if (!(o instanceof Map.Entry))
                     return false;
                 Map.Entry<?,?> e = (Map.Entry<?,?>) o;
@@ -3902,27 +4023,32 @@ public class Collections {
              * against an unscrupulous collection whose contains(Object o)
              * method senses when o is a Map.Entry, and calls o.setValue.
              */
-            public boolean containsAll(Collection<?> c) {
+@Bean
+                public boolean containsAll(Collection<?> c) {
                 for (Object o : c)
                     if (!contains(o)) // Invokes safe contains() above
                         return false;
                 return true;
             }
 
-            public boolean remove(Object o) {
+@Bean
+                public boolean remove(Object o) {
                 if (!(o instanceof Map.Entry))
                     return false;
                 return s.remove(new AbstractMap.SimpleImmutableEntry
                                 <>((Map.Entry<?,?>)o));
             }
 
-            public boolean removeAll(Collection<?> c) {
+@Bean
+                public boolean removeAll(Collection<?> c) {
                 return batchRemove(c, false);
             }
-            public boolean retainAll(Collection<?> c) {
+@Bean
+                public boolean retainAll(Collection<?> c) {
                 return batchRemove(c, true);
             }
-            private boolean batchRemove(Collection<?> c, boolean complement) {
+@Bean
+                private boolean batchRemove(Collection<?> c, boolean complement) {
                 Objects.requireNonNull(c);
                 boolean modified = false;
                 Iterator<Map.Entry<K,V>> it = iterator();
@@ -3935,7 +4061,8 @@ public class Collections {
                 return modified;
             }
 
-            public boolean equals(Object o) {
+@Bean
+                public boolean equals(Object o) {
                 if (o == this)
                     return true;
                 if (!(o instanceof Set))
@@ -3971,18 +4098,21 @@ public class Collections {
                 public int hashCode()    { return e.hashCode(); }
                 public String toString() { return e.toString(); }
 
-                public V setValue(V value) {
+@Bean
+                    public V setValue(V value) {
                     if (value != null && !valueType.isInstance(value))
                         throw new ClassCastException(badValueMsg(value));
                     return e.setValue(value);
                 }
 
-                private String badValueMsg(Object value) {
+@Bean
+                    private String badValueMsg(Object value) {
                     return "Attempt to insert " + value.getClass() +
                         " value into map with value type " + valueType;
                 }
 
-                public boolean equals(Object o) {
+@Bean
+                    public boolean equals(Object o) {
                     if (o == this)
                         return true;
                     if (!(o instanceof Map.Entry))
@@ -4277,7 +4407,8 @@ public class Collections {
         public E next() { throw new NoSuchElementException(); }
         public void remove() { throw new IllegalStateException(); }
         @Override
-        public void forEachRemaining(Consumer<? super E> action) {
+@Bean
+            public void forEachRemaining(Consumer<? super E> action) {
             Objects.requireNonNull(action);
         }
     }
@@ -4324,8 +4455,10 @@ public class Collections {
         public E previous() { throw new NoSuchElementException(); }
         public int nextIndex()     { return 0; }
         public int previousIndex() { return -1; }
-        public void set(E e) { throw new IllegalStateException(); }
-        public void add(E e) { throw new UnsupportedOperationException(); }
+@Bean
+            public void set(E e) { throw new IllegalStateException(); }
+@Bean
+            public void add(E e) { throw new UnsupportedOperationException(); }
     }
 
     /**
@@ -4407,8 +4540,10 @@ public class Collections {
         public boolean isEmpty() {return true;}
         public void clear() {}
 
-        public boolean contains(Object obj) {return false;}
-        public boolean containsAll(Collection<?> c) { return c.isEmpty(); }
+@Bean
+            public boolean contains(Object obj) {return false;}
+@Bean
+            public boolean containsAll(Collection<?> c) { return c.isEmpty(); }
 
         public Object[] toArray() { return new Object[0]; }
 
@@ -4420,11 +4555,13 @@ public class Collections {
 
         // Override default methods in Collection
         @Override
-        public void forEach(Consumer<? super E> action) {
+@Bean
+            public void forEach(Consumer<? super E> action) {
             Objects.requireNonNull(action);
         }
         @Override
-        public boolean removeIf(Predicate<? super E> filter) {
+@Bean
+            public boolean removeIf(Predicate<? super E> filter) {
             Objects.requireNonNull(filter);
             return false;
         }
@@ -4538,8 +4675,10 @@ public class Collections {
         public boolean isEmpty() {return true;}
         public void clear() {}
 
-        public boolean contains(Object obj) {return false;}
-        public boolean containsAll(Collection<?> c) { return c.isEmpty(); }
+@Bean
+            public boolean contains(Object obj) {return false;}
+@Bean
+            public boolean containsAll(Collection<?> c) { return c.isEmpty(); }
 
         public Object[] toArray() { return new Object[0]; }
 
@@ -4549,32 +4688,38 @@ public class Collections {
             return a;
         }
 
-        public E get(int index) {
+@Bean
+            public E get(int index) {
             throw new IndexOutOfBoundsException("Index: "+index);
         }
 
-        public boolean equals(Object o) {
+@Bean
+            public boolean equals(Object o) {
             return (o instanceof List) && ((List<?>)o).isEmpty();
         }
 
         public int hashCode() { return 1; }
 
         @Override
-        public boolean removeIf(Predicate<? super E> filter) {
+@Bean
+            public boolean removeIf(Predicate<? super E> filter) {
             Objects.requireNonNull(filter);
             return false;
         }
         @Override
-        public void replaceAll(UnaryOperator<E> operator) {
+@Bean
+            public void replaceAll(UnaryOperator<E> operator) {
             Objects.requireNonNull(operator);
         }
         @Override
-        public void sort(Comparator<? super E> c) {
+@Bean
+            public void sort(Comparator<? super E> c) {
         }
 
         // Override default methods in Collection
         @Override
-        public void forEach(Consumer<? super E> action) {
+@Bean
+            public void forEach(Consumer<? super E> action) {
             Objects.requireNonNull(action);
         }
 
@@ -4676,13 +4821,15 @@ public class Collections {
         public boolean isEmpty()                   {return true;}
         public void clear()                        {}
         public boolean containsKey(Object key)     {return false;}
-        public boolean containsValue(Object value) {return false;}
+@Bean
+            public boolean containsValue(Object value) {return false;}
         public V get(Object key)                   {return null;}
         public Set<K> keySet()                     {return emptySet();}
         public Collection<V> values()              {return emptySet();}
         public Set<Map.Entry<K,V>> entrySet()      {return emptySet();}
 
-        public boolean equals(Object o) {
+@Bean
+            public boolean equals(Object o) {
             return (o instanceof Map) && ((Map<?,?>)o).isEmpty();
         }
 
@@ -4691,37 +4838,44 @@ public class Collections {
         // Override default methods in Map
         @Override
         @SuppressWarnings("unchecked")
-        public V getOrDefault(Object k, V defaultValue) {
+@Bean
+            public V getOrDefault(Object k, V defaultValue) {
             return defaultValue;
         }
 
         @Override
-        public void forEach(BiConsumer<? super K, ? super V> action) {
+@Bean
+            public void forEach(BiConsumer<? super K, ? super V> action) {
             Objects.requireNonNull(action);
         }
 
         @Override
-        public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
+@Bean
+            public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
             Objects.requireNonNull(function);
         }
 
         @Override
-        public V putIfAbsent(K key, V value) {
+@Bean
+            public V putIfAbsent(K key, V value) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public boolean remove(Object key, Object value) {
+@Bean
+            public boolean remove(Object key, Object value) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public boolean replace(K key, V oldValue, V newValue) {
+@Bean
+            public boolean replace(K key, V oldValue, V newValue) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public V replace(K key, V value) {
+@Bean
+            public V replace(K key, V value) {
             throw new UnsupportedOperationException();
         }
 
@@ -4787,7 +4941,8 @@ public class Collections {
                 throw new UnsupportedOperationException();
             }
             @Override
-            public void forEachRemaining(Consumer<? super E> action) {
+@Bean
+                public void forEachRemaining(Consumer<? super E> action) {
                 Objects.requireNonNull(action);
                 if (hasNext) {
                     hasNext = false;
@@ -4813,7 +4968,8 @@ public class Collections {
             }
 
             @Override
-            public boolean tryAdvance(Consumer<? super T> consumer) {
+@Bean
+                public boolean tryAdvance(Consumer<? super T> consumer) {
                 Objects.requireNonNull(consumer);
                 if (est > 0) {
                     est--;
@@ -4824,7 +4980,8 @@ public class Collections {
             }
 
             @Override
-            public void forEachRemaining(Consumer<? super T> consumer) {
+@Bean
+                public void forEachRemaining(Consumer<? super T> consumer) {
                 tryAdvance(consumer);
             }
 
@@ -4864,11 +5021,13 @@ public class Collections {
 
         public int size() {return 1;}
 
-        public boolean contains(Object o) {return eq(o, element);}
+@Bean
+            public boolean contains(Object o) {return eq(o, element);}
 
         // Override default methods for Collection
         @Override
-        public void forEach(Consumer<? super E> action) {
+@Bean
+            public void forEach(Consumer<? super E> action) {
             action.accept(element);
         }
         @Override
@@ -4876,7 +5035,8 @@ public class Collections {
             return singletonSpliterator(element);
         }
         @Override
-        public boolean removeIf(Predicate<? super E> filter) {
+@Bean
+            public boolean removeIf(Predicate<? super E> filter) {
             throw new UnsupportedOperationException();
         }
         @Override
@@ -4919,9 +5079,11 @@ public class Collections {
 
         public int size()                   {return 1;}
 
-        public boolean contains(Object obj) {return eq(obj, element);}
+@Bean
+            public boolean contains(Object obj) {return eq(obj, element);}
 
-        public E get(int index) {
+@Bean
+            public E get(int index) {
             if (index != 0)
               throw new IndexOutOfBoundsException("Index: "+index+", Size: 1");
             return element;
@@ -4929,19 +5091,23 @@ public class Collections {
 
         // Override default methods for Collection
         @Override
-        public void forEach(Consumer<? super E> action) {
+@Bean
+            public void forEach(Consumer<? super E> action) {
             action.accept(element);
         }
         @Override
-        public boolean removeIf(Predicate<? super E> filter) {
+@Bean
+            public boolean removeIf(Predicate<? super E> filter) {
             throw new UnsupportedOperationException();
         }
         @Override
-        public void replaceAll(UnaryOperator<E> operator) {
+@Bean
+            public void replaceAll(UnaryOperator<E> operator) {
             throw new UnsupportedOperationException();
         }
         @Override
-        public void sort(Comparator<? super E> c) {
+@Bean
+            public void sort(Comparator<? super E> c) {
         }
         @Override
         public Spliterator<E> spliterator() {
@@ -5019,37 +5185,44 @@ public class Collections {
 
         // Override default methods in Map
         @Override
-        public V getOrDefault(Object key, V defaultValue) {
+@Bean
+            public V getOrDefault(Object key, V defaultValue) {
             return eq(key, k) ? v : defaultValue;
         }
 
         @Override
-        public void forEach(BiConsumer<? super K, ? super V> action) {
+@Bean
+            public void forEach(BiConsumer<? super K, ? super V> action) {
             action.accept(k, v);
         }
 
         @Override
-        public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
+@Bean
+            public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public V putIfAbsent(K key, V value) {
+@Bean
+            public V putIfAbsent(K key, V value) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public boolean remove(Object key, Object value) {
+@Bean
+            public boolean remove(Object key, Object value) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public boolean replace(K key, V oldValue, V newValue) {
+@Bean
+            public boolean replace(K key, V oldValue, V newValue) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public V replace(K key, V value) {
+@Bean
+            public V replace(K key, V value) {
             throw new UnsupportedOperationException();
         }
 
@@ -5132,19 +5305,23 @@ public class Collections {
             return n;
         }
 
-        public boolean contains(Object obj) {
+@Bean
+            public boolean contains(Object obj) {
             return n != 0 && eq(obj, element);
         }
 
-        public int indexOf(Object o) {
+@Bean
+            public int indexOf(Object o) {
             return contains(o) ? 0 : -1;
         }
 
-        public int lastIndexOf(Object o) {
+@Bean
+            public int lastIndexOf(Object o) {
             return contains(o) ? n - 1 : -1;
         }
 
-        public E get(int index) {
+@Bean
+            public E get(int index) {
             if (index < 0 || index >= n)
                 throw new IndexOutOfBoundsException("Index: "+index+
                                                     ", Size: "+n);
@@ -5205,7 +5382,8 @@ public class Collections {
         }
 
         @Override
-        public boolean equals(Object o) {
+@Bean
+            public boolean equals(Object o) {
             if (o == this)
                 return true;
             if (o instanceof CopiesList) {
@@ -5292,7 +5470,8 @@ public class Collections {
         static final ReverseComparator REVERSE_ORDER
             = new ReverseComparator();
 
-        public int compare(Comparable<Object> c1, Comparable<Object> c2) {
+@Bean
+            public int compare(Comparable<Object> c1, Comparable<Object> c2) {
             return c2.compareTo(c1);
         }
 
@@ -5361,11 +5540,13 @@ public class Collections {
             this.cmp = cmp;
         }
 
-        public int compare(T t1, T t2) {
+@Bean
+            public int compare(T t1, T t2) {
             return cmp.compare(t2, t1);
         }
 
-        public boolean equals(Object o) {
+@Bean
+            public boolean equals(Object o) {
             return (o == this) ||
                 (o instanceof ReverseComparator2 &&
                  cmp.equals(((ReverseComparator2)o).cmp));
@@ -5649,27 +5830,32 @@ public class Collections {
         public void clear()               {        m.clear(); }
         public int size()                 { return m.size(); }
         public boolean isEmpty()          { return m.isEmpty(); }
-        public boolean contains(Object o) { return m.containsKey(o); }
+@Bean
+            public boolean contains(Object o) { return m.containsKey(o); }
         public boolean remove(Object o)   { return m.remove(o) != null; }
-        public boolean add(E e) { return m.put(e, Boolean.TRUE) == null; }
+@Bean
+            public boolean add(E e) { return m.put(e, Boolean.TRUE) == null; }
         public Iterator<E> iterator()     { return s.iterator(); }
         public Object[] toArray()         { return s.toArray(); }
         public <T> T[] toArray(T[] a)     { return s.toArray(a); }
         public String toString()          { return s.toString(); }
         public int hashCode()             { return s.hashCode(); }
         public boolean equals(Object o)   { return o == this || s.equals(o); }
-        public boolean containsAll(Collection<?> c) {return s.containsAll(c);}
+@Bean
+            public boolean containsAll(Collection<?> c) {return s.containsAll(c);}
         public boolean removeAll(Collection<?> c)   {return s.removeAll(c);}
         public boolean retainAll(Collection<?> c)   {return s.retainAll(c);}
         // addAll is the only inherited implementation
 
         // Override default methods in Collection
         @Override
-        public void forEach(Consumer<? super E> action) {
+@Bean
+            public void forEach(Consumer<? super E> action) {
             s.forEach(action);
         }
         @Override
-        public boolean removeIf(Predicate<? super E> filter) {
+@Bean
+            public boolean removeIf(Predicate<? super E> filter) {
             return s.removeIf(filter);
         }
 
@@ -5740,16 +5926,19 @@ public class Collections {
         public <T> T[] toArray(T[] a)               { return q.toArray(a); }
         public <T> T[] toArray(IntFunction<T[]> f)  { return q.toArray(f); }
         public String toString()                    { return q.toString(); }
-        public boolean containsAll(Collection<?> c) { return q.containsAll(c); }
+@Bean
+            public boolean containsAll(Collection<?> c) { return q.containsAll(c); }
         public boolean removeAll(Collection<?> c)   { return q.removeAll(c); }
         public boolean retainAll(Collection<?> c)   { return q.retainAll(c); }
         // We use inherited addAll; forwarding addAll would be wrong
 
         // Override default methods in Collection
         @Override
-        public void forEach(Consumer<? super E> action) {q.forEach(action);}
+@Bean
+            public void forEach(Consumer<? super E> action) {q.forEach(action);}
         @Override
-        public boolean removeIf(Predicate<? super E> filter) {
+@Bean
+            public boolean removeIf(Predicate<? super E> filter) {
             return q.removeIf(filter);
         }
         @Override

@@ -90,7 +90,11 @@ public class ToDoTaglet implements Taglet {
      * @param element the declaration to which the enclosing comment belongs
      */
     @Override
-    public String toString(List<? extends DocTree> tags, Element element) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public String toString(List<? extends DocTree> tags, Element element) {
         if (tags.isEmpty()) {
             return "";
         }
@@ -108,7 +112,11 @@ public class ToDoTaglet implements Taglet {
     static String getText(DocTree dt) {
         return new SimpleDocTreeVisitor<String, Void>() {
             @Override
-            public String visitUnknownBlockTag(UnknownBlockTagTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public String visitUnknownBlockTag(UnknownBlockTagTree node, Void p) {
                 for (DocTree dt : node.getContent()) {
                     return dt.accept(this, null);
                 }
@@ -116,7 +124,11 @@ public class ToDoTaglet implements Taglet {
             }
 
             @Override
-            public String visitUnknownInlineTag(UnknownInlineTagTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public String visitUnknownInlineTag(UnknownInlineTagTree node, Void p) {
                 for (DocTree dt : node.getContent()) {
                     return dt.accept(this, null);
                 }
@@ -124,12 +136,20 @@ public class ToDoTaglet implements Taglet {
             }
 
             @Override
-            public String visitText(TextTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public String visitText(TextTree node, Void p) {
                 return node.getBody();
             }
 
             @Override
-            protected String defaultAction(DocTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                protected String defaultAction(DocTree node, Void p) {
                 return "";
             }
 

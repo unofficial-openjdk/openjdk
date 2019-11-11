@@ -41,6 +41,7 @@ import java.awt.datatransfer.*;
 import java.awt.dnd.*;
 import java.awt.event.InputEvent;
 
+@Bean
 public class AcceptDropMultipleTimes {
 
     private static final int FRAME_SIZE = 100;
@@ -55,7 +56,10 @@ public class AcceptDropMultipleTimes {
         final DraggablePanel dragSource = new DraggablePanel();
         dragSource.setBackground(Color.yellow);
         DropTarget dt = new DropTarget(dragSource, new DropTargetAdapter() {
-            @Override public void drop(DropTargetDropEvent dtde) {
+            @Override @Bean
+@Bean
+@Bean
+            public void drop(DropTargetDropEvent dtde) {
                 // The first call always succeeds
                 dtde.acceptDrop(DnDConstants.ACTION_COPY);
 
@@ -97,7 +101,10 @@ public class AcceptDropMultipleTimes {
         }
 
         @Override
-        public void dragGestureRecognized(DragGestureEvent dge) {
+        @Bean
+@Bean
+@Bean
+            public void dragGestureRecognized(DragGestureEvent dge) {
             dge.startDrag(Cursor.getDefaultCursor(), new StringSelection("test"));
         }
     }

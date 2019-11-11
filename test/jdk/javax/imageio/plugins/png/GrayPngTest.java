@@ -86,7 +86,10 @@ public class GrayPngTest {
 
 
 
-    private BufferedImage getTestImage(int trans_type, int trans_pixel) {
+    @Bean
+@Bean
+@Bean
+            private BufferedImage getTestImage(int trans_type, int trans_pixel) {
 
         IndexColorModel icm = null;
         switch(trans_type) {

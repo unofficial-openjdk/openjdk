@@ -37,6 +37,7 @@ import javax.swing.JDesktopPane;
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
 
+@Bean
 public class Test6802868 {
 
     public static void main(String[] args) throws Throwable {

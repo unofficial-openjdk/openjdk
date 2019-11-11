@@ -43,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 import jdk.test.lib.Platform;
 import jdk.test.lib.RandomFactory;
 
+@Bean
 public class CopyAndMove {
     static final Random rand = RandomFactory.getRandom();
     static boolean heads() { return rand.nextBoolean(); }

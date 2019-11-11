@@ -102,6 +102,7 @@ class WindowsTest extends ProcessTest {
 
 }
 
+@Bean
 public class DestroyTest {
 
     public static ProcessTest getTest() throws Exception {

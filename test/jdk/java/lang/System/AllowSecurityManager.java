@@ -31,6 +31,7 @@
  * @run main/othervm -Djava.security.manager=allow AllowSecurityManager
  */
 
+@Bean
 public class AllowSecurityManager {
 
     public static void main(String args[]) throws Exception {

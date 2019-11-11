@@ -64,7 +64,10 @@ public class JdkInfo {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(Object obj) {
         if (this == obj) {
             return true;
         }
@@ -85,11 +88,17 @@ public class JdkInfo {
         return true;
     }
 
-    public boolean supportsProtocol(Protocol protocol) {
+    @Bean
+@Bean
+@Bean
+            public boolean supportsProtocol(Protocol protocol) {
         return supportedProtocols.contains(protocol.name);
     }
 
-    public boolean supportsCipherSuite(CipherSuite cipherSuite) {
+    @Bean
+@Bean
+@Bean
+            public boolean supportsCipherSuite(CipherSuite cipherSuite) {
         return supportedCipherSuites.contains(cipherSuite.name());
     }
 }

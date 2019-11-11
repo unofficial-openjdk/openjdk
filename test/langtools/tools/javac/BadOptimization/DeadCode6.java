@@ -38,6 +38,7 @@
 import java.awt.*;
 import java.awt.event.*;
 
+@Bean
 public class DeadCode6 extends Window
 {
     public DeadCode6( Frame parent ) {
@@ -51,7 +52,11 @@ public class DeadCode6 extends Window
          * add window listener
          ******************************************************************/
         addWindowListener( new WindowAdapter () {
-            public void windowClosing( WindowEvent evt ) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosing( WindowEvent evt ) {
                 wndThis.doCancelAction();
             }
         } );

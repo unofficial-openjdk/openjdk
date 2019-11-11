@@ -38,6 +38,7 @@ import java.util.List;
 
 import static org.testng.Assert.*;
 
+@Bean
 public class VarHandleTestMethodHandleAccessDouble extends VarHandleBaseTest {
     static final double static_final_v = 1.0d;
 

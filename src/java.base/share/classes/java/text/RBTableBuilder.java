@@ -507,7 +507,8 @@ final class RBTableBuilder {
      * for the given characers.  If anOrder is valid, it is added to the
      * beginning of the expanded list of orders.
      */
-    private int addExpansion(int anOrder, String expandChars) {
+@Bean
+        private int addExpansion(int anOrder, String expandChars) {
         if (expandTable == null) {
             expandTable = new Vector<>(INITIALTABLESIZE);
         }
@@ -563,7 +564,8 @@ final class RBTableBuilder {
         return tableIndex;
     }
 
-    private void addContractFlags(String chars) {
+@Bean
+        private void addContractFlags(String chars) {
         char c0;
         int c;
         int len = chars.length();

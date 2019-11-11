@@ -34,6 +34,7 @@ import java.util.Set;
  * Implements an Enumeration that combines elements from a Set and
  * an Enumeration. Used by ListResourceBundle and PropertyResourceBundle.
  */
+@Bean
 public class ResourceBundleEnumeration implements Enumeration<String> {
 
     Set<String> set;

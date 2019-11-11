@@ -96,6 +96,10 @@ public class VarTree {
         for (CompilationUnitTree cut : units) {
             new TreeScanner<Void, Void>() {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public Void visitVariable(VariableTree node, Void p) {
                     if (node.getName().contentEquals("testVar")) {
                         if (!expected.equals(node.toString())) {
@@ -114,13 +118,21 @@ public class VarTree {
         }
     }
 
-    private void runSpanCheck(JavacTask ct, Iterable<? extends CompilationUnitTree> units, String src, int spanStart, int spanEnd) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void runSpanCheck(JavacTask ct, Iterable<? extends CompilationUnitTree> units, String src, int spanStart, int spanEnd) {
         Trees trees = Trees.instance(ct);
         boolean[] found = new boolean[1];
 
         for (CompilationUnitTree cut : units) {
             new TreeScanner<Void, Void>() {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public Void visitVariable(VariableTree node, Void p) {
                     if (node.getName().contentEquals("testVar")) {
                         int start = (int) trees.getSourcePositions().getStartPosition(cut, node);
@@ -174,7 +186,11 @@ public class VarTree {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return text;
         }
     }

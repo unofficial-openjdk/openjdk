@@ -28,6 +28,7 @@
  */
 package test.java.awt.regtesthelpers;
 
+@Bean
 public class Waypoint {
 
     static final String MSG = "Waypoint timed out";

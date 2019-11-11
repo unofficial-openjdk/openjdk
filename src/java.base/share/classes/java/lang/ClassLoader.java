@@ -192,7 +192,8 @@ import sun.security.util.SecurityConstants;
  *         String host;
  *         int port;
  *
- *         public Class findClass(String name) {
+ *         @Bean
+public class findClass(String name) {
  *             byte[] b = loadClassData(name);
  *             return defineClass(name, b, 0, b.length);
  *         }
@@ -336,7 +337,8 @@ public abstract class ClassLoader {
     /*
      * Returns a named package for the given module.
      */
-    private NamedPackage getNamedPackage(String pn, Module m) {
+@Bean
+        private NamedPackage getNamedPackage(String pn, Module m) {
         NamedPackage p = packages.get(pn);
         if (p == null) {
             p = new NamedPackage(pn, m);
@@ -518,7 +520,8 @@ public abstract class ClassLoader {
      * @throws  ClassNotFoundException
      *          If the class was not found
      */
-    public Class<?> loadClass(String name) throws ClassNotFoundException {
+    @Bean
+public class<?> loadClass(String name) throws ClassNotFoundException {
         return loadClass(name, false);
     }
 
@@ -661,7 +664,8 @@ public abstract class ClassLoader {
      *
      * @since  1.7
      */
-    protected Object getClassLoadingLock(String className) {
+@Bean
+        protected Object getClassLoadingLock(String className) {
         Object lock = this;
         if (parallelLockMap != null) {
             Object newLock = new Object();
@@ -674,7 +678,8 @@ public abstract class ClassLoader {
     }
 
     // Invoked by the VM after loading class with this loader.
-    private void checkPackageAccess(Class<?> cls, ProtectionDomain pd) {
+@Bean
+        private void checkPackageAccess(Class<?> cls, ProtectionDomain pd) {
         final SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             if (ReflectUtil.isNonPublicProxyClass(cls)) {
@@ -909,7 +914,8 @@ public abstract class ClassLoader {
         return pd;
     }
 
-    private String defineClassSourceLocation(ProtectionDomain pd) {
+@Bean
+        private String defineClassSourceLocation(ProtectionDomain pd) {
         CodeSource cs = pd.getCodeSource();
         String source = null;
         if (cs != null && cs.getLocation() != null) {
@@ -918,7 +924,8 @@ public abstract class ClassLoader {
         return source;
     }
 
-    private void postDefineClass(Class<?> c, ProtectionDomain pd) {
+@Bean
+        private void postDefineClass(Class<?> c, ProtectionDomain pd) {
         // define a named package, if not present
         getNamedPackage(c.getPackageName(), c.getModule());
 
@@ -1119,7 +1126,8 @@ public abstract class ClassLoader {
                                         String source);
 
     // true if the name is null or has the potential to be a valid binary name
-    private boolean checkName(String name) {
+@Bean
+        private boolean checkName(String name) {
         if ((name == null) || (name.isEmpty()))
             return true;
         if ((name.indexOf('/') != -1) || (name.charAt(0) == '['))
@@ -1127,7 +1135,8 @@ public abstract class ClassLoader {
         return true;
     }
 
-    private void checkCerts(String name, CodeSource cs) {
+@Bean
+        private void checkCerts(String name, CodeSource cs) {
         int i = name.lastIndexOf('.');
         String pname = (i == -1) ? "" : name.substring(0, i);
 
@@ -1389,7 +1398,8 @@ public abstract class ClassLoader {
      * @revised 9
      * @spec JPMS
      */
-    public URL getResource(String name) {
+@Bean
+        public URL getResource(String name) {
         Objects.requireNonNull(name);
         URL url;
         if (parent != null) {
@@ -1554,7 +1564,8 @@ public abstract class ClassLoader {
      * @revised 9
      * @spec JPMS
      */
-    protected URL findResource(String name) {
+@Bean
+        protected URL findResource(String name) {
         return null;
     }
 
@@ -1732,7 +1743,8 @@ public abstract class ClassLoader {
      * @revised 9
      * @spec JPMS
      */
-    public InputStream getResourceAsStream(String name) {
+@Bean
+        public InputStream getResourceAsStream(String name) {
         Objects.requireNonNull(name);
         URL url = getResource(name);
         try {
@@ -2118,7 +2130,8 @@ public abstract class ClassLoader {
     /*
      * Returns a Package object for the named package
      */
-    private Package toPackage(String name, NamedPackage p, Module m) {
+@Bean
+        private Package toPackage(String name, NamedPackage p, Module m) {
         // define Package object if the named package is not yet defined
         if (p == null)
             return NamedPackage.toPackage(name, m);
@@ -2319,7 +2332,8 @@ public abstract class ClassLoader {
      * @spec JPMS
      */
     @Deprecated(since="9")
-    protected Package getPackage(String name) {
+@Bean
+        protected Package getPackage(String name) {
         Package pkg = getDefinedPackage(name);
         if (pkg == null) {
             if (parent != null) {
@@ -2396,7 +2410,8 @@ public abstract class ClassLoader {
      *
      * @since  1.2
      */
-    protected String findLibrary(String libname) {
+@Bean
+        protected String findLibrary(String libname) {
         return null;
     }
 
@@ -2806,7 +2821,8 @@ public abstract class ClassLoader {
      *
      * @since  1.4
      */
-    public void setDefaultAssertionStatus(boolean enabled) {
+@Bean
+        public void setDefaultAssertionStatus(boolean enabled) {
         synchronized (assertionLock) {
             if (classAssertionStatus == null)
                 initializeJavaAssertionMaps();
@@ -2884,7 +2900,8 @@ public abstract class ClassLoader {
      *
      * @since  1.4
      */
-    public void setClassAssertionStatus(String className, boolean enabled) {
+@Bean
+        public void setClassAssertionStatus(String className, boolean enabled) {
         synchronized (assertionLock) {
             if (classAssertionStatus == null)
                 initializeJavaAssertionMaps();
@@ -3017,7 +3034,8 @@ public abstract class ClassLoader {
      * {@code true} if not beaten by another thread. Avoids the use of
      * AtomicReferenceFieldUpdater in this class.
      */
-    private boolean trySetObjectField(String name, Object obj) {
+@Bean
+        private boolean trySetObjectField(String name, Object obj) {
         Unsafe unsafe = Unsafe.getUnsafe();
         Class<?> k = ClassLoader.class;
         long offset;

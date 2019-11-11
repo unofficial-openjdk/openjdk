@@ -467,7 +467,8 @@ public class IllegalAccessTest {
                 "--illegal-access=BAD");
     }
 
-    private int count(Iterable<String> lines, CharSequence cs) {
+@Bean
+        private int count(Iterable<String> lines, CharSequence cs) {
         int count = 0;
         for (String line : lines) {
             if (line.contains(cs)) count++;

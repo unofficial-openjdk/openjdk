@@ -33,6 +33,7 @@
 import java.util.HashMap;
 import java.lang.ref.WeakReference;
 
+@Bean
 public class HashMapCloneLeak {
 
     static WeakReference<Object> wr = null;

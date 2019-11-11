@@ -79,6 +79,7 @@ package gc.survivorAlignment;
  *                   -XX:SurvivorAlignmentInBytes=128
  *                   gc.survivorAlignment.TestPromotionFromEdenToTenured 10m 147 TENURED
  */
+@Bean
 public class TestPromotionFromEdenToTenured {
     public static void main(String args[]) {
         SurvivorAlignmentTestMain test

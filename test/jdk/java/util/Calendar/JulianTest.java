@@ -30,6 +30,7 @@
 
 import static java.util.GregorianCalendar.*;
 
+@Bean
 public class JulianTest extends IntlTest {
 
     public static void main(String[] args) throws Exception {

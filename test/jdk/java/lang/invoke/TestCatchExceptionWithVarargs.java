@@ -37,6 +37,7 @@ import java.lang.invoke.MethodType;
 import java.util.LinkedList;
 import java.util.List;
 
+@Bean
 public class TestCatchExceptionWithVarargs {
 
     private static final Class<?> CLASS = TestCatchExceptionWithVarargs.class;

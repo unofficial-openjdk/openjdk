@@ -46,7 +46,11 @@ public final class javax_swing_JTree extends AbstractTest<JTree> {
         return new JTree();
     }
 
-    protected void validate(JTree before, JTree after) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void validate(JTree before, JTree after) {
         Class type = after.getModel().getClass();
         if (!type.equals(before.getModel().getClass()))
             throw new Error("Invalid model: " + type);
@@ -57,29 +61,57 @@ public final class javax_swing_JTree extends AbstractTest<JTree> {
             return null;
         }
 
-        public Object getChild(Object parent, int index) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Object getChild(Object parent, int index) {
             return null;
         }
 
-        public int getChildCount(Object parent) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int getChildCount(Object parent) {
             return 0;
         }
 
-        public boolean isLeaf(Object node) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean isLeaf(Object node) {
             return false;
         }
 
-        public void valueForPathChanged(TreePath path, Object newValue) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void valueForPathChanged(TreePath path, Object newValue) {
         }
 
-        public int getIndexOfChild(Object parent, Object child) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int getIndexOfChild(Object parent, Object child) {
             return 0;
         }
 
-        public void addTreeModelListener(TreeModelListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void addTreeModelListener(TreeModelListener listener) {
         }
 
-        public void removeTreeModelListener(TreeModelListener listener) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void removeTreeModelListener(TreeModelListener listener) {
         }
     }
 }

@@ -144,7 +144,11 @@ public class DocCommentToplevelTest {
             DocCommentTable docComments;
 
             @Override
-            public ClassTree visitCompilationUnit(CompilationUnitTree node, Void unused) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public ClassTree visitCompilationUnit(CompilationUnitTree node, Void unused) {
                 docComments = ((JCTree.JCCompilationUnit)node).docComments;
                 boolean expectedComment = tdk == ToplevelDocKind.HAS_DOC &&
                                           pk == PackageKind.NO_PKG &&
@@ -157,7 +161,11 @@ public class DocCommentToplevelTest {
             }
 
             @Override
-            public ClassTree visitPackage(PackageTree node, Void unused) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public ClassTree visitPackage(PackageTree node, Void unused) {
                 boolean expectedComment = tdk == ToplevelDocKind.HAS_DOC &&
                                           pk != PackageKind.NO_PKG;
                 boolean foundComment = docComments.hasComment((JCTree) node);
@@ -168,7 +176,11 @@ public class DocCommentToplevelTest {
             }
 
             @Override
-            public ClassTree visitClass(ClassTree node, Void unused) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public ClassTree visitClass(ClassTree node, Void unused) {
                 boolean expectedComment = tdk == ToplevelDocKind.HAS_DOC &&
                         pk == PackageKind.NO_PKG && ik == ImportKind.ZERO &&
                         node.getSimpleName().toString().equals("First");
@@ -205,7 +217,11 @@ public class DocCommentToplevelTest {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return source;
         }
     }

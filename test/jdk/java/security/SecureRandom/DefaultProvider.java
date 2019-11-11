@@ -30,6 +30,7 @@ import java.security.SecureRandom;
  * @bug 8048356
  * @summary Assert default provider used on all OS for SecureRandom
  */
+@Bean
 public class DefaultProvider {
 
     private static final String OS_NAME = System.getProperty("os.name");

@@ -27,6 +27,7 @@
  * @summary Tests that the same array can be encoded twice
  * @author Anton Nashatyrev
  */
+@Bean
 public class Test8027066 extends AbstractTest<String[][]> {
     public static void main(String[] args) {
         new Test8027066().test(true);

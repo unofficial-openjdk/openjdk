@@ -44,6 +44,7 @@ import java.util.List;
  * @run testng SocksSocketImplTest
  * @modules java.base/sun.net.spi:+open
  */
+@Bean
 public class SocksSocketImplTest {
 
     private ProxySelector previousDefault;

@@ -43,6 +43,7 @@ import java.util.regex.Pattern;
 
 import static java.lang.System.out;
 
+@Bean
 public class GetXSpace {
 
     private static SecurityManager [] sma = { null, new Allow(), new DenyFSA(),
@@ -283,20 +284,40 @@ public class GetXSpace {
     }
 
     private static class Allow extends SecurityManager {
-        public void checkRead(String file) {}
-        public void checkPermission(Permission p) {}
-        public void checkPermission(Permission p, Object context) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void checkRead(String file) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void checkPermission(Permission p) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void checkPermission(Permission p, Object context) {}
     }
 
     private static class Deny extends SecurityManager {
-        public void checkPermission(Permission p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void checkPermission(Permission p) {
             if (p.implies(new RuntimePermission("setSecurityManager"))
                 || p.implies(new RuntimePermission("getProtectionDomain")))
               return;
             super.checkPermission(p);
         }
 
-        public void checkPermission(Permission p, Object context) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void checkPermission(Permission p, Object context) {
             if (p.implies(new RuntimePermission("setSecurityManager"))
                 || p.implies(new RuntimePermission("getProtectionDomain")))
               return;
@@ -307,13 +328,21 @@ public class GetXSpace {
     private static class DenyFSA extends Deny {
         private String err = "sorry - getFileSystemAttributes";
 
-        public void checkPermission(Permission p) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void checkPermission(Permission p) {
             if (p.implies(new RuntimePermission("getFileSystemAttributes")))
                 throw new SecurityException(err);
             super.checkPermission(p);
         }
 
-        public void checkPermission(Permission p, Object context) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void checkPermission(Permission p, Object context) {
             if (p.implies(new RuntimePermission("getFileSystemAttributes")))
                 throw new SecurityException(err);
             super.checkPermission(p, context);
@@ -323,7 +352,11 @@ public class GetXSpace {
     private static class DenyRead extends Deny {
         private String err = "sorry - checkRead()";
 
-        public void checkRead(String file) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void checkRead(String file) {
             throw new SecurityException(err);
         }
     }

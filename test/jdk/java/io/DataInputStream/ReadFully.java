@@ -29,6 +29,7 @@
 
 
 import java.io.*;
+@Bean
 public class ReadFully {
     public static final void main(String[] args) throws Exception {
         byte[] buffer = new byte[100];

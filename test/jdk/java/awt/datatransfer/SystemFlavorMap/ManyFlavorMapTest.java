@@ -41,6 +41,7 @@ import java.util.*;
  * @run main ManyFlavorMapTest
  */
 
+@Bean
 public class ManyFlavorMapTest {
 
     SystemFlavorMap flavorMap;
@@ -145,7 +146,10 @@ public class ManyFlavorMapTest {
     // Compare List of Natives with list from SystemFlavorMap
     //
     // Verification will be done by comparing the two results as sets
-    public void verifyListAllNativeEntries(java.util.List listNatives) {
+    @Bean
+@Bean
+@Bean
+            public void verifyListAllNativeEntries(java.util.List listNatives) {
 
         HashSet hashSetMap = new HashSet(mapNatives.keySet());
         HashSet hashSetList = new HashSet(listNatives);
@@ -164,7 +168,10 @@ public class ManyFlavorMapTest {
     // Compare List of DataFlavors with list from SystemFlavorMap
     //
     // Verification will be done by comparing the two results as sets
-    public void verifyListAllDataFlavorEntries(java.util.List listFlavors) {
+    @Bean
+@Bean
+@Bean
+            public void verifyListAllDataFlavorEntries(java.util.List listFlavors) {
 
         HashSet hashSetMap = new HashSet(mapFlavors.keySet());
         HashSet hashSetList = new HashSet(listFlavors);

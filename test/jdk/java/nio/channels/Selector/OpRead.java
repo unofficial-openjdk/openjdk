@@ -31,6 +31,7 @@ import java.nio.*;
 import java.nio.channels.*;
 import java.util.*;
 
+@Bean
 public class OpRead {
 
     static void test() throws Exception {

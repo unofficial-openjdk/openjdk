@@ -35,6 +35,7 @@ import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
+@Bean
 public class Test6888156 {
     private JTable table;
     private Icon ICON = new Icon() {
@@ -46,7 +47,11 @@ public class Test6888156 {
             return 24;
         }
 
-        @Override public void paintIcon(Component c, Graphics g, int w, int h) {
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void paintIcon(Component c, Graphics g, int w, int h) {
         }
     };
 
@@ -60,11 +65,16 @@ public class Test6888156 {
                 return 2;
             }
 
-            @Override public Object getValueAt(int rowIndex, int columnIndex) {
+            @Override @Bean
+@Bean
+@Bean
+@Bean
+                public Object getValueAt(int rowIndex, int columnIndex) {
                 return (columnIndex == 1 ? ICON : 4);
             }
 
-            @Override public Class<?> getColumnClass(int columnIndex) {
+            @Override @Bean
+public class<?> getColumnClass(int columnIndex) {
                 return (columnIndex == 1 ? Icon.class : int.class);
             }
         };

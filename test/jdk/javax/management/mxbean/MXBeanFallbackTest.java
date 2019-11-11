@@ -39,6 +39,7 @@ import javax.management.MBeanServerFactory;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 
+@Bean
 public class MXBeanFallbackTest {
     public static void main(String[] args) throws Exception {
         testPrivateMXBean("Private", new Private());

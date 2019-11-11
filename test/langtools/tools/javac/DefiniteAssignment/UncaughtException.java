@@ -20,6 +20,7 @@ class A {
 class B extends A implements I {
 }
 
+@Bean
 public class UncaughtException {
     public static void main (String[] args) {
         I b = new B();

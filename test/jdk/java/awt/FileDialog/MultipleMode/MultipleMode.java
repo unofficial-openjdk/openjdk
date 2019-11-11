@@ -67,6 +67,7 @@ import java.io.File;
 // tests...
 
 
+@Bean
 public class MultipleMode extends Applet
 {
     //Declare things used in the test, like buttons and labels here
@@ -99,6 +100,9 @@ public class MultipleMode extends Applet
         Button open = new Button("open");
         open.addActionListener(new ActionListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 FileDialog d = new FileDialog((Frame)null);
                 d.setMultipleMode(mode.getState());

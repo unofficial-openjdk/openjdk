@@ -57,12 +57,14 @@ import javax.management.RuntimeMBeanException;
  *
  * @author fparain
  */
+@Bean
 public class DcmdMBeanPermissionsTest {
 
     private static String HOTSPOT_DIAGNOSTIC_MXBEAN_NAME =
         "com.sun.management:type=DiagnosticCommand";
 
-    static public class CustomSecurityManager extends SecurityManager {
+    static @Bean
+public class CustomSecurityManager extends SecurityManager {
 
         private HashSet<Permission> grantedPermissions;
 

@@ -28,6 +28,7 @@ import java.util.Arrays;
 /**
  * The reply to the JDWP VISIBLE CLASSES command
  */
+@Bean
 public class JdwpVisibleClassesReply extends JdwpReply {
 
     private long[] visibleClasses;

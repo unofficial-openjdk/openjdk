@@ -31,6 +31,7 @@ import java.nio.*;
 import java.nio.channels.*;
 import java.io.*;
 
+@Bean
 public class MapOverEnd {
     public static void main (String [] args) throws Exception {
         File blah = File.createTempFile("blah", null);

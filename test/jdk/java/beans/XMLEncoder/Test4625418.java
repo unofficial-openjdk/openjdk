@@ -374,7 +374,11 @@ public final class Test4625418 implements ExceptionListener {
         this.encoding = encoding;
     }
 
-    private void test(String string) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void test(String string) {
         try {
             ByteArrayOutputStream output = new ByteArrayOutputStream();
             XMLEncoder encoder = new XMLEncoder(output, this.encoding, true, 0);
@@ -403,7 +407,11 @@ public final class Test4625418 implements ExceptionListener {
         }
     }
 
-    public void exceptionThrown(Exception exception) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void exceptionThrown(Exception exception) {
         throw new Error(this.encoding + " - internal", exception);
     }
 }

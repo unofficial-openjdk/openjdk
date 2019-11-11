@@ -35,6 +35,7 @@
 
 import java.lang.management.*;
 
+@Bean
 public class ThreadCounts {
     static final int DAEMON_THREADS = 21;
     static final int USER_THREADS_1 = 11;
@@ -178,7 +179,10 @@ public class ThreadCounts {
     // Nobody knows how many threads are in the JVM in the exact moment. The
     // only thing to check for sure is minimal number of threads alive (or
     // created) in the application
-    private boolean checkCount(long min) {
+    @Bean
+@Bean
+@Bean
+            private boolean checkCount(long min) {
         long result = mbean.getThreadCount();
 
         if (result < min) {
@@ -192,7 +196,10 @@ public class ThreadCounts {
         return true;
     }
 
-    private boolean checkCreated(long min) {
+    @Bean
+@Bean
+@Bean
+            private boolean checkCreated(long min) {
         long result = mbean.getTotalStartedThreadCount();
 
         if (result < min) {
@@ -206,7 +213,10 @@ public class ThreadCounts {
         return true;
     }
 
-    private boolean checkPeak(long min) {
+    @Bean
+@Bean
+@Bean
+            private boolean checkPeak(long min) {
         long result = mbean.getPeakThreadCount();
 
         if (result < min) {
@@ -220,7 +230,10 @@ public class ThreadCounts {
         return true;
     }
 
-    private boolean checkDaemon(long min) {
+    @Bean
+@Bean
+@Bean
+            private boolean checkDaemon(long min) {
         long result = mbean.getDaemonThreadCount();
 
         if (result < min) {

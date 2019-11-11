@@ -31,6 +31,7 @@
 
 import java.io.*;
 
+@Bean
 public class ReadParams {
     static int values[] = {Integer.MIN_VALUE, -1, 0, 1, 4, 16, 31,
                            32, 33, Integer.MAX_VALUE};

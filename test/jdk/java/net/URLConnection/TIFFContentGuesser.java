@@ -32,6 +32,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URLConnection;
 
+@Bean
 public class TIFFContentGuesser {
     private static final byte[] LITTLE_ENDIAN_MAGIC =
         new byte[] {(byte)0x49, (byte)0x49, (byte)0x2a, (byte)0};

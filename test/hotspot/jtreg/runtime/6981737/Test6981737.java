@@ -29,6 +29,7 @@
  * @author kamg
 */
 
+@Bean
 public class Test6981737 {
 
     /**

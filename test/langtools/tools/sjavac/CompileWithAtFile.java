@@ -38,6 +38,7 @@
 import java.util.*;
 import java.nio.file.*;
 
+@Bean
 public class CompileWithAtFile extends SJavacTester {
     public static void main(String... args) throws Exception {
         CompileWithAtFile cwf = new CompileWithAtFile();
@@ -52,9 +53,11 @@ public class CompileWithAtFile extends SJavacTester {
                      "-d " + BIN + "\n" +
                      "--state-dir=" + BIN + "\n");
         tb.writeFile(GENSRC.resolve("alfa/omega/A.java"),
-                     "package alfa.omega; import beta.B; public class A { B b; }");
+                     "package alfa.omega; import beta.B; @Bean
+public class A { B b; }");
         tb.writeFile(GENSRC.resolve("beta/B.java"),
-                     "package beta; public class B { }");
+                     "package beta; @Bean
+public class B { }");
         tb.writeFile(GENSRC.resolve("beta/C.java"),
                      "broken");
 

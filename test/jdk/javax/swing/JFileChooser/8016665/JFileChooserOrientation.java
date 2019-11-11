@@ -144,7 +144,10 @@ public class JFileChooserOrientation {
 
                 fileChooserButton.addActionListener(new ActionListener() {
                     @Override
-                    public void actionPerformed(ActionEvent e) {
+                    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
 
                         try {
                             showFileChooser();
@@ -164,7 +167,10 @@ public class JFileChooserOrientation {
                 passButton = new JButton(" Pass ");
                 passButton.addActionListener(new ActionListener() {
                     @Override
-                    public void actionPerformed(ActionEvent e) {
+                    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                         try {
                             pass();
                         } catch (Exception ex) {
@@ -179,7 +185,10 @@ public class JFileChooserOrientation {
                 failButton = new JButton(" Fail ");
                 failButton.addActionListener(new ActionListener() {
                     @Override
-                    public void actionPerformed(ActionEvent e) {
+                    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                         try {
                             fail();
                         } catch (Exception ex) {

@@ -32,6 +32,7 @@
  * @run main IllDefinedOrderOfInit
  */
 
+@Bean
 public class IllDefinedOrderOfInit {
     int i = m();
     int j = 0;
@@ -41,7 +42,11 @@ public class IllDefinedOrderOfInit {
         }
     }
     int m() { j = 5; return j++; }
-    static public void main(String args[]) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String args[]) {
         new IllDefinedOrderOfInit();
     }
 }

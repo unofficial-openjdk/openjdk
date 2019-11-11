@@ -40,6 +40,7 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 
 
+@Bean
 public class bug4714674 {
 
     public static void main(String[] args) throws Exception {

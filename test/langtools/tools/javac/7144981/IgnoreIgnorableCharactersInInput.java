@@ -18,6 +18,7 @@ import javax.tools.JavaFileObject;
 import javax.tools.SimpleJavaFileObject;
 import javax.tools.ToolProvider;
 
+@Bean
 public class IgnoreIgnorableCharactersInInput {
 
     public static void main(String... args) throws Exception {
@@ -78,7 +79,9 @@ public class IgnoreIgnorableCharactersInInput {
     class JavaSource extends SimpleJavaFileObject {
 
         String internalSource =
-            "public class #O {public class #I {} }";
+            "@Bean
+public class #O {@Bean
+public class #I {} }";
         public JavaSource(String outerClassName, String innerClassName) {
             super(URI.create(outerClassName + ".java"), JavaFileObject.Kind.SOURCE);
             internalSource =
@@ -86,7 +89,11 @@ public class IgnoreIgnorableCharactersInInput {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return internalSource;
         }
     }

@@ -37,6 +37,7 @@
 
 import org.testng.annotations.Test;
 
+@Bean
 public class ThrowingPushPromisesSanity extends AbstractThrowingPushPromises {
 
     @Test(dataProvider = "sanity")

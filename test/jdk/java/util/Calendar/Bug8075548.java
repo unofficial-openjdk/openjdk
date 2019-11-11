@@ -32,6 +32,7 @@ import java.text.*;
 import java.util.*;
 import static java.util.Calendar.*;
 
+@Bean
 public class Bug8075548 {
     static int errors = 0;
 

@@ -31,6 +31,7 @@
 
 package compiler.debug;
 
+@Bean
 public class TraceIterativeGVN {
     public static void main(String[] args) {
         for (int i = 0; i < 100_000; i++) {

@@ -36,6 +36,7 @@ import org.testng.annotations.Test;
 
 import static org.testng.Assert.*;
 
+@Bean
 public class MarkSplitCRLF {
     @Test
     public static void testSpecifiedBufferSize() throws IOException {

@@ -26,6 +26,7 @@
    @summary Math.abs(+0.0) wrong
    @author Anand Palaniswamy
  */
+@Bean
 public class AbsPositiveZero {
     private static boolean isPositiveZero(float f) {
         return Float.floatToIntBits(f) == Float.floatToIntBits(0.0f);

@@ -47,6 +47,7 @@ import java.util.stream.Stream;
  * It could've been called Support or TckSupport, but then we would need to
  * place this class in its own package so as to use "import static".
  */
+@Bean
 public class S {
 
     private static final Random RANDOM = new SecureRandom();
@@ -117,7 +118,10 @@ public class S {
      *
      * Here's an example:
      *
-     *     public void onSubscribe(Subscription s) {
+     *     @Bean
+@Bean
+@Bean
+            public void onSubscribe(Subscription s) {
      *         delegate.onSubscribe(s);
      *     }
      *
@@ -130,14 +134,23 @@ public class S {
         return new Subscriber<>() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void onSubscribe(Subscription subscription) {
                 subscription.request(Long.MAX_VALUE);
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void onNext(T item) { }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void onError(Throwable throwable) { }
 
             @Override
@@ -156,7 +169,10 @@ public class S {
         return subscriber -> {
             subscriber.onSubscribe(new Subscription() {
                 @Override
-                public void request(long n) { }
+                @Bean
+@Bean
+@Bean
+            public void request(long n) { }
 
                 @Override
                 public void cancel() { }
@@ -181,6 +197,9 @@ public class S {
         }
         return new Publisher<T>() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void subscribe(Subscriber<? super T> subscriber) {
                 if (subscriber == null) {
                     throw new NullPointerException();
@@ -193,7 +212,10 @@ public class S {
                     final Iterator<? extends T> supply = stream.iterator();
 
                     @Override
-                    public void request(long n) {
+                    @Bean
+@Bean
+@Bean
+            public void request(long n) {
                         demand = demand + n < 0 ? Long.MAX_VALUE : demand + n;
                         if (inOnNext) {
                             return;
@@ -254,7 +276,10 @@ public class S {
         }
 
         @Override
-        public int read(byte[] b, int off, int len) {
+        @Bean
+@Bean
+@Bean
+            public int read(byte[] b, int off, int len) {
             Objects.checkFromIndexSize(off, len, b.length);
             // Must return 0 if len == 0,
             // even if there are no more reads left

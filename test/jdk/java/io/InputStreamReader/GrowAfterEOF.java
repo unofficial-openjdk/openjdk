@@ -29,6 +29,7 @@
 
 import java.io.*;
 
+@Bean
 public class GrowAfterEOF {
     public static void main(String[] args) throws Exception {
         File input = new File(".", "TestEOFInput.txt");

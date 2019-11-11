@@ -145,7 +145,9 @@ public final class BufferIndexingLinkerExporter extends GuardingDynamicLinkerExp
         final ArrayList<GuardingDynamicLinker> linkers = new ArrayList<>();
         linkers.add(new TypeBasedGuardingDynamicLinker() {
             @Override
-            public boolean canLinkType(final Class<?> type) {
+@Bean
+@Bean
+                    public boolean canLinkType(final Class<?> type) {
                 return Buffer.class.isAssignableFrom(type);
             }
 

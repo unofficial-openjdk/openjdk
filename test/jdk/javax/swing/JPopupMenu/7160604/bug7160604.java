@@ -75,14 +75,20 @@ public class bug7160604 extends JApplet {
             jPopupMenu.add("string");
             jPopupMenu.add(new AbstractAction("action") {
                 @Override
-                public void actionPerformed(final ActionEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(final ActionEvent e) {
                 }
             });
             jPopupMenu.add(new JLabel("label"));
             jPopupMenu.add(new JMenuItem("MenuItem"));
             label.addMouseListener(new MouseAdapter() {
                 @Override
-                public void mouseReleased(final MouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void mouseReleased(final MouseEvent e) {
                     jPopupMenu.show(label, 0, 0);
                 }
             });

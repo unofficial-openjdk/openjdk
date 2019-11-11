@@ -49,6 +49,7 @@ class SDENullTarg {
 
     /********** test program **********/
 
+@Bean
 public class SDENullTest extends TestScaffold {
     ReferenceType targetClass;
     ThreadReference mainThread;

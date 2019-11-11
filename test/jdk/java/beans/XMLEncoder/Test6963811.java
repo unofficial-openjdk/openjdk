@@ -31,6 +31,7 @@
 import java.beans.Encoder;
 import java.beans.DefaultPersistenceDelegate;
 
+@Bean
 public class Test6963811 implements Runnable {
     private static final Encoder ENCODER = new Encoder();
     private final long time;

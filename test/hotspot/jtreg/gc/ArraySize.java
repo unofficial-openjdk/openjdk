@@ -30,6 +30,7 @@
 
 package gc;
 
+@Bean
 public class ArraySize {
 
     public static void main(String[] args) throws Exception {

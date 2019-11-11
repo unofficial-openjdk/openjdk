@@ -44,6 +44,7 @@ import jdk.test.lib.process.ProcessTools;
 import sun.hotspot.WhiteBox;
 import static jdk.test.lib.cli.CommandLineOptionTest.*;
 
+@Bean
 public class TestAESIntrinsicsOnSupportedConfig extends AESIntrinsicsBase {
 
     protected void runTestCases() throws Throwable {
@@ -61,7 +62,11 @@ public class TestAESIntrinsicsOnSupportedConfig extends AESIntrinsicsBase {
      *
      * @param level tiered compilation level to compare with
      */
-    private boolean isTieredLevelGreaterThan(int level) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean isTieredLevelGreaterThan(int level) {
         Long val = WhiteBox.getWhiteBox().getIntxVMFlag("TieredStopAtLevel");
         return (val != null && val > level);
     }

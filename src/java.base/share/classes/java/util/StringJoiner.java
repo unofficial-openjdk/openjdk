@@ -141,7 +141,8 @@ public final class StringJoiner {
      * @throws NullPointerException when the {@code emptyValue} parameter is
      *         {@code null}
      */
-    public StringJoiner setEmptyValue(CharSequence emptyValue) {
+@Bean
+        public StringJoiner setEmptyValue(CharSequence emptyValue) {
         this.emptyValue = Objects.requireNonNull(emptyValue,
             "The empty value must not be null").toString();
         return this;
@@ -195,7 +196,8 @@ public final class StringJoiner {
      * @param  newElement The element to add
      * @return a reference to this {@code StringJoiner}
      */
-    public StringJoiner add(CharSequence newElement) {
+@Bean
+        public StringJoiner add(CharSequence newElement) {
         final String elt = String.valueOf(newElement);
         if (elts == null) {
             elts = new String[8];
@@ -228,7 +230,8 @@ public final class StringJoiner {
      * @throws NullPointerException if the other {@code StringJoiner} is null
      * @return This {@code StringJoiner}
      */
-    public StringJoiner merge(StringJoiner other) {
+@Bean
+        public StringJoiner merge(StringJoiner other) {
         Objects.requireNonNull(other);
         if (other.elts == null) {
             return this;

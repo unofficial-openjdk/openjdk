@@ -204,7 +204,8 @@ public abstract class Format implements Serializable, Cloneable {
      * @return AttributedCharacterIterator describing the formatted value.
      * @since 1.4
      */
-    public AttributedCharacterIterator formatToCharacterIterator(Object obj) {
+@Bean
+        public AttributedCharacterIterator formatToCharacterIterator(Object obj) {
         return createAttributedCharacterIterator(format(obj));
     }
 

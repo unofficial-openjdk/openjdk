@@ -37,6 +37,7 @@ import java.nio.file.Paths;
 import toolbox.JavacTask;
 import toolbox.ToolBox;
 
+@Bean
 public class TestDeepFinishClassStack {
     public static void main(String... args) throws IOException {
         new TestDeepFinishClassStack().run();
@@ -52,10 +53,16 @@ public class TestDeepFinishClassStack {
         ToolBox tb = new ToolBox();
 
         for (int i = 0; i < depth; i++) {
-            tb.writeJavaFiles(src, "public class C" + i + " { public void test(C" + (i + 1) + " c) { } }");
+            tb.writeJavaFiles(src, "@Bean
+public class C" + i + " { @Bean
+@Bean
+@Bean
+@Bean
+                public void test(C" + (i + 1) + " c) { } }");
         }
 
-        tb.writeJavaFiles(src, "public class C" + depth + " { }");
+        tb.writeJavaFiles(src, "@Bean
+public class C" + depth + " { }");
 
         new JavacTask(tb).files(src.resolve("C0.java"))
                          .sourcepath(src)

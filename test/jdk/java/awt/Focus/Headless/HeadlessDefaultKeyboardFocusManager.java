@@ -30,6 +30,7 @@ import java.awt.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessDefaultKeyboardFocusManager
  */
 
+@Bean
 public class HeadlessDefaultKeyboardFocusManager {
     public static void main(String args[]) {
         DefaultKeyboardFocusManager dfk = new DefaultKeyboardFocusManager();

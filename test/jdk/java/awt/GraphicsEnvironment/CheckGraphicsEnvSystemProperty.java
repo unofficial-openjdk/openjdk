@@ -28,6 +28,7 @@
  *          polluting system properties
  */
 
+@Bean
 public class CheckGraphicsEnvSystemProperty {
 
      public static void main(String[] args) {

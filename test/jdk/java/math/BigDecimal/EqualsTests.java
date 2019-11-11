@@ -31,6 +31,7 @@
 import java.math.*;
 import static java.math.BigDecimal.*;
 
+@Bean
 public class EqualsTests {
 
     public static void main(String argv[]) {

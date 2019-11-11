@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+@Bean
 public class InterfaceMethodsTest extends TestScaffold {
     private static final int RESULT_A = 1;
     private static final int RESULT_B = 2;
@@ -119,7 +120,11 @@ public class InterfaceMethodsTest extends TestScaffold {
             tc.doTests(tc);
         }
 
-        private void doTests(TargetClass ref) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void doTests(TargetClass ref) {
             // break
         }
     }
@@ -175,7 +180,11 @@ public class InterfaceMethodsTest extends TestScaffold {
         }
     }
 
-    private void testInterfaceA(ObjectReference ref) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testInterfaceA(ObjectReference ref) {
 
         ReferenceType ifaceClass = (ReferenceType)vm().classesByName(INTERFACEA_NAME).get(0);
 
@@ -229,7 +238,11 @@ public class InterfaceMethodsTest extends TestScaffold {
         testInvokePos(ifaceClass, ref, "implementedMethod", "()I", vm().mirrorOf(RESULT_TARGET), true);
     }
 
-    private void testInterfaceB(ObjectReference ref) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testInterfaceB(ObjectReference ref) {
         // Test non-virtual calls on InterfaceB
         ReferenceType ifaceClass = (ReferenceType)vm().classesByName(INTERFACEB_NAME).get(0);
 
@@ -289,7 +302,11 @@ public class InterfaceMethodsTest extends TestScaffold {
                 "Invalid MethodID");
     }
 
-    private void testImplementationClass(ReferenceType targetClass, ObjectReference thisObject) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testImplementationClass(ReferenceType targetClass, ObjectReference thisObject) {
         // Test invocations on the implementation object
 
         // Note: private interface calls have already been tested
@@ -367,7 +384,11 @@ public class InterfaceMethodsTest extends TestScaffold {
     // using virtual, or non-virtual, invocation mode as specified, for instance methods. Verify the
     // expected return value.
     // Should succeed.
-    private void testInvokePos(Method method, ObjectReference ref, Value value, boolean virtual) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testInvokePos(Method method, ObjectReference ref, Value value, boolean virtual) {
         logInvocation(ref, method.name(), method.signature(), method.declaringType());
         try {
             invoke(method.declaringType(), ref, method, value, virtual);
@@ -460,7 +481,11 @@ public class InterfaceMethodsTest extends TestScaffold {
         }
     }
 
-    private Method getMethod(ReferenceType rt, String name, String signature) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Method getMethod(ReferenceType rt, String name, String signature) {
         if (rt == null) return null;
         Method m = findMethod(rt, name, signature);
         if (m == null) {
@@ -496,7 +521,11 @@ public class InterfaceMethodsTest extends TestScaffold {
         return m;
     }
 
-    private void logInvocation(ObjectReference ref, String methodName, String methodSig, ReferenceType targetClass) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void logInvocation(ObjectReference ref, String methodName, String methodSig, ReferenceType targetClass) {
         if (ref != null) {
             System.err.println("Invoking: " + ref.referenceType().name() + "." +
                     methodName + methodSig + " with target of type " +
@@ -541,7 +570,11 @@ public class InterfaceMethodsTest extends TestScaffold {
         }
     }
 
-    private Method lookupMethod(ReferenceType targetClass, String methodName, String methodSig) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Method lookupMethod(ReferenceType targetClass, String methodName, String methodSig) {
         List methods = targetClass.allMethods();
         Iterator iter = methods.iterator();
         while (iter.hasNext()) {
@@ -554,7 +587,11 @@ public class InterfaceMethodsTest extends TestScaffold {
         throw new NoSuchMethodError();
     }
 
-    private Method lookupDeclaredMethod(ReferenceType targetClass, String methodName, String methodSig) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Method lookupDeclaredMethod(ReferenceType targetClass, String methodName, String methodSig) {
         Method m = findMethod(targetClass, methodName, methodSig);
         if (m == null)
             throw new NoSuchMethodError();

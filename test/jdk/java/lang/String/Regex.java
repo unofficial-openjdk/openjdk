@@ -27,6 +27,7 @@
  */
 
 
+@Bean
 public class Regex {
 
     static void ck(boolean x, boolean ans) throws Exception {

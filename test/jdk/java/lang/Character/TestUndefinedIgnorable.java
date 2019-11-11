@@ -28,6 +28,7 @@
  * @summary Undefined character values should not be ignorable identifiers.
  */
 
+@Bean
 public class TestUndefinedIgnorable {
     static int endValue = 0xFFFF;
 

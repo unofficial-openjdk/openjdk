@@ -33,6 +33,7 @@ import jdk.test.lib.cds.CDSOptions;
 import jdk.test.lib.cds.CDSTestUtils;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class NonBootLoaderClasses {
     public static void main(String[] args) throws Exception {
         final String PLATFORM_CLASS = "jdk/dynalink/DynamicLinker";

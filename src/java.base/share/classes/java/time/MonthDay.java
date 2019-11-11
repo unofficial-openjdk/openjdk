@@ -347,7 +347,8 @@ public final class MonthDay
      * @return true if the field is supported on this month-day, false if not
      */
     @Override
-    public boolean isSupported(TemporalField field) {
+@Bean
+        public boolean isSupported(TemporalField field) {
         if (field instanceof ChronoField) {
             return field == MONTH_OF_YEAR || field == DAY_OF_MONTH;
         }
@@ -378,7 +379,8 @@ public final class MonthDay
      * @throws UnsupportedTemporalTypeException if the field is not supported
      */
     @Override
-    public ValueRange range(TemporalField field) {
+@Bean
+        public ValueRange range(TemporalField field) {
         if (field == MONTH_OF_YEAR) {
             return field.range();
         } else if (field == DAY_OF_MONTH) {
@@ -414,7 +416,8 @@ public final class MonthDay
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override  // override for Javadoc
-    public int get(TemporalField field) {
+@Bean
+        public int get(TemporalField field) {
         return range(field).checkValidIntValue(getLong(field), field);
     }
 
@@ -442,7 +445,8 @@ public final class MonthDay
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public long getLong(TemporalField field) {
+@Bean
+        public long getLong(TemporalField field) {
         if (field instanceof ChronoField) {
             switch ((ChronoField) field) {
                 // alignedDOW and alignedWOM not supported because they cannot be set in with()
@@ -506,7 +510,8 @@ public final class MonthDay
      * @return true if the year is valid for this month-day
      * @see Year#isValidMonthDay(MonthDay)
      */
-    public boolean isValidYear(int year) {
+@Bean
+        public boolean isValidYear(int year) {
         return (day == 29 && month == 2 && Year.isLeap(year) == false) == false;
     }
 
@@ -524,7 +529,8 @@ public final class MonthDay
      * @return a {@code MonthDay} based on this month-day with the requested month, not null
      * @throws DateTimeException if the month-of-year value is invalid
      */
-    public MonthDay withMonth(int month) {
+@Bean
+        public MonthDay withMonth(int month) {
         return with(Month.of(month));
     }
 
@@ -540,7 +546,8 @@ public final class MonthDay
      * @param month  the month-of-year to set in the returned month-day, not null
      * @return a {@code MonthDay} based on this month-day with the requested month, not null
      */
-    public MonthDay with(Month month) {
+@Bean
+        public MonthDay with(Month month) {
         Objects.requireNonNull(month, "month");
         if (month.getValue() == this.month) {
             return this;
@@ -562,7 +569,8 @@ public final class MonthDay
      * @throws DateTimeException if the day-of-month value is invalid,
      *  or if the day-of-month is invalid for the month
      */
-    public MonthDay withDayOfMonth(int dayOfMonth) {
+@Bean
+        public MonthDay withDayOfMonth(int dayOfMonth) {
         if (dayOfMonth == this.day) {
             return this;
         }
@@ -625,7 +633,8 @@ public final class MonthDay
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public Temporal adjustInto(Temporal temporal) {
+@Bean
+        public Temporal adjustInto(Temporal temporal) {
         if (Chronology.from(temporal).equals(IsoChronology.INSTANCE) == false) {
             throw new DateTimeException("Adjustment only supported on ISO date-time");
         }
@@ -642,7 +651,8 @@ public final class MonthDay
      * @return the formatted month-day string, not null
      * @throws DateTimeException if an error occurs during printing
      */
-    public String format(DateTimeFormatter formatter) {
+@Bean
+        public String format(DateTimeFormatter formatter) {
         Objects.requireNonNull(formatter, "formatter");
         return formatter.format(this);
     }
@@ -662,7 +672,8 @@ public final class MonthDay
      * @return the local date formed from this month-day and the specified year, not null
      * @throws DateTimeException if the year is outside the valid range of years
      */
-    public LocalDate atYear(int year) {
+@Bean
+        public LocalDate atYear(int year) {
         return LocalDate.of(year, month, isValidYear(year) ? day : 28);
     }
 
@@ -677,7 +688,8 @@ public final class MonthDay
      * @return the comparator value, negative if less, positive if greater
      */
     @Override
-    public int compareTo(MonthDay other) {
+@Bean
+        public int compareTo(MonthDay other) {
         int cmp = (month - other.month);
         if (cmp == 0) {
             cmp = (day - other.day);
@@ -691,7 +703,8 @@ public final class MonthDay
      * @param other  the other month-day to compare to, not null
      * @return true if this is after the specified month-day
      */
-    public boolean isAfter(MonthDay other) {
+@Bean
+        public boolean isAfter(MonthDay other) {
         return compareTo(other) > 0;
     }
 
@@ -701,7 +714,8 @@ public final class MonthDay
      * @param other  the other month-day to compare to, not null
      * @return true if this point is before the specified month-day
      */
-    public boolean isBefore(MonthDay other) {
+@Bean
+        public boolean isBefore(MonthDay other) {
         return compareTo(other) < 0;
     }
 
@@ -715,7 +729,8 @@ public final class MonthDay
      * @return true if this is equal to the other month-day
      */
     @Override
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (this == obj) {
             return true;
         }

@@ -35,7 +35,10 @@ public class DynamicPolicy extends Policy{
     public DynamicPolicy() {
     }
 
-    public PermissionCollection getPermissions(CodeSource cs) {
+    @Bean
+@Bean
+@Bean
+            public PermissionCollection getPermissions(CodeSource cs) {
 
         Permissions perms = new Permissions();
         initStaticPolicy(perms);
@@ -48,11 +51,17 @@ public class DynamicPolicy extends Policy{
         return perms;
     }
 
-    public boolean implies(ProtectionDomain pd, Permission p) {
+    @Bean
+@Bean
+@Bean
+            public boolean implies(ProtectionDomain pd, Permission p) {
         return getPermissions(pd).implies(p) || DEFAULT_POLICY.implies(pd, p);
     }
 
-    public PermissionCollection getPermissions(ProtectionDomain pd) {
+    @Bean
+@Bean
+@Bean
+            public PermissionCollection getPermissions(ProtectionDomain pd) {
 
         Permissions perms = new Permissions();
         initStaticPolicy(perms);
@@ -68,7 +77,10 @@ public class DynamicPolicy extends Policy{
         refresher++;
     }
 
-    private void initStaticPolicy(PermissionCollection perms) {
+    @Bean
+@Bean
+@Bean
+            private void initStaticPolicy(PermissionCollection perms) {
 
         perms.add(new java.security.SecurityPermission("getPolicy"));
         perms.add(new java.security.SecurityPermission("setPolicy"));

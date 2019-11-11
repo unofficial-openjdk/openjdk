@@ -169,7 +169,11 @@ public final class TableExample implements LayoutManager {
         showConnectionInfoButton = new JButton("Configuration");
         showConnectionInfoButton.addActionListener(new ActionListener() {
 
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 activateConnectionDialog();
             }
         });
@@ -177,7 +181,11 @@ public final class TableExample implements LayoutManager {
         fetchButton = new JButton("Fetch");
         fetchButton.addActionListener(new ActionListener() {
 
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 fetch();
             }
         });
@@ -203,7 +211,11 @@ public final class TableExample implements LayoutManager {
         frame.addWindowListener(new WindowAdapter() {
 
             @Override
-            public void windowClosing(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosing(WindowEvent e) {
                 System.exit(0);
             }
         });
@@ -265,21 +277,41 @@ public final class TableExample implements LayoutManager {
         new TableExample();
     }
 
-    public Dimension preferredLayoutSize(Container c) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Dimension preferredLayoutSize(Container c) {
         return origin;
     }
 
-    public Dimension minimumLayoutSize(Container c) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Dimension minimumLayoutSize(Container c) {
         return origin;
     }
 
-    public void addLayoutComponent(String s, Component c) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void addLayoutComponent(String s, Component c) {
     }
 
-    public void removeLayoutComponent(Component c) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void removeLayoutComponent(Component c) {
     }
 
-    public void layoutContainer(Container c) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void layoutContainer(Container c) {
         Rectangle b = c.getBounds();
         int topHeight = 90;
         int inset = 4;

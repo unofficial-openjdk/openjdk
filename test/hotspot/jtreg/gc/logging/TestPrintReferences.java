@@ -42,6 +42,7 @@ import jdk.test.lib.process.ProcessTools;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
+@Bean
 public class TestPrintReferences {
     static String output;
     static final String doubleRegex = "[0-9]+[.,][0-9]+";

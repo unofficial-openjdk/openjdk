@@ -58,6 +58,7 @@ import java.util.stream.Collectors;
  *                   -Xlog:gc=trace:file=TestNoAllocationsInHRegions70.log
  *                   gc.g1.humongousObjects.TestNoAllocationsInHRegions 30 70
  */
+@Bean
 public class TestNoAllocationsInHRegions {
     private static final WhiteBox WB = WhiteBox.getWhiteBox();
     private static final Random RND = Utils.getRandomInstance();

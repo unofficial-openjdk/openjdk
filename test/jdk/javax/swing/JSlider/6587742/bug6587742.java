@@ -52,7 +52,10 @@ public class bug6587742 extends JApplet {
             cbThemes.addItem(new DefaultMetalTheme());
 
             cbThemes.addItemListener(new ItemListener() {
-                public void itemStateChanged(ItemEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void itemStateChanged(ItemEvent e) {
                     MetalTheme theme = (MetalTheme) cbThemes.getSelectedItem();
 
                     if (theme != null) {

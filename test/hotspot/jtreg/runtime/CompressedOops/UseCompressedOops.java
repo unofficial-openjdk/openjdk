@@ -41,6 +41,7 @@ import sun.hotspot.gc.GC;
 
 import sun.hotspot.code.Compiler;
 
+@Bean
 public class UseCompressedOops {
 
     public static void main(String[] args) throws Exception {

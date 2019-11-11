@@ -79,6 +79,7 @@ import javax.tools.JavaFileManager;
  * have their initializers replace with 0, 0.0, false, null as appropriate.
  */
 
+@Bean
 public class GenStubs {
     static class Fault extends Exception {
         private static final long serialVersionUID = 0;
@@ -97,7 +98,11 @@ public class GenStubs {
             System.exit(1);
     }
 
-    public boolean run(String... args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean run(String... args) {
         File outdir = null;
         String sourcepath = null;
         List<String> classes = new ArrayList<String>();
@@ -119,7 +124,11 @@ public class GenStubs {
         return run(sourcepath, outdir, classes);
     }
 
-    public boolean run(String sourcepath, File outdir, List<String> classes) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean run(String sourcepath, File outdir, List<String> classes) {
         //System.err.println("run: sourcepath:" + sourcepath + " outdir:" + outdir + " classes:" + classes);
         if (sourcepath == null)
             throw new IllegalArgumentException("sourcepath not set");
@@ -200,7 +209,11 @@ public class GenStubs {
          * -- required, in order to remove @deprecated tags, since we
          * (separately) remove all annotations, including @Deprecated
          */
-        public void visitTopLevel(JCCompilationUnit tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitTopLevel(JCCompilationUnit tree) {
             super.visitTopLevel(tree);
             tree.docComments = null;
         }
@@ -209,7 +222,11 @@ public class GenStubs {
          * methods: remove method bodies, make methods native
          */
         @Override
-        public void visitClassDef(JCClassDecl tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitClassDef(JCClassDecl tree) {
             long prevClassMods = currClassMods;
             currClassMods = tree.mods.flags;
             try {
@@ -224,7 +241,11 @@ public class GenStubs {
          * methods: remove method bodies, make methods native
          */
         @Override
-        public void visitMethodDef(JCMethodDecl tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitMethodDef(JCMethodDecl tree) {
             tree.mods = translate(tree.mods);
             tree.restype = translate(tree.restype);
             tree.typarams = translateTypeParams(tree.typarams);
@@ -245,7 +266,11 @@ public class GenStubs {
          * modifiers: remove annotations
          */
         @Override
-        public void visitModifiers(JCModifiers tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitModifiers(JCModifiers tree) {
             tree.annotations = com.sun.tools.javac.util.List.nil();
             result = tree;
         }
@@ -255,7 +280,11 @@ public class GenStubs {
          * when possible -- i.e. leave public, protected initializers alone
          */
         @Override
-        public void visitVarDef(JCVariableDecl tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitVarDef(JCVariableDecl tree) {
             tree.mods = translate(tree.mods);
             tree.vartype = translate(tree.vartype);
             if (tree.init != null) {
@@ -321,15 +350,27 @@ public class GenStubs {
         }
 
         @Override
-        public void visitImport(JCImport tree) { } // ignore names found in imports
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitImport(JCImport tree) { } // ignore names found in imports
 
         @Override
-        public void visitIdent(JCIdent tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitIdent(JCIdent tree) {
             names.add(tree.name);
         }
 
         @Override
-        public void visitSelect(JCFieldAccess tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitSelect(JCFieldAccess tree) {
             super.visitSelect(tree);
             names.add(tree.name);
         }

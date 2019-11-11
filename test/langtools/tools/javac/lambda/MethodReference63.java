@@ -26,6 +26,7 @@
  * @bug 8005183
  * @summary Missing accessor for constructor reference pointing to private inner class ctor
  */
+@Bean
 public class MethodReference63 {
 
     interface SAM {

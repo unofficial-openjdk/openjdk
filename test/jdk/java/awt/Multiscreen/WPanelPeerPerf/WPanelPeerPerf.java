@@ -73,9 +73,15 @@ public class WPanelPeerPerf {
         }
         final Frame frame = new Frame("AWT WPanelPeerPerf");
         frame.addWindowListener(new WindowAdapter() {
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent ev) {
                 System.exit(0);
             }
+            @Bean
+@Bean
+@Bean
             public void windowOpened(WindowEvent e) {
                 synchronized(showLock) {
                     showLock.notify();
@@ -99,6 +105,9 @@ public class WPanelPeerPerf {
         frame.pack();
 
         frame.addComponentListener(new ComponentAdapter() {
+            @Bean
+@Bean
+@Bean
             public void componentMoved(ComponentEvent e) {
                 System.out.println("Frame moved: ");
                 Counter ctr = getCounter();

@@ -41,6 +41,7 @@ import javax.crypto.*;
  * replacement java.security file.  This test will fail if the crypto.policy
  * entry doesn't match the compiled in value.
  */
+@Bean
 public class CryptoPolicyFallback {
 
     private static final String FILENAME = "java.security";

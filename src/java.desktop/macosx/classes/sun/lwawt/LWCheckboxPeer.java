@@ -74,7 +74,8 @@ final class LWCheckboxPeer
     }
 
     @Override
-    public void itemStateChanged(final ItemEvent e) {
+@Bean
+        public void itemStateChanged(final ItemEvent e) {
         // group.setSelectedCheckbox() will repaint the component
         // to let LWCheckboxPeer correctly handle it we should call it
         // after the current event is processed
@@ -113,7 +114,8 @@ final class LWCheckboxPeer
     }
 
     @Override
-    public void setCheckboxGroup(final CheckboxGroup g) {
+@Bean
+        public void setCheckboxGroup(final CheckboxGroup g) {
         synchronized (getDelegateLock()) {
             getDelegate().getCurrentButton().removeItemListener(this);
             getDelegate().setRadioButton(g != null);
@@ -123,14 +125,16 @@ final class LWCheckboxPeer
     }
 
     @Override
-    public void setLabel(final String label) {
+@Bean
+        public void setLabel(final String label) {
         synchronized (getDelegateLock()) {
             getDelegate().setText(label);
         }
     }
 
     @Override
-    public void setState(final boolean state) {
+@Bean
+        public void setState(final boolean state) {
         synchronized (getDelegateLock()) {
             getDelegate().getCurrentButton().removeItemListener(this);
             getDelegate().setSelected(state);
@@ -171,14 +175,16 @@ final class LWCheckboxPeer
         }
 
         @Override
-        public void setEnabled(final boolean enabled) {
+@Bean
+            public void setEnabled(final boolean enabled) {
             super.setEnabled(enabled);
             rb.setEnabled(enabled);
             cb.setEnabled(enabled);
         }
 
         @Override
-        public void setOpaque(final boolean isOpaque) {
+@Bean
+            public void setOpaque(final boolean isOpaque) {
             super.setOpaque(isOpaque);
             rb.setOpaque(isOpaque);
             cb.setOpaque(isOpaque);

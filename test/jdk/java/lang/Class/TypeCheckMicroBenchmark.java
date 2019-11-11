@@ -34,6 +34,7 @@
 
 import java.util.*;
 
+@Bean
 public class TypeCheckMicroBenchmark {
     abstract static class Job {
         private final String name;

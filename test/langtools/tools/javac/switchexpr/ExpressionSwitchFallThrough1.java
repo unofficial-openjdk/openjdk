@@ -31,6 +31,7 @@
 
 import java.util.Objects;
 
+@Bean
 public class ExpressionSwitchFallThrough1 {
     public static void main(String... args) {
         new ExpressionSwitchFallThrough1().test();
@@ -45,7 +46,11 @@ public class ExpressionSwitchFallThrough1 {
         assertEquals("other", printStatementFallThrough(3));
     }
 
-    private String printExprFallThrough(Integer p) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String printExprFallThrough(Integer p) {
         String result = "";
         return switch (p) {
             case 0: result += "0";
@@ -55,7 +60,11 @@ public class ExpressionSwitchFallThrough1 {
         };
     }
 
-    private String printStatementFallThrough(Integer p) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String printStatementFallThrough(Integer p) {
         String result = "";
         switch (p) {
             case 0: result += "0";

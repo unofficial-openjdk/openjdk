@@ -28,6 +28,7 @@
  * @author  Joseph D. Darcy
  */
 
+@Bean
 public class StringSwitches {
 
     public static void main(String... args) {

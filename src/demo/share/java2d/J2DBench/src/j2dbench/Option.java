@@ -69,17 +69,20 @@ public abstract class Option extends Node implements Modifier {
 
     public abstract boolean isDefault();
 
-    public void modifyTest(TestEnvironment env, Object val) {
+@Bean
+        public void modifyTest(TestEnvironment env, Object val) {
         env.setModifier(this, val);
     }
 
-    public void restoreTest(TestEnvironment env, Object val) {
+@Bean
+        public void restoreTest(TestEnvironment env, Object val) {
         env.removeModifier(this);
     }
 
     public abstract String getValString();
 
-    public String getValString(Object v) {
+@Bean
+        public String getValString(Object v) {
         return v.toString();
     }
 
@@ -87,19 +90,23 @@ public abstract class Option extends Node implements Modifier {
         return getTreeName()+"="+getValString();
     }
 
-    public String getOptionString(Object value) {
+@Bean
+        public String getOptionString(Object value) {
         return getTreeName()+"="+getValString(value);
     }
 
-    public String getAbbreviatedModifierDescription(Object value) {
+@Bean
+        public String getAbbreviatedModifierDescription(Object value) {
         return getNodeName()+"="+getValString(value);
     }
 
-    public String getModifierValueName(Object val) {
+@Bean
+        public String getModifierValueName(Object val) {
         return getValString(val);
     }
 
-    public String setOption(String key, String value) {
+@Bean
+        public String setOption(String key, String value) {
         if (key.length() != 0) {
             return "Option name too specific";
         }
@@ -108,7 +115,8 @@ public abstract class Option extends Node implements Modifier {
 
     public abstract String setValueFromString(String value);
 
-    public void write(PrintWriter pw) {
+@Bean
+        public void write(PrintWriter pw) {
         //if (!isDefault()) {
             pw.println(getOptionString());
         //}
@@ -178,7 +186,8 @@ public abstract class Option extends Node implements Modifier {
                 jcb = new JComboBox(valnames);
                 updateGUI();
                 jcb.addItemListener(new ItemListener() {
-                    public void itemStateChanged(ItemEvent e) {
+@Bean
+                        public void itemStateChanged(ItemEvent e) {
                         if (e.getStateChange() == ItemEvent.SELECTED) {
                             JComboBox jcb = (JComboBox) e.getItemSelectable();
                             value = jcb.getSelectedIndex();
@@ -193,7 +202,8 @@ public abstract class Option extends Node implements Modifier {
             return jp;
         }
 
-        public String getAbbreviatedModifierDescription(Object value) {
+@Bean
+            public String getAbbreviatedModifierDescription(Object value) {
             String ret = getNodeName();
             if (value.equals(Boolean.FALSE)) {
                 ret = "!"+ret;
@@ -205,7 +215,8 @@ public abstract class Option extends Node implements Modifier {
             return valnames[value];
         }
 
-        public String setValueFromString(String value) {
+@Bean
+            public String setValueFromString(String value) {
             for (int i = 0; i < valnames.length; i++) {
                 if (valnames[i].equalsIgnoreCase(value)) {
                     if (this.value != i) {
@@ -235,11 +246,13 @@ public abstract class Option extends Node implements Modifier {
             return value;
         }
 
-        public void modifyTest(TestEnvironment env) {
+@Bean
+            public void modifyTest(TestEnvironment env) {
             // Used from within a Group.EnableSet group.
         }
 
-        public void restoreTest(TestEnvironment env) {
+@Bean
+            public void restoreTest(TestEnvironment env) {
             // Used from within a Group.EnableSet group.
         }
 
@@ -269,7 +282,8 @@ public abstract class Option extends Node implements Modifier {
                 jcb = new JCheckBox(getDescription());
                 updateGUI();
                 jcb.addItemListener(new ItemListener() {
-                    public void itemStateChanged(ItemEvent e) {
+@Bean
+                        public void itemStateChanged(ItemEvent e) {
                         value = (e.getStateChange() == ItemEvent.SELECTED);
                         if (J2DBench.verbose.isEnabled()) {
                             System.out.println(getOptionString());
@@ -280,7 +294,8 @@ public abstract class Option extends Node implements Modifier {
             return jcb;
         }
 
-        public String getAbbreviatedModifierDescription(Object value) {
+@Bean
+            public String getAbbreviatedModifierDescription(Object value) {
             String ret = getNodeName();
             if (value.equals(Boolean.FALSE)) {
                 ret = "!"+ret;
@@ -292,7 +307,8 @@ public abstract class Option extends Node implements Modifier {
             return (value ? "enabled" : "disabled");
         }
 
-        public String setValueFromString(String value) {
+@Bean
+            public String setValueFromString(String value) {
             boolean newval;
             if (value.equalsIgnoreCase("enabled")) {
                 newval = true;
@@ -400,7 +416,8 @@ public abstract class Option extends Node implements Modifier {
             return Integer.toString(value);
         }
 
-        public String setValueFromString(String value) {
+@Bean
+            public String setValueFromString(String value) {
             int val;
             try {
                 val = Integer.parseInt(value);
@@ -508,7 +525,8 @@ public abstract class Option extends Node implements Modifier {
             return new SwitchIterator(optionvalues, enabled);
         }
 
-        public void setNumRows(int numrows) {
+@Bean
+            public void setNumRows(int numrows) {
             this.numrows = numrows;
         }
 
@@ -528,7 +546,8 @@ public abstract class Option extends Node implements Modifier {
                 jlist.setBorder(new LineBorder(Color.black, 2));
                 updateGUI();
                 jlist.addListSelectionListener(new ListSelectionListener() {
-                    public void valueChanged(ListSelectionEvent e) {
+@Bean
+                        public void valueChanged(ListSelectionEvent e) {
                         int flags = 0;
                         for (int curindex = 0; curindex < size; curindex++) {
                             JList list = (JList) e.getSource();
@@ -569,15 +588,18 @@ public abstract class Option extends Node implements Modifier {
             return -1;
         }
 
-        public String getValString(Object value) {
+@Bean
+            public String getValString(Object value) {
             return optionnames[findValueIndex(value)];
         }
 
-        public String getAbbreviatedModifierDescription(Object value) {
+@Bean
+            public String getAbbreviatedModifierDescription(Object value) {
             return abbrevnames[findValueIndex(value)];
         }
 
-        public String setValueFromString(String value) {
+@Bean
+            public String setValueFromString(String value) {
             int enabled = 0;
             StringTokenizer st = new StringTokenizer(value, ",");
             while (st.hasMoreTokens()) {
@@ -720,7 +742,8 @@ public abstract class Option extends Node implements Modifier {
                  jcombo = new JComboBox(descnames);
                  updateGUI();
                  jcombo.addItemListener(new ItemListener() {
-                     public void itemStateChanged(ItemEvent e) {
+@Bean
+                         public void itemStateChanged(ItemEvent e) {
                          if (e.getStateChange() == ItemEvent.SELECTED) {
                              selected = jcombo.getSelectedIndex();
                              if (J2DBench.verbose.isEnabled()) {
@@ -759,23 +782,28 @@ public abstract class Option extends Node implements Modifier {
              return -1;
          }
 
-         public String getValString(Object value) {
+@Bean
+             public String getValString(Object value) {
              return optionnames[findValueIndex(value)];
          }
 
-         public String getAbbreviatedModifierDescription(Object value) {
+@Bean
+             public String getAbbreviatedModifierDescription(Object value) {
              return abbrevnames[findValueIndex(value)];
          }
 
-         public String setValue(int v) {
+@Bean
+             public String setValue(int v) {
              return setValue(new Integer(v));
          }
 
-         public String setValue(boolean v) {
+@Bean
+             public String setValue(boolean v) {
              return setValue(new Boolean(v));
          }
 
-         public String setValue(Object value) {
+@Bean
+             public String setValue(Object value) {
              for (int i = 0; i < size; i++) {
                  if (optionvalues[i].equals(value)) {
                      this.selected = i;
@@ -786,7 +814,8 @@ public abstract class Option extends Node implements Modifier {
              return "Bad value";
          }
 
-         public String setValueFromString(String value) {
+@Bean
+             public String setValueFromString(String value) {
              for (int i = 0; i < size; i++) {
                  if (optionnames[i].equals(value)) {
                      this.selected = i;

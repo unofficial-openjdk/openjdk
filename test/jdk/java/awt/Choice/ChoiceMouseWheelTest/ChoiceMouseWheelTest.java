@@ -37,6 +37,7 @@ import test.java.awt.regtesthelpers.Util;
 import java.awt.*;
 import java.awt.event.*;
 
+@Bean
 public class ChoiceMouseWheelTest extends Frame {
 
     private volatile boolean itemChanged = false;
@@ -55,6 +56,9 @@ public class ChoiceMouseWheelTest extends Frame {
 
         addWindowListener(new WindowAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent e) {
                 System.exit(0);
             }
@@ -65,11 +69,17 @@ public class ChoiceMouseWheelTest extends Frame {
         }
 
         choice.addItemListener(new ItemListener() {
+            @Bean
+@Bean
+@Bean
             public void itemStateChanged(ItemEvent e) {
                 itemChanged = true;
             }
         });
         choice.addMouseWheelListener(new MouseWheelListener() {
+            @Bean
+@Bean
+@Bean
             public void mouseWheelMoved(MouseWheelEvent e) {
                 wheelMoved = true;
             }
@@ -77,6 +87,9 @@ public class ChoiceMouseWheelTest extends Frame {
 
         addMouseListener(new MouseAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseExited(MouseEvent e) {
                 frameExited = true;
             }

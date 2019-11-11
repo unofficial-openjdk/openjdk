@@ -30,6 +30,7 @@
 
 import java.util.*;
 
+@Bean
 public class Purge {
     public static void main (String[] args) {
         Random rnd = new Random();

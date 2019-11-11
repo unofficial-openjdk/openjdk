@@ -35,6 +35,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Bean
 public class SelfRef {
     public static void main(String[] args) {
         testMap(new Hashtable<Object,Object>());

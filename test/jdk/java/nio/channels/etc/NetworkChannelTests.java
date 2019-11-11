@@ -32,6 +32,7 @@ import java.net.*;
 import java.io.IOException;
 import java.util.*;
 
+@Bean
 public class NetworkChannelTests {
 
     static interface ChannelFactory {

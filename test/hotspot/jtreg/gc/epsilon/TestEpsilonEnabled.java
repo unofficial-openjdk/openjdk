@@ -35,6 +35,7 @@ package gc.epsilon;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 
+@Bean
 public class TestEpsilonEnabled {
   public static void main(String[] args) throws Exception {
     if (!isEpsilonEnabled()) {

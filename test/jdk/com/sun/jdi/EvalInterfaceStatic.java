@@ -78,6 +78,7 @@ interface ExtendedEvalStaticInterfaces extends EvalStaticInterfaces {
 }
 
 
+@Bean
 public class EvalInterfaceStatic extends JdbTest {
     public static void main(String argv[]) {
         new EvalInterfaceStatic().run();

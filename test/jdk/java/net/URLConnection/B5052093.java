@@ -35,6 +35,7 @@ import java.io.*;
 import sun.net.www.protocol.file.FileURLConnection;
 import static java.net.Proxy.NO_PROXY;
 
+@Bean
 public class B5052093 implements HttpCallback {
     private static TestHttpServer server;
     private static long testSize = ((long) (Integer.MAX_VALUE)) + 2;
@@ -55,7 +56,11 @@ public class B5052093 implements HttpCallback {
         }
     }
 
-    public void request(HttpTransaction req) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void request(HttpTransaction req) {
         try {
             req.setResponseHeader("content-length", Long.toString(testSize));
             req.sendResponse(200, "OK");

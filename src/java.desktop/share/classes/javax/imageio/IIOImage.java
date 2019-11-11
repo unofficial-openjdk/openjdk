@@ -168,7 +168,8 @@ public class IIOImage {
      *
      * @see #getRenderedImage
      */
-    public void setRenderedImage(RenderedImage image) {
+@Bean
+        public void setRenderedImage(RenderedImage image) {
         synchronized(this) {
             if (image == null) {
                 throw new IllegalArgumentException("image == null!");
@@ -218,7 +219,8 @@ public class IIOImage {
      *
      * @see #getRaster
      */
-    public void setRaster(Raster raster) {
+@Bean
+        public void setRaster(Raster raster) {
         synchronized(this) {
             if (raster == null) {
                 throw new IllegalArgumentException("raster == null!");
@@ -254,7 +256,8 @@ public class IIOImage {
      * @see #getThumbnails
      * @see #setThumbnails
      */
-    public BufferedImage getThumbnail(int index) {
+@Bean
+        public BufferedImage getThumbnail(int index) {
         if (thumbnails == null) {
             throw new IndexOutOfBoundsException("No thumbnails available!");
         }
@@ -291,7 +294,8 @@ public class IIOImage {
      * @see #getThumbnail(int)
      * @see #getThumbnails
      */
-    public void setThumbnails(List<? extends BufferedImage> thumbnails) {
+@Bean
+        public void setThumbnails(List<? extends BufferedImage> thumbnails) {
         this.thumbnails = thumbnails;
     }
 
@@ -316,7 +320,8 @@ public class IIOImage {
      *
      * @see #getMetadata
      */
-    public void setMetadata(IIOMetadata metadata) {
+@Bean
+        public void setMetadata(IIOMetadata metadata) {
         this.metadata = metadata;
     }
 }

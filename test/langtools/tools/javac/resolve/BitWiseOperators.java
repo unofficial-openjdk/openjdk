@@ -46,6 +46,7 @@ import combo.ComboTask.Result;
 import combo.ComboTestHelper;
 
 
+@Bean
 public class BitWiseOperators extends ComboInstance<BitWiseOperators> {
 
     enum OperandType implements ComboParameter {
@@ -61,7 +62,11 @@ public class BitWiseOperators extends ComboInstance<BitWiseOperators> {
         }
 
         @Override
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             return StringUtils.toLowerCase(name());
         }
     }
@@ -78,7 +83,11 @@ public class BitWiseOperators extends ComboInstance<BitWiseOperators> {
         }
 
         @Override
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             return op;
         }
     }
@@ -93,7 +102,11 @@ public class BitWiseOperators extends ComboInstance<BitWiseOperators> {
     OperandType[] opTypes = new OperandType[2];
 
     String template = "class Test {\n" +
-                      "    public Object test(#{TYPE[0]} var1, #{TYPE[1]} var2) {\n" +
+                      "    @Bean
+@Bean
+@Bean
+@Bean
+                public Object test(#{TYPE[0]} var1, #{TYPE[1]} var2) {\n" +
                       "        return var1 #{OP} var2;\n" +
                       "    }\n" +
                       "}";

@@ -40,6 +40,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
+@Bean
 public class JavatimeTest {
 
     static final int NANOS_PER_SECOND = 1000000000;

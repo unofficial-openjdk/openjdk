@@ -41,6 +41,7 @@ import java.util.EnumSet;
 import org.testng.annotations.*;
 import static org.testng.Assert.*;
 
+@Bean
 public class EmbeddedStackWalkTest {
     static final StackWalker WALKERS[] = new StackWalker[] {
             StackWalker.getInstance(RETAIN_CLASS_REFERENCE),
@@ -61,7 +62,11 @@ public class EmbeddedStackWalkTest {
     }
 
     @Test(dataProvider = "walkerProvider")
-    public void test(StackWalker walker) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void test(StackWalker walker) {
         C1.call(walker, BIG_LOOP);
     }
 

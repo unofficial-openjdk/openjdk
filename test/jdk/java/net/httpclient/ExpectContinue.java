@@ -57,6 +57,7 @@ import org.testng.annotations.Test;
 import static java.lang.System.out;
 import static org.testng.Assert.assertEquals;
 
+@Bean
 public class ExpectContinue {
 
     SSLContext sslContext;

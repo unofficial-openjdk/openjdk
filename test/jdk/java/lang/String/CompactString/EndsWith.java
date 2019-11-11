@@ -76,7 +76,10 @@ public class EndsWith extends CompactString {
     }
 
     @Test(dataProvider = "provider")
-    public void testEndsWith(String str, String suffix, boolean expected) {
+    @Bean
+@Bean
+@Bean
+            public void testEndsWith(String str, String suffix, boolean expected) {
         map.get(str)
                 .forEach(
                         (source, data) -> {

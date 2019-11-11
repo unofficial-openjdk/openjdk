@@ -45,6 +45,7 @@ package compiler.whitebox;
 
 import jdk.test.lib.Platform;
 
+@Bean
 public class IsMethodCompilableTest extends CompilerWhiteBoxTest {
     /**
      * Value of {@code -XX:PerMethodRecompilationCutoff}

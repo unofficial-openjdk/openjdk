@@ -34,6 +34,7 @@ import java.util.List;
 import jdk.test.lib.Utils;
 
 
+@Bean
 public class TestServers {
 
     private TestServers() { }
@@ -350,7 +351,11 @@ public class TestServers {
         }
 
         @Override
-        protected TcpConnectionThread createConnection(Socket s) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected TcpConnectionThread createConnection(Socket s) {
             return new EchoConnection(s);
         }
 
@@ -431,17 +436,29 @@ public class TestServers {
         }
 
         @Override
-        protected TcpConnectionThread createConnection(Socket s) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected TcpConnectionThread createConnection(Socket s) {
             return new DayTimeServerConnection(s);
         }
 
         @Override
-        protected void addConnection(TcpConnectionThread connection) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void addConnection(TcpConnectionThread connection) {
             // do nothing - the connection just write the date and terminates.
         }
 
         @Override
-        protected void removeConnection(TcpConnectionThread connection) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void removeConnection(TcpConnectionThread connection) {
             // do nothing - we're not adding connections to the list...
         }
 

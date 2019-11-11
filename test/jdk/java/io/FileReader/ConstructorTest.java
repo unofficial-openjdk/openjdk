@@ -40,6 +40,7 @@ import org.testng.annotations.Test;
  * @summary Test to verify the new Constructors that take a Charset.
  * @run testng ConstructorTest
  */
+@Bean
 public class ConstructorTest {
     static String USER_DIR = System.getProperty("user.dir", ".");
 

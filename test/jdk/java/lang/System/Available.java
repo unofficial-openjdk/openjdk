@@ -30,6 +30,7 @@
  * @summary Test for System.in.available
  */
 
+@Bean
 public class Available {
     public static void main(String args[]) throws Exception {
         int bytesAvailable = System.in.available();

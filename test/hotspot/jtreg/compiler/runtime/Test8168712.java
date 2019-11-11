@@ -32,6 +32,7 @@ package compiler.runtime;
 
 import java.util.*;
 
+@Bean
 public class Test8168712 {
     static HashSet<Test8168712> m = new HashSet<>();
     public static void main(String args[]) {

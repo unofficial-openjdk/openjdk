@@ -30,6 +30,7 @@
 import java.io.*;
 import java.util.*;
 
+@Bean
 public class T6917288 {
     // refers to kind of reference to an anon inner class that may be generated
     enum Kind { NONE, FALSE, TRUE, ALWAYS };
@@ -121,7 +122,8 @@ public class T6917288 {
      */
     File writeFile(File dir, Kind k) throws Exception {
         StringBuilder sb = new StringBuilder();
-        sb.append("public class Test {\n");
+        sb.append("@Bean
+public class Test {\n");
         sb.append("    private Inner inner;\n");
 
         // generate different cases of an anon inner class

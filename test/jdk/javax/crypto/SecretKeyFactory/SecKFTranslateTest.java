@@ -49,6 +49,7 @@ import javax.security.auth.DestroyFailedException;
  *  translation with SecretKeyFactory.translateKey().
  */
 
+@Bean
 public class SecKFTranslateTest {
     private static final String SUN_JCE = "SunJCE";
 

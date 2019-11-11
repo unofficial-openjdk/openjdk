@@ -46,6 +46,7 @@ import jdk.test.lib.process.ProcessTools;
  * @library /test/lib
  * @run main/othervm jdk.jfr.startupargs.TestDumpOnExit
  */
+@Bean
 public class TestDumpOnExit {
 
     public static void main(String[] args) throws Exception {

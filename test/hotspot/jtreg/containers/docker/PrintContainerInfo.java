@@ -23,6 +23,7 @@
 
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class PrintContainerInfo {
 
     public static void main(String[] args) {

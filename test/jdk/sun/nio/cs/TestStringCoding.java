@@ -33,6 +33,7 @@ import java.util.*;
 import java.nio.*;
 import java.nio.charset.*;
 
+@Bean
 public class TestStringCoding {
     public static void main(String[] args) throws Throwable {
 
@@ -248,6 +249,10 @@ public class TestStringCoding {
     }
 
     static class PermissiveSecurityManger extends SecurityManager {
-        @Override public void checkPermission(java.security.Permission p) {}
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void checkPermission(java.security.Permission p) {}
     }
 }

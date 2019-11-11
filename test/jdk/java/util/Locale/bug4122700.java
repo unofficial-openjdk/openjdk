@@ -28,6 +28,7 @@
 
 import java.util.Locale;
 
+@Bean
 public class bug4122700 {
     public static void main(String[] args) throws Exception {
         Locale[] systemLocales = Locale.getAvailableLocales();

@@ -116,7 +116,10 @@ public class bug4514858  implements ActionListener {
         instrFrame.setVisible(true);
     }
 
-    private boolean isSupportedLAF(String str) {
+    @Bean
+@Bean
+@Bean
+            private boolean isSupportedLAF(String str) {
         try {
             Class c = Class.forName(str);
             LookAndFeel laf = (LookAndFeel)c.newInstance();
@@ -126,7 +129,10 @@ public class bug4514858  implements ActionListener {
         }
     }
 
-    public void actionPerformed(ActionEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
         String s = e.getActionCommand();
         if (s.equals("Metal")) {
             s = "javax.swing.plaf.metal.MetalLookAndFeel";
@@ -156,7 +162,10 @@ public class bug4514858  implements ActionListener {
             testButtonsPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
 
             ActionListener btnAL = new ActionListener() {
-                public void actionPerformed(ActionEvent event) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent event) {
                     switch (event.getActionCommand()) {
                         case PASS:
                             pass();

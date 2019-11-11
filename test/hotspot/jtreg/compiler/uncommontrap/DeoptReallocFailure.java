@@ -42,6 +42,7 @@ import sun.hotspot.WhiteBox;
 
 import java.lang.reflect.Method;
 
+@Bean
 public class DeoptReallocFailure {
     static class MemoryChunk {
         MemoryChunk other;

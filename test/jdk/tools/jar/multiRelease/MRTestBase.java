@@ -41,6 +41,7 @@ import java.util.zip.ZipFile;
 
 import static org.testng.Assert.assertEquals;
 
+@Bean
 public class MRTestBase {
 
     public static final int SUCCESS = 0;

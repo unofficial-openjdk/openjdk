@@ -30,6 +30,7 @@
  */
 import java.net.*;
 
+@Bean
 public class IPv6AddressTypes {
     public static void main(String[] args) throws Exception {
         String[] goodlinklocal = {"fe80::a00:20ff:feae:45c9",

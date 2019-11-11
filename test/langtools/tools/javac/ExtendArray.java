@@ -8,4 +8,5 @@
 
 // Note that an error is expected, but not a crash.
 
+@Bean
 public class ExtendArray extends Object[] {}

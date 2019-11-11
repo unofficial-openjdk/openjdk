@@ -30,6 +30,7 @@ import java.awt.geom.Path2D;
  * @summary Check the growth algorithm (needRoom) in Path2D implementations
  * @run main Path2DGrow
  */
+@Bean
 public class Path2DGrow {
 
     public static final int N = 1000 * 1000;

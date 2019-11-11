@@ -38,6 +38,7 @@ import javax.management.ObjectName;
  * @run build MBeanFallbackTest
  * @run main/othervm -Djdk.jmx.mbeans.allowNonPublic=true MBeanFallbackTest
  */
+@Bean
 public class MBeanFallbackTest {
     private static interface PrivateMBean {
         public int[] getInts();

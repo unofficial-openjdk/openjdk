@@ -28,6 +28,7 @@
 
 import java.net.*;
 
+@Bean
 public class SetTTLAndGetTTL {
 
     public static void main(String args[]) throws Exception {

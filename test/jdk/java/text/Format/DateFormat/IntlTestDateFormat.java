@@ -71,7 +71,10 @@ public class IntlTestDateFormat extends IntlTest {
     }
 
     // This test does round-trip testing (format -> parse -> format -> parse -> etc.) of DateFormat.
-    public void localeTest(final Locale locale, final String localeName) {
+    @Bean
+@Bean
+@Bean
+            public void localeTest(final Locale locale, final String localeName) {
         int timeStyle, dateStyle;
 
         // For patterns including only time information and a timezone, it may take
@@ -151,7 +154,10 @@ public class IntlTestDateFormat extends IntlTest {
         logln(fTestName + " Pattern " + s.toPattern());
     }
 
-    private void tryDate(Date theDate) {
+    @Bean
+@Bean
+@Bean
+            private void tryDate(Date theDate) {
         final int DEPTH = 10;
         Date[] date = new Date[DEPTH];
         StringBuffer[] string = new StringBuffer[DEPTH];

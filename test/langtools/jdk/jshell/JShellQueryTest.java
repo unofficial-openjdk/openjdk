@@ -39,6 +39,7 @@ import static java.util.stream.Collectors.joining;
 import static org.testng.Assert.assertEquals;
 
 @Test
+@Bean
 public class JShellQueryTest extends KullaTesting {
 
     public void testSnippets() {

@@ -41,6 +41,7 @@ import java.util.stream.Collectors;
 import jdk.test.lib.NetworkConfiguration;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class LinkLocal {
 
     static int testCount = 0;

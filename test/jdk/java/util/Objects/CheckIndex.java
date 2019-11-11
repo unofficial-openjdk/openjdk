@@ -42,6 +42,7 @@ import java.util.function.IntSupplier;
 
 import static org.testng.Assert.*;
 
+@Bean
 public class CheckIndex {
 
     static class AssertingOutOfBoundsException extends RuntimeException {
@@ -94,7 +95,11 @@ public class CheckIndex {
     }
 
     @Test(dataProvider = "checkIndexProvider")
-    public void testCheckIndex(int index, int length, boolean withinBounds) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testCheckIndex(int index, int length, boolean withinBounds) {
         String expectedMessage = withinBounds
                                  ? null
                                  : Preconditions.outOfBoundsExceptionFormatter(IndexOutOfBoundsException::new).
@@ -156,7 +161,11 @@ public class CheckIndex {
     }
 
     @Test(dataProvider = "checkFromToIndexProvider")
-    public void testCheckFromToIndex(int fromIndex, int toIndex, int length, boolean withinBounds) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testCheckFromToIndex(int fromIndex, int toIndex, int length, boolean withinBounds) {
         String expectedMessage = withinBounds
                                  ? null
                                  : Preconditions.outOfBoundsExceptionFormatter(IndexOutOfBoundsException::new).
@@ -225,7 +234,11 @@ public class CheckIndex {
     }
 
     @Test(dataProvider = "checkFromIndexSizeProvider")
-    public void testCheckFromIndexSize(int fromIndex, int size, int length, boolean withinBounds) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testCheckFromIndexSize(int fromIndex, int size, int length, boolean withinBounds) {
         String expectedMessage = withinBounds
                                  ? null
                                  : Preconditions.outOfBoundsExceptionFormatter(IndexOutOfBoundsException::new).

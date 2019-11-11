@@ -40,6 +40,7 @@ import javax.swing.border.TitledBorder;
 
 import static javax.swing.UIManager.getInstalledLookAndFeels;
 
+@Bean
 public class Test6981576 extends TitledBorder {
 
     private static volatile Throwable failed;
@@ -82,7 +83,11 @@ public class Test6981576 extends TitledBorder {
     }
 
     @Override
-    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
         getBorder().paintBorder(c, g, x, y, width, height);
     }
 

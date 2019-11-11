@@ -30,6 +30,7 @@ import java.awt.event.WindowEvent;
  * @author Aruna Samji
  */
 
+@Bean
 public class GUIZoomFrame extends Frame {
 
     JFrame jframe1, jframe2;
@@ -56,7 +57,11 @@ public class GUIZoomFrame extends Frame {
 
         //Listeners for ZoomJFrameChangeState
         jframe1.addWindowStateListener(new WindowAdapter() {
-            public void windowStateChanged(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowStateChanged(WindowEvent e) {
                 if (e.getNewState() == Frame.MAXIMIZED_BOTH)
                     maxBoth = true;
 
@@ -76,7 +81,11 @@ public class GUIZoomFrame extends Frame {
 
         //Listeners for ZoomJFrameRepaint
         jframe2.addWindowStateListener( new WindowAdapter() {
-            public void windowStateChanged(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowStateChanged(WindowEvent e) {
                 if (e.getNewState() == Frame.MAXIMIZED_BOTH)
                     maxBoth = true;
 

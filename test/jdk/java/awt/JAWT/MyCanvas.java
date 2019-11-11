@@ -24,6 +24,7 @@
 import java.awt.*;
 import java.awt.event.*;
 
+@Bean
 public class MyCanvas extends Canvas {
 
     static {
@@ -45,6 +46,10 @@ public class MyCanvas extends Canvas {
             f.setBounds(0, 0, 100, 100);
             f.add(new MyCanvas());
             f.addWindowListener(new WindowAdapter() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void windowClosing(WindowEvent ev) {
                     System.exit(0);
                 }

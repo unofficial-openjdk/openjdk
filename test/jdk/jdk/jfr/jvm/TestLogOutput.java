@@ -39,6 +39,7 @@ import java.util.List;
  * @library /test/lib
  * @run main/othervm -Xlog:disable -Xlog:jfr*=trace:file=jfr_trace.txt -XX:StartFlightRecording=duration=1s,filename=recording.jfr jdk.jfr.jvm.TestLogOutput
  */
+@Bean
 public class TestLogOutput {
     public static void main(String[] args) throws Exception {
         final String fileName = "jfr_trace.txt";

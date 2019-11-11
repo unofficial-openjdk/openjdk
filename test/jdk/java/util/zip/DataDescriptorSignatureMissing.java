@@ -43,6 +43,7 @@
 import java.io.*;
 import java.util.zip.*;
 
+@Bean
 public class DataDescriptorSignatureMissing  {
     void printStream(InputStream is) throws IOException {
         Reader r = new InputStreamReader(is);

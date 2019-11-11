@@ -37,6 +37,7 @@ import java.util.Arrays;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 
+@Bean
 public class P12SecretKey {
 
     private static final String ALIAS = "alias";

@@ -29,6 +29,7 @@
 
 import java.awt.geom.Line2D;
 
+@Bean
 public class NegLineDistSqBug {
     static int errored;
 

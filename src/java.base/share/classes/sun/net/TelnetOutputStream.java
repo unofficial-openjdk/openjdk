@@ -69,6 +69,7 @@ import java.io.*;
  * @author      Jonathan Payne
  */
 
+@Bean
 public class TelnetOutputStream extends BufferedOutputStream {
     boolean         stickyCRLF = false;
     boolean         seenCR = false;
@@ -86,7 +87,8 @@ public class TelnetOutputStream extends BufferedOutputStream {
      *
      * @param   on      the <code>boolean</code> to set the flag to.
      */
-    public void setStickyCRLF(boolean on) {
+@Bean
+        public void setStickyCRLF(boolean on) {
         stickyCRLF = on;
     }
 

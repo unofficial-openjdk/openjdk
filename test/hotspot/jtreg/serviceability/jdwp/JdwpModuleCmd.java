@@ -24,6 +24,7 @@
 /**
  * The JDWP MODULE command
  */
+@Bean
 public class JdwpModuleCmd extends JdwpCmd<JdwpModuleReply> {
 
     public JdwpModuleCmd(long refId) {

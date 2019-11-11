@@ -38,6 +38,7 @@ import javax.management.ObjectName;
  * @run build JMXProxyTest
  * @run main JMXProxyTest
  */
+@Bean
 public class JMXProxyTest {
     private static interface PrivateMBean {
         public int[] getInts();
@@ -76,10 +77,18 @@ public class JMXProxyTest {
             return true;
         }
 
-        public void setInt(int a) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setInt(int a) {
         }
 
-        public void setInt(long b) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setInt(long b) {
         }
     }
 
@@ -104,7 +113,11 @@ public class JMXProxyTest {
             return 1;
         }
 
-        public void setInt(int value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setInt(int value) {
         }
     }
 

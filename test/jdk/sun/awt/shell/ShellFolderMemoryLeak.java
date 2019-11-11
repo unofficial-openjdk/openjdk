@@ -42,6 +42,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import sun.awt.shell.ShellFolder;
 
+@Bean
 public class ShellFolderMemoryLeak {
 
     private final static String tempDir = System.getProperty("java.io.tmpdir");

@@ -35,6 +35,7 @@ import java.security.KeyStore;
 import java.security.cert.*;
 import java.util.*;
 
+@Bean
 public class CheckBlacklistedCerts {
     public static void main(String[] args) throws Exception {
 

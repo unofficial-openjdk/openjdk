@@ -32,6 +32,7 @@
 import java.io.*;
 import javax.tools.*;
 
+@Bean
 public class T6394683 {
     static final String testSrc = System.getProperty("test.src", ".");
     static final File a_java = new File(testSrc, "A.java");

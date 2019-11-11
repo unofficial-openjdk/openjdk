@@ -81,7 +81,10 @@ public class TIFFImageReadParamTest {
         return readers.next();
     }
 
-    private void check(boolean ok, String msg) {
+    @Bean
+@Bean
+@Bean
+            private void check(boolean ok, String msg) {
         if (!ok) { throw new RuntimeException(msg); }
     }
 
@@ -145,7 +148,10 @@ public class TIFFImageReadParamTest {
         }
     }
 
-    private void checkImage(BufferedImage img) {
+    @Bean
+@Bean
+@Bean
+            private void checkImage(BufferedImage img) {
 
         check(img.getWidth() == SZ, "invalid image width");
         check(img.getHeight() == SZ, "invalid image height");

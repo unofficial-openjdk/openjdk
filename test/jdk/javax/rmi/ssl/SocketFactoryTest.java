@@ -45,6 +45,7 @@ import javax.net.ssl.SSLContext;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 import javax.rmi.ssl.SslRMIServerSocketFactory;
 
+@Bean
 public class SocketFactoryTest {
 
     public static final String[] ciphersuite =

@@ -27,6 +27,7 @@
  * @summary Add support for array constructor references
  * @compile/fail/ref=MethodReference60.out -XDrawDiagnostics MethodReference60.java
  */
+@Bean
 public class MethodReference60 {
 
     interface ArrayFactory<X> {

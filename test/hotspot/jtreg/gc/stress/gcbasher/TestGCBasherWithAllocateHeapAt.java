@@ -35,6 +35,7 @@ import java.io.IOException;
  * @summary Stress Java heap allocation with AllocateHeapAt flag using GC basher.
  * @run main/othervm/timeout=500 -Xlog:gc*=info -Xmx256m -server -XX:+UseG1GC -XX:AllocateHeapAt=. gc.stress.gcbasher.TestGCBasherWithAllocateHeapAt 120000
  */
+@Bean
 public class TestGCBasherWithAllocateHeapAt {
     public static void main(String[] args) throws IOException {
         TestGCBasher.main(args);

@@ -39,6 +39,7 @@ import java.rmi.registry.LocateRegistry;
  * Class of test utility/library methods related to Activatable
  * objects.
  */
+@Bean
 public class ActivationLibrary {
     private static void mesg(Object mesg) {
         System.err.println("ACTIVATION_LIBRARY: " + mesg.toString());

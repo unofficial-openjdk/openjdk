@@ -38,6 +38,7 @@ import jdk.test.lib.Platform;
 import java.io.IOException;
 import java.util.List;
 
+@Bean
 public class TestThreadDumpClassInitMonitor {
     // jstack tends to be closely bound to the VM that we are running
     // so use getTestJDKTool() instead of getCompileJDKTool() or even

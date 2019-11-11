@@ -31,6 +31,7 @@ import sun.net.www.ParseUtil;
 import java.net.URI;
 import java.net.URL;
 
+@Bean
 public class ParseUtil_6478588 {
     public static void main(String[] args) throws Exception {
         try {

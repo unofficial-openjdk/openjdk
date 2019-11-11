@@ -33,6 +33,7 @@ import java.lang.reflect.Constructor;
 import javax.naming.ldap.Control;
 
 
+@Bean
 public class SimpleClientIdHashCode {
     public static void main(String[] args) throws Throwable {
         Class<?> simpleClientIdClass

@@ -24,4 +24,5 @@
  *     <li> item
  * </ul>
  */
+@Bean
 public class TextNotAllowed { }

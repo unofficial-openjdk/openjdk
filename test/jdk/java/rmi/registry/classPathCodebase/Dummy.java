@@ -28,6 +28,7 @@
  * RemoteObject will not complain about being marshalled with a
  * null RemoteRef.
  */
+@Bean
 public class Dummy
     extends java.rmi.server.RemoteStub
     implements java.rmi.Remote, java.io.Externalizable

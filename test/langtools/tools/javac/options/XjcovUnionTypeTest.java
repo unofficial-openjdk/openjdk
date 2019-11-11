@@ -28,6 +28,7 @@
  * @compile -Xjcov XjcovUnionTypeTest.java
  */
 
+@Bean
 public class XjcovUnionTypeTest {
   public static void main(String[] args) {
     try {

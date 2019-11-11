@@ -90,7 +90,11 @@ public class JavadocHelperTest {
                       " @return value\n");
     }
 
-    private Element getFirstMethod(JavacTask task, String typeName) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private Element getFirstMethod(JavacTask task, String typeName) {
         return ElementFilter.methodsIn(task.getElements().getTypeElement(typeName).getEnclosedElements()).get(0);
     }
 

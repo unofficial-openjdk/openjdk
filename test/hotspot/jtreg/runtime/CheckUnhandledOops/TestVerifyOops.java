@@ -28,6 +28,7 @@
  * @run main/othervm -XX:+VerifyOops TestVerifyOops
  */
 
+@Bean
 public class TestVerifyOops {
 
     public static void main(String[] args) {

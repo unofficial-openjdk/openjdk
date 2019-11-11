@@ -33,6 +33,7 @@ class x123 {
     }
 }
 
+@Bean
 public class InitArg {
 
     public static boolean x123Initialized = false;

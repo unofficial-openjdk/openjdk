@@ -33,6 +33,7 @@
  */
 
 
+@Bean
 public class CollationKeyTest {
 
     public static void main(String[] args) {

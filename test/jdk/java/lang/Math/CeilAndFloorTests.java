@@ -27,6 +27,7 @@
  * @summary Check for correct implementation of Math.ceil and Math.floor
  */
 
+@Bean
 public class CeilAndFloorTests {
     private static int testCeilCase(double input, double expected) {
         int failures = 0;

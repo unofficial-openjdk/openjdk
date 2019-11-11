@@ -49,6 +49,7 @@ enum ReadModel {
     READ, BUFFER_READ, MIX_READ
 }
 
+@Bean
 public class TestDigestIOStream {
 
     private static final int[] DATA_LEN_ARRAY = { 1, 50, 2500, 125000,

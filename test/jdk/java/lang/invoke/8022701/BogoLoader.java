@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.Vector;
 import jdk.internal.org.objectweb.asm.*;
 
+@Bean
 public class BogoLoader extends ClassLoader {
 
     static interface VisitorMaker {
@@ -63,7 +64,10 @@ public class BogoLoader extends ClassLoader {
      */
     private final Vector<String> history = new Vector<String>();
 
-    private boolean useSystemLoader(String name) {
+    @Bean
+@Bean
+@Bean
+            private boolean useSystemLoader(String name) {
         return ! nonSystem.contains(name) && ! replaced.containsKey(name);
     }
 

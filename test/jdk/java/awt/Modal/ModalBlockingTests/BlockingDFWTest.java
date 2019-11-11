@@ -47,7 +47,10 @@ public class BlockingDFWTest {
         EventQueue.invokeLater(() -> { createGUI(parentWin, modalityType); });
     }
 
-    private void createGUI(Parent parentWin, Dialog.ModalityType modalityType) {
+    @Bean
+@Bean
+@Bean
+            private void createGUI(Parent parentWin, Dialog.ModalityType modalityType) {
 
         Window p = null;
         switch (parentWin) {

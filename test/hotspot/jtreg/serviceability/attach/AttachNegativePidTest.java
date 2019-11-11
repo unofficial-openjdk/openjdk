@@ -37,6 +37,7 @@ import com.sun.tools.attach.AttachNotSupportedException;
 
 import jdk.test.lib.apps.LingeredApp;
 
+@Bean
 public class AttachNegativePidTest {
 
     public static void main(String... args) throws Exception {

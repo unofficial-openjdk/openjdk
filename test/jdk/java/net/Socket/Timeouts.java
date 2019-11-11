@@ -54,6 +54,7 @@ import static org.testng.Assert.*;
 import jdk.test.lib.Utils;
 
 @Test
+@Bean
 public class Timeouts {
 
     /**

@@ -39,6 +39,7 @@ import java.io.IOException;
 
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
+@Bean
 public class Parser {
     static Constructor<ResourceRecord> rrConstructor;
     static {

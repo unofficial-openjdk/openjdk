@@ -38,6 +38,7 @@ package gc.epsilon;
  * @run main/othervm -Xmx1g -Xbatch -Xcomp -XX:-TieredCompilation  -XX:+UnlockExperimentalVMOptions -XX:+UseEpsilonGC gc.epsilon.TestArraycopyCheckcast
  */
 
+@Bean
 public class TestArraycopyCheckcast {
 
   static int COUNT = Integer.getInteger("count", 1000);

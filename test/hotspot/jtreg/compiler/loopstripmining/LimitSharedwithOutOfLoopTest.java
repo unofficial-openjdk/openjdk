@@ -30,6 +30,7 @@
  *
  */
 
+@Bean
 public class LimitSharedwithOutOfLoopTest {
     public static void main(String[] args) {
         boolean[] array1 = new boolean[2001];

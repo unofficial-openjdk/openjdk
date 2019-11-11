@@ -51,6 +51,7 @@ import java.lang.reflect.Executable;
 import java.util.Arrays;
 import java.util.Map;
 
+@Bean
 public class GetLineNumberTableTest {
     public static void main(String[] args) {
         TestCase.getAllExecutables()

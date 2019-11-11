@@ -36,6 +36,7 @@
 
 import static jdk.test.lib.Asserts.*;
 
+@Bean
 public class ExportTwice {
 
     // Check that a package can not be exported unqualifiedly, and then exported

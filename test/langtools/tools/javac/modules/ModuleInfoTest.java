@@ -42,6 +42,7 @@ import java.util.List;
 import toolbox.JavacTask;
 import toolbox.Task;
 
+@Bean
 public class ModuleInfoTest extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {
@@ -82,12 +83,14 @@ public class ModuleInfoTest extends ModuleTestBase {
     }
 
     /**
-     * Verify that a public class cannot be put in module-info.java.
+     * Verify that a @Bean
+public class cannot be put in module-info.java.
      */
     @Test
     public void testNotModuleDeclInModuleJava_2(Path base) throws Exception {
         Path src = base.resolve("src");
-        tb.writeFile(src.resolve("module-info.java"), "public class C { }");
+        tb.writeFile(src.resolve("module-info.java"), "@Bean
+public class C { }");
         String log = new JavacTask(tb)
                 .options("-XDrawDiagnostics")
                 .files(findJavaFiles(src))
@@ -143,7 +146,8 @@ public class ModuleInfoTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                           "module M { exports p to N; }",
-                          "package p; public class C {}");
+                          "package p; @Bean
+public class C {}");
         String log = new JavacTask(tb)
                 .options("-XDrawDiagnostics",
                          "-Xlint:module")
@@ -164,7 +168,8 @@ public class ModuleInfoTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                           "module M { exports p to N, N; }",
-                          "package p; public class C {}");
+                          "package p; @Bean
+public class C {}");
         String log = new JavacTask(tb)
                 .options("-XDrawDiagnostics",
                          "-Xlint:module")
@@ -185,7 +190,8 @@ public class ModuleInfoTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                           "@SuppressWarnings(\"module\") module M { exports p to N; }",
-                          "package p; public class C {}");
+                          "package p; @Bean
+public class C {}");
         String log = new JavacTask(tb)
                 .options("-XDrawDiagnostics",
                          "-Xlint:module")
@@ -206,7 +212,8 @@ public class ModuleInfoTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                           "module M { opens p to N; }",
-                          "package p; public class C {}");
+                          "package p; @Bean
+public class C {}");
         String log = new JavacTask(tb)
                 .options("-XDrawDiagnostics",
                          "-Xlint:module")
@@ -227,7 +234,8 @@ public class ModuleInfoTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                           "module M { opens p to N, N; }",
-                          "package p; public class C {}");
+                          "package p; @Bean
+public class C {}");
         String log = new JavacTask(tb)
                 .options("-XDrawDiagnostics",
                          "-Xlint:module")
@@ -248,7 +256,8 @@ public class ModuleInfoTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                           "@SuppressWarnings(\"module\") module M { opens p to N; }",
-                          "package p; public class C {}");
+                          "package p; @Bean
+public class C {}");
         String log = new JavacTask(tb)
                 .options("-XDrawDiagnostics",
                          "-Xlint:module")
@@ -464,8 +473,10 @@ public class ModuleInfoTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src.resolve("m1x"),
                           "module m1x { " + code + " }",
-                          "package p; public class P {}",
-                          "package q; public class Q {}");
+                          "package p; @Bean
+public class P {}",
+                          "package q; @Bean
+public class Q {}");
         tb.writeJavaFiles(src.resolve("m2x"),
                           "module m2x { requires m1x; }");
         tb.writeJavaFiles(src.resolve("m3x"),
@@ -602,7 +613,8 @@ public class ModuleInfoTest extends ModuleTestBase {
     public void testWrongOpensTransitiveFlag(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src, "module M { opens transitive p1; }",
-                "package p1; public class A { }");
+                "package p1; @Bean
+public class A { }");
         String log = new JavacTask(tb)
                 .options("-XDrawDiagnostics")
                 .files(findJavaFiles(src))
@@ -618,7 +630,8 @@ public class ModuleInfoTest extends ModuleTestBase {
     public void testWrongOpensStaticFlag(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src, "module M { opens static p1; }",
-                "package p1; public class A { }");
+                "package p1; @Bean
+public class A { }");
         String log = new JavacTask(tb)
                 .options("-XDrawDiagnostics")
                 .files(findJavaFiles(src))
@@ -634,7 +647,8 @@ public class ModuleInfoTest extends ModuleTestBase {
     public void testSeveralOpensDirectives(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src, "module M { opens opens p1; }",
-                "package p1; public class A { }");
+                "package p1; @Bean
+public class A { }");
         String log = new JavacTask(tb)
                 .options("-XDrawDiagnostics")
                 .files(findJavaFiles(src))
@@ -650,7 +664,8 @@ public class ModuleInfoTest extends ModuleTestBase {
     public void testUnknownDirective(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src, "module M { boolean p1; }",
-                "package p1; public class A { }");
+                "package p1; @Bean
+public class A { }");
         String log = new JavacTask(tb)
                 .options("-XDrawDiagnostics")
                 .files(findJavaFiles(src))
@@ -666,7 +681,8 @@ public class ModuleInfoTest extends ModuleTestBase {
     public void testUnknownModuleFlag(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src, "private module M { }",
-                "package p1; public class A { }");
+                "package p1; @Bean
+public class A { }");
         String log = new JavacTask(tb)
                 .options("-XDrawDiagnostics")
                 .files(findJavaFiles(src))
@@ -682,7 +698,8 @@ public class ModuleInfoTest extends ModuleTestBase {
     public void testDirectiveOnModuleDeclaration(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src, "opens module M { }",
-                "package p1; public class A { }");
+                "package p1; @Bean
+public class A { }");
         String log = new JavacTask(tb)
                 .options("-XDrawDiagnostics")
                 .files(findJavaFiles(src))
@@ -698,7 +715,8 @@ public class ModuleInfoTest extends ModuleTestBase {
     public void testTooOpenModule(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src, "open open module M { }",
-                "package p1; public class A { }");
+                "package p1; @Bean
+public class A { }");
         String log = new JavacTask(tb)
                 .options("-XDrawDiagnostics")
                 .files(findJavaFiles(src))
@@ -714,7 +732,8 @@ public class ModuleInfoTest extends ModuleTestBase {
     public void testEnumAsModuleFlag(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src, "enum module M { }",
-                "package p1; public class A { }");
+                "package p1; @Bean
+public class A { }");
         String log = new JavacTask(tb)
                 .options("-XDrawDiagnostics")
                 .files(findJavaFiles(src))
@@ -730,7 +749,8 @@ public class ModuleInfoTest extends ModuleTestBase {
     public void testClassInModule(Path base) throws Exception {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src, "module M { class B { } }",
-                "package p1; public class A { }");
+                "package p1; @Bean
+public class A { }");
         String log = new JavacTask(tb)
                 .options("-XDrawDiagnostics")
                 .files(findJavaFiles(src))

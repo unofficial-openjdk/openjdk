@@ -30,6 +30,7 @@
  * @run main MethodReference05
  */
 
+@Bean
 public class MethodReference05 {
 
     static int assertionCount = 0;

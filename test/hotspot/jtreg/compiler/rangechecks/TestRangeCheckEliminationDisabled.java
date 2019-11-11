@@ -32,6 +32,7 @@
 
 package compiler.rangechecks;
 
+@Bean
 public class TestRangeCheckEliminationDisabled {
 
     public static void main(String[] args) {

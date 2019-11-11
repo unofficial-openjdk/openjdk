@@ -35,6 +35,7 @@ import javax.swing.JApplet;
 import javax.swing.JColorChooser;
 import javax.swing.UIManager;
 
+@Bean
 public class Test4887836 extends JApplet {
     public void init() {
         UIManager.put("Label.font", new Font("Perpetua", 0, 36)); // NON-NLS: property and font names

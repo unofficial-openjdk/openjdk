@@ -82,6 +82,9 @@ public class TestGetBaseBundleName {
 
         final ResourceBundle bundle = new ResourceBundle() {
             @Override
+            @Bean
+@Bean
+@Bean
             protected Object handleGetObject(String key) {
                 if ("dummy".equals(key)) return "foo";
                 throw new MissingResourceException("Missing key",
@@ -101,6 +104,9 @@ public class TestGetBaseBundleName {
 
         final ResourceBundle bundle2 = new ResourceBundle() {
             @Override
+            @Bean
+@Bean
+@Bean
             protected Object handleGetObject(String key) {
                 if ("dummy".equals(key)) return "foo";
                 throw new MissingResourceException("Missing key",

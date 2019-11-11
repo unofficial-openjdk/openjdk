@@ -68,6 +68,7 @@ import java.io.*;
  * @since 1.4
  */
 
+@Bean
 public class CipherOutputStream extends FilterOutputStream {
 
     // the cipher engine to use to process stream data

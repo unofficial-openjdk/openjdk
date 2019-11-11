@@ -36,6 +36,7 @@ import java.util.*;
 import javax.management.*;
 import javax.management.openmbean.*;
 
+@Bean
 public class ConstraintTest {
     private static String failure;
 

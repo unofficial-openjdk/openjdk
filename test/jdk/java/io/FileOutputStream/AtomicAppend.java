@@ -33,6 +33,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
+@Bean
 public class AtomicAppend {
     // Before the fix for
     // 6631352: Implement atomic append mode using FILE_APPEND_DATA (win)

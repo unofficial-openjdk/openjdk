@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import javax.imageio.ImageIO;
 
+@Bean
 public class FSFrame extends Frame implements Runnable {
 
     // Don't start the test until the window is visible
@@ -46,7 +47,10 @@ public class FSFrame extends Frame implements Runnable {
     Robot robot = null;
     static volatile boolean done = false;
 
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
         if (!visible && getWidth() != 0 && getHeight() != 0) {
             visible = true;
             try {
@@ -62,7 +66,10 @@ public class FSFrame extends Frame implements Runnable {
     }
 
     @Override
-    public void update(Graphics g) {
+    @Bean
+@Bean
+@Bean
+            public void update(Graphics g) {
         paint(g);
     }
 

@@ -74,21 +74,33 @@ public class VerifyTargetTest extends InputVerifier implements FocusListener {
     }
 
     @Override
-    public boolean verify(JComponent input) {
+    @Bean
+@Bean
+@Bean
+            public boolean verify(JComponent input) {
         return true;
     }
 
     @Override
-    public boolean verifyTarget(JComponent input) {
+    @Bean
+@Bean
+@Bean
+            public boolean verifyTarget(JComponent input) {
         success = input == field2;
         return false;
     }
 
     @Override
-    public void focusGained(FocusEvent e) {}
+    @Bean
+@Bean
+@Bean
+            public void focusGained(FocusEvent e) {}
 
     @Override
-    public void focusLost(FocusEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void focusLost(FocusEvent e) {
         success = false;
     }
 }

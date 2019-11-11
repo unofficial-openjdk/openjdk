@@ -44,6 +44,7 @@ import java.awt.event.ActionListener;
 import java.util.concurrent.TimeUnit;
 import javax.swing.JFileChooser;
 
+@Bean
 public class ExternalDriveNameTest {
 
     public static void main(String args[]) throws Exception {
@@ -156,7 +157,11 @@ class TestUI {
         failButton.setActionCommand("Fail");
         failButton.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
                 testResult = false;
                 mainFrame.dispose();
                 latch.countDown();

@@ -37,6 +37,7 @@ import java.awt.*;
 
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class bug8024864
 {
     private static final int REPEATS = 30;

@@ -34,6 +34,7 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.TreeMap;
 
+@Bean
 public class IDTest {
     public static void main(String[] args) {
         Set<String> ids = new HashSet<>();

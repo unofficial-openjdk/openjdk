@@ -35,6 +35,7 @@ import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
 
+@Bean
 public class ArraysNewInstanceBug implements Runnable {
     static Class<?>[] classes;
 

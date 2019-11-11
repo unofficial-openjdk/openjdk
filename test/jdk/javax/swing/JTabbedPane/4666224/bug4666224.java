@@ -38,7 +38,10 @@ public class bug4666224 extends JApplet {
        java.awt.EventQueue.invokeAndWait( () -> {
            tabPane = new JTabbedPane();
            tabPane.addMouseListener(new MouseAdapter() {
-                public void mouseClicked(MouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void mouseClicked(MouseEvent e) {
                     Point pt = e.getPoint();
                     System.out.println("Index at location: "
                         + tabPane.indexAtLocation(pt.x, pt.y));
@@ -258,14 +261,20 @@ public class bug4666224 extends JApplet {
             this.placement = placement;
         }
 
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
             tabPane.setTabPlacement(placement);
         }
     }
 
     private class ChangeLayoutAction extends AbstractAction {
         private boolean a = true;
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
             if (a) {
                 tabPane.setTabLayoutPolicy(JTabbedPane.WRAP_TAB_LAYOUT);
                 a = false;
@@ -277,7 +286,10 @@ public class bug4666224 extends JApplet {
     }
 
     private class DumpAction extends AbstractAction {
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
             for (int i = 0; i < tabPane.getTabCount(); i++) {
                 System.out.println("Tab: " + i + " "
                     + tabPane.getUI().getTabBounds(tabPane, i));
@@ -539,7 +551,10 @@ class TestDialog extends Dialog
             setVisible(true);
         }
 
-        public void actionPerformed(ActionEvent ae) {
+        @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent ae) {
             remarksMessage=null;
             if(ae.getSource()==addRemarks)  {
                 String msg = textarea.getText().trim();

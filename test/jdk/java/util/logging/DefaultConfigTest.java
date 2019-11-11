@@ -38,6 +38,7 @@ import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+@Bean
 public class DefaultConfigTest {
     static final java.io.PrintStream out = System.out;
     public static void main(String arg[]) {

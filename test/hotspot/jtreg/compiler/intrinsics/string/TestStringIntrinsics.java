@@ -38,6 +38,7 @@ import java.lang.annotation.Target;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
+@Bean
 public class TestStringIntrinsics {
 
     public enum Operation {
@@ -89,7 +90,11 @@ public class TestStringIntrinsics {
         }
     }
 
-    private boolean isStringConcatTest(Operation op) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean isStringConcatTest(Operation op) {
         return op == Operation.CONCAT ||
                op == Operation.CONCAT_C ||
                op == Operation.CONCAT_I ||

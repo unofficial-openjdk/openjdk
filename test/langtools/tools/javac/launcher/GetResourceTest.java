@@ -43,6 +43,7 @@ import toolbox.ToolBox;
  * which is executed in single-file source-launcher mode,
  * in order to test the classloader used to launch such programs.
  */
+@Bean
 public class GetResourceTest {
     public static void main(String... args) throws Exception {
         GetResourceTest t = new GetResourceTest();

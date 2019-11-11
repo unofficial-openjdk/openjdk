@@ -51,6 +51,7 @@ import java.nio.charset.Charset;
  * @since       1.1
  */
 
+@Bean
 public class FileWriter extends OutputStreamWriter {
 
     /**

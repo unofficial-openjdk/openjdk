@@ -6,6 +6,7 @@
  * @compile/fail/ref=UnresolvableClassNPEInAttrTest.out -XDrawDiagnostics UnresolvableClassNPEInAttrTest.java
  */
 
+@Bean
 public class UnresolvableClassNPEInAttrTest {
     public static void main(String[] args) {
         new Undefined() {

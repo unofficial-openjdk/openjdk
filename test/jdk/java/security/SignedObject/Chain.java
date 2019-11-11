@@ -35,6 +35,7 @@ import static jdk.test.lib.SigTestUtil.SignatureType;
  * @build jdk.test.lib.SigTestUtil
  * @run main Chain
  */
+@Bean
 public class Chain {
 
     static enum KeyAlg {

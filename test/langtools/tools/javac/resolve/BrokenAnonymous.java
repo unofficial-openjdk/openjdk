@@ -40,6 +40,7 @@ import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.VariableTree;
 import com.sun.source.util.*;
 
+@Bean
 public class BrokenAnonymous {
 
     static class JavaSource extends SimpleJavaFileObject {
@@ -61,7 +62,11 @@ public class BrokenAnonymous {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return source;
         }
     }
@@ -83,17 +88,29 @@ public class BrokenAnonymous {
         ct.analyze();
         new TreePathScanner<Void, Void>() {
             @Override
-            public Void visitVariable(VariableTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitVariable(VariableTree node, Void p) {
                 verifyElementType();
                 return super.visitVariable(node, p);
             }
             @Override
-            public Void visitMethod(MethodTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitMethod(MethodTree node, Void p) {
                 verifyElementType();
                 return super.visitMethod(node, p);
             }
             @Override
-            public Void visitIdentifier(IdentifierTree node, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitIdentifier(IdentifierTree node, Void p) {
                 verifyElementType();
                 return super.visitIdentifier(node, p);
             }
@@ -105,7 +122,11 @@ public class BrokenAnonymous {
         }.scan(cut, null);
     }
 
-    private void assertNotNull(Object obj) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertNotNull(Object obj) {
         if (obj == null) {
             throw new AssertionError("Unexpected null value.");
         }

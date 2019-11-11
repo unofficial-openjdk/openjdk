@@ -44,6 +44,7 @@ import java.net.Socket;
 import java.net.SocketException;
 
 
+@Bean
 public class TestFtpClientNameListWithNull {
 
     private static volatile boolean commandHasArgs;

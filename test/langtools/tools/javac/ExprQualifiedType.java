@@ -7,6 +7,7 @@
  * @compile/fail/ref=ExprQualifiedType.out -XDrawDiagnostics ExprQualifiedType.java
  */
 
+@Bean
 public class ExprQualifiedType {
 
     static class Nested {

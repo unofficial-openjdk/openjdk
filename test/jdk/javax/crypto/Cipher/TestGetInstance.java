@@ -33,6 +33,7 @@ import java.security.spec.*;
 
 import javax.crypto.*;
 
+@Bean
 public class TestGetInstance {
 
     private static void same(Provider p1, Provider p2) throws Exception {

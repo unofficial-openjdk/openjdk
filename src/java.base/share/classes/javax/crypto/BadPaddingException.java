@@ -35,6 +35,7 @@ import java.security.GeneralSecurityException;
  * @since 1.4
  */
 
+@Bean
 public class BadPaddingException extends GeneralSecurityException {
 
     @java.io.Serial

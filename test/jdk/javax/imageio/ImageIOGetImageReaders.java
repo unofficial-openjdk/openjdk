@@ -29,6 +29,7 @@
 
 import javax.imageio.ImageIO;
 
+@Bean
 public class ImageIOGetImageReaders {
 
     public static void main(String[] args) {

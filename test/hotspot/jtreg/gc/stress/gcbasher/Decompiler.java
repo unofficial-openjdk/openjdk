@@ -60,25 +60,42 @@ class Decompiler {
         decodeMethodDependencies(methods, constantPool);
     }
 
-    public ClassInfo getClassInfo() {
+    @Bean
+public classInfo getClassInfo() {
         return ci;
     }
 
-    private boolean isDependency(String name, String className) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean isDependency(String name, String className) {
         return !name.equals(className) && !name.startsWith("[");
     }
 
-    private void addDependency(MethodInfo m, String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void addDependency(MethodInfo m, String name) {
         Dependency d = new Dependency(m.getName(), m.getDescriptor(), name);
         ci.addResolutionDep(d);
     }
 
-    private String resolveName(ConstantPoolEntry[] constantPool, int cpi) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String resolveName(ConstantPoolEntry[] constantPool, int cpi) {
         int nameIndex = constantPool[cpi].getNameIndex();
         return constantPool[nameIndex].getValue();
     }
 
-    private void decodeMethodDependencies(MethodInfo[] methods, ConstantPoolEntry[] constantPool) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void decodeMethodDependencies(MethodInfo[] methods, ConstantPoolEntry[] constantPool) {
         for (int i = 0; i < methods.length; i++) {
             MethodInfo m = methods[i];
             final int stopCheck = m.getCodeStart() + m.getCodeLength();

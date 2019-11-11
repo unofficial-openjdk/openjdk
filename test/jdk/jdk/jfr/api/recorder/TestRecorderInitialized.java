@@ -43,7 +43,10 @@ public class TestRecorderInitialized {
         private boolean notified;
 
         @Override
-        public void recorderInitialized(FlightRecorder r) {
+        @Bean
+@Bean
+@Bean
+            public void recorderInitialized(FlightRecorder r) {
             notified = true;
         }
     }

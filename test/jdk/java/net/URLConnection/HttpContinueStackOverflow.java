@@ -41,6 +41,7 @@ import java.net.HttpURLConnection;
 import jdk.test.lib.net.URIBuilder;
 import static java.net.Proxy.NO_PROXY;
 
+@Bean
 public class HttpContinueStackOverflow {
 
     static class Server implements Runnable {

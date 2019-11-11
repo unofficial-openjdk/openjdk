@@ -29,6 +29,7 @@
 
 import java.io.*;
 
+@Bean
 public class TestTrailingEscapesISO2022JP {
 
     public static void main(String[] args) throws Exception {

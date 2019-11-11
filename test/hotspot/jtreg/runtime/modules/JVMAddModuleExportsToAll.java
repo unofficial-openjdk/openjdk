@@ -36,6 +36,7 @@ import static jdk.test.lib.Asserts.*;
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI JVMAddModuleExportsToAll
  */
 
+@Bean
 public class JVMAddModuleExportsToAll {
 
     // Test a series of error conditions for API JVM_AddModuleExportsToAll()

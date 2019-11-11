@@ -38,6 +38,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+@Bean
 public class Basic {
 
     /*
@@ -65,7 +66,11 @@ public class Basic {
     }
 
     @Test(dataProvider = "testLists")
-    public void testRandomAccess(List<Integer> list, boolean expectedRA, String failMsg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testRandomAccess(List<Integer> list, boolean expectedRA, String failMsg) {
 
         var actualRA = list instanceof RandomAccess;
         assertEquals(actualRA, expectedRA, failMsg);
@@ -95,7 +100,11 @@ public class Basic {
     }
 
     @Test(dataProvider = "testLists")
-    public void testListCopy(List<Integer> list, boolean expectedRA, String failMsg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testListCopy(List<Integer> list, boolean expectedRA, String failMsg) {
         ArrayList testCollection = new ArrayList<>(Collections.nCopies(100, 0));
         // Test that copy works on random & sequential access
         Collections.copy(list, testCollection);
@@ -103,7 +112,11 @@ public class Basic {
     }
 
     @Test(dataProvider = "testLists")
-    public void testListFill(List<Integer> list, boolean expectedRA, String failMsg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testListFill(List<Integer> list, boolean expectedRA, String failMsg) {
         ArrayList testCollection = new ArrayList<>(Collections.nCopies(100, 0));
         // Test that copy works on random & sequential access
         Collections.fill(list, 0);

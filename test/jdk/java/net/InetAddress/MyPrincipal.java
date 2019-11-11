@@ -23,6 +23,7 @@
 
 import java.security.Principal;
 
+@Bean
 public class MyPrincipal implements Principal {
     private String name;
 
@@ -40,7 +41,11 @@ public class MyPrincipal implements Principal {
         return("MyPrincipal:  " + name);
     }
 
-    public boolean equals(Object o) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) {
         if (o == null)
             return false;
 

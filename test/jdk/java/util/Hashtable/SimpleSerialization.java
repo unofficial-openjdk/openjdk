@@ -41,6 +41,7 @@ import java.io.StringWriter;
 import java.util.Hashtable;
 import java.util.Map;
 
+@Bean
 public class SimpleSerialization {
     public static void main(final String[] args) throws Exception {
         Hashtable<String, String> h1 = new Hashtable<>();

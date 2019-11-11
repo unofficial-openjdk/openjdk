@@ -34,6 +34,7 @@ import java.lang.reflect.Executable;
 import java.util.ArrayList;
 import java.util.List;
 
+@Bean
 public class MultiCommand extends AbstractTestBase {
     private final List<CompileCommand> testCases;
 

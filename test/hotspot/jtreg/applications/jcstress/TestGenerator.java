@@ -58,6 +58,7 @@ import java.util.function.Predicate;
  *
  * @see <a href=https://wiki.openjdk.java.net/display/CodeTools/jcstress>jcstress</a>
  */
+@Bean
 public class TestGenerator {
     private static final String COPYRIGHT;
     static {

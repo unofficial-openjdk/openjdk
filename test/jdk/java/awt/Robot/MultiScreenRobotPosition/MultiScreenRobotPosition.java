@@ -55,7 +55,10 @@ public class MultiScreenRobotPosition {
 
             frame.addMouseListener(new MouseAdapter() {
                 @Override
-                public void mouseClicked(MouseEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void mouseClicked(MouseEvent e) {
                     System.out.println("e = " + e);
                     fail = false;
                 }

@@ -59,6 +59,7 @@ import static java.net.http.HttpClient.Version.HTTP_1_1;
 import static java.net.http.HttpClient.Version.HTTP_2;
 
 
+@Bean
 public class InvalidSSLContextTest {
 
     SSLContext sslContext;

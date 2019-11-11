@@ -49,19 +49,28 @@ import static java.lang.System.out;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
+@Bean
 public class ConnectExceptionTest {
 
     static final ProxySelector INVALID_PROXY = new ProxySelector() {
         final List<Proxy> proxy = List.of(new Proxy(Proxy.Type.HTTP,
                 InetSocketAddress.createUnresolved("proxy.invalid", 8080)));
         @Override public List<Proxy> select(URI uri) { return proxy; }
-        @Override public void connectFailed(URI uri, SocketAddress sa, IOException ioe) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void connectFailed(URI uri, SocketAddress sa, IOException ioe) { }
         @Override public String toString() { return "INVALID_PROXY"; }
     };
 
     static final ProxySelector NO_PROXY = new ProxySelector() {
         @Override public List<Proxy> select(URI uri) { return List.of(Proxy.NO_PROXY); }
-        @Override public void connectFailed(URI uri, SocketAddress sa, IOException ioe) { }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public void connectFailed(URI uri, SocketAddress sa, IOException ioe) { }
         @Override public String toString() { return "NO_PROXY"; }
     };
 

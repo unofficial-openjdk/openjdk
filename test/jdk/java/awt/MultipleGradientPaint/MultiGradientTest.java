@@ -70,6 +70,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+@Bean
 public class MultiGradientTest extends JPanel {
 
     private static final Color[] COLORS = {
@@ -135,7 +136,11 @@ public class MultiGradientTest extends JPanel {
             addMouseMotionListener(l);
         }
 
-        public void paintComponent(Graphics g) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void paintComponent(Graphics g) {
             Graphics2D g2d = (Graphics2D)g.create();
 
             int w = getWidth();
@@ -198,7 +203,11 @@ public class MultiGradientTest extends JPanel {
             g2d.dispose();
         }
 
-        private void updatePoints(int x, int y) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void updatePoints(int x, int y) {
             Point2D inv = new Point2D.Double(x, y);
 
             try {
@@ -303,12 +312,20 @@ public class MultiGradientTest extends JPanel {
 
         private class MyMouseAdapter extends MouseAdapter {
             @Override
-            public void mouseClicked(MouseEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void mouseClicked(MouseEvent e) {
                 updatePoints(e.getX(), e.getY());
             }
 
             @Override
-            public void mouseDragged(MouseEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void mouseDragged(MouseEvent e) {
                 updatePoints(e.getX(), e.getY());
             }
         }
@@ -335,6 +352,10 @@ public class MultiGradientTest extends JPanel {
             SpinnerNumberModel model = new SpinnerNumberModel(max, 2, max, 1);
             spinNumColors = new JSpinner(model);
             spinNumColors.addChangeListener(new ChangeListener() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void stateChanged(ChangeEvent e) {
                     numColors = ((Integer)spinNumColors.getValue()).intValue();
                     gradientPanel.updatePaint();
@@ -346,7 +367,11 @@ public class MultiGradientTest extends JPanel {
             cbRender = createCheck(this, "Render Quality");
         }
 
-        private JComboBox createCombo(JPanel panel, Enum e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private JComboBox createCombo(JPanel panel, Enum e) {
             JComboBox cmb = new JComboBox();
             cmb.setModel(new EnumComboBoxModel(e.getClass()));
             cmb.addActionListener(this);
@@ -354,14 +379,22 @@ public class MultiGradientTest extends JPanel {
             return cmb;
         }
 
-        private JCheckBox createCheck(JPanel panel, String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private JCheckBox createCheck(JPanel panel, String name) {
             JCheckBox cb = new JCheckBox(name);
             cb.addActionListener(this);
             panel.add(cb);
             return cb;
         }
 
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             Object source = e.getSource();
 
             if (source == cmbPaint) {
@@ -405,11 +438,19 @@ public class MultiGradientTest extends JPanel {
             return list.size();
         }
 
-        public E getElementAt(int index) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public E getElementAt(int index) {
             return list.get(index);
         }
 
-        public void setSelectedItem(Object anItem) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setSelectedItem(Object anItem) {
             selected = (E)anItem;
             this.fireContentsChanged(this, 0, getSize());
         }
@@ -422,7 +463,11 @@ public class MultiGradientTest extends JPanel {
     public static void main(String[] args) {
         final JFrame frame = new JFrame("Multistop Gradient Demo");
         frame.addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosing(WindowEvent e) {
                 frame.dispose();
             }
         });

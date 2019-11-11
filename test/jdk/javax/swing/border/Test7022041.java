@@ -35,6 +35,7 @@ import javax.swing.UnsupportedLookAndFeelException;
  *          methods of the TitledBorder class.
  * @author Pavel Tisnovsky
  */
+@Bean
 public class Test7022041 {
 
     public static void main(String[] args) throws Exception {

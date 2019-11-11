@@ -41,6 +41,7 @@ import jdk.internal.misc.Unsafe;
 
 import java.lang.reflect.Field;
 
+@Bean
 public class TestIntUnsafeCAS {
   private static final int ARRLEN = 97;
   private static final int ITERS  = 11000;

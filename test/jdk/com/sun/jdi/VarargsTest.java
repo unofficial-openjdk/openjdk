@@ -148,6 +148,7 @@ class VarargsTarg {
 
     /********** test program **********/
 
+@Bean
 public class VarargsTest extends TestScaffold {
     ClassType targetClass;
     ThreadReference mainThread;

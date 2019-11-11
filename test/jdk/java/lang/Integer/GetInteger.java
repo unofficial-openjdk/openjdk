@@ -27,6 +27,7 @@
  * @summary test Integer.getInteger method with empty key
  */
 
+@Bean
 public class GetInteger {
     public static void main(String[] args) throws Exception {
         Integer.getInteger("", 1);

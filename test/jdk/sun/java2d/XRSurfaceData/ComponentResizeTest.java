@@ -38,6 +38,7 @@ import javax.swing.JOptionPane;
  * @summary Resizes JFrame so that component drawn inside it gets repainted
  * without leaving any trails
  */
+@Bean
 public class ComponentResizeTest {
 
     private static JFrame demoFrame;

@@ -37,6 +37,7 @@ import java.util.Locale;
 
 import com.sun.tools.doclint.DocLint;
 
+@Bean
 public class ResourceTest {
     public static void main(String... args) throws Exception {
         Locale prev = Locale.getDefault();

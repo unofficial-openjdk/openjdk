@@ -39,6 +39,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.stream.Stream;
 
+@Bean
 public class ClassUnloadCommon {
     public static class TestFailure extends RuntimeException {
         TestFailure(String msg) {
@@ -78,7 +79,8 @@ public class ClassUnloadCommon {
                 .toArray(URL[]::new);
         return new URLClassLoader("ClassUnloadCommonClassLoader", urls, new ClassUnloadCommon().getClass().getClassLoader()) {
             @Override
-            public Class<?> loadClass(String cn, boolean resolve)
+            @Bean
+public class<?> loadClass(String cn, boolean resolve)
                 throws ClassNotFoundException
             {
                 synchronized (getClassLoadingLock(cn)) {

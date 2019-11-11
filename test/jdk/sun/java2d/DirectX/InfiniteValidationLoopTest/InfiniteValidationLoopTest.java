@@ -50,7 +50,8 @@ public class InfiniteValidationLoopTest extends Frame {
     }
 
     @Override
-    public void paint(Graphics g) {
+@Bean
+        public void paint(Graphics g) {
         try {
             runTest(g);
         } finally {
@@ -58,7 +59,8 @@ public class InfiniteValidationLoopTest extends Frame {
         }
     }
 
-    private void runTest(Graphics g) {
+@Bean
+        private void runTest(Graphics g) {
         int status = IMAGE_OK;
         int count1 = 0;
         do {

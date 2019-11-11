@@ -33,6 +33,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.ServerSocket;
 
+@Bean
 public class SetReceiveBufferSize {
     public static void main(String[] args) throws Exception {
         SetReceiveBufferSize s = new SetReceiveBufferSize();

@@ -31,6 +31,7 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Toolkit;
 
+@Bean
 public class FontCrash {
 
     public static void main(String[] args) {

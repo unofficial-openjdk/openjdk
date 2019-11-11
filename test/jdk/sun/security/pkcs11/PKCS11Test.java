@@ -162,7 +162,11 @@ public abstract class PKCS11Test {
 
     public abstract void main(Provider p) throws Exception;
 
-    protected boolean skipTest(Provider p) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected boolean skipTest(Provider p) {
         return false;
     }
 

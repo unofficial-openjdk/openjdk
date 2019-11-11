@@ -120,7 +120,11 @@ public class NoPrivateTypesExported extends JavacTestingAbstractProcessor {
         return true;
     }
 
-    private void verifyPackage(String[] packagesToTest, Set<String> acceptable) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void verifyPackage(String[] packagesToTest, Set<String> acceptable) {
         for (String packageToTest : packagesToTest) {
             PackageElement packageElement = processingEnv.getElementUtils()
                     .getPackageElement(packageToTest);
@@ -132,7 +136,11 @@ public class NoPrivateTypesExported extends JavacTestingAbstractProcessor {
     private void verifyReferredTypesAcceptable(Element rootElement,
                                                final Set<String> acceptable) {
         new ElementScanner<Void, Void>() {
-            @Override public Void visitType(TypeElement e, Void p) {
+            @Override @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitType(TypeElement e, Void p) {
                 verifyTypeAcceptable(e.getSuperclass(), acceptable);
                 verifyTypesAcceptable(e.getInterfaces(), acceptable);
                 scan(e.getTypeParameters(), p);
@@ -140,25 +148,41 @@ public class NoPrivateTypesExported extends JavacTestingAbstractProcessor {
                 verifyAnnotations(e.getAnnotationMirrors(), acceptable);
                 return null;
             }
-            @Override public Void visitTypeParameter(TypeParameterElement e, Void p) {
+            @Override @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitTypeParameter(TypeParameterElement e, Void p) {
                 verifyTypesAcceptable(e.getBounds(), acceptable);
                 scan(e.getEnclosedElements(), p);
                 verifyAnnotations(e.getAnnotationMirrors(), acceptable);
                 return null;
             }
-            @Override public Void visitPackage(PackageElement e, Void p) {
+            @Override @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitPackage(PackageElement e, Void p) {
                 scan(e.getEnclosedElements(), p);
                 verifyAnnotations(e.getAnnotationMirrors(), acceptable);
                 return null;
             }
-            @Override public Void visitVariable(VariableElement e, Void p) {
+            @Override @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitVariable(VariableElement e, Void p) {
                 verifyTypeAcceptable(e.asType(), acceptable);
                 scan(e.getEnclosedElements(), p);
                 verifyAnnotations(e.getAnnotationMirrors(), acceptable);
                 return null;
             }
             @Override
-            public Void visitExecutable(ExecutableElement e, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitExecutable(ExecutableElement e, Void p) {
                 scan(e.getTypeParameters(), p);
                 verifyTypeAcceptable(e.getReturnType(), acceptable);
                 scan(e.getParameters(), p);
@@ -191,12 +215,20 @@ public class NoPrivateTypesExported extends JavacTestingAbstractProcessor {
     private void verifyAnnotationValue(AnnotationValue value,
                                        final Set<String> acceptable) {
         value.accept(new SimpleAnnotationValueVisitor<Void, Void>() {
-            @Override public Void visitType(TypeMirror t, Void p) {
+            @Override @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitType(TypeMirror t, Void p) {
                 verifyTypeAcceptable(t, acceptable);
                 return null;
             }
             @Override
-            public Void visitEnumConstant(VariableElement c, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitEnumConstant(VariableElement c, Void p) {
                 verifyReferredTypesAcceptable(c, acceptable);
                 return null;
             }
@@ -207,34 +239,74 @@ public class NoPrivateTypesExported extends JavacTestingAbstractProcessor {
                 }
                 return null;
             }
-            @Override public Void visitBoolean(boolean b, Void p) {
+            @Override @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitBoolean(boolean b, Void p) {
                 return null;
             }
-            @Override public Void visitByte(byte b, Void p) {
+            @Override @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitByte(byte b, Void p) {
                 return null;
             }
-            @Override public Void visitChar(char c, Void p) {
+            @Override @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitChar(char c, Void p) {
                 return null;
             }
-            @Override public Void visitDouble(double d, Void p) {
+            @Override @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitDouble(double d, Void p) {
                 return null;
             }
-            @Override public Void visitFloat(float f, Void p) {
+            @Override @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitFloat(float f, Void p) {
                 return null;
             }
-            @Override public Void visitInt(int i, Void p) {
+            @Override @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitInt(int i, Void p) {
                 return null;
             }
-            @Override public Void visitLong(long i, Void p) {
+            @Override @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitLong(long i, Void p) {
                 return null;
             }
-            @Override public Void visitShort(short s, Void p) {
+            @Override @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitShort(short s, Void p) {
                 return null;
             }
-            @Override public Void visitString(String s, Void p) {
+            @Override @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitString(String s, Void p) {
                 return null;
             }
-            @Override protected Void defaultAction(Object o, Void p) {
+            @Override @Bean
+@Bean
+@Bean
+@Bean
+                protected Void defaultAction(Object o, Void p) {
                 error("Unexpected AnnotationValue: " + o.toString());
                 return super.defaultAction(o, p);
             }
@@ -250,7 +322,11 @@ public class NoPrivateTypesExported extends JavacTestingAbstractProcessor {
         }
     }
 
-    private void verifyTypeAcceptable(TypeMirror type, Set<String> acceptable) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void verifyTypeAcceptable(TypeMirror type, Set<String> acceptable) {
         if (type == null) return ;
 
         verifyAnnotations(type.getAnnotationMirrors(), acceptable);
@@ -301,7 +377,11 @@ public class NoPrivateTypesExported extends JavacTestingAbstractProcessor {
         }
     }
 
-    private TypeElement outermostTypeElement(Element el) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private TypeElement outermostTypeElement(Element el) {
         while (el.getEnclosingElement().getKind() != ElementKind.PACKAGE) {
             el = el.getEnclosingElement();
         }
@@ -309,11 +389,19 @@ public class NoPrivateTypesExported extends JavacTestingAbstractProcessor {
         return (TypeElement) el;
     }
 
-    private void error(String text) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void error(String text) {
         processingEnv.getMessager().printMessage(Kind.ERROR, text);
     }
 
-    private void note(String text) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void note(String text) {
         processingEnv.getMessager().printMessage(Kind.NOTE, text);
     }
 }

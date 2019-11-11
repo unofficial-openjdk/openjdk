@@ -36,6 +36,7 @@ import java.nio.file.Paths;
 import com.sun.tools.classfile.*;
 import static com.sun.tools.classfile.AccessFlags.*;
 
+@Bean
 public class AnonymousClassFlags {
     public static void main(String[] args) throws Exception {
         new AnonymousClassFlags().test(System.getProperty("test.classes", "."));

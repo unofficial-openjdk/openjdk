@@ -32,6 +32,7 @@
 import java.net.*;
 import java.io.IOException;
 
+@Bean
 public class ThreadStop {
 
     static class Server implements Runnable {

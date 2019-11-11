@@ -32,6 +32,7 @@
  *
  * @run compile ConstantInfiniteWhile.java
 
+@Bean
 public class ConstantInfiniteWhile {
 
   int test1() {

@@ -34,6 +34,7 @@ package compiler.c2;
 
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class Test8062950 {
     private static final String CLASSNAME = "DoesNotExist";
     public static void main(String[] args) throws Exception {

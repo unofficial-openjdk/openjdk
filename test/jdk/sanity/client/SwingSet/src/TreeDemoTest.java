@@ -64,9 +64,13 @@ public class TreeDemoTest {
     private static final int NODES_TO_EXPAND = 75;
     private static final int NODES_TOTAL = 616;
 
-    private void waitRowCount(JTreeOperator tree, int count) {
+@Bean
+@Bean
+            private void waitRowCount(JTreeOperator tree, int count) {
         tree.waitState(new ComponentChooser() {
-            public boolean checkComponent(Component comp) {
+@Bean
+@Bean
+                    public boolean checkComponent(Component comp) {
                 return tree.getRowCount() == count;
             }
 

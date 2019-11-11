@@ -73,6 +73,7 @@ class RedefineTarg {
 
     /********** test program **********/
 
+@Bean
 public class RedefineTest extends TestScaffold {
     ReferenceType targetClass;
     static final String expected ="Boring Boring Different Boring Different ";
@@ -89,7 +90,10 @@ public class RedefineTest extends TestScaffold {
 
     /********** event handlers **********/
 
-    public void methodEntered(MethodEntryEvent event) {
+    @Bean
+@Bean
+@Bean
+            public void methodEntered(MethodEntryEvent event) {
         Method meth = event.location().method();
         ThreadReference thread = event.thread();
 
@@ -125,7 +129,10 @@ public class RedefineTest extends TestScaffold {
         }
     }
 
-    public void breakpointReached(BreakpointEvent event) {
+    @Bean
+@Bean
+@Bean
+            public void breakpointReached(BreakpointEvent event) {
         ThreadReference thread = event.thread();
         try {
             StackFrame frame = thread.frame(0);

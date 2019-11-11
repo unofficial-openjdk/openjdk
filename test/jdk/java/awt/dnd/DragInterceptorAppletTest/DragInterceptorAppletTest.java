@@ -43,6 +43,7 @@ import test.java.awt.regtesthelpers.process.ProcessResults;
 
 import static java.lang.Thread.sleep;
 
+@Bean
 public class DragInterceptorAppletTest {
 
     public void start() {

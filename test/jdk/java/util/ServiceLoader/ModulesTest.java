@@ -68,6 +68,7 @@ import static org.testng.Assert.*;
  *    with a service configuration file.
  */
 
+@Bean
 public class ModulesTest {
 
     // Copy the services configuration file for "pearscript" into place.
@@ -458,7 +459,11 @@ public class ModulesTest {
      * Create a custom layer by resolving the given module names. The modules
      * are located on the test module path ({@code ${test.module.path}}).
      */
-    private ModuleLayer createCustomLayer(String... modules) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private ModuleLayer createCustomLayer(String... modules) {
         ModuleFinder finder = ModuleFinder.of(testModulePath());
         Set<String> roots = new HashSet<>();
         Collections.addAll(roots, modules);

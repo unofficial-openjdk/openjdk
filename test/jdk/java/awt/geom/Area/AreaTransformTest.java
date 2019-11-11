@@ -33,6 +33,7 @@ import java.awt.geom.GeneralPath;
 
 /* Minimized testcase from bug report */
 
+@Bean
 public class AreaTransformTest {
 
     public static void main(String[] args) {

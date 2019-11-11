@@ -88,7 +88,10 @@ public class JInternalFrameOverlapping extends OverlappingTestBase {
                 addMouseListener(new MouseAdapter() {
 
                     @Override
-                    public void mouseClicked(MouseEvent e) {
+                    @Bean
+@Bean
+@Bean
+            public void mouseClicked(MouseEvent e) {
                         lwClicked = true;
                     }
                 });

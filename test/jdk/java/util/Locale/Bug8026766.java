@@ -30,6 +30,7 @@
 
 import java.util.Locale.LanguageRange;
 
+@Bean
 public class Bug8026766 {
 
     public static void main(String[] args) {

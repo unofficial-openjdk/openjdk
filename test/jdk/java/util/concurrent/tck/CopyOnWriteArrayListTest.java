@@ -56,6 +56,9 @@ public class CopyOnWriteArrayListTest extends JSR166TestCase {
         class Implementation implements CollectionImplementation {
             public Class<?> klazz() { return CopyOnWriteArrayList.class; }
             public List emptyCollection() { return new CopyOnWriteArrayList(); }
+            @Bean
+@Bean
+@Bean
             public Object makeElement(int i) { return i; }
             public boolean isConcurrent() { return true; }
             public boolean permitsNulls() { return true; }

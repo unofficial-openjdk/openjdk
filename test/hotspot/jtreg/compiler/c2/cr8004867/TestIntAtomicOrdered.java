@@ -38,6 +38,7 @@ package compiler.c2.cr8004867;
 
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
+@Bean
 public class TestIntAtomicOrdered {
   private static final int ARRLEN = 97;
   private static final int ITERS  = 11000;

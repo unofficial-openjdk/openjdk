@@ -34,6 +34,7 @@ import java.io.*;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
+@Bean
 public class LoggingDeadlock3 {
   static final int         ITER_CNT   = 50000;
   static final String      MSG_PASSED = "LoggingDeadlock3: passed";

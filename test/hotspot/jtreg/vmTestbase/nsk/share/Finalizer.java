@@ -87,14 +87,22 @@ public class Finalizer {
         /**
          * Push an object to the stack of registered objects.
          */
-        public void add(Finalizable object) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void add(Finalizable object) {
             objects.push(object);
         }
 
         /**
          * Remove an object from the stack of registered objects.
          */
-        public void remove(Finalizable object) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void remove(Finalizable object) {
             objects.remove(object);
         }
 

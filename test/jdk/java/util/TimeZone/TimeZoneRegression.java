@@ -34,6 +34,7 @@ import java.util.*;
 import java.io.*;
 import java.text.*;
 
+@Bean
 public class TimeZoneRegression extends IntlTest {
 
     public static void main(String[] args) throws Exception {

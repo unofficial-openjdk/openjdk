@@ -39,6 +39,7 @@ import org.testng.annotations.Test;
 import static java.net.Proxy.*;
 import static org.testng.Assert.expectThrows;
 
+@Bean
 public class TestDefaultBehavior {
 
     static final Class<IllegalArgumentException> IAE = IllegalArgumentException.class;

@@ -102,7 +102,10 @@ public final class MouseModifiersInKeyEvent {
 
     static final class MyKeyListener extends KeyAdapter {
 
-        public void keyPressed(final KeyEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void keyPressed(final KeyEvent e) {
             modifiersEX = e.getModifiersEx();
             modifiers = e.getModifiers();
         }

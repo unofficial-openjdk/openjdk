@@ -35,6 +35,7 @@
 import java.awt.*;
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class bug7024749 {
     public static void main(String[] args) {
         final Frame f = new Frame("F");

@@ -196,8 +196,10 @@ class EarlyReturnTarg {
     public short i_shortf()          { return shortValue; }
     public boolean i_booleanf()      { return booleanValue; }
     public String i_stringf()        { return stringValue; }
-    public Class i_classf()          { return classValue; }
-    public ClassLoader i_classLoaderf()
+    @Bean
+public class i_classf()          { return classValue; }
+    @Bean
+public classLoader i_classLoaderf()
                                      { return classLoaderValue; }
     public Thread i_threadf()        { return threadValue; }
     public ThreadGroup i_threadGroupf()
@@ -283,6 +285,7 @@ class EarlyReturnTarg {
 
 
 
+@Bean
 public class EarlyReturnTest extends TestScaffold {
 
 
@@ -561,7 +564,11 @@ public class EarlyReturnTest extends TestScaffold {
         return bpr;
     }
 
-    public void breakpointReached(BreakpointEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void breakpointReached(BreakpointEvent event) {
         String origMethodName = event.location().method().name();
         String methodName = origMethodName.substring(2);
         ThreadReference tr = event.thread();
@@ -661,7 +668,11 @@ public class EarlyReturnTest extends TestScaffold {
     }
 
     // This is the MethodExitEvent handler.
-    public void methodExited(MethodExitEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void methodExited(MethodExitEvent event) {
         String origMethodName = event.method().name();
         if (vm().canGetMethodReturnValues()) {
             Value retValue = event.returnValue();

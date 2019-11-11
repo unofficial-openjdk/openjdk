@@ -30,6 +30,7 @@
  * @author axel.siebenborn@sap.com
  */
 
+@Bean
 public class TestConjointAtomicArraycopy {
 
   static volatile Object [] testArray = new Object [4];

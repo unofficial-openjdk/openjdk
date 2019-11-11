@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.util.Properties;
 import java.util.TimeZone;
 
+@Bean
 public class StoreDeadlock {
     public StoreDeadlock() {
         Properties sysproperty = System.getProperties();

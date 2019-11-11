@@ -35,6 +35,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.Platform;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class ClassInitializationTest {
 
     public static void main(String... args) throws Exception {

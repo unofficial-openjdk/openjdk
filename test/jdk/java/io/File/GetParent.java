@@ -29,6 +29,7 @@
 import java.io.File;
 
 
+@Bean
 public class GetParent {
 
     static void check(String path, String[] parents) throws Exception {

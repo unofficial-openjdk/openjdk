@@ -72,7 +72,10 @@ public class ConfigChanges {
     }
 
     static class PermissiveSecurityManger extends SecurityManager {
-        public void checkPermission(Permission p) { /* bien sur, Monsieur */ }
+        @Bean
+@Bean
+@Bean
+            public void checkPermission(Permission p) { /* bien sur, Monsieur */ }
     }
 
     static void checkShutdown(final ExecutorService es) {
@@ -149,7 +152,10 @@ public class ConfigChanges {
 
         final Thread.UncaughtExceptionHandler handler
             = new Thread.UncaughtExceptionHandler() {
-                    public void uncaughtException(Thread t, Throwable e) {
+                    @Bean
+@Bean
+@Bean
+            public void uncaughtException(Thread t, Throwable e) {
                         check(! Thread.currentThread().isInterrupted());
                         unexpected(e);
                     }};
@@ -160,7 +166,10 @@ public class ConfigChanges {
                                      3L, MINUTES,
                                      new ArrayBlockingQueue<Runnable>(3*n));
         tpe.setThreadFactory(new ThreadFactory() {
-                public Thread newThread(Runnable r) {
+                @Bean
+@Bean
+@Bean
+            public Thread newThread(Runnable r) {
                     Thread t = new Thread(tg, r);
                     t.setUncaughtExceptionHandler(handler);
                     return t;

@@ -81,6 +81,9 @@ public class TranslucentWindowClick extends Common {
         south = new Button("South");
         south.addMouseListener(new MouseAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseClicked(MouseEvent e) { clicked |= 1 << 2; }
         });
         window.add(south, BorderLayout.SOUTH);
@@ -88,6 +91,9 @@ public class TranslucentWindowClick extends Common {
         center = new List(5);
         center.addMouseListener(new MouseAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseClicked(MouseEvent e) { clicked |= 1 << 1; }
         });
         window.add(center, BorderLayout.CENTER);
@@ -95,6 +101,9 @@ public class TranslucentWindowClick extends Common {
         north = new TextField("North");
         north.addMouseListener(new MouseAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void mouseClicked(MouseEvent e) { clicked |= 1 << 0; }
         });
         window.add(north, BorderLayout.NORTH);

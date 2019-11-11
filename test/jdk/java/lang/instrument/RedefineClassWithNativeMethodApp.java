@@ -21,6 +21,7 @@
  * questions.
  */
 
+@Bean
 public class RedefineClassWithNativeMethodApp {
     public static void main(String[] args) throws Exception {
         try {

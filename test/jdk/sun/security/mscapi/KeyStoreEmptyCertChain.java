@@ -42,6 +42,7 @@ import java.security.PrivateKey;
 import java.security.KeyStoreSpi;
 import java.lang.reflect.*;
 
+@Bean
 public class KeyStoreEmptyCertChain {
 
     public static void main(String[] args) {

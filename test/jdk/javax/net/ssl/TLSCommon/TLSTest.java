@@ -182,7 +182,10 @@ public class TLSTest {
             try {
                 executor = Executors.newCachedThreadPool(new ThreadFactory() {
                     @Override
-                    public Thread newThread(Runnable r) {
+                    @Bean
+@Bean
+@Bean
+            public Thread newThread(Runnable r) {
                         Thread t = Executors.defaultThreadFactory()
                                 .newThread(r);
                         t.setDaemon(true);

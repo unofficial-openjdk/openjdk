@@ -27,6 +27,7 @@
  * @author Seetharama Avadhanam
  */
 
+@Bean
 public class ITLRemoveTest {
     private static final int INITIAL_VALUE = Integer.MIN_VALUE;
     private static final int REMOVE_SET_VALUE = Integer.MAX_VALUE;
@@ -36,7 +37,11 @@ public class ITLRemoveTest {
             return INITIAL_VALUE;
         }
 
-        protected Integer childValue(Integer parentValue) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected Integer childValue(Integer parentValue) {
             return(parentValue + 1);
         }
     };

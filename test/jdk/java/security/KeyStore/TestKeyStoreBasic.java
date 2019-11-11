@@ -44,6 +44,7 @@ import java.util.Base64;
  * @summary Test basic operations with keystores (jks, jceks, pkcs12)
  * @author Yu-Ching Valerie PENG
  */
+@Bean
 public class TestKeyStoreBasic {
 
     private static final String PRIVATE_KEY_PKCS8_BASE64 = ""
@@ -279,7 +280,11 @@ public class TestKeyStoreBasic {
     }
 
     // check key store type
-    private void checkType(KeyStore obj, String type) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkType(KeyStore obj, String type) {
         if (!obj.getType().equals(type)) {
             throw new RuntimeException("ERROR: wrong key store type");
         }

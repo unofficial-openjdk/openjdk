@@ -36,6 +36,7 @@ import java.lang.Thread.State;
 import java.util.concurrent.*;
 import javax.management.*;
 
+@Bean
 public class PostRegisterDeadlockTest {
     public static interface BlibbyMBean {}
 
@@ -45,13 +46,21 @@ public class PostRegisterDeadlockTest {
             this.otherName = otherName;
         }
 
-        public ObjectName preRegister(MBeanServer mbs, ObjectName on) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public ObjectName preRegister(MBeanServer mbs, ObjectName on) {
             return on;
         }
 
         public void preDeregister() {}
 
-        public void postRegister(Boolean done) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void postRegister(Boolean done) {
             // If no other MBean was registered
             // do nothing.
             //

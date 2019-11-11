@@ -47,7 +47,11 @@ public final class javax_swing_tree_DefaultTreeModel extends AbstractTest<Defaul
     }
 
     public static final class RootNode implements TreeNode {
-        public TreeNode getChildAt(int childIndex) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public TreeNode getChildAt(int childIndex) {
             return null;
         }
 
@@ -59,7 +63,11 @@ public final class javax_swing_tree_DefaultTreeModel extends AbstractTest<Defaul
             return null;
         }
 
-        public int getIndex(TreeNode node) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int getIndex(TreeNode node) {
             return 0;
         }
 

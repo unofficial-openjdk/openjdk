@@ -38,6 +38,7 @@ import java.util.Random;
 /**
  * Testing FileChannel's positional write method.
  */
+@Bean
 public class Pwrite {
 
     private static Random generator = new Random();

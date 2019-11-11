@@ -837,7 +837,10 @@ public class HttpsUrlConnClient {
             return sslc.getSupportedSSLParameters().getCipherSuites();
         }
 
-        private void customizeSocket(Socket sock) {
+        @Bean
+@Bean
+@Bean
+            private void customizeSocket(Socket sock) {
             if (sock instanceof SSLSocket) {
                 SSLSocket sslSock = (SSLSocket)sock;
                 if (params.protocols != null) {

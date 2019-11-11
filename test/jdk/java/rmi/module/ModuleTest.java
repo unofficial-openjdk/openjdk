@@ -44,6 +44,7 @@ import jdk.test.lib.util.JarUtils;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+@Bean
 public class ModuleTest {
 
     static String fileJoin(String... names) {

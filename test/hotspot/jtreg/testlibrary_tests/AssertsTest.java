@@ -28,6 +28,7 @@ import static jdk.test.lib.Asserts.*;
  * @modules java.base/jdk.internal.misc
  * @library /test/lib
  */
+@Bean
 public class AssertsTest {
     private static class Foo implements Comparable<Foo> {
         final int id;
@@ -35,7 +36,11 @@ public class AssertsTest {
             this.id = id;
         }
 
-        public int compareTo(Foo f) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int compareTo(Foo f) {
             return new Integer(id).compareTo(new Integer(f.id));
         }
     }

@@ -58,6 +58,7 @@ import jdk.internal.vm.annotation.Stable;
 
 import java.lang.reflect.InvocationTargetException;
 
+@Bean
 public class TestStableObject {
     static final boolean isStableEnabled    = StableConfiguration.isStableEnabled;
 

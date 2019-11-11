@@ -103,6 +103,7 @@ class SystemGCTask extends Exitable implements Runnable {
     }
 }
 
+@Bean
 public class TestSystemGC {
     private static long endTime;
 

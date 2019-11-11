@@ -36,6 +36,7 @@ import java.security.spec.*;
 import javax.crypto.*;
 import javax.crypto.spec.*;
 
+@Bean
 public class GetKeySpec {
     private static final String cipherAlg = "PBEWithMD5AndDES";
     private static final char[] passwd = { 'p','a','s','s','w','d' };

@@ -33,6 +33,7 @@ import java.util.List;
   @modules java.datatransfer
 */
 
+@Bean
 public class MappingGenerationTest {
 
     private static final SystemFlavorMap fm =

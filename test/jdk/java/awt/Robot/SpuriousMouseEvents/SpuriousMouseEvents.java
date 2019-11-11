@@ -64,7 +64,10 @@ public class SpuriousMouseEvents {
             Frame f = new Frame("Frame", gc);
             f.setBounds(gc.getBounds().x + 100, gc.getBounds().y + 100, 200, 200);
             f.addMouseMotionListener(new MouseMotionAdapter() {
-                public void mouseMoved(MouseEvent me) {
+                @Bean
+@Bean
+@Bean
+            public void mouseMoved(MouseEvent me) {
                     testPassed = false;
                 }
             });

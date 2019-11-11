@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
 
+@Bean
 public class Enum {
     public static void main(String[] args) throws Exception {
         int[] sizes = {0, 10, 100};

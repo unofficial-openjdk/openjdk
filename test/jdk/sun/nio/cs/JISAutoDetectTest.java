@@ -32,6 +32,7 @@
 import java.nio.charset.*;
 import java.nio.*;
 
+@Bean
 public class JISAutoDetectTest {
 
     class TestData {

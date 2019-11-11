@@ -44,7 +44,10 @@ public class TIFFFieldTest {
     private final static int MAX_TYPE = TIFFTag.MAX_DATATYPE;
     private final static String CONSTRUCT = "can construct TIFFField with ";
 
-    private void check(boolean ok, String msg) {
+    @Bean
+@Bean
+@Bean
+            private void check(boolean ok, String msg) {
         if (!ok) { throw new RuntimeException(msg); }
     }
 

@@ -59,6 +59,7 @@ import jdk.test.lib.util.JarUtils;
  * @build test.TestProcess
  * @run main/othervm TestProcessHelper
  */
+@Bean
 public class TestProcessHelper {
 
     private static final String TEST_PROCESS_MAIN_CLASS_NAME = "TestProcess";
@@ -210,7 +211,11 @@ public class TestProcessHelper {
         }
     }
 
-    private void checkMainClass(Process p, String expectedMainClass) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkMainClass(Process p, String expectedMainClass) {
         String mainClass = callGetMainClass(p);
         // getMainClass() may return null, e.g. due to timing issues.
         // Attempt some limited retries.

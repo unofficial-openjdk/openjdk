@@ -27,6 +27,7 @@
  * @summary Add lambda tests
  *  Compiler crash when local inner class nested inside lambda captures local variables from enclosing scope
  */
+@Bean
 public class LambdaCapture06 {
 
     static int assertionCount = 0;

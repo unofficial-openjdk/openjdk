@@ -36,6 +36,7 @@ import java.nio.channels.*;
 
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class PrintSupportedOptions {
 
     @FunctionalInterface

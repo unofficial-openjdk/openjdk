@@ -37,6 +37,7 @@ import java.util.regex.Pattern;
 import org.testng.annotations.Test;
 
 @Test
+@Bean
 public class ToolShiftTabTest extends UITesting {
 
     // Shift-tab as escape sequence

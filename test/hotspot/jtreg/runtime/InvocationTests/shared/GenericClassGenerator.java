@@ -108,7 +108,11 @@ public class GenericClassGenerator<T extends GenericClassGenerator> {
     }
 
     /*******************************************************************/
-    public T addTargetConstructor(AccessType access) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public T addTargetConstructor(AccessType access) {
         // AccessType.UNDEF means that the target method isn't defined, so do nothing
         if (access == AccessType.UNDEF || isInterface(flags) ) {
             return (T)this;
@@ -155,12 +159,20 @@ public class GenericClassGenerator<T extends GenericClassGenerator> {
     }
 
     /*******************************************************************/
-    public T addTargetMethod(AccessType access) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public T addTargetMethod(AccessType access) {
         return addTargetMethod(access, 0);
     }
 
     /*******************************************************************/
-    public T addTargetMethod(AccessType access, int additionalFlags) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public T addTargetMethod(AccessType access, int additionalFlags) {
         // AccessType.UNDEF means that the target method isn't defined, so do nothing
         if (access == AccessType.UNDEF) {
             return (T)this;
@@ -203,7 +215,11 @@ public class GenericClassGenerator<T extends GenericClassGenerator> {
     }
 
     /*******************************************************************/
-    public T addField(int access, String name, String type) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public T addField(int access, String name, String type) {
         writer.visitField(
                 access
                 , name
@@ -218,7 +234,11 @@ public class GenericClassGenerator<T extends GenericClassGenerator> {
 
     /*******************************************************************/
     // Add target method call site into current class
-    public T addCaller(String targetClass, int callType) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public T addCaller(String targetClass, int callType) {
         MethodVisitor m = writer.visitMethod(
                 ACC_PUBLIC | ACC_STATIC
                 , "call"

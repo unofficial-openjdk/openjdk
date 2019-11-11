@@ -50,6 +50,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
+@Bean
 public class SpliteratorCollisions extends SpliteratorTestHelper {
 
     private static final List<Integer> SIZES = Arrays.asList(0, 1, 10, 100, 1000);
@@ -171,7 +172,11 @@ public class SpliteratorCollisions extends SpliteratorTestHelper {
         }
 
         @Override
-        public boolean equals(Object obj) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object obj) {
             if (obj instanceof HashableInteger) {
                 HashableInteger other = (HashableInteger) obj;
 
@@ -187,7 +192,11 @@ public class SpliteratorCollisions extends SpliteratorTestHelper {
         }
 
         @Override
-        public int compareTo(HashableInteger o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int compareTo(HashableInteger o) {
             return value - o.value;
         }
 

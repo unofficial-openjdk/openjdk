@@ -29,6 +29,7 @@
  * @run main/othervm --enable-preview ExpressionSwitchCodeFromJLS
  */
 
+@Bean
 public class ExpressionSwitchCodeFromJLS {
     static void howMany(int k) {
         switch (k) {

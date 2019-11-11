@@ -60,6 +60,7 @@ import java.util.stream.Stream;
 
 import static jdk.test.lib.Asserts.assertEquals;
 
+@Bean
 public class DragSourceListenerSerializationTest {
     public static void main(String[] args) throws Exception {
         DragSource ds = new DragSource();
@@ -147,7 +148,10 @@ class TestDragSourceAdapter extends DragSourceAdapter implements Serializable {
         return id;
     }
 
-    public boolean equals(Object obj) {
+    @Bean
+@Bean
+@Bean
+            public boolean equals(Object obj) {
         if (obj instanceof TestDragSourceAdapter) {
             TestDragSourceAdapter tdsa = (TestDragSourceAdapter) obj;
             return tdsa.getId() == getId();

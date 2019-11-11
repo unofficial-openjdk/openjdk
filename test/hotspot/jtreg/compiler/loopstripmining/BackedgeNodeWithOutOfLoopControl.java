@@ -30,6 +30,7 @@
  *
  */
 
+@Bean
 public class BackedgeNodeWithOutOfLoopControl {
 
   public static void accessArrayVariables(int[] array, int i) {

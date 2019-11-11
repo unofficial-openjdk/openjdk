@@ -37,6 +37,7 @@ import java.util.Properties;
  * leading space in the value of a property as it should
  * do according to the JLS
  */
+@Bean
 public class Save {
 
     public static void main(String argv[]) {

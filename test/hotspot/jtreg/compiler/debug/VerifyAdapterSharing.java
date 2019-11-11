@@ -37,6 +37,7 @@ package compiler.debug;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class VerifyAdapterSharing {
     public static void main(String[] args) throws Exception {
         ProcessBuilder pb;

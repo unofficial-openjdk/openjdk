@@ -33,6 +33,7 @@ import java.awt.font.NumericShaper;
 import java.util.EnumSet;
 import static java.awt.font.NumericShaper.*;
 
+@Bean
 public class EqualsTest {
     public static void main(String[] args) {
         NumericShaper ns1 = getContextualShaper(ARABIC | TAMIL, TAMIL);

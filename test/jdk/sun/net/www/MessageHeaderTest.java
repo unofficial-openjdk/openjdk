@@ -30,6 +30,7 @@
 import java.io.*;
 import sun.net.www.MessageHeader;
 
+@Bean
 public class MessageHeaderTest {
     public static void main (String[] args) throws Exception {
         for (int i=0; i<7; i++) {

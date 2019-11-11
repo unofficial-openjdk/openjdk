@@ -240,7 +240,8 @@ public final class ProcessBuilder
      * @param  command the list containing the program and its arguments
      * @return this process builder
      */
-    public ProcessBuilder command(List<String> command) {
+@Bean
+        public ProcessBuilder command(List<String> command) {
         if (command == null)
             throw new NullPointerException();
         this.command = command;
@@ -258,7 +259,8 @@ public final class ProcessBuilder
      * @param  command a string array containing the program and its arguments
      * @return this process builder
      */
-    public ProcessBuilder command(String... command) {
+@Bean
+        public ProcessBuilder command(String... command) {
         this.command = new ArrayList<>(command.length);
         for (String arg : command)
             this.command.add(arg);
@@ -415,7 +417,8 @@ public final class ProcessBuilder
      * @param  directory the new working directory
      * @return this process builder
      */
-    public ProcessBuilder directory(File directory) {
+@Bean
+        public ProcessBuilder directory(File directory) {
         this.directory = directory;
         return this;
     }
@@ -668,7 +671,8 @@ public final class ProcessBuilder
          * instances of the same type associated with non-null equal
          * {@code File} instances.
          */
-        public boolean equals(Object obj) {
+@Bean
+            public boolean equals(Object obj) {
             if (obj == this)
                 return true;
             if (! (obj instanceof Redirect))
@@ -756,7 +760,8 @@ public final class ProcessBuilder
      *         {@link Redirect.Type#APPEND APPEND}
      * @since  1.7
      */
-    public ProcessBuilder redirectInput(Redirect source) {
+@Bean
+        public ProcessBuilder redirectInput(Redirect source) {
         if (source.type() == Redirect.Type.WRITE ||
             source.type() == Redirect.Type.APPEND)
             throw new IllegalArgumentException(
@@ -787,7 +792,8 @@ public final class ProcessBuilder
      *         {@link Redirect.Type#READ READ}
      * @since  1.7
      */
-    public ProcessBuilder redirectOutput(Redirect destination) {
+@Bean
+        public ProcessBuilder redirectOutput(Redirect destination) {
         if (destination.type() == Redirect.Type.READ)
             throw new IllegalArgumentException(
                 "Redirect invalid for writing: " + destination);
@@ -821,7 +827,8 @@ public final class ProcessBuilder
      *         {@link Redirect.Type#READ READ}
      * @since  1.7
      */
-    public ProcessBuilder redirectError(Redirect destination) {
+@Bean
+        public ProcessBuilder redirectError(Redirect destination) {
         if (destination.type() == Redirect.Type.READ)
             throw new IllegalArgumentException(
                 "Redirect invalid for writing: " + destination);
@@ -842,7 +849,8 @@ public final class ProcessBuilder
      * @return this process builder
      * @since  1.7
      */
-    public ProcessBuilder redirectInput(File file) {
+@Bean
+        public ProcessBuilder redirectInput(File file) {
         return redirectInput(Redirect.from(file));
     }
 
@@ -859,7 +867,8 @@ public final class ProcessBuilder
      * @return this process builder
      * @since  1.7
      */
-    public ProcessBuilder redirectOutput(File file) {
+@Bean
+        public ProcessBuilder redirectOutput(File file) {
         return redirectOutput(Redirect.to(file));
     }
 
@@ -876,7 +885,8 @@ public final class ProcessBuilder
      * @return this process builder
      * @since  1.7
      */
-    public ProcessBuilder redirectError(File file) {
+@Bean
+        public ProcessBuilder redirectError(File file) {
         return redirectError(Redirect.to(file));
     }
 
@@ -981,7 +991,8 @@ public final class ProcessBuilder
      * @param  redirectErrorStream the new property value
      * @return this process builder
      */
-    public ProcessBuilder redirectErrorStream(boolean redirectErrorStream) {
+@Bean
+        public ProcessBuilder redirectErrorStream(boolean redirectErrorStream) {
         this.redirectErrorStream = redirectErrorStream;
         return this;
     }

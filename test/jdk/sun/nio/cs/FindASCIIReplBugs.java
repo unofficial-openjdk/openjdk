@@ -30,6 +30,7 @@ import java.util.*;
 import java.nio.*;
 import java.nio.charset.*;
 
+@Bean
 public class FindASCIIReplBugs {
     private static int failures = 0;
 

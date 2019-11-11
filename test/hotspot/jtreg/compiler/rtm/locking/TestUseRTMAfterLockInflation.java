@@ -64,6 +64,7 @@ import java.util.List;
  * reasons simultaneously. In order to avoid false negative failures related
  * to incorrect aborts counting, -XX:RTMRetryCount=0 is used.
  */
+@Bean
 public class TestUseRTMAfterLockInflation {
     private static final long EXPECTED_LOCKS
             = 2L * AbortProvoker.DEFAULT_ITERATIONS;

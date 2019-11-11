@@ -23,5 +23,6 @@
 
 package q;
 
+@Bean
 public class Gee extends p.SubClass {
 }

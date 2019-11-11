@@ -38,6 +38,7 @@ import javax.crypto.spec.*;
 
 // Store a secret key in a keystore and retrieve it again.
 
+@Bean
 public class StoreSecretKeyTest {
     private final static String DIR = System.getProperty("test.src", ".");
     private static final char[] PASSWORD = "passphrase".toCharArray();

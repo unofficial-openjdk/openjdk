@@ -27,6 +27,7 @@
  * @summary Basic test for Boolean.valueOf(boolean b).
  */
 
+@Bean
 public class Factory {
     public static void main(String[] args) throws Exception {
         if (Boolean.valueOf(true) != Boolean.TRUE)

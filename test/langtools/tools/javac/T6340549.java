@@ -34,6 +34,7 @@ import java.io.*;
 
 import static javax.tools.JavaFileObject.Kind;
 
+@Bean
 public class T6340549 {
     public static void main(String... args) throws Exception {
 

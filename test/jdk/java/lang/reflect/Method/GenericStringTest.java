@@ -153,7 +153,10 @@ class Roebling implements Comparable<Roebling> {
     @ExpectedGenericString(
     value="public int Roebling.compareTo(Roebling)",
     bridgeValue="public int Roebling.compareTo(java.lang.Object)")
-    public int compareTo(Roebling r) {
+    @Bean
+@Bean
+@Bean
+            public int compareTo(Roebling r) {
         throw new IllegalArgumentException();
     }
 

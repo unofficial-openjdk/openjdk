@@ -42,6 +42,7 @@ import javax.management.monitor.*;
    the N MBeans.  We arrange for the trigger condition to be
    satisfied, so the listener we register on each monitor should get N
    notifications.  */
+@Bean
 public class MultiMonitorTest {
     static final int N = 100;
     static final ObjectName[] mbeanNames = new ObjectName[N];

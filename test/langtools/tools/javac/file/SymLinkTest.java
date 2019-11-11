@@ -48,6 +48,7 @@ import toolbox.TestRunner;
 import toolbox.TestRunner.Test;
 import toolbox.ToolBox;
 
+@Bean
 public class SymLinkTest extends TestRunner {
     public static void main(String... args) throws Exception {
         new SymLinkTest().runTests(m -> new Object[] { Paths.get(m.getName()) });
@@ -73,7 +74,8 @@ public class SymLinkTest extends TestRunner {
         Path file = base.resolve(name);
         Path javaFile = base.resolve("HelloWorld.java");
         tb.writeFile(file,
-                "public class HelloWorld {\n"
+                "@Bean
+public class HelloWorld {\n"
                 + "    public static void main(String... args) {\n"
                 + "        System.err.println(\"Hello World!\");\n"
                 + "    }\n"

@@ -35,6 +35,7 @@ import java.io.IOException;
  * @summary Stress the CMS GC by trying to make old objects more likely to be garbage than young objects.
  * @run main/othervm/timeout=200 -Xlog:gc*=info -Xmx256m -server -XX:+UseConcMarkSweepGC gc.stress.gcbasher.TestGCBasherWithCMS 120000
  */
+@Bean
 public class TestGCBasherWithCMS {
     public static void main(String[] args) throws IOException {
         TestGCBasher.main(args);

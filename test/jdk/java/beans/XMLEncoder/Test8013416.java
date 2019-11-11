@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Set;
 
+@Bean
 public class Test8013416 extends AbstractTest {
     public static void main(String[] args) {
         new Test8013416().test(true);
@@ -50,19 +51,31 @@ public class Test8013416 extends AbstractTest {
     }
 
     @Override
-    protected void initialize(XMLEncoder encoder) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void initialize(XMLEncoder encoder) {
         super.initialize(encoder);
         encoder.setPersistenceDelegate(Public.class, new PublicPersistenceDelegate());
     }
 
     private static final class PublicPersistenceDelegate extends DefaultPersistenceDelegate {
         @Override
-        protected Expression instantiate(Object oldInstance, Encoder out) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected Expression instantiate(Object oldInstance, Encoder out) {
             return new Expression(oldInstance, oldInstance.getClass(), "new", null);
         }
 
         @Override
-        protected void initialize(Class<?> type, Object oldInstance, Object newInstance, Encoder out) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void initialize(Class<?> type, Object oldInstance, Object newInstance, Encoder out) {
             super.initialize(type, oldInstance, newInstance, out);
 
             Public<String, String> map = (Public) oldInstance;
@@ -79,7 +92,11 @@ public class Test8013416 extends AbstractTest {
     private static class Private<K, V> {
         private HashMap<K, V> map = new HashMap<K, V>();
 
-        public void put(K key, V value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void put(K key, V value) {
             this.map.put(key, value);
         }
 

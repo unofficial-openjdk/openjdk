@@ -67,6 +67,9 @@ public class PerPixelTranslucentCanvas extends Common {
 
         center = new JPanel() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void paint(Graphics g) {
                 g.setColor(OVAL_COLOR);
                 g.fillOval(0, 0, getWidth(), getHeight());

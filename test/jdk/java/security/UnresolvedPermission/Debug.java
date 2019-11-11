@@ -31,6 +31,7 @@
  * @run main/othervm/policy=Debug.policy -Djava.security.debug=policy,access Debug
  */
 
+@Bean
 public class Debug {
 
     public static void main(String[] args) {

@@ -33,6 +33,7 @@
 
 package compiler.c1;
 
+@Bean
 public class TestPinnedIntrinsics {
 
     private static void testNanoTime() {

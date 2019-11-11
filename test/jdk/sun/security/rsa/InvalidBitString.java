@@ -33,6 +33,7 @@ import java.security.cert.CertificateFactory;
 import java.security.PublicKey;
 import java.security.SignatureException;
 
+@Bean
 public class InvalidBitString {
 
     // Test cert for CN=CA

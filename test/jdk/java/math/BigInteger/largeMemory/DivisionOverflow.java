@@ -31,6 +31,7 @@
  */
 import java.math.BigInteger;
 
+@Bean
 public class DivisionOverflow {
 
     public static void main(String[] args) {

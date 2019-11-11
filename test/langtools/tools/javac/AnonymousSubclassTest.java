@@ -36,6 +36,7 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class AnonymousSubclassTest {
     public static void main(String... args) throws Exception {
         new AnonymousSubclassTest().run();
@@ -46,7 +47,8 @@ public class AnonymousSubclassTest {
     // To trigger the error we want, first we need to compile
     // a class with an anonymous inner class: Foo$1.
     final String foo =
-        "public class Foo {" +
+        "@Bean
+public class Foo {" +
         "  void m() { Foo f = new Foo() {}; }" +
         "}";
 
@@ -55,7 +57,8 @@ public class AnonymousSubclassTest {
     // error will be generated if we don't load Foo$1 through the
     // class reader.
     final String test1 =
-        "public class Test1 {" +
+        "@Bean
+public class Test1 {" +
         "  void m() {"+
         "    Foo f1 = new Foo();"+
         "    Foo f2 = new Foo$1(f1) {};"+
@@ -63,7 +66,8 @@ public class AnonymousSubclassTest {
         "}";
 
     final String test2 =
-        "public class Test2 {" +
+        "@Bean
+public class Test2 {" +
         "  class T extends Foo$1 {" +
         "    public T(Foo f) { super(f); }" +
         "  }"+

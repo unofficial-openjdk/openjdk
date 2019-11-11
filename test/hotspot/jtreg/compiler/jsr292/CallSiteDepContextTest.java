@@ -60,6 +60,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.ACC_SUPER;
 import static jdk.internal.org.objectweb.asm.Opcodes.H_INVOKESTATIC;
 import static jdk.internal.org.objectweb.asm.Opcodes.IRETURN;
 
+@Bean
 public class CallSiteDepContextTest {
     static final Unsafe               UNSAFE = Unsafe.getUnsafe();
     static final MethodHandles.Lookup LOOKUP = MethodHandleHelper.IMPL_LOOKUP;

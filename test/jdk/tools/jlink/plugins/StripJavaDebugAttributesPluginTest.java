@@ -62,6 +62,7 @@ import jdk.tools.jlink.plugin.ResourcePool;
 import jdk.tools.jlink.plugin.ResourcePoolEntry;
 import tests.Helper;
 
+@Bean
 public class StripJavaDebugAttributesPluginTest {
     public static void main(String[] args) throws Exception {
         new StripJavaDebugAttributesPluginTest().test();

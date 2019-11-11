@@ -27,6 +27,7 @@
  * @summary Test GetChars method parameter checking
  */
 
+@Bean
 public class GetCharsOverLength {
 
    public static void main (String argv[]) {

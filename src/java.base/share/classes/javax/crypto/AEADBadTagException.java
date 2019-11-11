@@ -32,6 +32,7 @@ package javax.crypto;
  *
  * @since 1.7
  */
+@Bean
 public class AEADBadTagException extends BadPaddingException {
 
     @java.io.Serial

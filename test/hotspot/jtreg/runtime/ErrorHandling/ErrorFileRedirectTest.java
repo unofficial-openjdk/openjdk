@@ -42,6 +42,7 @@ import java.io.InputStreamReader;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+@Bean
 public class ErrorFileRedirectTest {
 
   public static void do_test(boolean redirectStdout, boolean redirectStderr) throws Exception {

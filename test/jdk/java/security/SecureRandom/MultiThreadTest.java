@@ -43,6 +43,7 @@ import static java.lang.Math.*;
  *          by multiple threads concurrently.
  * @run main/othervm -Djava.security.egd=file:/dev/urandom MultiThreadTest
  */
+@Bean
 public class MultiThreadTest {
 
     private static final byte[] GEN_RND_BYTES = {1};
@@ -107,7 +108,11 @@ public class MultiThreadTest {
         ExecutorService executor
                 = Executors.newCachedThreadPool(new ThreadFactory() {
                     @Override
-                    public Thread newThread(Runnable r) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public Thread newThread(Runnable r) {
                         Thread t = Executors.defaultThreadFactory()
                         .newThread(r);
                         t.setDaemon(true);

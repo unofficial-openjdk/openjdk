@@ -43,6 +43,7 @@ import javax.management.StandardMBean;
 import javax.management.openmbean.TabularData;
 import javax.management.openmbean.TabularType;
 
+@Bean
 public class TypeNameTest {
     public static interface TestMXBean {
         public int getInt();

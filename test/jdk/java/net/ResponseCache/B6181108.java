@@ -35,6 +35,7 @@ import java.io.*;
 import jdk.test.lib.net.URIBuilder;
 import static java.net.Proxy.NO_PROXY;
 
+@Bean
 public class B6181108 implements Runnable {
     ServerSocket ss;
     static String urlWithSpace;
@@ -77,14 +78,22 @@ public class B6181108 implements Runnable {
     }
 
     static class ResponseCache extends java.net.ResponseCache {
-        public CacheResponse get(URI uri, String method, Map<String,List<String>> hdrs) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CacheResponse get(URI uri, String method, Map<String,List<String>> hdrs) {
             System.out.println("get uri = " + uri);
             if (!urlWithSpace.equals(uri.toString())) {
                 throw new RuntimeException("test failed");
             }
             return null;
         }
-        public CacheRequest put(URI uri,  URLConnection urlc) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CacheRequest put(URI uri,  URLConnection urlc) {
             System.out.println("put uri = " + uri);
             return null;
         }

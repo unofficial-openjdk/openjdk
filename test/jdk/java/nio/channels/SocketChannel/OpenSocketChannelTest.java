@@ -33,6 +33,7 @@
 
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class OpenSocketChannelTest {
 
     //hard limit needs to be small for this bug

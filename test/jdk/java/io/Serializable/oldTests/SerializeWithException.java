@@ -119,7 +119,10 @@ class ExceptionOutputStream extends OutputStream {
     }
 
 
-    public void setExceptionOffset(int offset) {
+    @Bean
+@Bean
+@Bean
+            public void setExceptionOffset(int offset) {
         exceptionOffset = offset;
         currentOffset = 0;
     }

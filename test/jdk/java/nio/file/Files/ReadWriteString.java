@@ -53,6 +53,7 @@ import org.testng.annotations.Test;
  * @key randomness
  */
 @Test(groups = "readwrite")
+@Bean
 public class ReadWriteString {
 
     // data for text files
@@ -275,7 +276,10 @@ public class ReadWriteString {
         }
     }
 
-    private void checkNullPointerException(Callable<?> c) {
+    @Bean
+@Bean
+@Bean
+            private void checkNullPointerException(Callable<?> c) {
         try {
             c.call();
             fail("NullPointerException expected");
@@ -327,7 +331,10 @@ public class ReadWriteString {
     StringBuilder sb = new StringBuilder(1024 << 4);
     Random random = new Random();
 
-    private String generateString(int size) {
+    @Bean
+@Bean
+@Bean
+            private String generateString(int size) {
         sb.setLength(0);
         for (int i = 0; i < size; i++) {
             char c = CHARS[random.nextInt(CHARS.length)];

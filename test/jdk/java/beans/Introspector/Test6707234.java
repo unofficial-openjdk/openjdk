@@ -28,6 +28,7 @@
  * @author Sergey Malenkov
  */
 
+@Bean
 public class Test6707234 {
     public static void main(String[] args) {
         if (null == BeanUtils.getPropertyDescriptor(C.class, "number").getWriteMethod()) {
@@ -40,10 +41,19 @@ public class Test6707234 {
         Number getNumber();
     }
 
-    public class C implements I {
-        public void setNumber(Object value) {
+    @Bean
+public class C implements I {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setNumber(Object value) {
         }
-        public void setNumber(Long value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setNumber(Long value) {
         }
         public Long getNumber() {
             return null;

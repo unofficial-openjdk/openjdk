@@ -48,7 +48,10 @@ public class GetInstancePolicySpi extends PolicySpi {
         });
     }
 
-    public boolean engineImplies(ProtectionDomain domain, Permission perm) {
+    @Bean
+@Bean
+@Bean
+            public boolean engineImplies(ProtectionDomain domain, Permission perm) {
 
         /**
          * Note there is no need to capture own protection domain and

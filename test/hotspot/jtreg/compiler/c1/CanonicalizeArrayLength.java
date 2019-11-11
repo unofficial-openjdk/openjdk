@@ -48,6 +48,7 @@
 
 package compiler.c1;
 
+@Bean
 public class CanonicalizeArrayLength {
     int[] arr = new int[42];
     int[] arrNull = null;

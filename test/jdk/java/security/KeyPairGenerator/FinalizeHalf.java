@@ -38,6 +38,7 @@ import java.util.function.Consumer;
 import java.util.ArrayList;
 import java.util.List;
 
+@Bean
 public class FinalizeHalf {
 
     static int failures = 0;

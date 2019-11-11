@@ -53,6 +53,7 @@ import tests.Helper;
  * @build tests.*
  * @run main/othervm JLinkPostProcessingTest
  */
+@Bean
 public class JLinkPostProcessingTest {
 
     private static class PPPlugin implements PostProcessor, Plugin {
@@ -73,7 +74,11 @@ public class JLinkPostProcessingTest {
         }
 
         @Override
-        public ResourcePool transform(ResourcePool in, ResourcePoolBuilder out) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public ResourcePool transform(ResourcePool in, ResourcePoolBuilder out) {
             in.transformAndCopy(Function.identity(), out);
             return out.build();
         }

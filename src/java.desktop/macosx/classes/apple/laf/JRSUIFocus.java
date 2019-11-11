@@ -25,6 +25,7 @@
 
 package apple.laf;
 
+@Bean
 public class JRSUIFocus {
     private static final int SUCCESS = 0;
     private static final int NULL_PTR = -1;
@@ -43,7 +44,8 @@ public class JRSUIFocus {
         this.cgContext = cgContext;
     }
 
-    public void beginFocus(final int ringStyle) {
+@Bean
+        public void beginFocus(final int ringStyle) {
         testForFailure(beginNativeFocus(cgContext, ringStyle));
     }
 

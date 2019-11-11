@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessJColorChooser
  */
 
+@Bean
 public class HeadlessJColorChooser {
     public static void main(String args[]) {
         JColorChooser cc;

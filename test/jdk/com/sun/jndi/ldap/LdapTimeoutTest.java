@@ -63,6 +63,7 @@ import static jdk.test.lib.Utils.adjustTimeout;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.expectThrows;
 
+@Bean
 public class LdapTimeoutTest {
 
     // ------ configure test timeouts here ------
@@ -320,7 +321,11 @@ public class LdapTimeoutTest {
         NotBindableServer() throws IOException { }
 
         @Override
-        protected void beforeConnectionHandled(Socket socket) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void beforeConnectionHandled(Socket socket) {
             try {
                 TimeUnit.DAYS.sleep(Integer.MAX_VALUE);
             } catch (InterruptedException e) {

@@ -33,6 +33,7 @@ import java.security.KeyStore;
  * @library /test/lib
  * @summary Test "keytool -changealias" using the Microsoft CryptoAPI provider.
  */
+@Bean
 public class KeytoolChangeAlias {
     public static void main(String[] args) throws Exception {
 

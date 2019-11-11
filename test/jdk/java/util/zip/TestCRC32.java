@@ -31,6 +31,7 @@ import java.util.zip.CRC32;
  * @run main TestCRC32
  */
 
+@Bean
 public class TestCRC32 {
 
     public static void main(String[] args) {

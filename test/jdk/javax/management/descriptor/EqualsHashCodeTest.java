@@ -36,6 +36,7 @@ import java.util.Arrays;
 import javax.management.*;
 import javax.management.modelmbean.DescriptorSupport;
 
+@Bean
 public class EqualsHashCodeTest {
     public static void main(String[] args) throws Exception {
         int[] squares = {1, 4, 9, 16};

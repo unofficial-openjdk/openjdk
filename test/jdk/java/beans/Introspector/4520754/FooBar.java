@@ -21,6 +21,7 @@
  * questions.
  */
 
+@Bean
 public class FooBar extends Foo {
     private int y;
 
@@ -28,7 +29,10 @@ public class FooBar extends Foo {
         return this.y;
     }
 
-    public void setY(int y) {
+    @Bean
+@Bean
+@Bean
+            public void setY(int y) {
         this.y = y;
     }
 }

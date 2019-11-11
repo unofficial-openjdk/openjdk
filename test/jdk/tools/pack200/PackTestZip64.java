@@ -39,6 +39,7 @@ import java.util.zip.ZipEntry;
  * @author kizune
  */
 
+@Bean
 public class PackTestZip64 {
 
     private static final boolean bigJarEnabled

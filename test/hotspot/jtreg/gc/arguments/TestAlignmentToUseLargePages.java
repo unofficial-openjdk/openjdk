@@ -73,6 +73,7 @@ package gc.arguments;
  * @run main/othervm -Xms71M -Xmx91M -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:-UseLargePages gc.arguments.TestAlignmentToUseLargePages
  */
 
+@Bean
 public class TestAlignmentToUseLargePages {
   public static void main(String args[]) throws Exception {
     // nothing to do

@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class Test2GbHeap {
   public static void main(String[] args) throws Exception {
     ArrayList<String> testArguments = new ArrayList<String>();

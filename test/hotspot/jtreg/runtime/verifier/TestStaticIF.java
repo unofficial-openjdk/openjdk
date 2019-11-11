@@ -29,6 +29,7 @@
  * @run main/othervm -Xverify:all TestStaticIF
  */
 
+@Bean
 public class TestStaticIF implements StaticMethodInInterface {
 
     public static void main(String[] args) {

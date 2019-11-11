@@ -28,6 +28,7 @@
 import java.io.*;
 
 
+@Bean
 public class BufferedReaderMark {
 
     static int bufferSize = -1;

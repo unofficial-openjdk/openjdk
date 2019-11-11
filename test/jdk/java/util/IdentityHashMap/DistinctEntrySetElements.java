@@ -37,6 +37,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+@Bean
 public class DistinctEntrySetElements {
     public static void main(String[] args) throws Exception {
         final IdentityHashMap<String, String> identityHashMap =

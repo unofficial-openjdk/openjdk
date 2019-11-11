@@ -40,6 +40,7 @@
 
 package compiler.arguments;
 
+@Bean
 public class TestUseCountLeadingZerosInstructionOnUnsupportedCPU
      extends BMIUnsupportedCPUTest {
 

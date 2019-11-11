@@ -149,7 +149,10 @@ public final class MultipleContextsFunctionalTest {
         }
 
         @Override
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
             this.toFront();
             btn.setText("TEST " + (++counter));
             this.toBack();

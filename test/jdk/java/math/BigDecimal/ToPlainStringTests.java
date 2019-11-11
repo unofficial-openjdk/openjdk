@@ -32,6 +32,7 @@
 
 import java.math.*;
 
+@Bean
 public class ToPlainStringTests {
     public static void main(String argv[]) {
         String [][] testCases = {

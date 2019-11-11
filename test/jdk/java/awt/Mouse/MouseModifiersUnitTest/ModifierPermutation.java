@@ -265,16 +265,25 @@ public class ModifierPermutation {
 class CheckingAdapter extends MouseAdapter{
     public CheckingAdapter(){}
 
-    public void mousePressed(MouseEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void mousePressed(MouseEvent e) {
         System.out.println("PRESSED "+e);
         ModifierPermutation.checkModifiersOnPress(e);
     }
-    public void mouseReleased(MouseEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void mouseReleased(MouseEvent e) {
         System.out.println("RELEASED "+e);
         ModifierPermutation.checkModifiersOnRelease(e);
 
     }
-    public void mouseClicked(MouseEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void mouseClicked(MouseEvent e) {
         System.out.println("CLICKED "+e);
         ModifierPermutation.checkModifiersOnClick(e);
     }

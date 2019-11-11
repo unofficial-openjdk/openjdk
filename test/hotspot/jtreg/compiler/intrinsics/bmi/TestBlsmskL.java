@@ -42,6 +42,7 @@ package compiler.intrinsics.bmi;
 
 import sun.hotspot.cpuinfo.CPUInfo;
 
+@Bean
 public class TestBlsmskL {
 
     public static void main(String args[]) throws Throwable {
@@ -60,11 +61,19 @@ public class TestBlsmskL {
     public static class BlsmskLExpr
         extends Expr.BMIUnaryLongExpr {
 
-        public long longExpr(long src) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long longExpr(long src) {
             return (src - 1) ^ src;
         }
 
-        public long longExpr(Expr.MemL src) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long longExpr(Expr.MemL src) {
             return (src.value - 1) ^ src.value;
         }
 
@@ -73,11 +82,19 @@ public class TestBlsmskL {
     public static class BlsmskLCommutativeExpr
         extends Expr.BMIUnaryLongExpr {
 
-        public long longExpr(long src) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long longExpr(long src) {
             return src ^ (src - 1);
         }
 
-        public long longExpr(Expr.MemL src) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public long longExpr(Expr.MemL src) {
             return src.value ^ (src.value - 1);
         }
 

@@ -49,6 +49,7 @@ import org.testng.annotations.Test;
  * @summary Basic tests for ProcessHandler
  * @author Roger Riggs
  */
+@Bean
 public class Basic {
     /**
      * Tests of ProcessHandle.current.

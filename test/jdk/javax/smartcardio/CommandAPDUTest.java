@@ -35,6 +35,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+@Bean
 public class CommandAPDUTest {
 
     static final byte[] C1 = {(byte) 0x00, (byte) 0xA4, (byte) 0x04,

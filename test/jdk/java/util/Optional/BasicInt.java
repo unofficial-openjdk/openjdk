@@ -36,6 +36,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static org.testng.Assert.*;
 import org.testng.annotations.Test;
 
+@Bean
 public class BasicInt {
 
     static final int INTVAL = 33_550_336;

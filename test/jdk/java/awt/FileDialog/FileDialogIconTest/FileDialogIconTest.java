@@ -41,6 +41,7 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import javax.swing.SwingUtilities;
 
+@Bean
 public class FileDialogIconTest {
     private static Frame frame;
     private static Dialog dialog;

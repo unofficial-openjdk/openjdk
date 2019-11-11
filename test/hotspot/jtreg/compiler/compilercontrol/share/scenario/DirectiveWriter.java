@@ -49,7 +49,8 @@ public class DirectiveWriter implements AutoCloseable {
      * @param methods methods used for the match
      * @return this DirectiveWriter instance
      */
-    public DirectiveWriter match(String... methods) {
+@Bean
+        public DirectiveWriter match(String... methods) {
         if (jsonFile.getElement() == null) {
             write(JSONFile.Element.ARRAY);
         }
@@ -65,7 +66,8 @@ public class DirectiveWriter implements AutoCloseable {
      * @param methodDescriptors method descriptors used for the match
      * @return this DirectiveWriter instance
      */
-    public DirectiveWriter match(MethodDescriptor... methodDescriptors) {
+@Bean
+        public DirectiveWriter match(MethodDescriptor... methodDescriptors) {
         String[] methods = new String[methodDescriptors.length];
         for (int i = 0; i < methodDescriptors.length; i++) {
             methods[i] = methodDescriptors[i].getString();
@@ -82,7 +84,8 @@ public class DirectiveWriter implements AutoCloseable {
      * @param methods methods used for the inline
      * @return this DirectiveWriter instance
      */
-    public DirectiveWriter inline(String... methods) {
+@Bean
+        public DirectiveWriter inline(String... methods) {
         write(JSONFile.Element.PAIR, "inline");
         writeMethods(methods);
         return this;
@@ -96,13 +99,15 @@ public class DirectiveWriter implements AutoCloseable {
      * @param methods methods used for the inline
      * @return this DirectiveWriter instance
      */
-    public DirectiveWriter inline(List<String> methods) {
+@Bean
+        public DirectiveWriter inline(List<String> methods) {
         write(JSONFile.Element.PAIR, "inline");
         writeMethods(methods.toArray(new String[methods.size()]));
         return this;
     }
 
-    private void writeMethods(String[] methods) {
+@Bean
+        private void writeMethods(String[] methods) {
         if (methods.length == 0) {
             throw new IllegalArgumentException("ERROR: empty methods array");
         }
@@ -145,7 +150,8 @@ public class DirectiveWriter implements AutoCloseable {
      *
      * @return this DirectiveWriter instance
      */
-    public DirectiveWriter emitCompiler(Scenario.Compiler compiler) {
+@Bean
+        public DirectiveWriter emitCompiler(Scenario.Compiler compiler) {
         write(JSONFile.Element.PAIR, compiler.name);
         write(JSONFile.Element.OBJECT);
         return this;
@@ -167,7 +173,8 @@ public class DirectiveWriter implements AutoCloseable {
         return this;
     }
 
-    public DirectiveWriter write(JSONFile.Element element, String... value) {
+@Bean
+        public DirectiveWriter write(JSONFile.Element element, String... value) {
         jsonFile.write(element, value);
         return this;
     }
@@ -179,7 +186,8 @@ public class DirectiveWriter implements AutoCloseable {
      * @param value value of the directive
      * @return this DirectiveWriter instance
      */
-    public DirectiveWriter option(Option option, Object value) {
+@Bean
+        public DirectiveWriter option(Option option, Object value) {
         write(JSONFile.Element.PAIR, option.string);
         write(JSONFile.Element.VALUE, String.valueOf(value));
         return this;

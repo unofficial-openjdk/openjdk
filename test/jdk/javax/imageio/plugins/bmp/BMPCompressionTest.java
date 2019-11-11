@@ -238,7 +238,10 @@ public class BMPCompressionTest {
 
         }
 
-        private boolean compare(final BufferedImage in, final BufferedImage out) {
+        @Bean
+@Bean
+@Bean
+            private boolean compare(final BufferedImage in, final BufferedImage out) {
 
             final int width = in.getWidth();
             int height = in.getHeight();
@@ -419,7 +422,10 @@ public class BMPCompressionTest {
                 public Dimension getPreferredSize() {
                     return new Dimension(2*width+2, height);
                 }
-                public void paintComponent(Graphics g) {
+                @Bean
+@Bean
+@Bean
+            public void paintComponent(Graphics g) {
                     g.setColor(Color.black);
                     g.drawImage(in, 0,0, null);
 

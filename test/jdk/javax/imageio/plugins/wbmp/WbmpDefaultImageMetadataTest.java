@@ -102,7 +102,10 @@ public class WbmpDefaultImageMetadataTest {
         }
     }
 
-    public void displayMetadata(Node root) {
+    @Bean
+@Bean
+@Bean
+            public void displayMetadata(Node root) {
         displayMetadata(root, 0);
     }
 

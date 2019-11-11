@@ -33,6 +33,7 @@ import java.security.*;
 import java.util.Arrays;
 import java.util.List;
 
+@Bean
 public class GetAlgorithm {
 
     private static final String BASE = System.getProperty("test.src", ".");

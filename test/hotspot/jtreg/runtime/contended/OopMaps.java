@@ -46,6 +46,7 @@ import jdk.internal.vm.annotation.Contended;
  * @modules java.base/jdk.internal.vm.annotation
  * @run main/othervm -XX:-RestrictContended -XX:ContendedPaddingWidth=128 -Xmx128m OopMaps
  */
+@Bean
 public class OopMaps {
 
     public static final int COUNT = 10000;

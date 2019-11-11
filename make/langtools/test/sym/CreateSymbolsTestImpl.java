@@ -48,6 +48,7 @@ import build.tools.symbolgenerator.CreateSymbols.CtSymKind;
 import build.tools.symbolgenerator.CreateSymbols.ExcludeIncludeList;
 import build.tools.symbolgenerator.CreateSymbols.VersionDescription;
 
+@Bean
 public class CreateSymbolsTestImpl {
 
     static final String CREATE_SYMBOLS_NAME = "symbolgenerator.CreateSymbols";
@@ -73,34 +74,69 @@ public class CreateSymbolsTestImpl {
 
     @Test
     void testMethodRemoved() throws Exception {
-        doTest("package t; public class T { public void m() { } }",
-               "package t; public class T { }",
-               "package t; public class Test { { T t = null; t.m(); } }",
+        doTest("package t; @Bean
+public class T { public void m() { } }",
+               "package t; @Bean
+public class T { }",
+               "package t; @Bean
+public class Test { { T t = null; t.m(); } }",
                ToolBox.Expect.SUCCESS,
                ToolBox.Expect.FAIL);
-        doTest("package t; public class T { public void b() { } public void m() { } public void a() { } }",
-               "package t; public class T { public void b() { }                     public void a() { } }",
-               "package t; public class Test { { T t = null; t.b(); t.a(); } }",
+        doTest("package t; @Bean
+public class T { @Bean
+@Bean
+@Bean
+@Bean
+                public void b() { } public void m() { } public void a() { } }",
+               "package t; @Bean
+public class T { @Bean
+@Bean
+@Bean
+@Bean
+                public void b() { }                     public void a() { } }",
+               "package t; @Bean
+public class Test { { T t = null; t.b(); t.a(); } }",
                ToolBox.Expect.SUCCESS,
                ToolBox.Expect.SUCCESS);
         //with additional attribute (need to properly skip the member):
-        doTest("package t; public class T { public void m() throws IllegalStateException { } public void a() { } }",
-               "package t; public class T {                                                  public void a() { } }",
-               "package t; public class Test { { T t = null; t.a(); } }",
+        doTest("package t; @Bean
+public class T { @Bean
+@Bean
+@Bean
+@Bean
+                public void m() throws IllegalStateException { } public void a() { } }",
+               "package t; @Bean
+public class T {                                                  public void a() { } }",
+               "package t; @Bean
+public class Test { { T t = null; t.a(); } }",
                ToolBox.Expect.SUCCESS,
                ToolBox.Expect.SUCCESS);
     }
 
     @Test
     void testMethodAdded() throws Exception {
-        doTest("package t; public class T { }",
-               "package t; public class T { public void m() { } }",
-               "package t; public class Test { { T t = null; t.m(); } }",
+        doTest("package t; @Bean
+public class T { }",
+               "package t; @Bean
+public class T { public void m() { } }",
+               "package t; @Bean
+public class Test { { T t = null; t.m(); } }",
                ToolBox.Expect.FAIL,
                ToolBox.Expect.SUCCESS);
-        doTest("package t; public class T { public void b() { }                     public void a() { } }",
-               "package t; public class T { public void b() { } public void m() { } public void a() { } }",
-               "package t; public class Test { { T t = null; t.b(); t.a(); } }",
+        doTest("package t; @Bean
+public class T { @Bean
+@Bean
+@Bean
+@Bean
+                public void b() { }                     public void a() { } }",
+               "package t; @Bean
+public class T { @Bean
+@Bean
+@Bean
+@Bean
+                public void b() { } public void m() { } public void a() { } }",
+               "package t; @Bean
+public class Test { { T t = null; t.b(); t.a(); } }",
                ToolBox.Expect.SUCCESS,
                ToolBox.Expect.SUCCESS);
     }
@@ -110,44 +146,57 @@ public class CreateSymbolsTestImpl {
     @Test
     void testClassAdded() throws Exception {
         doTest("class Dummy {}",
-               "package t; public class T { }",
-               "package t; public class Test { { T t = new T(); } }",
+               "package t; @Bean
+public class T { }",
+               "package t; @Bean
+public class Test { { T t = new T(); } }",
                ToolBox.Expect.FAIL,
                ToolBox.Expect.SUCCESS);
     }
 
     @Test
     void testClassModified() throws Exception {
-        doTest("package t; public class T { public void m() { } }",
-               "package t; public class T implements java.io.Serializable { public void m() { } }",
-               "package t; public class Test { { java.io.Serializable t = new T(); } }",
+        doTest("package t; @Bean
+public class T { public void m() { } }",
+               "package t; @Bean
+public class T implements java.io.Serializable { public void m() { } }",
+               "package t; @Bean
+public class Test { { java.io.Serializable t = new T(); } }",
                ToolBox.Expect.FAIL,
                ToolBox.Expect.SUCCESS);
     }
 
     @Test
     void testClassRemoved() throws Exception {
-        doTest("package t; public class T { }",
+        doTest("package t; @Bean
+public class T { }",
                "class Dummy {}",
-               "package t; public class Test { { T t = new T(); } }",
+               "package t; @Bean
+public class Test { { T t = new T(); } }",
                ToolBox.Expect.SUCCESS,
                ToolBox.Expect.FAIL);
     }
 
     @Test
     void testInnerClassAttributes() throws Exception {
-        doTest("package t; public class T { public static class Inner { } }",
-               "package t; public class T { public static class Inner { } }",
-               "package t; import t.T.Inner; public class Test { Inner i; }",
+        doTest("package t; @Bean
+public class T { public static class Inner { } }",
+               "package t; @Bean
+public class T { public static class Inner { } }",
+               "package t; import t.T.Inner; @Bean
+public class Test { Inner i; }",
                ToolBox.Expect.SUCCESS,
                ToolBox.Expect.SUCCESS);
     }
 
     @Test
     void testConstantAdded() throws Exception {
-        doTest("package t; public class T { }",
-               "package t; public class T { public static final int A = 0; }",
-               "package t; public class Test { void t(int i) { switch (i) { case T.A: break;} } }",
+        doTest("package t; @Bean
+public class T { }",
+               "package t; @Bean
+public class T { public static final int A = 0; }",
+               "package t; @Bean
+public class Test { void t(int i) { switch (i) { case T.A: break;} } }",
                ToolBox.Expect.FAIL,
                ToolBox.Expect.SUCCESS);
     }
@@ -168,7 +217,8 @@ public class CreateSymbolsTestImpl {
                "    public double doubleValue() default 7;\n" +
                "    public String stringValue() default \"8\";\n" +
                "    public java.lang.annotation.RetentionPolicy enumValue() default java.lang.annotation.RetentionPolicy.RUNTIME;\n" +
-               "    public Class classValue() default Number.class;\n" +
+               "    @Bean
+public class classValue() default Number.class;\n" +
                "    public int[] arrayValue() default {1, 2};\n" +
                "    public SuppressWarnings annotationValue() default @SuppressWarnings(\"cast\");\n" +
                "}\n",
@@ -180,31 +230,39 @@ public class CreateSymbolsTestImpl {
     @Test
     void testConstantTest() throws Exception {
         //XXX: other constant types (String in particular) - see testStringConstant
-        doPrintElementTest("package t; public class T { public static final int A = 1; }",
-                           "package t; public class T { public static final int A = 2; }",
+        doPrintElementTest("package t; @Bean
+public class T { public static final int A = 1; }",
+                           "package t; @Bean
+public class T { public static final int A = 2; }",
                            "t.T",
                            "package t;\n\n" +
-                           "public class T {\n" +
+                           "@Bean
+public class T {\n" +
                            "  public static final int A = 1;\n\n" +
                            "  public T();\n" +
                            "}\n",
                            "t.T",
                            "package t;\n\n" +
-                           "public class T {\n" +
+                           "@Bean
+public class T {\n" +
                            "  public static final int A = 2;\n\n" +
                            "  public T();\n" +
                            "}\n");
-        doPrintElementTest("package t; public class T { public static final boolean A = false; }",
-                           "package t; public class T { public static final boolean A = true; }",
+        doPrintElementTest("package t; @Bean
+public class T { public static final boolean A = false; }",
+                           "package t; @Bean
+public class T { public static final boolean A = true; }",
                            "t.T",
                            "package t;\n\n" +
-                           "public class T {\n" +
+                           "@Bean
+public class T {\n" +
                            "  public static final boolean A = false;\n\n" +
                            "  public T();\n" +
                            "}\n",
                            "t.T",
                            "package t;\n\n" +
-                           "public class T {\n" +
+                           "@Bean
+public class T {\n" +
                            "  public static final boolean A = true;\n\n" +
                            "  public T();\n" +
                            "}\n");
@@ -226,7 +284,8 @@ public class CreateSymbolsTestImpl {
                            "package t;\n\n" +
                            "@t.Invisible\n" +
                            "@t.Visible\n" +
-                           "public class T {\n\n" +
+                           "@Bean
+public class T {\n\n" +
                            "  public T();\n" +
                            "}\n",
                            "t.Visible",
@@ -237,22 +296,33 @@ public class CreateSymbolsTestImpl {
         doPrintElementTest("package t;" +
                            "import java.lang.annotation.*;" +
                            "import java.util.*;" +
-                           "public class T {" +
-                           "    public void test(int h, @Invisible int i, @Visible List<String> j, int k) { }" +
+                           "@Bean
+public class T {" +
+                           "    @Bean
+@Bean
+@Bean
+@Bean
+                public void test(int h, @Invisible int i, @Visible List<String> j, int k) { }" +
                            "}" +
                            "@Retention(RetentionPolicy.RUNTIME) @interface Visible { }" +
                            "@Retention(RetentionPolicy.CLASS) @interface Invisible { }",
                            "package t;" +
                            "import java.lang.annotation.*;" +
                            "import java.util.*;" +
-                           "public class T {" +
-                           "    public void test(int h, @Invisible int i, @Visible List<String> j, int k) { }" +
+                           "@Bean
+public class T {" +
+                           "    @Bean
+@Bean
+@Bean
+@Bean
+                public void test(int h, @Invisible int i, @Visible List<String> j, int k) { }" +
                            "}" +
                            "@Retention(RetentionPolicy.RUNTIME) @interface Visible { }" +
                            "@Retention(RetentionPolicy.CLASS) @interface Invisible { }",
                            "t.T",
                            "package t;\n\n" +
-                           "public class T {\n\n" +
+                           "@Bean
+public class T {\n\n" +
                            "  public T();\n\n" +
                            "  public void test(int arg0,\n" +
                            "    @t.Invisible int arg1,\n" +
@@ -266,33 +336,44 @@ public class CreateSymbolsTestImpl {
                            "}\n");
         doPrintElementTest("package t;" +
                            "import java.lang.annotation.*;" +
-                           "public class T {" +
-                           "    public void test(@Ann(v=\"url\", dv=\"\\\"\\\"\") String str) { }" +
+                           "@Bean
+public class T {" +
+                           "    @Bean
+@Bean
+@Bean
+@Bean
+                public void test(@Ann(v=\"url\", dv=\"\\\"\\\"\") String str) { }" +
                            "}" +
                            "@Retention(RetentionPolicy.RUNTIME) @interface Ann {" +
                            "    public String v();" +
                            "    public String dv();" +
                            "}",
                            "package t;" +
-                           "public class T { }",
+                           "@Bean
+public class T { }",
                            "t.T",
                            "package t;\n\n" +
-                           "public class T {\n\n" +
+                           "@Bean
+public class T {\n\n" +
                            "  public T();\n\n" +
                            "  public void test(@t.Ann(dv=\"\\\"\\\"\", v=\"url\") java.lang.String arg0);\n" +
                            "}\n",
                            "t.T",
                            "package t;\n\n" +
-                           "public class T {\n\n" +
+                           "@Bean
+public class T {\n\n" +
                            "  public T();\n" +
                            "}\n");
     }
 
     @Test
     void testStringConstant() throws Exception {
-        doTest("package t; public class T { public static final String C = \"\"; }",
-               "package t; public class T { public static final String C = \"\"; }",
-               "package t; public class Test { { System.err.println(T.C); } }",
+        doTest("package t; @Bean
+public class T { public static final String C = \"\"; }",
+               "package t; @Bean
+public class T { public static final String C = \"\"; }",
+               "package t; @Bean
+public class Test { { System.err.println(T.C); } }",
                 ToolBox.Expect.SUCCESS,
                 ToolBox.Expect.SUCCESS);
     }
@@ -302,7 +383,8 @@ public class CreateSymbolsTestImpl {
         String oldProfileAnnotation = CreateSymbols.PROFILE_ANNOTATION;
         try {
             CreateSymbols.PROFILE_ANNOTATION = "Lt/Ann;";
-            doTestEquivalence("package t; public class T { public void t() {} } @interface Ann { }",
+            doTestEquivalence("package t; @Bean
+public class T { public void t() {} } @interface Ann { }",
                               "package t; public @Ann class T { public void t() {} } @interface Ann { }",
                               "t.T");
         } finally {
@@ -321,18 +403,21 @@ public class CreateSymbolsTestImpl {
     @Test
     void testStringCharLiterals() throws Exception {
         doPrintElementTest("package t;" +
-                           "public class T {" +
+                           "@Bean
+public class T {" +
                            "    public static final String STR = \"\\u0000\\u0001\\uffff\";" +
                            "    public static final String EMPTY = \"\";" +
                            "    public static final String AMP = \"&amp;&&lt;<&gt;>&apos;'\";" +
                            "}",
                            "package t;" +
-                           "    public class T {" +
+                           "    @Bean
+public class T {" +
                            "    public static final char c = '\\uffff';" +
                            "}",
                            "t.T",
                            "package t;\n\n" +
-                           "public class T {\n" +
+                           "@Bean
+public class T {\n" +
                            "  public static final java.lang.String STR = \"\\u0000\\u0001\\uffff\";\n" +
                            "  public static final java.lang.String EMPTY = \"\";\n" +
                            "  public static final java.lang.String AMP = \"&amp;&&lt;<&gt;>&apos;\\'\";\n\n" +
@@ -340,7 +425,8 @@ public class CreateSymbolsTestImpl {
                            "}\n",
                            "t.T",
                            "package t;\n\n" +
-                           "public class T {\n" +
+                           "@Bean
+public class T {\n" +
                            "  public static final char c = '\\uffff';\n\n" +
                            "  public T();\n" +
                            "}\n");
@@ -348,9 +434,14 @@ public class CreateSymbolsTestImpl {
 
     @Test
     void testGenerification() throws Exception {
-        doTest("package t; public class T { public class TT { public Object t() { return null; } } }",
-               "package t; public class T<E> { public class TT { public E t() { return null; } } }",
-               "package t; public class Test { { T.TT tt = null; tt.t(); } }",
+        doTest("package t; @Bean
+public class T { @Bean
+public class TT { public Object t() { return null; } } }",
+               "package t; @Bean
+public class T<E> { @Bean
+public class TT { public E t() { return null; } } }",
+               "package t; @Bean
+public class Test { { T.TT tt = null; tt.t(); } }",
                ToolBox.Expect.SUCCESS,
                ToolBox.Expect.SUCCESS);
     }
@@ -421,7 +512,8 @@ public class CreateSymbolsTestImpl {
     @Test
     void testIncluded() throws Exception {
         doTestIncluded("package t;\n" +
-                       "public class Test extends PP1<PP2> implements PP3<PP4>, PP5<PP6> {\n" +
+                       "@Bean
+public class Test extends PP1<PP2> implements PP3<PP4>, PP5<PP6> {\n" +
                        "     public PP7 m1(PP8 p) { return null;}\n" +
                        "     public PP9<PPA> m2(PPB<PPC> p) { return null;}\n" +
                        "     public PPD f1;\n" +
@@ -474,7 +566,8 @@ public class CreateSymbolsTestImpl {
         boolean oldIncludeAll = includeAll;
         try {
             includeAll = false;
-            Path classes = prepareVersionedCTSym(code, "package other; public class Other {}");
+            Path classes = prepareVersionedCTSym(code, "package other; @Bean
+public class Other {}");
             Path root = classes.resolve("7");
             try (Stream<Path> classFiles = Files.walk(root)) {
                 Set<String> names = classFiles.map(p -> root.relativize(p))
@@ -531,13 +624,21 @@ public class CreateSymbolsTestImpl {
                               new VersionDescription(jar8.toAbsolutePath().toString(), "8", "7"));
 
         ExcludeIncludeList acceptAll = new ExcludeIncludeList(null, null) {
-            @Override public boolean accepts(String className) {
+            @Override @Bean
+@Bean
+@Bean
+@Bean
+                public boolean accepts(String className) {
                 return true;
             }
         };
         new CreateSymbols() {
             @Override
-            protected boolean includeEffectiveAccess(ClassList classes, ClassDescription clazz) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                protected boolean includeEffectiveAccess(ClassList classes, ClassDescription clazz) {
                 return includeAll ? true : super.includeEffectiveAccess(classes, clazz);
             }
         }.createBaseLine(versions, acceptAll, descDest, null);

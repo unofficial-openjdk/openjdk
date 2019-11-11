@@ -8,6 +8,7 @@
  * @compile/fail/ref=TargetType02.out -XDrawDiagnostics TargetType02.java
  */
 
+@Bean
 public class TargetType02 {
 
     interface S1<X extends Number> {

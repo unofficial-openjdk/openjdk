@@ -164,6 +164,9 @@ public class WindowResizingOnSetLocationTest {
         failButton.setActionCommand("Fail");
         failButton.addActionListener(new ActionListener() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent e) {
                 disposeFrames();
                 countDownLatch.countDown();
@@ -188,6 +191,9 @@ public class WindowResizingOnSetLocationTest {
         mainFrame.addWindowListener(new WindowAdapter() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent e) {
                 disposeFrames();
                 countDownLatch.countDown();
@@ -279,6 +285,9 @@ public class WindowResizingOnSetLocationTest {
         JPanel panel = new JPanel() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void paint(Graphics g) {
                 super.paint(g);
                 g.drawImage(img, 0, 0, getWidth(), getHeight(), this);
@@ -302,7 +311,10 @@ public class WindowResizingOnSetLocationTest {
 
             JPanel panel = new JPanel(new FlowLayout()) {
                 @Override
-                public void paint(Graphics g) {
+                @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
                     super.paint(g);
                     AffineTransform tx = ((Graphics2D) g).getTransform();
                     mrImage.scaleX = tx.getScaleX();
@@ -346,12 +358,18 @@ public class WindowResizingOnSetLocationTest {
         }
 
         @Override
-        public int getWidth(ImageObserver observer) {
+        @Bean
+@Bean
+@Bean
+            public int getWidth(ImageObserver observer) {
             return width;
         }
 
         @Override
-        public int getHeight(ImageObserver observer) {
+        @Bean
+@Bean
+@Bean
+            public int getHeight(ImageObserver observer) {
             return height;
         }
 
@@ -361,7 +379,10 @@ public class WindowResizingOnSetLocationTest {
         }
 
         @Override
-        public Image getResolutionVariant(double destImageWidth, double destImageHeight) {
+        @Bean
+@Bean
+@Bean
+            public Image getResolutionVariant(double destImageWidth, double destImageHeight) {
 
             int w = (int) destImageWidth;
             int h = (int) destImageHeight;

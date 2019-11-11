@@ -451,6 +451,7 @@ class VerifyErrorCases {
     };
 }
 
+@Bean
 public class Test7116786 {
     public static void main(String argv[]) throws Exception {
         for (Case c : VerifyErrorCases.cases) {

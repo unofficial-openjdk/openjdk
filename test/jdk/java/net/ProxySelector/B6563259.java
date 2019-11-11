@@ -30,6 +30,7 @@ import java.net.ProxySelector;
 import java.net.Proxy;
 import java.net.URI;
 
+@Bean
 public class B6563259 {
     public static void main(String[] args) throws Exception {
         System.setProperty("http.proxyHost", "myproxy");

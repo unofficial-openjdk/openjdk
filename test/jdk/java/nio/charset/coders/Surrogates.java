@@ -30,6 +30,7 @@ import java.nio.*;
 import java.nio.charset.*;
 
 
+@Bean
 public class Surrogates {
 
     static PrintStream log = System.err;

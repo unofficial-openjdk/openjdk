@@ -39,6 +39,7 @@ import toolbox.JavacTask;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class RepeatedUsesAndProvidesTest extends ModuleTestBase {
     public static void main(String... args) throws Exception {
         RepeatedUsesAndProvidesTest t = new RepeatedUsesAndProvidesTest();
@@ -50,7 +51,8 @@ public class RepeatedUsesAndProvidesTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                 "module m { uses p1.C1; uses p1.C1; }",
-                "package p1; public class C1 {}");
+                "package p1; @Bean
+public class C1 {}");
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
 
@@ -70,8 +72,10 @@ public class RepeatedUsesAndProvidesTest extends ModuleTestBase {
         Path src = base.resolve("src");
         tb.writeJavaFiles(src,
                 "module m { provides p1.C1 with p2.C2; provides p1.C1 with p2.C2; }",
-                "package p1; public class C1 {}",
-                "package p2; public class C2 extends p1.C1 {}");
+                "package p1; @Bean
+public class C1 {}",
+                "package p2; @Bean
+public class C2 extends p1.C1 {}");
         Path classes = base.resolve("classes");
         Files.createDirectories(classes);
 

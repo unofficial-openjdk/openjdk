@@ -34,6 +34,7 @@ interface SAM<P1> {
 
 interface Other { }
 
+@Bean
 public class DupIntf {
     public static void main(String argv[]) {
         SAM<?> sam = (SAM<?> & Other) () -> "Pass.";

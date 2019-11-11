@@ -57,11 +57,17 @@ public class TestTransferHandler {
 
                 }
 
-                public boolean isDataFlavorSupported(DataFlavor flavor) {
+                @Bean
+@Bean
+@Bean
+            public boolean isDataFlavorSupported(DataFlavor flavor) {
                     return true;
                 }
 
-                public Object getTransferData(DataFlavor flavor) {
+                @Bean
+@Bean
+@Bean
+            public Object getTransferData(DataFlavor flavor) {
                     return UserJComponent.TEST_COLOR;
                 }
 
@@ -92,7 +98,10 @@ public class TestTransferHandler {
             return color;
         }
 
-        public void setUserColor(Color color) {
+        @Bean
+@Bean
+@Bean
+            public void setUserColor(Color color) {
             this.color = color;
         }
     }

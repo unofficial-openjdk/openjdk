@@ -46,6 +46,7 @@ import static jdk.jshell.Snippet.SubKind.TEMP_VAR_EXPRESSION_SUBKIND;
 import static jdk.jshell.Snippet.Status.VALID;
 
 @Test
+@Bean
 public class SimpleRegressionTest extends KullaTesting {
 
     public void testSnippetMemberAssignment() {

@@ -71,6 +71,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.fail;
 
+@Bean
 public class MaxStreams {
 
     Http2TestServer http2TestServer;   // HTTP/2 ( h2c )

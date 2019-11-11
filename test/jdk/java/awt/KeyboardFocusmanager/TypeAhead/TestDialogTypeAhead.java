@@ -56,7 +56,10 @@ public class TestDialogTypeAhead {
     public void init()
     {
         Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
-                public void eventDispatched(AWTEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void eventDispatched(AWTEvent e) {
                     System.err.println(e.toString());
                 }
             }, AWTEvent.KEY_EVENT_MASK);
@@ -71,7 +74,10 @@ public class TestDialogTypeAhead {
         d.pack();
 
         ok.addKeyListener(new KeyAdapter() {
-                public void keyPressed(KeyEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void keyPressed(KeyEvent e) {
                     System.err.println("OK pressed");
                     d.dispose();
                     f.dispose();
@@ -83,7 +89,10 @@ public class TestDialogTypeAhead {
                 }
             });
         ok.addFocusListener(new FocusAdapter() {
-                public void focusGained(FocusEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void focusGained(FocusEvent e) {
                     gotFocus = true;
                     System.err.println("Ok got focus");
                 }
@@ -91,7 +100,10 @@ public class TestDialogTypeAhead {
         f.add(b);
         f.pack();
         b.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
+                @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
                     System.err.println("B pressed");
 
                     EventQueue.invokeLater(new Runnable() {
@@ -152,7 +164,10 @@ public class TestDialogTypeAhead {
 
     }// start()
 
-    private void moveMouseOver(Container c) {
+    @Bean
+@Bean
+@Bean
+            private void moveMouseOver(Container c) {
         Point p = c.getLocationOnScreen();
         Dimension d = c.getSize();
         robot.mouseMove(p.x + (int)(d.getWidth()/2), p.y + (int)(d.getHeight()/2));
@@ -174,7 +189,10 @@ public class TestDialogTypeAhead {
         }
     }
 
-    private void waitTillShown(Component c) {
+    @Bean
+@Bean
+@Bean
+            private void waitTillShown(Component c) {
         while (true) {
             try {
                 Thread.sleep(100);
@@ -187,13 +205,19 @@ public class TestDialogTypeAhead {
             }
         }
     }
-    private void makeFocused(Component comp) {
+    @Bean
+@Bean
+@Bean
+            private void makeFocused(Component comp) {
         if (comp.isFocusOwner()) {
             return;
         }
         final Semaphore sema = new Semaphore();
         final FocusAdapter fa = new FocusAdapter() {
-                public void focusGained(FocusEvent fe) {
+                @Bean
+@Bean
+@Bean
+            public void focusGained(FocusEvent fe) {
                     sema.raise();
                 }
             };

@@ -38,6 +38,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 
+@Bean
 public class NullDataFlavorTest {
 
     private final static Clipboard clipboard =
@@ -85,7 +86,10 @@ class NullSelection implements Transferable {
     }
 
     @Override
-    public boolean isDataFlavorSupported(DataFlavor flavor) {
+    @Bean
+@Bean
+@Bean
+            public boolean isDataFlavorSupported(DataFlavor flavor) {
         for (DataFlavor fl : flavors) {
             if (flavor.equals(fl)) {
                 return true;

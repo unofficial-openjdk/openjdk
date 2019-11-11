@@ -537,7 +537,8 @@ public final class LocalTime
      * @return true if the field is supported on this time, false if not
      */
     @Override
-    public boolean isSupported(TemporalField field) {
+@Bean
+        public boolean isSupported(TemporalField field) {
         if (field instanceof ChronoField) {
             return field.isTimeBased();
         }
@@ -573,7 +574,8 @@ public final class LocalTime
      * @return true if the unit can be added/subtracted, false if not
      */
     @Override  // override for Javadoc
-    public boolean isSupported(TemporalUnit unit) {
+@Bean
+        public boolean isSupported(TemporalUnit unit) {
         if (unit instanceof ChronoUnit) {
             return unit.isTimeBased();
         }
@@ -605,7 +607,8 @@ public final class LocalTime
      * @throws UnsupportedTemporalTypeException if the field is not supported
      */
     @Override  // override for Javadoc
-    public ValueRange range(TemporalField field) {
+@Bean
+        public ValueRange range(TemporalField field) {
         return Temporal.super.range(field);
     }
 
@@ -637,7 +640,8 @@ public final class LocalTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override  // override for Javadoc and performance
-    public int get(TemporalField field) {
+@Bean
+        public int get(TemporalField field) {
         if (field instanceof ChronoField) {
             return get0(field);
         }
@@ -668,7 +672,8 @@ public final class LocalTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public long getLong(TemporalField field) {
+@Bean
+        public long getLong(TemporalField field) {
         if (field instanceof ChronoField) {
             if (field == NANO_OF_DAY) {
                 return toNanoOfDay();
@@ -762,7 +767,8 @@ public final class LocalTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public LocalTime with(TemporalAdjuster adjuster) {
+@Bean
+        public LocalTime with(TemporalAdjuster adjuster) {
         // optimizations
         if (adjuster instanceof LocalTime) {
             return (LocalTime) adjuster;
@@ -853,7 +859,8 @@ public final class LocalTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public LocalTime with(TemporalField field, long newValue) {
+@Bean
+        public LocalTime with(TemporalField field, long newValue) {
         if (field instanceof ChronoField) {
             ChronoField f = (ChronoField) field;
             f.checkValidValue(newValue);
@@ -889,7 +896,8 @@ public final class LocalTime
      * @return a {@code LocalTime} based on this time with the requested hour, not null
      * @throws DateTimeException if the hour value is invalid
      */
-    public LocalTime withHour(int hour) {
+@Bean
+        public LocalTime withHour(int hour) {
         if (this.hour == hour) {
             return this;
         }
@@ -906,7 +914,8 @@ public final class LocalTime
      * @return a {@code LocalTime} based on this time with the requested minute, not null
      * @throws DateTimeException if the minute value is invalid
      */
-    public LocalTime withMinute(int minute) {
+@Bean
+        public LocalTime withMinute(int minute) {
         if (this.minute == minute) {
             return this;
         }
@@ -923,7 +932,8 @@ public final class LocalTime
      * @return a {@code LocalTime} based on this time with the requested second, not null
      * @throws DateTimeException if the second value is invalid
      */
-    public LocalTime withSecond(int second) {
+@Bean
+        public LocalTime withSecond(int second) {
         if (this.second == second) {
             return this;
         }
@@ -940,7 +950,8 @@ public final class LocalTime
      * @return a {@code LocalTime} based on this time with the requested nanosecond, not null
      * @throws DateTimeException if the nanos value is invalid
      */
-    public LocalTime withNano(int nanoOfSecond) {
+@Bean
+        public LocalTime withNano(int nanoOfSecond) {
         if (this.nano == nanoOfSecond) {
             return this;
         }
@@ -969,7 +980,8 @@ public final class LocalTime
      * @throws DateTimeException if unable to truncate
      * @throws UnsupportedTemporalTypeException if the unit is not supported
      */
-    public LocalTime truncatedTo(TemporalUnit unit) {
+@Bean
+        public LocalTime truncatedTo(TemporalUnit unit) {
         if (unit == ChronoUnit.NANOS) {
             return this;
         }
@@ -1007,7 +1019,8 @@ public final class LocalTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public LocalTime plus(TemporalAmount amountToAdd) {
+@Bean
+        public LocalTime plus(TemporalAmount amountToAdd) {
         return (LocalTime) amountToAdd.addTo(this);
     }
 
@@ -1064,7 +1077,8 @@ public final class LocalTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public LocalTime plus(long amountToAdd, TemporalUnit unit) {
+@Bean
+        public LocalTime plus(long amountToAdd, TemporalUnit unit) {
         if (unit instanceof ChronoUnit) {
             switch ((ChronoUnit) unit) {
                 case NANOS: return plusNanos(amountToAdd);
@@ -1092,7 +1106,8 @@ public final class LocalTime
      * @param hoursToAdd  the hours to add, may be negative
      * @return a {@code LocalTime} based on this time with the hours added, not null
      */
-    public LocalTime plusHours(long hoursToAdd) {
+@Bean
+        public LocalTime plusHours(long hoursToAdd) {
         if (hoursToAdd == 0) {
             return this;
         }
@@ -1111,7 +1126,8 @@ public final class LocalTime
      * @param minutesToAdd  the minutes to add, may be negative
      * @return a {@code LocalTime} based on this time with the minutes added, not null
      */
-    public LocalTime plusMinutes(long minutesToAdd) {
+@Bean
+        public LocalTime plusMinutes(long minutesToAdd) {
         if (minutesToAdd == 0) {
             return this;
         }
@@ -1136,7 +1152,8 @@ public final class LocalTime
      * @param secondstoAdd  the seconds to add, may be negative
      * @return a {@code LocalTime} based on this time with the seconds added, not null
      */
-    public LocalTime plusSeconds(long secondstoAdd) {
+@Bean
+        public LocalTime plusSeconds(long secondstoAdd) {
         if (secondstoAdd == 0) {
             return this;
         }
@@ -1163,7 +1180,8 @@ public final class LocalTime
      * @param nanosToAdd  the nanos to add, may be negative
      * @return a {@code LocalTime} based on this time with the nanoseconds added, not null
      */
-    public LocalTime plusNanos(long nanosToAdd) {
+@Bean
+        public LocalTime plusNanos(long nanosToAdd) {
         if (nanosToAdd == 0) {
             return this;
         }
@@ -1201,7 +1219,8 @@ public final class LocalTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public LocalTime minus(TemporalAmount amountToSubtract) {
+@Bean
+        public LocalTime minus(TemporalAmount amountToSubtract) {
         return (LocalTime) amountToSubtract.subtractFrom(this);
     }
 
@@ -1225,7 +1244,8 @@ public final class LocalTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public LocalTime minus(long amountToSubtract, TemporalUnit unit) {
+@Bean
+        public LocalTime minus(long amountToSubtract, TemporalUnit unit) {
         return (amountToSubtract == Long.MIN_VALUE ? plus(Long.MAX_VALUE, unit).plus(1, unit) : plus(-amountToSubtract, unit));
     }
 
@@ -1241,7 +1261,8 @@ public final class LocalTime
      * @param hoursToSubtract  the hours to subtract, may be negative
      * @return a {@code LocalTime} based on this time with the hours subtracted, not null
      */
-    public LocalTime minusHours(long hoursToSubtract) {
+@Bean
+        public LocalTime minusHours(long hoursToSubtract) {
         return plusHours(-(hoursToSubtract % HOURS_PER_DAY));
     }
 
@@ -1256,7 +1277,8 @@ public final class LocalTime
      * @param minutesToSubtract  the minutes to subtract, may be negative
      * @return a {@code LocalTime} based on this time with the minutes subtracted, not null
      */
-    public LocalTime minusMinutes(long minutesToSubtract) {
+@Bean
+        public LocalTime minusMinutes(long minutesToSubtract) {
         return plusMinutes(-(minutesToSubtract % MINUTES_PER_DAY));
     }
 
@@ -1271,7 +1293,8 @@ public final class LocalTime
      * @param secondsToSubtract  the seconds to subtract, may be negative
      * @return a {@code LocalTime} based on this time with the seconds subtracted, not null
      */
-    public LocalTime minusSeconds(long secondsToSubtract) {
+@Bean
+        public LocalTime minusSeconds(long secondsToSubtract) {
         return plusSeconds(-(secondsToSubtract % SECONDS_PER_DAY));
     }
 
@@ -1286,7 +1309,8 @@ public final class LocalTime
      * @param nanosToSubtract  the nanos to subtract, may be negative
      * @return a {@code LocalTime} based on this time with the nanoseconds subtracted, not null
      */
-    public LocalTime minusNanos(long nanosToSubtract) {
+@Bean
+        public LocalTime minusNanos(long nanosToSubtract) {
         return plusNanos(-(nanosToSubtract % NANOS_PER_DAY));
     }
 
@@ -1352,7 +1376,8 @@ public final class LocalTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public Temporal adjustInto(Temporal temporal) {
+@Bean
+        public Temporal adjustInto(Temporal temporal) {
         return temporal.with(NANO_OF_DAY, toNanoOfDay());
     }
 
@@ -1404,7 +1429,8 @@ public final class LocalTime
      * @throws ArithmeticException if numeric overflow occurs
      */
     @Override
-    public long until(Temporal endExclusive, TemporalUnit unit) {
+@Bean
+        public long until(Temporal endExclusive, TemporalUnit unit) {
         LocalTime end = LocalTime.from(endExclusive);
         if (unit instanceof ChronoUnit) {
             long nanosUntil = end.toNanoOfDay() - toNanoOfDay();  // no overflow
@@ -1431,7 +1457,8 @@ public final class LocalTime
      * @return the formatted time string, not null
      * @throws DateTimeException if an error occurs during printing
      */
-    public String format(DateTimeFormatter formatter) {
+@Bean
+        public String format(DateTimeFormatter formatter) {
         Objects.requireNonNull(formatter, "formatter");
         return formatter.format(this);
     }
@@ -1446,7 +1473,8 @@ public final class LocalTime
      * @param date  the date to combine with, not null
      * @return the local date-time formed from this time and the specified date, not null
      */
-    public LocalDateTime atDate(LocalDate date) {
+@Bean
+        public LocalDateTime atDate(LocalDate date) {
         return LocalDateTime.of(date, this);
     }
 
@@ -1459,7 +1487,8 @@ public final class LocalTime
      * @param offset  the offset to combine with, not null
      * @return the offset time formed from this time and the specified offset, not null
      */
-    public OffsetTime atOffset(ZoneOffset offset) {
+@Bean
+        public OffsetTime atOffset(ZoneOffset offset) {
         return OffsetTime.of(this, offset);
     }
 
@@ -1506,7 +1535,8 @@ public final class LocalTime
      * @return the number of seconds since the epoch of 1970-01-01T00:00:00Z, may be negative
      * @since 9
      */
-    public long toEpochSecond(LocalDate date, ZoneOffset offset) {
+@Bean
+        public long toEpochSecond(LocalDate date, ZoneOffset offset) {
         Objects.requireNonNull(date, "date");
         Objects.requireNonNull(offset, "offset");
         long epochDay = date.toEpochDay();
@@ -1526,7 +1556,8 @@ public final class LocalTime
      * @return the comparator value, negative if less, positive if greater
      */
     @Override
-    public int compareTo(LocalTime other) {
+@Bean
+        public int compareTo(LocalTime other) {
         int cmp = Integer.compare(hour, other.hour);
         if (cmp == 0) {
             cmp = Integer.compare(minute, other.minute);
@@ -1548,7 +1579,8 @@ public final class LocalTime
      * @param other  the other time to compare to, not null
      * @return true if this is after the specified time
      */
-    public boolean isAfter(LocalTime other) {
+@Bean
+        public boolean isAfter(LocalTime other) {
         return compareTo(other) > 0;
     }
 
@@ -1560,7 +1592,8 @@ public final class LocalTime
      * @param other  the other time to compare to, not null
      * @return true if this point is before the specified time
      */
-    public boolean isBefore(LocalTime other) {
+@Bean
+        public boolean isBefore(LocalTime other) {
         return compareTo(other) < 0;
     }
 
@@ -1578,7 +1611,8 @@ public final class LocalTime
      * @return true if this is equal to the other time
      */
     @Override
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (this == obj) {
             return true;
         }

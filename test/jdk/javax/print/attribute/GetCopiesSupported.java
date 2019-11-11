@@ -33,6 +33,7 @@ import javax.print.*;
 import javax.print.attribute.*;
 import javax.print.attribute.standard.*;
 
+@Bean
 public class GetCopiesSupported {
 
     public static void main(String args[]) {

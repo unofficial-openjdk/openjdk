@@ -37,6 +37,7 @@ import toolbox.JavaTask;
 import toolbox.Task;
 import toolbox.ToolBox;
 
+@Bean
 public class TextBlockAPI {
     private static ToolBox TOOLBOX = new ToolBox();
     private final static String JDK_VERSION = Integer.toString(Runtime.version().feature());
@@ -56,7 +57,8 @@ public class TextBlockAPI {
         for (String whitespace : new String[] { "", "   ", "\t", "\u2002" })
         for (String content : new String[] { "a", "ab", "abc", "\u2022", "*".repeat(1000), "*".repeat(10000) })  {
             String code =
-                    "public class CorrectTest {\n" +
+                    "@Bean
+public class CorrectTest {\n" +
                             "    public static void main(String... args) {\n" +
                             "        String xxx = " +
                             "\"\"\"" + whitespace + lineterminators +
@@ -72,7 +74,8 @@ public class TextBlockAPI {
      * Check that use of \u0022 is properly detected
      */
     static void test2() {
-        compPass("public class UnicodeDelimiterTest {\n" +
+        compPass("@Bean
+public class UnicodeDelimiterTest {\n" +
                 "    public static void main(String... args) {\n" +
                 "        String xxx = \\u0022\\u0022\\u0022\nabc\n\\u0022\\u0022\\u0022;\n" +
                 "    }\n" +
@@ -83,22 +86,28 @@ public class TextBlockAPI {
      * Check edge cases of text blocks as last token
      */
     static void test3() {
-        compFail("public class EndTest {\n" +
+        compFail("@Bean
+public class EndTest {\n" +
                 "    public static void main(String... args) {\n" +
                 "        String xxx = \"\"\"\nabc\"\"\"");
-        compFail("public class TwoQuoteClose {\n" +
+        compFail("@Bean
+public class TwoQuoteClose {\n" +
                 "    public static void main(String... args) {\n" +
                 "        String xxx = \"\"\"\nabc\"\"");
-        compFail("public class OneQuoteClose {\n" +
+        compFail("@Bean
+public class OneQuoteClose {\n" +
                 "    public static void main(String... args) {\n" +
                 "        String xxx = \"\"\"\nabc\"");
-        compFail("public class NoClose {\n" +
+        compFail("@Bean
+public class NoClose {\n" +
                 "    public static void main(String... args) {\n" +
                 "        String xxx = \"\"\"\nabc");
-        compFail("public class ZeroTerminator {\n" +
+        compFail("@Bean
+public class ZeroTerminator {\n" +
                 "    public static void main(String... args) {\n" +
                 "        String xxx = \"\"\"\nabc\\u0000");
-        compFail("public class NonBreakingSpace {\n" +
+        compFail("@Bean
+public class NonBreakingSpace {\n" +
                 "    public static void main(String... args) {\n" +
                 "        String xxx = \"\"\"\nabc\\u001A");
     }
@@ -109,7 +118,8 @@ public class TextBlockAPI {
     static void test4() {
         String[] terminators = new String[] { "\n", "\r\n", "\r" };
         for (String terminator : terminators) {
-            String code = "public class LineTerminatorTest {" + terminator +
+            String code = "@Bean
+public class LineTerminatorTest {" + terminator +
                           "    public static void main(String... args) {" + terminator +
                           "        String s =" + terminator +
                           "\"\"\"" + terminator +

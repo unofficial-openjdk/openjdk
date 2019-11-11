@@ -35,6 +35,7 @@ import java.util.Map;
  *          upon deserialization if "causative exception" is null.
  * @author  Josh Bloch
  */
+@Bean
 public class LegacyChainedExceptionSerialization {
     private static Throwable[] broken = {
         new ClassNotFoundException(),

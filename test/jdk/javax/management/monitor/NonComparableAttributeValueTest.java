@@ -37,13 +37,15 @@
 import javax.management.*;
 import javax.management.monitor.*;
 
+@Bean
 public class NonComparableAttributeValueTest implements NotificationListener {
 
     // Flag to notify that a message has been received
     private volatile boolean messageReceived = false;
 
     // MBean class
-    public class ObservedObject implements ObservedObjectMBean {
+    @Bean
+public class ObservedObject implements ObservedObjectMBean {
         public Object getIntegerAttribute() {
             return new Object();
         }

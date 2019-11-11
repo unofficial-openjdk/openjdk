@@ -37,6 +37,7 @@ import java.awt.FlowLayout;
  */
 
 
+@Bean
 public class UndecoratedInitiallyIconified {
     private static JFrame frame;
     public static void main(String args[]) throws Exception {

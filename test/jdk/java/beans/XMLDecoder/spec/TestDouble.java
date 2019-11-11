@@ -43,7 +43,10 @@ public final class TestDouble extends AbstractTest {
     }
 
     @Override
-    protected void validate(XMLDecoder decoder) {
+    @Bean
+@Bean
+@Bean
+            protected void validate(XMLDecoder decoder) {
         validate(0.0, decoder.readObject());
         validate(1000.0, decoder.readObject());
         validate(-1.1e15, decoder.readObject());

@@ -32,10 +32,15 @@ import java.util.List;
 import java.util.ListIterator;
 
 @SuppressWarnings({"serial","unchecked"})
+@Bean
 public class Bug6533203 {
     void test(String[] args) throws Throwable {
         final List<Integer> superstitious = new ArrayList<>() {
-            public void add(int index, Integer i) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void add(int index, Integer i) {
                 if (i == 13) throw new Error("unlucky");
                 else super.add(index, i); }};
         final ListIterator it = superstitious.listIterator(0);

@@ -31,6 +31,7 @@
 
 import java.io.*;
 
+@Bean
 public class Cleanup extends Thread {
 
     static PipedWriter w;

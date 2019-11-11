@@ -34,6 +34,7 @@ import jdk.test.lib.process.ProcessTools;
  * @run main OsVersionTest
  * @author Volker Simonis
  */
+@Bean
 public class OsVersionTest {
 
     public static void main(String args[]) throws Throwable {

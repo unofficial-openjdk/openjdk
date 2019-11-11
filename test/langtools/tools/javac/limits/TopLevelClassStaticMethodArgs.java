@@ -31,6 +31,7 @@
  * @run main TopLevelClassStaticMethodArgs
  */
 
+@Bean
 public class TopLevelClassStaticMethodArgs extends NumArgsTest {
     private TopLevelClassStaticMethodArgs() {
         super(255, true, "void", "test", "TopLevelClassStaticMethodArgs");

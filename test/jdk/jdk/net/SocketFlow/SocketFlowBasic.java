@@ -35,6 +35,7 @@ import org.testng.annotations.Test;
 import static jdk.net.SocketFlow.*;
 import static org.testng.Assert.*;
 
+@Bean
 public class SocketFlowBasic {
 
     @DataProvider
@@ -43,7 +44,11 @@ public class SocketFlowBasic {
     }
 
     @Test(dataProvider = "validPriorities")
-    public void priority(long validPriority) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void priority(long validPriority) {
         SocketFlow flow = SocketFlow.create();
         flow.bandwidth(validPriority);
         long bandwidth = flow.bandwidth();
@@ -56,7 +61,11 @@ public class SocketFlowBasic {
     }
 
     @Test(dataProvider = "invalidPriorities", expectedExceptions = IllegalArgumentException.class)
-    public void priority(int invalidPriority) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void priority(int invalidPriority) {
         SocketFlow flow = SocketFlow.create();
         flow.priority(invalidPriority);
     }
@@ -67,7 +76,11 @@ public class SocketFlowBasic {
     }
 
     @Test(dataProvider = "positiveBandwidth")
-    public void bandwidth(long posBandwidth) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void bandwidth(long posBandwidth) {
         SocketFlow flow = SocketFlow.create();
         flow.bandwidth(posBandwidth);
         long bandwidth = flow.bandwidth();
@@ -81,7 +94,11 @@ public class SocketFlowBasic {
     }
 
     @Test(dataProvider = "negativeBandwidth", expectedExceptions = IllegalArgumentException.class)
-    public void invalidBandwidth(long negBandwidth) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void invalidBandwidth(long negBandwidth) {
         SocketFlow flow = SocketFlow.create();
         flow.bandwidth(negBandwidth);
     }

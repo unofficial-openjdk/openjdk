@@ -33,6 +33,7 @@
  */
 package compiler.integerArithmetic;
 
+@Bean
 public class TestIntegerComparison {
     /**
      * Tests optimization of signed integer comparison (see BoolNode::Ideal).

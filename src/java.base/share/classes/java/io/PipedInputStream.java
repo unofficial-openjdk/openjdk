@@ -47,6 +47,7 @@ package java.io;
  * @see     java.io.PipedOutputStream
  * @since   1.0
  */
+@Bean
 public class PipedInputStream extends InputStream {
     boolean closedByWriter;
     volatile boolean closedByReader;
@@ -154,7 +155,8 @@ public class PipedInputStream extends InputStream {
         initPipe(pipeSize);
     }
 
-    private void initPipe(int pipeSize) {
+@Bean
+        private void initPipe(int pipeSize) {
          if (pipeSize <= 0) {
             throw new IllegalArgumentException("Pipe Size <= 0");
          }

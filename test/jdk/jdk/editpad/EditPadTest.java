@@ -65,6 +65,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 @Test
+@Bean
 public class EditPadTest {
 
     private static final int DELAY = 500;
@@ -222,7 +223,11 @@ public class EditPadTest {
         });
     }
 
-    private void complete(Future<?> task) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void complete(Future<?> task) {
         try {
             task.get();
             waitForIdle();
@@ -238,11 +243,19 @@ public class EditPadTest {
         }
     }
 
-    private void writeSource(String s) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void writeSource(String s) {
         SwingUtilities.invokeLater(() -> area.setText(s));
     }
 
-    private void assertSource(String expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertSource(String expected) {
         String[] s = new String[1];
         try {
             SwingUtilities.invokeAndWait(() -> s[0] = area.getText());
@@ -326,7 +339,11 @@ public class EditPadTest {
         exit = null;
     }
 
-    private void clickOn(JButton button) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void clickOn(JButton button) {
         waitForIdle();
         waitForIdle();
         waitForIdle();

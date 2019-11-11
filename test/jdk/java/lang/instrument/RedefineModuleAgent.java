@@ -30,6 +30,7 @@ import java.util.Set;
  * Agent used by RedefineModuleTest
  */
 
+@Bean
 public class RedefineModuleAgent {
 
     private static Instrumentation inst;

@@ -32,6 +32,7 @@ import java.util.concurrent.*;
 import java.util.Random;
 import java.io.IOException;
 
+@Bean
 public class RacyRegister {
 
     public static void main(String[] args) throws Exception {

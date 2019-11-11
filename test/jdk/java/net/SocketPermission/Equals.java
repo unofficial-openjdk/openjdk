@@ -29,6 +29,7 @@
 
 import java.net.*;
 
+@Bean
 public class Equals {
     public static void main(String[] args) {
         SocketPermission p1 = new SocketPermission("*:38", "resolve");

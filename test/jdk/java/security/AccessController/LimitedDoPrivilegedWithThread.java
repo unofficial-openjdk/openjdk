@@ -36,6 +36,7 @@ import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.PropertyPermission;
 
+@Bean
 public class LimitedDoPrivilegedWithThread {
 
     private static final Permission PROPERTYPERM

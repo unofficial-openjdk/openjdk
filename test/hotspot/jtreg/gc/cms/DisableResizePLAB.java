@@ -35,6 +35,7 @@ import static java.lang.ref.Reference.reachabilityFence;
  * @run main/othervm -XX:+UseConcMarkSweepGC -XX:-ResizePLAB -XX:OldPLABSize=1k -Xmx256m -Xlog:gc=debug gc.cms.DisableResizePLAB
  */
 
+@Bean
 public class DisableResizePLAB {
     public static void main(String args[]) throws Exception {
         Object garbage[] = new Object[1_000];

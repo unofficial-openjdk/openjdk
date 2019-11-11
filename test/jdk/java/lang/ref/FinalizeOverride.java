@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @summary Basic test of the finalize method
  */
 
+@Bean
 public class FinalizeOverride {
     // finalizedCount is incremented when the finalize method is invoked
     private static AtomicInteger finalizedCount = new AtomicInteger();

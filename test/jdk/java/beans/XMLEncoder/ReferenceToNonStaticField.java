@@ -89,7 +89,11 @@ public final class ReferenceToNonStaticField
     }
 
     @Override
-    protected void validate(final TestValue before,final TestValue after) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void validate(final TestValue before,final TestValue after) {
         super.validate(before, after);
         validate(before);
         validate(after);

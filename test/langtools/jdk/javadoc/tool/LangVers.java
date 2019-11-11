@@ -39,6 +39,7 @@ import javax.lang.model.SourceVersion;
 import jdk.javadoc.doclet.Doclet;
 import jdk.javadoc.doclet.DocletEnvironment;
 
+@Bean
 public class LangVers implements Doclet {
 
     public static void main(String[] args) {
@@ -54,7 +55,11 @@ public class LangVers implements Doclet {
             throw new Error("Javadoc encountered warnings or errors.");
     }
 
-    public boolean run(DocletEnvironment root) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean run(DocletEnvironment root) {
         ClassDoc fishdoc = root.classNamed("LangVers.Fish");
         System.out.println(fishdoc);
         if (fishdoc.isEnum()) {
@@ -74,7 +79,11 @@ public class LangVers implements Doclet {
     public enum Fish {
         One, Two, Red, Blue;
 
-        public void enroll(List<? super Fish> school) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void enroll(List<? super Fish> school) {
             school.add(this);
         }
     }

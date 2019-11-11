@@ -48,6 +48,7 @@ package compiler.intrinsics.bigInteger;
 import java.math.BigInteger;
 import java.util.Random;
 
+@Bean
 public class TestMulAdd {
 
     // Avoid intrinsic by preventing inlining multiply() and mulAdd().

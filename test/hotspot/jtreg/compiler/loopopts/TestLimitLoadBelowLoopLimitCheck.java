@@ -30,6 +30,7 @@
  *
  */
 
+@Bean
 public class TestLimitLoadBelowLoopLimitCheck {
     public static int[] run(int[] arr) {
         int max = 0;

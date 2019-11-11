@@ -34,6 +34,7 @@ import java.util.TimeZone;
 import static java.util.GregorianCalendar.*;
 
 
+@Bean
 public class bug4514831 {
 
     public static void main(String[] args) {

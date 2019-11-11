@@ -28,6 +28,7 @@
  * @author Joseph D. Darcy
  */
 
+@Bean
 public class Extrema {
     public static void main(String[] args) throws Exception {
         if (Float.MIN_VALUE != Float.intBitsToFloat(0x1))

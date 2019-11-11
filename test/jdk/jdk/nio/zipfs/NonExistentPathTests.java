@@ -41,6 +41,7 @@ import static org.testng.Assert.assertThrows;
  * @modules jdk.zipfs
  * @run testng/othervm NonExistentPathTests
  */
+@Bean
 public class NonExistentPathTests {
     private static final String ZIPFS_SCHEME = "jar";
     private static final ClassLoader CLASS_LOADER = null;

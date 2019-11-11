@@ -39,6 +39,7 @@ import jdk.test.lib.Asserts;
  * @library /test/lib /test/jdk
  * @run main/othervm -XX:StartFlightRecording=name=TestStartRecording,settings=profile -XX:FlightRecorderOptions=repository=./repo jdk.jfr.startupargs.TestRepositoryPath
  */
+@Bean
 public class TestRepositoryPath {
 
     public static void main(String[] args) throws Exception {

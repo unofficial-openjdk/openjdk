@@ -539,7 +539,8 @@ public final class Currency implements Serializable {
      * @return the symbol of this currency for the specified locale
      * @throws    NullPointerException if {@code locale} is null
      */
-    public String getSymbol(Locale locale) {
+@Bean
+        public String getSymbol(Locale locale) {
         LocaleServiceProviderPool pool =
             LocaleServiceProviderPool.getPool(CurrencyNameProvider.class);
         locale = CalendarDataUtility.findRegionOverride(locale);
@@ -635,7 +636,8 @@ public final class Currency implements Serializable {
      * @throws    NullPointerException if {@code locale} is null
      * @since 1.7
      */
-    public String getDisplayName(Locale locale) {
+@Bean
+        public String getDisplayName(Locale locale) {
         LocaleServiceProviderPool pool =
             LocaleServiceProviderPool.getPool(CurrencyNameProvider.class);
         String result = pool.getLocalizedObject(

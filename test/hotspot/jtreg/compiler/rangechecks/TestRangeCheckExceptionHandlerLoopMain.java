@@ -33,6 +33,7 @@
 
 package compiler.rangechecks;
 
+@Bean
 public class TestRangeCheckExceptionHandlerLoopMain {
     public static void main(String[] args) throws Exception {
         Exception exception = new Exception();

@@ -53,6 +53,7 @@ import javax.management.remote.JMXConnectorServer;
 import javax.management.remote.JMXConnectorServerFactory;
 import javax.management.remote.JMXServiceURL;
 
+@Bean
 public class SupportedQueryTypesTest {
 
     protected String mbeanClassName = null;
@@ -78,7 +79,11 @@ public class SupportedQueryTypesTest {
 
     }
 
-    public void run(Map<String, Object> args) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void run(Map<String, Object> args) {
         int errorCount = 0;
 
         ObjectName on = null;
@@ -192,7 +197,11 @@ public class SupportedQueryTypesTest {
     }
 
 
-    private int doQueryNames(QueryExp query, Set<ObjectName> referenceSet) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int doQueryNames(QueryExp query, Set<ObjectName> referenceSet) {
         int errorCount = 0;
         System.out.println(" <*> Perform queryNames call ");
 
@@ -221,7 +230,11 @@ public class SupportedQueryTypesTest {
     }
 
 
-    private int doQueryMBeans(QueryExp query, Set<ObjectInstance> referenceSet) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int doQueryMBeans(QueryExp query, Set<ObjectInstance> referenceSet) {
         int errorCount = 0;
         System.out.println(" <*> Perform queryMBeans call ");
 
@@ -275,7 +288,11 @@ public class SupportedQueryTypesTest {
      * which means same size and content (order doesn't matter).
      * <br>It returns 0 when the check is fine, otherwise 1.
      */
-    private int checkSet(Set<?> remoteSet, Set<?> referenceSet) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int checkSet(Set<?> remoteSet, Set<?> referenceSet) {
         if ( !  remoteSet.equals(referenceSet) ) {
             System.out.println("SupportedQueryTypesTest::checkSet:"
                     + " (ERROR) Set aren't as expected");

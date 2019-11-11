@@ -30,6 +30,7 @@
 
 import java.util.StringTokenizer;
 
+@Bean
 public class Supplementary {
     public static void main(String[] args) {
         String text =

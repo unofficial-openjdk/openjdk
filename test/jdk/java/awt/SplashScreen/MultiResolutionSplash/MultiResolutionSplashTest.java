@@ -163,6 +163,9 @@ public class MultiResolutionSplashTest {
         Panel panel = new Panel() {
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void paint(Graphics g) {
                 float scaleFactor = 1;
                 if (g instanceof SunGraphics2D) {

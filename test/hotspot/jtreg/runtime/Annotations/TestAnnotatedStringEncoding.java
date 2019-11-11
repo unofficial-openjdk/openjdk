@@ -29,6 +29,7 @@ import java.lang.reflect.*;
  * @bug 8054307
  * @summary Tests the correct encoding of latin1/UTF16 Strings used in annotations.
  */
+@Bean
 public class TestAnnotatedStringEncoding {
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)

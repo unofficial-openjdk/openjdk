@@ -49,6 +49,7 @@ import compiler.whitebox.CompilerWhiteBoxTest;
 import sun.hotspot.code.Compiler;
 import jtreg.SkippedException;
 
+@Bean
 public class TestCipherBlockChainingEncrypt {
     private static String algorithm = "PBEWithHmacSHA1AndAES_256";
     private static final String PBEPASS = "Hush, it's supposed to be a secret!";
@@ -110,7 +111,11 @@ public class TestCipherBlockChainingEncrypt {
         return result;
     }
 
-    private void execute(int edMode, byte[] inputText, int offset, int len) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void execute(int edMode, byte[] inputText, int offset, int len) {
         try {
             // init Cipher
             if (Cipher.ENCRYPT_MODE == edMode) {

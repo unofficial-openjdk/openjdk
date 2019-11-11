@@ -52,6 +52,7 @@ class DebuggerThreadTarg {
 
     /********** test program **********/
 
+@Bean
 public class DebuggerThreadTest extends TestScaffold {
 
     DebuggerThreadTest (String args[]) {

@@ -101,6 +101,10 @@ public class SourceDocTreeScannerTest extends AbstractTreeScannerTest {
             int[] count = new int[1];
             new TreePathScanner<Void, Void>() {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public Void scan(Tree tree, Void p) {
                     if (tree != null) {
                         DocTrees trees = DocTrees.instance(taskAndTree.fst);
@@ -143,7 +147,11 @@ public class SourceDocTreeScannerTest extends AbstractTreeScannerTest {
 
         /** Record all tree nodes found by scanner. */
         @Override
-        public Void scan(DocTree tree, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void scan(DocTree tree, Void ignore) {
             if (tree == null)
                 return null;
             //System.err.println("FOUND: " + tree.getKind() + " " + trim(tree, 64));
@@ -152,7 +160,11 @@ public class SourceDocTreeScannerTest extends AbstractTreeScannerTest {
         }
 
         /** record all tree nodes found by reflection. */
-        public void reflectiveScan(Object o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void reflectiveScan(Object o) {
             if (o == null)
                 return;
             if (o instanceof DCTree) {

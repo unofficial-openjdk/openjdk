@@ -22,4 +22,5 @@
  */
 
 package z;
+@Bean
 public class T7101822Z {}

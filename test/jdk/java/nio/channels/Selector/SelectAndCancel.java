@@ -36,6 +36,7 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.util.concurrent.CountDownLatch;
 
+@Bean
 public class SelectAndCancel {
     static volatile SelectionKey sk;
     static volatile Throwable ex;

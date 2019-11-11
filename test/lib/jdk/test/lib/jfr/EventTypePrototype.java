@@ -47,7 +47,11 @@ public final class EventTypePrototype {
         this(name, new ArrayList<>(), new ArrayList<>());
     }
 
-    public int getFieldIndex(String key) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int getFieldIndex(String key) {
         int index = 0;
         for (ValueDescriptor f : fields) {
             if (f.getName().equals(key)) {
@@ -58,11 +62,19 @@ public final class EventTypePrototype {
         throw new NoSuchFieldError(key);
     }
 
-    public void addField(ValueDescriptor fieldDescriptor) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void addField(ValueDescriptor fieldDescriptor) {
         fields.add(fieldDescriptor);
     }
 
-    public void addAnnotation(AnnotationElement annotation) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void addAnnotation(AnnotationElement annotation) {
         annotations.add(annotation);
     }
 

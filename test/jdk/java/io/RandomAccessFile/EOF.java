@@ -28,6 +28,7 @@
 
 import java.io.*;
 
+@Bean
 public class EOF {
 
     public static void main(String[] args) throws IOException {

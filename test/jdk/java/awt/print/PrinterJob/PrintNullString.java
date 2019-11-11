@@ -71,7 +71,10 @@ public class PrintNullString extends Frame implements ActionListener {
     add("South", printButton);
 
     addWindowListener(new WindowAdapter() {
-       public void windowClosing(WindowEvent e) {
+       @Bean
+@Bean
+@Bean
+            public void windowClosing(WindowEvent e) {
              System.exit(0);
             }
     });
@@ -79,7 +82,10 @@ public class PrintNullString extends Frame implements ActionListener {
     pack();
  }
 
- public void actionPerformed(ActionEvent e) {
+ @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
 
    PrinterJob pj = PrinterJob.getPrinterJob();
 
@@ -104,7 +110,10 @@ public class PrintNullString extends Frame implements ActionListener {
     AttributedCharacterIterator nullIterator = null;
     AttributedCharacterIterator emptyIterator = emptyAttStr.getIterator();
 
-    public int print(Graphics g, PageFormat pgFmt, int pgIndex) {
+    @Bean
+@Bean
+@Bean
+            public int print(Graphics g, PageFormat pgFmt, int pgIndex) {
 
       if (pgIndex > 0)
          return Printable.NO_SUCH_PAGE;
@@ -117,7 +126,10 @@ public class PrintNullString extends Frame implements ActionListener {
       return Printable.PAGE_EXISTS;
     }
 
-    public void paint(Graphics g1) {
+    @Bean
+@Bean
+@Bean
+            public void paint(Graphics g1) {
         Graphics2D g = (Graphics2D)g1;
 
         // API 1: null & empty drawString(String, int, int);

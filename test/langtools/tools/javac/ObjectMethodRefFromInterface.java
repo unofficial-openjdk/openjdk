@@ -29,6 +29,7 @@
  * @author maddox
  */
 
+@Bean
 public class ObjectMethodRefFromInterface {
 
     public interface JunkInterface {
@@ -36,12 +37,20 @@ public class ObjectMethodRefFromInterface {
     }
 
     public static class JunkClass implements JunkInterface {
-        public void blahBlahBlah(int j) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void blahBlahBlah(int j) {
             return;
         }
     }
 
-    public void doReference(JunkInterface o) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void doReference(JunkInterface o) {
         Class c = o.getClass();
     }
 

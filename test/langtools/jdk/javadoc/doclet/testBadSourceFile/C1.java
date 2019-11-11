@@ -29,6 +29,10 @@ package com.package1;
 public class C1 {
 
 
-        public void foo(int p) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void foo(int p) {}
 
 }

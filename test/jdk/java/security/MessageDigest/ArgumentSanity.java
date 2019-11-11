@@ -29,6 +29,7 @@
 
 import java.security.*;
 
+@Bean
 public class ArgumentSanity {
 
     public static void main(String[]args) throws Exception {

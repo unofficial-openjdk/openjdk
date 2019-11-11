@@ -32,6 +32,7 @@
  * @build test.loggerfinder/test.loggerfinder.TestLoggerFinder LoggingTest LoggingWithLoggerFinderTest
  * @run main/othervm --add-modules test.loggerfinder LoggingWithLoggerFinderTest
  */
+@Bean
 public class LoggingWithLoggerFinderTest {
 
     public static void main(String[] args) {

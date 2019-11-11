@@ -94,7 +94,11 @@ public class CodeCacheTest {
       return Integer.parseInt(match.substring(match.lastIndexOf(" ") + 1, match.length()));
     }
 
-    public void run(CommandExecutor executor) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void run(CommandExecutor executor) {
         // Get number of code cache segments
         int segmentsCount = 0;
         String flags = executor.execute("VM.flags -all").getOutput();

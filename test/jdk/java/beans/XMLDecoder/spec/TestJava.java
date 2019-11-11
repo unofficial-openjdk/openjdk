@@ -46,12 +46,18 @@ public final class TestJava extends AbstractTest {
 
     private String message;
 
-    public void init(String message) {
+    @Bean
+@Bean
+@Bean
+            public void init(String message) {
         this.message = message;
     }
 
     @Override
-    protected void validate(XMLDecoder decoder) {
+    @Bean
+@Bean
+@Bean
+            protected void validate(XMLDecoder decoder) {
         decoder.setOwner(this);
         if (this != decoder.readObject()) {
             throw new Error("owner should be the same");

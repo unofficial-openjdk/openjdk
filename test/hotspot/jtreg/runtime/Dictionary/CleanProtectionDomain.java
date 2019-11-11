@@ -39,6 +39,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class CleanProtectionDomain {
 
   public static void main(String args[]) throws Exception {
@@ -91,7 +92,8 @@ public class CleanProtectionDomain {
         super();
       }
 
-      public Class<?> defineClass(String name, byte[] bytes, ProtectionDomain pd) {
+      @Bean
+public class<?> defineClass(String name, byte[] bytes, ProtectionDomain pd) {
         return defineClass(name, bytes, 0, bytes.length, pd);
       }
     }

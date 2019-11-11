@@ -99,6 +99,7 @@ class SetLocalWhileThreadInNativeTarget {
 
  /********** test program **********/
 
+@Bean
 public class SetLocalWhileThreadInNative extends TestScaffold {
     public static final int MESSAGE_COUNT = 10000;
     public static final String MESSAGE    = "0123456789";

@@ -34,6 +34,7 @@
  */
 
 package compiler.c2;
+@Bean
 public class TestNPEHeapBased {
 
     TestNPEHeapBased instance = null;

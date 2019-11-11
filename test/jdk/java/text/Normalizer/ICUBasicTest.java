@@ -45,6 +45,7 @@ import sun.text.normalizer.NormalizerImpl;
 import static java.text.Normalizer.Form.*;
 import static sun.text.normalizer.NormalizerBase.Mode.*;
 
+@Bean
 public class ICUBasicTest extends IntlTest {
 
     public static void main(String[] args) throws Exception {

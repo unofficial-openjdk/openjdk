@@ -39,6 +39,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
+@Bean
 public class DeprecateOptionN {
     private static final ToolProvider JAR_TOOL = ToolProvider.findFirst("jar")
             .orElseThrow(() ->

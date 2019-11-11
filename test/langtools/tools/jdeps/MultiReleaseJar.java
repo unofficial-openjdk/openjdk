@@ -42,6 +42,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
 
+@Bean
 public class MultiReleaseJar {
     Path mrjar;
     String testJdk;

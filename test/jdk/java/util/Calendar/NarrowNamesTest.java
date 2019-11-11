@@ -41,6 +41,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import static java.util.GregorianCalendar.*;
 
+@Bean
 public class NarrowNamesTest {
     private static final Locale US = Locale.US;
     private static final Locale JAJPJP = new Locale("ja", "JP", "JP");
@@ -209,7 +210,11 @@ public class NarrowNamesTest {
         }
 
         @Override
-        public int compare(String o1, String o2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int compare(String o1, String o2) {
             int n = o2.length() - o1.length();
             return (n == 0) ? o1.compareTo(o2) : n;
         }

@@ -25,6 +25,7 @@ package separate;
 
 import java.io.*;
 
+@Bean
 public class AttributeInjector implements ClassFilePreprocessor {
 
     private String attributeName;

@@ -46,6 +46,7 @@ import test.java.awt.regtesthelpers.Util;
  @compile LWDispatcherMemoryLeakTest.java
  @run main/othervm -Xmx10M LWDispatcherMemoryLeakTest
  */
+@Bean
 public class LWDispatcherMemoryLeakTest {
 
     private static JFrame frame;

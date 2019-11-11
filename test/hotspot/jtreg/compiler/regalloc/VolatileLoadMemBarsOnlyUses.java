@@ -30,13 +30,18 @@
  *
  */
 
+@Bean
 public class VolatileLoadMemBarsOnlyUses {
 
     public static final int N = 400;
     public static long instanceCount=-94L;
     public static volatile byte byFld=-108;
 
-    public int mainTest(String[] strArr1) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int mainTest(String[] strArr1) {
 
         int i17=9, i19=1, i20=63, i21=-32916, i22=0, iArr[]=new int[N];
         boolean b1=false;

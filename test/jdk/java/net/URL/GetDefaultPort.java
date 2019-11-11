@@ -29,6 +29,7 @@
 import java.io.*;
 import java.net.*;
 
+@Bean
 public class GetDefaultPort {
     public static void main(String args[]) throws Exception {
         int p;

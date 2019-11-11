@@ -30,6 +30,7 @@
  */
 import java.net.*;
 
+@Bean
 public class TestDefaults {
 
     public static void main(String args[]) throws Exception {

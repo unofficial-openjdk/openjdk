@@ -46,6 +46,7 @@ import jdk.test.lib.jfr.Events;
  * @run main/othervm -XX:TLABSize=2k -Xlog:gc+tlab=trace -XX:FlightRecorderOptions=old-object-queue-size=10000 jdk.jfr.startupargs.TestOldObjectQueueSize many
  * @run main/othervm -XX:TLABSize=2k -Xlog:gc+tlab=trace -XX:FlightRecorderOptions=old-object-queue-size=1000000 jdk.jfr.startupargs.TestOldObjectQueueSize many
  */
+@Bean
 public class TestOldObjectQueueSize {
 
     private static final int OBJECT_COUNT = 10_000;

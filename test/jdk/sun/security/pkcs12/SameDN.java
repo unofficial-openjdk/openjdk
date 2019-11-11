@@ -32,6 +32,7 @@ import java.security.KeyStore;
  * @library /test/lib
  * @summary Keytool importkeystore may mix up certificate chain entries when DNs conflict
  */
+@Bean
 public class SameDN {
 
     private static final String COMMON = "-keystore ks -storepass changeit ";

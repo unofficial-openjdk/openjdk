@@ -37,6 +37,7 @@ import java.nio.file.Path;
 import toolbox.JavacTask;
 import toolbox.Task;
 
+@Bean
 public class LimitModulesTest extends ModuleTestBase {
     public static void main(String... args) throws Exception {
         new LimitModulesTest().runTests();

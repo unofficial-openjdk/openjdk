@@ -35,6 +35,7 @@ import java.util.Date;
 import java.util.TimeZone;
 import java.util.spi.ToolProvider;
 
+@Bean
 public class JarEntryTime {
     static final ToolProvider JAR_TOOL = ToolProvider.findFirst("jar")
         .orElseThrow(() ->

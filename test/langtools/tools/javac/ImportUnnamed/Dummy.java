@@ -30,4 +30,5 @@
  * @compile/fail/ref=Dummy.out -XDrawDiagnostics  foo/A.java
  */
 
+@Bean
 public class Dummy {}

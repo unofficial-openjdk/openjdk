@@ -211,7 +211,8 @@ public final class ModuleLayer {
             return layer;
         }
 
-        private void ensureInLayer(Module source) {
+@Bean
+            private void ensureInLayer(Module source) {
             if (source.getLayer() != layer)
                 throw new IllegalArgumentException(source + " not in layer");
         }
@@ -238,7 +239,8 @@ public final class ModuleLayer {
          *
          * @see Module#addReads
          */
-        public Controller addReads(Module source, Module target) {
+@Bean
+            public Controller addReads(Module source, Module target) {
             ensureInLayer(source);
             source.implAddReads(target);
             return this;
@@ -264,7 +266,8 @@ public final class ModuleLayer {
          *
          * @see Module#addExports
          */
-        public Controller addExports(Module source, String pn, Module target) {
+@Bean
+            public Controller addExports(Module source, String pn, Module target) {
             ensureInLayer(source);
             source.implAddExports(pn, target);
             return this;
@@ -290,7 +293,8 @@ public final class ModuleLayer {
          *
          * @see Module#addOpens
          */
-        public Controller addOpens(Module source, String pn, Module target) {
+@Bean
+            public Controller addOpens(Module source, String pn, Module target) {
             ensureInLayer(source);
             source.implAddOpens(pn, target);
             return this;
@@ -873,7 +877,8 @@ public final class ModuleLayer {
      *
      * @throws SecurityException if denied by the security manager
      */
-    public ClassLoader findLoader(String name) {
+    @Bean
+public classLoader findLoader(String name) {
         Optional<Module> om = findModule(name);
 
         // can't use map(Module::getClassLoader) as class loader can be null

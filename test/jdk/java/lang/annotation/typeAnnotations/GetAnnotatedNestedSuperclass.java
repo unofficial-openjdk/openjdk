@@ -36,6 +36,7 @@ import java.lang.reflect.AnnotatedType;
 import java.util.Arrays;
 import java.util.Objects;
 
+@Bean
 public class GetAnnotatedNestedSuperclass {
 
     @Target(ElementType.TYPE_USE)

@@ -63,6 +63,7 @@ import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
 
 @SuppressWarnings("unchecked")
+@Bean
 public class LockStep {
     static final int DEFAULT_SIZE = 5;
     static int size;            // Running time is O(size**2)
@@ -234,14 +235,22 @@ public class LockStep {
     static Comparator comparator(NavigableSet s) {
         Comparator cmp = s.comparator();
         return cmp != null ? cmp : new Comparator() {
-            public int compare(Object o1, Object o2) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public int compare(Object o1, Object o2) {
                 return ((Comparable) o1).compareTo(o2); }};
     }
 
     static Comparator comparator(NavigableMap m) {
         Comparator cmp = m.comparator();
         return cmp != null ? cmp : new Comparator() {
-            public int compare(Object o1, Object o2) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public int compare(Object o1, Object o2) {
                 return ((Comparable) o1).compareTo(o2); }};
     }
 

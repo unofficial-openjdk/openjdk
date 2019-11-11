@@ -59,7 +59,11 @@ public final class javax_swing_JComponent extends AbstractTest<JComponent> {
         }
 
         @Override
-        public void setUI(final ComponentUI newUI) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setUI(final ComponentUI newUI) {
             ui = newUI;
         }
     }
@@ -70,7 +74,11 @@ public final class javax_swing_JComponent extends AbstractTest<JComponent> {
             throw new Error();
         }
 
-        public void setFlag(final boolean flag) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setFlag(final boolean flag) {
             throw new Error();
         }
     }

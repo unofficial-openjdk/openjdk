@@ -34,6 +34,7 @@
  */
 import java.security.*;
 
+@Bean
 public class SignatureGetAlgorithm {
 
     public static void main(String[] args) throws Exception {

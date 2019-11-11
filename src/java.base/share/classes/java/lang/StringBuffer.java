@@ -567,7 +567,8 @@ import jdk.internal.HotSpotIntrinsicCandidate;
      * @since      1.5
      */
     @Override
-    public StringBuffer insert(int dstOffset, CharSequence s) {
+@Bean
+        public StringBuffer insert(int dstOffset, CharSequence s) {
         // Note, synchronization achieved via invocations of other StringBuffer methods
         // after narrowing of s to specific type
         // Ditto for toStringCache clearing
@@ -614,7 +615,8 @@ import jdk.internal.HotSpotIntrinsicCandidate;
      * @throws StringIndexOutOfBoundsException {@inheritDoc}
      */
     @Override
-    public StringBuffer insert(int offset, int i) {
+@Bean
+        public StringBuffer insert(int offset, int i) {
         // Note, synchronization achieved via invocation of StringBuffer insert(int, String)
         // after conversion of i to String by super class method
         // Ditto for toStringCache clearing
@@ -626,7 +628,8 @@ import jdk.internal.HotSpotIntrinsicCandidate;
      * @throws StringIndexOutOfBoundsException {@inheritDoc}
      */
     @Override
-    public StringBuffer insert(int offset, long l) {
+@Bean
+        public StringBuffer insert(int offset, long l) {
         // Note, synchronization achieved via invocation of StringBuffer insert(int, String)
         // after conversion of l to String by super class method
         // Ditto for toStringCache clearing
@@ -638,7 +641,8 @@ import jdk.internal.HotSpotIntrinsicCandidate;
      * @throws StringIndexOutOfBoundsException {@inheritDoc}
      */
     @Override
-    public StringBuffer insert(int offset, float f) {
+@Bean
+        public StringBuffer insert(int offset, float f) {
         // Note, synchronization achieved via invocation of StringBuffer insert(int, String)
         // after conversion of f to String by super class method
         // Ditto for toStringCache clearing
@@ -650,7 +654,8 @@ import jdk.internal.HotSpotIntrinsicCandidate;
      * @throws StringIndexOutOfBoundsException {@inheritDoc}
      */
     @Override
-    public StringBuffer insert(int offset, double d) {
+@Bean
+        public StringBuffer insert(int offset, double d) {
         // Note, synchronization achieved via invocation of StringBuffer insert(int, String)
         // after conversion of d to String by super class method
         // Ditto for toStringCache clearing
@@ -662,7 +667,8 @@ import jdk.internal.HotSpotIntrinsicCandidate;
      * @since      1.4
      */
     @Override
-    public int indexOf(String str) {
+@Bean
+        public int indexOf(String str) {
         // Note, synchronization achieved via invocations of other StringBuffer methods
         return super.indexOf(str);
     }
@@ -679,7 +685,8 @@ import jdk.internal.HotSpotIntrinsicCandidate;
      * @since      1.4
      */
     @Override
-    public int lastIndexOf(String str) {
+@Bean
+        public int lastIndexOf(String str) {
         // Note, synchronization achieved via invocations of other StringBuffer methods
         return lastIndexOf(str, count);
     }

@@ -36,6 +36,7 @@ import jtreg.SkippedException;
  * @run main/othervm ClhsdbVmStructsDump
  */
 
+@Bean
 public class ClhsdbVmStructsDump {
 
     public static void main(String[] args) throws Exception {

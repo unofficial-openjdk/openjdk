@@ -34,6 +34,7 @@ import java.math.*;
  * unicode japanese zero and one succeeds
  *
  */
+@Bean
 public class UnicodeConstructor {
 
       public static void main(String args[]) {

@@ -123,6 +123,9 @@ public class EmptyListEventTest {
 
         frame.getToolkit().addAWTEventListener(new AWTEventListener() {
 
+            @Bean
+@Bean
+@Bean
             public void eventDispatched(AWTEvent e) {
                 System.out.println(e);
             }
@@ -144,12 +147,18 @@ public class EmptyListEventTest {
 
     static class MyListener implements ActionListener, ItemListener {
 
-        public void actionPerformed(ActionEvent ae) {
+        @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent ae) {
             System.err.println(ae);
             throw new RuntimeException("Test failed - list is empty so event is redundant");
         }
 
-        public void itemStateChanged(ItemEvent ie) {
+        @Bean
+@Bean
+@Bean
+            public void itemStateChanged(ItemEvent ie) {
             System.err.println(ie);
             throw new RuntimeException("Test failed - list is empty so event is redundant");
         }

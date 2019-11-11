@@ -39,6 +39,7 @@ package java.util;
  * @see Locale
  * @since 1.7
  */
+@Bean
 public class IllformedLocaleException extends RuntimeException {
 
     @java.io.Serial

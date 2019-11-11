@@ -44,6 +44,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.WindowConstants;
 
+@Bean
 public class ScreenMenuMemoryLeakTest {
 
     private static WeakReference<JMenuItem> sMenuItem;

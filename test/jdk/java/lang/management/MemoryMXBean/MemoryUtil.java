@@ -30,6 +30,7 @@
 import java.lang.management.*;
 import java.util.*;
 
+@Bean
 public class MemoryUtil {
 
     private static String INDENT = "    ";

@@ -29,6 +29,7 @@
 
 import java.net.*;
 
+@Bean
 public class B4148751
 {
 

@@ -39,6 +39,7 @@ import javax.tools.JavaCompiler.CompilationTask;
 import com.sun.source.tree.*;
 import com.sun.source.util.*;
 
+@Bean
 public class T6956462 {
     public static void main(String[] args) throws Exception {
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
@@ -66,7 +67,11 @@ public class T6956462 {
         }
 
         @Override
-        public Tree visitCompilationUnit(CompilationUnitTree file, Void v) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Tree visitCompilationUnit(CompilationUnitTree file, Void v) {
             this.file = file;
             for (Tree typeDecl : file.getTypeDecls()) {
                 typeDecl.accept(this, v);
@@ -75,18 +80,30 @@ public class T6956462 {
         }
 
         @Override
-        public Tree visitImport(ImportTree imp, Void v) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Tree visitImport(ImportTree imp, Void v) {
             return null;
         }
 
         @Override
-        public Tree visitMethodInvocation(MethodInvocationTree invoke, Void v) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Tree visitMethodInvocation(MethodInvocationTree invoke, Void v) {
             invoke.getMethodSelect().accept(this, v);
             return null;
         }
 
         @Override
-        public Tree visitBlock(BlockTree block, Void v) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Tree visitBlock(BlockTree block, Void v) {
             for (StatementTree stat : block.getStatements()) {
                 stat.accept(this, v);
             }
@@ -94,7 +111,11 @@ public class T6956462 {
         }
 
         @Override
-        public Tree visitClass(ClassTree clazz, Void v) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Tree visitClass(ClassTree clazz, Void v) {
             for (Tree member : clazz.getMembers()) {
                 member.accept(this, v);
             }
@@ -102,25 +123,41 @@ public class T6956462 {
         }
 
         @Override
-        public Tree visitIdentifier(IdentifierTree ident, Void v) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Tree visitIdentifier(IdentifierTree ident, Void v) {
             trees.getScope(trees.getPath(file, ident));
             return null;
         }
 
         @Override
-        public Tree visitMethod(MethodTree method, Void v) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Tree visitMethod(MethodTree method, Void v) {
             method.getBody().accept(this, v);
             return null;
         }
 
         @Override
-        public Tree visitMemberSelect(MemberSelectTree select, Void v) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Tree visitMemberSelect(MemberSelectTree select, Void v) {
             select.getExpression().accept(this, v);
             return null;
         }
 
         @Override
-        public Tree visitVariable(VariableTree var, Void v) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Tree visitVariable(VariableTree var, Void v) {
             var.getInitializer().accept(this, v);
             return null;
         }

@@ -28,6 +28,7 @@
 
 import java.nio.*;
 
+@Bean
 public class CharAt {
     public static void main (String[] args) {
         CharSequence cs = CharBuffer.wrap("foo");

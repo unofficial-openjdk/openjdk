@@ -28,6 +28,7 @@
  *
  */
 
+@Bean
 public class Pos01 {
 
     static class A extends Exception {}

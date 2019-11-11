@@ -36,6 +36,7 @@ package java.util;
  * @since 1.1
  */
 
+@Bean
 public class EventObject implements java.io.Serializable {
 
     @java.io.Serial

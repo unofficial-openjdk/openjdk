@@ -42,6 +42,7 @@ import java.util.Arrays;
  * Ciphers). Just need something non-null for testing, as the tests will throw
  * exceptions before trying to instantiate a real object.
  */
+@Bean
 public class GetInstanceNullsEmpties {
 
     private static final Provider SUN = Security.getProvider("SUN");

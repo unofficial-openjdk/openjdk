@@ -34,6 +34,7 @@ import java.lang.Exception;
  * @author Anthony Scarpino
  */
 
+@Bean
 public class ProviderVersionCheck {
 
     public static void main(String arg[]) throws Exception{

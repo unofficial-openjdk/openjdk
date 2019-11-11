@@ -40,6 +40,7 @@ import java.nio.*;
 import java.util.*;
 import java.util.zip.*;
 
+@Bean
 public class FlaterCriticalArray {
     // If true, print information about performance
     private static final boolean debug = System.getProperty("debug") != null;
@@ -106,7 +107,11 @@ public class FlaterCriticalArray {
                   name + ": Inflated and deflated arrays do not match");
         }
 
-        private void inform(String inOut, long duration, int length) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void inform(String inOut, long duration, int length) {
             debug(name, inOut, duration, length);
         }
 

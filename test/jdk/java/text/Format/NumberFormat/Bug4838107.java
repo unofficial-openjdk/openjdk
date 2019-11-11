@@ -39,7 +39,10 @@ public class Bug4838107 extends IntlTest {
     static DecimalFormatSymbols dfs;
     static boolean err = false;
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+            public void main(String[] args) {
         Locale defaultLoc = Locale.getDefault();
         Locale.setDefault(Locale.US);
 

@@ -695,7 +695,8 @@ public class Color implements Paint, java.io.Serializable {
      *                             {@code false} otherwise.
      * @since   1.0
      */
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         return obj instanceof Color && ((Color)obj).getRGB() == this.getRGB();
     }
 

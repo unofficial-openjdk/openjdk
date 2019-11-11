@@ -55,6 +55,7 @@
 import java.util.Arrays;
 import java.util.concurrent.*;
 
+@Bean
 public class TestPinnedGarbage {
     static {
         System.loadLibrary("TestPinnedGarbage");

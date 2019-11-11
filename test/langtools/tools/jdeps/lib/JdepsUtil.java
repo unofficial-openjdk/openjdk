@@ -71,7 +71,11 @@ public final class JdepsUtil {
             System.err.println(cmd);
         }
 
-        public Command verbose(String verbose) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Command verbose(String verbose) {
             switch (verbose) {
                 case "-verbose":
                     this.verbose = Analyzer.Type.VERBOSE;
@@ -92,7 +96,11 @@ public final class JdepsUtil {
             return this;
         }
 
-        public Command filter(String value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Command filter(String value) {
             switch (value) {
                 case "-filter:package":
                     filter.filter(true, false);
@@ -107,42 +115,74 @@ public final class JdepsUtil {
             return this;
         }
 
-        public Command addClassPath(String classpath) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Command addClassPath(String classpath) {
             builder.addClassPath(classpath);
             return this;
         }
 
-        public Command addRoot(Path path) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Command addRoot(Path path) {
             builder.addRoot(path);
             return this;
         }
 
-        public Command appModulePath(String modulePath) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Command appModulePath(String modulePath) {
             builder.appModulePath(modulePath);
             return this;
         }
 
-        public Command addmods(Set<String> mods) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Command addmods(Set<String> mods) {
             builder.addmods(mods);
             return this;
         }
 
-        public Command requires(Set<String> mods) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Command requires(Set<String> mods) {
             requires.addAll(mods);
             return this;
         }
 
-        public Command matchPackages(Set<String> pkgs) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Command matchPackages(Set<String> pkgs) {
             filter.packages(pkgs);
             return this;
         }
 
-        public Command regex(String regex) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Command regex(String regex) {
             filter.regex(Pattern.compile(regex));
             return this;
         }
 
-        public Command include(String regex) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Command include(String regex) {
             filter.includePattern(Pattern.compile(regex));
             return this;
         }
@@ -184,7 +224,11 @@ public final class JdepsUtil {
                                            verbose, false);
         }
 
-        public void dumpOutput(PrintStream out) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void dumpOutput(PrintStream out) {
             out.println(sw.toString());
         }
 

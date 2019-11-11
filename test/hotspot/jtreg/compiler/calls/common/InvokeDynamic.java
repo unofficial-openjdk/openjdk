@@ -36,6 +36,7 @@ import java.lang.invoke.MethodType;
  * java for easier support and readability.
  */
 
+@Bean
 public class InvokeDynamic extends CallsBase {
     private static final Object LOCK = new Object();
 

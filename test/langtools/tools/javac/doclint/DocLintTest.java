@@ -52,6 +52,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Bean
 public class DocLintTest {
     public static void main(String... args) throws Exception {
         new DocLintTest().run();
@@ -63,7 +64,8 @@ public class DocLintTest {
 
     final String code =
         /* 01 */    "/** Class comment. */\n" +
-        /* 02 */    "public class Test {\n" +
+        /* 02 */    "@Bean
+public class Test {\n" +
         /* 03 */    "    /** Method comment. */\n" +
         /* 04 */    "    public void method() { }\n" +
         /* 05 */    "\n" +
@@ -114,6 +116,10 @@ public class DocLintTest {
             fm.setLocation(StandardLocation.CLASS_OUTPUT, Arrays.asList(new File(".")));
             file = new SimpleJavaFileObject(URI.create("Test.java"), JavaFileObject.Kind.SOURCE) {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public CharSequence getCharContent(boolean ignoreEncoding) {
                     return code;
                 }
@@ -188,7 +194,11 @@ public class DocLintTest {
 //            throw new Error("stop");
     }
 
-    private void check(String out, Set<Message> expect) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void check(String out, Set<Message> expect) {
         Pattern stats = Pattern.compile("^([1-9]+) (error|warning)(s?)");
         Set<Message> found = EnumSet.noneOf(Message.class);
         int e = 0, w = 0;

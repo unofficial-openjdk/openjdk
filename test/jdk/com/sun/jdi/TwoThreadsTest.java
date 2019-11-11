@@ -96,6 +96,7 @@ class TwoThreadsTarg extends Thread {
 
 /********** test program **********/
 
+@Bean
 public class TwoThreadsTest extends TestScaffold {
     ReferenceType targetClass;
     ThreadReference mainThread;
@@ -115,7 +116,11 @@ public class TwoThreadsTest extends TestScaffold {
 
     /* BreakpointEvent handler */
 
-    public void breakpointReached(BreakpointEvent event) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void breakpointReached(BreakpointEvent event) {
         if (bkpts == 0) {
             /*
              * This thread will watch for n secs to go by with no

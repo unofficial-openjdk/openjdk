@@ -52,6 +52,7 @@ import org.testng.TestNG;
  * @modules jdk.unsupported
  */
 
+@Bean
 public class ReflectionFactoryTest {
 
     // Initialized by init()

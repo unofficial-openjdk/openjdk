@@ -30,6 +30,7 @@ import java.io.*;
  *    close or flush from the underlying stream fails.
  */
 
+@Bean
 public class FailingFlushAndClose {
 
     static int failed;

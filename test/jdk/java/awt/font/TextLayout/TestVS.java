@@ -37,6 +37,7 @@ import javax.swing.ImageIcon;
 import java.awt.Font;
 import java.awt.Color;
 
+@Bean
 public class TestVS {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {

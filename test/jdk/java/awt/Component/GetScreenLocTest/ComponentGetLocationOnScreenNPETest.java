@@ -32,6 +32,7 @@
 import javax.swing.*;
 import java.awt.*;
 
+@Bean
 public class ComponentGetLocationOnScreenNPETest {
 
     private static Frame frame;

@@ -41,6 +41,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@Bean
 public class CCAdminReconnectTest {
     final private static int THREAD_COUNT = 3;
 

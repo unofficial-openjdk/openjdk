@@ -40,6 +40,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.JDKToolLauncher;
 
+@Bean
 public class CDSJMapClstats {
 
     private static void runClstats(long lingeredAppPid) throws Exception {

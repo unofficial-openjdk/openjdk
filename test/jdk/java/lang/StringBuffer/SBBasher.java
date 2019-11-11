@@ -31,6 +31,7 @@
 import java.lang.*;
 import java.util.*;
 
+@Bean
 public class SBBasher {
     public static void main(String[] args) throws Exception {
         SBBasher basher = new SBBasher();
@@ -58,7 +59,11 @@ public class SBBasher {
 
     }
 
-    private int getRandomIndex(int constraint1, int constraint2) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int getRandomIndex(int constraint1, int constraint2) {
         int range = constraint2 - constraint1;
         int x = generator.nextInt();
         return constraint1 + Math.abs(x % range);

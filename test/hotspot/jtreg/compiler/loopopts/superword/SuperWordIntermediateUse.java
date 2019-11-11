@@ -32,6 +32,7 @@
 
 package compiler.loopopts.superword;
 
+@Bean
 public class SuperWordIntermediateUse {
 
     private int iFld;

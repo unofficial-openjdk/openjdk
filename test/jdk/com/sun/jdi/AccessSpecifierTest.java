@@ -141,6 +141,7 @@ class AccessSpecifierTarg {
 
     /********** test program **********/
 
+@Bean
 public class AccessSpecifierTest extends TestScaffold {
 
     private final static String debugeeName = "AccessSpecifierTarg";

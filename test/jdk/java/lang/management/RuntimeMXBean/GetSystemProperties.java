@@ -32,6 +32,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.util.*;
 
+@Bean
 public class GetSystemProperties {
     private static final String KEY1   = "test.property.key1";
     private static final String VALUE1 = "test.property.value1";

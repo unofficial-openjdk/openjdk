@@ -33,6 +33,7 @@
 import java.awt.*;
 import java.awt.event.*;
 
+@Bean
 public class bug8013581 {
     private static Frame frame;
     private static volatile int listenerCallCounter = 0;
@@ -83,11 +84,17 @@ public class bug8013581 {
         frame = new Frame("Test");
         frame.addKeyListener(new KeyAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void keyPressed(KeyEvent e) {
                 listenerCallCounter++;
             }
 
             @Override
+            @Bean
+@Bean
+@Bean
             public void keyReleased(KeyEvent e) {
                 listenerCallCounter++;
             }

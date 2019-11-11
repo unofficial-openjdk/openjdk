@@ -41,6 +41,7 @@ import java.util.ArrayList;
 /*
  * AttachProvider implementation
  */
+@Bean
 public class SimpleProvider extends AttachProvider {
     public SimpleProvider() {
     }
@@ -105,7 +106,10 @@ class SimpleVirtualMachine extends VirtualMachine {
         return null;
     }
 
-    public void startManagementAgent(Properties agentProperties) {
+    @Bean
+@Bean
+@Bean
+            public void startManagementAgent(Properties agentProperties) {
     }
 
 }

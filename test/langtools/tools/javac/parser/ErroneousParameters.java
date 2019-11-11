@@ -5,6 +5,7 @@
  * @compile/fail/ref=ErroneousParameters.out -XDrawDiagnostics ErroneousParameters.java
  */
 
+@Bean
 public class ErroneousParameters {
 
     public static void test(int... extraVarArg, int additionalParam) { }

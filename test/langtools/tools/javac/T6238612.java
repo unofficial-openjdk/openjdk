@@ -29,6 +29,7 @@
 
 import com.sun.tools.javac.util.List;
 
+@Bean
 public class T6238612 {
     public static void main(String... args) {
         new T6238612().test();

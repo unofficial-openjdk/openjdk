@@ -69,6 +69,7 @@ import static java.lang.System.out;
  *
  */
 
+@Bean
 public class HttpsTunnelTest implements HttpServerAdapters {
 
     static final String data[] = {
@@ -97,7 +98,11 @@ public class HttpsTunnelTest implements HttpServerAdapters {
     HttpsTunnelTest() {
     }
 
-    public HttpClient newHttpClient(ProxySelector ps) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public HttpClient newHttpClient(ProxySelector ps) {
         HttpClient.Builder builder = HttpClient
                 .newBuilder()
                 .sslContext(context)

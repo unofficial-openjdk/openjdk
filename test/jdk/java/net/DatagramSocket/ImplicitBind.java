@@ -29,6 +29,7 @@
 
 import java.net.*;
 
+@Bean
 public class ImplicitBind {
     public static void main(String[] args) throws Exception {
         DatagramSocket s = new DatagramSocket((SocketAddress)null);

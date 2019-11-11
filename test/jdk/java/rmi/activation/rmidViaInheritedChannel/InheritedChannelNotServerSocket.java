@@ -58,6 +58,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 
+@Bean
 public class InheritedChannelNotServerSocket {
     private static final Object lock = new Object();
     private static boolean notified = false;

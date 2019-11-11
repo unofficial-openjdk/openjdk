@@ -33,6 +33,7 @@ import java.lang.ref.ReferenceQueue;
 import java.util.ArrayList;
 import java.util.List;
 
+@Bean
 public class PhantomReferentClearing {
 
     private static final long ENQUEUE_TIMEOUT = 1000;   // 1 sec, in millis

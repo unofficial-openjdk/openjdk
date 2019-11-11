@@ -33,6 +33,7 @@ import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 
+@Bean
 public class Test6660539 implements Runnable {
     private static final String NAME = "$$$";
 

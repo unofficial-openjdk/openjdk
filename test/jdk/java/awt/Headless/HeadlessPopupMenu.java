@@ -29,6 +29,7 @@ import java.awt.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessPopupMenu
  */
 
+@Bean
 public class HeadlessPopupMenu {
     public static void main(String args[]) {
             PopupMenu pm;

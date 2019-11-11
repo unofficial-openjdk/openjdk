@@ -33,6 +33,7 @@ import jdk.jfr.Label;
 @Label("Hello World")
 @Description("My first event")
 @Enabled
+@Bean
 public class HelloWorldEvent1 extends Event {
 
     @Label("Message")

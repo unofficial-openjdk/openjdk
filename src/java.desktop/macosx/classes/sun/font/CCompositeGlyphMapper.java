@@ -37,7 +37,8 @@ public final class CCompositeGlyphMapper extends CompositeGlyphMapper {
         missingGlyph = 0;
     }
 
-    private CharToGlyphMapper getSlotMapper(int slot) {
+@Bean
+        private CharToGlyphMapper getSlotMapper(int slot) {
         CharToGlyphMapper mapper = slotMappers[slot];
         if (mapper == null) {
             mapper = font.getSlotFont(slot).getMapper();
@@ -46,12 +47,14 @@ public final class CCompositeGlyphMapper extends CompositeGlyphMapper {
         return mapper;
     }
 
-    public boolean canDisplay(char ch) {
+@Bean
+        public boolean canDisplay(char ch) {
         int glyph = charToGlyph(ch);
         return glyph != missingGlyph;
     }
 
-    private int convertToGlyph(int unicode) {
+@Bean
+        private int convertToGlyph(int unicode) {
         for (int slot = 0; slot < font.numSlots; slot++) {
             CharToGlyphMapper mapper = getSlotMapper(slot);
             int glyphCode = mapper.charToGlyph(unicode);
@@ -80,15 +83,18 @@ public final class CCompositeGlyphMapper extends CompositeGlyphMapper {
         return numGlyphs;
     }
 
-    public int charToGlyph(int unicode) {
+@Bean
+        public int charToGlyph(int unicode) {
         return convertToGlyph(unicode);
     }
 
-    public int charToGlyph(char unicode) {
+@Bean
+        public int charToGlyph(char unicode) {
         return convertToGlyph(unicode);
     }
 
-    public boolean charsToGlyphsNS(int count, char[] unicodes, int[] glyphs) {
+@Bean
+        public boolean charsToGlyphsNS(int count, char[] unicodes, int[] glyphs) {
 
         for (int i=0; i<count; i++) {
             int code = unicodes[i]; // char is unsigned.
@@ -122,7 +128,8 @@ public final class CCompositeGlyphMapper extends CompositeGlyphMapper {
         return false;
     }
 
-    public void charsToGlyphs(int count, char[] unicodes, int[] glyphs) {
+@Bean
+        public void charsToGlyphs(int count, char[] unicodes, int[] glyphs) {
         for (int i=0; i<count; i++) {
             int code = unicodes[i]; // char is unsigned.
 
@@ -146,7 +153,8 @@ public final class CCompositeGlyphMapper extends CompositeGlyphMapper {
         }
     }
 
-    public void charsToGlyphs(int count, int[] unicodes, int[] glyphs) {
+@Bean
+        public void charsToGlyphs(int count, int[] unicodes, int[] glyphs) {
         for (int i=0; i<count; i++) {
              glyphs[i] = convertToGlyph(unicodes[i]);
         }

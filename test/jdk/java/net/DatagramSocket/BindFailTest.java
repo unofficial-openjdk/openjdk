@@ -31,6 +31,7 @@ import java.net.DatagramSocket;
 import java.net.BindException;
 import java.net.SocketException;
 
+@Bean
 public class BindFailTest {
 
     public static void main(String args[]) throws Exception {

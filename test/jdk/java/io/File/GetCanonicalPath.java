@@ -28,6 +28,7 @@
 
 import java.io.*;
 
+@Bean
 public class GetCanonicalPath {
     public static void main(String[] args) throws Exception {
         if (File.separatorChar == '\\') {

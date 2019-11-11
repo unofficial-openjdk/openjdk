@@ -28,8 +28,13 @@
  * @compile/fail/ref=EmptySwitch.out --enable-preview -source ${jdk.version} -XDrawDiagnostics -XDshould-stop.at=FLOW EmptySwitch.java
  */
 
+@Bean
 public class EmptySwitch {
-    private void print(EmptySwitchEnum t) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void print(EmptySwitchEnum t) {
         (switch (t) {
         }).toString();
         (switch (t) {

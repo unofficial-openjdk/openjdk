@@ -103,6 +103,7 @@ import javax.swing.table.TableModel;
  * @author Alexander Kouznetsov
  */
 @SuppressWarnings("serial")
+@Bean
 public class Intro extends JPanel {
 
     private static final Color myBlack = new Color(20, 20, 20);
@@ -125,7 +126,11 @@ public class Intro extends JPanel {
         addMouseListener(new MouseAdapter() {
 
             @Override
-            public void mouseClicked(MouseEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void mouseClicked(MouseEvent e) {
                 removeAll();
                 if ((doTable = !doTable)) {
                     setToolTipText("click for animation");
@@ -162,17 +167,29 @@ public class Intro extends JPanel {
         WindowListener l = new WindowAdapter() {
 
             @Override
-            public void windowClosing(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosing(WindowEvent e) {
                 System.exit(0);
             }
 
             @Override
-            public void windowDeiconified(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowDeiconified(WindowEvent e) {
                 intro.start();
             }
 
             @Override
-            public void windowIconified(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowIconified(WindowEvent e) {
                 intro.stop();
             }
         };
@@ -223,6 +240,10 @@ public class Intro extends JPanel {
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public Object getValueAt(int row, int col) {
                     Surface.Scene scene = intro.surface.director.get(row);
                     if (col == 0) {
@@ -235,21 +256,34 @@ public class Intro extends JPanel {
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public String getColumnName(int col) {
                     return names[col];
                 }
 
                 @Override
-                public Class<?> getColumnClass(int c) {
+                @Bean
+public class<?> getColumnClass(int c) {
                     return getValueAt(0, c).getClass();
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public boolean isCellEditable(int row, int col) {
                     return col != 1 ? true : false;
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void setValueAt(Object aValue, int row, int col) {
                     Surface.Scene scene = intro.surface.director.get(row);
                     if (col == 0) {
@@ -301,7 +335,11 @@ public class Intro extends JPanel {
         }
 
         @Override
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             JButton b = (JButton) e.getSource();
             b.setSelected(!b.isSelected());
             b.setText(b.isSelected() ? "Select All" : "Unselect All");
@@ -313,7 +351,11 @@ public class Intro extends JPanel {
         }
 
         @Override
-        public void stateChanged(ChangeEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void stateChanged(ChangeEvent e) {
             JSlider slider = (JSlider) e.getSource();
             int value = slider.getValue();
             TitledBorder tb = (TitledBorder) slider.getBorder();
@@ -343,6 +385,10 @@ public class Intro extends JPanel {
             addMouseListener(new MouseAdapter() {
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void mouseClicked(MouseEvent e) {
                     if (thread == null) {
                         start();
@@ -356,12 +402,20 @@ public class Intro extends JPanel {
             director = new Director(this);
         }
 
-        public FontMetrics getMetrics(Font font) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public FontMetrics getMetrics(Font font) {
             return getFontMetrics(font);
         }
 
         @Override
-        public void paint(Graphics g) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(Graphics g) {
             Dimension d = getSize();
             if (d.width <= 0 || d.height <= 0) {
                 return;
@@ -616,14 +670,22 @@ public class Intro extends JPanel {
                 }
             }
 
-            public void reset(int w, int h) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void reset(int w, int h) {
                 index = 0;
                 for (int i = 0; i < parts.size(); i++) {
                     (parts.get(i)).reset(w, h);
                 }
             }
 
-            public void step(int w, int h) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void step(int w, int h) {
                 for (int i = 0; i < parts.size(); i++) {
                     Part part = parts.get(i);
                     if (index >= part.getBegin() && index <= part.getEnd()) {
@@ -632,7 +694,11 @@ public class Intro extends JPanel {
                 }
             }
 
-            public void render(int w, int h, Graphics2D g2) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void render(int w, int h, Graphics2D g2) {
                 for (int i = 0; i < parts.size(); i++) {
                     Part part = parts.get(i);
                     if (index >= part.getBegin() && index <= part.getEnd()) {
@@ -707,7 +773,11 @@ public class Intro extends JPanel {
                 }
             }
 
-            public void setIncrements(double numRevolutions) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setIncrements(double numRevolutions) {
                 this.numRev = (int) numRevolutions;
                 rIncr = 360.0 / ((ending - beginning) / numRevolutions);
                 sIncr = 1.0 / (ending - beginning);
@@ -721,7 +791,11 @@ public class Intro extends JPanel {
             }
 
             @Override
-            public void reset(int w, int h) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void reset(int w, int h) {
                 if (type == SCXI) {
                     sx = -1.0;
                     sy = 1.0;
@@ -735,7 +809,11 @@ public class Intro extends JPanel {
             }
 
             @Override
-            public void step(int w, int h) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void step(int w, int h) {
 
                 float charWidth = w / 2 - sw / 2;
 
@@ -780,7 +858,11 @@ public class Intro extends JPanel {
             }
 
             @Override
-            public void render(int w, int h, Graphics2D g2) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void render(int w, int h, Graphics2D g2) {
                 Composite saveAC = null;
                 if ((type & AC) != 0 && sx > 0 && sx < 1) {
                     saveAC = g2.getComposite();
@@ -861,7 +943,11 @@ public class Intro extends JPanel {
             }
 
             @Override
-            public void reset(int w, int h) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void reset(int w, int h) {
                 incr = 1.0f / (ending - beginning);
                 if ((type & CNT) != 0) {
                     incr /= 2.3f;
@@ -878,7 +964,11 @@ public class Intro extends JPanel {
             }
 
             @Override
-            public void step(int w, int h) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void step(int w, int h) {
                 rect.clear();
                 grad.clear();
 
@@ -940,7 +1030,11 @@ public class Intro extends JPanel {
             }
 
             @Override
-            public void render(int w, int h, Graphics2D g2) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void render(int w, int h, Graphics2D g2) {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                         RenderingHints.VALUE_ANTIALIAS_OFF);
                 for (int i = 0; i < grad.size(); i++) {
@@ -999,14 +1093,22 @@ public class Intro extends JPanel {
                 setTextureSize(size);
             }
 
-            public void setTextureSize(int size) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void setTextureSize(int size) {
                 this.size = size;
                 bimg = new BufferedImage(size, size, BufferedImage.TYPE_INT_RGB);
                 rect = new Rectangle(0, 0, size, size);
             }
 
             @Override
-            public void reset(int w, int h) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void reset(int w, int h) {
                 incr = (float) (size) / (float) (ending - beginning);
                 if ((type & HAF) != 0) {
                     incr /= 2;
@@ -1024,7 +1126,11 @@ public class Intro extends JPanel {
             }
 
             @Override
-            public void step(int w, int h) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void step(int w, int h) {
                 Graphics2D g2 = bimg.createGraphics();
                 g2.setPaint(p1);
                 g2.fillRect(0, 0, size, size);
@@ -1040,7 +1146,11 @@ public class Intro extends JPanel {
             }
 
             @Override
-            public void render(int w, int h, Graphics2D g2) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void render(int w, int h, Graphics2D g2) {
                 g2.setPaint(texture);
                 if ((type & NF) == 0) {
                     g2.fillRect(0, 0, w, h);
@@ -1090,7 +1200,11 @@ public class Intro extends JPanel {
             }
 
             @Override
-            public void reset(int w, int h) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void reset(int w, int h) {
                 if (doRandom) {
                     int num = (int) (Math.random() * 5.0);
                     switch (num) {
@@ -1120,7 +1234,11 @@ public class Intro extends JPanel {
             }
 
             @Override
-            public void step(int w, int h) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void step(int w, int h) {
                 if (bimg == null) {
                     int biw = surf.bimg.getWidth();
                     int bih = surf.bimg.getHeight();
@@ -1151,7 +1269,11 @@ public class Intro extends JPanel {
             }
 
             @Override
-            public void render(int w, int h, Graphics2D g2) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void render(int w, int h, Graphics2D g2) {
                 g2.clip(shape);
                 g2.drawImage(bimg, 0, 0, null);
             }
@@ -1217,12 +1339,20 @@ public class Intro extends JPanel {
             }
 
             @Override
-            public void reset(int w, int h) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void reset(int w, int h) {
                 bimg = null;
             }
 
             @Override
-            public void step(int w, int h) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void step(int w, int h) {
                 if (inc > ending) {
                     bimg = null;
                 }
@@ -1245,7 +1375,11 @@ public class Intro extends JPanel {
             }
 
             @Override
-            public void render(int w, int h, Graphics2D g2) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void render(int w, int h, Graphics2D g2) {
                 big.setColor(myBlack);
 
                 for (int k = 0; k <= (ending - beginning); k++) {
@@ -1310,7 +1444,11 @@ public class Intro extends JPanel {
             }
 
             @Override
-            public void reset(int w, int h) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void reset(int w, int h) {
                 scale = 1.0;
                 rotate = 0.0;
                 bimg = null;
@@ -1319,7 +1457,11 @@ public class Intro extends JPanel {
             }
 
             @Override
-            public void step(int w, int h) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void step(int w, int h) {
                 if (bimg == null) {
                     int biw = surf.bimg.getWidth();
                     int bih = surf.bimg.getHeight();
@@ -1342,7 +1484,11 @@ public class Intro extends JPanel {
             }
 
             @Override
-            public void render(int w, int h, Graphics2D g2) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void render(int w, int h, Graphics2D g2) {
                 AffineTransform saveTx = g2.getTransform();
                 g2.setColor(myBlue);
                 for (int i = 0; i < subs.size() && scale > 0.0; i++) {
@@ -1424,7 +1570,11 @@ public class Intro extends JPanel {
                 }
             }
 
-            public void generatePts(int w, int h, double sizeF) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void generatePts(int w, int h, double sizeF) {
                 pts.clear();
                 double size = Math.min(w, h) * sizeF;
                 Ellipse2D ellipse = new Ellipse2D.Double(w / 2 - size / 2, h / 2 - size
@@ -1442,7 +1592,11 @@ public class Intro extends JPanel {
             }
 
             @Override
-            public void reset(int w, int h) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void reset(int w, int h) {
                 if ((type & DEC) != 0) {
                     rotate = 360;
                     alpha = 1.0f;
@@ -1457,7 +1611,11 @@ public class Intro extends JPanel {
             }
 
             @Override
-            public void step(int w, int h) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void step(int w, int h) {
                 if ((type & ZOOM) != 0) {
                     generatePts(w, h, zoom += zIncr);
                 }
@@ -1470,7 +1628,11 @@ public class Intro extends JPanel {
             }
 
             @Override
-            public void render(int w, int h, Graphics2D g2) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void render(int w, int h, Graphics2D g2) {
                 Composite saveAC = null;
                 if ((type & AC) != 0 && alpha >= 0 && alpha <= 1) {
                     saveAC = g2.getComposite();
@@ -1540,7 +1702,11 @@ public class Intro extends JPanel {
             }
 
             @Override
-            public void reset(int w, int h) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void reset(int w, int h) {
                 rect1 = new Rectangle(8, 20, w - 20, 30);
                 rect2 = new Rectangle(20, 8, 30, h - 20);
                 if ((type & NOANIM) == 0) {
@@ -1553,7 +1719,11 @@ public class Intro extends JPanel {
             }
 
             @Override
-            public void step(int w, int h) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void step(int w, int h) {
                 if ((type & NOANIM) != 0) {
                     return;
                 }
@@ -1567,7 +1737,11 @@ public class Intro extends JPanel {
             }
 
             @Override
-            public void render(int w, int h, Graphics2D g2) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void render(int w, int h, Graphics2D g2) {
                 if ((type & RECT) != 0) {
                     g2.setColor(myBlue);
                     g2.fill(rect1);
@@ -1637,7 +1811,11 @@ public class Intro extends JPanel {
             }
 
             @Override
-            public void reset(int w, int h) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void reset(int w, int h) {
                 strH = (fm2.getAscent() + fm2.getDescent());
                 endIndex = 1;
                 listIndex = 0;
@@ -1646,7 +1824,11 @@ public class Intro extends JPanel {
             }
 
             @Override
-            public void step(int w, int h) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void step(int w, int h) {
                 if (listIndex < list.length) {
                     if (++endIndex > list[listIndex].length()) {
                         if (++listIndex < list.length) {
@@ -1660,7 +1842,11 @@ public class Intro extends JPanel {
             }
 
             @Override
-            public void render(int w, int h, Graphics2D g2) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void render(int w, int h, Graphics2D g2) {
                 g2.setColor(myWhite);
                 g2.setFont(font1);
                 g2.drawString(v.get(0), 90, 85);
@@ -1726,7 +1912,11 @@ public class Intro extends JPanel {
             }
 
             @Override
-            public void reset(int w, int h) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void reset(int w, int h) {
                 v.clear();
                 strH = (fm.getAscent() + fm.getDescent());
                 nStrs = (h - 40) / strH + 1;
@@ -1737,7 +1927,11 @@ public class Intro extends JPanel {
             }
 
             @Override
-            public void step(int w, int h) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void step(int w, int h) {
                 if (counter++ % cntMod == 0) {
                     if (index < cast.size()) {
                         v.add(cast.get(index));
@@ -1751,7 +1945,11 @@ public class Intro extends JPanel {
             }
 
             @Override
-            public void render(int w, int h, Graphics2D g2) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void render(int w, int h, Graphics2D g2) {
                 g2.setPaint(gp);
                 g2.setFont(font);
                 double remainder = counter % cntMod;

@@ -36,6 +36,7 @@ import javax.imageio.stream.FileCacheImageOutputStream;
 import javax.imageio.stream.ImageOutputStream;
 import javax.imageio.stream.MemoryCacheImageOutputStream;
 
+@Bean
 public class FlushBefore {
 
     public static void main(String[] args) throws IOException {

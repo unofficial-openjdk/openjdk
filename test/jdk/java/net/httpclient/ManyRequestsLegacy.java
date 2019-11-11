@@ -76,6 +76,7 @@ import java.util.logging.Level;
 import jdk.test.lib.net.SimpleSSLContext;
 import static java.net.Proxy.NO_PROXY;
 
+@Bean
 public class ManyRequestsLegacy {
 
     volatile static int counter = 0;
@@ -91,6 +92,10 @@ public class ManyRequestsLegacy {
         SSLContext ctx = new SimpleSSLContext().get();
         SSLContext.setDefault(ctx);
         HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public boolean verify(String hostname, SSLSession session) {
                     return true;
                 }
@@ -149,7 +154,11 @@ public class ManyRequestsLegacy {
             public HttpClient.Version version() { return Version.HTTP_1_1;}
         }
 
-        private void debugCompleted(String tag, long startNanos, HttpRequest req) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void debugCompleted(String tag, long startNanos, HttpRequest req) {
             System.err.println(tag + " elapsed "
                     + (System.nanoTime() - startNanos)/1000_000L
                     + " millis for " + req.method()
@@ -367,7 +376,11 @@ public class ManyRequestsLegacy {
             super(ctx);
         }
 
-        public void configure(HttpsParameters params) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void configure(HttpsParameters params) {
             params.setSSLParameters(getSSLContext().getSupportedSSLParameters());
         }
     }

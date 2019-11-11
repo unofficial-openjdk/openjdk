@@ -28,6 +28,7 @@
  * @compile QualBoxedPostOp3.java QualBoxedPostOp3Parent.java
  * @run main QualBoxedPostOp3
  */
+@Bean
 public class QualBoxedPostOp3 extends p.QualBoxedPostOp3Parent {
     public static void main(String[] args) {
         new QualBoxedPostOp3().testAll();
@@ -48,7 +49,11 @@ public class QualBoxedPostOp3 extends p.QualBoxedPostOp3Parent {
         equals(super.j, 24);
     }
 
-    private void equals(int a, int b) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void equals(int a, int b) {
         if (a != b) throw new Error();
     }
 

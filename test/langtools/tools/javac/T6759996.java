@@ -35,6 +35,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 
+@Bean
 public class T6759996 {
     public static void main(String[] args) throws Exception {
         new T6759996().run();

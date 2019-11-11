@@ -35,6 +35,7 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 
+@Bean
 public class TestTransform {
     public static void testTransformedFont(AffineTransform a, Object textHint) {
         BufferedImage bi = new BufferedImage(200, 200,

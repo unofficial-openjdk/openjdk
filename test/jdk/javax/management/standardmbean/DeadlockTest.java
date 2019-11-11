@@ -33,6 +33,7 @@
 import javax.management.*;
 import javax.management.timer.*;
 
+@Bean
 public class DeadlockTest extends StandardMBean {
     public <T> DeadlockTest(T implementation, Class<T> mbeanInterface)
     throws NotCompliantMBeanException {
@@ -43,7 +44,11 @@ public class DeadlockTest extends StandardMBean {
         return super.getCachedMBeanInfo();
     }
 
-    public void cacheMBeanInfo(MBeanInfo mi) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void cacheMBeanInfo(MBeanInfo mi) {
         super.cacheMBeanInfo(mi);
     }
 

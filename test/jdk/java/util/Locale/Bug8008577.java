@@ -34,6 +34,7 @@ import java.util.Arrays;
 import java.util.List;
 import sun.util.locale.provider.LocaleProviderAdapter;
 
+@Bean
 public class Bug8008577 {
 
     static final LocaleProviderAdapter.Type[] expected = {

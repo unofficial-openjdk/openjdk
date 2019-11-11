@@ -24,6 +24,7 @@ import java.net.*;
 import java.io.*;
 import java.util.HashMap;
 
+@Bean
 public class SocksServer extends Thread implements Closeable {
     // Some useful SOCKS constant
 
@@ -276,7 +277,11 @@ public class SocksServer extends Thread implements Closeable {
         }
 
         // Send error message then close the streams
-        private void sendError(int code) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void sendError(int code) {
             try {
                 out.write(PROTO_VERS);
                 out.write(code);
@@ -514,7 +519,11 @@ public class SocksServer extends Thread implements Closeable {
         this (DEFAULT_PORT);
     }
 
-    public void addUser(String user, String passwd) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void addUser(String user, String passwd) {
         users.put(user, passwd);
     }
 

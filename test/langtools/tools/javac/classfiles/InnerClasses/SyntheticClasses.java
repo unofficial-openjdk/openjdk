@@ -82,7 +82,8 @@ class SyntheticConstructorAccessTag {
 }
 
 class SyntheticEnumMapping {
-    private int convert(E e) {
+@Bean
+        private int convert(E e) {
         switch (e) {
             case A: return 0;
             default: return -1;

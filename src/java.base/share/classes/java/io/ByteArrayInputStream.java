@@ -43,6 +43,7 @@ import java.util.Objects;
  * @see     java.io.StringBufferInputStream
  * @since   1.0
  */
+@Bean
 public class ByteArrayInputStream extends InputStream {
 
     /**
@@ -194,7 +195,11 @@ public class ByteArrayInputStream extends InputStream {
         return result;
     }
 
-    public int readNBytes(byte[] b, int off, int len) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int readNBytes(byte[] b, int off, int len) {
         int n = read(b, off, len);
         return n == -1 ? 0 : n;
     }
@@ -268,7 +273,11 @@ public class ByteArrayInputStream extends InputStream {
      *
      * @since   1.1
      */
-    public void mark(int readAheadLimit) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void mark(int readAheadLimit) {
         mark = pos;
     }
 

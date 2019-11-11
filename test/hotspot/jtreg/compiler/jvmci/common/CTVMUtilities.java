@@ -46,6 +46,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
+@Bean
 public class CTVMUtilities {
     /*
      * A method to return HotSpotResolvedJavaMethod object using class object
@@ -109,7 +110,8 @@ public class CTVMUtilities {
         private final String targetName;
         private final String targetDesc;
 
-        public ClassVisitorForLabels(ClassWriter cw, Map<Label, Integer> lines,
+        @Bean
+public classVisitorForLabels(ClassWriter cw, Map<Label, Integer> lines,
                                      Executable target) {
             super(Opcodes.ASM7, cw);
             this.lineNumbers = lines;
@@ -139,7 +141,11 @@ public class CTVMUtilities {
             if (targetDesc.equals(desc) && targetName.equals(name)) {
                 return new MethodVisitor(Opcodes.ASM7, mv) {
                     @Override
-                    public void visitLineNumber(int i, Label label) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public void visitLineNumber(int i, Label label) {
                         super.visitLineNumber(i, label);
                         lineNumbers.put(label, i);
                     }

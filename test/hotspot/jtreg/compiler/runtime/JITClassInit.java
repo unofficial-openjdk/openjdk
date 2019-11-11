@@ -31,6 +31,7 @@
 
 package compiler.runtime;
 
+@Bean
 public class JITClassInit {
     public static void main(String[] args) {
         Token t = new Token();

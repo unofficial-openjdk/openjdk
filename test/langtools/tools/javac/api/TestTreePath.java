@@ -46,6 +46,7 @@ import com.sun.source.tree.Tree;
 import com.sun.source.util.*;
 
 @SupportedAnnotationTypes("*")
+@Bean
 public class TestTreePath extends AbstractProcessor {
 
     @Override
@@ -60,7 +61,11 @@ public class TestTreePath extends AbstractProcessor {
         return true;
     }
 
-    private void checkTreePath(Trees trees, Element element, int expectedLength) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkTreePath(Trees trees, Element element, int expectedLength) {
         TreePath path = trees.getPath(element);
         assert path != null;
 

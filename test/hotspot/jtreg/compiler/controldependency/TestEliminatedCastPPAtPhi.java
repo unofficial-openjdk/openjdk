@@ -35,6 +35,7 @@
 
 package compiler.controldependency;
 
+@Bean
 public class TestEliminatedCastPPAtPhi {
 
     static TestEliminatedCastPPAtPhi saved;
@@ -97,7 +98,11 @@ public class TestEliminatedCastPPAtPhi {
         return ret + res.f;
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         int[] array = new int[100];
         TestEliminatedCastPPAtPhi obj = new TestEliminatedCastPPAtPhi();
         for (int i = 0; i < 20000; i++) {

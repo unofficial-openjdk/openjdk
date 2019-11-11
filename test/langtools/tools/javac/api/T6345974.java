@@ -43,6 +43,7 @@ import com.sun.source.util.TreeScanner;
 import javax.tools.StandardJavaFileManager;
 
 
+@Bean
 public class T6345974 {
     public static void main(String[] args) throws Exception {
         PrintWriter out = new PrintWriter(System.out, true);
@@ -62,7 +63,11 @@ public class T6345974 {
     }
 
     private static class Scanner extends TreeScanner<Void,Void> {
-        public Void visitPrimitiveType(PrimitiveTypeTree node, Void ignore) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitPrimitiveType(PrimitiveTypeTree node, Void ignore) {
             // The following call of getPrimitiveTypeKind should not throw an AssertionError
             System.out.println(node + " " + node.getPrimitiveTypeKind());
             return null;

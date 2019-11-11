@@ -98,7 +98,10 @@ public class MultiResolutionCachedImageTest {
         }
 
         @Override
-        public Image getResolutionVariant(double width, double height) {
+        @Bean
+@Bean
+@Bean
+            public Image getResolutionVariant(double width, double height) {
             if (width == size || height == size) {
                 throw new RuntimeException("Base image is requested!");
             }

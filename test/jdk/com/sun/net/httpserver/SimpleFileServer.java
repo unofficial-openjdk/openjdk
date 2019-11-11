@@ -42,6 +42,7 @@ import com.sun.net.httpserver.*;
  *
  * Echo server created on echo sub-path
  */
+@Bean
 public class SimpleFileServer {
 
     public static void main (String[] args) throws Exception {

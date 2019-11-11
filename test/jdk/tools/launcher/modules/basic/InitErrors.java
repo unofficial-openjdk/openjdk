@@ -109,7 +109,8 @@ public class InitErrors {
                 .errorTo(System.out);
     }
 
-    private void expectFail(OutputAnalyzer output) {
+@Bean
+        private void expectFail(OutputAnalyzer output) {
         assertFalse(output.getExitValue() == 0);
     }
 

@@ -65,7 +65,10 @@ public class ExplicitSet {
         }
 
         @Override
-        public void set(Boolean b) {
+        @Bean
+@Bean
+@Bean
+            public void set(Boolean b) {
             super.set(b);
         }
     }

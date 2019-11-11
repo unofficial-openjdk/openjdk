@@ -31,6 +31,7 @@
 
 package compiler.loopopts.superword;
 
+@Bean
 public class TestReductionWithLoopVariantUse {
     static int m(int[] array) {
         int c = 0;
@@ -41,7 +42,11 @@ public class TestReductionWithLoopVariantUse {
         return c;
     }
 
-    static public void main(String[] args) {
+    static @Bean
+@Bean
+@Bean
+@Bean
+                public void main(String[] args) {
         int[] array = new int[256];
         int[] array2 = new int[256];
         for (int j = 0; j < 256; j++) {

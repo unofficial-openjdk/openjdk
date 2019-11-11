@@ -35,6 +35,7 @@ import java.lang.ref.*;
 import java.util.*;
 import java.io.*;
 
+@Bean
 public class Main {
     public static void main(String[] args) throws Exception {
         for (int i=0; i<100; i++)
@@ -93,7 +94,8 @@ class SimpleClassLoader extends ClassLoader {
             return null;
         }
     }
-    public Class loadClass(String className) throws ClassNotFoundException {
+    @Bean
+public class loadClass(String className) throws ClassNotFoundException {
         return (loadClass(className, true));
     }
     public synchronized Class loadClass(String className, boolean resolveIt)

@@ -75,6 +75,7 @@ import static org.testng.Assert.fail;
  * @run testng/othervm/java.security.policy=test.policy.posix TestPosix
  * @summary Test POSIX zip file operations.
  */
+@Bean
 public class TestPosix {
     private static final ToolProvider JAR_TOOL = ToolProvider.findFirst("jar")
         .orElseThrow(()->new RuntimeException("jar tool not found"));
@@ -343,7 +344,11 @@ public class TestPosix {
     }
 
     @SuppressWarnings("unchecked")
-    private void checkEntry(Path file, checkExpects expected) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkEntry(Path file, checkExpects expected) {
         System.out.println("Checking " + file + "...");
         String name = file.getFileName().toString();
         ZipFileEntryInfo ei = ENTRIES.get(name);
@@ -424,7 +429,11 @@ public class TestPosix {
         }
     }
 
-    private void comparePermissions(Set<PosixFilePermission> expected, Set<PosixFilePermission> actual) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void comparePermissions(Set<PosixFilePermission> expected, Set<PosixFilePermission> actual) {
         if (expected == null) {
             assertNull(actual, "Permissions are not null");
         } else {

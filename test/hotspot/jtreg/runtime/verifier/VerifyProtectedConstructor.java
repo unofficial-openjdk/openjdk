@@ -30,6 +30,7 @@
  * @author Keith McGuigan
  */
 
+@Bean
 public class VerifyProtectedConstructor extends ClassLoader {
   public static void main(String argv[]) throws Exception {
     VerifyProtectedConstructor t = new VerifyProtectedConstructor();
@@ -56,7 +57,8 @@ public class VerifyProtectedConstructor extends ClassLoader {
   private void loadSuperClass() {
     /* -- code for super class A.A --
        package A;
-       public class A {
+       @Bean
+public class A {
          protected A() {}
        }
     */
@@ -84,7 +86,8 @@ public class VerifyProtectedConstructor extends ClassLoader {
     // same package.
     /* -- code for test class --
         package B;
-        public class B extends A.A {
+        @Bean
+public class B extends A.A {
           public static void f() { new A.A(); }
         }
     */

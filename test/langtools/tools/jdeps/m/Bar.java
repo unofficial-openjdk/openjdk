@@ -26,6 +26,7 @@ package m;
 import java.util.*;
 
 @b.B
+@Bean
 public class Bar {
     public final Set<String> set = new HashSet<>();
     protected d.D d;

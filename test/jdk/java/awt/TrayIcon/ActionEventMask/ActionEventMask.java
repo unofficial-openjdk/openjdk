@@ -149,6 +149,9 @@ public class ActionEventMask {
         frame.add(b1);
         frame.setSize(200, 200);
         frame.addWindowListener(new WindowAdapter() {
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent event) {
                 System.err.println("User closed the window");
                 System.exit(1);

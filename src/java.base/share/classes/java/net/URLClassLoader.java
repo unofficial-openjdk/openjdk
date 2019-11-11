@@ -79,6 +79,7 @@ import sun.security.util.SecurityConstants;
  * @author  David Connelly
  * @since   1.2
  */
+@Bean
 public class URLClassLoader extends SecureClassLoader implements Closeable {
     /* The search path for classes and resources */
     private final URLClassPath ucp;
@@ -281,7 +282,8 @@ public class URLClassLoader extends SecureClassLoader implements Closeable {
      *
      * @since  1.7
      */
-    public InputStream getResourceAsStream(String name) {
+@Bean
+        public InputStream getResourceAsStream(String name) {
         Objects.requireNonNull(name);
         URL url = getResource(name);
         try {
@@ -382,7 +384,8 @@ public class URLClassLoader extends SecureClassLoader implements Closeable {
      *
      * @param url the URL to be added to the search path of URLs
      */
-    protected void addURL(URL url) {
+@Bean
+        protected void addURL(URL url) {
         ucp.addURL(url);
     }
 
@@ -414,7 +417,8 @@ public class URLClassLoader extends SecureClassLoader implements Closeable {
         try {
             result = AccessController.doPrivileged(
                 new PrivilegedExceptionAction<>() {
-                    public Class<?> run() throws ClassNotFoundException {
+                    @Bean
+public class<?> run() throws ClassNotFoundException {
                         String path = name.replace('.', '/').concat(".class");
                         Resource res = ucp.getResource(path, false);
                         if (res != null) {
@@ -533,7 +537,8 @@ public class URLClassLoader extends SecureClassLoader implements Closeable {
      * @revised 9
      * @spec JPMS
      */
-    protected Package definePackage(String name, Manifest man, URL url) {
+@Bean
+        protected Package definePackage(String name, Manifest man, URL url) {
         String specTitle = null, specVersion = null, specVendor = null;
         String implTitle = null, implVersion = null, implVendor = null;
         String sealed = null;
@@ -587,7 +592,8 @@ public class URLClassLoader extends SecureClassLoader implements Closeable {
      *
      * @throws SecurityException if the package name is untrusted in the manifest
      */
-    private boolean isSealed(String name, Manifest man) {
+@Bean
+        private boolean isSealed(String name, Manifest man) {
         Attributes attr = SharedSecrets.javaUtilJarAccess()
                 .getTrustedAttributes(man, name.replace('.', '/').concat("/"));
         String sealed = null;
@@ -609,7 +615,8 @@ public class URLClassLoader extends SecureClassLoader implements Closeable {
      * @return a {@code URL} for the resource, or {@code null}
      * if the resource could not be found, or if the loader is closed.
      */
-    public URL findResource(final String name) {
+@Bean
+        public URL findResource(final String name) {
         /*
          * The same restriction to finding classes applies to resources
          */

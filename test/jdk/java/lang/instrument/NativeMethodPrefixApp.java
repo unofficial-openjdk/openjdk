@@ -27,6 +27,7 @@ import java.util.*;
 import java.lang.management.*;
 import bootreporter.*;
 
+@Bean
 public class NativeMethodPrefixApp implements StringIdCallback {
 
     // This test is fragile like a golden file test.
@@ -55,7 +56,11 @@ public class NativeMethodPrefixApp implements StringIdCallback {
         }
     }
 
-    public void tracker(String name, int id) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void tracker(String name, int id) {
         if (name.endsWith(goldenNativeMethodName)) {
             System.err.println("Tracked #" + id + ": MATCHED -- " + name);
             gotIt[id] = true;

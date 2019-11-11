@@ -139,7 +139,11 @@ public class Test implements Doclet {
     int testNum;
     int errors;
 
-    public boolean run(DocletEnvironment root) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean run(DocletEnvironment root) {
         DocTrees docTrees = root.getDocTrees();
         System.out.println("classes:" + ElementFilter.typesIn(root.getIncludedElements()));
 
@@ -203,6 +207,10 @@ public class Test implements Doclet {
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public boolean process(String option, List<String> arguments) {
                     overviewpath = arguments.get(0);
                     return true;
@@ -217,7 +225,11 @@ public class Test implements Doclet {
         return SourceVersion.latest();
     }
 
-    public void init(Locale locale, Reporter reporter) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void init(Locale locale, Reporter reporter) {
         return;
     }
 }

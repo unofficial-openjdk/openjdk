@@ -30,6 +30,7 @@
 import java.net.*;
 import java.util.*;
 
+@Bean
 public class B6644726 {
     public static void main(String[] args) throws Exception {
         testCookieStore();

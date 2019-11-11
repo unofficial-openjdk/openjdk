@@ -46,6 +46,7 @@ import java.util.stream.TestData;
 
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class NetworkInterfaceStreamTest extends OpTestCase {
 
     private final static boolean IS_WINDOWS = System.getProperty("os.name").startsWith("Windows");
@@ -88,7 +89,11 @@ public class NetworkInterfaceStreamTest extends OpTestCase {
         return anis;
     }
 
-    private void getAllSubNetworkInterfaces(NetworkInterface ni, Collection<NetworkInterface> result) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void getAllSubNetworkInterfaces(NetworkInterface ni, Collection<NetworkInterface> result) {
         if (isIncluded(ni)) {
             result.add(ni);
         }
@@ -162,7 +167,11 @@ public class NetworkInterfaceStreamTest extends OpTestCase {
      * @param ni a network interace
      * @return false if it is a "Teredo Tunneling Pseudo-Interface", otherwise true.
      */
-    private boolean isIncluded(NetworkInterface ni) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean isIncluded(NetworkInterface ni) {
         if (!IS_WINDOWS) {
             return true;
         }

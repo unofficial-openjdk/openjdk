@@ -35,6 +35,7 @@
 
 package compiler.rangechecks;
 
+@Bean
 public class TestUncommonTrapMerging {
 
     public static void main(String[] args) throws Throwable {

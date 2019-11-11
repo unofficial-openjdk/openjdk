@@ -38,6 +38,7 @@ import java.util.List;
 
 import LambdaReceiver_anotherpkg.LambdaReceiver_A;
 
+@Bean
 public class LambdaReceiver extends LambdaReceiver_A {
 
     interface IA {

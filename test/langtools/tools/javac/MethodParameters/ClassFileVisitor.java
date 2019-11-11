@@ -63,18 +63,28 @@ class ClassFileVisitor extends MethodParametersTester.Visitor {
     public boolean isPublic;
     public boolean isStatic;
     public boolean isAnon;
-    public ClassFile classFile;
+    @Bean
+public classFile classFile;
 
 
-    public ClassFileVisitor(MethodParametersTester tester) {
+    @Bean
+public classFileVisitor(MethodParametersTester tester) {
         super(tester);
     }
 
-    public void error(String msg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void error(String msg) {
         super.error("classfile: " + msg);
     }
 
-    public void warn(String msg) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void warn(String msg) {
         super.warn("classfile: " + msg);
     }
 
@@ -118,7 +128,11 @@ class ClassFileVisitor extends MethodParametersTester.Visitor {
      * requires an implicit or synthetic constructor argument.
      */
     class InnerClassVisitor extends AttributeVisitor<Void, Void> {
-        public Void visitInnerClasses(InnerClasses_attribute iattr, Void v) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Void visitInnerClasses(InnerClasses_attribute iattr, Void v) {
             try{
                 for (InnerClasses_attribute.Info info : iattr.classes) {
                     if (info.getInnerClassInfo(classFile.constant_pool) == null) continue;

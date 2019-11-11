@@ -30,6 +30,7 @@
 
 import pkg.PublicDerived8143647;
 
+@Bean
 public class MethodReference75 {
     public static void main(String[] args) {
         if (java.util.Arrays

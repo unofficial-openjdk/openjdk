@@ -7,6 +7,7 @@
  * @compile/fail/ref=InnerNamedConstant_2.out -XDrawDiagnostics InnerNamedConstant_2.java
  */
 
+@Bean
 public class InnerNamedConstant_2 {
 
     static class Inner1 {

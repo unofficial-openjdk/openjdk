@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.io.*;
 
+@Bean
 public class BadProxySelector {
     public static void main(String[] args) throws Exception {
         ProxySelector.setDefault(new HTTPProxySelector());
@@ -57,7 +58,11 @@ public class BadProxySelector {
     // always returns bogus HTTP proxies
     private static class HTTPProxySelector extends ProxySelector {
         @Override
-        public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {}
 
         @Override
         public List<Proxy> select(URI uri) {
@@ -73,7 +78,11 @@ public class BadProxySelector {
 
     private static class NullHTTPProxySelector extends ProxySelector {
         @Override
-        public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {}
 
         @Override
         public List<Proxy> select(URI uri) {

@@ -14,4 +14,5 @@
  * </p>
  * <i> <blockquote> abc </blockquote> </i>
  */
+@Bean
 public class InsertImplicit { }

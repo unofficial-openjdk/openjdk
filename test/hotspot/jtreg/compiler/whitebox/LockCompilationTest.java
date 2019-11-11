@@ -41,6 +41,7 @@ package compiler.whitebox;
 
 import jdk.test.lib.Asserts;
 
+@Bean
 public class LockCompilationTest extends CompilerWhiteBoxTest {
 
     public static void main(String[] args) throws Exception {

@@ -39,6 +39,7 @@
 
 package compiler.codegen;
 
+@Bean
 public class Test6942326 {
 
     static String[] strings = new String[1024];
@@ -361,49 +362,77 @@ public class Test6942326 {
     private final static class TestCon17 implements TestCon {
         private static final String constr = "1111111111111xx1x";
         public String constr() { return constr; }
-        public int indexOf(String str) { return str.indexOf(constr); }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int indexOf(String str) { return str.indexOf(constr); }
     }
 
     // search constant substring (16 chars).
     private final static class TestCon16 implements TestCon {
         private static final String constr = "111111111111xx1x";
         public String constr() { return constr; }
-        public int indexOf(String str) { return str.indexOf(constr); }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int indexOf(String str) { return str.indexOf(constr); }
     }
 
     // search constant substring (9 chars).
     private final static class TestCon9 implements TestCon {
         private static final String constr = "11111xx1x";
         public String constr() { return constr; }
-        public int indexOf(String str) { return str.indexOf(constr); }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int indexOf(String str) { return str.indexOf(constr); }
     }
 
     // search constant substring (8 chars).
     private final static class TestCon8 implements TestCon {
         private static final String constr = "1111xx1x";
         public String constr() { return constr; }
-        public int indexOf(String str) { return str.indexOf(constr); }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int indexOf(String str) { return str.indexOf(constr); }
     }
 
     // search constant substring (4 chars).
     private final static class TestCon4 implements TestCon {
         private static final String constr = "xx1x";
         public String constr() { return constr; }
-        public int indexOf(String str) { return str.indexOf(constr); }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int indexOf(String str) { return str.indexOf(constr); }
     }
 
     // search constant substring (3 chars).
     private final static class TestCon3 implements TestCon {
         private static final String constr = "x1x";
         public String constr() { return constr; }
-        public int indexOf(String str) { return str.indexOf(constr); }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int indexOf(String str) { return str.indexOf(constr); }
     }
 
     // search constant substring (2 chars).
     private final static class TestCon2 implements TestCon {
         private static final String constr = "1y";
         public String constr() { return constr; }
-        public int indexOf(String str) { return str.indexOf(constr); }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int indexOf(String str) { return str.indexOf(constr); }
     }
 
 
@@ -411,6 +440,10 @@ public class Test6942326 {
     private final static class TestCon1 implements TestCon {
         private static final String constr = "y";
         public String constr() { return constr; }
-        public int indexOf(String str) { return str.indexOf(constr); }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int indexOf(String str) { return str.indexOf(constr); }
     }
 }

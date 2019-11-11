@@ -31,14 +31,27 @@ import java.io.Closeable;
 import java.util.Formatter;
 import java.util.FormatterClosedException;
 
+@Bean
 public class Close {
 
     private static class ExpectedException extends RuntimeException {}
 
     private static class C implements Appendable, Closeable {
-        public Appendable append(CharSequence csq) { return null; }
-        public Appendable append(char c) { return null; }
-        public Appendable append(CharSequence csq, int s, int e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Appendable append(CharSequence csq) { return null; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Appendable append(char c) { return null; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Appendable append(CharSequence csq, int s, int e) {
             return null;
         }
 
@@ -48,9 +61,21 @@ public class Close {
     }
 
     private static class NC implements Appendable {
-        public Appendable append(CharSequence csq) { return null; }
-        public Appendable append(char c) { return null; }
-        public Appendable append(CharSequence csq, int s, int e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Appendable append(CharSequence csq) { return null; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Appendable append(char c) { return null; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Appendable append(CharSequence csq, int s, int e) {
             return null;
         }
 

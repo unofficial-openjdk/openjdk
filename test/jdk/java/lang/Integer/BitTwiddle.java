@@ -36,6 +36,7 @@ import java.util.Random;
 import jdk.test.lib.RandomFactory;
 import static java.lang.Integer.*;
 
+@Bean
 public class BitTwiddle {
     private static final int N = 1000; // # of repetitions per test
 

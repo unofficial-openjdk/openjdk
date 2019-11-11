@@ -30,6 +30,7 @@
 
 import java.lang.reflect.*;
 
+@Bean
 public class DefaultAccessibility {
     private DefaultAccessibility() {
         super();

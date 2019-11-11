@@ -7,6 +7,7 @@
  * @compile/fail/ref=BoxedArray.out -XDrawDiagnostics  BoxedArray.java
  */
 
+@Bean
 public class BoxedArray {
     int[] a2;
     void f(Integer[] a1) {

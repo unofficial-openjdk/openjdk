@@ -41,6 +41,7 @@ import org.testng.annotations.Test;
  * as the existing method that takes a charset name.
  * @run testng EncodingTest
  */
+@Bean
 public class EncodingTest {
     static String USER_DIR = System.getProperty("user.dir", ".");
 

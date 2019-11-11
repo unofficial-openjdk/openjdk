@@ -32,6 +32,7 @@
 
 import p1.*;
 
+@Bean
 public class QualifiedThisAndSuper_2 {
 
     void check(String expr, String result, String expected) {
@@ -41,7 +42,8 @@ public class QualifiedThisAndSuper_2 {
         }
     }
 
-    public class A extends p1.AS {
+    @Bean
+public class A extends p1.AS {
         A() { super(); }
         String s = "as";
         private String t = "at";
@@ -49,7 +51,8 @@ public class QualifiedThisAndSuper_2 {
         String m() { return "am"; }
         private String n() { return "an"; }
         protected String o() { return "ao"; }
-        public class B extends p1.BS {
+        @Bean
+public class B extends p1.BS {
             B() { super(); }
             String s = "bs";
             private String t = "bt";
@@ -57,7 +60,8 @@ public class QualifiedThisAndSuper_2 {
             String m() { return "bm"; }
             private String n() { return "bn"; }
             protected String o() { return "bo"; }
-            public class C extends p1.CS {
+            @Bean
+public class C extends p1.CS {
                 C() { super(); }
                 String s = "cs";
                 private String t = "ct";

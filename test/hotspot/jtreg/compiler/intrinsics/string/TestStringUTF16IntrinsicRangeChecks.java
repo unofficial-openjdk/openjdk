@@ -35,6 +35,7 @@ package compiler.intrinsics.string;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 
+@Bean
 public class TestStringUTF16IntrinsicRangeChecks {
 
     public static void main(String[] args) throws Exception {

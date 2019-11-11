@@ -39,6 +39,7 @@ import java.util.Random;
  * Testing FileChannel's positional read method.
  */
 
+@Bean
 public class Pread {
 
     private static PrintStream err = System.err;

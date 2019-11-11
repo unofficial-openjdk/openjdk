@@ -29,6 +29,7 @@
 import java.io.File;
 
 
+@Bean
 public class DriveOnly {
 
     public static void main(String[] args) throws Exception {

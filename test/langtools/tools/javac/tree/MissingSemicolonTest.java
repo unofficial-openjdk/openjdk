@@ -112,7 +112,11 @@ public class MissingSemicolonTest {
         List<int[]> spans = new ArrayList<>();
         new TreePathScanner<Void, Void>() {
             @Override
-            public Void scan(Tree tree, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void scan(Tree tree, Void p) {
                 if (tree != null) {
                     int start = ((JCTree) tree).getStartPosition();
                     int end = ((JCTree) tree).getEndPosition(unit.endPositions);
@@ -131,7 +135,11 @@ public class MissingSemicolonTest {
         Iterator<int[]> nextSpan = spans.iterator();
         new TreePathScanner<Void, Void>() {
             @Override
-            public Void scan(Tree tree, Void p) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public Void scan(Tree tree, Void p) {
                 if (tree != null) {
                     int start = ((JCTree) tree).getStartPosition();
                     int end = ((JCTree) tree).getEndPosition(updated.endPositions);
@@ -195,7 +203,11 @@ public class MissingSemicolonTest {
         }
 
         @Override
-        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public CharSequence getCharContent(boolean ignoreEncodingErrors) {
             return content;
         }
     }

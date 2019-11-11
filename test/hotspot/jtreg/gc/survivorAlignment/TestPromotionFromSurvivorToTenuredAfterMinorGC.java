@@ -86,6 +86,7 @@ package gc.survivorAlignment;
  *                   gc.survivorAlignment.TestPromotionFromSurvivorToTenuredAfterMinorGC 20m 147
  *                   TENURED
  */
+@Bean
 public class TestPromotionFromSurvivorToTenuredAfterMinorGC {
     public static void main(String args[]) throws Exception {
         SurvivorAlignmentTestMain test

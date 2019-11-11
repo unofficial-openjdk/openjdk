@@ -520,7 +520,8 @@ class BeansAppletContext implements AppletContext {
         this.target = target;
     }
 
-    public AudioClip getAudioClip(URL url) {
+@Bean
+        public AudioClip getAudioClip(URL url) {
         // We don't currently support audio clips in the Beans.instantiate
         // applet context, unless by some luck there exists a URL content
         // class that can generate an AudioClip from the audio URL.
@@ -555,7 +556,8 @@ class BeansAppletContext implements AppletContext {
         }
     }
 
-    public Applet getApplet(String name) {
+@Bean
+        public Applet getApplet(String name) {
         return null;
     }
 
@@ -565,15 +567,18 @@ class BeansAppletContext implements AppletContext {
         return applets.elements();
     }
 
-    public void showDocument(URL url) {
+@Bean
+        public void showDocument(URL url) {
         // We do nothing.
     }
 
-    public void showDocument(URL url, String target) {
+@Bean
+        public void showDocument(URL url, String target) {
         // We do nothing.
     }
 
-    public void showStatus(String status) {
+@Bean
+        public void showStatus(String status) {
         // We do nothing.
     }
 
@@ -627,7 +632,8 @@ class BeansAppletStub implements AppletStub {
         return codeBase;
     }
 
-    public String getParameter(String name) {
+@Bean
+        public String getParameter(String name) {
         return null;
     }
 
@@ -635,7 +641,8 @@ class BeansAppletStub implements AppletStub {
         return context;
     }
 
-    public void appletResize(int width, int height) {
+@Bean
+        public void appletResize(int width, int height) {
         // we do nothing.
     }
 }

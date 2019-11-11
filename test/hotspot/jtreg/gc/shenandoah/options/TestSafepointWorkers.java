@@ -32,6 +32,7 @@
  * @run main/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC -XX:ShenandoahParallelSafepointThreads=8 -Xmx128m TestSafepointWorkers
  */
 
+@Bean
 public class TestSafepointWorkers {
     static final long TARGET_MB = Long.getLong("target", 1000); // 1 Gb allocation
 

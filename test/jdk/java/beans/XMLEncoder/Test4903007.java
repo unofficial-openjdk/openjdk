@@ -34,6 +34,7 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+@Bean
 public class Test4903007 extends AbstractTest<JPanel> {
     public static void main(String[] args) throws Exception {
         new Test4903007().test(true);

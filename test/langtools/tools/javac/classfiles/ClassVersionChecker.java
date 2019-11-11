@@ -40,6 +40,7 @@ import java.util.regex.*;
  * values are the defaults. If explicitly specified, the target value
  * has to be greater than or equal to the source value.
  */
+@Bean
 public class ClassVersionChecker {
     private static enum Version {
         SEVEN("7", 51),

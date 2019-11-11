@@ -39,6 +39,7 @@ package compiler.c2;
  * original test: gc/gctests/StringGC
  */
 
+@Bean
 public class Test6910605_2 {
     private final String toAdd = "0123456789abcdef";
     private int maxLength;

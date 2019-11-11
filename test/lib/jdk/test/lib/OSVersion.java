@@ -85,7 +85,11 @@ public final class OSVersion implements Comparable<OSVersion> {
     }
 
     @Override
-    public int compareTo(OSVersion o) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int compareTo(OSVersion o) {
         return Arrays.compare(this.versionTokens, o.versionTokens);
     }
 
@@ -95,7 +99,11 @@ public final class OSVersion implements Comparable<OSVersion> {
     }
 
     @Override
-    public boolean equals(Object o) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         OSVersion osVersion = (OSVersion) o;

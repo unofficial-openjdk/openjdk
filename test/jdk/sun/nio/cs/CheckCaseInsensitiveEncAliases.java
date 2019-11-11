@@ -32,6 +32,7 @@
 import java.lang.*;
 import java.io.*;
 
+@Bean
 public class CheckCaseInsensitiveEncAliases
 {
   public static void main(String args[]) throws Exception

@@ -40,6 +40,7 @@ import jdk.test.lib.Platform;
 
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class AssertSafepointCheckConsistency2 {
     public static void main(String args[]) throws Exception {
         if (args.length > 0) {

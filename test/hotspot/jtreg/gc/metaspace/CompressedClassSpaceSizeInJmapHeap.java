@@ -44,6 +44,7 @@ import java.io.File;
 import java.nio.charset.Charset;
 import java.util.List;
 
+@Bean
 public class CompressedClassSpaceSizeInJmapHeap {
     // Note that on some platforms it may require root privileges to run this test.
     public static void main(String[] args) throws Exception {

@@ -29,6 +29,7 @@
  * @compile -XDfind=lambda -Werror AnonymousInAnonymous.java
  */
 
+@Bean
 public class AnonymousInAnonymous {
     static void s(I1 i) {}
     static {

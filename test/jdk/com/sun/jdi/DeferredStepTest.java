@@ -79,6 +79,7 @@ class DeferredStepTestTarg {
     }
 }
 
+@Bean
 public class DeferredStepTest extends JdbTest {
     public static void main(String argv[]) {
         new DeferredStepTest().run();
@@ -100,7 +101,11 @@ public class DeferredStepTest extends JdbTest {
     private Pattern lineRegexp = Pattern.compile("^(\\d+)\\b.*", Pattern.MULTILINE);
 
     // returns the 1st group of the pattern.
-    private String parse(Pattern p, String input) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String parse(Pattern p, String input) {
         Matcher m = p.matcher(input);
         if (!m.find()) {
             throw new RuntimeException("Input '" + input + "' does not matches '" + p.pattern() + "'");
@@ -134,7 +139,11 @@ public class DeferredStepTest extends JdbTest {
         processThreadData(threadName, lineNum, data);
     }
 
-    private void processThreadData(String threadName, int lineNum, ThreadData data) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void processThreadData(String threadName, int lineNum, ThreadData data) {
         int lastLine = data.lastLine;
         data.lastLine = lineNum;
         if (lastLine < 0) {

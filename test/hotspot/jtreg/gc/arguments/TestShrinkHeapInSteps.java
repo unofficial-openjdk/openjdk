@@ -39,6 +39,7 @@ import java.util.LinkedList;
 import java.util.Arrays;
 import jdk.test.lib.Utils;
 
+@Bean
 public class TestShrinkHeapInSteps {
     public static void main(String args[]) throws Exception {
         LinkedList<String> options = new LinkedList<>(

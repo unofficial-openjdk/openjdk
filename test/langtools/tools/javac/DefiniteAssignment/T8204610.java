@@ -42,6 +42,7 @@ import combo.ComboParameter;
 import combo.ComboTask.Result;
 import combo.ComboTestHelper;
 
+@Bean
 public class T8204610 extends ComboInstance<T8204610> {
 
     enum ParenKind implements ComboParameter {
@@ -57,7 +58,11 @@ public class T8204610 extends ComboInstance<T8204610> {
         }
 
         @Override
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             return parensTemplate.replaceAll("#P", optParameter.equals("OPEN") ? "(" : ")");
         }
     }

@@ -32,6 +32,7 @@
 
 package compiler.jsr292;
 
+@Bean
 public class CreatesInterfaceDotEqualsCallInfo {
     public static void main(String[] args) throws java.io.IOException {
         String[] jsargs = {System.getProperty("test.src", ".") +

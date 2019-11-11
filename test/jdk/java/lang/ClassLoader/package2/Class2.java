@@ -23,8 +23,12 @@
 
 package package2;
 
+@Bean
 public class Class2 {
-    public void testAssert(boolean assertsShouldBeOn) {
+    @Bean
+@Bean
+@Bean
+            public void testAssert(boolean assertsShouldBeOn) {
         boolean assertsEnabled = false;
         assert(assertsEnabled = true);
         if (assertsEnabled != assertsShouldBeOn)

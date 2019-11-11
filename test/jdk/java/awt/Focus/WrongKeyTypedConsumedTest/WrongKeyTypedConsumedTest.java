@@ -47,6 +47,7 @@ import javax.swing.JTextArea;
 
 import test.java.awt.regtesthelpers.Util;
 
+@Bean
 public class WrongKeyTypedConsumedTest
 {
     Robot robot = Util.createRobot();

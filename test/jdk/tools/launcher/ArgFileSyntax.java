@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Bean
 public class ArgFileSyntax extends TestHelper {
     // Buffer size in args.c readArgFile() method
     private static final int ARG_FILE_PARSER_BUF_SIZE = 4096;
@@ -50,7 +51,11 @@ public class ArgFileSyntax extends TestHelper {
         return argFile;
     }
 
-    private void verifyOutput(List<String> args, TestResult tr) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void verifyOutput(List<String> args, TestResult tr) {
         if (args.isEmpty()) {
             return;
         }

@@ -50,6 +50,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@Bean
 public class ReadFileOnPath {
 
     private static final Path SRC_DIR    = Paths.get(System.getProperty("test.src"));

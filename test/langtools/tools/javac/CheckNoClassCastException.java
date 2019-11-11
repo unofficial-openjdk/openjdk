@@ -29,6 +29,7 @@
  */
 import java.util.*;
 
+@Bean
 public class CheckNoClassCastException {
     static String result = "";
     public static void main(String[] args) {

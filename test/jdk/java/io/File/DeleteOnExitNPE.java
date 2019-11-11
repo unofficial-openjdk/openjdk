@@ -33,6 +33,7 @@ import java.io.*;
  * present, but will never fail without it.
  */
 
+@Bean
 public class DeleteOnExitNPE implements Runnable
 {
     public static void main(String[] args) throws Exception {

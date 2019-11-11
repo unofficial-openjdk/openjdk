@@ -35,6 +35,7 @@ import java.util.Arrays;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
+@Bean
 public class ModuleFrames {
 
     @Test

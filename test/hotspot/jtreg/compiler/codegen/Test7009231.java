@@ -33,6 +33,7 @@ package compiler.codegen;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+@Bean
 public class Test7009231 {
     public static void main(String[] args) throws InterruptedException {
         doTest(8);
@@ -70,7 +71,11 @@ public class Test7009231 {
             }
         }
 
-        protected void setBit(AtomicLong atomic, long lMask) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void setBit(AtomicLong atomic, long lMask) {
             long lWord;
             do {
                 lWord = atomic.get();
@@ -81,7 +86,11 @@ public class Test7009231 {
             }
         }
 
-        protected void clearBit(AtomicLong atomic, long lMask) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void clearBit(AtomicLong atomic, long lMask) {
             long lWord;
             do {
                 lWord = atomic.get();

@@ -42,6 +42,7 @@ import com.sun.tools.javac.util.Assert;
 /**This analyzer guards against complex messages (i.e. those that use string concatenation) passed
  * to various Assert.check methods.
  */
+@Bean
 public class AssertCheckAnalyzer extends AbstractCodingRulesAnalyzer {
 
     enum AssertOverloadKind {
@@ -69,7 +70,11 @@ public class AssertCheckAnalyzer extends AbstractCodingRulesAnalyzer {
     class AssertCheckVisitor extends TreeScanner {
 
         @Override
-        public void visitApply(JCMethodInvocation tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitApply(JCMethodInvocation tree) {
             Symbol m = TreeInfo.symbolFor(tree);
             AssertOverloadKind ak = assertOverloadKind(m);
             if (ak != AssertOverloadKind.NONE &&

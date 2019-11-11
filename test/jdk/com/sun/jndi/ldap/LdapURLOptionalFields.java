@@ -30,6 +30,7 @@
 
 import com.sun.jndi.ldap.LdapURL;
 
+@Bean
 public class LdapURLOptionalFields {
 
     private static final String[] TEST_URLS = {

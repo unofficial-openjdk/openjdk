@@ -31,6 +31,7 @@
 import java.util.*;
 import java.util.function.UnaryOperator;
 
+@Bean
 public class CheckedListReplaceAll {
     public static void main(String[] args) {
         List unwrapped = Arrays.asList(new Object[]{1, 2, 3});

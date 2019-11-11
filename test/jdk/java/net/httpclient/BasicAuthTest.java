@@ -51,6 +51,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import static java.nio.charset.StandardCharsets.US_ASCII;
 
+@Bean
 public class BasicAuthTest {
 
     static volatile boolean ok;
@@ -117,7 +118,11 @@ public class BasicAuthTest {
         }
 
         @Override
-        public boolean checkCredentials(String username, String password) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean checkCredentials(String username, String password) {
             if (!"user".equals(username) || !"passwd".equals(password)) {
                 return false;
             }

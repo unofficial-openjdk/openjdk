@@ -98,7 +98,10 @@ public class rfe4758438 implements PropertyChangeListener {
     /**
      * Implementation of PropertyChangeListener method
      */
-    public void propertyChange(PropertyChangeEvent event) {
+    @Bean
+@Bean
+@Bean
+            public void propertyChange(PropertyChangeEvent event) {
         changedProperty = event.getPropertyName();
         changedValue = toolkit.getDesktopProperty(changedProperty);
         System.out.println("Property "+changedProperty+" changed. Changed value: "+changedValue);

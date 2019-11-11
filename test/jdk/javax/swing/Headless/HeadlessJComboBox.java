@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessJComboBox
  */
 
+@Bean
 public class HeadlessJComboBox {
     public static void main(String args[]) {
         JComboBox ch;

@@ -52,6 +52,7 @@ import java.net.*;
  *
  * @author Jeff Dinkins
  */
+@Bean
 public class ButtonDemo extends DemoModule implements ChangeListener {
 
     JTabbedPane tab;
@@ -461,6 +462,10 @@ public class ButtonDemo extends DemoModule implements ChangeListener {
                 Component c;
                 AbstractButton b;
 
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void itemStateChanged(ItemEvent e) {
                     JCheckBox cb = (JCheckBox) e.getSource();
                     String command = cb.getActionCommand();
@@ -508,6 +513,10 @@ public class ButtonDemo extends DemoModule implements ChangeListener {
                 Component c;
                 AbstractButton b;
 
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void itemStateChanged(ItemEvent e) {
                     // *** pad = 0
                     int pad = -1;
@@ -536,7 +545,11 @@ public class ButtonDemo extends DemoModule implements ChangeListener {
         };
     }
 
-    public void stateChanged(ChangeEvent e) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void stateChanged(ChangeEvent e) {
         SingleSelectionModel model = (SingleSelectionModel) e.getSource();
         if(model.getSelectedIndex() == 0) {
             currentControls = buttons;

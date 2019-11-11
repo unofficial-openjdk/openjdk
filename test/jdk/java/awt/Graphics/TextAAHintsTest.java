@@ -31,13 +31,18 @@ import java.awt.*;
 import java.awt.geom.*;
 import java.awt.image.*;
 
+@Bean
 public class TextAAHintsTest extends Component {
 
     String black = "This text should be solid black";
     String gray  = "This text should be gray scale anti-aliased";
     String lcd   = "This text should be LCD sub-pixel text (coloured).";
 
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(Graphics g) {
 
         Graphics2D g2d = (Graphics2D)g.create();
         g2d.setColor(Color.white);
@@ -48,7 +53,11 @@ public class TextAAHintsTest extends Component {
         volatileImageText(g.create(0, 200, 500, 100));
     }
 
-    private void drawText(Graphics g) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void drawText(Graphics g) {
 
         Graphics2D g2d = (Graphics2D)g;
 
@@ -87,7 +96,11 @@ public class TextAAHintsTest extends Component {
         g2d.drawString(lcd, 10, 95);
     }
 
-    public void bufferedImageText(Graphics g) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void bufferedImageText(Graphics g) {
         BufferedImage bi =
                  new BufferedImage(500, 100, BufferedImage.TYPE_INT_RGB);
         Graphics2D g2d = bi.createGraphics();
@@ -96,7 +109,11 @@ public class TextAAHintsTest extends Component {
         g.drawImage(bi, 0, 0, null);
     }
 
-    public VolatileImage getVolatileImage(int w, int h) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public VolatileImage getVolatileImage(int w, int h) {
         VolatileImage image;
         try {
             image = createVolatileImage(w, h, new ImageCapabilities(true));
@@ -114,7 +131,11 @@ public class TextAAHintsTest extends Component {
         return image;
     }
 
-    public void volatileImageText(Graphics g) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void volatileImageText(Graphics g) {
         VolatileImage image = getVolatileImage(500, 100);
         if (image == null) {
             return;

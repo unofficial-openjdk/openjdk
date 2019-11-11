@@ -31,6 +31,7 @@
 
 package gc;
 
+@Bean
 public class InfiniteList {
     InfiniteList next;
     long data[] = new long[50000];

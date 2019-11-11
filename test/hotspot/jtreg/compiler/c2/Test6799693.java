@@ -33,6 +33,7 @@
 
 package compiler.c2;
 
+@Bean
 public class Test6799693 {
     static int var_bad = 1;
 

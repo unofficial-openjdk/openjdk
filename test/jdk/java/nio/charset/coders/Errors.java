@@ -33,6 +33,7 @@ import java.io.*;
 import java.nio.*;
 
 
+@Bean
 public class Errors {
 
     static PrintStream log = System.err;

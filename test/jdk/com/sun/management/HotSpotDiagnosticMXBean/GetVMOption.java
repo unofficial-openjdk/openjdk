@@ -36,6 +36,7 @@ import java.lang.management.ManagementFactory;
 import java.util.List;
 import javax.management.MBeanServer;
 
+@Bean
 public class GetVMOption {
     private static final String HEAP_DUMP_ON_OOM = "HeapDumpOnOutOfMemoryError";
     private static final String EXPECTED_VALUE = "true";

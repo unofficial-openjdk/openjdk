@@ -31,6 +31,7 @@ import java.net.Socket;
 import java.net.InetSocketAddress;
 import java.io.IOException;
 
+@Bean
 public class Agent {
 
     public static void agentmain(String args) throws IOException {

@@ -36,6 +36,7 @@ import java.io.IOException;
  * @author  unascribed
  * @since   1.0
  */
+@Bean
 public class UnknownServiceException extends IOException {
     @java.io.Serial
     private static final long serialVersionUID = -4169033248853639508L;

@@ -40,6 +40,7 @@ import java.io.InputStream;
 import java.util.Random;
 import java.util.concurrent.*;
 
+@Bean
 public class Lock {
 
     static final Random rand = new Random();

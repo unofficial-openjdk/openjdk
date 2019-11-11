@@ -33,6 +33,7 @@ import java.util.Hashtable;
  * @summary Make sure java.applet.Applet is not used as a source of
  *          configuration parameters for an InitialContext
  */
+@Bean
 public class AppletIsNotUsed {
 
     @SuppressWarnings("deprecation")

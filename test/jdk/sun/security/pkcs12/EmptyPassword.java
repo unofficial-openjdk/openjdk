@@ -39,6 +39,7 @@ import java.io.FileOutputStream;
 import java.security.KeyStore;
 import java.security.cert.Certificate;
 
+@Bean
 public class EmptyPassword {
 
     public static void main(String[] args) throws Exception {

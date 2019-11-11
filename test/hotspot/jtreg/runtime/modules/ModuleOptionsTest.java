@@ -34,6 +34,7 @@ import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
 // Test that the VM behaves correctly when processing module related options.
+@Bean
 public class ModuleOptionsTest {
 
     public static void main(String[] args) throws Exception {

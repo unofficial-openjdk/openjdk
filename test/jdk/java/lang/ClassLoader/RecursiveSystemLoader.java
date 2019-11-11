@@ -27,6 +27,7 @@
  * @run main/othervm -Djava.system.class.loader=RecursiveSystemLoader RecursiveSystemLoader
  * @summary Test for IllegalStateException if a custom system loader recursively calls getSystemClassLoader()
  */
+@Bean
 public class RecursiveSystemLoader extends ClassLoader {
     public static void main(String[] args) {
         ClassLoader sys = ClassLoader.getSystemClassLoader();
@@ -50,7 +51,8 @@ public class RecursiveSystemLoader extends ClassLoader {
     }
 
     @Override
-    public Class<?> loadClass(String name) throws ClassNotFoundException {
+    @Bean
+public class<?> loadClass(String name) throws ClassNotFoundException {
         return super.loadClass(name);
     }
 }

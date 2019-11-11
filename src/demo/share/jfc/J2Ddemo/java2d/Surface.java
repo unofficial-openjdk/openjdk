@@ -116,11 +116,19 @@ public abstract class Surface extends JPanel implements Printable {
         }
     }
 
-    protected Image getImage(String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected Image getImage(String name) {
         return DemoImages.getImage(name, this);
     }
 
-    protected Font getFont(String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected Font getFont(String name) {
         return DemoFonts.getFont(name);
     }
 
@@ -137,15 +145,27 @@ public abstract class Surface extends JPanel implements Printable {
         bimg = null;
     }
 
-    public void setAntiAlias(boolean aa) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setAntiAlias(boolean aa) {
         AntiAlias = aa ? VALUE_ANTIALIAS_ON : VALUE_ANTIALIAS_OFF;
     }
 
-    public void setRendering(boolean rd) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setRendering(boolean rd) {
         Rendering = rd ? VALUE_RENDER_QUALITY : VALUE_RENDER_SPEED;
     }
 
-    public void setTexture(Object obj) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setTexture(Object obj) {
         if (obj instanceof GradientPaint) {
             texture = new GradientPaint(0, 0, Color.white,
                     getSize().width * 2, 0, Color.green);
@@ -154,17 +174,29 @@ public abstract class Surface extends JPanel implements Printable {
         }
     }
 
-    public void setComposite(boolean cp) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setComposite(boolean cp) {
         composite = cp
                 ? AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f)
                 : null;
     }
 
-    public void setMonitor(boolean pm) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setMonitor(boolean pm) {
         perfMonitor = pm;
     }
 
-    public void setSleepAmount(long amount) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setSleepAmount(long amount) {
         sleepAmount = amount;
     }
 
@@ -201,7 +233,11 @@ public abstract class Surface extends JPanel implements Printable {
         (byte) 136, (byte) 153, (byte) 170, (byte) 187,
         (byte) 204, (byte) 221, (byte) 238, (byte) 255 };
 
-    private BufferedImage createBinaryImage(int w, int h, int pixelBits) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private BufferedImage createBinaryImage(int w, int h, int pixelBits) {
         int bytesPerRow = w * pixelBits / 8;
         if (w * pixelBits % 8 != 0) {
             bytesPerRow++;
@@ -231,7 +267,11 @@ public abstract class Surface extends JPanel implements Printable {
         return new BufferedImage(cm, r, false, null);
     }
 
-    private BufferedImage createSGISurface(int w, int h, int pixelBits) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private BufferedImage createSGISurface(int w, int h, int pixelBits) {
         int rMask32 = 0xFF000000;
         int rMask16 = 0xF800;
         int gMask32 = 0x00FF0000;
@@ -316,7 +356,11 @@ public abstract class Surface extends JPanel implements Printable {
      * super.paintImmediately(g).
      */
     @Override
-    public void paintImmediately(int x, int y, int w, int h) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void paintImmediately(int x, int y, int w, int h) {
         RepaintManager repaintManager = null;
         boolean save = true;
         if (!isDoubleBuffered()) {
@@ -332,7 +376,11 @@ public abstract class Surface extends JPanel implements Printable {
     }
 
     @Override
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void paint(Graphics g) {
 
         super.paint(g);
 
@@ -440,7 +488,11 @@ public abstract class Surface extends JPanel implements Printable {
     }
 
     // System.out graphics state information.
-    public void verbose(GlobalControls controls) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void verbose(GlobalControls controls) {
         String str = "  " + name + " ";
         if (animating != null && animating.running()) {
             str = str.concat(" Running");
@@ -479,17 +531,29 @@ public abstract class Surface extends JPanel implements Printable {
         f.addWindowListener(new WindowAdapter() {
 
             @Override
-            public void windowClosing(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowClosing(WindowEvent e) {
                 System.exit(0);
             }
 
             @Override
-            public void windowDeiconified(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowDeiconified(WindowEvent e) {
                 dp.start();
             }
 
             @Override
-            public void windowIconified(WindowEvent e) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void windowIconified(WindowEvent e) {
                 dp.stop();
             }
         });

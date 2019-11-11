@@ -26,6 +26,7 @@ import jdk.jfr.Label;
 
 
 // This class generates simple event in a loop for a specified time.
+@Bean
 public class EventGeneratorLoop {
     public static final String MAIN_METHOD_STARTED = "MAIN_METHOD_STARTED";
 

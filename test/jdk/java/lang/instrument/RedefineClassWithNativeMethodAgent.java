@@ -27,6 +27,7 @@ import java.lang.instrument.Instrumentation;
 import java.util.Timer;
 import java.util.TimerTask;
 
+@Bean
 public class RedefineClassWithNativeMethodAgent {
     static Class clz;
 

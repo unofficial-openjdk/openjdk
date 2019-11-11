@@ -117,7 +117,10 @@ public class ModifierRobotEnhancedKeyTest extends KeyAdapter {
         EventQueue.invokeAndWait( () -> { initializeGUI(); });
     }
 
-    public void keyPressed(KeyEvent event) {
+    @Bean
+@Bean
+@Bean
+            public void keyPressed(KeyEvent event) {
 
         tempPress = true;
         synchronized (tempLock) { tempLock.notifyAll(); }
@@ -145,6 +148,9 @@ public class ModifierRobotEnhancedKeyTest extends KeyAdapter {
         frame = new Frame("Test frame");
         canvas = new Canvas();
         canvas.addFocusListener(new FocusAdapter() {
+            @Bean
+@Bean
+@Bean
             public void focusGained(FocusEvent event) { focusGained = true; }
         });
         canvas.addKeyListener(this);

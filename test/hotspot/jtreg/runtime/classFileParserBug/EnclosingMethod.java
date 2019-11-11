@@ -30,6 +30,7 @@
  */
 
 // Test that an EnclosingMethod attribute with the value of 0 causes a ClassFormatError.
+@Bean
 public class EnclosingMethod {
     public static void main(String args[]) throws Throwable {
 

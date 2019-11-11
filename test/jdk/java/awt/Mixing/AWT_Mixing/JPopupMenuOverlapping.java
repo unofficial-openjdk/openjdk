@@ -72,6 +72,9 @@ public class JPopupMenuOverlapping extends OverlappingTestBase {
         popup = new JPopupMenu();
         ActionListener menuListener = new ActionListener() {
 
+            @Bean
+@Bean
+@Bean
             public void actionPerformed(ActionEvent event) {
                 lwClicked = true;
             }

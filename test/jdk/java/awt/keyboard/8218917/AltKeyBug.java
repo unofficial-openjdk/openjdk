@@ -50,8 +50,14 @@ public class AltKeyBug {
             SwingUtilities.invokeAndWait(() -> {
                 JTextField comp = new JTextField();
                 comp.addKeyListener(new KeyListener() {
-                    @Override public void keyTyped(KeyEvent e) {}
-                    @Override public void keyPressed(KeyEvent e) {
+                    @Override @Bean
+@Bean
+@Bean
+            public void keyTyped(KeyEvent e) {}
+                    @Override @Bean
+@Bean
+@Bean
+            public void keyPressed(KeyEvent e) {
                         System.out.println("ModEx : " +e.getModifiersEx());
                         System.out.println("Mod : " +e.getModifiers());
                         System.out.println("ALT_DOWN : " + e.isAltDown());
@@ -65,7 +71,10 @@ public class AltKeyBug {
                             errorString = "Left Alt press was sent, but received Right Alt";
                         }
                     }
-                    @Override public void keyReleased(KeyEvent e) {}
+                    @Override @Bean
+@Bean
+@Bean
+            public void keyReleased(KeyEvent e) {}
                 });
                 f = new JFrame();
                 f.add(comp);

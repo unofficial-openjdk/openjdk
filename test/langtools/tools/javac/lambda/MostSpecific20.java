@@ -26,6 +26,7 @@
  * @bug 8143852
  * @summary Test that generic function interface method bounds are the same
  */
+@Bean
 public class MostSpecific20 {
     public static void main(String[] args) {
         new MostSpecific20().test();

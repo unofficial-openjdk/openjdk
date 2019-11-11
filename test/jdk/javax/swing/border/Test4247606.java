@@ -39,6 +39,7 @@ import javax.swing.JPanel;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 
+@Bean
 public class Test4247606 extends JApplet {
     public void init() {
         JButton button = new JButton("Button"); // NON-NLS: the button text

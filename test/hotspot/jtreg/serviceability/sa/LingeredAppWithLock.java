@@ -24,6 +24,7 @@
 import jdk.test.lib.apps.LingeredApp;
 
 
+@Bean
 public class LingeredAppWithLock extends LingeredApp {
 
     public static void lockMethod(Object lock) {

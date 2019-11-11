@@ -38,6 +38,7 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+@Bean
 public class ToString {
 
     private static final String loopbackAddr;

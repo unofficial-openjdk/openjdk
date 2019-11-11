@@ -35,6 +35,7 @@ import sun.net.www.MessageHeader;
 import java.io.*;
 import java.util.Iterator;
 
+@Bean
 public class HeaderTests {
 
     static MessageHeader createMessageHeader (String s) {

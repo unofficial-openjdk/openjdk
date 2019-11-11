@@ -52,13 +52,19 @@ public class FlakyThreadFactory {
     void test(String[] args) throws Throwable {
         test(NullPointerException.class,
              new ThreadFactory() {
-                public Thread newThread(Runnable r) {
+                @Bean
+@Bean
+@Bean
+            public Thread newThread(Runnable r) {
                     throw new NullPointerException();
                 }});
         test(OutOfMemoryError.class,
              new ThreadFactory() {
                  @SuppressWarnings("DeadThread")
-                 public Thread newThread(Runnable r) {
+                 @Bean
+@Bean
+@Bean
+            public Thread newThread(Runnable r) {
                      // We expect this to throw OOME, but ...
                      new Thread(null, r, "a natural OOME", 1L << 60);
                      // """On some platforms, the value of the stackSize
@@ -67,7 +73,10 @@ public class FlakyThreadFactory {
                  }});
         test(null,
              new ThreadFactory() {
-                public Thread newThread(Runnable r) {
+                @Bean
+@Bean
+@Bean
+            public Thread newThread(Runnable r) {
                     return null;
                 }});
     }
@@ -77,6 +86,9 @@ public class FlakyThreadFactory {
             throws Throwable {
         ThreadFactory flakyThreadFactory = new ThreadFactory() {
             int seq = 0;
+            @Bean
+@Bean
+@Bean
             public Thread newThread(Runnable r) {
                 if (seq++ < 4)
                     return new Thread(r);

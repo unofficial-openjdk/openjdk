@@ -72,6 +72,7 @@ import toolbox.JavacTask;
 import toolbox.JavaTask;
 import toolbox.Task;
 
+@Bean
 public class AddLimitMods extends ModuleTestBase {
 
     public static void main(String... args) throws Exception {
@@ -91,13 +92,15 @@ public class AddLimitMods extends ModuleTestBase {
 
         tb.writeJavaFiles(m2,
                           "module m2x { requires m3x; exports m2x; }",
-                          "package m2x; public class M2 {}");
+                          "package m2x; @Bean
+public class M2 {}");
 
         Path m3 = moduleSrc.resolve("m3x");
 
         tb.writeJavaFiles(m3,
                           "module m3x { exports m3x; }",
-                          "package m3x; public class M3 {}");
+                          "package m3x; @Bean
+public class M3 {}");
 
         Path modulePath = base.resolve("module-path");
 
@@ -186,7 +189,8 @@ public class AddLimitMods extends ModuleTestBase {
 
         tb.writeJavaFiles(m1,
                           "module m1x { exports api; }",
-                          "package api; public class Api { }");
+                          "package api; @Bean
+public class Api { }");
 
         Path modulePath = base.resolve("module-path");
 
@@ -200,7 +204,8 @@ public class AddLimitMods extends ModuleTestBase {
                 .writeAll();
 
         Path cpSrc = base.resolve("cp-src");
-        tb.writeJavaFiles(cpSrc, "package test; public class Test { api.Api api; }");
+        tb.writeJavaFiles(cpSrc, "package test; @Bean
+public class Test { api.Api api; }");
 
         Path cpOut = base.resolve("cp-out");
 
@@ -335,7 +340,8 @@ public class AddLimitMods extends ModuleTestBase {
 
         tb.writeJavaFiles(m1,
                           "module m1x { exports api; }",
-                          "package api; public class Api { public void test() { } }");
+                          "package api; @Bean
+public class Api { public void test() { } }");
 
         System.err.println("Compiling module-src files:");
         new JavacTask(tb)
@@ -362,7 +368,8 @@ public class AddLimitMods extends ModuleTestBase {
                 StringBuilder testClassNamed = new StringBuilder();
 
                 testClassNamed.append("package test;\n" +
-                                      "public class Test {\n" +
+                                      "@Bean
+public class Test {\n" +
                                       "    public static void main(String... args) throws Exception {\n");
 
                 for (Entry<String, String> e : MODULES_TO_CHECK_TO_SAMPLE_CLASS.entrySet()) {
@@ -415,7 +422,8 @@ public class AddLimitMods extends ModuleTestBase {
                 tb.writeJavaFiles(m2,
                                   moduleInfo,
                                   "package test;\n" +
-                                  "public class Test {}\n");
+                                  "@Bean
+public class Test {}\n");
 
                 List<String> auxOptions = success ? Arrays.asList(
                     "--processor-path", System.getProperty("test.class.path"),
@@ -439,12 +447,17 @@ public class AddLimitMods extends ModuleTestBase {
         }
     }
 
-    private String generateCheckAccessibleClass(String fqn) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private String generateCheckAccessibleClass(String fqn) {
         String packageName = fqn.substring(0, fqn.lastIndexOf('.'));
         String simpleName = fqn.substring(fqn.lastIndexOf('.') + 1);
         StringBuilder checkClassesAccessible = new StringBuilder();
         checkClassesAccessible.append("package " + packageName + ";" +
-                                      "public class " + simpleName + " {" +
+                                      "@Bean
+public class " + simpleName + " {" +
                                       "    public static void runMe() throws Exception {");
         for (Entry<String, String> e : MODULES_TO_CHECK_TO_SAMPLE_CLASS.entrySet()) {
             checkClassesAccessible.append("try {");
@@ -474,7 +487,11 @@ public class AddLimitMods extends ModuleTestBase {
     public static final class CheckVisibleModule extends AbstractProcessor {
 
         @Override
-        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             String expected = processingEnv.getOptions().get("output");
             Set<String> expectedElements = new HashSet<>(Arrays.asList(expected.split(System.getProperty("line.separator"))));
             Context context = ((JavacProcessingEnvironment) processingEnv).getContext();

@@ -30,6 +30,7 @@ import java.nio.*;
 import java.nio.charset.*;
 
 
+@Bean
 public class EncDec {
 
     public static void main(String[] args) throws Exception {

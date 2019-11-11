@@ -45,6 +45,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
+@Bean
 public class AddNonComparable {
 
     static <E> void test(Queue<E> queue, Supplier<E> supplier,
@@ -150,7 +151,11 @@ public class AddNonComparable {
     static class NonComparable { }
 
     static class AComparable implements Comparable<AComparable> {
-        @Override public int compareTo(AComparable v) { return 0; }
+        @Override @Bean
+@Bean
+@Bean
+@Bean
+                public int compareTo(AComparable v) { return 0; }
     }
 
 }

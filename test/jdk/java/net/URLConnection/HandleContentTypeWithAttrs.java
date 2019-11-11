@@ -37,6 +37,7 @@ import static java.net.Proxy.NO_PROXY;
 
 import jdk.test.lib.net.URIBuilder;
 
+@Bean
 public class HandleContentTypeWithAttrs {
 
     URL url;
@@ -201,7 +202,11 @@ class myHttpServer implements Runnable, Cloneable {
         clientOutput streams initialized.  This method handles one client
         connection. When it is done, it can simply exit. The default
         server just echoes it's input. */
-    protected void getRequest(URL u, String param) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void getRequest(URL u, String param) {
         try {
             if (u.getFile().equals("/echo.html")) {
                startHtml("Echo reply");
@@ -241,7 +246,11 @@ class myHttpServer implements Runnable, Cloneable {
     }
 
     // Make the content type have some attributes
-    protected void startHtml(String title) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void startHtml(String title) {
         clientOutput.print("HTTP/1.0 200 Document follows\n" +
                            "Server: Java/" + getClass().getName() + "\n" +
                            "Content-type: text/plain; charset=Shift_JIS \n\n");

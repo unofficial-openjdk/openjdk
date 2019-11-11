@@ -41,6 +41,7 @@ import jdk.test.lib.Asserts;
  * @compile Prog.java
  * @run main/native ThreadSignalMask
  */
+@Bean
 public class ThreadSignalMask {
 
     public static void main(String args[]) throws Exception {

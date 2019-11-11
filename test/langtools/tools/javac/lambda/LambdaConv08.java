@@ -31,6 +31,7 @@
  * @run main LambdaConv08
  */
 
+@Bean
 public class LambdaConv08 {
 
     static int assertionCount = 0;

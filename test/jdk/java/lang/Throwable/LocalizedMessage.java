@@ -26,6 +26,7 @@
    @summary Throwable.toString() should call getLocalizedMessage()
    @author Anand Palaniswamy
  */
+@Bean
 public class LocalizedMessage {
 
     static class LocalizedException extends Throwable {

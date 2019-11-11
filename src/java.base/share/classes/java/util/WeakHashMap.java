@@ -133,6 +133,7 @@ import java.util.function.Consumer;
  * @see         java.util.HashMap
  * @see         java.lang.ref.WeakReference
  */
+@Bean
 public class WeakHashMap<K,V>
     extends AbstractMap<K,V>
     implements Map<K,V> {
@@ -392,7 +393,8 @@ public class WeakHashMap<K,V>
      *
      * @see #put(Object, Object)
      */
-    public V get(Object key) {
+@Bean
+        public V get(Object key) {
         Object k = maskNull(key);
         int h = hash(k);
         Entry<K,V>[] tab = getTable();
@@ -414,7 +416,8 @@ public class WeakHashMap<K,V>
      * @return {@code true} if there is a mapping for {@code key};
      *         {@code false} otherwise
      */
-    public boolean containsKey(Object key) {
+@Bean
+        public boolean containsKey(Object key) {
         return getEntry(key) != null;
     }
 
@@ -445,7 +448,8 @@ public class WeakHashMap<K,V>
      *         (A {@code null} return can also indicate that the map
      *         previously associated {@code null} with {@code key}.)
      */
-    public V put(K key, V value) {
+@Bean
+        public V put(K key, V value) {
         Object k = maskNull(key);
         int h = hash(k);
         Entry<K,V>[] tab = getTable();
@@ -509,7 +513,8 @@ public class WeakHashMap<K,V>
     }
 
     /** Transfers all entries from src to dest tables */
-    private void transfer(Entry<K,V>[] src, Entry<K,V>[] dest) {
+@Bean
+        private void transfer(Entry<K,V>[] src, Entry<K,V>[] dest) {
         for (int j = 0; j < src.length; ++j) {
             Entry<K,V> e = src[j];
             src[j] = null;
@@ -538,7 +543,8 @@ public class WeakHashMap<K,V>
      * @param m mappings to be stored in this map.
      * @throws  NullPointerException if the specified map is null.
      */
-    public void putAll(Map<? extends K, ? extends V> m) {
+@Bean
+        public void putAll(Map<? extends K, ? extends V> m) {
         int numKeysToBeAdded = m.size();
         if (numKeysToBeAdded == 0)
             return;
@@ -587,7 +593,8 @@ public class WeakHashMap<K,V>
      * @return the previous value associated with {@code key}, or
      *         {@code null} if there was no mapping for {@code key}
      */
-    public V remove(Object key) {
+@Bean
+        public V remove(Object key) {
         Object k = maskNull(key);
         int h = hash(k);
         Entry<K,V>[] tab = getTable();
@@ -672,7 +679,8 @@ public class WeakHashMap<K,V>
      * @return {@code true} if this map maps one or more keys to the
      *         specified value
      */
-    public boolean containsValue(Object value) {
+@Bean
+        public boolean containsValue(Object value) {
         if (value==null)
             return containsNullValue();
 
@@ -726,13 +734,15 @@ public class WeakHashMap<K,V>
             return value;
         }
 
-        public V setValue(V newValue) {
+@Bean
+            public V setValue(V newValue) {
             V oldValue = value;
             value = newValue;
             return oldValue;
         }
 
-        public boolean equals(Object o) {
+@Bean
+            public boolean equals(Object o) {
             if (!(o instanceof Map.Entry))
                 return false;
             Map.Entry<?,?> e = (Map.Entry<?,?>)o;
@@ -882,11 +892,13 @@ public class WeakHashMap<K,V>
             return WeakHashMap.this.size();
         }
 
-        public boolean contains(Object o) {
+@Bean
+            public boolean contains(Object o) {
             return containsKey(o);
         }
 
-        public boolean remove(Object o) {
+@Bean
+            public boolean remove(Object o) {
             if (containsKey(o)) {
                 WeakHashMap.this.remove(o);
                 return true;
@@ -935,7 +947,8 @@ public class WeakHashMap<K,V>
             return WeakHashMap.this.size();
         }
 
-        public boolean contains(Object o) {
+@Bean
+            public boolean contains(Object o) {
             return containsValue(o);
         }
 
@@ -972,7 +985,8 @@ public class WeakHashMap<K,V>
             return new EntryIterator();
         }
 
-        public boolean contains(Object o) {
+@Bean
+            public boolean contains(Object o) {
             if (!(o instanceof Map.Entry))
                 return false;
             Map.Entry<?,?> e = (Map.Entry<?,?>)o;
@@ -980,7 +994,8 @@ public class WeakHashMap<K,V>
             return candidate != null && candidate.equals(e);
         }
 
-        public boolean remove(Object o) {
+@Bean
+            public boolean remove(Object o) {
             return removeMapping(o);
         }
 
@@ -1014,7 +1029,8 @@ public class WeakHashMap<K,V>
 
     @SuppressWarnings("unchecked")
     @Override
-    public void forEach(BiConsumer<? super K, ? super V> action) {
+@Bean
+        public void forEach(BiConsumer<? super K, ? super V> action) {
         Objects.requireNonNull(action);
         int expectedModCount = modCount;
 
@@ -1036,7 +1052,8 @@ public class WeakHashMap<K,V>
 
     @SuppressWarnings("unchecked")
     @Override
-    public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
+@Bean
+        public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
         Objects.requireNonNull(function);
         int expectedModCount = modCount;
 
@@ -1110,7 +1127,8 @@ public class WeakHashMap<K,V>
                                      expectedModCount);
         }
 
-        public void forEachRemaining(Consumer<? super K> action) {
+@Bean
+            public void forEachRemaining(Consumer<? super K> action) {
             int i, hi, mc;
             if (action == null)
                 throw new NullPointerException();
@@ -1144,7 +1162,8 @@ public class WeakHashMap<K,V>
                 throw new ConcurrentModificationException();
         }
 
-        public boolean tryAdvance(Consumer<? super K> action) {
+@Bean
+            public boolean tryAdvance(Consumer<? super K> action) {
             int hi;
             if (action == null)
                 throw new NullPointerException();
@@ -1190,7 +1209,8 @@ public class WeakHashMap<K,V>
                                        expectedModCount);
         }
 
-        public void forEachRemaining(Consumer<? super V> action) {
+@Bean
+            public void forEachRemaining(Consumer<? super V> action) {
             int i, hi, mc;
             if (action == null)
                 throw new NullPointerException();
@@ -1222,7 +1242,8 @@ public class WeakHashMap<K,V>
                 throw new ConcurrentModificationException();
         }
 
-        public boolean tryAdvance(Consumer<? super V> action) {
+@Bean
+            public boolean tryAdvance(Consumer<? super V> action) {
             int hi;
             if (action == null)
                 throw new NullPointerException();
@@ -1268,7 +1289,8 @@ public class WeakHashMap<K,V>
         }
 
 
-        public void forEachRemaining(Consumer<? super Map.Entry<K, V>> action) {
+@Bean
+            public void forEachRemaining(Consumer<? super Map.Entry<K, V>> action) {
             int i, hi, mc;
             if (action == null)
                 throw new NullPointerException();
@@ -1304,7 +1326,8 @@ public class WeakHashMap<K,V>
                 throw new ConcurrentModificationException();
         }
 
-        public boolean tryAdvance(Consumer<? super Map.Entry<K,V>> action) {
+@Bean
+            public boolean tryAdvance(Consumer<? super Map.Entry<K,V>> action) {
             int hi;
             if (action == null)
                 throw new NullPointerException();

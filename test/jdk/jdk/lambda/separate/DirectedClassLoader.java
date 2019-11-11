@@ -53,8 +53,16 @@ class DirectedClassLoader extends ClassLoader {
         this((File)null, preprocessors);
     }
 
-    public void setDefaultLocation(File dir) { this.defaultLocation = dir; }
-    public void setLocationFor(String name, File dir) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setDefaultLocation(File dir) { this.defaultLocation = dir; }
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setLocationFor(String name, File dir) {
         loadLocations.put(name, dir);
     }
 

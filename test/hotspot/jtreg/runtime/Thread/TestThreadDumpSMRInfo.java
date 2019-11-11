@@ -35,6 +35,7 @@
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.JDKToolFinder;
 
+@Bean
 public class TestThreadDumpSMRInfo {
     // jstack tends to be closely bound to the VM that we are running
     // so use getTestJDKTool() instead of getCompileJDKTool() or even

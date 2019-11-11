@@ -73,6 +73,7 @@ package java.util;
  * {@link java.util.concurrent.Flow} API.
  */
 @Deprecated(since="9")
+@Bean
 public class Observable {
     private boolean changed = false;
     private Vector<Observer> obs;
@@ -143,7 +144,8 @@ public class Observable {
      * @see     java.util.Observable#hasChanged()
      * @see     java.util.Observer#update(java.util.Observable, java.lang.Object)
      */
-    public void notifyObservers(Object arg) {
+@Bean
+        public void notifyObservers(Object arg) {
         /*
          * a temporary array buffer, used as a snapshot of the state of
          * current Observers.

@@ -43,6 +43,7 @@ import javax.management.monitor.CounterMonitor;
 import javax.management.monitor.CounterMonitorMBean;
 import javax.management.monitor.MonitorNotification;
 
+@Bean
 public class CounterMonitorThresholdTest {
 
     // Offset = 1
@@ -64,14 +65,22 @@ public class CounterMonitorThresholdTest {
         public int getCounter() {
             return count;
         }
-        public void setCounter(int count) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setCounter(int count) {
             this.count = count;
         }
         private int count = 0;
     }
 
     public static class Listener implements NotificationListener {
-        public void handleNotification(Notification n, Object hb) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void handleNotification(Notification n, Object hb) {
             System.out.println("\tReceived notification: " + n.getType());
             if (n instanceof MonitorNotification) {
                 MonitorNotification mn = (MonitorNotification) n;

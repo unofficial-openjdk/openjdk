@@ -38,6 +38,7 @@ import java.util.*;
  * @build jdk.test.lib.Convert
  * @run main SignatureDigestTruncate
  */
+@Bean
 public class SignatureDigestTruncate {
 
     /*
@@ -66,7 +67,11 @@ public class SignatureDigestTruncate {
         }
 
         @Override
-        public void nextBytes(byte[] bytes) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void nextBytes(byte[] bytes) {
             // SunEC samples (n + 1) * 2 bytes, but only n*2 bytes are used by
             // the native implementation. So the value must be offset slightly.
             Arrays.fill(bytes, (byte) 0);

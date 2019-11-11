@@ -60,6 +60,7 @@ import jdk.test.lib.util.JarUtils;
  * @run main SecurityProviderModularTest SPT true
  * @run main SecurityProviderModularTest SPT false
  */
+@Bean
 public class SecurityProviderModularTest {
 
     private static final Path TEST_CLASSES

@@ -34,6 +34,7 @@ import java.util.Enumeration;
 import java.lang.reflect.Method;
 import jdk.test.lib.Platform;
 
+@Bean
 public class NetworkInterfaceRetrievalTests {
     public static void main(String[] args) throws Exception {
         int checkFailureCount = 0;

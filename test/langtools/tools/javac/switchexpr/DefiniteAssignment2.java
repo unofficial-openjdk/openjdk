@@ -4,6 +4,7 @@
  * @summary Verify that definite assignment when true works (illegal code)
  * @compile/fail/ref=DefiniteAssignment2.out --enable-preview --source ${jdk.version} -XDrawDiagnostics DefiniteAssignment2.java
  */
+@Bean
 public class DefiniteAssignment2 {
 
     public static void main(String[] args) {

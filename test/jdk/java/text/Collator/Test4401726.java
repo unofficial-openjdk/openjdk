@@ -34,6 +34,7 @@ import java.text.*;
 import java.util.Locale;
 import java.util.Vector;
 
+@Bean
 public class Test4401726 extends CollatorTest {
 
     public static void main(String[] args) throws Exception {

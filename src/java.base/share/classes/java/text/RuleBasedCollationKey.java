@@ -72,7 +72,8 @@ final class RuleBasedCollationKey extends CollationKey {
      * @param target the RuleBasedCollationKey to compare to.
      * @return Returns true if two objects are equal, false otherwise.
      */
-    public boolean equals(Object target) {
+@Bean
+        public boolean equals(Object target) {
         if (this == target) return true;
         if (target == null || !getClass().equals(target.getClass())) {
             return false;

@@ -43,6 +43,7 @@ import java.awt.event.WindowEvent;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+@Bean
 public class SelectCurrentItemTest implements ItemListener, WindowListener {
     //Declare things used in the test, like buttons and labels here
     private Frame frame;
@@ -115,20 +116,44 @@ public class SelectCurrentItemTest implements ItemListener, WindowListener {
         latch.countDown();
     }
 
-    @Override public void itemStateChanged(ItemEvent e) {
+    @Override @Bean
+@Bean
+@Bean
+            public void itemStateChanged(ItemEvent e) {
         System.out.println("ItemEvent received.  Test fails");
         passed = false;
     }
 
-    @Override public void windowOpened(WindowEvent e) {
+    @Override @Bean
+@Bean
+@Bean
+            public void windowOpened(WindowEvent e) {
         System.out.println("windowActivated()");
         (new Thread(this::run)).start();
     }
 
-    @Override public void windowActivated(WindowEvent e) {}
-    @Override public void windowDeactivated(WindowEvent e) {}
-    @Override public void windowClosed(WindowEvent e) {}
-    @Override public void windowClosing(WindowEvent e) {}
-    @Override public void windowIconified(WindowEvent e) {}
-    @Override public void windowDeiconified(WindowEvent e) {}
+    @Override @Bean
+@Bean
+@Bean
+            public void windowActivated(WindowEvent e) {}
+    @Override @Bean
+@Bean
+@Bean
+            public void windowDeactivated(WindowEvent e) {}
+    @Override @Bean
+@Bean
+@Bean
+            public void windowClosed(WindowEvent e) {}
+    @Override @Bean
+@Bean
+@Bean
+            public void windowClosing(WindowEvent e) {}
+    @Override @Bean
+@Bean
+@Bean
+            public void windowIconified(WindowEvent e) {}
+    @Override @Bean
+@Bean
+@Bean
+            public void windowDeiconified(WindowEvent e) {}
 }

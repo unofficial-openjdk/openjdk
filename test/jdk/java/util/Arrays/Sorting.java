@@ -37,6 +37,7 @@ import java.util.Arrays;
 import java.util.Random;
 import java.io.PrintStream;
 
+@Bean
 public class Sorting {
     private static final PrintStream out = System.out;
     private static final PrintStream err = System.err;
@@ -343,7 +344,11 @@ public class Sorting {
             return myValue;
         }
 
-        public int compareTo(Pair pair) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int compareTo(Pair pair) {
             if (myKey < pair.myKey) {
                 return -1;
             }

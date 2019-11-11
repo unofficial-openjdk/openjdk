@@ -29,6 +29,7 @@
 
 import java.security.Security;
 
+@Bean
 public class BadKdcDefaultValue {
     public static void main(String[] args) throws Exception {
         if (!"tryLast".equalsIgnoreCase(

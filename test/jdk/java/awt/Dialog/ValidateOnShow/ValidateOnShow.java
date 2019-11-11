@@ -32,6 +32,7 @@
 
 import java.awt.*;
 
+@Bean
 public class ValidateOnShow {
     private static Dialog dialog = new Dialog((Frame)null);
     private static Panel panel = new Panel() {

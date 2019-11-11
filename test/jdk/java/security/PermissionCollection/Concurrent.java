@@ -42,6 +42,7 @@ import com.sun.rmi.rmid.ExecOptionPermission;
 
 import java.util.*;
 
+@Bean
 public class Concurrent {
     private static final int LIMIT1 = 2000;
     private static final int LIMIT2 = 1000;

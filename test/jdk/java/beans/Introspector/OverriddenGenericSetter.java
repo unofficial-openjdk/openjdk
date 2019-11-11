@@ -36,13 +36,21 @@ public final class OverriddenGenericSetter {
     static class Parent<T> {
         private T value;
         public final T getValue() {return value;}
-        protected void setValue(T value) {this.value = value;}
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void setValue(T value) {this.value = value;}
     }
 
     static class ChildO extends Parent<Object> {
         public ChildO() {}
         @Override
-        public void setValue(Object value) {super.setValue(value);}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(Object value) {super.setValue(value);}
     }
 
     // For overridden setXXX javac will generate the "synthetic bridge" method
@@ -51,13 +59,21 @@ public final class OverriddenGenericSetter {
     static class ChildA extends Parent<ArithmeticException> {
         public ChildA() {}
         @Override
-        public void setValue(ArithmeticException value) {super.setValue(value);}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(ArithmeticException value) {super.setValue(value);}
     }
 
     static class ChildS extends Parent<String> {
         public ChildS() {}
         @Override
-        public void setValue(String value) {super.setValue(value);}
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(String value) {super.setValue(value);}
     }
 
     public static void main(String[] args) throws Exception {

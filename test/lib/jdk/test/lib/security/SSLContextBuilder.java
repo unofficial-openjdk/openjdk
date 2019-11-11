@@ -55,37 +55,65 @@ public class SSLContextBuilder {
 
     private SecureRandom random = null;
 
-    public SSLContextBuilder trustStore(KeyStore trustStore) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public SSLContextBuilder trustStore(KeyStore trustStore) {
         this.trustStore = trustStore;
         return this;
     }
 
-    public SSLContextBuilder keyStore(KeyStore keyStore) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public SSLContextBuilder keyStore(KeyStore keyStore) {
         this.keyStore = keyStore;
         return this;
     }
 
-    public SSLContextBuilder tmfAlgo(String tmfAlgo) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public SSLContextBuilder tmfAlgo(String tmfAlgo) {
         this.tmfAlgo = tmfAlgo;
         return this;
     }
 
-    public SSLContextBuilder kmfAlgo(String kmfAlgo) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public SSLContextBuilder kmfAlgo(String kmfAlgo) {
         this.kmfAlgo = kmfAlgo;
         return this;
     }
 
-    public SSLContextBuilder kmfPassphrase(String kmfPassphrase) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public SSLContextBuilder kmfPassphrase(String kmfPassphrase) {
         this.kmfPassphrase = kmfPassphrase;
         return this;
     }
 
-    public SSLContextBuilder protocol(String protocol) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public SSLContextBuilder protocol(String protocol) {
         this.protocol = protocol;
         return this;
     }
 
-    public SSLContextBuilder random(SecureRandom random) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public SSLContextBuilder random(SecureRandom random) {
         this.random = random;
         return this;
     }

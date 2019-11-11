@@ -67,6 +67,7 @@ import jtreg.SkippedException;
 import sun.hotspot.WhiteBox;
 import sun.hotspot.gc.GC;
 
+@Bean
 public class TestSmallHeap {
 
     public static void main(String[] args) throws Exception {

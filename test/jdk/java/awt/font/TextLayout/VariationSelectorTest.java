@@ -13,6 +13,7 @@ import java.awt.Graphics2D;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 
+@Bean
 public class VariationSelectorTest {
     // A font supporting Unicode variation selectors is required
     // At least DejaVu 2.20 from 2007
@@ -36,7 +37,10 @@ public class VariationSelectorTest {
 
     private static class MyComponent extends JComponent {
         @Override
-        protected void paintComponent(Graphics g) {
+        @Bean
+@Bean
+@Bean
+            protected void paintComponent(Graphics g) {
             Graphics2D g2d = (Graphics2D) g;
             FontRenderContext frc = g2d.getFontRenderContext();
             String text = "a";

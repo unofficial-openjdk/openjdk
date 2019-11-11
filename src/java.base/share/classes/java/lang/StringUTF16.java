@@ -1042,7 +1042,8 @@ final class StringUTF16 {
             this.fence = start + length;
         }
 
-        private int indexOfLineSeparator(int start) {
+@Bean
+            private int indexOfLineSeparator(int start) {
             for (int current = start; current < fence; current++) {
                 char ch = getChar(value, current);
                 if (ch == '\n' || ch == '\r') {
@@ -1052,7 +1053,8 @@ final class StringUTF16 {
             return fence;
         }
 
-        private int skipLineSeparator(int start) {
+@Bean
+            private int skipLineSeparator(int start) {
             if (start < fence) {
                 if (getChar(value, start) == '\r') {
                     int next = start + 1;
@@ -1073,7 +1075,8 @@ final class StringUTF16 {
         }
 
         @Override
-        public boolean tryAdvance(Consumer<? super String> action) {
+@Bean
+            public boolean tryAdvance(Consumer<? super String> action) {
             if (action == null) {
                 throw new NullPointerException("tryAdvance action missing");
             }
@@ -1085,7 +1088,8 @@ final class StringUTF16 {
         }
 
         @Override
-        public void forEachRemaining(Consumer<? super String> action) {
+@Bean
+            public void forEachRemaining(Consumer<? super String> action) {
             if (action == null) {
                 throw new NullPointerException("forEachRemaining action missing");
             }
@@ -1173,7 +1177,8 @@ final class StringUTF16 {
         }
 
         @Override
-        public void forEachRemaining(IntConsumer action) {
+@Bean
+            public void forEachRemaining(IntConsumer action) {
             byte[] a; int i, hi; // hoist accesses and checks from loop
             if (action == null)
                 throw new NullPointerException();
@@ -1186,7 +1191,8 @@ final class StringUTF16 {
         }
 
         @Override
-        public boolean tryAdvance(IntConsumer action) {
+@Bean
+            public boolean tryAdvance(IntConsumer action) {
             if (action == null)
                 throw new NullPointerException();
             int i = index;
@@ -1244,7 +1250,8 @@ final class StringUTF16 {
         }
 
         @Override
-        public void forEachRemaining(IntConsumer action) {
+@Bean
+            public void forEachRemaining(IntConsumer action) {
             byte[] a; int i, hi; // hoist accesses and checks from loop
             if (action == null)
                 throw new NullPointerException();
@@ -1257,7 +1264,8 @@ final class StringUTF16 {
         }
 
         @Override
-        public boolean tryAdvance(IntConsumer action) {
+@Bean
+            public boolean tryAdvance(IntConsumer action) {
             if (action == null)
                 throw new NullPointerException();
             if (index >= 0 && index < fence) {

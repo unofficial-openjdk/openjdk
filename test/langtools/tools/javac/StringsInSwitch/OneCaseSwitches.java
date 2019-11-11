@@ -12,6 +12,7 @@ import java.lang.annotation.*;
 import java.util.*;
 import static java.lang.annotation.RetentionPolicy.*;
 
+@Bean
 public class OneCaseSwitches {
     @Retention(RUNTIME)
     @interface TestMeForNull {}

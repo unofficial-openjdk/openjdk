@@ -44,12 +44,20 @@ public abstract class AnimatingControlsSurface extends AnimatingSurface
         implements CustomControlsContext {
 
     @Override
-    public void setControls(Component[] controls) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setControls(Component[] controls) {
         this.controls = controls;
     }
 
     @Override
-    public void setConstraints(String[] constraints) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setConstraints(String[] constraints) {
         this.constraints = constraints;
     }
 
@@ -64,7 +72,11 @@ public abstract class AnimatingControlsSurface extends AnimatingSurface
     }
 
     @Override
-    public void handleThread(CustomControlsContext.State state) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void handleThread(CustomControlsContext.State state) {
         for (Component control : controls) {
             if (control instanceof CustomControls) {
                 if (state == START) {

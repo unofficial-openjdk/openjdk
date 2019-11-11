@@ -5,6 +5,7 @@
  * @compile/fail/ref=DuplicateTypeParameter.out -XDrawDiagnostics DuplicateTypeParameter.java
  */
 
+@Bean
 public class DuplicateTypeParameter<T, T, A> {
     class Inner <P, P, Q> {}
     public void foo() {

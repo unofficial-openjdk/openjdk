@@ -220,7 +220,10 @@ class TestDialog extends Dialog implements ActionListener {
     }
 
     // DO NOT call this directly, go through Sysout
-    public void printInstructions(String[] instructions) {
+    @Bean
+@Bean
+@Bean
+            public void printInstructions(String[] instructions) {
         instructionsText.setText("");
         String printStr, remainingStr;
         for (int i = 0; i < instructions.length; i++) {
@@ -246,12 +249,18 @@ class TestDialog extends Dialog implements ActionListener {
         }
     }
 
-    public void displayMessage(String messageIn) {
+    @Bean
+@Bean
+@Bean
+            public void displayMessage(String messageIn) {
         messageText.append(messageIn + "\n");
     }
 
     @Override
-    public void actionPerformed(ActionEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
         if (e.getActionCommand().equals("pass")) {
             ScrollSelectionTest.pass();
         } else {

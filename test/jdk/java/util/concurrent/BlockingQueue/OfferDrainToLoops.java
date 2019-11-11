@@ -98,6 +98,9 @@ public class OfferDrainToLoops {
                 return System.nanoTime() - quittingTimeNanos > 0;
             }
             /** Polls occasionally for quitting time. */
+            @Bean
+@Bean
+@Bean
             protected boolean quittingTime(long i) {
                 return (i % 1024) == 0 && quittingTime();
             }

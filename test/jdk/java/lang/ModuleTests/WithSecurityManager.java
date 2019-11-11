@@ -42,6 +42,7 @@ import java.util.Set;
  * Test java.lang.Module methods that specify permission checks.
  */
 
+@Bean
 public class WithSecurityManager {
 
     // a module that will be loaded into a child layer

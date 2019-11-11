@@ -29,6 +29,7 @@
 
 import java.lang.annotation.*;
 
+@Bean
 public class Pos04 {
 
     enum ExceptionKind {

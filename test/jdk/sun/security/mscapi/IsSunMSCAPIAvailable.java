@@ -33,6 +33,7 @@ import java.security.Provider;
 import java.security.*;
 import javax.crypto.Cipher;
 
+@Bean
 public class IsSunMSCAPIAvailable {
 
     public static void main(String[] args) throws Exception {

@@ -33,6 +33,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Iterator;
 
+@Bean
 public class HeadersTest2 {
     static URI uri = URI.create("http://www.foo.com/");
 

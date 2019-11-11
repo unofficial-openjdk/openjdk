@@ -89,6 +89,7 @@ class BacktraceFieldTarg {
 
 /********** test program **********/
 
+@Bean
 public class BacktraceFieldTest extends TestScaffold {
     ThreadReference mainThread;
 

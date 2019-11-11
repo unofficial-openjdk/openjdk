@@ -34,6 +34,7 @@ package java.security;
  * @since 1.1
  */
 
+@Bean
 public class InvalidParameterException extends IllegalArgumentException {
 
     @java.io.Serial

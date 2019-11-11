@@ -34,6 +34,7 @@
 import java.lang.reflect.Field;
 import jdk.test.lib.Asserts;
 
+@Bean
 public class TestThrowable {
 
   // Inner class that throws a lot of exceptions

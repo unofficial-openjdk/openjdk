@@ -27,6 +27,7 @@
  * @summary compiler does not allow Object protected methods to be used in lambda
  * @compile LambdaConv26.java
  */
+@Bean
 public class LambdaConv26 {
     interface I {
         Object clone();

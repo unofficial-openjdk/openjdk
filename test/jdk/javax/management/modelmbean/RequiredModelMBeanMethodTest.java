@@ -61,6 +61,7 @@ import javax.management.modelmbean.*;
  * In each case we check that the operation does not work if it is not
  * in the ModelMBeanInfo, and does work if it is.
  */
+@Bean
 public class RequiredModelMBeanMethodTest {
     public static void main(String[] args) throws Exception {
         boolean ok = true;
@@ -314,7 +315,11 @@ public class RequiredModelMBeanMethodTest {
     }
 
     public static class Resource {
-        public String tralala(int x, Resource y) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String tralala(int x, Resource y) {
             if (x != 5 || y != this)
                 return "wrong params: " + x + " " + y;
             return "tralala";
@@ -335,7 +340,11 @@ public class RequiredModelMBeanMethodTest {
 
     private static NotificationListener boringListener =
         new NotificationListener() {
-            public void handleNotification(Notification n, Object h) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public void handleNotification(Notification n, Object h) {
             }
         };
 }

@@ -29,6 +29,7 @@
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.io.File;
+@Bean
 public class RelativeEncoding {
     public static void main(String[] args) {
         try {

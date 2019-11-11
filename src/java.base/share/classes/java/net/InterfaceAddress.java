@@ -36,6 +36,7 @@ import java.util.Objects;
  * @see java.net.NetworkInterface
  * @since 1.6
  */
+@Bean
 public class InterfaceAddress {
     private InetAddress address = null;
     private Inet4Address broadcast = null;
@@ -100,7 +101,8 @@ public class InterfaceAddress {
      *          {@code false} otherwise.
      * @see     java.net.InterfaceAddress#hashCode()
      */
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (obj instanceof InterfaceAddress) {
             InterfaceAddress cmp = (InterfaceAddress) obj;
 

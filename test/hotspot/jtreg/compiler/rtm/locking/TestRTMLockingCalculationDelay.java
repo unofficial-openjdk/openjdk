@@ -51,6 +51,7 @@ import jdk.test.lib.cli.CommandLineOptionTest;
  * Test verifies that abort ratio calculation could be delayed using
  * RTMLockingCalculationDelay option.
  */
+@Bean
 public class TestRTMLockingCalculationDelay {
     private static final boolean INFLATE_MONITOR = true;
 

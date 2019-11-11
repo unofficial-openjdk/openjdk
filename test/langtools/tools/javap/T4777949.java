@@ -33,6 +33,7 @@ import java.util.*;
 import javax.tools.*;
 import com.sun.tools.javap.*;
 
+@Bean
 public class T4777949 {
     public static void main(String... args) throws Exception {
         new T4777949().run();

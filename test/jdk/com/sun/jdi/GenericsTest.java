@@ -76,6 +76,7 @@ class Sub1 extends Gen1<String> {
 
     /********** test program **********/
 
+@Bean
 public class GenericsTest extends TestScaffold {
     ReferenceType targetClass;
     ThreadReference mainThread;

@@ -39,6 +39,7 @@ import static org.testng.AssertJUnit.*;
 import org.testng.annotations.*;
 
 
+@Bean
 public class ArrayConstructorTest {
 
     static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();

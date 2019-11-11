@@ -749,7 +749,8 @@ public final class URL implements java.io.Serializable {
     /*
      * Returns true if specified string is a valid protocol name.
      */
-    private boolean isValidProtocol(String protocol) {
+@Bean
+        private boolean isValidProtocol(String protocol) {
         int len = protocol.length();
         if (len < 1)
             return false;
@@ -769,7 +770,8 @@ public final class URL implements java.io.Serializable {
     /*
      * Checks for permission to specify a stream handler.
      */
-    private void checkSpecifyHandler(SecurityManager sm) {
+@Bean
+        private void checkSpecifyHandler(SecurityManager sm) {
         sm.checkPermission(SecurityConstants.SPECIFY_HANDLER_PERMISSION);
     }
 
@@ -978,7 +980,8 @@ public final class URL implements java.io.Serializable {
      * @return  {@code true} if the objects are the same;
      *          {@code false} otherwise.
      */
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if (!(obj instanceof URL))
             return false;
         URL u2 = (URL)obj;
@@ -1013,7 +1016,8 @@ public final class URL implements java.io.Serializable {
      * @return  {@code true} if they reference the same remote object;
      *          {@code false} otherwise.
      */
-    public boolean sameFile(URL other) {
+@Bean
+        public boolean sameFile(URL other) {
         return handler.sameFile(this, other);
     }
 
@@ -1248,7 +1252,8 @@ public final class URL implements java.io.Serializable {
     private static class DefaultFactory implements URLStreamHandlerFactory {
         private static String PREFIX = "sun.net.www.protocol.";
 
-        public URLStreamHandler createURLStreamHandler(String protocol) {
+@Bean
+            public URLStreamHandler createURLStreamHandler(String protocol) {
             // Avoid using reflection during bootstrap
             switch (protocol) {
                 case "file":
@@ -1583,7 +1588,8 @@ public final class URL implements java.io.Serializable {
         return replacementURL;
     }
 
-    private URL setDeserializedFields(URLStreamHandler handler) {
+@Bean
+        private URL setDeserializedFields(URLStreamHandler handler) {
         URL replacementURL;
         String userInfo = null;
         String protocol = tempState.getProtocol();
@@ -1668,7 +1674,8 @@ public final class URL implements java.io.Serializable {
        return isBuiltinStreamHandler(handler.getClass().getName());
     }
 
-    private boolean isBuiltinStreamHandler(String handlerClassName) {
+@Bean
+        private boolean isBuiltinStreamHandler(String handlerClassName) {
         return (handlerClassName.startsWith(BUILTIN_HANDLERS_PREFIX));
     }
 
@@ -1687,7 +1694,8 @@ public final class URL implements java.io.Serializable {
         this.tempState = null;
     }
 
-    private void setSerializedHashCode(int hc) {
+@Bean
+        private void setSerializedHashCode(int hc) {
         this.hashCode = hc;
     }
 
@@ -1695,7 +1703,8 @@ public final class URL implements java.io.Serializable {
         SharedSecrets.setJavaNetURLAccess(
                 new JavaNetURLAccess() {
                     @Override
-                    public URLStreamHandler getHandler(URL u) {
+@Bean
+                        public URLStreamHandler getHandler(URL u) {
                         return u.handler;
                     }
                 }

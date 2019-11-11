@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@Bean
 public class ToArray {
     public static void main(String[] args) {
         //----------------------------------------------------------------

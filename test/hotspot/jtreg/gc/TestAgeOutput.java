@@ -69,6 +69,7 @@ import java.util.regex.Pattern;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class TestAgeOutput {
 
     public static void checkPattern(String pattern, String what) throws Exception {

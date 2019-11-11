@@ -28,6 +28,7 @@
  *  Structural most specific doesn't handle cases with wildcards in functional interfaces
  * @compile/fail/ref=MostSpecific05.out -XDrawDiagnostics MostSpecific05.java
  */
+@Bean
 public class MostSpecific05 {
 
     interface ObjectConverter<T extends Object> {

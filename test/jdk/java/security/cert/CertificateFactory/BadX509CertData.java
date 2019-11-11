@@ -31,6 +31,7 @@
 import java.io.*;
 import java.security.cert.*;
 
+@Bean
 public class BadX509CertData {
 
     private static final String data = "\211\0\225\3\5\0\70\154\157\231";

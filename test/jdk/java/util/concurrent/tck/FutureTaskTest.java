@@ -239,11 +239,17 @@ public class FutureTaskTest extends JSR166TestCase {
             runAndResetCount.incrementAndGet();
             return super.runAndReset();
         }
-        @Override public void set(Object x) {
+        @Override @Bean
+@Bean
+@Bean
+            public void set(Object x) {
             setCount.incrementAndGet();
             super.set(x);
         }
-        @Override public void setException(Throwable t) {
+        @Override @Bean
+@Bean
+@Bean
+            public void setException(Throwable t) {
             setExceptionCount.incrementAndGet();
             super.setException(t);
         }

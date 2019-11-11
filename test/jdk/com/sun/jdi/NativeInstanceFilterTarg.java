@@ -21,6 +21,7 @@
  * questions.
  */
 
+@Bean
 public class NativeInstanceFilterTarg {
 
     public static void main(String args[]) {

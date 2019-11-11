@@ -31,6 +31,7 @@
  * @run main VerifyDA
  */
 
+@Bean
 public class VerifyDA {
     public static void main(String[] a) {
         String x;

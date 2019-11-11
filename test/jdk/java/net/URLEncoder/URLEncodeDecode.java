@@ -32,6 +32,7 @@
 import java.io.*;
 import java.net.*;
 
+@Bean
 public class URLEncodeDecode {
 
     static char chars[] = {'H', 'e', 'l', 'l', 'o',

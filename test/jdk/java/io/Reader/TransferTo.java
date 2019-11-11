@@ -40,6 +40,7 @@ import static java.lang.String.format;
  * @key randomness
  * @author Patrick Reinhart
  */
+@Bean
 public class TransferTo {
 
     private static Random generator = RandomFactory.getRandom();

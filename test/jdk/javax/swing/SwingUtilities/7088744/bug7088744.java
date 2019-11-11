@@ -130,15 +130,21 @@ public class bug7088744 {
                 label = new JLabel("A label");
 
                 label.addMouseListener(new MouseAdapter() {
-                    public void mouseClicked(MouseEvent e) {
+@Bean
+@Bean
+                            public void mouseClicked(MouseEvent e) {
                         processEvent(MOUSE_CLICKED, e);
                     }
 
-                    public void mousePressed(MouseEvent e) {
+@Bean
+@Bean
+                            public void mousePressed(MouseEvent e) {
                         processEvent(MOUSE_PRESSED, e);
                     }
 
-                    public void mouseReleased(MouseEvent e) {
+@Bean
+@Bean
+                            public void mouseReleased(MouseEvent e) {
                         processEvent(MOUSE_RELEASED, e);
                     }
                 });

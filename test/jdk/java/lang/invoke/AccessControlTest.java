@@ -47,6 +47,7 @@ import test.java.lang.invoke.AccessControlTest_subpkg.Acquaintance_remote;
  * Test many combinations of Lookup access and cross-class lookupStatic.
  * @author jrose
  */
+@Bean
 public class AccessControlTest {
     static final Class<?> THIS_CLASS = AccessControlTest.class;
     // How much output?
@@ -87,7 +88,11 @@ public class AccessControlTest {
         public Lookup lookup() { lookup.getClass(); return lookup; }
 
         @Override
-        public int compareTo(LookupCase that) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int compareTo(LookupCase that) {
             Class<?> c1 = this.lookupClass();
             Class<?> c2 = that.lookupClass();
             Class<?> p1 = this.prevLookupClass();
@@ -113,10 +118,18 @@ public class AccessControlTest {
         }
 
         @Override
-        public boolean equals(Object that) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(Object that) {
             return (that instanceof LookupCase && equals((LookupCase)that));
         }
-        public boolean equals(LookupCase that) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean equals(LookupCase that) {
             return (this.lookupClass() == that.lookupClass() &&
                     this.prevLookupClass() == that.prevLookupClass() &&
                     this.lookupModes() == that.lookupModes());
@@ -193,7 +206,11 @@ public class AccessControlTest {
          * access capabilities as the original. [A11]
          * <hr>
          */
-        public LookupCase in(Class<?> c2) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public LookupCase in(Class<?> c2) {
             Class<?> c1 = lookupClass();
             Module m1 = c1.getModule();
             Module m2 = c2.getModule();
@@ -302,7 +319,11 @@ public class AccessControlTest {
         }
 
         /** Predict the success or failure of accessing this method. */
-        public boolean willAccess(Method m) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean willAccess(Method m) {
             Class<?> c1 = lookupClass();
             Class<?> c2 = m.getDeclaringClass();
             Module m1 = c1.getModule();
@@ -350,7 +371,11 @@ public class AccessControlTest {
         }
 
         /** Predict the success or failure of accessing this class. */
-        public boolean willAccessClass(Class<?> c2, boolean load) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean willAccessClass(Class<?> c2, boolean load) {
             Class<?> c1 = lookupClass();
             if (load && c2.getClassLoader() != null) {
                 if (c1.getClassLoader() == null) {
@@ -413,7 +438,11 @@ public class AccessControlTest {
     private final ClassLoader THIS_LOADER = this.getClass().getClassLoader();
     { if (THIS_LOADER != null)  LOADERS.add(THIS_LOADER); }  // #1
 
-    private LookupCase lookupCase(String name) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private LookupCase lookupCase(String name) {
         for (LookupCase lc : CASES) {
             if (lc.toString().equals(name))
                 return lc;
@@ -421,7 +450,11 @@ public class AccessControlTest {
         throw new AssertionError(name);
     }
 
-    private int numberOf(ClassLoader cl) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int numberOf(ClassLoader cl) {
         if (cl == null)  return 0;
         int i = LOADERS.indexOf(cl);
         if (i < 0) {
@@ -431,7 +464,11 @@ public class AccessControlTest {
         return i+1;
     }
 
-    private void addLookupEdge(LookupCase l1, Class<?> c2, LookupCase l2, int dropAccess) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void addLookupEdge(LookupCase l1, Class<?> c2, LookupCase l2, int dropAccess) {
         TreeSet<LookupCase> edges = CASE_EDGES.get(l2);
         if (edges == null)  CASE_EDGES.put(l2, edges = new TreeSet<>());
         if (edges.add(l1)) {
@@ -447,7 +484,11 @@ public class AccessControlTest {
         }
     }
 
-    private void makeCases(Lookup[] originalLookups) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void makeCases(Lookup[] originalLookups) {
         // make initial set of lookup test cases
         CASES.clear(); LOADERS.clear(); CASE_EDGES.clear();
         ArrayList<Class<?>> classes = new ArrayList<>();
@@ -524,7 +565,11 @@ public class AccessControlTest {
 
     private int testCount, testCountFails;
 
-    private void testOneAccess(LookupCase sourceCase, Method method, String kind) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void testOneAccess(LookupCase sourceCase, Method method, String kind) {
         Class<?> targetClass = method.getDeclaringClass();
         String methodName = method.getName();
         MethodType methodType = methodType(method.getReturnType(), method.getParameterTypes());
@@ -671,6 +716,7 @@ class AccessControlTest_sibling {
 // This guy tests access from outside the package:
 /*
 package test.java.lang.invoke.AccessControlTest_subpkg;
+@Bean
 public class Acquaintance_remote {
     public static Lookup[] lookups() { ...
     }

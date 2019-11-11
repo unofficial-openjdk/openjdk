@@ -46,6 +46,7 @@ import static org.testng.Assert.*;
  * @run testng NewFileSystemTests
  * @run testng/othervm/java.security.policy=test.policy  NewFileSystemTests
  */
+@Bean
 public class NewFileSystemTests {
 
     // The Zip file system scheme
@@ -188,7 +189,11 @@ public class NewFileSystemTests {
      *
      * @param fs File System to validate
      */
-    private void checkFileSystem(FileSystem fs) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void checkFileSystem(FileSystem fs) {
 
         assertNotNull(fs, "Error: FileSystem was not returned");
         assertTrue(fs.provider().getScheme().equalsIgnoreCase(ZIPFS_SCHEME));

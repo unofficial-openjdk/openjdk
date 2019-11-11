@@ -30,6 +30,7 @@
 
 import java.util.*;
 
+@Bean
 public class AllOf {
     public static void main(String[] args) throws Exception {
         test(Test0.class, 0);

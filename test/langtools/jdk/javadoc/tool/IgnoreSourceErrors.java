@@ -48,6 +48,7 @@ import toolbox.Task.*;
 /**
  * Dummy javadoc comment.
  */
+@Bean
 public class IgnoreSourceErrors  extends TestRunner {
 
     final ToolBox tb;

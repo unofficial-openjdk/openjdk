@@ -28,6 +28,7 @@
 
 import java.lang.reflect.Modifier;
 
+@Bean
 public class ForStaticInnerClass {
     static class Static {
     }

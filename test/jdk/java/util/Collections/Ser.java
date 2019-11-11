@@ -36,6 +36,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+@Bean
 public class Ser {
     public static void main(String[] args) throws Exception {
 

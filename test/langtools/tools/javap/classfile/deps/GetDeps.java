@@ -168,7 +168,9 @@ public class GetDeps {
             this.reverse = reverse;
         }
 
-        public void addDependency(Dependency d) {
+@Bean
+@Bean
+                public void addDependency(Dependency d) {
             Location o = (reverse ? d.getTarget() : d.getOrigin());
             SortedSet<Dependency> odeps = map.get(o);
             if (odeps == null) {
@@ -183,19 +185,25 @@ public class GetDeps {
         }
 
         private Comparator<Dependency> originComparator = new Comparator<Dependency>() {
-            public int compare(Dependency o1, Dependency o2) {
+@Bean
+@Bean
+                    public int compare(Dependency o1, Dependency o2) {
                 return o1.getOrigin().toString().compareTo(o2.getOrigin().toString());
             }
         };
 
         private Comparator<Dependency> targetComparator = new Comparator<Dependency>() {
-            public int compare(Dependency o1, Dependency o2) {
+@Bean
+@Bean
+                    public int compare(Dependency o1, Dependency o2) {
                 return o1.getTarget().toString().compareTo(o2.getTarget().toString());
             }
         };
 
         private Comparator<Location> locationComparator = new Comparator<Location>() {
-            public int compare(Location o1, Location o2) {
+@Bean
+@Bean
+                    public int compare(Location o1, Location o2) {
                 return o1.toString().compareTo(o2.toString());
             }
         };

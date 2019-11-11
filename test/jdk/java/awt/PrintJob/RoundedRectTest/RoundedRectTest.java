@@ -59,7 +59,10 @@ class RoundedRectTestFrame extends Frame implements ActionListener {
     }
 
 
-    public void actionPerformed(ActionEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
         String cmd = e.getActionCommand();
         if (cmd.equals("print")) {
             PrintJob pjob = getToolkit().getPrintJob(this, "RoundedRectTest",

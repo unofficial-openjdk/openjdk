@@ -45,6 +45,7 @@ import com.sun.tools.javac.processing.JavacProcessingEnvironment;
 import com.sun.tools.javac.util.Context;
 
 @SupportedOptions("expect")
+@Bean
 public class T7018098 extends JavacTestingAbstractProcessor {
     public static void main(String... args) throws Exception {
         new T7018098().run();
@@ -103,7 +104,11 @@ public class T7018098 extends JavacTestingAbstractProcessor {
     //---------------
 
     @Override
-    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         Context context = ((JavacProcessingEnvironment) processingEnv).getContext();
         FSInfo fsInfo = context.get(FSInfo.class);
 

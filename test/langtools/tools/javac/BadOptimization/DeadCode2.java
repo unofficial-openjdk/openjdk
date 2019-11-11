@@ -38,6 +38,7 @@ class cls
    int [] ai = null;
 }
 
+@Bean
 public class DeadCode2 extends cls
 {
     int [] bi = null;

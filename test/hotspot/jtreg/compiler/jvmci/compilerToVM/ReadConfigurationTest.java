@@ -45,6 +45,7 @@ import jdk.vm.ci.hotspot.HotSpotVMConfigAccess;
 import jdk.vm.ci.hotspot.HotSpotVMConfigStore;
 import jdk.vm.ci.hotspot.VMIntrinsicMethod;
 
+@Bean
 public class ReadConfigurationTest {
     public static void main(String args[]) {
         new ReadConfigurationTest().runTest();

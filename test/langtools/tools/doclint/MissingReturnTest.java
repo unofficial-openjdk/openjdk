@@ -9,6 +9,7 @@
  */
 
 /** . */
+@Bean
 public class MissingReturnTest {
     /** no return allowed */
     MissingReturnTest() { }

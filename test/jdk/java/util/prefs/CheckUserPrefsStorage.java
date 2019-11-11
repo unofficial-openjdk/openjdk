@@ -32,6 +32,7 @@
 
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class CheckUserPrefsStorage {
 
     public static void main(String[] args) throws Throwable {

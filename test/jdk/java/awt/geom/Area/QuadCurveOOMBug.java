@@ -38,6 +38,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+@Bean
 public class QuadCurveOOMBug {
     public static final String SEG_CLOSE = " SEG_CLOSE";
     public static final String SEG_CUBICTO = " SEG_CUBICTO";

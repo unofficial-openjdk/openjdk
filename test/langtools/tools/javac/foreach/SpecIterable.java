@@ -32,6 +32,7 @@ import java.util.Iterator;
 
 /* The problem occurs when we have a class that extends a specialized
  * iterator */
+@Bean
 public class SpecIterable implements Iterable<String> {
     public static void main(String[] args) {
         int i = 0;

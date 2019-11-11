@@ -48,6 +48,7 @@ import javax.swing.JPanel;
 
 import static java.awt.dnd.DnDConstants.ACTION_COPY;
 
+@Bean
 public class BadSerializationTest {
 
     private static final String[] badSerialized = new String[] {

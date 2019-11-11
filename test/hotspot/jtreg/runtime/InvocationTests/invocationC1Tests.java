@@ -43,6 +43,7 @@ import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.compiler.InMemoryJavaCompiler;
 
+@Bean
 public class invocationC1Tests {
 
     public static void runTest(String whichTests, String classFileVersion) throws Exception {
@@ -72,7 +73,8 @@ public class invocationC1Tests {
 
     public static void main(String args[]) throws Throwable {
         // Get current major class file version and test with it.
-        byte klassbuf[] = InMemoryJavaCompiler.compile("blah", "public class blah { }");
+        byte klassbuf[] = InMemoryJavaCompiler.compile("blah", "@Bean
+public class blah { }");
         int major_version = klassbuf[6] << 8 | klassbuf[7];
         runTest("invokespecial.Generator", String.valueOf(major_version));
         runTest("invokeinterface.Generator", String.valueOf(major_version));

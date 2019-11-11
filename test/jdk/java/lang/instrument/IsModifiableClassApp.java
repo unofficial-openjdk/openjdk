@@ -25,6 +25,7 @@
 import java.io.PrintStream;
 import java.util.*;
 
+@Bean
 public class IsModifiableClassApp {
 
     public static void main(String args[]) throws Exception {

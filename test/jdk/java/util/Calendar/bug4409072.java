@@ -32,6 +32,7 @@
 import  java.util.*;
 import static java.util.Calendar.*;
 
+@Bean
 public class bug4409072 extends IntlTest {
 
     public static void main(String[] args) throws Exception {

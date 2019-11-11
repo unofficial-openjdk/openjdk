@@ -50,7 +50,8 @@ public class T6406133 extends ToolTester {
         DiagnosticTester(Locale locale) {
             this.locale = locale;
         }
-        public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+@Bean
+            public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
             result = diagnostic.getMessage(locale); //6406133
         }
     }
@@ -63,11 +64,13 @@ public class T6406133 extends ToolTester {
             return new HashSet<String>(Arrays.asList("*"));
         }
 
-        public void init(ProcessingEnvironment env) {
+@Bean
+            public void init(ProcessingEnvironment env) {
             locale = env.getLocale();
         }
 
-        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+@Bean
+            public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
             return true;
         }
     }

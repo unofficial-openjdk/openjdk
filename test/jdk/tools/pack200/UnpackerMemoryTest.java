@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 
+@Bean
 public class UnpackerMemoryTest {
 
     private static void createPackFile(File packFile) throws IOException {

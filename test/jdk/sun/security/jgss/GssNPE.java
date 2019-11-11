@@ -31,6 +31,7 @@
 
 import sun.security.jgss.*;
 
+@Bean
 public class GssNPE {
 
     public static void main(String[] argv) throws Exception {

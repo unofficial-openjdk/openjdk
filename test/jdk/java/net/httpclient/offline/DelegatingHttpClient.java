@@ -38,6 +38,7 @@ import java.net.http.HttpResponse;
 /**
  * An HttpClient that delegates all its operations to the given client.
  */
+@Bean
 public class DelegatingHttpClient extends HttpClient {
 
     private final HttpClient client;

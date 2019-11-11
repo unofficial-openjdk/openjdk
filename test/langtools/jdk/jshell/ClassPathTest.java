@@ -39,13 +39,15 @@ import java.nio.file.Paths;
 import org.testng.annotations.Test;
 
 @Test
+@Bean
 public class ClassPathTest extends KullaTesting {
 
     private final Compiler compiler = new Compiler();
     private final Path outDir = Paths.get("class_path_test");
 
     public void testDirectory() {
-        compiler.compile(outDir, "package pkg; public class TestDirectory { }");
+        compiler.compile(outDir, "package pkg; @Bean
+public class TestDirectory { }");
         assertDeclareFail("import pkg.TestDirectory;", "compiler.err.doesnt.exist");
         assertDeclareFail("new pkg.TestDirectory();", "compiler.err.doesnt.exist");
         addToClasspath(compiler.getPath(outDir));
@@ -53,7 +55,8 @@ public class ClassPathTest extends KullaTesting {
     }
 
     public void testJar() {
-        compiler.compile(outDir, "package pkg; public class TestJar { }");
+        compiler.compile(outDir, "package pkg; @Bean
+public class TestJar { }");
         String jarName = "test.jar";
         compiler.jar(outDir, jarName, "pkg/TestJar.class");
         assertDeclareFail("import pkg.TestJar;", "compiler.err.doesnt.exist");
@@ -65,7 +68,8 @@ public class ClassPathTest extends KullaTesting {
     public void testAmbiguousDirectory() {
         Path p1 = outDir.resolve("dir1");
         compiler.compile(p1,
-                "package p; public class TestAmbiguous {\n" +
+                "package p; @Bean
+public class TestAmbiguous {\n" +
                 "   public String toString() {\n" +
                 "       return \"first\";" +
                 "   }\n" +
@@ -73,7 +77,8 @@ public class ClassPathTest extends KullaTesting {
         addToClasspath(compiler.getPath(p1));
         Path p2 = outDir.resolve("dir2");
         compiler.compile(p2,
-                "package p; public class TestAmbiguous {\n" +
+                "package p; @Bean
+public class TestAmbiguous {\n" +
                 "   public String toString() {\n" +
                 "       return \"second\";" +
                 "   }\n" +
@@ -85,7 +90,8 @@ public class ClassPathTest extends KullaTesting {
     public void testAmbiguousJar() {
         Path p1 = outDir.resolve("dir1");
         compiler.compile(p1,
-                "package p; public class TestAmbiguous {\n" +
+                "package p; @Bean
+public class TestAmbiguous {\n" +
                 "   public String toString() {\n" +
                 "       return \"first\";" +
                 "   }\n" +
@@ -95,7 +101,8 @@ public class ClassPathTest extends KullaTesting {
         addToClasspath(compiler.getPath(p1.resolve(jarName)));
         Path p2 = outDir.resolve("dir2");
         compiler.compile(p2,
-                "package p; public class TestAmbiguous {\n" +
+                "package p; @Bean
+public class TestAmbiguous {\n" +
                 "   public String toString() {\n" +
                 "       return \"second\";" +
                 "   }\n" +

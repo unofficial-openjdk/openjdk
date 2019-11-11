@@ -36,6 +36,7 @@ import java.security.cert.X509Certificate;
 /**
  * Test that a PKCS12 keystore entry with mixed-case alias can be retrieved.
  */
+@Bean
 public class MixedcaseAlias {
     private static final String DIR = System.getProperty("test.src", ".");
     private static final String CERT = DIR + "/trusted.pem";

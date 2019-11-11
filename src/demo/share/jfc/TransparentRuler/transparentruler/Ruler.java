@@ -67,6 +67,7 @@ import javax.swing.WindowConstants;
  * @author Alexander Kouznetsov
  */
 @SuppressWarnings("serial")
+@Bean
 public class Ruler extends JFrame {
 
     private static final Color BACKGROUND = Color.RED;
@@ -109,7 +110,11 @@ public class Ruler extends JFrame {
          * componentResized() method
          */
         @Override
-        public void componentResized(ComponentEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void componentResized(ComponentEvent e) {
 
             // We do apply shape only if PERPIXEL_TRANSPARENT is supported
             if (transparencySupported) {
@@ -125,7 +130,11 @@ public class Ruler extends JFrame {
         }
 
         @Override
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void actionPerformed(ActionEvent e) {
             System.exit(0);
         }
     };
@@ -148,7 +157,11 @@ public class Ruler extends JFrame {
         int x, y;
 
         @Override
-        public void mousePressed(MouseEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void mousePressed(MouseEvent e) {
             if (e.getButton() == MouseEvent.BUTTON1) {
                 x = e.getX();
                 y = e.getY();
@@ -156,14 +169,22 @@ public class Ruler extends JFrame {
         }
 
         @Override
-        public void mouseDragged(MouseEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void mouseDragged(MouseEvent e) {
             if ((e.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK) != 0) {
                 setLocation(e.getXOnScreen() - x, e.getYOnScreen() - y);
             }
         }
 
         @Override
-        public void mouseReleased(MouseEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void mouseReleased(MouseEvent e) {
             if (e.isPopupTrigger()) {
                 jPopupMenu.show(getContentPane(), e.getX(), e.getY());
             }
@@ -178,7 +199,11 @@ public class Ruler extends JFrame {
     private final KeyAdapter keyboardListener = new KeyAdapter() {
 
         @Override
-        public void keyPressed(KeyEvent e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void keyPressed(KeyEvent e) {
             int step = e.isControlDown() ? 50 : e.isAltDown() ? 1 : 5;
             switch (e.getKeyCode()) {
                 case KeyEvent.VK_LEFT:
@@ -213,7 +238,11 @@ public class Ruler extends JFrame {
         setContentPane(new JPanel() {
 
             @Override
-            protected void paintComponent(Graphics g) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                protected void paintComponent(Graphics g) {
                 Graphics2D gg = (Graphics2D) g.create();
                 int w = getWidth();
                 int h = getHeight();

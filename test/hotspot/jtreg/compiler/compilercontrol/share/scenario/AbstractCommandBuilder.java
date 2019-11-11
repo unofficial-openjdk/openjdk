@@ -46,7 +46,8 @@ public abstract class AbstractCommandBuilder
     protected final List<CompileCommand> compileCommands = new ArrayList<>();
 
     @Override
-    public void add(CompileCommand command) {
+@Bean
+        public void add(CompileCommand command) {
         compileCommands.add(command);
         CommandStateBuilder.getInstance().add(command);
     }
@@ -84,7 +85,8 @@ public abstract class AbstractCommandBuilder
             return INSTANCE;
         }
 
-        public void add(CompileCommand command) {
+@Bean
+            public void add(CompileCommand command) {
             switch (command.type) {
                 case OPTION:
                     optionCommands.add(command);

@@ -41,6 +41,7 @@ import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 
+@Bean
 public class RandomMXBeanTest {
     public static interface StupidMXBean {
         public int ZERO = Integer.parseInt("0");
@@ -53,7 +54,11 @@ public class RandomMXBeanTest {
             return 0;
         }
 
-        public int identity(int x) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public int identity(int x) {
             return x;
         }
     }

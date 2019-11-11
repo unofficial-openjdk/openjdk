@@ -53,6 +53,7 @@ import static compiler.jvmci.compilerToVM.ConstantPoolTestCase.ConstantTypes.CON
 /**
  * Common class for jdk.vm.ci.hotspot.CompilerToVM constant pool tests
  */
+@Bean
 public class ConstantPoolTestCase {
 
     private static final Map<Tag, ConstantTypes> TAG_TO_TYPE_MAP;
@@ -80,7 +81,11 @@ public class ConstantPoolTestCase {
     public static enum ConstantTypes {
         CONSTANT_CLASS {
             @Override
-            public TestedCPEntry getTestedCPEntry(DummyClasses dummyClass, int index) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public TestedCPEntry getTestedCPEntry(DummyClasses dummyClass, int index) {
                 ConstantPool constantPoolSS = dummyClass.constantPoolSS;
                 checkIndex(constantPoolSS, index);
                 Class<?> klass = constantPoolSS.getClassAt(index);
@@ -96,25 +101,41 @@ public class ConstantPoolTestCase {
         },
         CONSTANT_FIELDREF {
             @Override
-            public TestedCPEntry getTestedCPEntry(DummyClasses dummyClass, int index) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public TestedCPEntry getTestedCPEntry(DummyClasses dummyClass, int index) {
                 return this.getTestedCPEntryForMethodAndField(dummyClass, index);
             }
         },
         CONSTANT_METHODREF {
             @Override
-            public TestedCPEntry getTestedCPEntry(DummyClasses dummyClass, int index) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public TestedCPEntry getTestedCPEntry(DummyClasses dummyClass, int index) {
                 return this.getTestedCPEntryForMethodAndField(dummyClass, index);
             }
         },
         CONSTANT_INTERFACEMETHODREF {
             @Override
-            public TestedCPEntry getTestedCPEntry(DummyClasses dummyClass, int index) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public TestedCPEntry getTestedCPEntry(DummyClasses dummyClass, int index) {
                 return this.getTestedCPEntryForMethodAndField(dummyClass, index);
             }
         },
         CONSTANT_STRING {
             @Override
-            public TestedCPEntry getTestedCPEntry(DummyClasses dummyClass, int index) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public TestedCPEntry getTestedCPEntry(DummyClasses dummyClass, int index) {
                 ConstantPool constantPoolSS = dummyClass.constantPoolSS;
                 checkIndex(constantPoolSS, index);
                 String value = constantPoolSS.getStringAt(index);
@@ -137,7 +158,11 @@ public class ConstantPoolTestCase {
         CONSTANT_METHODTYPE,
         CONSTANT_INVOKEDYNAMIC {
             @Override
-            public TestedCPEntry getTestedCPEntry(DummyClasses dummyClass, int index) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public TestedCPEntry getTestedCPEntry(DummyClasses dummyClass, int index) {
                 ConstantPool constantPoolSS = dummyClass.constantPoolSS;
                 checkIndex(constantPoolSS, index);
                 int nameAndTypeIndex = constantPoolSS.getNameAndTypeRefIndexAt(index);
@@ -153,7 +178,11 @@ public class ConstantPoolTestCase {
         },
         CONSTANT_INVALID;
 
-        public TestedCPEntry getTestedCPEntry(DummyClasses dummyClass, int index) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public TestedCPEntry getTestedCPEntry(DummyClasses dummyClass, int index) {
             return null; // returning null by default
         }
 
@@ -165,7 +194,11 @@ public class ConstantPoolTestCase {
             return dummyClass.testedCP.get(this);
         }
 
-        protected TestedCPEntry getTestedCPEntryForMethodAndField(DummyClasses dummyClass, int index) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected TestedCPEntry getTestedCPEntryForMethodAndField(DummyClasses dummyClass, int index) {
             ConstantPool constantPoolSS = dummyClass.constantPoolSS;
             checkIndex(constantPoolSS, index);
             String[] info = constantPoolSS.getMemberRefInfoAt(index);
@@ -178,7 +211,11 @@ public class ConstantPoolTestCase {
             return null;
         }
 
-        protected void checkIndex(ConstantPool constantPoolSS, int index) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                protected void checkIndex(ConstantPool constantPoolSS, int index) {
             ConstantPool.Tag tag = constantPoolSS.getTagAt(index);
             ConstantTypes type = mapTagToCPType(tag);
             if (!this.equals(type)) {

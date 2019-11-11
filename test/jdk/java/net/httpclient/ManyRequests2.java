@@ -44,6 +44,7 @@
  */
  // * @run main/othervm/timeout=40 -Djdk.httpclient.HttpClient.log=ssl ManyRequests
 
+@Bean
 public class ManyRequests2 {
 
     public static void main(String[] args) throws Exception {

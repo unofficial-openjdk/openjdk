@@ -52,6 +52,7 @@ import java.net.*;
  *
  * @author Jeff Dinkins
  */
+@Bean
 public class ToolTipDemo extends DemoModule {
 
     /**
@@ -118,7 +119,11 @@ public class ToolTipDemo extends DemoModule {
 
         // Use the contains method to set the tooltip text depending
         // on where the mouse is over the cow.
-        public boolean contains(int x, int y) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public boolean contains(int x, int y) {
             if(!cowgon.contains(new Point(x, y))) {
                 return false;
             }

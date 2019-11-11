@@ -29,6 +29,7 @@
 import java.nio.*;
 import java.nio.charset.*;
 
+@Bean
 public class TestMiscEUC_JP {
 
   public static void main(String[] args) throws Exception

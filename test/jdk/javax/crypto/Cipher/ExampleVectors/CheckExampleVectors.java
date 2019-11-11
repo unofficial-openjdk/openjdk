@@ -35,6 +35,7 @@ import java.util.function.*;
 import javax.crypto.*;
 import javax.crypto.spec.*;
 
+@Bean
 public class CheckExampleVectors {
 
     private enum Mode {

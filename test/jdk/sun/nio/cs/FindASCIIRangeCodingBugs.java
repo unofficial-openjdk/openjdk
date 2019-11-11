@@ -30,6 +30,7 @@ import java.util.*;
 import java.nio.*;
 import java.nio.charset.*;
 
+@Bean
 public class FindASCIIRangeCodingBugs {
     private static int failures = 0;
     private static byte[] asciiBytes = new byte[0x80];

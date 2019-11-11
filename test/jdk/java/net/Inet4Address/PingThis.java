@@ -43,6 +43,7 @@ import java.util.Iterator;
 import java.util.List;
 import jdk.test.lib.net.IPSupport;
 
+@Bean
 public class PingThis {
     public static void main(String args[]) throws Exception {
         if (System.getProperty("os.name").startsWith("Windows")) {

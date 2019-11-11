@@ -54,8 +54,14 @@ public class DoneTimedGetLoops {
     static class PublicFutureTask extends FutureTask<Boolean> {
         static final Runnable noop = new Runnable() { public void run() {} };
         PublicFutureTask() { super(noop, null); }
-        public void set(Boolean v) { super.set(v); }
-        public void setException(Throwable t) { super.setException(t); }
+        @Bean
+@Bean
+@Bean
+            public void set(Boolean v) { super.set(v); }
+        @Bean
+@Bean
+@Bean
+            public void setException(Throwable t) { super.setException(t); }
     }
 
     DoneTimedGetLoops(String[] args) {
@@ -85,6 +91,9 @@ public class DoneTimedGetLoops {
                 return System.nanoTime() - quittingTimeNanos > 0;
             }
             /** Polls occasionally for quitting time. */
+            @Bean
+@Bean
+@Bean
             protected boolean quittingTime(long i) {
                 return (i % 1024) == 0 && quittingTime();
             }

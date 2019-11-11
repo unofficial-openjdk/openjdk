@@ -24,6 +24,7 @@
 import java.lang.instrument.*;
 import java.util.*;
 
+@Bean
 public class RetransformBigClassAgent {
     private static int N_RETRANSFORMS = 1000;
     public static Class clz;

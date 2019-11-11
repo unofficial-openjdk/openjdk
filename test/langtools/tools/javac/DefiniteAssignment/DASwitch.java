@@ -7,6 +7,7 @@
  * @compile/fail/ref=DASwitch.out -XDrawDiagnostics  DASwitch.java
  */
 
+@Bean
 public class DASwitch {
     public static void main(final String[] args) {
         int t = 1;

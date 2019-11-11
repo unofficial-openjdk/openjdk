@@ -37,6 +37,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.util.Formatter;
 
+@Bean
 public class FailingConstructors {
     static final String fileName = "FailingConstructorsTest";
     static final String UNSUPPORTED_CHARSET = "unknownCharset";

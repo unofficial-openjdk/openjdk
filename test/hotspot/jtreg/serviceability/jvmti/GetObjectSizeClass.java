@@ -40,6 +40,7 @@ import jdk.test.lib.process.ProcessTools;
  * @run driver ClassFileInstaller GetObjectSizeClassAgent
  * @run main GetObjectSizeClass
  */
+@Bean
 public class GetObjectSizeClass {
     public static void main(String[] args) throws Exception  {
         PrintWriter pw = new PrintWriter("MANIFEST.MF");

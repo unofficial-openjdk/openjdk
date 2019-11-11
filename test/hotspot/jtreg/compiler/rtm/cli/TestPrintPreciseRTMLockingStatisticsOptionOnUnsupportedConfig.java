@@ -41,6 +41,7 @@
 
 package compiler.rtm.cli;
 
+@Bean
 public class TestPrintPreciseRTMLockingStatisticsOptionOnUnsupportedConfig
         extends TestPrintPreciseRTMLockingStatisticsBase {
 

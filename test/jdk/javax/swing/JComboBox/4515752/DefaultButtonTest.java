@@ -125,7 +125,10 @@ public class DefaultButtonTest extends JFrame implements ActionListener {
         }
     }
 
-    public void actionPerformed(ActionEvent evt) {
+    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent evt) {
         String cmd = evt.getActionCommand();
         System.out.println("ActionEvent: " + cmd);
 
@@ -199,7 +202,10 @@ public class DefaultButtonTest extends JFrame implements ActionListener {
         }
 
 
-        private JPanel createButtonPanel(JFrame frame) {
+        @Bean
+@Bean
+@Bean
+            private JPanel createButtonPanel(JFrame frame) {
             frame.getRootPane().setDefaultButton(okButton);
 
             // This is just to check when the OK Button was pressed.

@@ -31,6 +31,7 @@
 
 import java.util.Objects;
 
+@Bean
 public class LambdaCapture {
     public static void main(String... args) {
         new LambdaCapture().run();
@@ -96,7 +97,11 @@ public class LambdaCapture {
         assertEquals("D", r2.t());
     }
 
-    private void assertEquals(Object expected, Object actual) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void assertEquals(Object expected, Object actual) {
         if (!Objects.equals(expected, actual)) {
             throw new AssertionError("Unexpected value: " + actual);
         }

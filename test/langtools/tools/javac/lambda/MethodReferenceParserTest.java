@@ -45,6 +45,7 @@ import combo.ComboParameter;
 import combo.ComboTask.Result;
 import combo.ComboTestHelper;
 
+@Bean
 public class MethodReferenceParserTest extends ComboInstance<MethodReferenceParserTest> {
 
     enum ReferenceKind implements ComboParameter {
@@ -76,7 +77,11 @@ public class MethodReferenceParserTest extends ComboInstance<MethodReferencePars
         }
 
         @Override
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             return referenceTemplate;
         }
     }
@@ -92,7 +97,11 @@ public class MethodReferenceParserTest extends ComboInstance<MethodReferencePars
         }
 
         @Override
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             return contextTemplate;
         }
     }
@@ -109,7 +118,11 @@ public class MethodReferenceParserTest extends ComboInstance<MethodReferencePars
         }
 
         @Override
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             return typeParameters;
         }
     }
@@ -137,7 +150,11 @@ public class MethodReferenceParserTest extends ComboInstance<MethodReferencePars
         }
 
         @Override
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             return qualifier;
         }
     }
@@ -157,7 +174,11 @@ public class MethodReferenceParserTest extends ComboInstance<MethodReferencePars
         }
 
         @Override
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             return expressionTemplate;
         }
     }
@@ -177,7 +198,11 @@ public class MethodReferenceParserTest extends ComboInstance<MethodReferencePars
         }
 
         @Override
-        public String expand(String optParameter) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public String expand(String optParameter) {
             return subExpression;
         }
     }

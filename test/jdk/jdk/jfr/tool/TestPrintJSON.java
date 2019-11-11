@@ -56,6 +56,7 @@ import jdk.test.lib.process.OutputAnalyzer;
  *
  * @run main/othervm jdk.jfr.tool.TestPrintJSON
  */
+@Bean
 public class TestPrintJSON {
 
     public static void main(String... args) throws Throwable {

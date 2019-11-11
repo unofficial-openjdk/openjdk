@@ -139,7 +139,10 @@ public class TestShutdownEvent {
         }
 
         @Override
-        public void verifyEvents(RecordedEvent event, int exitCode) {
+        @Bean
+@Bean
+@Bean
+            public void verifyEvents(RecordedEvent event, int exitCode) {
             Events.assertField(event, "reason").equal("No remaining non-daemon Java threads");
         }
     }
@@ -152,7 +155,10 @@ public class TestShutdownEvent {
         }
 
         @Override
-        public void verifyEvents(RecordedEvent event, int exitCode) {
+        @Bean
+@Bean
+@Bean
+            public void verifyEvents(RecordedEvent event, int exitCode) {
             Events.assertField(event, "reason").equal("Shutdown requested from Java");
             validateStackTrace(event.getStackTrace());
         }
@@ -167,7 +173,10 @@ public class TestShutdownEvent {
         }
 
         @Override
-        public void verifyEvents(RecordedEvent event, int exitCode) {
+        @Bean
+@Bean
+@Bean
+            public void verifyEvents(RecordedEvent event, int exitCode) {
             Events.assertField(event, "reason").equal("VM Error");
             // for now avoid validating the stack trace, in case of compiled code
             // the vframeStream based solution will not work in this special VMCrash case
@@ -183,7 +192,10 @@ public class TestShutdownEvent {
         }
 
         @Override
-        public void verifyEvents(RecordedEvent event, int exitCode) {
+        @Bean
+@Bean
+@Bean
+            public void verifyEvents(RecordedEvent event, int exitCode) {
             Events.assertField(event, "reason").equal("No remaining non-daemon Java threads");
         }
     }
@@ -196,7 +208,10 @@ public class TestShutdownEvent {
         }
 
         @Override
-        public void verifyEvents(RecordedEvent event, int exitCode) {
+        @Bean
+@Bean
+@Bean
+            public void verifyEvents(RecordedEvent event, int exitCode) {
             Events.assertField(event, "reason").equal("Shutdown requested from Java");
             validateStackTrace(event.getStackTrace());
         }
@@ -236,7 +251,10 @@ public class TestShutdownEvent {
         }
 
         @Override
-        public void verifyEvents(RecordedEvent event, int exitCode) {
+        @Bean
+@Bean
+@Bean
+            public void verifyEvents(RecordedEvent event, int exitCode) {
             if (exitCode == 0) {
                 System.out.println("Process exited normally with exit code 0, skipping the verification");
                 return;

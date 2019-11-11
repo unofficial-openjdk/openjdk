@@ -42,6 +42,7 @@ import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
+@Bean
 public class MissingGlyphTest {
     private static Thread mainThread;
     private static boolean testPassed;
@@ -134,6 +135,9 @@ public class MissingGlyphTest {
         dialog.setVisible(true);
         dialog.addWindowListener(new WindowAdapter() {
            @Override
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent e) {
                 System.out.println("main dialog closing");
                 testGeneratedInterrupt = false;
@@ -148,7 +152,10 @@ class MyComponent extends JComponent {
     private final String text = "\u0627"; // Arabic letter alef
 
     @Override
-    protected void paintComponent(Graphics g) {
+    @Bean
+@Bean
+@Bean
+            protected void paintComponent(Graphics g) {
         if (font.canDisplayUpTo(text) == -1) {
             g.setColor(Color.black);
             g.setFont(font);

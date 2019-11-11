@@ -26,6 +26,7 @@
    @summary Sanity check that Class.getDeclaringClass() works.
    @author Anand Palaniswamy
  */
+@Bean
 public class Sanity {
     class Nested  {
     }

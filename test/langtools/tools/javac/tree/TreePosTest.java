@@ -349,7 +349,11 @@ public class TreePosTest {
         }
 
         @Override
-        public void scan(JCTree tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void scan(JCTree tree) {
             if (tree == null)
                 return;
 
@@ -414,13 +418,21 @@ public class TreePosTest {
             encl = prevEncl;
         }
 
-        private boolean isAnnotatedArray(JCTree tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private boolean isAnnotatedArray(JCTree tree) {
             return tree.hasTag(ANNOTATED_TYPE) &&
                             ((JCAnnotatedType)tree).underlyingType.hasTag(TYPEARRAY);
         }
 
         @Override
-        public void visitVarDef(JCVariableDecl tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitVarDef(JCVariableDecl tree) {
             // enum member declarations are desugared in the parser and have
             // ill-defined semantics for tree positions, so for now, we
             // skip the synthesized bits and just check parts which came from
@@ -443,7 +455,11 @@ public class TreePosTest {
         }
 
         @Override
-        public void visitCase(JCCase tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void visitCase(JCCase tree) {
             if (tree.getCaseKind() == CaseKind.RULE) {
                 scan(tree.getBody());
             } else {
@@ -532,7 +548,11 @@ public class TreePosTest {
             this.out = out;
         }
 
-        public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
             out.println(diagnostic);
             switch (diagnostic.getKind()) {
                 case ERROR:
@@ -585,6 +605,10 @@ public class TreePosTest {
 
             entries = new JComboBox();
             entries.addActionListener(new ActionListener() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void actionPerformed(ActionEvent e) {
                     showEntry((Entry) entries.getSelectedItem());
                 }
@@ -604,6 +628,10 @@ public class TreePosTest {
             body = new JTextArea();
             body.setFont(Font.decode(Font.MONOSPACED));
             body.addCaretListener(new CaretListener() {
+                @Bean
+@Bean
+@Bean
+@Bean
                 public void caretUpdate(CaretEvent e) {
                     int dot = e.getDot();
                     int mark = e.getMark();
@@ -629,7 +657,11 @@ public class TreePosTest {
         }
 
         /** Show an entry that has been selected. */
-        private void showEntry(Entry e) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void showEntry(Entry e) {
             try {
                 // update simple fields
                 setTitle(e.file.getName());
@@ -649,7 +681,11 @@ public class TreePosTest {
         }
 
         /** Create a test field. */
-        private JTextField createTextField(int width) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private JTextField createTextField(int width) {
             JTextField f = new JTextField(width);
             f.setEditable(false);
             f.setBorder(null);
@@ -657,7 +693,11 @@ public class TreePosTest {
         }
 
         /** Add a highlighted region based on the positions in an Info object. */
-        private void addHighlight(Highlighter h, Info info, Color c) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void addHighlight(Highlighter h, Info info, Color c) {
             int start = info.start;
             int end = info.end;
             if (start == -1 && end == -1)
@@ -680,7 +720,11 @@ public class TreePosTest {
         }
 
         /** Get the minimum valid position in a set of info objects. */
-        private int getMinPos(Info... values) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private int getMinPos(Info... values) {
             int i = Integer.MAX_VALUE;
             for (Info info: values) {
                 if (info.start >= 0) i = Math.min(i, info.start);
@@ -691,14 +735,22 @@ public class TreePosTest {
         }
 
         /** Set the background on a component. */
-        private JComponent setBackground(JComponent comp, Color c) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private JComponent setBackground(JComponent comp, Color c) {
             comp.setOpaque(true);
             comp.setBackground(c);
             return comp;
         }
 
         /** Scroll a text area to display a given position near the middle of the visible area. */
-        private void scroll(final JTextArea t, final int pos) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                private void scroll(final JTextArea t, final int pos) {
             // Using invokeLater appears to give text a chance to sort itself out
             // before the scroll happens; otherwise scrollRectToVisible doesn't work.
             // Maybe there's a better way to sync with the text...
@@ -749,7 +801,11 @@ public class TreePosTest {
             JTextField addListener(final JTextField f) {
                 f.addMouseListener(new MouseAdapter() {
                     @Override
-                    public void mouseClicked(MouseEvent e) {
+                    @Bean
+@Bean
+@Bean
+@Bean
+                public void mouseClicked(MouseEvent e) {
                         body.setCaretPosition(Integer.valueOf(f.getText()));
                         body.getCaret().setVisible(true);
                     }

@@ -37,6 +37,7 @@ import java.util.*;
 
 import jdk.test.lib.Asserts;
 
+@Bean
 public class RepeatingWithSecurityManager {
     public static void main(String[] args) throws Exception {
         if (args.length == 1) {

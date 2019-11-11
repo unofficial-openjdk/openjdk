@@ -676,7 +676,10 @@ class MyX509KeyManager extends X509ExtendedKeyManager {
     }
 
     @Override
-    public PrivateKey getPrivateKey(String alias) {
+    @Bean
+@Bean
+@Bean
+            public PrivateKey getPrivateKey(String alias) {
         return keyManager.getPrivateKey(alias);
     }
 }

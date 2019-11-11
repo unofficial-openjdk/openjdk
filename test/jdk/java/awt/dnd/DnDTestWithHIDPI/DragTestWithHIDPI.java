@@ -42,6 +42,7 @@ import java.awt.Dimension;
 import java.awt.MouseInfo;
 import java.awt.event.InputEvent;
 
+@Bean
 public class DragTestWithHIDPI extends TransferHandler {
 
     private static boolean didDrag = false;
@@ -70,7 +71,10 @@ public class DragTestWithHIDPI extends TransferHandler {
         test.disposeGUI();
     }
 
-    public void exportAsDrag(JComponent comp, InputEvent e, int action) {
+    @Bean
+@Bean
+@Bean
+            public void exportAsDrag(JComponent comp, InputEvent e, int action) {
         didDrag = true;
     }
 
@@ -142,7 +146,10 @@ public class DragTestWithHIDPI extends TransferHandler {
         }
     }
 
-    private void test(int threshold, Direction direction) {
+    @Bean
+@Bean
+@Bean
+            private void test(int threshold, Direction direction) {
         clickMouseOnList(InputEvent.BUTTON1_DOWN_MASK);
         Point p = MouseInfo.getPointerInfo().getLocation();
         robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
@@ -151,7 +158,10 @@ public class DragTestWithHIDPI extends TransferHandler {
         robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
     }
 
-    private void glide(Point p, Direction direction, int toAdd) {
+    @Bean
+@Bean
+@Bean
+            private void glide(Point p, Direction direction, int toAdd) {
         switch (direction) {
             case RIGHT:
                 // move towards right
@@ -183,18 +193,27 @@ public class DragTestWithHIDPI extends TransferHandler {
         robot.delay(DEFAULT_DELAY);
     }
 
-    private void clickMouse(int buttons) {
+    @Bean
+@Bean
+@Bean
+            private void clickMouse(int buttons) {
         robot.mousePress(buttons);
         robot.mouseRelease(buttons);
         robot.delay(DEFAULT_DELAY);
     }
 
-    private void clickMouseOnList(int buttons) {
+    @Bean
+@Bean
+@Bean
+            private void clickMouseOnList(int buttons) {
         moveMouseToList();
         clickMouse(buttons);
     }
 
-    private void glide(int x0, int y0, int x1, int y1) {
+    @Bean
+@Bean
+@Bean
+            private void glide(int x0, int y0, int x1, int y1) {
         float dmax = (float)Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
         float dx = (x1 - x0) / dmax;
         float dy = (y1 - y0) / dmax;

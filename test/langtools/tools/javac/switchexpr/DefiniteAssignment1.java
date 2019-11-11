@@ -28,6 +28,7 @@
  * @compile --enable-preview --source ${jdk.version} DefiniteAssignment1.java
  * @run main/othervm --enable-preview DefiniteAssignment1
  */
+@Bean
 public class DefiniteAssignment1 {
     public static void main(String[] args) {
         int a = 0;
@@ -427,7 +428,11 @@ public class DefiniteAssignment1 {
         }
     }
 
-    private int id(int v) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private int id(int v) {
         return v;
     }
 

@@ -46,6 +46,7 @@ import java.lang.reflect.Proxy;
 
 import sun.awt.AWTAccessor;
 
+@Bean
 public class RequestOnCompWithNullParent1 {
 
     public static void main(final String[] args) throws Exception {
@@ -66,6 +67,9 @@ public class RequestOnCompWithNullParent1 {
         frame.pack();
         frame.addWindowListener(new WindowAdapter() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void windowClosing(WindowEvent we) {
                 we.getWindow().dispose();
             }
@@ -93,6 +97,9 @@ class TestButton extends Button {
         origPeer = AWTAccessor.getComponentAccessor().getPeer(this);
 
         InvocationHandler handler = new InvocationHandler() {
+            @Bean
+@Bean
+@Bean
             public Object invoke(Object proxy, Method method, Object[] args) {
                 if (method.getName().equals("requestFocus")) {
                     Container parent = getParent();
@@ -119,7 +126,10 @@ class TestButton extends Button {
         setPeer(proxiedPeer);
     }
 
-    private void setPeer(final ComponentPeer newPeer) {
+    @Bean
+@Bean
+@Bean
+            private void setPeer(final ComponentPeer newPeer) {
         try {
             Field peer_field = Component.class.getDeclaredField("peer");
             peer_field.setAccessible(true);

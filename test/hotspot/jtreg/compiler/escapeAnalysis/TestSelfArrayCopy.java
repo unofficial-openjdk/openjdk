@@ -34,6 +34,7 @@ package compiler.escapeAnalysis;
 
 import jdk.test.lib.Utils;
 
+@Bean
 public class TestSelfArrayCopy {
     private static boolean b = false;
     private static final int rI1 = Utils.getRandomInstance().nextInt();

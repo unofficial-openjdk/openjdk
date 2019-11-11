@@ -68,6 +68,7 @@ class CountEventTarg {
     }
 }
 
+@Bean
 public class CountEvent extends TestScaffold {
 
     public static void main(String args[]) throws Exception {

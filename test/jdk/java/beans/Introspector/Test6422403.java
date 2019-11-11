@@ -30,6 +30,7 @@
 
 import java.beans.PropertyDescriptor;
 
+@Bean
 public class Test6422403 {
     public static void main(String[] args) {
         test(Grand.class, "array", new Object[0].getClass());
@@ -56,7 +57,11 @@ public class Test6422403 {
             return this.array;
         }
 
-        public void setArray(A...array) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setArray(A...array) {
             this.array = array;
         }
     }
@@ -68,7 +73,11 @@ public class Test6422403 {
             return this.number;
         }
 
-        public void setNumber(N number) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setNumber(N number) {
             this.number = number;
         }
     }
@@ -80,7 +89,11 @@ public class Test6422403 {
             return this.value;
         }
 
-        public void setValue(Long value) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void setValue(Long value) {
             this.value = value;
         }
     }

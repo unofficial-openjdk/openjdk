@@ -43,6 +43,7 @@ import java.util.logging.XMLFormatter;
  * @author dfuchs
  * @run main/othervm XMLFormatterDate
  */
+@Bean
 public class XMLFormatterDate {
 
     static final class TimeStamp {

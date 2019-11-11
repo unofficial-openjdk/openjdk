@@ -38,6 +38,7 @@ import jdk.test.lib.process.ProcessTools;
  *
  * @run main jdk.jfr.startupargs.TestMultipleStartupRecordings
  */
+@Bean
 public class TestMultipleStartupRecordings {
 
     private static final String START_FLIGHT_RECORDING = "-XX:StartFlightRecording";

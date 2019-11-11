@@ -34,6 +34,7 @@ package java.util;
  *
  * @since 1.5
  */
+@Bean
 public class MissingFormatWidthException extends IllegalFormatException {
 
     @java.io.Serial

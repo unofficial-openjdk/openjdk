@@ -44,6 +44,7 @@ import java.util.jar.Pack200;
  * @author ksrini
  */
 
+@Bean
 public class TestExceptions {
 
     static final File testJar = new File("test.jar");

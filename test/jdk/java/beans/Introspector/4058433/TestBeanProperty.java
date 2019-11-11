@@ -34,6 +34,7 @@ import java.util.Arrays;
  * @author Sergey Malenkov
  * @library ..
  */
+@Bean
 public class TestBeanProperty {
     public static void main(String[] args) throws Exception {
         Class<?>[] types =
@@ -109,7 +110,10 @@ public class TestBeanProperty {
             return this.value;
         }
 
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
     }
@@ -122,15 +126,24 @@ public class TestBeanProperty {
             return this.value;
         }
 
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
 
-        public void addPropertyChangeListener(PropertyChangeListener listener) {
+        @Bean
+@Bean
+@Bean
+            public void addPropertyChangeListener(PropertyChangeListener listener) {
             this.pcs.addPropertyChangeListener(listener);
         }
 
-        public void removePropertyChangeListener(PropertyChangeListener listener) {
+        @Bean
+@Bean
+@Bean
+            public void removePropertyChangeListener(PropertyChangeListener listener) {
             this.pcs.removePropertyChangeListener(listener);
         }
     }
@@ -144,15 +157,24 @@ public class TestBeanProperty {
         }
 
         @BeanProperty(bound = false)
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
 
-        public void addPropertyChangeListener(PropertyChangeListener listener) {
+        @Bean
+@Bean
+@Bean
+            public void addPropertyChangeListener(PropertyChangeListener listener) {
             this.pcs.addPropertyChangeListener(listener);
         }
 
-        public void removePropertyChangeListener(PropertyChangeListener listener) {
+        @Bean
+@Bean
+@Bean
+            public void removePropertyChangeListener(PropertyChangeListener listener) {
             this.pcs.removePropertyChangeListener(listener);
         }
     }
@@ -165,7 +187,10 @@ public class TestBeanProperty {
         }
 
         @BeanProperty(expert = true)
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
     }
@@ -178,7 +203,10 @@ public class TestBeanProperty {
         }
 
         @BeanProperty(hidden = true)
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
     }
@@ -191,7 +219,10 @@ public class TestBeanProperty {
         }
 
         @BeanProperty(preferred = true)
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
     }
@@ -204,7 +235,10 @@ public class TestBeanProperty {
         }
 
         @BeanProperty(required = true)
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
     }
@@ -217,7 +251,10 @@ public class TestBeanProperty {
         }
 
         @BeanProperty(visualUpdate = true)
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
     }
@@ -231,7 +268,10 @@ public class TestBeanProperty {
         }
 
         @BeanProperty(description = "setter")
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
     }
@@ -245,7 +285,10 @@ public class TestBeanProperty {
         }
 
         @BeanProperty()
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
     }
@@ -259,7 +302,10 @@ public class TestBeanProperty {
         }
 
         @BeanProperty(enumerationValues = {})
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
     }
@@ -274,7 +320,10 @@ public class TestBeanProperty {
         @BeanProperty(enumerationValues = {
                 "javax.swing.SwingConstants.LEFT",
                 "javax.swing.SwingConstants.RIGHT"})
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
     }
@@ -287,7 +336,10 @@ public class TestBeanProperty {
         }
 
         @BeanProperty(enumerationValues = {"ZERO", "ONE"})
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
 
@@ -305,7 +357,10 @@ public class TestBeanProperty {
         @BeanProperty(enumerationValues = {
                 "X.ZERO",
                 "X.ONE"})
-        public void setValue(int value) {
+        @Bean
+@Bean
+@Bean
+            public void setValue(int value) {
             this.value = value;
         }
     }

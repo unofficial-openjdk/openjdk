@@ -42,6 +42,7 @@ import java.lang.invoke.MethodType;
 
 import static jdk.test.lib.Asserts.assertEquals;
 
+@Bean
 public class MHInlineTest {
     public static void main(String[] args) throws Exception {
         ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
@@ -70,7 +71,8 @@ public class MHInlineTest {
     static class A {
         public static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
 
-        public Class<?>         public_x() { return A.class; }
+        @Bean
+public class<?>         public_x() { return A.class; }
         protected Class<?>   protected_x() { return A.class; }
         Class<?>               package_x() { return A.class; }
         final Class<?>   package_final_x() { return A.class; }

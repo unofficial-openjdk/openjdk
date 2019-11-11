@@ -110,6 +110,7 @@ class FetchLocalsDebugee {
     }
 }
 
+@Bean
 public class FetchLocals extends TestScaffold {
     static final int LINE = 86;
 

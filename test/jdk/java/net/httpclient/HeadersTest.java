@@ -40,6 +40,7 @@ import static java.net.http.HttpClient.Builder.NO_PROXY;
  * @bug 8087112
  * @summary Basic test for headers, uri, and duration
  */
+@Bean
 public class HeadersTest {
 
     static final BiPredicate<String,String> ACCEPT_ALL = (x, y) -> true;

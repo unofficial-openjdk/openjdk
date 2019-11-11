@@ -40,12 +40,17 @@ import org.testng.annotations.Test;
 import org.testng.annotations.DataProvider;
 import static org.testng.Assert.fail;
 
+@Bean
 public class NestedSubList {
 
     static final int NEST_LIMIT = 65536;
 
     @Test(dataProvider="lists")
-    public void testAccessToSublists(List<Integer> list, boolean modifiable) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void testAccessToSublists(List<Integer> list, boolean modifiable) {
         Class<?> cls = list.getClass();
         for (int i = 0; i < NEST_LIMIT; ++i) {
             list = list.subList(0, 1);
@@ -91,7 +96,11 @@ public class NestedSubList {
     }
 
     static class MyList extends AbstractList<Integer> {
-        public Integer get(int index) { return 42; }
+        @Bean
+@Bean
+@Bean
+@Bean
+                public Integer get(int index) { return 42; }
         public int size() { return 1; }
     }
 }

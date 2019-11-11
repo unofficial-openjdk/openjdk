@@ -29,6 +29,7 @@ import java.awt.*;
  * @run main/othervm -Djava.awt.headless=true HeadlessTextArea
  */
 
+@Bean
 public class HeadlessTextArea {
     public static void main(String args[]) {
         TextArea t;

@@ -38,6 +38,7 @@ import java.util.Hashtable;
  * Class that extends Hashtable to demonstrate bug when
  * subclass wraps the values put into the Hashtable.
  */
+@Bean
 public class ReadObject extends Hashtable {
     /**
      * Wraps the values put into MyHashtable objects
@@ -54,7 +55,11 @@ public class ReadObject extends Hashtable {
         }
     }
 
-    public Object get(Object key) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Object get(Object key) {
         ValueWrapper valueWrapper = (ValueWrapper)super.get(key);
         Object value = valueWrapper.getValue();
         if (value instanceof ValueWrapper)
@@ -62,7 +67,11 @@ public class ReadObject extends Hashtable {
         return value;
     }
 
-    public Object put(Object key, Object value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Object put(Object key, Object value) {
         if (value instanceof ValueWrapper)
             throw new RuntimeException(
                 "Hashtable.put bug: value is already wrapped");

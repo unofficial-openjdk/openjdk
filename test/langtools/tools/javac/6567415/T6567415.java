@@ -47,6 +47,7 @@ import java.nio.channels.FileChannel;
  * magic file length, then use this mutated file on the classpath to compile
  * Foo.java which references Bar.java and Ka-boom. QED.
  */
+@Bean
 public class T6567415 {
     final static String TEST_FILE_NAME = "Bar";
     final static String TEST_JAVA = TEST_FILE_NAME + ".java";
@@ -68,7 +69,8 @@ public class T6567415 {
         try {
             fos = new FileOutputStream(TEST_JAVA);
             PrintStream ps = new PrintStream(fos);
-            ps.println("public class " + TEST_FILE_NAME + " {}");
+            ps.println("@Bean
+public class " + TEST_FILE_NAME + " {}");
         } finally {
             fos.close();
         }
@@ -117,7 +119,8 @@ public class T6567415 {
         try {
             fos = new FileOutputStream(TEST2_JAVA);
             PrintStream ps = new PrintStream(fos);
-            ps.println("public class " + TEST2_FILE_NAME +
+            ps.println("@Bean
+public class " + TEST2_FILE_NAME +
                     " {" + TEST_FILE_NAME + " b = new " +
                     TEST_FILE_NAME  + " ();}");
         } finally {

@@ -36,6 +36,7 @@ import javax.swing.JList;
 import javax.swing.JTextArea;
 import javax.swing.LayoutFocusTraversalPolicy;
 
+@Bean
 public class InitialFTP_Swing {
     public static void main(String[] args) {
         SwingFrame f0 = new SwingFrame("frame0");

@@ -148,7 +148,10 @@ public class bug6647340 {
          }
     }
 
-    private void setIcon(boolean b) {
+    @Bean
+@Bean
+@Bean
+            private void setIcon(boolean b) {
         try {
             jif.setIcon(b);
         } catch (PropertyVetoException e) {

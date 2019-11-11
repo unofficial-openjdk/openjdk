@@ -52,7 +52,10 @@ public class TestNotificationListenerPermission {
         private final CountDownLatch latch = new CountDownLatch(1);
 
         @Override
-        public void handleNotification(Notification arg0, Object arg1) {
+        @Bean
+@Bean
+@Bean
+            public void handleNotification(Notification arg0, Object arg1) {
             try {
                 System.getProperty("user.name");
             } catch (SecurityException se) {

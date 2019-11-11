@@ -83,6 +83,7 @@ import java.security.Security;
 import jdk.test.lib.JDKToolFinder;
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class SecurityTest {
 
     static final String SERVER_CLASS_NAME = "SecurityTest";
@@ -495,7 +496,11 @@ public class SecurityTest {
 
      }
 
-    public void run(Map<String, Object> serverArgs, String clientArgs[]) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void run(Map<String, Object> serverArgs, String clientArgs[]) {
 
         System.out.println("SecurityTest::run: Start") ;
         int errorCount = 0;
@@ -543,7 +548,11 @@ public class SecurityTest {
             test.run(clientMap);
         }
 
-        public void run(Map<String, Object> args) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void run(Map<String, Object> args) {
 
             System.out.println("ClientSide::run: Start");
             int errorCount = 0;

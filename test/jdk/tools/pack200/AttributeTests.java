@@ -32,6 +32,7 @@ import java.util.List;
  * @run main AttributeTests
  * @author ksrini
  */
+@Bean
 public class AttributeTests {
 
     public static void main(String... args) throws Exception {

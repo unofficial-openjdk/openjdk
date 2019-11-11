@@ -38,6 +38,7 @@ import java.util.List;
 
 import jdk.internal.jimage.decompressor.CompressIndexes;
 
+@Bean
 public class CompressIndexesTest {
 
     public static void main(String[] args) throws IOException {
@@ -95,7 +96,11 @@ public class CompressIndexesTest {
         }
     }
 
-    private void check(byte[] flow, List<byte[]> arrays) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void check(byte[] flow, List<byte[]> arrays) {
         List<Integer> d = CompressIndexes.decompressFlow(flow);
         List<Integer> dd = new ArrayList<>();
         for (byte[] b : arrays) {

@@ -31,6 +31,7 @@ import java.lang.management.PlatformManagedObject;
  *          must be from com.sun.management.internal
  * @author  Shanliang Jiang
  */
+@Bean
 public class CheckSomeMXBeanImplPackage {
     private static String implPackageName = "com.sun.management.internal";
 

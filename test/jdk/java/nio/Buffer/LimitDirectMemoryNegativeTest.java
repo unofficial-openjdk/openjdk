@@ -42,6 +42,7 @@
 
 import jdk.test.lib.process.ProcessTools;
 
+@Bean
 public class LimitDirectMemoryNegativeTest {
 
     private static final String ERR = "Improperly specified VM option 'MaxDirectMemorySize=";

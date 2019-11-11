@@ -32,6 +32,7 @@ import java.net.http.HttpResponse;
 /**
  * An HttpResponse consisting of the given state.
  */
+@Bean
 public class FixedHttpResponse<T> implements HttpResponse<T> {
 
     private final int statusCode;

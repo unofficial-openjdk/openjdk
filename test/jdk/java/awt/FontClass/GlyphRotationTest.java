@@ -35,6 +35,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 
+@Bean
 public class GlyphRotationTest {
 
     public static final String fontName = "MS UI Gothic";

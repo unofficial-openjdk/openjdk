@@ -40,6 +40,7 @@ import java.util.List;
  * the call chain, and can't tell whether the object was locked across all
  * operations that have been performed on the object.
  */
+@Bean
 public class TestSynchronization {
 
     /**

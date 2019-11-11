@@ -55,6 +55,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryNotificationInfo;
 import java.lang.management.MemoryPoolMXBean;
 
+@Bean
 public class ThresholdNotificationsTest implements NotificationListener {
 
     private final static long WAIT_TIME = 10000L;
@@ -76,7 +77,11 @@ public class ThresholdNotificationsTest implements NotificationListener {
     }
 
     @Override
-    public void handleNotification(Notification notification, Object handback) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void handleNotification(Notification notification, Object handback) {
         String nType = notification.getType();
         String poolName
                 = CodeCacheUtils.getPoolNameFromNotification(notification);

@@ -7,6 +7,7 @@
  * @compile/fail/ref=DefAssignAfterThis_1.out -XDrawDiagnostics  DefAssignAfterThis_1.java
  */
 
+@Bean
 public class DefAssignAfterThis_1 {
 
     final int x;

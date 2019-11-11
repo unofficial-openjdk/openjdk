@@ -122,7 +122,11 @@ public class JavacTreeScannerTest extends AbstractTreeScannerTest {
 
         /** Record all tree nodes found by scanner. */
         @Override
-        public void scan(JCTree tree) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void scan(JCTree tree) {
             if (tree == null)
                 return;
             //System.err.println("FOUND: " + tree.getTag() + " " + trim(tree, 64));
@@ -131,7 +135,11 @@ public class JavacTreeScannerTest extends AbstractTreeScannerTest {
         }
 
         /** record all tree nodes found by reflection. */
-        public void reflectiveScan(Object o) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void reflectiveScan(Object o) {
             if (o == null)
                 return;
             if (o instanceof JCTree) {

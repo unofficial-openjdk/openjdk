@@ -30,6 +30,7 @@
 
 import java.io.*;
 
+@Bean
 public class SkipNegative {
     public static void main(String argv[]) throws Exception {
         char[] cbuf = "testString".toCharArray();

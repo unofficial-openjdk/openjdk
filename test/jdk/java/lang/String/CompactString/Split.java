@@ -164,7 +164,10 @@ public class Split extends CompactString {
     }
 
     @Test(dataProvider = "provider")
-    public void testSplit(String str, String regex, int limit, String[] expected) {
+    @Bean
+@Bean
+@Bean
+            public void testSplit(String str, String regex, int limit, String[] expected) {
         map.get(str)
                 .forEach(
                         (source, data) -> {

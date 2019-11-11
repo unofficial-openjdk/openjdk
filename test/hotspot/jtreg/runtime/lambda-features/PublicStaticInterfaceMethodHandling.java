@@ -40,6 +40,7 @@ interface InterfaceWithStaticAndDefaultMethods {
     }
 }
 
+@Bean
 public class PublicStaticInterfaceMethodHandling  {
     public static void main(String[] args) {
         TestClass tc = new TestClass();

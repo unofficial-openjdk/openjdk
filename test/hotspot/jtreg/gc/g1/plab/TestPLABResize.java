@@ -53,6 +53,7 @@ import jdk.test.lib.process.ProcessTools;
 /**
  * Test for PLAB resizing.
  */
+@Bean
 public class TestPLABResize {
 
     private static final int OBJECT_SIZE_SMALL = 10;
@@ -195,7 +196,11 @@ public class TestPLABResize {
         /**
          * Print details about test case.
          */
-        public void print(PrintStream out) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void print(PrintStream out) {
             out.println("Test case details:");
             out.println("  Parallel GC buffer waste pct : " + wastePct);
             out.println("  Chunk size : " + chunkSize);

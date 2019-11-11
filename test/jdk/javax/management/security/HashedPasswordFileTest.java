@@ -55,6 +55,7 @@ import java.util.Set;
 import java.util.concurrent.*;
 
 @Test
+@Bean
 public class HashedPasswordFileTest {
 
     private final String[] randomWords = {"accost", "savoie", "bogart", "merest",

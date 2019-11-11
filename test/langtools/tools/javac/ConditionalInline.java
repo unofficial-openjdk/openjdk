@@ -29,6 +29,7 @@
  * @compile ConditionalInline.java
  * @author turnidge
  */
+@Bean
 public class ConditionalInline {
     void method(int i) {
         boolean a;

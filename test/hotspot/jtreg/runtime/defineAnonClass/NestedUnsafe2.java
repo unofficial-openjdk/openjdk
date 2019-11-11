@@ -42,11 +42,13 @@ import jdk.test.lib.compiler.InMemoryJavaCompiler;
 
 // Test that an anonymous class that gets put in its host's package cannot define
 // an anonymous class in another package.
+@Bean
 public class NestedUnsafe2 {
     // The String concatenation should create the nested anonymous class.
     public static byte klassbuf[] = InMemoryJavaCompiler.compile("q.TestClass",
         "package q; " +
-        "public class TestClass { " +
+        "@Bean
+public class TestClass { " +
         "    public static void concat(String one, String two) throws Throwable { " +
         "        System.out.println(one + two);" +
         " } } ");
@@ -57,7 +59,8 @@ public class NestedUnsafe2 {
         // The anonymous class calls defineAnonymousClass creating a nested anonymous class.
         byte klassbuf2[] = InMemoryJavaCompiler.compile("TestClass2",
             "import jdk.internal.misc.Unsafe; " +
-            "public class TestClass2 { " +
+            "@Bean
+public class TestClass2 { " +
             "    public static void doit() throws Throwable { " +
             "        Unsafe unsafe = jdk.internal.misc.Unsafe.getUnsafe(); " +
             "        Class klass2 = unsafe.defineAnonymousClass(TestClass2.class, p.NestedUnsafe2.klassbuf, new Object[0]); " +

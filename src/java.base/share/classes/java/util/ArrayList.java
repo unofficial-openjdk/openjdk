@@ -106,6 +106,7 @@ import jdk.internal.util.ArraysSupport;
  * @see     Vector
  * @since   1.2
  */
+@Bean
 public class ArrayList<E> extends AbstractList<E>
         implements List<E>, RandomAccess, Cloneable, java.io.Serializable
 {
@@ -211,7 +212,8 @@ public class ArrayList<E> extends AbstractList<E>
      *
      * @param minCapacity the desired minimum capacity
      */
-    public void ensureCapacity(int minCapacity) {
+@Bean
+        public void ensureCapacity(int minCapacity) {
         if (minCapacity > elementData.length
             && !(elementData == DEFAULTCAPACITY_EMPTY_ELEMENTDATA
                  && minCapacity <= DEFAULT_CAPACITY)) {
@@ -270,7 +272,8 @@ public class ArrayList<E> extends AbstractList<E>
      * @param o element whose presence in this list is to be tested
      * @return {@code true} if this list contains the specified element
      */
-    public boolean contains(Object o) {
+@Bean
+        public boolean contains(Object o) {
         return indexOf(o) >= 0;
     }
 
@@ -281,7 +284,8 @@ public class ArrayList<E> extends AbstractList<E>
      * {@code Objects.equals(o, get(i))},
      * or -1 if there is no such index.
      */
-    public int indexOf(Object o) {
+@Bean
+        public int indexOf(Object o) {
         return indexOfRange(o, 0, size);
     }
 
@@ -310,7 +314,8 @@ public class ArrayList<E> extends AbstractList<E>
      * {@code Objects.equals(o, get(i))},
      * or -1 if there is no such index.
      */
-    public int lastIndexOf(Object o) {
+@Bean
+        public int lastIndexOf(Object o) {
         return lastIndexOfRange(o, 0, size);
     }
 
@@ -422,7 +427,8 @@ public class ArrayList<E> extends AbstractList<E>
      * @return the element at the specified position in this list
      * @throws IndexOutOfBoundsException {@inheritDoc}
      */
-    public E get(int index) {
+@Bean
+        public E get(int index) {
         Objects.checkIndex(index, size);
         return elementData(index);
     }
@@ -436,7 +442,8 @@ public class ArrayList<E> extends AbstractList<E>
      * @return the element previously at the specified position
      * @throws IndexOutOfBoundsException {@inheritDoc}
      */
-    public E set(int index, E element) {
+@Bean
+        public E set(int index, E element) {
         Objects.checkIndex(index, size);
         E oldValue = elementData(index);
         elementData[index] = element;
@@ -448,7 +455,8 @@ public class ArrayList<E> extends AbstractList<E>
      * bytecode size under 35 (the -XX:MaxInlineSize default value),
      * which helps when add(E) is called in a C1-compiled loop.
      */
-    private void add(E e, Object[] elementData, int s) {
+@Bean
+        private void add(E e, Object[] elementData, int s) {
         if (s == elementData.length)
             elementData = grow();
         elementData[s] = e;
@@ -461,7 +469,8 @@ public class ArrayList<E> extends AbstractList<E>
      * @param e element to be appended to this list
      * @return {@code true} (as specified by {@link Collection#add})
      */
-    public boolean add(E e) {
+@Bean
+        public boolean add(E e) {
         modCount++;
         add(e, elementData, size);
         return true;
@@ -476,7 +485,8 @@ public class ArrayList<E> extends AbstractList<E>
      * @param element element to be inserted
      * @throws IndexOutOfBoundsException {@inheritDoc}
      */
-    public void add(int index, E element) {
+@Bean
+        public void add(int index, E element) {
         rangeCheckForAdd(index);
         modCount++;
         final int s;
@@ -499,7 +509,8 @@ public class ArrayList<E> extends AbstractList<E>
      * @return the element that was removed from the list
      * @throws IndexOutOfBoundsException {@inheritDoc}
      */
-    public E remove(int index) {
+@Bean
+        public E remove(int index) {
         Objects.checkIndex(index, size);
         final Object[] es = elementData;
 
@@ -512,7 +523,8 @@ public class ArrayList<E> extends AbstractList<E>
     /**
      * {@inheritDoc}
      */
-    public boolean equals(Object o) {
+@Bean
+        public boolean equals(Object o) {
         if (o == this) {
             return true;
         }
@@ -546,7 +558,8 @@ public class ArrayList<E> extends AbstractList<E>
         return !oit.hasNext();
     }
 
-    private boolean equalsArrayList(ArrayList<?> other) {
+@Bean
+        private boolean equalsArrayList(ArrayList<?> other) {
         final int otherModCount = other.modCount;
         final int s = size;
         boolean equal;
@@ -567,7 +580,8 @@ public class ArrayList<E> extends AbstractList<E>
         return equal;
     }
 
-    private void checkForComodification(final int expectedModCount) {
+@Bean
+        private void checkForComodification(final int expectedModCount) {
         if (modCount != expectedModCount) {
             throw new ConcurrentModificationException();
         }
@@ -609,7 +623,8 @@ public class ArrayList<E> extends AbstractList<E>
      * @param o element to be removed from this list, if present
      * @return {@code true} if this list contained the specified element
      */
-    public boolean remove(Object o) {
+@Bean
+        public boolean remove(Object o) {
         final Object[] es = elementData;
         final int size = this.size;
         int i = 0;
@@ -633,7 +648,8 @@ public class ArrayList<E> extends AbstractList<E>
      * Private remove method that skips bounds checking and does not
      * return the value removed.
      */
-    private void fastRemove(Object[] es, int i) {
+@Bean
+        private void fastRemove(Object[] es, int i) {
         modCount++;
         final int newSize;
         if ((newSize = size - 1) > i)
@@ -665,7 +681,8 @@ public class ArrayList<E> extends AbstractList<E>
      * @return {@code true} if this list changed as a result of the call
      * @throws NullPointerException if the specified collection is null
      */
-    public boolean addAll(Collection<? extends E> c) {
+@Bean
+        public boolean addAll(Collection<? extends E> c) {
         Object[] a = c.toArray();
         modCount++;
         int numNew = a.length;
@@ -695,7 +712,8 @@ public class ArrayList<E> extends AbstractList<E>
      * @throws IndexOutOfBoundsException {@inheritDoc}
      * @throws NullPointerException if the specified collection is null
      */
-    public boolean addAll(int index, Collection<? extends E> c) {
+@Bean
+        public boolean addAll(int index, Collection<? extends E> c) {
         rangeCheckForAdd(index);
 
         Object[] a = c.toArray();
@@ -731,7 +749,8 @@ public class ArrayList<E> extends AbstractList<E>
      *          toIndex > size() ||
      *          toIndex < fromIndex})
      */
-    protected void removeRange(int fromIndex, int toIndex) {
+@Bean
+        protected void removeRange(int fromIndex, int toIndex) {
         if (fromIndex > toIndex) {
             throw new IndexOutOfBoundsException(
                     outOfBoundsMsg(fromIndex, toIndex));
@@ -741,7 +760,8 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /** Erases the gap from lo to hi, by sliding down following elements. */
-    private void shiftTailOverGap(Object[] es, int lo, int hi) {
+@Bean
+        private void shiftTailOverGap(Object[] es, int lo, int hi) {
         System.arraycopy(es, hi, es, lo, size - hi);
         for (int to = size, i = (size -= hi - lo); i < to; i++)
             es[i] = null;
@@ -750,7 +770,8 @@ public class ArrayList<E> extends AbstractList<E>
     /**
      * A version of rangeCheck used by add and addAll.
      */
-    private void rangeCheckForAdd(int index) {
+@Bean
+        private void rangeCheckForAdd(int index) {
         if (index > size || index < 0)
             throw new IndexOutOfBoundsException(outOfBoundsMsg(index));
     }
@@ -760,7 +781,8 @@ public class ArrayList<E> extends AbstractList<E>
      * Of the many possible refactorings of the error handling code,
      * this "outlining" performs best with both server and client VMs.
      */
-    private String outOfBoundsMsg(int index) {
+@Bean
+        private String outOfBoundsMsg(int index) {
         return "Index: "+index+", Size: "+size;
     }
 
@@ -786,7 +808,8 @@ public class ArrayList<E> extends AbstractList<E>
      *         or if the specified collection is null
      * @see Collection#contains(Object)
      */
-    public boolean removeAll(Collection<?> c) {
+@Bean
+        public boolean removeAll(Collection<?> c) {
         return batchRemove(c, false, 0, size);
     }
 
@@ -806,7 +829,8 @@ public class ArrayList<E> extends AbstractList<E>
      *         or if the specified collection is null
      * @see Collection#contains(Object)
      */
-    public boolean retainAll(Collection<?> c) {
+@Bean
+        public boolean retainAll(Collection<?> c) {
         return batchRemove(c, true, 0, size);
     }
 
@@ -990,7 +1014,8 @@ public class ArrayList<E> extends AbstractList<E>
         }
 
         @Override
-        public void forEachRemaining(Consumer<? super E> action) {
+@Bean
+            public void forEachRemaining(Consumer<? super E> action) {
             Objects.requireNonNull(action);
             final int size = ArrayList.this.size;
             int i = cursor;
@@ -1047,7 +1072,8 @@ public class ArrayList<E> extends AbstractList<E>
             return (E) elementData[lastRet = i];
         }
 
-        public void set(E e) {
+@Bean
+            public void set(E e) {
             if (lastRet < 0)
                 throw new IllegalStateException();
             checkForComodification();
@@ -1059,7 +1085,8 @@ public class ArrayList<E> extends AbstractList<E>
             }
         }
 
-        public void add(E e) {
+@Bean
+            public void add(E e) {
             checkForComodification();
 
             try {
@@ -1136,7 +1163,8 @@ public class ArrayList<E> extends AbstractList<E>
             this.modCount = root.modCount;
         }
 
-        public E set(int index, E element) {
+@Bean
+            public E set(int index, E element) {
             Objects.checkIndex(index, size);
             checkForComodification();
             E oldValue = root.elementData(offset + index);
@@ -1144,7 +1172,8 @@ public class ArrayList<E> extends AbstractList<E>
             return oldValue;
         }
 
-        public E get(int index) {
+@Bean
+            public E get(int index) {
             Objects.checkIndex(index, size);
             checkForComodification();
             return root.elementData(offset + index);
@@ -1155,14 +1184,16 @@ public class ArrayList<E> extends AbstractList<E>
             return size;
         }
 
-        public void add(int index, E element) {
+@Bean
+            public void add(int index, E element) {
             rangeCheckForAdd(index);
             checkForComodification();
             root.add(offset + index, element);
             updateSizeAndModCount(1);
         }
 
-        public E remove(int index) {
+@Bean
+            public E remove(int index) {
             Objects.checkIndex(index, size);
             checkForComodification();
             E result = root.remove(offset + index);
@@ -1170,17 +1201,20 @@ public class ArrayList<E> extends AbstractList<E>
             return result;
         }
 
-        protected void removeRange(int fromIndex, int toIndex) {
+@Bean
+            protected void removeRange(int fromIndex, int toIndex) {
             checkForComodification();
             root.removeRange(offset + fromIndex, offset + toIndex);
             updateSizeAndModCount(fromIndex - toIndex);
         }
 
-        public boolean addAll(Collection<? extends E> c) {
+@Bean
+            public boolean addAll(Collection<? extends E> c) {
             return addAll(this.size, c);
         }
 
-        public boolean addAll(int index, Collection<? extends E> c) {
+@Bean
+            public boolean addAll(int index, Collection<? extends E> c) {
             rangeCheckForAdd(index);
             int cSize = c.size();
             if (cSize==0)
@@ -1191,19 +1225,23 @@ public class ArrayList<E> extends AbstractList<E>
             return true;
         }
 
-        public void replaceAll(UnaryOperator<E> operator) {
+@Bean
+            public void replaceAll(UnaryOperator<E> operator) {
             root.replaceAllRange(operator, offset, offset + size);
         }
 
-        public boolean removeAll(Collection<?> c) {
+@Bean
+            public boolean removeAll(Collection<?> c) {
             return batchRemove(c, false);
         }
 
-        public boolean retainAll(Collection<?> c) {
+@Bean
+            public boolean retainAll(Collection<?> c) {
             return batchRemove(c, true);
         }
 
-        private boolean batchRemove(Collection<?> c, boolean complement) {
+@Bean
+            private boolean batchRemove(Collection<?> c, boolean complement) {
             checkForComodification();
             int oldSize = root.size;
             boolean modified =
@@ -1213,7 +1251,8 @@ public class ArrayList<E> extends AbstractList<E>
             return modified;
         }
 
-        public boolean removeIf(Predicate<? super E> filter) {
+@Bean
+            public boolean removeIf(Predicate<? super E> filter) {
             checkForComodification();
             int oldSize = root.size;
             boolean modified = root.removeIf(filter, offset, offset + size);
@@ -1239,7 +1278,8 @@ public class ArrayList<E> extends AbstractList<E>
             return a;
         }
 
-        public boolean equals(Object o) {
+@Bean
+            public boolean equals(Object o) {
             if (o == this) {
                 return true;
             }
@@ -1259,19 +1299,22 @@ public class ArrayList<E> extends AbstractList<E>
             return hash;
         }
 
-        public int indexOf(Object o) {
+@Bean
+            public int indexOf(Object o) {
             int index = root.indexOfRange(o, offset, offset + size);
             checkForComodification();
             return index >= 0 ? index - offset : -1;
         }
 
-        public int lastIndexOf(Object o) {
+@Bean
+            public int lastIndexOf(Object o) {
             int index = root.lastIndexOfRange(o, offset, offset + size);
             checkForComodification();
             return index >= 0 ? index - offset : -1;
         }
 
-        public boolean contains(Object o) {
+@Bean
+            public boolean contains(Object o) {
             return indexOf(o) >= 0;
         }
 
@@ -1322,7 +1365,8 @@ public class ArrayList<E> extends AbstractList<E>
                     return (E) elementData[offset + (lastRet = i)];
                 }
 
-                public void forEachRemaining(Consumer<? super E> action) {
+@Bean
+                    public void forEachRemaining(Consumer<? super E> action) {
                     Objects.requireNonNull(action);
                     final int size = SubList.this.size;
                     int i = cursor;
@@ -1362,7 +1406,8 @@ public class ArrayList<E> extends AbstractList<E>
                     }
                 }
 
-                public void set(E e) {
+@Bean
+                    public void set(E e) {
                     if (lastRet < 0)
                         throw new IllegalStateException();
                     checkForComodification();
@@ -1374,7 +1419,8 @@ public class ArrayList<E> extends AbstractList<E>
                     }
                 }
 
-                public void add(E e) {
+@Bean
+                    public void add(E e) {
                     checkForComodification();
 
                     try {
@@ -1400,12 +1446,14 @@ public class ArrayList<E> extends AbstractList<E>
             return new SubList<>(this, fromIndex, toIndex);
         }
 
-        private void rangeCheckForAdd(int index) {
+@Bean
+            private void rangeCheckForAdd(int index) {
             if (index < 0 || index > this.size)
                 throw new IndexOutOfBoundsException(outOfBoundsMsg(index));
         }
 
-        private String outOfBoundsMsg(int index) {
+@Bean
+            private String outOfBoundsMsg(int index) {
             return "Index: "+index+", Size: "+this.size;
         }
 
@@ -1414,7 +1462,8 @@ public class ArrayList<E> extends AbstractList<E>
                 throw new ConcurrentModificationException();
         }
 
-        private void updateSizeAndModCount(int sizeChange) {
+@Bean
+            private void updateSizeAndModCount(int sizeChange) {
             SubList<E> slist = this;
             do {
                 slist.size += sizeChange;
@@ -1448,7 +1497,8 @@ public class ArrayList<E> extends AbstractList<E>
                         root.new ArrayListSpliterator(lo, index = mid, expectedModCount);
                 }
 
-                public boolean tryAdvance(Consumer<? super E> action) {
+@Bean
+                    public boolean tryAdvance(Consumer<? super E> action) {
                     Objects.requireNonNull(action);
                     int hi = getFence(), i = index;
                     if (i < hi) {
@@ -1462,7 +1512,8 @@ public class ArrayList<E> extends AbstractList<E>
                     return false;
                 }
 
-                public void forEachRemaining(Consumer<? super E> action) {
+@Bean
+                    public void forEachRemaining(Consumer<? super E> action) {
                     Objects.requireNonNull(action);
                     int i, hi, mc; // hoist accesses and checks from loop
                     ArrayList<E> lst = root;
@@ -1501,7 +1552,8 @@ public class ArrayList<E> extends AbstractList<E>
      * @throws NullPointerException {@inheritDoc}
      */
     @Override
-    public void forEach(Consumer<? super E> action) {
+@Bean
+        public void forEach(Consumer<? super E> action) {
         Objects.requireNonNull(action);
         final int expectedModCount = modCount;
         final Object[] es = elementData;
@@ -1591,7 +1643,8 @@ public class ArrayList<E> extends AbstractList<E>
                 new ArrayListSpliterator(lo, index = mid, expectedModCount);
         }
 
-        public boolean tryAdvance(Consumer<? super E> action) {
+@Bean
+            public boolean tryAdvance(Consumer<? super E> action) {
             if (action == null)
                 throw new NullPointerException();
             int hi = getFence(), i = index;
@@ -1606,7 +1659,8 @@ public class ArrayList<E> extends AbstractList<E>
             return false;
         }
 
-        public void forEachRemaining(Consumer<? super E> action) {
+@Bean
+            public void forEachRemaining(Consumer<? super E> action) {
             int i, hi, mc; // hoist accesses and checks from loop
             Object[] a;
             if (action == null)
@@ -1655,7 +1709,8 @@ public class ArrayList<E> extends AbstractList<E>
      * @throws NullPointerException {@inheritDoc}
      */
     @Override
-    public boolean removeIf(Predicate<? super E> filter) {
+@Bean
+        public boolean removeIf(Predicate<? super E> filter) {
         return removeIf(filter, 0, size);
     }
 
@@ -1697,13 +1752,15 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     @Override
-    public void replaceAll(UnaryOperator<E> operator) {
+@Bean
+        public void replaceAll(UnaryOperator<E> operator) {
         replaceAllRange(operator, 0, size);
         // TODO(8203662): remove increment of modCount from ...
         modCount++;
     }
 
-    private void replaceAllRange(UnaryOperator<E> operator, int i, int end) {
+@Bean
+        private void replaceAllRange(UnaryOperator<E> operator, int i, int end) {
         Objects.requireNonNull(operator);
         final int expectedModCount = modCount;
         final Object[] es = elementData;
@@ -1715,7 +1772,8 @@ public class ArrayList<E> extends AbstractList<E>
 
     @Override
     @SuppressWarnings("unchecked")
-    public void sort(Comparator<? super E> c) {
+@Bean
+        public void sort(Comparator<? super E> c) {
         final int expectedModCount = modCount;
         Arrays.sort((E[]) elementData, 0, size, c);
         if (modCount != expectedModCount)

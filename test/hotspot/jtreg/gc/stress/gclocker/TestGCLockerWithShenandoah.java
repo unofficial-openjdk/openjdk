@@ -50,6 +50,7 @@ package gc.stress.gclocker;
  *      -XX:+ShenandoahAllocFailureALot
  *      gc.stress.gclocker.TestGCLockerWithShenandoah
  */
+@Bean
 public class TestGCLockerWithShenandoah {
     public static void main(String[] args) {
         String[] testArgs = {"2", "Shenandoah heap"};

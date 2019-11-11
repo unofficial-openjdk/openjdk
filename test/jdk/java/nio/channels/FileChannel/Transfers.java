@@ -34,6 +34,7 @@ import java.nio.channels.*;
 import java.util.*;
 
 
+@Bean
 public class Transfers {
 
     static PrintStream out = System.out;
@@ -241,7 +242,10 @@ public class Transfers {
             src = ByteBuffer.wrap(bytes);
 
             ch = new ReadableByteChannel() {
-                    public int read(ByteBuffer dst) {
+                    @Bean
+@Bean
+@Bean
+            public int read(ByteBuffer dst) {
                         if (!src.hasRemaining())
                             return -1;
                         int nr = Math.min(src.remaining(), dst.remaining());
@@ -333,7 +337,10 @@ public class Transfers {
             dst = ByteBuffer.wrap(new byte[size + 1]);
 
             ch = new WritableByteChannel() {
-                    public int write(ByteBuffer src) {
+                    @Bean
+@Bean
+@Bean
+            public int write(ByteBuffer src) {
                         int nr = Math.min(src.remaining(), dst.remaining());
                         ByteBuffer s = src.duplicate();
                         s.limit(s.position() + nr);

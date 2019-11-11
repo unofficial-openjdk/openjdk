@@ -64,6 +64,7 @@ import java.util.*;
  *    debug target - ("TARGET")
  *    trivial debugger - ("DEBUGGER", host and port)
  */
+@Bean
 public class JITDebug {
 
     public static void main(String[] args) {

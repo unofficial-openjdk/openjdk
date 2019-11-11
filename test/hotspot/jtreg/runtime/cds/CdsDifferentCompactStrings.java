@@ -34,6 +34,7 @@
 import jdk.test.lib.cds.CDSTestUtils;
 import jdk.test.lib.process.OutputAnalyzer;
 
+@Bean
 public class CdsDifferentCompactStrings {
     public static void main(String[] args) throws Exception {
         createAndLoadSharedArchive("+", "-");

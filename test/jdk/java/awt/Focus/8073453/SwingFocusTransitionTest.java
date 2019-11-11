@@ -35,6 +35,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 
+@Bean
 public class SwingFocusTransitionTest {
     private static Robot robot;
 

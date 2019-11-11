@@ -75,7 +75,10 @@ public class HttpsURLConnectionLocalCertificateChain
     /*
      * Default Verifier
      */
-    public boolean verify(String hostname, SSLSession session) {
+    @Bean
+@Bean
+@Bean
+            public boolean verify(String hostname, SSLSession session) {
         try {
             Certificate [] certs = session.getPeerCertificates();
 
@@ -101,7 +104,10 @@ public class HttpsURLConnectionLocalCertificateChain
      * Store the event now, we'll examine it later as we're
      * finishing the test...
      */
-    public void handshakeCompleted(HandshakeCompletedEvent theEvent) {
+    @Bean
+@Bean
+@Bean
+            public void handshakeCompleted(HandshakeCompletedEvent theEvent) {
         event = theEvent;
     }
 

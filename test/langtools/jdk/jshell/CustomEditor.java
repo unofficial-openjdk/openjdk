@@ -34,6 +34,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 
+@Bean
 public class CustomEditor implements AutoCloseable {
 
     public static final int SOURCE_CODE = 0;

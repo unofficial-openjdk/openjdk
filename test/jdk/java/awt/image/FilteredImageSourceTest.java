@@ -44,19 +44,35 @@ import java.util.Hashtable;
  */
 class EmptyImageConsumer implements ImageConsumer {
     @Override
-    public void setDimensions(int width, int height) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setDimensions(int width, int height) {
     }
 
     @Override
-    public void setProperties(Hashtable<?, ?> props) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setProperties(Hashtable<?, ?> props) {
     }
 
     @Override
-    public void setColorModel(ColorModel colorModel) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setColorModel(ColorModel colorModel) {
     }
 
     @Override
-    public void setHints(int hintFlags) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void setHints(int hintFlags) {
     }
 
     @Override
@@ -72,7 +88,11 @@ class EmptyImageConsumer implements ImageConsumer {
     }
 
     @Override
-    public void imageComplete(int i) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void imageComplete(int i) {
     }
 }
 
@@ -82,24 +102,44 @@ class EmptyImageConsumer implements ImageConsumer {
  */
 class EmptyImageProducer implements ImageProducer {
     @Override
-    public void addConsumer(ImageConsumer imageConsumer) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void addConsumer(ImageConsumer imageConsumer) {
     }
 
     @Override
-    public boolean isConsumer(ImageConsumer imageConsumer) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public boolean isConsumer(ImageConsumer imageConsumer) {
         return false;
     }
 
     @Override
-    public void removeConsumer(ImageConsumer imageConsumer) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void removeConsumer(ImageConsumer imageConsumer) {
     }
 
     @Override
-    public void startProduction(ImageConsumer imageConsumer) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void startProduction(ImageConsumer imageConsumer) {
     }
 
     @Override
-    public void requestTopDownLeftRightResend(ImageConsumer imageConsumer) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public void requestTopDownLeftRightResend(ImageConsumer imageConsumer) {
     }
 }
 
@@ -118,12 +158,20 @@ class EmptyFilteredImage extends Image {
     }
 
     @Override
-    public int getWidth(ImageObserver observer) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int getWidth(ImageObserver observer) {
         return 100;
     }
 
     @Override
-    public int getHeight(ImageObserver observer) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public int getHeight(ImageObserver observer) {
         return 100;
     }
 
@@ -138,7 +186,11 @@ class EmptyFilteredImage extends Image {
     }
 
     @Override
-    public Object getProperty(String name, ImageObserver observer) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Object getProperty(String name, ImageObserver observer) {
         return null;
     }
 }

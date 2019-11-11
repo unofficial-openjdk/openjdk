@@ -31,6 +31,7 @@
 
 import java.security.*;
 
+@Bean
 public class NoInstalledProviders {
 
     public static void main(String[] args) throws Exception {

@@ -32,6 +32,7 @@ import java.nio.channels.*;
 import java.nio.*;
 import java.io.*;
 
+@Bean
 public class Write {
 
    public static void main(String[] args) throws Exception {

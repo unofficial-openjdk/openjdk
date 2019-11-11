@@ -29,6 +29,7 @@
 import java.lang.invoke.*;
 import java.util.*;
 
+@Bean
 public class MetafactoryMethodNameTest {
 
     public static void main(String... args) {

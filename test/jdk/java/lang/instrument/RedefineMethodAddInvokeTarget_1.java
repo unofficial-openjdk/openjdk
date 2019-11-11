@@ -23,6 +23,7 @@
 
 import java.lang.reflect.Method;
 
+@Bean
 public class RedefineMethodAddInvokeTarget {
     public void test(int counter) throws Exception {
         Method method = getClass().getDeclaredMethod("myMethod" +

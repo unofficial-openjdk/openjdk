@@ -50,6 +50,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
+@Bean
 public class LogGeneratedClassesTest extends LUtils {
     String longFQCN;
 
@@ -58,7 +59,8 @@ public class LogGeneratedClassesTest extends LUtils {
         final List<String> scratch = new ArrayList<>();
         scratch.clear();
         scratch.add("package com.example;");
-        scratch.add("public class TestLambda {");
+        scratch.add("@Bean
+public class TestLambda {");
         scratch.add("    interface I {");
         scratch.add("        int foo();");
         scratch.add("    }");
@@ -79,7 +81,8 @@ public class LogGeneratedClassesTest extends LUtils {
 
         scratch.remove(0);
         scratch.remove(0);
-        scratch.add(0, "public class LongPackageName {");
+        scratch.add(0, "@Bean
+public class LongPackageName {");
         StringBuilder sb = new StringBuilder("com.example.");
         // longer than 255 which exceed max length of most filesystems
         for (int i = 0; i < 30; i++) {

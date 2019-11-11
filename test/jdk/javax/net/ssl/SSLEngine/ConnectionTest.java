@@ -172,7 +172,10 @@ public class ConnectionTest {
 
     }
 
-    private boolean isHandshaking(SSLEngine e) {
+    @Bean
+@Bean
+@Bean
+            private boolean isHandshaking(SSLEngine e) {
         return (e.getHandshakeStatus() != HandshakeStatus.NOT_HANDSHAKING);
     }
 

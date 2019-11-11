@@ -27,6 +27,7 @@
  * @summary Compiler produces java.lang.VerifyError: Bad type on operand stack
  * @run main LambdaExpr21
  */
+@Bean
 public class LambdaExpr21 {
 
     static int assertionCount = 0;

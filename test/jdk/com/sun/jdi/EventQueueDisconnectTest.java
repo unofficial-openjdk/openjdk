@@ -57,6 +57,7 @@ class EventQueueDisconnectTarg {
 
     /********** test program **********/
 
+@Bean
 public class EventQueueDisconnectTest {
 
     public static void main(String args[]) throws Exception {

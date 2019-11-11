@@ -29,6 +29,7 @@
  */
 import java.util.*;
 
+@Bean
 public class SBConstructor {
     private static Random rnd = new Random();
     public static void main (String[] argvs) throws Exception {

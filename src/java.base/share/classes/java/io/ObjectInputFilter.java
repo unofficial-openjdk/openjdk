@@ -571,7 +571,8 @@ public interface ObjectInputFilter {
              * @throws IllegalArgumentException if the pattern is missing
              *                the name, the Long value is not a number or is negative.
              */
-            private boolean parseLimit(String pattern) {
+@Bean
+                private boolean parseLimit(String pattern) {
                 int eqNdx = pattern.indexOf('=');
                 if (eqNdx < 0) {
                     // not a limit pattern
@@ -611,7 +612,8 @@ public interface ObjectInputFilter {
              * {@inheritDoc}
              */
             @Override
-            public Status checkInput(FilterInfo filterInfo) {
+@Bean
+                public Status checkInput(FilterInfo filterInfo) {
                 if (filterInfo.references() < 0
                         || filterInfo.depth() < 0
                         || filterInfo.streamBytes() < 0

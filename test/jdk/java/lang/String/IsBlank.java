@@ -31,6 +31,7 @@ import java.util.stream.IntStream;
  * @run main/othervm IsBlank
  */
 
+@Bean
 public class IsBlank {
    public static void main(String... arg) {
         testIsBlank();

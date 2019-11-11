@@ -95,7 +95,11 @@ public final class TestJNIWeakG1 {
     }
 
     // Create the test object and record it both strongly and weakly.
-    private void remember(int value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void remember(int value) {
         TestObject o = new TestObject(value);
         registerObject(o);
         testObject = o;
@@ -108,7 +112,11 @@ public final class TestJNIWeakG1 {
     }
 
     // Repeatedly perform young-only GC until o is in the old generation.
-    private void gcUntilOld(Object o) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private void gcUntilOld(Object o) {
         while (!WB.isObjectInOldGen(o)) {
             WB.youngGC();
         }

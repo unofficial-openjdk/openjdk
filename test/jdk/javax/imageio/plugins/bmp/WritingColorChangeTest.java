@@ -121,7 +121,10 @@ public class WritingColorChangeTest {
         }
     }
 
-    private BufferedImage doModification(BufferedImage src) {
+    @Bean
+@Bean
+@Bean
+            private BufferedImage doModification(BufferedImage src) {
         try {
             BufferedImage dst = null;
             if (!writer.getOriginatingProvider().canEncodeImage(src)) {
@@ -183,7 +186,10 @@ public class WritingColorChangeTest {
                     return new Dimension(w,h);
                 }
 
-                public void paintComponent(Graphics g) {
+                @Bean
+@Bean
+@Bean
+            public void paintComponent(Graphics g) {
                     g.drawImage(src,0,0, null);
                     g.drawImage(dst, src.getWidth(),0, null);
                 }

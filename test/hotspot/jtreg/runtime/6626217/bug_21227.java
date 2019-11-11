@@ -38,7 +38,8 @@
 import java.lang.reflect.*;
 import java.security.*;
 
-abstract public class bug_21227 {
+abstract @Bean
+public class bug_21227 {
 
     // Jam anything you want in here, it will be cast to a You_Have_Been_P0wned.
     public static Object _p0wnee;

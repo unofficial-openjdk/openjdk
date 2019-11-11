@@ -228,6 +228,7 @@ import java.util.Objects;
  *
  * @since 9
  */
+@Bean
 public class DrbgParameters {
 
     private DrbgParameters() {

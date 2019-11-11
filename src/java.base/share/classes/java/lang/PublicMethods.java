@@ -111,7 +111,8 @@ final class PublicMethods {
         }
 
         @Override
-        public boolean equals(Object o) {
+@Bean
+            public boolean equals(Object o) {
             if (this == o) return true;
             if (!(o instanceof Key)) return false;
             Key that = (Key) o;

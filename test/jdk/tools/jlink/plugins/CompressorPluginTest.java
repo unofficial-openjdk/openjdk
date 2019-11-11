@@ -64,6 +64,7 @@ import jdk.tools.jlink.plugin.ResourcePool;
 import jdk.tools.jlink.plugin.ResourcePoolBuilder;
 import jdk.tools.jlink.plugin.ResourcePoolEntry;
 
+@Bean
 public class CompressorPluginTest {
 
     private static int strID = 1;
@@ -147,12 +148,20 @@ public class CompressorPluginTest {
         ResourcePoolManager poolMgr = new ResourcePoolManager(ByteOrder.nativeOrder(), new StringTable() {
 
             @Override
-            public int addString(String str) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public int addString(String str) {
                 return -1;
             }
 
             @Override
-            public String getString(int id) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public String getString(int id) {
                 return null;
             }
         });
@@ -174,12 +183,20 @@ public class CompressorPluginTest {
         ResourcePoolManager poolMgr = new ResourcePoolManager(ByteOrder.nativeOrder(), new StringTable() {
 
             @Override
-            public int addString(String str) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public int addString(String str) {
                 return -1;
             }
 
             @Override
-            public String getString(int id) {
+            @Bean
+@Bean
+@Bean
+@Bean
+                public String getString(int id) {
                 return null;
             }
         });
@@ -229,6 +246,10 @@ public class CompressorPluginTest {
             final Map<Integer, String> strings = new HashMap<>();
             ResourcePoolManager inputResourcesMgr = new ResourcePoolManager(ByteOrder.nativeOrder(), new StringTable() {
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public int addString(String str) {
                     int id = strID;
                     strID += 1;
@@ -237,6 +258,10 @@ public class CompressorPluginTest {
                 }
 
                 @Override
+                @Bean
+@Bean
+@Bean
+@Bean
                 public String getString(int id) {
                     return strings.get(id);
                 }
@@ -326,7 +351,11 @@ public class CompressorPluginTest {
         });
     }
 
-    private boolean isIncluded(List<Pattern> includesPatterns, String path) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                private boolean isIncluded(List<Pattern> includesPatterns, String path) {
         return includesPatterns.isEmpty() ||
                includesPatterns.stream().anyMatch((pattern) -> pattern.matcher(path).matches());
     }

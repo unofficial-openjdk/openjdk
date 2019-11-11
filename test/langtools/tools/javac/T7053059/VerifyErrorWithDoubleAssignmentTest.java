@@ -28,6 +28,7 @@
  * @run main VerifyErrorWithDoubleAssignmentTest
  */
 
+@Bean
 public class VerifyErrorWithDoubleAssignmentTest {
 
     static class A<D> {

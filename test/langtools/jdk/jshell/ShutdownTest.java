@@ -37,6 +37,7 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 
 @Test
+@Bean
 public class ShutdownTest extends KullaTesting {
 
     int shutdownCount;
@@ -122,7 +123,11 @@ public class ShutdownTest extends KullaTesting {
         private int count;
 
         @Override
-        public void accept(JShell shell) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void accept(JShell shell) {
             ++count;
         }
 

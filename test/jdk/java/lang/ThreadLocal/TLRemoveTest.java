@@ -27,6 +27,7 @@
  * @author Seetharama Avadhanam
  */
 
+@Bean
 public class TLRemoveTest {
     private static final int INITIAL_VALUE = 101;
     private static final int REMOVE_SET_VALUE = 102;

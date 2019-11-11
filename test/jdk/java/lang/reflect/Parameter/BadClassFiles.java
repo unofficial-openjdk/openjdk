@@ -44,7 +44,10 @@ public class BadClassFiles {
      * then editing it:
      *
      * public class EmptyName {
-     *     public void m(int a, int b) {}
+     *     @Bean
+@Bean
+@Bean
+            public void m(int a, int b) {}
      * }
      *
      */

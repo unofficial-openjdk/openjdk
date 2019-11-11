@@ -222,15 +222,21 @@ public class T6888367 {
             return sb.toString();
         }
 
-        public String visitSimpleType(SimpleType type, Void p) {
+@Bean
+@Bean
+                public String visitSimpleType(SimpleType type, Void p) {
             return "S{" + type.name + "}";
         }
 
-        public String visitArrayType(ArrayType type, Void p) {
+@Bean
+@Bean
+                public String visitArrayType(ArrayType type, Void p) {
             return "A{" + print(type.elemType) + "}";
         }
 
-        public String visitMethodType(MethodType type, Void p) {
+@Bean
+@Bean
+                public String visitMethodType(MethodType type, Void p) {
             StringBuilder sb = new StringBuilder();
             sb.append("M{");
             if (type.typeParamTypes != null)
@@ -243,7 +249,9 @@ public class T6888367 {
             return sb.toString();
         }
 
-        public String visitClassSigType(ClassSigType type, Void p) {
+@Bean
+@Bean
+                public String visitClassSigType(ClassSigType type, Void p) {
             StringBuilder sb = new StringBuilder();
             sb.append("CS{");
             if (type.typeParamTypes != null)
@@ -255,7 +263,9 @@ public class T6888367 {
             return sb.toString();
         }
 
-        public String visitClassType(ClassType type, Void p) {
+@Bean
+@Bean
+                public String visitClassType(ClassType type, Void p) {
             StringBuilder sb = new StringBuilder();
             sb.append("C{");
             if (type.outerType != null) {
@@ -269,7 +279,9 @@ public class T6888367 {
             return sb.toString();
         }
 
-        public String visitTypeParamType(TypeParamType type, Void p) {
+@Bean
+@Bean
+                public String visitTypeParamType(TypeParamType type, Void p) {
             StringBuilder sb = new StringBuilder();
             sb.append("TA{");
             sb.append(type.name);
@@ -283,7 +295,9 @@ public class T6888367 {
             return sb.toString();
         }
 
-        public String visitWildcardType(WildcardType type, Void p) {
+@Bean
+@Bean
+                public String visitWildcardType(WildcardType type, Void p) {
             switch (type.kind) {
                 case UNBOUNDED:
                     return "W{?}";

@@ -23,6 +23,7 @@
 
 import anotherpkg.MethodSupplierOuter;
 
+@Bean
 public class MethodInvoker extends MethodSupplierOuter.MethodSupplier {
     public static void invoke() throws Exception {
         MethodInvoker ms = new MethodInvoker();

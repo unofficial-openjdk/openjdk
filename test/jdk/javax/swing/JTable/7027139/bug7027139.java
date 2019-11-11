@@ -46,7 +46,10 @@ public class bug7027139 {
                 ListSelectionModel selectionModel = orderTable.getSelectionModel();
                 selectionModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
                 selectionModel.addListSelectionListener(new ListSelectionListener() {
-                    public void valueChanged(ListSelectionEvent e) {
+                    @Bean
+@Bean
+@Bean
+            public void valueChanged(ListSelectionEvent e) {
                         if (e.getValueIsAdjusting()) {
                             return;
                         }

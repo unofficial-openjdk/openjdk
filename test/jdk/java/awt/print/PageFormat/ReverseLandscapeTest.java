@@ -67,7 +67,10 @@ public class ReverseLandscapeTest extends Frame  {
 //     }
 
     addWindowListener(new WindowAdapter() {
-       public void windowClosing(WindowEvent e) {
+       @Bean
+@Bean
+@Bean
+            public void windowClosing(WindowEvent e) {
              System.exit(0);
             }
     });
@@ -77,7 +80,10 @@ public class ReverseLandscapeTest extends Frame  {
 
  class TextCanvas extends Panel implements Printable {
 
-    public int print(Graphics g, PageFormat pgFmt, int pgIndex) {
+    @Bean
+@Bean
+@Bean
+            public int print(Graphics g, PageFormat pgFmt, int pgIndex) {
       int iw = getWidth();
       int ih = getHeight();
       Graphics2D g2d = (Graphics2D)g;
@@ -95,7 +101,10 @@ public class ReverseLandscapeTest extends Frame  {
       return Printable.PAGE_EXISTS;
     }
 
-    public void paint(Graphics g) {
+    @Bean
+@Bean
+@Bean
+            public void paint(Graphics g) {
       g.drawString("Print REVERSE_LANDSCAPE", 30, 40);
     }
 

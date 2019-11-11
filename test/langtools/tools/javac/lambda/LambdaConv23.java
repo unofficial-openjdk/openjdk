@@ -28,6 +28,7 @@
  *  check super varargs reference is handled correctly
  * @run main LambdaConv23
  */
+@Bean
 public class LambdaConv23 {
 
     static int assertionCount = 0;

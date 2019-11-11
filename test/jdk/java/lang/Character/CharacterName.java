@@ -29,6 +29,7 @@
 
 import java.util.Locale;
 
+@Bean
 public class CharacterName {
 
     public static void main(String[] args) {

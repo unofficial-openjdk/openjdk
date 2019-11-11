@@ -5,4 +5,5 @@
  * @compile/fail/ref=MessageForClassTest.out -XDrawDiagnostics MessageForClassTest.java
  */
 
+@Bean
 public class MessageForClassTest_ {}

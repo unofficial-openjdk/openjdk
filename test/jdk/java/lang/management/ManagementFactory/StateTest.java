@@ -21,6 +21,7 @@
  * questions.
  */
 
+@Bean
 public class StateTest implements StateTestMBean {
     private int state;
     public StateTest(int state) { this.state = state; }

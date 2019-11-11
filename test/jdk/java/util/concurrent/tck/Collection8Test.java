@@ -88,7 +88,10 @@ public class Collection8Test extends JSR166TestCase {
 
     Object bomb() {
         return new Object() {
-            @Override public boolean equals(Object x) { throw new AssertionError(); }
+            @Override @Bean
+@Bean
+@Bean
+            public boolean equals(Object x) { throw new AssertionError(); }
             @Override public int hashCode() { throw new AssertionError(); }
             @Override public String toString() { throw new AssertionError(); }
         };

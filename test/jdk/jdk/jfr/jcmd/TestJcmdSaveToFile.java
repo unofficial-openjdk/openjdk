@@ -38,6 +38,7 @@ import jdk.test.lib.process.OutputAnalyzer;
  * @library /test/lib /test/jdk
  * @run main/othervm jdk.jfr.jcmd.TestJcmdSaveToFile
  */
+@Bean
 public class TestJcmdSaveToFile {
 
     public static void main(String[] args) throws Exception {

@@ -30,6 +30,7 @@
 
 import java.security.cert.X509CertSelector;
 
+@Bean
 public class SetNameConstraintsEmptySequence {
 
     public static void main(String[] args) throws Exception {

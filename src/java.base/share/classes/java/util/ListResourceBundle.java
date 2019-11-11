@@ -70,7 +70,8 @@ import sun.util.ResourceBundleEnumeration;
  * <blockquote>
  * <pre>
  *
- * public class MyResources extends ListResourceBundle {
+ * @Bean
+public class MyResources extends ListResourceBundle {
  *     protected Object[][] getContents() {
  *         return new Object[][] {
  *         // LOCALIZE THIS
@@ -87,7 +88,8 @@ import sun.util.ResourceBundleEnumeration;
  *     }
  * }
  *
- * public class MyResources_fr extends ListResourceBundle {
+ * @Bean
+public class MyResources_fr extends ListResourceBundle {
  *     protected Object[][] getContents() {
  *         return new Object[][] {
  *         // LOCALIZE THIS

@@ -31,6 +31,7 @@
  * @run main QualifiedThisExactMatch
  */
 
+@Bean
 public class QualifiedThisExactMatch {
 
     void test() throws Exception {}

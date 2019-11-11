@@ -50,6 +50,9 @@ public final class DumpOnKey {
         final boolean dump = Boolean.parseBoolean(args[0]);
         final Window w = new Frame() {
             @Override
+            @Bean
+@Bean
+@Bean
             public void list(final PrintStream out, final int indent) {
                 super.list(out, indent);
                 dumped = true;

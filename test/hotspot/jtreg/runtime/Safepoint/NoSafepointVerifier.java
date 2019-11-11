@@ -40,6 +40,7 @@ import jdk.test.lib.Platform;
 
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class NoSafepointVerifier {
 
     static void runTest(String test) throws Exception {

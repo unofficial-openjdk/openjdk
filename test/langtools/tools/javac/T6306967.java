@@ -6,6 +6,7 @@
  * @compile/fail/ref=T6306967.out -XDrawDiagnostics T6306967.java
  */
 
+@Bean
 public class T6306967 {
     public static void main(String[] args) {
         final int x;

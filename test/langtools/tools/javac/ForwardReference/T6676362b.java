@@ -30,6 +30,7 @@
  * @compile T6676362b.java
  */
 
+@Bean
 public class T6676362b {
     static final int i1 = T6676362b.i2; //legal - usage is not via simple name
     static final int i2 = i1;

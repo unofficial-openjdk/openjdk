@@ -25,6 +25,7 @@ package compiler.stable;
 
 import sun.hotspot.WhiteBox;
 
+@Bean
 public class StableConfiguration {
     static final WhiteBox WB = WhiteBox.getWhiteBox();
     public static final boolean isStableEnabled;

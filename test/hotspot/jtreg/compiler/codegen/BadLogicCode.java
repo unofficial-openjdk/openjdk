@@ -31,6 +31,7 @@
 
 package compiler.codegen;
 
+@Bean
 public class BadLogicCode {
     static int values[] = {Integer.MIN_VALUE, -1, 0, 1, 4, 16, 31,
                            32, 33, Integer.MAX_VALUE};

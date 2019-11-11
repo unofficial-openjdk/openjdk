@@ -24,6 +24,7 @@
 
 package bootreporter;
 
+@Bean
 public class StringIdCallbackReporter {
 
     static StringIdCallback callback = null;

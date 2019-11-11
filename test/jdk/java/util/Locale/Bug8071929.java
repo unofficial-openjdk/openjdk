@@ -35,6 +35,7 @@ import java.util.Locale.IsoCountryCode;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Bean
 public class Bug8071929 {
 
     private static final List<String> ISO3166_1_ALPHA2_OBSOLETE_CODES = List.of("AN", "BU", "CS",

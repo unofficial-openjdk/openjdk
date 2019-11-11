@@ -32,6 +32,7 @@ import jdk.test.lib.process.ProcessTools;
 
 import java.util.stream.Stream;
 
+@Bean
 public class EndorsedDirs {
     private static String TEST_CLASSES = System.getProperty("test.classes", ".");
 

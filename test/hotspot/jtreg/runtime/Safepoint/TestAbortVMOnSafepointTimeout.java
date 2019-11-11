@@ -34,6 +34,7 @@ import jdk.test.lib.process.*;
  *          java.management
  */
 
+@Bean
 public class TestAbortVMOnSafepointTimeout {
 
     public static void main(String[] args) throws Exception {

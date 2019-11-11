@@ -31,6 +31,7 @@ import java.lang.ref.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@Bean
 public class ReferenceEnqueue {
 
     public static void main(String args[]) throws Exception {

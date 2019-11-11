@@ -257,7 +257,11 @@ public class TestSingletonLists extends JavadocTester {
         }
 
         @Override
-        public void startFile(Path path) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void startFile(Path path) {
             fileName = path.getFileName().toString();
         }
 
@@ -266,11 +270,19 @@ public class TestSingletonLists extends JavadocTester {
         }
 
         @Override
-        public void docType(String doctype) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void docType(String doctype) {
         }
 
         @Override
-        public void startElement(String name, Map<String,String> attrs, boolean selfClosing) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void startElement(String name, Map<String,String> attrs, boolean selfClosing) {
             switch (name) {
 
                 case "ul": case "ol": case "dl":
@@ -286,7 +298,11 @@ public class TestSingletonLists extends JavadocTester {
         }
 
         @Override
-        public void endElement(String name) {
+        @Bean
+@Bean
+@Bean
+@Bean
+                public void endElement(String name) {
             switch (name) {
                 case "ul": case "ol": {
                     Map<String,Integer> c = counts.pop();

@@ -36,6 +36,7 @@ import java.net.ProxySelector;
 import java.net.Proxy;
 import java.net.URI;
 
+@Bean
 public class B6737819 {
     private static String[] uris = {
         "http://localhost/index.html",

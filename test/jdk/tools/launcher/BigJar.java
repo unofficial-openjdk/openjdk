@@ -66,6 +66,7 @@ import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+@Bean
 public class BigJar extends TestHelper {
 
     private static final long GIGA = 1024 * 1024 * 1024;
@@ -111,7 +112,8 @@ public class BigJar extends TestHelper {
     Manifest createMainClass(File javaFile) throws IOException {
         javaFile.delete();
         List<String> content = new ArrayList<>();
-        content.add("public class " + baseName(javaFile) + "{");
+        content.add("@Bean
+public class " + baseName(javaFile) + "{");
         content.add("public static void main(String... args) {");
         content.add("System.out.println(\"Hello World\\n\");");
         content.add("System.exit(0);");

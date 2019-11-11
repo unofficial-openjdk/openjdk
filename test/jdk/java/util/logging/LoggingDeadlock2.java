@@ -63,6 +63,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.concurrent.TimeUnit;
 
+@Bean
 public class LoggingDeadlock2 {
 
     // ask child process to dumpstack after 60secs

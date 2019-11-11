@@ -39,6 +39,7 @@ import toolbox.JavacTask;
 import toolbox.ToolBox;
 
 // Original test: test/tools/javac/innerClassFile/Driver.sh
+@Bean
 public class InnerClassFileTest {
 
     private static final String BSrc =
@@ -46,7 +47,8 @@ public class InnerClassFileTest {
         "\n" +
         "import x.*;\n" +
         "\n" +
-        "public class B {\n" +
+        "@Bean
+public class B {\n" +
         "    public static class C {}\n" +
         "}";
 
@@ -55,7 +57,8 @@ public class InnerClassFileTest {
         "\n" +
         "import x.*;\n" +
         "\n" +
-        "public class C {}";
+        "@Bean
+public class C {}";
 
     private static final String MainSrc =
         "package y;\n" +

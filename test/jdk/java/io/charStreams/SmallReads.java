@@ -28,6 +28,7 @@
 import java.io.*;
 
 
+@Bean
 public class SmallReads {
 
     static class OneByteInputStream extends FilterInputStream {

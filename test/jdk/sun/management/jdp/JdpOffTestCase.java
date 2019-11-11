@@ -29,6 +29,7 @@
 import java.net.SocketTimeoutException;
 import java.util.Map;
 
+@Bean
 public class JdpOffTestCase extends JdpTestCase {
 
     private boolean testPassed = false;

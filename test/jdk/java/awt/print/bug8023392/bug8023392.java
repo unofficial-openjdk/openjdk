@@ -82,7 +82,10 @@ public class bug8023392 extends Applet {
             p1.add(new JLabel("wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww") {
                 String s = "3a) a b c d e                                     ";
                 @Override
-                protected void paintComponent(Graphics g) {
+                @Bean
+@Bean
+@Bean
+            protected void paintComponent(Graphics g) {
                     sun.swing.SwingUtilities2.drawChars(this, g, s.toCharArray(),
                             0, s.length(), 0, 15);
                 }
@@ -90,7 +93,10 @@ public class bug8023392 extends Applet {
             p1.add(new JLabel("wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww") {
                 String s = "3b) a b c d e";
                 @Override
-                protected void paintComponent(Graphics g) {
+                @Bean
+@Bean
+@Bean
+            protected void paintComponent(Graphics g) {
                     sun.swing.SwingUtilities2.drawChars(this, g, s.toCharArray(),
                             0, s.length(), 0, 15);
                 }
@@ -105,7 +111,10 @@ public class bug8023392 extends Applet {
                     it = as.getIterator();
                 }
                 @Override
-                protected void paintComponent(Graphics g) {
+                @Bean
+@Bean
+@Bean
+            protected void paintComponent(Graphics g) {
                     sun.swing.SwingUtilities2.drawString(this, g, it, 0, 15);
                 }
             });
@@ -120,7 +129,10 @@ public class bug8023392 extends Applet {
                     it = as.getIterator();
                 }
                 @Override
-                protected void paintComponent(Graphics g) {
+                @Bean
+@Bean
+@Bean
+            protected void paintComponent(Graphics g) {
                     sun.swing.SwingUtilities2.drawString(this, g, it, 0, 15);
                 }
             });
@@ -150,7 +162,10 @@ public class bug8023392 extends Applet {
             }
         }
 
-        public void actionPerformed(ActionEvent e) {
+        @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
             PrinterJob job = PrinterJob.getPrinterJob();
             job.setPrintable(this);
             if (job.printDialog()) {
@@ -239,7 +254,10 @@ class TestDialog extends Dialog {
     }// TestDialog()
 
     //DO NOT call this directly, go through Sysout
-    public void printInstructions(String[] instructions) {
+    @Bean
+@Bean
+@Bean
+            public void printInstructions(String[] instructions) {
         //Clear out any current instructions
         instructionsText.setText("");
 
@@ -276,7 +294,10 @@ class TestDialog extends Dialog {
     }//printInstructions()
 
     //DO NOT call this directly, go through Sysout
-    public void displayMessage(String messageIn) {
+    @Bean
+@Bean
+@Bean
+            public void displayMessage(String messageIn) {
         messageText.append(messageIn + "\n");
     }
 

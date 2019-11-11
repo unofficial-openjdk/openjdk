@@ -100,7 +100,10 @@ public class XMLResourceBundleTest {
             props.loadFromXML(stream);
         }
 
-        protected Object handleGetObject(String key) {
+        @Bean
+@Bean
+@Bean
+            protected Object handleGetObject(String key) {
             if (key == null) {
                 throw new NullPointerException();
             }

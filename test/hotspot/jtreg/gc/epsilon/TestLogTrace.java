@@ -32,6 +32,7 @@ package gc.epsilon;
  * @run main/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseEpsilonGC -Xlog:gc*=trace gc.epsilon.TestLogTrace
  */
 
+@Bean
 public class TestLogTrace {
   public static void main(String[] args) throws Exception {
     System.out.println("Hello World");

@@ -71,7 +71,10 @@ public class bug4199622 extends JFrame implements ActionListener {
     }
 
     @Override
-    public void actionPerformed(ActionEvent e) {
+    @Bean
+@Bean
+@Bean
+            public void actionPerformed(ActionEvent e) {
         if (UIManager.getBoolean("ComboBox.noActionOnKeyNavigation") && cb.isPopupVisible()) {
             throw new RuntimeException("Test failed. actionPerformed generated");
         }

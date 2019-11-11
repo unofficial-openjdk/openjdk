@@ -39,6 +39,7 @@ import java.util.List;
  * @compile SigRecord.java
  * @run main/othervm TestSigGen15
  */
+@Bean
 public class TestSigGen15 {
 
     private static final String[] testFiles = {

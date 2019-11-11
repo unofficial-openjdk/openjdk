@@ -45,7 +45,10 @@ public final class TestString extends AbstractTest {
     }
 
     @Override
-    protected void validate(XMLDecoder decoder) {
+    @Bean
+@Bean
+@Bean
+            protected void validate(XMLDecoder decoder) {
         validate(PREFIX, decoder.readObject());
         validate(POSTFIX, decoder.readObject());
         validate(PREFIX + POSTFIX, decoder.readObject());

@@ -418,7 +418,8 @@ public final class UUID implements java.io.Serializable, Comparable<UUID> {
      * @return  {@code true} if the objects are the same; {@code false}
      *          otherwise
      */
-    public boolean equals(Object obj) {
+@Bean
+        public boolean equals(Object obj) {
         if ((null == obj) || (obj.getClass() != UUID.class))
             return false;
         UUID id = (UUID)obj;
@@ -442,7 +443,8 @@ public final class UUID implements java.io.Serializable, Comparable<UUID> {
      *          greater than {@code val}
      *
      */
-    public int compareTo(UUID val) {
+@Bean
+        public int compareTo(UUID val) {
         // The ordering is intentionally set up so that the UUIDs
         // can simply be numerically compared as two numbers
         return (this.mostSigBits < val.mostSigBits ? -1 :

@@ -32,6 +32,7 @@ import java.text.*;
 import java.util.*;
 
 @SuppressWarnings("deprecation")
+@Bean
 public class DateTest extends IntlTest
 {
     public static void main(String[] args) throws Exception {

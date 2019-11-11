@@ -66,7 +66,11 @@ abstract class AbstractTask<T extends AbstractTask<T>> implements Task {
      * @param expect the expected outcome
      * @return the result of calling {@code run()}
      */
-    public Result run(Expect expect) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Result run(Expect expect) {
         expect(expect, Integer.MIN_VALUE);
         return run();
     }
@@ -78,7 +82,11 @@ abstract class AbstractTask<T extends AbstractTask<T>> implements Task {
      *      is {@code FAIL}
      * @return the result of calling {@code run()}
      */
-    public Result run(Expect expect, int exitCode) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public Result run(Expect expect, int exitCode) {
         expect(expect, exitCode);
         return run();
     }
@@ -91,7 +99,11 @@ abstract class AbstractTask<T extends AbstractTask<T>> implements Task {
      * @param expect the expected outcome
      * @param exitCode the expected exit code
      */
-    protected void expect(Expect expect, int exitCode) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                protected void expect(Expect expect, int exitCode) {
         this.expect = expect;
         this.expectedExitCode = exitCode;
     }
@@ -137,7 +149,11 @@ abstract class AbstractTask<T extends AbstractTask<T>> implements Task {
      * @return this task object
      * @throws IllegalStateException if the task mode is not {@code EXEC}
      */
-    public T envVar(String name, String value) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public T envVar(String name, String value) {
         if (mode != Mode.EXEC)
             throw new IllegalStateException();
         envVars.put(name, value);
@@ -151,7 +167,11 @@ abstract class AbstractTask<T extends AbstractTask<T>> implements Task {
      * @return this task object
      * @throws IllegalStateException if the task mode is not {@code EXEC}
      */
-    public T redirect(OutputKind outputKind, String path) {
+    @Bean
+@Bean
+@Bean
+@Bean
+                public T redirect(OutputKind outputKind, String path) {
         if (mode != Mode.EXEC)
             throw new IllegalStateException();
         redirects.put(outputKind, path);

@@ -49,6 +49,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+@Bean
 public class Launcher {
     private static final String MANIFEST = "MANIFEST.MF";
     public static void main(String[] args) throws Exception  {

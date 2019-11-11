@@ -35,6 +35,7 @@ import java.io.IOException;
  * @summary Stress ZGC
  * @run main/othervm/timeout=200 -Xlog:gc*=info -Xmx384m -server -XX:+UnlockExperimentalVMOptions -XX:+UseZGC gc.stress.gcbasher.TestGCBasherWithZ 120000
  */
+@Bean
 public class TestGCBasherWithZ {
     public static void main(String[] args) throws IOException {
         TestGCBasher.main(args);

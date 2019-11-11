@@ -56,6 +56,7 @@ import jdk.test.lib.NetworkConfiguration;
 
 import static org.testng.Assert.*;
 
+@Bean
 public class SocksIPv6Test {
 
     private HttpServer server;

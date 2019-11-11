@@ -33,6 +33,7 @@
 
 import java.util.regex.*;
 
+@Bean
 public class ToHexString {
     private ToHexString() {}
 

@@ -32,6 +32,7 @@ import javax.swing.*;
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
 
+@Bean
 public class bug6986385 {
 
     public static void main(String... args) throws Exception {

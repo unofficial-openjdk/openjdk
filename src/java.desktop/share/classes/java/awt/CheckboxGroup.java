@@ -119,7 +119,8 @@ public class CheckboxGroup implements java.io.Serializable {
      * @see      java.awt.CheckboxGroup#getSelectedCheckbox
      * @since    1.1
      */
-    public void setSelectedCheckbox(Checkbox box) {
+@Bean
+        public void setSelectedCheckbox(Checkbox box) {
         setCurrent(box);
     }
 

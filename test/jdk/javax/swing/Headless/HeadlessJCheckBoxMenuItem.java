@@ -32,6 +32,7 @@ import java.util.Locale;
  * @run main/othervm -Djava.awt.headless=true HeadlessJCheckBoxMenuItem
  */
 
+@Bean
 public class HeadlessJCheckBoxMenuItem {
     public static void main(String args[]) {
         JCheckBoxMenuItem ch;
