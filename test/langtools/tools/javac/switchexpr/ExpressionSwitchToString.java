@@ -102,7 +102,7 @@ public class C {\n" +
         String sourceVersion = Integer.toString(Runtime.version().feature());
 
         JavacTask ct = (JavacTask) tool.getTask(null, null, noErrors,
-            List.of("-XDdev", "--enable-preview", "-source", sourceVersion), null,
+            List.of("-XDdev"), null,
             Arrays.asList(new MyFileObject(CODE)));
         String actualCode = ct.parse().iterator().next().toString();
         actualCode = actualCode.replace(System.getProperty("line.separator"), "\n");

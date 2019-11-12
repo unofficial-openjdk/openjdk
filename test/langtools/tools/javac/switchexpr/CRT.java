@@ -172,9 +172,7 @@ public class CRT {
         tb.createDirectories(classes);
         tb.cleanDirectory(classes);
         new JavacTask(tb)
-                .options("-Xjcov",
-                         "--enable-preview",
-                         "-source", SOURCE_VERSION)
+                .options("-Xjcov")
                 .outdir(classes)
                 .sources("@Bean
 public class Test {\n" +

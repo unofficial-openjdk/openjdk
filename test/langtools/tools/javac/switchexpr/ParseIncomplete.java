@@ -70,7 +70,7 @@ public class C {" +
             StringWriter out = new StringWriter();
             try {
                 JavacTask ct = (JavacTask) tool.getTask(out, null, noErrors,
-                    List.of("-XDdev", "--enable-preview", "-source", sourceVersion), null,
+                    List.of("-XDdev"), null,
                     Arrays.asList(new MyFileObject(code)));
                 ct.parse().iterator().next();
             } catch (Throwable t) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,22 @@
  * questions.
  */
 
-// key: compiler.warn.restricted.type.not.allowed.preview
+#include "precompiled.hpp"
+#include "gc/z/zNUMA.hpp"
 
-class yield { }
+void ZNUMA::initialize_platform() {
+  _enabled = false;
+}
+
+uint32_t ZNUMA::count() {
+  return 1;
+}
+
+uint32_t ZNUMA::id() {
+  return 0;
+}
+
+uint32_t ZNUMA::memory_id(uintptr_t addr) {
+  // NUMA support not enabled, assume everything belongs to node zero
+  return 0;
+}

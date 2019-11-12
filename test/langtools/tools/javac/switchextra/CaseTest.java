@@ -150,7 +150,7 @@ public class CaseTest {
 
         StringWriter out = new StringWriter();
         JavacTask ct = (JavacTask) tool.getTask(out, null, noErrors,
-            List.of("-XDdev", "--enable-preview", "-source", sourceVersion), null,
+            List.of("-XDdev"), null,
             Arrays.asList(new MyFileObject(code)));
         return ct.parse().iterator().next();
     }
