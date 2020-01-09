@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2017, 2020, Red Hat, Inc. All rights reserved.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -202,6 +202,7 @@ public:
       _heap(ShenandoahHeap::heap()) {}
 
   virtual void do_nmethod(nmethod* nm) {
+    assert(_heap->is_concurrent_root_in_progress(), "Only this phase");
     if (failed()) {
       return;
     }
