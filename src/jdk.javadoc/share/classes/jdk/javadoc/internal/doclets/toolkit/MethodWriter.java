@@ -43,22 +43,18 @@ public interface MethodWriter {
     /**
      * Get the method details tree header.
      *
-     * @param typeElement the class being documented
      * @param memberDetailsTree the content tree representing member details
      * @return content tree for the method details header
      */
-    public Content getMethodDetailsTreeHeader(TypeElement typeElement,
-            Content memberDetailsTree);
+    Content getMethodDetailsTreeHeader(Content memberDetailsTree);
 
     /**
      * Get the method documentation tree header.
      *
      * @param method the method being documented
-     * @param methodDetailsTree the content tree representing method details
      * @return content tree for the method documentation header
      */
-    public Content getMethodDocTreeHeader(ExecutableElement method,
-            Content methodDetailsTree);
+    Content getMethodDocTreeHeader(ExecutableElement method);
 
     /**
      * Get the signature for the given method.
@@ -66,7 +62,7 @@ public interface MethodWriter {
      * @param method the method being documented
      * @return content tree for the method signature
      */
-    public Content getSignature(ExecutableElement method);
+    Content getSignature(ExecutableElement method);
 
     /**
      * Add the deprecated output for the given method.
@@ -74,7 +70,7 @@ public interface MethodWriter {
      * @param method the method being documented
      * @param methodDocTree content tree to which the deprecated information will be added
      */
-    public void addDeprecated(ExecutableElement method, Content methodDocTree);
+    void addDeprecated(ExecutableElement method, Content methodDocTree);
 
     /**
      * Add the comments for the given method.
@@ -83,7 +79,7 @@ public interface MethodWriter {
      * @param method the method being documented
      * @param methodDocTree the content tree to which the comments will be added
      */
-    public void addComments(TypeMirror holder, ExecutableElement method, Content methodDocTree);
+    void addComments(TypeMirror holder, ExecutableElement method, Content methodDocTree);
 
     /**
      * Add the tags for the given method.
@@ -91,7 +87,7 @@ public interface MethodWriter {
      * @param method the method being documented
      * @param methodDocTree the content tree to which the tags will be added
      */
-    public void addTags(ExecutableElement method, Content methodDocTree);
+    void addTags(ExecutableElement method, Content methodDocTree);
 
     /**
      * Get the method details tree.
@@ -100,7 +96,7 @@ public interface MethodWriter {
      * @param methodDetailsTree the content tree representing method details
      * @return content tree for the method details
      */
-    public Content getMethodDetails(Content methodDetailsTreeHeader, Content methodDetailsTree);
+    Content getMethodDetails(Content methodDetailsTreeHeader, Content methodDetailsTree);
 
     /**
      * Get the method documentation.
@@ -108,12 +104,12 @@ public interface MethodWriter {
      * @param methodDocTree the content tree representing method documentation
      * @return content tree for the method documentation
      */
-    public Content getMethodDoc(Content methodDocTree);
+    Content getMethodDoc(Content methodDocTree);
 
     /**
      * Gets the member header tree.
      *
      * @return a content tree for the member header
      */
-    public Content getMemberTreeHeader();
+    Content getMemberTreeHeader();
 }

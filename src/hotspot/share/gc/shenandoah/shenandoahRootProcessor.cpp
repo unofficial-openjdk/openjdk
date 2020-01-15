@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2015, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -201,18 +202,6 @@ void ShenandoahRootEvacuator::roots_do(uint worker_id, OopClosure* oops) {
 ShenandoahRootUpdater::ShenandoahRootUpdater(uint n_workers, ShenandoahPhaseTimings::Phase phase) :
   ShenandoahRootProcessor(phase),
   _thread_roots(n_workers > 1) {
-}
-
-void ShenandoahRootUpdater::strong_roots_do(uint worker_id, OopClosure* oops_cl) {
-  CodeBlobToOopClosure update_blobs(oops_cl, CodeBlobToOopClosure::FixRelocations);
-  CLDToOopClosure clds(oops_cl, ClassLoaderData::_claim_strong);
-
-  _serial_roots.oops_do(oops_cl, worker_id);
-  _vm_roots.oops_do(oops_cl, worker_id);
-
-  _thread_roots.oops_do(oops_cl, NULL, worker_id);
-  _cld_roots.cld_do(&clds, worker_id);
-  _code_roots.code_blobs_do(&update_blobs, worker_id);
 }
 
 ShenandoahRootAdjuster::ShenandoahRootAdjuster(uint n_workers, ShenandoahPhaseTimings::Phase phase) :

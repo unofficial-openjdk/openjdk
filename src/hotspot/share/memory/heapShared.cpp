@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -78,9 +78,7 @@ static ArchivableStaticFieldInfo closed_archive_subgraph_entry_fields[] = {
 // Entry fields for subgraphs archived in the open archive heap region.
 static ArchivableStaticFieldInfo open_archive_subgraph_entry_fields[] = {
   {"jdk/internal/module/ArchivedModuleGraph",  "archivedModuleGraph"},
-  {"java/util/ImmutableCollections$ListN",     "EMPTY_LIST"},
-  {"java/util/ImmutableCollections$MapN",      "EMPTY_MAP"},
-  {"java/util/ImmutableCollections$SetN",      "EMPTY_SET"},
+  {"java/util/ImmutableCollections",           "archivedObjects"},
   {"java/lang/module/Configuration",           "EMPTY_CONFIGURATION"},
   {"jdk/internal/math/FDBigInteger",           "archivedCaches"},
 };
@@ -186,14 +184,12 @@ void HeapShared::archive_klass_objects(Thread* THREAD) {
 void HeapShared::archive_java_heap_objects(GrowableArray<MemRegion> *closed,
                                            GrowableArray<MemRegion> *open) {
   if (!is_heap_object_archiving_allowed()) {
-    if (log_is_enabled(Info, cds)) {
-      log_info(cds)(
-        "Archived java heap is not supported as UseG1GC, "
-        "UseCompressedOops and UseCompressedClassPointers are required."
-        "Current settings: UseG1GC=%s, UseCompressedOops=%s, UseCompressedClassPointers=%s.",
-        BOOL_TO_STR(UseG1GC), BOOL_TO_STR(UseCompressedOops),
-        BOOL_TO_STR(UseCompressedClassPointers));
-    }
+    log_info(cds)(
+      "Archived java heap is not supported as UseG1GC, "
+      "UseCompressedOops and UseCompressedClassPointers are required."
+      "Current settings: UseG1GC=%s, UseCompressedOops=%s, UseCompressedClassPointers=%s.",
+      BOOL_TO_STR(UseG1GC), BOOL_TO_STR(UseCompressedOops),
+      BOOL_TO_STR(UseCompressedClassPointers));
     return;
   }
 
@@ -205,11 +201,11 @@ void HeapShared::archive_java_heap_objects(GrowableArray<MemRegion> *closed,
     // Cache for recording where the archived objects are copied to
     create_archived_object_cache();
 
-    tty->print_cr("Dumping objects to closed archive heap region ...");
+    log_info(cds)("Dumping objects to closed archive heap region ...");
     NOT_PRODUCT(StringTable::verify());
     copy_closed_archive_heap_objects(closed);
 
-    tty->print_cr("Dumping objects to open archive heap region ...");
+    log_info(cds)("Dumping objects to open archive heap region ...");
     copy_open_archive_heap_objects(open);
 
     destroy_archived_object_cache();

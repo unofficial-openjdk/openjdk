@@ -80,17 +80,20 @@ class MacroAssembler: public Assembler {
 
   void call_VM_helper(Register oop_result, address entry_point, int number_of_arguments, bool check_exceptions = true);
 
-  // True if an XOR can be used to expand narrow klass references.
-  bool use_XOR_for_compressed_class_base;
+  enum KlassDecodeMode {
+    KlassDecodeNone,
+    KlassDecodeZero,
+    KlassDecodeXor,
+    KlassDecodeMovk
+  };
+
+  KlassDecodeMode klass_decode_mode();
+
+ private:
+  static KlassDecodeMode _klass_decode_mode;
 
  public:
-  MacroAssembler(CodeBuffer* code) : Assembler(code) {
-    use_XOR_for_compressed_class_base
-      = operand_valid_for_logical_immediate
-           (/*is32*/false, (uint64_t)CompressedKlassPointers::base())
-         && ((uint64_t)CompressedKlassPointers::base()
-             > (1UL << log2_intptr(CompressedKlassPointers::range())));
-  }
+  MacroAssembler(CodeBuffer* code) : Assembler(code) {}
 
  // These routines should emit JVMTI PopFrame and ForceEarlyReturn handling code.
  // The implementation is only non-empty for the InterpreterMacroAssembler,
@@ -131,6 +134,20 @@ class MacroAssembler: public Assembler {
     InstructionMark im(this);
     code_section()->relocate(inst_mark(), a.rspec());
     a.lea(this, r);
+  }
+
+  /* Sometimes we get misaligned loads and stores, usually from Unsafe
+     accesses, and these can exceed the offset range. */
+  Address legitimize_address(const Address &a, int size, Register scratch) {
+    if (a.getMode() == Address::base_plus_offset) {
+      if (! Address::offset_ok_for_immed(a.offset(), exact_log2(size))) {
+        block_comment("legitimize_address {");
+        lea(scratch, a);
+        block_comment("} legitimize_address");
+        return Address(scratch);
+      }
+    }
+    return a;
   }
 
   void addmw(Address a, Register incr, Register scratch) {

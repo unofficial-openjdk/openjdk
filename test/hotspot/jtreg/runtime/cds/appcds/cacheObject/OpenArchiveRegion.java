@@ -31,7 +31,6 @@
  * vm options.
  * @requires (vm.gc=="null")
  * @library /test/lib /test/hotspot/jtreg/runtime/cds/appcds
- * @modules jdk.jartool/sun.tools.jar
  * @compile ../test-classes/Hello.java
  * @run driver OpenArchiveRegion
  */
@@ -45,7 +44,7 @@ public class OpenArchiveRegion {
         String appClasses[] = TestCommon.list("Hello");
 
         // Dump with open archive heap region, requires G1 GC
-        OutputAnalyzer output = TestCommon.dump(appJar, appClasses);
+        OutputAnalyzer output = TestCommon.dump(appJar, appClasses, "-Xlog:cds=debug");
         TestCommon.checkDump(output, "oa0 space:");
         output.shouldNotContain("oa0 space:         0 [");
         output = TestCommon.exec(appJar, "Hello");

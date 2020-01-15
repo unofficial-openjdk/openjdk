@@ -1,5 +1,7 @@
 /*
+ * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2016, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -36,8 +38,7 @@
                             product_rw,                                     \
                             lp64_product,                                   \
                             range,                                          \
-                            constraint,                                     \
-                            writeable)                                      \
+                            constraint)                                     \
                                                                             \
   experimental(size_t, ShenandoahHeapRegionSize, 0,                         \
           "Size of the Shenandoah regions. Set to zero to detect "          \

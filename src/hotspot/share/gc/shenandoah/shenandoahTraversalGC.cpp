@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018, 2020, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -605,8 +606,8 @@ void ShenandoahTraversalGC::final_traversal_collection() {
     _heap->set_concurrent_traversal_in_progress(false);
     _heap->mark_complete_marking_context();
 
-    fixup_roots();
     _heap->parallel_cleaning(false);
+    fixup_roots();
 
     _heap->set_has_forwarded_objects(false);
 
@@ -707,7 +708,8 @@ public:
   void work(uint worker_id) {
     ShenandoahParallelWorkerSession worker_session(worker_id);
     ShenandoahTraversalFixRootsClosure cl;
-    _rp->strong_roots_do(worker_id, &cl);
+    ShenandoahForwardedIsAliveClosure is_alive;
+    _rp->roots_do(worker_id, &is_alive, &cl);
   }
 };
 

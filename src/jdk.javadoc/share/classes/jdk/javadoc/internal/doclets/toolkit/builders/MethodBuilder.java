@@ -71,7 +71,7 @@ public class MethodBuilder extends AbstractMemberBuilder {
      * Construct a new MethodBuilder.
      *
      * @param context       the build context.
-     * @param typeElement the class whoses members are being documented.
+     * @param typeElement the class whose members are being documented.
      * @param writer the doclet specific writer.
      */
     private MethodBuilder(Context context,
@@ -86,7 +86,7 @@ public class MethodBuilder extends AbstractMemberBuilder {
      * Construct a new MethodBuilder.
      *
      * @param context       the build context.
-     * @param typeElement the class whoses members are being documented.
+     * @param typeElement the class whose members are being documented.
      * @param writer the doclet specific writer.
      *
      * @return an instance of a MethodBuilder.
@@ -123,13 +123,12 @@ public class MethodBuilder extends AbstractMemberBuilder {
             return;
         }
         if (hasMembersToDocument()) {
-            Content methodDetailsTreeHeader = writer.getMethodDetailsTreeHeader(typeElement,
-                    memberDetailsTree);
+            Content methodDetailsTreeHeader = writer.getMethodDetailsTreeHeader(memberDetailsTree);
             Content methodDetailsTree = writer.getMemberTreeHeader();
 
             for (Element method : methods) {
                 currentMethod = (ExecutableElement)method;
-                Content methodDocTree = writer.getMethodDocTreeHeader(currentMethod, methodDetailsTree);
+                Content methodDocTree = writer.getMethodDocTreeHeader(currentMethod);
 
                 buildSignature(methodDocTree);
                 buildDeprecationInfo(methodDocTree);

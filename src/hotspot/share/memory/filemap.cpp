@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1164,9 +1164,9 @@ void FileMapInfo::write_region(int region, char* base, size_t size,
 
   si->set_file_offset(_file_offset);
   char* requested_base = (target_base == NULL) ? NULL : target_base + MetaspaceShared::final_delta();
-  log_info(cds)("Shared file region  %d: " SIZE_FORMAT_HEX_W(08)
-                " bytes, addr " INTPTR_FORMAT " file offset " SIZE_FORMAT_HEX_W(08),
-                region, size, p2i(requested_base), _file_offset);
+  log_debug(cds)("Shared file region  %d: " SIZE_FORMAT_HEX_W(08)
+                 " bytes, addr " INTPTR_FORMAT " file offset " SIZE_FORMAT_HEX_W(08),
+                 region, size, p2i(requested_base), _file_offset);
 
   int crc = ClassLoader::crc32(0, base, (jint)size);
   si->init(region, target_base, size, read_only, allow_exec, crc);
@@ -1185,8 +1185,8 @@ void FileMapInfo::write_bitmap_region(const CHeapBitMap* ptrmap) {
   ptrmap->write_to(buffer, size_in_bytes);
   header()->set_ptrmap_size_in_bits(size_in_bits);
 
-  log_info(cds)("ptrmap = " INTPTR_FORMAT " (" SIZE_FORMAT " bytes)",
-                p2i(buffer), size_in_bytes);
+  log_debug(cds)("ptrmap = " INTPTR_FORMAT " (" SIZE_FORMAT " bytes)",
+                 p2i(buffer), size_in_bytes);
   write_region(MetaspaceShared::bm, (char*)buffer, size_in_bytes, /*read_only=*/true, /*allow_exec=*/false);
 }
 
@@ -1247,8 +1247,8 @@ size_t FileMapInfo::write_archive_heap_regions(GrowableArray<MemRegion> *heap_me
       total_size += size;
     }
 
-    log_info(cds)("Archive heap region %d: " INTPTR_FORMAT " - " INTPTR_FORMAT " = " SIZE_FORMAT_W(8) " bytes",
-                  i, p2i(start), p2i(start + size), size);
+    log_debug(cds)("Archive heap region %d: " INTPTR_FORMAT " - " INTPTR_FORMAT " = " SIZE_FORMAT_W(8) " bytes",
+                   i, p2i(start), p2i(start + size), size);
     write_region(i, start, size, false, false);
     if (size > 0) {
       address oopmap = oopmaps->at(arr_idx)._oopmap;
@@ -1790,7 +1790,7 @@ bool FileMapInfo::map_heap_data(MemRegion **heap_mem, int first,
                                 si->allow_exec());
     if (base == NULL || base != addr) {
       // dealloc the regions from java heap
-      dealloc_archive_heap_regions(regions, region_num, is_open_archive);
+      dealloc_archive_heap_regions(regions, region_num);
       log_info(cds)("UseSharedSpaces: Unable to map at required address in java heap. "
                     INTPTR_FORMAT ", size = " SIZE_FORMAT " bytes",
                     p2i(addr), regions[i].byte_size());
@@ -1799,7 +1799,7 @@ bool FileMapInfo::map_heap_data(MemRegion **heap_mem, int first,
 
     if (VerifySharedSpaces && !region_crc_check(addr, regions[i].byte_size(), si->crc())) {
       // dealloc the regions from java heap
-      dealloc_archive_heap_regions(regions, region_num, is_open_archive);
+      dealloc_archive_heap_regions(regions, region_num);
       log_info(cds)("UseSharedSpaces: mapped heap regions are corrupt");
       return false;
     }
@@ -1855,10 +1855,10 @@ void FileMapInfo::fixup_mapped_heap_regions() {
 }
 
 // dealloc the archive regions from java heap
-void FileMapInfo::dealloc_archive_heap_regions(MemRegion* regions, int num, bool is_open) {
+void FileMapInfo::dealloc_archive_heap_regions(MemRegion* regions, int num) {
   if (num > 0) {
     assert(regions != NULL, "Null archive ranges array with non-zero count");
-    G1CollectedHeap::heap()->dealloc_archive_regions(regions, num, is_open);
+    G1CollectedHeap::heap()->dealloc_archive_regions(regions, num);
   }
 }
 #endif // INCLUDE_CDS_JAVA_HEAP
@@ -2075,11 +2075,9 @@ void FileMapInfo::stop_sharing_and_unmap(const char* msg) {
     // Dealloc the archive heap regions only without unmapping. The regions are part
     // of the java heap. Unmapping of the heap regions are managed by GC.
     map_info->dealloc_archive_heap_regions(open_archive_heap_ranges,
-                                           num_open_archive_heap_ranges,
-                                           true);
+                                           num_open_archive_heap_ranges);
     map_info->dealloc_archive_heap_regions(closed_archive_heap_ranges,
-                                           num_closed_archive_heap_ranges,
-                                           false);
+                                           num_closed_archive_heap_ranges);
   } else if (DumpSharedSpaces) {
     fail_stop("%s", msg);
   }
