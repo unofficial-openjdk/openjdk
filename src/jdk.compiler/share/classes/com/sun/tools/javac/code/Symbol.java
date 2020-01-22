@@ -57,6 +57,7 @@ import com.sun.tools.javac.comp.AttrContext;
 import com.sun.tools.javac.comp.Env;
 import com.sun.tools.javac.jvm.*;
 import com.sun.tools.javac.jvm.PoolConstant;
+import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCFieldAccess;
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 import com.sun.tools.javac.tree.JCTree.Tag;
@@ -1733,6 +1734,7 @@ public abstract class Symbol extends AnnoConstruct implements PoolConstant, Elem
     @SuppressWarnings("preview")
     public static class RecordComponent extends VarSymbol implements RecordComponentElement {
         public MethodSymbol accessor;
+        public JCTree.JCMethodDecl accessorMeth;
 
         /**
          * Construct a record component, given its flags, name, type and owner.

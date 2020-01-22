@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -494,8 +494,6 @@ void SafepointSynchronize::disarm_safepoint() {
       assert(!cur_state->is_running(), "Thread not suspended at safepoint");
       cur_state->restart(); // TSS _running
       assert(cur_state->is_running(), "safepoint state has not been reset");
-
-      SafepointMechanism::disarm_if_needed(current, false /* NO release */);
     }
   } // ~JavaThreadIteratorWithHandle
 
@@ -736,10 +734,6 @@ static bool safepoint_safe_with(JavaThread *thread, JavaThreadState state) {
 }
 
 bool SafepointSynchronize::handshake_safe(JavaThread *thread) {
-  // This function must be called with the Threads_lock held so an externally
-  // suspended thread cannot be resumed thus it is safe.
-  assert(Threads_lock->owned_by_self() && Thread::current()->is_VM_thread(),
-         "Must hold Threads_lock and be VMThread");
   if (thread->is_ext_suspended() || thread->is_terminated()) {
     return true;
   }

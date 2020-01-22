@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2015, 2020, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -187,6 +188,14 @@ public:
   void oops_do(BoolObjectClosure* is_alive, OopClosure* keep_alive, uint worker_id);
 };
 
+class ShenandoahConcurrentStringDedupRoots {
+public:
+  ShenandoahConcurrentStringDedupRoots();
+  ~ShenandoahConcurrentStringDedupRoots();
+
+  void oops_do(BoolObjectClosure* is_alive, OopClosure* keep_alive, uint worker_id);
+};
+
 template <typename ITR>
 class ShenandoahCodeCacheRoots {
 private:
@@ -306,8 +315,6 @@ public:
 
   template<typename IsAlive, typename KeepAlive>
   void roots_do(uint worker_id, IsAlive* is_alive, KeepAlive* keep_alive);
-
-  void strong_roots_do(uint worker_id, OopClosure* oops_cl);
 };
 
 // Adjuster all roots at a safepoint during full gc

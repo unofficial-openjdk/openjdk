@@ -42,7 +42,6 @@
 #define VM_OPS_DO(template)                       \
   template(None)                                  \
   template(Cleanup)                               \
-  template(ThreadStop)                            \
   template(ThreadDump)                            \
   template(PrintThreads)                          \
   template(FindDeadlocks)                         \
@@ -177,7 +176,6 @@ class VM_Operation : public StackObj {
   // Configuration. Override these appropriately in subclasses.
   virtual VMOp_Type type() const = 0;
   virtual bool allow_nested_vm_operations() const { return false; }
-  virtual void oops_do(OopClosure* f)              { /* do nothing */ };
 
   // An operation can either be done inside a safepoint
   // or concurrently with Java threads running.
@@ -208,30 +206,6 @@ class VM_Cleanup: public VM_Operation {
  public:
   VMOp_Type type() const { return VMOp_Cleanup; }
   void doit() {};
-};
-
-class VM_ThreadStop: public VM_Operation {
- private:
-  oop     _thread;        // The Thread that the Throwable is thrown against
-  oop     _throwable;     // The Throwable thrown at the target Thread
- public:
-  // All oops are passed as JNI handles, since there is no guarantee that a GC might happen before the
-  // VM operation is executed.
-  VM_ThreadStop(oop thread, oop throwable) {
-    _thread    = thread;
-    _throwable = throwable;
-  }
-  VMOp_Type type() const                         { return VMOp_ThreadStop; }
-  oop target_thread() const                      { return _thread; }
-  oop throwable() const                          { return _throwable;}
-  void doit();
-  // We deoptimize if top-most frame is compiled - this might require a C2I adapter to be generated
-  bool allow_nested_vm_operations() const        { return true; }
-
-  // GC support
-  void oops_do(OopClosure* f) {
-    f->do_oop(&_thread); f->do_oop(&_throwable);
-  }
 };
 
 class VM_ClearICs: public VM_Operation {

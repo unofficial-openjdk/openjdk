@@ -114,14 +114,14 @@ public class TestMemberInheritance extends JavadocTester {
         checkOutput("pkg2/DocumentedNonGenericChild.html", true,
                 "<td class=\"colFirst\"><code>protected abstract java.lang.String</code></td>\n"
                 + "<th class=\"colSecond\" scope=\"row\"><code><span class=\"memberNameLink\">"
-                + "<a href=\"#parentMethod(T)\">parentMethod</a></span>&#8203;"
-                + "(java.lang.String&nbsp;t)</code></th>\n"
+                + "<a href=\"#parentMethod(T)\">parentMethod</a></span>&#8203;(java.lang.String&nbsp;t)</code></th>\n"
                 + "<td class=\"colLast\">\n"
                 + "<div class=\"block\">Returns some value.</div>\n"
                 + "</td>\n");
 
         checkOutput("pkg2/DocumentedNonGenericChild.html", true,
-                "</a><a id=\"parentMethod(T)\">parentMethod</a></h3>\n"
+                "<section class=\"detail\" id=\"parentMethod(T)\">\n"
+                + "<h3 id=\"parentMethod(java.lang.Object)\">parentMethod</h3>\n"
                 + "<div class=\"memberSignature\"><span class=\"modifiers\">protected abstract</span>"
                 + "&nbsp;<span class=\"returnType\">java.lang.String</span>&nbsp;"
                 + "<span class=\"memberName\">parentMethod</span>&#8203;"
@@ -143,8 +143,8 @@ public class TestMemberInheritance extends JavadocTester {
                 + "<a href=\"#f\">f</a></span></code></th>\n"
                 + "<td class=\"colLast\">\n"
                 + "<div class=\"block\">A field.</div>",
-                "<section class=\"detail\">\n"
-                + "<h3><a id=\"f\">f</a></h3>\n"
+                "<section class=\"detail\" id=\"f\">\n"
+                + "<h3>f</h3>\n"
                 + "<div class=\"memberSignature\"><span class=\"modifiers\">public</span>&nbsp;"
                 + "<span class=\"returnType\">java.lang.String</span>&nbsp;<span class=\"memberName\">f</span></div>\n"
                 + "<div class=\"block\">A field.</div>\n"
@@ -154,14 +154,12 @@ public class TestMemberInheritance extends JavadocTester {
                 "<td class=\"colFirst\"><code>java.lang.String</code></td>\n"
                 + "<th class=\"colSecond\" scope=\"row\"><code><span class=\"memberNameLink\">"
                 + "<a href=\"#method(T)\">method</a></span>&#8203;(java.lang.String&nbsp;t)</code></th>",
-                "<section class=\"detail\">\n"
-                + "<h3><a id=\"method(java.lang.Object)\">\n"
-                + "<!--   -->\n"
-                + "</a><a id=\"method(T)\">method</a></h3>\n"
-                + "<div class=\"memberSignature\"><span class=\"modifiers\">public</span>&nbsp;"
-                + "<span class=\"returnType\">java.lang.String</span>&nbsp;<span class=\"memberName\">"
-                + "method</span>&#8203;(<span class=\"arguments\">java.lang.String&nbsp;t)</span></div>\n"
+                "<section class=\"detail\" id=\"method(T)\">\n"
+                + "<h3 id=\"method(java.lang.Object)\">method</h3>\n"
+                + "<div class=\"memberSignature\"><span class=\"modifiers\">public</span>"
+                + "&nbsp;<span class=\"returnType\">java.lang.String</span>&nbsp;"
+                + "<span class=\"memberName\">method</span>&#8203;(<span class=\"arguments\">"
+                + "java.lang.String&nbsp;t)</span></div>\n"
                 + "</section>");
-
     }
 }

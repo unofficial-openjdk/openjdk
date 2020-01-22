@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,7 +37,7 @@ bool JVMCIGlobals::check_jvmci_flags_are_consistent() {
 
 #ifndef PRODUCT
 #define APPLY_JVMCI_FLAGS(params3, params4) \
-  JVMCI_FLAGS(params4, params3, params4, params3, params4, params3, params4, params4, IGNORE_RANGE, IGNORE_CONSTRAINT, IGNORE_WRITEABLE)
+  JVMCI_FLAGS(params4, params3, params4, params3, params4, params3, params4, params4, IGNORE_RANGE, IGNORE_CONSTRAINT)
 #define JVMCI_DECLARE_CHECK4(type, name, value, doc) bool name##checked = false;
 #define JVMCI_DECLARE_CHECK3(type, name, doc)        bool name##checked = false;
 #define JVMCI_FLAG_CHECKED(name)                          name##checked = true;
@@ -194,7 +194,7 @@ bool JVMCIGlobals::enable_jvmci_product_mode(JVMFlag::Flags origin) {
 void JVMCIGlobals::check_jvmci_supported_gc() {
   if (EnableJVMCI) {
     // Check if selected GC is supported by JVMCI and Java compiler
-    if (!(UseSerialGC || UseParallelGC || UseParallelOldGC || UseG1GC)) {
+    if (!(UseSerialGC || UseParallelGC || UseG1GC)) {
       vm_exit_during_initialization("JVMCI Compiler does not support selected GC", GCConfig::hs_err_name());
       FLAG_SET_DEFAULT(EnableJVMCI, false);
       FLAG_SET_DEFAULT(UseJVMCICompiler, false);
