@@ -187,6 +187,11 @@ void assert_lock_strong(const Mutex* lock) {
   if (lock->owned_by_self()) return;
   fatal("must own lock %s", lock->name());
 }
+
+void assert_locked_or_safepoint_or_handshake(const Mutex* lock, const JavaThread* thread) {
+  if (Thread::current()->is_VM_thread() && thread->is_vmthread_processing_handshake()) return;
+  assert_locked_or_safepoint(lock);
+}
 #endif
 
 #define def(var, type, pri, vm_block, safepoint_check_allowed ) {      \
@@ -223,7 +228,7 @@ void mutex_init() {
   }
   if (UseShenandoahGC) {
     def(StringDedupQueue_lock      , PaddedMonitor, leaf,        true,  _safepoint_check_never);
-    def(StringDedupTable_lock      , PaddedMutex  , leaf,        true,  _safepoint_check_never);
+    def(StringDedupTable_lock      , PaddedMutex  , leaf + 1,    true,  _safepoint_check_never);
   }
   def(ParGCRareEvent_lock          , PaddedMutex  , leaf     ,   true,  _safepoint_check_always);
   def(CGCPhaseManager_lock         , PaddedMonitor, leaf,        false, _safepoint_check_always);

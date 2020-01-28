@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -153,6 +153,8 @@ public class HtmlDocletWriter {
      */
     public final HtmlConfiguration configuration;
 
+    protected final HtmlOptions options;
+
     protected final Utils utils;
 
     protected final Contents contents;
@@ -208,6 +210,7 @@ public class HtmlDocletWriter {
      */
     public HtmlDocletWriter(HtmlConfiguration configuration, DocPath path) {
         this.configuration = configuration;
+        this.options = configuration.getOptions();
         this.contents = configuration.contents;
         this.messages = configuration.messages;
         this.resources = configuration.resources;
@@ -259,9 +262,9 @@ public class HtmlDocletWriter {
             // append htmlstr up to start of next {@docroot}
             buf.append(htmlstr.substring(prevEnd, match));
             prevEnd = docrootMatcher.end();
-            if (configuration.docrootparent.length() > 0 && htmlstr.startsWith("/..", prevEnd)) {
+            if (options.docrootParent().length() > 0 && htmlstr.startsWith("/..", prevEnd)) {
                 // Insert the absolute link if {@docRoot} is followed by "/..".
-                buf.append(configuration.docrootparent);
+                buf.append(options.docrootParent());
                 prevEnd += 3;
             } else {
                 // Insert relative path where {@docRoot} was located
@@ -276,7 +279,7 @@ public class HtmlDocletWriter {
         return buf.toString();
     }
     //where:
-        // Note: {@docRoot} is not case sensitive when passed in w/command line option:
+        // Note: {@docRoot} is not case sensitive when passed in with a command-line option:
         private static final Pattern docrootPattern =
                 Pattern.compile(Pattern.quote("{@docroot}"), Pattern.CASE_INSENSITIVE);
 
@@ -339,7 +342,7 @@ public class HtmlDocletWriter {
      * @param htmltree the documentation tree to which the tags will be added
      */
     protected void addTagsInfo(Element e, Content htmltree) {
-        if (configuration.nocomment) {
+        if (options.noComment()) {
             return;
         }
         Content dl = new HtmlTree(HtmlTag.DL);
@@ -447,15 +450,15 @@ public class HtmlDocletWriter {
         Content htmlComment = contents.newPage;
         List<DocPath> additionalStylesheets = configuration.getAdditionalStylesheets();
         additionalStylesheets.addAll(localStylesheets);
-        Head head = new Head(path, configuration.docletVersion)
-                .setTimestamp(!configuration.notimestamp)
+        Head head = new Head(path, configuration.docletVersion, configuration.startTime)
+                .setTimestamp(!options.noTimestamp())
                 .setDescription(description)
                 .setGenerator(getGenerator(getClass()))
                 .setTitle(winTitle)
-                .setCharset(configuration.charset)
+                .setCharset(options.charset())
                 .addKeywords(metakeywords)
                 .setStylesheets(configuration.getMainStylesheet(), additionalStylesheets)
-                .setIndex(configuration.createindex, mainBodyScript)
+                .setIndex(options.createIndex(), mainBodyScript)
                 .addContent(extraHeadContent);
 
         Content htmlTree = HtmlTree.HTML(configuration.getLocale().getLanguage(), head.toContent(), body);
@@ -470,8 +473,8 @@ public class HtmlDocletWriter {
      * @return the window title string
      */
     public String getWindowTitle(String title) {
-        if (configuration.windowtitle.length() > 0) {
-            title += " (" + configuration.windowtitle  + ")";
+        if (options.windowTitle().length() > 0) {
+            title += " (" + options.windowTitle() + ")";
         }
         return title;
     }
@@ -485,12 +488,12 @@ public class HtmlDocletWriter {
     public Content getUserHeaderFooter(boolean header) {
         String content;
         if (header) {
-            content = replaceDocRootDir(configuration.header);
+            content = replaceDocRootDir(options.header());
         } else {
-            if (configuration.footer.length() != 0) {
-                content = replaceDocRootDir(configuration.footer);
+            if (options.footer().length() != 0) {
+                content = replaceDocRootDir(options.footer());
             } else {
-                content = replaceDocRootDir(configuration.header);
+                content = replaceDocRootDir(options.header());
             }
         }
         Content rawContent = new RawHtml(content);
@@ -503,7 +506,7 @@ public class HtmlDocletWriter {
      * @param htmlTree the content tree to which user specified top will be added
      */
     public void addTop(Content htmlTree) {
-        Content top = new RawHtml(replaceDocRootDir(configuration.top));
+        Content top = new RawHtml(replaceDocRootDir(options.top()));
         htmlTree.add(top);
     }
 
@@ -513,7 +516,7 @@ public class HtmlDocletWriter {
      * @param htmlTree the content tree to which user specified bottom will be added
      */
     public void addBottom(Content htmlTree) {
-        Content bottom = new RawHtml(replaceDocRootDir(configuration.bottom));
+        Content bottom = new RawHtml(replaceDocRootDir(options.bottom()));
         Content small = HtmlTree.SMALL(bottom);
         Content p = HtmlTree.P(HtmlStyle.legalCopy, small);
         htmlTree.add(p);
@@ -1259,7 +1262,7 @@ public class HtmlDocletWriter {
      */
     private void addCommentTags(Element element, DocTree holderTag, List<? extends DocTree> tags, boolean depr,
             boolean first, boolean inSummary, Content htmltree) {
-        if(configuration.nocomment){
+        if (options.noComment()){
             return;
         }
         Content div;
@@ -1332,16 +1335,16 @@ public class HtmlDocletWriter {
      * an inline tag, such as in comments or in free-form text arguments
      * to block tags.
      *
-     * @param holderTag    specific tag where comment resides
-     * @param element    specific element where comment resides
-     * @param tags   array of text tags and inline tags (often alternating)
-    present in the text of interest for this element
-     * @param isFirstSentence  true if text is first sentence
-     * @param inSummary   if the comment tags are added into the summary section
+     * @param holderTag       specific tag where comment resides
+     * @param element         specific element where comment resides
+     * @param trees           array of text tags and inline tags (often alternating)
+     *                        present in the text of interest for this element
+     * @param isFirstSentence true if text is first sentence
+     * @param inSummary       if the comment tags are added into the summary section
      * @return a Content object
      */
     public Content commentTagsToContent(DocTree holderTag, Element element,
-            List<? extends DocTree> tags, boolean isFirstSentence, boolean inSummary) {
+            List<? extends DocTree> trees, boolean isFirstSentence, boolean inSummary) {
 
         final Content result = new ContentBuilder() {
             @Override
@@ -1351,10 +1354,10 @@ public class HtmlDocletWriter {
         };
         CommentHelper ch = utils.getCommentHelper(element);
         // Array of all possible inline tags for this javadoc run
-        configuration.tagletManager.checkTags(element, tags, true);
+        configuration.tagletManager.checkTags(element, trees, true);
         commentRemoved = false;
 
-        for (ListIterator<? extends DocTree> iterator = tags.listIterator(); iterator.hasNext();) {
+        for (ListIterator<? extends DocTree> iterator = trees.listIterator(); iterator.hasNext();) {
             boolean isFirstNode = !iterator.hasPrevious();
             DocTree tag = iterator.next();
             boolean isLastNode  = !iterator.hasNext();
@@ -1420,8 +1423,8 @@ public class HtmlDocletWriter {
                     for (DocTree dt : node.getValue()) {
                         if (utils.isText(dt) && isHRef) {
                             String text = ((TextTree) dt).getBody();
-                            if (text.startsWith("/..") && !configuration.docrootparent.isEmpty()) {
-                                result.add(configuration.docrootparent);
+                            if (text.startsWith("/..") && !options.docrootParent().isEmpty()) {
+                                result.add(options.docrootParent());
                                 docRootContent = new ContentBuilder();
                                 result.add(textCleanup(text.substring(3), isLastNode));
                             } else {
@@ -1575,12 +1578,14 @@ public class HtmlDocletWriter {
                     return textCleanup(text, isLast, false);
                 }
 
-                private CharSequence textCleanup(String text, boolean isLast, boolean trimLeader) {
-                    if (trimLeader) {
-                        text = removeLeadingWhitespace(text);
-                    }
-                    if (isFirstSentence && isLast) {
-                        text = removeTrailingWhitespace(text);
+                private CharSequence textCleanup(String text, boolean isLast, boolean stripLeading) {
+                    boolean stripTrailing = isFirstSentence && isLast;
+                    if (stripLeading && stripTrailing) {
+                        text = text.strip();
+                    } else if (stripLeading) {
+                        text = text.stripLeading();
+                    } else if (stripTrailing) {
+                        text = text.stripTrailing();
                     }
                     text = utils.replaceTabs(text);
                     return utils.normalizeNewlines(text);
@@ -1610,25 +1615,6 @@ public class HtmlDocletWriter {
                 break;
         }
         return result;
-    }
-
-    private String removeTrailingWhitespace(String text) {
-        char[] buf = text.toCharArray();
-        for (int i = buf.length - 1; i > 0 ; i--) {
-            if (!Character.isWhitespace(buf[i]))
-                return text.substring(0, i + 1);
-        }
-        return text;
-    }
-
-    private String removeLeadingWhitespace(String text) {
-        char[] buf = text.toCharArray();
-        for (int i = 0; i < buf.length; i++) {
-            if (!Character.isWhitespace(buf[i])) {
-                return text.substring(i);
-            }
-        }
-        return text;
     }
 
     /**

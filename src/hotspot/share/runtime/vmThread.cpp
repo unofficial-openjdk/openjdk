@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -62,7 +62,6 @@ VMOperationQueue::VMOperationQueue() {
     _queue[i]->set_next(_queue[i]);
     _queue[i]->set_prev(_queue[i]);
   }
-  _drain_list = NULL;
 }
 
 
@@ -128,23 +127,6 @@ VM_Operation* VMOperationQueue::queue_drain(int prio) {
   return r;
 }
 
-void VMOperationQueue::queue_oops_do(int queue, OopClosure* f) {
-  VM_Operation* cur = _queue[queue];
-  cur = cur->next();
-  while (cur != _queue[queue]) {
-    cur->oops_do(f);
-    cur = cur->next();
-  }
-}
-
-void VMOperationQueue::drain_list_oops_do(OopClosure* f) {
-  VM_Operation* cur = _drain_list;
-  while (cur != NULL) {
-    cur->oops_do(f);
-    cur = cur->next();
-  }
-}
-
 //-----------------------------------------------------------------
 // High-level interface
 void VMOperationQueue::add(VM_Operation *op) {
@@ -179,20 +161,13 @@ VM_Operation* VMOperationQueue::remove_next() {
   return queue_remove_front(queue_empty(high_prio) ? low_prio : high_prio);
 }
 
-void VMOperationQueue::oops_do(OopClosure* f) {
-  for(int i = 0; i < nof_priorities; i++) {
-    queue_oops_do(i, f);
-  }
-  drain_list_oops_do(f);
-}
-
 //------------------------------------------------------------------------------------------------------------------
 // Timeout machinery
 
 void VMOperationTimeoutTask::task() {
   assert(AbortVMOnVMOperationTimeout, "only if enabled");
   if (is_armed()) {
-    jlong delay = (os::javaTimeMillis() - _arm_time);
+    jlong delay = nanos_to_millis(os::javaTimeNanos() - _arm_time);
     if (delay > AbortVMOnVMOperationTimeoutDelay) {
       fatal("VM operation took too long: " JLONG_FORMAT " ms (timeout: " INTX_FORMAT " ms)",
             delay, AbortVMOnVMOperationTimeoutDelay);
@@ -205,7 +180,7 @@ bool VMOperationTimeoutTask::is_armed() {
 }
 
 void VMOperationTimeoutTask::arm() {
-  _arm_time = os::javaTimeMillis();
+  _arm_time = os::javaTimeNanos();
   Atomic::release_store_fence(&_armed, 1);
 }
 
@@ -471,9 +446,9 @@ void VMThread::loop() {
 
       // Stall time tracking code
       if (PrintVMQWaitTime && _cur_vm_operation != NULL) {
-        long stall = os::javaTimeMillis() - _cur_vm_operation->timestamp();
+        jlong stall = nanos_to_millis(os::javaTimeNanos() - _cur_vm_operation->timestamp());
         if (stall > 0)
-          tty->print_cr("%s stall: %ld",  _cur_vm_operation->name(), stall);
+          tty->print_cr("%s stall: " JLONG_FORMAT,  _cur_vm_operation->name(), stall);
       }
 
       while (!should_terminate() && _cur_vm_operation == NULL) {
@@ -534,8 +509,6 @@ void VMThread::loop() {
       if (_cur_vm_operation->evaluate_at_safepoint()) {
         log_debug(vmthread)("Evaluating safepoint VM operation: %s", _cur_vm_operation->name());
 
-        _vm_queue->set_drain_list(safepoint_ops); // ensure ops can be scanned
-
         SafepointSynchronize::begin();
 
         if (_timeout_task != NULL) {
@@ -554,7 +527,6 @@ void VMThread::loop() {
               // evaluate_operation deletes the op object so we have
               // to grab the next op now
               VM_Operation* next = _cur_vm_operation->next();
-              _vm_queue->set_drain_list(next);
               evaluate_operation(_cur_vm_operation);
               _cur_vm_operation = next;
               _coalesced_count++;
@@ -579,8 +551,6 @@ void VMThread::loop() {
             safepoint_ops = NULL;
           }
         } while(safepoint_ops != NULL);
-
-        _vm_queue->set_drain_list(NULL);
 
         if (_timeout_task != NULL) {
           _timeout_task->disarm();
@@ -670,7 +640,7 @@ void VMThread::execute(VM_Operation* op) {
       MonitorLocker ml(VMOperationQueue_lock, Mutex::_no_safepoint_check_flag);
       log_debug(vmthread)("Adding VM operation: %s", op->name());
       _vm_queue->add(op);
-      op->set_timestamp(os::javaTimeMillis());
+      op->set_timestamp(os::javaTimeNanos());
       ml.notify();
     }
     {
@@ -714,39 +684,6 @@ void VMThread::execute(VM_Operation* op) {
     _cur_vm_operation = prev_vm_operation;
   }
 }
-
-
-void VMThread::oops_do(OopClosure* f, CodeBlobClosure* cf) {
-  Thread::oops_do(f, cf);
-  _vm_queue->oops_do(f);
-}
-
-//------------------------------------------------------------------------------------------------------------------
-#ifndef PRODUCT
-
-void VMOperationQueue::verify_queue(int prio) {
-  // Check that list is correctly linked
-  int length = _queue_length[prio];
-  VM_Operation *cur = _queue[prio];
-  int i;
-
-  // Check forward links
-  for(i = 0; i < length; i++) {
-    cur = cur->next();
-    assert(cur != _queue[prio], "list to short (forward)");
-  }
-  assert(cur->next() == _queue[prio], "list to long (forward)");
-
-  // Check backwards links
-  cur = _queue[prio];
-  for(i = 0; i < length; i++) {
-    cur = cur->prev();
-    assert(cur != _queue[prio], "list to short (backwards)");
-  }
-  assert(cur->prev() == _queue[prio], "list to long (backwards)");
-}
-
-#endif
 
 void VMThread::verify() {
   oops_do(&VerifyOopClosure::verify_oop, NULL);

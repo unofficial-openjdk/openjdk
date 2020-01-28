@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -153,12 +153,12 @@ public interface Doclet {
         /**
          * The kind of an option.
          */
-        public static enum Kind {
-            /** an extended option, such as those prefixed with -X */
+        enum Kind {
+            /** An extended option, such as those prefixed with {@code -X}. */
             EXTENDED,
-            /** a standard option */
+            /** A standard option. */
             STANDARD,
-            /** an implementation reserved option */
+            /** An implementation-reserved option. */
             OTHER;
         }
     }

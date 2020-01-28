@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -2580,7 +2580,7 @@ void JvmtiExport::post_sampled_object_alloc(JavaThread *thread, oop object) {
 
 void JvmtiExport::cleanup_thread(JavaThread* thread) {
   assert(JavaThread::current() == thread, "thread is not current");
-  MutexLocker mu(JvmtiThreadState_lock);
+  MutexLocker mu(thread, JvmtiThreadState_lock);
 
   if (thread->jvmti_thread_state() != NULL) {
     // This has to happen after the thread state is removed, which is
@@ -2600,7 +2600,6 @@ void JvmtiExport::clear_detected_exception(JavaThread* thread) {
 }
 
 void JvmtiExport::oops_do(OopClosure* f) {
-  JvmtiCurrentBreakpoints::oops_do(f);
   JvmtiObjectAllocEventCollector::oops_do_for_all_threads(f);
 }
 

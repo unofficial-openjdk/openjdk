@@ -33,14 +33,17 @@
 // See https://patchwork.kernel.org/patch/3575821/
 
 template<size_t byte_size>
-struct Atomic::PlatformAdd
-  : Atomic::AddAndFetch<Atomic::PlatformAdd<byte_size> >
-{
+struct Atomic::PlatformAdd {
   template<typename D, typename I>
   D add_and_fetch(D volatile* dest, I add_value, atomic_memory_order order) const {
     D res = __atomic_add_fetch(dest, add_value, __ATOMIC_RELEASE);
     FULL_MEM_BARRIER;
     return res;
+  }
+
+  template<typename D, typename I>
+  D fetch_and_add(D volatile* dest, I add_value, atomic_memory_order order) const {
+    return add_and_fetch(dest, add_value, order) - add_value;
   }
 };
 
@@ -55,9 +58,10 @@ inline T Atomic::PlatformXchg<byte_size>::operator()(T volatile* dest,
   return res;
 }
 
+// __attribute__((unused)) on dest is to get rid of spurious GCC warnings.
 template<size_t byte_size>
 template<typename T>
-inline T Atomic::PlatformCmpxchg<byte_size>::operator()(T volatile* dest,
+inline T Atomic::PlatformCmpxchg<byte_size>::operator()(T volatile* dest __attribute__((unused)),
                                                         T compare_value,
                                                         T exchange_value,
                                                         atomic_memory_order order) const {

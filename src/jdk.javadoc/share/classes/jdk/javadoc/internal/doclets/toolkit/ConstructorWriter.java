@@ -42,22 +42,18 @@ public interface ConstructorWriter {
     /**
      * Get the constructor details tree header.
      *
-     * @param typeElement the class being documented
      * @param memberDetailsTree the content tree representing member details
      * @return content tree for the constructor details header
      */
-    public Content getConstructorDetailsTreeHeader(TypeElement typeElement,
-            Content memberDetailsTree);
+    Content getConstructorDetailsTreeHeader(Content memberDetailsTree);
 
     /**
      * Get the constructor documentation tree header.
      *
      * @param constructor the constructor being documented
-     * @param constructorDetailsTree the content tree representing constructor details
      * @return content tree for the constructor documentation header
      */
-    public Content getConstructorDocTreeHeader(ExecutableElement constructor,
-            Content constructorDetailsTree);
+    Content getConstructorDocTreeHeader(ExecutableElement constructor);
 
     /**
      * Get the signature for the given constructor.
@@ -65,7 +61,7 @@ public interface ConstructorWriter {
      * @param constructor the constructor being documented
      * @return content tree for the constructor signature
      */
-    public Content getSignature(ExecutableElement constructor);
+    Content getSignature(ExecutableElement constructor);
 
     /**
      * Add the deprecated output for the given constructor.
@@ -73,7 +69,7 @@ public interface ConstructorWriter {
      * @param constructor the constructor being documented
      * @param constructorDocTree content tree to which the deprecated information will be added
      */
-    public void addDeprecated(ExecutableElement constructor, Content constructorDocTree);
+    void addDeprecated(ExecutableElement constructor, Content constructorDocTree);
 
     /**
      * Add the comments for the given constructor.
@@ -81,7 +77,7 @@ public interface ConstructorWriter {
      * @param constructor the constructor being documented
      * @param constructorDocTree the content tree to which the comments will be added
      */
-    public void addComments(ExecutableElement constructor, Content constructorDocTree);
+    void addComments(ExecutableElement constructor, Content constructorDocTree);
 
     /**
      * Add the tags for the given constructor.
@@ -89,7 +85,7 @@ public interface ConstructorWriter {
      * @param constructor the constructor being documented
      * @param constructorDocTree the content tree to which the tags will be added
      */
-    public void addTags(ExecutableElement constructor, Content constructorDocTree);
+    void addTags(ExecutableElement constructor, Content constructorDocTree);
 
     /**
      * Get the constructor details tree.
@@ -98,7 +94,7 @@ public interface ConstructorWriter {
      * @param memberDetailsTree the content tree representing member details
      * @return content tree for the constructor details
      */
-    public Content getConstructorDetails(Content memberDetailsTreeHeader, Content memberDetailsTree);
+    Content getConstructorDetails(Content memberDetailsTreeHeader, Content memberDetailsTree);
 
     /**
      * Get the constructor documentation.
@@ -106,19 +102,19 @@ public interface ConstructorWriter {
      * @param constructorDocTree the content tree representing constructor documentation
      * @return content tree for the constructor documentation
      */
-    public Content getConstructorDoc(Content constructorDocTree);
+    Content getConstructorDoc(Content constructorDocTree);
 
     /**
      * Let the writer know whether a non public constructor was found.
      *
      * @param foundNonPubConstructor true if we found a non public constructor.
      */
-    public void setFoundNonPubConstructor(boolean foundNonPubConstructor);
+    void setFoundNonPubConstructor(boolean foundNonPubConstructor);
 
     /**
      * Gets the member header tree.
      *
      * @return a content tree for the member header
      */
-    public Content getMemberTreeHeader();
+    Content getMemberTreeHeader();
 }

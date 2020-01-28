@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -79,7 +79,7 @@ public class HtmlSerialFieldWriter extends FieldWriterImpl
     /**
      * Return the header for serializable fields content section.
      *
-     * @param isLastContent true if the cotent being documented is the last content.
+     * @param isLastContent true if the content being documented is the last content.
      * @return a content tree for the header
      */
     public Content getFieldsContentHeader(boolean isLastContent) {
@@ -92,7 +92,7 @@ public class HtmlSerialFieldWriter extends FieldWriterImpl
      * Add serializable fields.
      *
      * @param heading the heading for the section
-     * @param serializableFieldsTree the tree to be added to the serializable fileds
+     * @param serializableFieldsTree the tree to be added to the serializable fields
      *        content tree
      * @return a content tree for the serializable fields content
      */
@@ -207,7 +207,7 @@ public class HtmlSerialFieldWriter extends FieldWriterImpl
      * @return true if overview details need to be printed
      */
     public boolean shouldPrintOverview(VariableElement field) {
-        if (!configuration.nocomment) {
+        if (!options.noComment()) {
             if(!utils.getFullBody(field).isEmpty() ||
                     writer.hasSerializationOverviewTags(field))
                 return true;

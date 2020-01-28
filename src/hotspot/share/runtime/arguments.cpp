@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,7 +42,6 @@
 #include "runtime/arguments.hpp"
 #include "runtime/flags/jvmFlag.hpp"
 #include "runtime/flags/jvmFlagConstraintList.hpp"
-#include "runtime/flags/jvmFlagWriteableList.hpp"
 #include "runtime/flags/jvmFlagRangeList.hpp"
 #include "runtime/globals_extension.hpp"
 #include "runtime/java.hpp"
@@ -520,15 +519,9 @@ static SpecialFlag const special_jvm_flags[] = {
   { "MinRAMFraction",               JDK_Version::jdk(10),  JDK_Version::undefined(), JDK_Version::undefined() },
   { "InitialRAMFraction",           JDK_Version::jdk(10),  JDK_Version::undefined(), JDK_Version::undefined() },
   { "UseMembar",                    JDK_Version::jdk(10), JDK_Version::jdk(12), JDK_Version::undefined() },
-  { "AllowJNIEnvProxy",             JDK_Version::jdk(13), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "ThreadLocalHandshakes",        JDK_Version::jdk(13), JDK_Version::jdk(14), JDK_Version::jdk(15) },
   { "AllowRedefinitionToAddDeleteMethods", JDK_Version::jdk(13), JDK_Version::undefined(), JDK_Version::undefined() },
   { "FlightRecorder",               JDK_Version::jdk(13), JDK_Version::undefined(), JDK_Version::undefined() },
-  { "FieldsAllocationStyle",        JDK_Version::jdk(14), JDK_Version::jdk(15), JDK_Version::jdk(16) },
-  { "CompactFields",                JDK_Version::jdk(14), JDK_Version::jdk(15), JDK_Version::jdk(16) },
   { "MonitorBound",                 JDK_Version::jdk(14), JDK_Version::jdk(15), JDK_Version::jdk(16) },
-  { "G1RSetScanBlockSize",          JDK_Version::jdk(14), JDK_Version::jdk(15), JDK_Version::jdk(16) },
-  { "UseParallelOldGC",             JDK_Version::jdk(14), JDK_Version::jdk(15), JDK_Version::jdk(16) },
 
   // --- Deprecated alias flags (see also aliased_jvm_flags) - sorted by obsolete_in then expired_in:
   { "DefaultMaxRAMFraction",        JDK_Version::jdk(8),  JDK_Version::undefined(), JDK_Version::undefined() },
@@ -542,94 +535,20 @@ static SpecialFlag const special_jvm_flags[] = {
   { "SharedReadOnlySize",            JDK_Version::undefined(), JDK_Version::jdk(10), JDK_Version::undefined() },
   { "SharedMiscDataSize",            JDK_Version::undefined(), JDK_Version::jdk(10), JDK_Version::undefined() },
   { "SharedMiscCodeSize",            JDK_Version::undefined(), JDK_Version::jdk(10), JDK_Version::undefined() },
-  { "CompilationPolicyChoice",       JDK_Version::jdk(13),     JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "TraceNMethodInstalls",          JDK_Version::jdk(13),     JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "FailOverToOldVerifier",         JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "UseConcMarkSweepGC",            JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSAbortSemantics",                       JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSAbortablePrecleanMinWorkPerIteration", JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSBitMapYieldQuantum",                   JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSBootstrapOccupancy",                   JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSClassUnloadingEnabled",                JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSClassUnloadingMaxInterval",            JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSCleanOnEnter",                         JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSConcMarkMultiple",                     JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSConcurrentMTEnabled",                  JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSCoordinatorYieldSleepCount",           JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSEdenChunksRecordAlways",               JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSExpAvgFactor",                         JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSExtrapolateSweep",                     JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSIncrementalSafetyFactor",              JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSIndexedFreeListReplenish",             JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSInitiatingOccupancyFraction",          JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSIsTooFullPercentage",                  JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSLargeCoalSurplusPercent",              JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSLargeSplitSurplusPercent",             JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSLoopWarn",                             JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSMaxAbortablePrecleanLoops",            JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSMaxAbortablePrecleanTime",             JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSOldPLABMax",                           JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSOldPLABMin",                           JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSOldPLABNumRefills",                    JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSOldPLABReactivityFactor",              JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSOldPLABResizeQuicker",                 JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSOldPLABToleranceFactor",               JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSPLABRecordAlways",                     JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSParallelInitialMarkEnabled",           JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSParallelRemarkEnabled",                JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSParallelSurvivorRemarkEnabled",        JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSPrecleanDenominator",                  JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSPrecleanIter",                         JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSPrecleanNumerator",                    JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSPrecleanRefLists1",                    JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSPrecleanRefLists2",                    JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSPrecleanSurvivors1",                   JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSPrecleanSurvivors2",                   JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSPrecleanThreshold",                    JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSPrecleaningEnabled",                   JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSPrintChunksInDump",                    JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSPrintObjectsInDump",                   JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSRemarkVerifyVariant",                  JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSReplenishIntermediate",                JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSRescanMultiple",                       JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSSamplingGrain",                        JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSScavengeBeforeRemark",                 JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSScheduleRemarkEdenPenetration",        JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSScheduleRemarkEdenSizeThreshold",      JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSScheduleRemarkSamplingRatio",          JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSSmallCoalSurplusPercent",              JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSSmallSplitSurplusPercent",             JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSSplitIndexedFreeListBlocks",           JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSTriggerRatio",                         JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSWorkQueueDrainThreshold",              JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSYield",                                JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSYieldSleepCount",                      JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMSYoungGenPerWorker",                    JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMS_FLSPadding",                          JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMS_FLSWeight",                           JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMS_SweepPadding",                        JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMS_SweepTimerThresholdMillis",           JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "CMS_SweepWeight",                         JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "FLSAlwaysCoalesceLarge",                  JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "FLSCoalescePolicy",                       JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "FLSLargestBlockCoalesceProximity",        JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "OldPLABWeight",                           JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "ParGCDesiredObjsFromOverflowList",        JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "ParGCTrimOverflow",                       JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "ParGCUseLocalOverflow",                   JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "ResizeOldPLAB",                           JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "UseCMSBestFit",                           JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "UseCMSInitiatingOccupancyOnly",           JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
-  { "GCLockerInvokesConcurrent",     JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
   { "BindGCTaskThreadsToCPUs",       JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(16) },
   { "UseGCTaskAffinity",             JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(16) },
   { "GCTaskTimeStampEntries",        JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(16) },
+  { "G1RSetScanBlockSize",           JDK_Version::jdk(14),     JDK_Version::jdk(15), JDK_Version::jdk(16) },
+  { "UseParallelOldGC",              JDK_Version::jdk(14),     JDK_Version::jdk(15), JDK_Version::jdk(16) },
+  { "CompactFields",                 JDK_Version::jdk(14),     JDK_Version::jdk(15), JDK_Version::jdk(16) },
+  { "FieldsAllocationStyle",         JDK_Version::jdk(14),     JDK_Version::jdk(15), JDK_Version::jdk(16) },
 
 #ifdef TEST_VERIFY_SPECIAL_JVM_FLAGS
   // These entries will generate build errors.  Their purpose is to test the macros.
   { "dep > obs",                    JDK_Version::jdk(9), JDK_Version::jdk(8), JDK_Version::undefined() },
   { "dep > exp ",                   JDK_Version::jdk(9), JDK_Version::undefined(), JDK_Version::jdk(8) },
   { "obs > exp ",                   JDK_Version::undefined(), JDK_Version::jdk(9), JDK_Version::jdk(8) },
+  { "obs > exp",                    JDK_Version::jdk(8), JDK_Version::undefined(), JDK_Version::jdk(10) },
   { "not deprecated or obsolete",   JDK_Version::undefined(), JDK_Version::undefined(), JDK_Version::jdk(9) },
   { "dup option",                   JDK_Version::jdk(9), JDK_Version::undefined(), JDK_Version::undefined() },
   { "dup option",                   JDK_Version::jdk(9), JDK_Version::undefined(), JDK_Version::undefined() },
@@ -714,6 +633,18 @@ bool Arguments::is_obsolete_flag(const char *flag_name, JDK_Version* version) {
     if (!flag.obsolete_in.is_undefined()) {
       if (!version_less_than(JDK_Version::current(), flag.obsolete_in)) {
         *version = flag.obsolete_in;
+        // This flag may have been marked for obsoletion in this version, but we may not
+        // have actually removed it yet. Rather than ignoring it as soon as we reach
+        // this version we allow some time for the removal to happen. So if the flag
+        // still actually exists we process it as normal, but issue an adjusted warning.
+        const JVMFlag *real_flag = JVMFlag::find_declared_flag(flag_name);
+        if (real_flag != NULL) {
+          char version_str[256];
+          version->to_string(version_str, sizeof(version_str));
+          warning("Temporarily processing option %s; support is scheduled for removal in %s",
+                  flag_name, version_str);
+          return false;
+        }
         return true;
       }
     }
@@ -774,11 +705,22 @@ static bool lookup_special_flag(const char *flag_name, size_t skip_index) {
 // If there is a semantic error (i.e. a bug in the table) such as the obsoletion
 // version being earlier than the deprecation version, then a warning is issued
 // and verification fails - by returning false. If it is detected that the table
-// is out of date, with respect to the current version, then a warning is issued
-// but verification does not fail. This allows the VM to operate when the version
-// is first updated, without needing to update all the impacted flags at the
-// same time.
-static bool verify_special_jvm_flags() {
+// is out of date, with respect to the current version, then ideally a warning is
+// issued but verification does not fail. This allows the VM to operate when the
+// version is first updated, without needing to update all the impacted flags at
+// the same time. In practice we can't issue the warning immediately when the version
+// is updated as it occurs for every test and some tests are not prepared to handle
+// unexpected output - see 8196739. Instead we only check if the table is up-to-date
+// if the check_globals flag is true, and in addition allow a grace period and only
+// check for stale flags when we hit build 20 (which is far enough into the 6 month
+// release cycle that all flag updates should have been processed, whilst still
+// leaving time to make the change before RDP2).
+// We use a gtest to call this, passing true, so that we can detect stale flags before
+// the end of the release cycle.
+
+static const int SPECIAL_FLAG_VALIDATION_BUILD = 20;
+
+bool Arguments::verify_special_jvm_flags(bool check_globals) {
   bool success = true;
   for (size_t i = 0; special_jvm_flags[i].name != NULL; i++) {
     const SpecialFlag& flag = special_jvm_flags[i];
@@ -811,24 +753,29 @@ static bool verify_special_jvm_flags() {
       }
 
       // if flag has become obsolete it should not have a "globals" flag defined anymore.
-      if (!version_less_than(JDK_Version::current(), flag.obsolete_in)) {
+      if (check_globals && VM_Version::vm_build_number() >= SPECIAL_FLAG_VALIDATION_BUILD &&
+          !version_less_than(JDK_Version::current(), flag.obsolete_in)) {
         if (JVMFlag::find_declared_flag(flag.name) != NULL) {
-          // Temporarily disable the warning: 8196739
-          // warning("Global variable for obsolete special flag entry \"%s\" should be removed", flag.name);
+          warning("Global variable for obsolete special flag entry \"%s\" should be removed", flag.name);
+          success = false;
         }
       }
+
+    } else if (!flag.expired_in.is_undefined()) {
+      warning("Special flag entry \"%s\" must be explicitly obsoleted before expired.", flag.name);
+      success = false;
     }
 
     if (!flag.expired_in.is_undefined()) {
       // if flag has become expired it should not have a "globals" flag defined anymore.
-      if (!version_less_than(JDK_Version::current(), flag.expired_in)) {
+      if (check_globals && VM_Version::vm_build_number() >= SPECIAL_FLAG_VALIDATION_BUILD &&
+          !version_less_than(JDK_Version::current(), flag.expired_in)) {
         if (JVMFlag::find_declared_flag(flag.name) != NULL) {
-          // Temporarily disable the warning: 8196739
-          // warning("Global variable for expired flag entry \"%s\" should be removed", flag.name);
+          warning("Global variable for expired flag entry \"%s\" should be removed", flag.name);
+          success = false;
         }
       }
     }
-
   }
   return success;
 }
@@ -1019,8 +966,17 @@ const char* Arguments::handle_aliases_and_deprecation(const char* arg, bool warn
   const char* real_name = real_flag_name(arg);
   JDK_Version since = JDK_Version();
   switch (is_deprecated_flag(arg, &since)) {
-    case -1:
-      return NULL; // obsolete or expired, don't process normally
+  case -1: {
+      // Obsolete or expired, so don't process normally,
+      // but allow for an obsolete flag we're still
+      // temporarily allowing.
+      if (!is_obsolete_flag(arg, &since)) {
+        return real_name;
+      }
+      // Note if we're not considered obsolete then we can't be expired either
+      // as obsoletion must come first.
+      return NULL;
+    }
     case 0:
       return real_name;
     case 1: {
@@ -2625,12 +2581,6 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* patch_m
       if (FLAG_SET_CMDLINE(ClassUnloading, false) != JVMFlag::SUCCESS) {
         return JNI_EINVAL;
       }
-    // -Xconcgc
-    } else if (match_option(option, "-Xconcgc")) {
-      warning("-Xconcgc uses UseConcMarkSweepGC; support was removed for both options in 14.0");
-    // -Xnoconcgc
-    } else if (match_option(option, "-Xnoconcgc")) {
-      warning("-Xnoconcgc uses UseConcMarkSweepGC; support was removed for both options in 14.0");
     // -Xbatch
     } else if (match_option(option, "-Xbatch")) {
       if (FLAG_SET_CMDLINE(BackgroundCompilation, false) != JVMFlag::SUCCESS) {
@@ -3901,12 +3851,11 @@ bool Arguments::handle_deprecated_print_gc_flags() {
 // Parse entry point called from JNI_CreateJavaVM
 
 jint Arguments::parse(const JavaVMInitArgs* initial_cmd_args) {
-  assert(verify_special_jvm_flags(), "deprecated and obsolete flag table inconsistent");
+  assert(verify_special_jvm_flags(false), "deprecated and obsolete flag table inconsistent");
 
-  // Initialize ranges, constraints and writeables
+  // Initialize ranges and constraints
   JVMFlagRangeList::init();
   JVMFlagConstraintList::init();
-  JVMFlagWriteableList::init();
 
   // If flag "-XX:Flags=flags-file" is used it will be the first option to be processed.
   const char* hotspotrc = ".hotspotrc";
@@ -4212,7 +4161,7 @@ jint Arguments::adjust_after_os() {
   if (UseNUMA) {
     if (!FLAG_IS_DEFAULT(AllocateHeapAt)) {
       FLAG_SET_ERGO(UseNUMA, false);
-    } else if (UseParallelGC || UseParallelOldGC) {
+    } else if (UseParallelGC) {
       if (FLAG_IS_DEFAULT(MinHeapDeltaBytes)) {
          FLAG_SET_DEFAULT(MinHeapDeltaBytes, 64*M);
       }

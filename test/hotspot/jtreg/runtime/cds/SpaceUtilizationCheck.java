@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,7 @@
  */
 
 import jdk.test.lib.cds.CDSTestUtils;
+import jdk.test.lib.cds.CDSOptions;
 import jdk.test.lib.process.OutputAnalyzer;
 import sun.hotspot.WhiteBox;
 
@@ -49,19 +50,22 @@ public class SpaceUtilizationCheck {
 
     public static void main(String[] args) throws Exception {
         // (1) Default VM arguments
-        test();
+        test("-Xlog:cds=debug");
 
         // (2) Use the now deprecated VM arguments. They should have no effect.
-        test("-XX:SharedReadWriteSize=128M",
+        test("-Xlog:cds=debug",
+             "-XX:SharedReadWriteSize=128M",
              "-XX:SharedReadOnlySize=128M",
              "-XX:SharedMiscDataSize=128M",
              "-XX:SharedMiscCodeSize=128M");
     }
 
     static void test(String... extra_options) throws Exception {
-        OutputAnalyzer output = CDSTestUtils.createArchive(extra_options);
+        CDSOptions opts = new CDSOptions();
+        opts.addSuffix(extra_options);
+        OutputAnalyzer output = CDSTestUtils.createArchive(opts);
         CDSTestUtils.checkDump(output);
-        Pattern pattern = Pattern.compile("^(..) *space: *([0-9]+).* out of *([0-9]+) bytes .* at 0x([0-9a0-f]+)");
+        Pattern pattern = Pattern.compile("(..) *space: *([0-9]+).* out of *([0-9]+) bytes .* at 0x([0-9a0-f]+)");
         WhiteBox wb = WhiteBox.getWhiteBox();
         long reserve_alignment = wb.metaspaceReserveAlignment();
         System.out.println("Metaspace::reserve_alignment() = " + reserve_alignment);
@@ -100,8 +104,8 @@ public class SpaceUtilizationCheck {
                 }
             }
         }
-        if (checked.size() != 4) {
-          throw new RuntimeException("Must have 4 consecutive, fully utilized regions");
+        if (checked.size() != 3) {
+          throw new RuntimeException("Must have 3 consecutive, fully utilized regions"); // MC,RW,RO
         }
     }
 }
