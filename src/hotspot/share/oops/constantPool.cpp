@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,6 @@
 #include "interpreter/bootstrapInfo.hpp"
 #include "interpreter/linkResolver.hpp"
 #include "memory/allocation.inline.hpp"
-#include "memory/heapInspection.hpp"
 #include "memory/heapShared.hpp"
 #include "memory/metadataFactory.hpp"
 #include "memory/metaspaceClosure.hpp"
@@ -50,7 +49,6 @@
 #include "oops/oop.inline.hpp"
 #include "oops/typeArrayOop.inline.hpp"
 #include "runtime/atomic.hpp"
-#include "runtime/fieldType.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/init.hpp"
 #include "runtime/javaCalls.hpp"
@@ -729,7 +727,7 @@ char* ConstantPool::string_at_noresolve(int which) {
 }
 
 BasicType ConstantPool::basic_type_for_signature_at(int which) const {
-  return FieldType::basic_type(symbol_at(which));
+  return Signature::basic_type(symbol_at(which));
 }
 
 
@@ -841,7 +839,7 @@ BasicType ConstantPool::basic_type_for_constant_at(int which) {
       tag.is_dynamic_constant_in_error()) {
     // have to look at the signature for this one
     Symbol* constant_type = uncached_signature_ref_at(which);
-    return FieldType::basic_type(constant_type);
+    return Signature::basic_type(constant_type);
   }
   return tag.basic_type();
 }
@@ -951,7 +949,7 @@ oop ConstantPool::resolve_constant_at_impl(const constantPoolHandle& this_cp,
         save_and_throw_exception(this_cp, index, tag, CHECK_NULL);
       }
       result_oop = bootstrap_specifier.resolved_value()();
-      BasicType type = FieldType::basic_type(bootstrap_specifier.signature());
+      BasicType type = Signature::basic_type(bootstrap_specifier.signature());
       if (!is_reference_type(type)) {
         // Make sure the primitive value is properly boxed.
         // This is a JDK responsibility.
@@ -2378,21 +2376,6 @@ void ConstantPool::print_value_on(outputStream* st) const {
     st->print(" cache=" PTR_FORMAT, p2i(cache()));
   }
 }
-
-#if INCLUDE_SERVICES
-// Size Statistics
-void ConstantPool::collect_statistics(KlassSizeStats *sz) const {
-  sz->_cp_all_bytes += (sz->_cp_bytes          = sz->count(this));
-  sz->_cp_all_bytes += (sz->_cp_tags_bytes     = sz->count_array(tags()));
-  sz->_cp_all_bytes += (sz->_cp_cache_bytes    = sz->count(cache()));
-  sz->_cp_all_bytes += (sz->_cp_operands_bytes = sz->count_array(operands()));
-  sz->_cp_all_bytes += (sz->_cp_refmap_bytes   = sz->count_array(reference_map()));
-
-  sz->_ro_bytes += sz->_cp_operands_bytes + sz->_cp_tags_bytes +
-                   sz->_cp_refmap_bytes;
-  sz->_rw_bytes += sz->_cp_bytes + sz->_cp_cache_bytes;
-}
-#endif // INCLUDE_SERVICES
 
 // Verification
 

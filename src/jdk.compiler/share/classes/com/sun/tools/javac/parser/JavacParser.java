@@ -3746,7 +3746,8 @@ public class JavacParser implements Parser {
                     ListBuffer<JCVariableDecl> tmpParams = new ListBuffer<>();
                     for (JCVariableDecl param : headerFields) {
                         tmpParams.add(F.at(param)
-                                .VarDef(F.Modifiers(Flags.PARAMETER | param.mods.flags & Flags.VARARGS),
+                                // we will get flags plus annotations from the record component
+                                .VarDef(F.Modifiers(Flags.PARAMETER | param.mods.flags & Flags.VARARGS, param.mods.annotations),
                                 param.name, param.vartype, null));
                     }
                     methDef.params = tmpParams.toList();
@@ -4022,7 +4023,7 @@ public class JavacParser implements Parser {
             int pos = token.pos;
             JCModifiers mods = modifiersOpt();
             if (token.kind == CLASS ||
-                isRecordStart() ||
+                allowRecords && isRecordStart() ||
                 token.kind == INTERFACE ||
                 token.kind == ENUM) {
                 return List.of(classOrRecordOrInterfaceOrEnumDeclaration(mods, dc));

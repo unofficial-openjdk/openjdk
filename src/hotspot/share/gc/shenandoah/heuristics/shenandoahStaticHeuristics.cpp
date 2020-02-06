@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -31,11 +32,6 @@
 #include "logging/logTag.hpp"
 
 ShenandoahStaticHeuristics::ShenandoahStaticHeuristics() : ShenandoahHeuristics() {
-  // Static heuristics may degrade to continuous if live data is larger
-  // than free threshold. ShenandoahAllocationThreshold is supposed to break this,
-  // but it only works if it is non-zero.
-  SHENANDOAH_ERGO_OVERRIDE_DEFAULT(ShenandoahAllocationThreshold, 1);
-
   SHENANDOAH_ERGO_ENABLE_FLAG(ExplicitGCInvokesConcurrent);
   SHENANDOAH_ERGO_ENABLE_FLAG(ShenandoahImplicitGCInvokesConcurrent);
 
@@ -54,10 +50,10 @@ bool ShenandoahStaticHeuristics::should_start_gc() const {
 
   size_t capacity = heap->max_capacity();
   size_t available = heap->free_set()->available();
-  size_t threshold_available = capacity / 100 * ShenandoahFreeThreshold;
+  size_t threshold_available = capacity / 100 * ShenandoahMinFreeThreshold;
 
   if (available < threshold_available) {
-    log_info(gc)("Trigger: Free (" SIZE_FORMAT "%s) is below free threshold (" SIZE_FORMAT "%s)",
+    log_info(gc)("Trigger: Free (" SIZE_FORMAT "%s) is below minimum threshold (" SIZE_FORMAT "%s)",
                  byte_size_in_proper_unit(available),           proper_unit_for_byte_size(available),
                  byte_size_in_proper_unit(threshold_available), proper_unit_for_byte_size(threshold_available));
     return true;

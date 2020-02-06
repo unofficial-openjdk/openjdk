@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -127,6 +127,8 @@
 #define JAVA_13_VERSION                   57
 
 #define JAVA_14_VERSION                   58
+
+#define JAVA_15_VERSION                   59
 
 void ClassFileParser::set_class_bad_constant_seen(short bad_constant) {
   assert((bad_constant == JVM_CONSTANT_Module ||
@@ -663,7 +665,7 @@ void ClassFileParser::parse_constant_pool(const ClassFileStream* const stream,
             "Illegal zero length constant pool entry at %d in class %s",
             name_index, CHECK);
 
-          if (sig->char_at(0) == JVM_SIGNATURE_FUNC) {
+          if (Signature::is_method(sig)) {
             // Format check method name and signature
             verify_legal_method_name(name, CHECK);
             verify_legal_method_signature(name, sig, CHECK);
@@ -688,9 +690,8 @@ void ClassFileParser::parse_constant_pool(const ClassFileStream* const stream,
         const Symbol* const signature = cp->symbol_at(signature_ref_index);
         if (_need_verify) {
           // CONSTANT_Dynamic's name and signature are verified above, when iterating NameAndType_info.
-          // Need only to be sure signature is non-zero length and the right type.
-          if (signature->utf8_length() == 0 ||
-              signature->char_at(0) == JVM_SIGNATURE_FUNC) {
+          // Need only to be sure signature is the right type.
+          if (Signature::is_method(signature)) {
             throwIllegalSignature("CONSTANT_Dynamic", name, signature, CHECK);
           }
         }
@@ -714,8 +715,7 @@ void ClassFileParser::parse_constant_pool(const ClassFileStream* const stream,
           if (_need_verify) {
             // Field name and signature are verified above, when iterating NameAndType_info.
             // Need only to be sure signature is non-zero length and the right type.
-            if (signature->utf8_length() == 0 ||
-                signature->char_at(0) == JVM_SIGNATURE_FUNC) {
+            if (Signature::is_method(signature)) {
               throwIllegalSignature("Field", name, signature, CHECK);
             }
           }
@@ -723,8 +723,7 @@ void ClassFileParser::parse_constant_pool(const ClassFileStream* const stream,
           if (_need_verify) {
             // Method name and signature are verified above, when iterating NameAndType_info.
             // Need only to be sure signature is non-zero length and the right type.
-            if (signature->utf8_length() == 0 ||
-                signature->char_at(0) != JVM_SIGNATURE_FUNC) {
+            if (!Signature::is_method(signature)) {
               throwIllegalSignature("Method", name, signature, CHECK);
             }
           }
@@ -1721,7 +1720,7 @@ void ClassFileParser::parse_fields(const ClassFileStream* const cfs,
                         injected[n].signature_index,
                         0);
 
-      const BasicType type = FieldType::basic_type(injected[n].signature());
+      const BasicType type = Signature::basic_type(injected[n].signature());
 
       // Remember how many oops we encountered and compute allocation type
       const FieldAllocationType atype = fac->update(false, type);
@@ -2794,21 +2793,8 @@ Method* ClassFileParser::parse_method(const ClassFileStream* const cfs,
   m->set_constants(_cp);
   m->set_name_index(name_index);
   m->set_signature_index(signature_index);
-
-  ResultTypeFinder rtf(cp->symbol_at(signature_index));
-  m->constMethod()->set_result_type(rtf.type());
-
-  if (args_size >= 0) {
-    m->set_size_of_parameters(args_size);
-  } else {
-    m->compute_size_of_parameters(THREAD);
-  }
-#ifdef ASSERT
-  if (args_size >= 0) {
-    m->compute_size_of_parameters(THREAD);
-    assert(args_size == m->size_of_parameters(), "");
-  }
-#endif
+  m->compute_from_signature(cp->symbol_at(signature_index));
+  assert(args_size < 0 || args_size == m->size_of_parameters(), "");
 
   // Fill in code attribute information
   m->set_max_stack(max_stack);
@@ -4127,25 +4113,14 @@ void ClassFileParser::layout_fields(ConstantPool* cp,
 
   int first_nonstatic_oop_offset = 0; // will be set for first oop field
 
-  bool compact_fields   = CompactFields;
-  int allocation_style = FieldsAllocationStyle;
-  if( allocation_style < 0 || allocation_style > 2 ) { // Out of range?
-    assert(false, "0 <= FieldsAllocationStyle <= 2");
-    allocation_style = 1; // Optimistic
-  }
+  bool compact_fields  = true;
+  bool allocate_oops_first = false;
 
   // The next classes have predefined hard-coded fields offsets
   // (see in JavaClasses::compute_hard_coded_offsets()).
   // Use default fields allocation order for them.
-  if( (allocation_style != 0 || compact_fields ) && _loader_data->class_loader() == NULL &&
-      (_class_name == vmSymbols::java_lang_AssertionStatusDirectives() ||
-       _class_name == vmSymbols::java_lang_Class() ||
-       _class_name == vmSymbols::java_lang_ClassLoader() ||
-       _class_name == vmSymbols::java_lang_ref_Reference() ||
-       _class_name == vmSymbols::java_lang_ref_SoftReference() ||
-       _class_name == vmSymbols::java_lang_StackTraceElement() ||
-       _class_name == vmSymbols::java_lang_String() ||
-       _class_name == vmSymbols::java_lang_Throwable() ||
+  if (_loader_data->class_loader() == NULL &&
+      (_class_name == vmSymbols::java_lang_ref_Reference() ||
        _class_name == vmSymbols::java_lang_Boolean() ||
        _class_name == vmSymbols::java_lang_Character() ||
        _class_name == vmSymbols::java_lang_Float() ||
@@ -4154,7 +4129,7 @@ void ClassFileParser::layout_fields(ConstantPool* cp,
        _class_name == vmSymbols::java_lang_Short() ||
        _class_name == vmSymbols::java_lang_Integer() ||
        _class_name == vmSymbols::java_lang_Long())) {
-    allocation_style = 0;     // Allocate oops first
+    allocate_oops_first = true;     // Allocate oops first
     compact_fields   = false; // Don't compact fields
   }
 
@@ -4162,35 +4137,14 @@ void ClassFileParser::layout_fields(ConstantPool* cp,
   int next_nonstatic_double_offset = 0;
 
   // Rearrange fields for a given allocation style
-  if( allocation_style == 0 ) {
+  if (allocate_oops_first) {
     // Fields order: oops, longs/doubles, ints, shorts/chars, bytes, padded fields
     next_nonstatic_oop_offset    = next_nonstatic_field_offset;
     next_nonstatic_double_offset = next_nonstatic_oop_offset +
                                     (nonstatic_oop_count * heapOopSize);
-  } else if( allocation_style == 1 ) {
+  } else {
     // Fields order: longs/doubles, ints, shorts/chars, bytes, oops, padded fields
     next_nonstatic_double_offset = next_nonstatic_field_offset;
-  } else if( allocation_style == 2 ) {
-    // Fields allocation: oops fields in super and sub classes are together.
-    if( nonstatic_field_size > 0 && _super_klass != NULL &&
-        _super_klass->nonstatic_oop_map_size() > 0 ) {
-      const unsigned int map_count = _super_klass->nonstatic_oop_map_count();
-      const OopMapBlock* const first_map = _super_klass->start_of_nonstatic_oop_maps();
-      const OopMapBlock* const last_map = first_map + map_count - 1;
-      const int next_offset = last_map->offset() + (last_map->count() * heapOopSize);
-      if (next_offset == next_nonstatic_field_offset) {
-        allocation_style = 0;   // allocate oops first
-        next_nonstatic_oop_offset    = next_nonstatic_field_offset;
-        next_nonstatic_double_offset = next_nonstatic_oop_offset +
-                                       (nonstatic_oop_count * heapOopSize);
-      }
-    }
-    if( allocation_style == 2 ) {
-      allocation_style = 1;     // allocate oops last
-      next_nonstatic_double_offset = next_nonstatic_field_offset;
-    }
-  } else {
-    ShouldNotReachHere();
   }
 
   int nonstatic_oop_space_count   = 0;
@@ -4234,7 +4188,7 @@ void ClassFileParser::layout_fields(ConstantPool* cp,
       // Allocate oop field in the gap if there are no other fields for that.
       nonstatic_oop_space_offset = offset;
       if (length >= heapOopSize && nonstatic_oop_count > 0 &&
-          allocation_style != 0) { // when oop fields not first
+          !allocate_oops_first) { // when oop fields not first
         nonstatic_oop_count      -= 1;
         nonstatic_oop_space_count = 1; // Only one will fit
         length -= heapOopSize;
@@ -4253,7 +4207,7 @@ void ClassFileParser::layout_fields(ConstantPool* cp,
                                        nonstatic_byte_count;
 
   // let oops jump before padding with this allocation style
-  if( allocation_style == 1 ) {
+  if (!allocate_oops_first) {
     next_nonstatic_oop_offset = next_nonstatic_padded_offset;
     if( nonstatic_oop_count > 0 ) {
       next_nonstatic_oop_offset = align_up(next_nonstatic_oop_offset, heapOopSize);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,6 @@
 #include "interpreter/bytecode.hpp"
 #include "interpreter/bytecodeStream.hpp"
 #include "interpreter/linkResolver.hpp"
-#include "memory/heapInspection.hpp"
 #include "memory/metaspaceClosure.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/methodData.inline.hpp"
@@ -200,8 +199,8 @@ int TypeStackSlotEntries::compute_cell_count(Symbol* signature, bool include_rec
   // Parameter profiling include the receiver
   int args_count = include_receiver ? 1 : 0;
   ResourceMark rm;
-  SignatureStream ss(signature);
-  args_count += ss.reference_parameter_count();
+  ReferenceArgumentCount rac(signature);
+  args_count += rac.count();
   args_count = MIN2(args_count, max);
   return args_count * per_arg_cell_count;
 }
@@ -228,31 +227,27 @@ int TypeEntriesAtCall::compute_cell_count(BytecodeStream* stream) {
   return header_cell + args_cell + ret_cell;
 }
 
-class ArgumentOffsetComputer : public SignatureInfo {
+class ArgumentOffsetComputer : public SignatureIterator {
 private:
   int _max;
+  int _offset;
   GrowableArray<int> _offsets;
 
-  void set(int size, BasicType type) { _size += size; }
-  void do_object(int begin, int end) {
-    if (_offsets.length() < _max) {
-      _offsets.push(_size);
+  friend class SignatureIterator;  // so do_parameters_on can call do_type
+  void do_type(BasicType type) {
+    if (is_reference_type(type) && _offsets.length() < _max) {
+      _offsets.push(_offset);
     }
-    SignatureInfo::do_object(begin, end);
-  }
-  void do_array (int begin, int end) {
-    if (_offsets.length() < _max) {
-      _offsets.push(_size);
-    }
-    SignatureInfo::do_array(begin, end);
+    _offset += parameter_type_word_count(type);
   }
 
-public:
+ public:
   ArgumentOffsetComputer(Symbol* signature, int max)
-    : SignatureInfo(signature), _max(max), _offsets(Thread::current(), max) {
+    : SignatureIterator(signature),
+      _max(max), _offset(0),
+      _offsets(Thread::current(), max) {
+    do_parameters_on(this);  // non-virtual template execution
   }
-
-  int total() { lazy_iterate_parameters(); return _size; }
 
   int off_at(int i) const { return _offsets.at(i); }
 };
@@ -267,7 +262,6 @@ void TypeStackSlotEntries::post_initialize(Symbol* signature, bool has_receiver,
     start += 1;
   }
   ArgumentOffsetComputer aos(signature, _number_of_entries-start);
-  aos.total();
   for (int i = start; i < _number_of_entries; i++) {
     set_stack_slot(i, aos.off_at(i-start) + (has_receiver ? 1 : 0));
     set_type(i, type_none());
@@ -278,11 +272,11 @@ void CallTypeData::post_initialize(BytecodeStream* stream, MethodData* mdo) {
   assert(Bytecodes::is_invoke(stream->code()), "should be invoke");
   Bytecode_invoke inv(stream->method(), stream->bci());
 
-  SignatureStream ss(inv.signature());
   if (has_arguments()) {
 #ifdef ASSERT
     ResourceMark rm;
-    int count = MIN2(ss.reference_parameter_count(), (int)TypeProfileArgsLimit);
+    ReferenceArgumentCount rac(inv.signature());
+    int count = MIN2(rac.count(), (int)TypeProfileArgsLimit);
     assert(count > 0, "room for args type but none found?");
     check_number_of_arguments(count);
 #endif
@@ -302,8 +296,8 @@ void VirtualCallTypeData::post_initialize(BytecodeStream* stream, MethodData* md
   if (has_arguments()) {
 #ifdef ASSERT
     ResourceMark rm;
-    SignatureStream ss(inv.signature());
-    int count = MIN2(ss.reference_parameter_count(), (int)TypeProfileArgsLimit);
+    ReferenceArgumentCount rac(inv.signature());
+    int count = MIN2(rac.count(), (int)TypeProfileArgsLimit);
     assert(count > 0, "room for args type but none found?");
     check_number_of_arguments(count);
 #endif
@@ -1575,16 +1569,6 @@ void MethodData::print_data_on(outputStream* st) const {
     if (dp >= end) return;
   }
 }
-
-#if INCLUDE_SERVICES
-// Size Statistics
-void MethodData::collect_statistics(KlassSizeStats *sz) const {
-  int n = sz->count(this);
-  sz->_method_data_bytes += n;
-  sz->_method_all_bytes += n;
-  sz->_rw_bytes += n;
-}
-#endif // INCLUDE_SERVICES
 
 // Verification
 

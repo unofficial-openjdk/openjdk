@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -108,7 +108,6 @@ class SafepointSynchronize : AllStatic {
   // JavaThreads that need to block for the safepoint will stop on the
   // _wait_barrier, where they can quickly be started again.
   static WaitBarrier* _wait_barrier;
-  static long         _end_of_last_safepoint;     // Time of last safepoint in milliseconds
   static julong       _coalesced_vmop_count;     // coalesced vmop count
 
   // For debug long safepoint
@@ -253,8 +252,7 @@ private:
   static jlong _last_safepoint_sync_time_ns;
   static jlong _last_safepoint_cleanup_time_ns;
   static jlong _last_safepoint_end_time_ns;
-  // amount of ms since epoch
-  static jlong _last_safepoint_end_time_epoch_ms;
+
   // Relative
   static jlong _last_app_time_ns;
 
@@ -280,11 +278,11 @@ public:
   static void statistics_exit_log();
 
   static jlong time_since_last_safepoint_ms() {
-    return (os::javaTimeNanos() - _last_safepoint_end_time_ns) / (NANOUNITS / MILLIUNITS);
+    return nanos_to_millis(os::javaTimeNanos() - _last_safepoint_end_time_ns);
   }
 
-  static jlong end_of_last_safepoint_epoch_ms() {
-    return _last_safepoint_end_time_epoch_ms;
+  static jlong end_of_last_safepoint_ms() {
+    return nanos_to_millis(_last_safepoint_end_time_ns);
   }
 
   static jlong start_of_safepoint() {

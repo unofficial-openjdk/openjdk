@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,7 +39,6 @@
 #include "logging/log.hpp"
 #include "logging/logTag.hpp"
 #include "memory/allocation.inline.hpp"
-#include "memory/heapInspection.hpp"
 #include "memory/metadataFactory.hpp"
 #include "memory/metaspaceClosure.hpp"
 #include "memory/metaspaceShared.hpp"
@@ -523,7 +522,7 @@ void Method::build_interpreter_method_data(const methodHandle& method, TRAPS) {
 
   // Grab a lock here to prevent multiple
   // MethodData*s from being created.
-  MutexLocker ml(MethodData_lock, THREAD);
+  MutexLocker ml(THREAD, MethodData_lock);
   if (method->method_data() == NULL) {
     ClassLoaderData* loader_data = method->method_holder()->class_loader_data();
     MethodData* method_data = MethodData::allocate(loader_data, method, THREAD);
@@ -578,9 +577,16 @@ int Method::extra_stack_words() {
   return extra_stack_entries() * Interpreter::stackElementSize;
 }
 
-void Method::compute_size_of_parameters(Thread *thread) {
-  ArgumentSizeComputer asc(signature());
-  set_size_of_parameters(asc.size() + (is_static() ? 0 : 1));
+// Derive size of parameters, return type, and fingerprint,
+// all in one pass, which is run at load time.
+// We need the first two, and might as well grab the third.
+void Method::compute_from_signature(Symbol* sig) {
+  // At this point, since we are scanning the signature,
+  // we might as well compute the whole fingerprint.
+  Fingerprinter fp(sig, is_static());
+  set_size_of_parameters(fp.size_of_parameters());
+  constMethod()->set_result_type(fp.return_type());
+  constMethod()->set_fingerprint(fp.fingerprint());
 }
 
 bool Method::is_empty_method() const {
@@ -1444,9 +1450,7 @@ methodHandle Method::make_method_handle_intrinsic(vmIntrinsics::ID iid,
   m->set_signature_index(_imcp_invoke_signature);
   assert(MethodHandles::is_signature_polymorphic_name(m->name()), "");
   assert(m->signature() == signature, "");
-  ResultTypeFinder rtf(signature);
-  m->constMethod()->set_result_type(rtf.type());
-  m->compute_size_of_parameters(THREAD);
+  m->compute_from_signature(signature);
   m->init_intrinsic_id();
   assert(m->is_method_handle_intrinsic(), "");
 #ifdef ASSERT
@@ -1686,7 +1690,7 @@ bool Method::load_signature_classes(const methodHandle& m, TRAPS) {
   ResourceMark rm(THREAD);
   Symbol*  signature = m->signature();
   for(SignatureStream ss(signature); !ss.is_done(); ss.next()) {
-    if (ss.is_object()) {
+    if (ss.is_reference()) {
       Symbol* sym = ss.as_symbol();
       Symbol*  name  = sym;
       Klass* klass = SystemDictionary::resolve_or_null(name, class_loader,
@@ -1714,8 +1718,7 @@ bool Method::has_unloaded_classes_in_signature(const methodHandle& m, TRAPS) {
   Symbol*  signature = m->signature();
   for(SignatureStream ss(signature); !ss.is_done(); ss.next()) {
     if (ss.type() == T_OBJECT) {
-      Symbol* name = ss.as_symbol_or_null();
-      if (name == NULL) return true;
+      Symbol* name = ss.as_symbol();
       Klass* klass = SystemDictionary::find(name, class_loader, protection_domain, THREAD);
       if (klass == NULL) return true;
     }
@@ -1734,7 +1737,7 @@ void Method::print_short_name(outputStream* st) {
   name()->print_symbol_on(st);
   if (WizardMode) signature()->print_symbol_on(st);
   else if (MethodHandles::is_signature_polymorphic(intrinsic_id()))
-    MethodHandles::print_as_basic_type_signature_on(st, signature(), true);
+    MethodHandles::print_as_basic_type_signature_on(st, signature());
 }
 
 // Comparer for sorting an object array containing
@@ -1787,8 +1790,8 @@ class SignatureTypePrinter : public SignatureTypeNames {
     _use_separator = false;
   }
 
-  void print_parameters()              { _use_separator = false; iterate_parameters(); }
-  void print_returntype()              { _use_separator = false; iterate_returntype(); }
+  void print_parameters()              { _use_separator = false; do_parameters_on(this); }
+  void print_returntype()              { _use_separator = false; do_type(return_type()); }
 };
 
 
@@ -2427,23 +2430,6 @@ void Method::print_value_on(outputStream* st) const {
   if (WizardMode && code() != NULL) st->print(" ((nmethod*)%p)", code());
 }
 
-#if INCLUDE_SERVICES
-// Size Statistics
-void Method::collect_statistics(KlassSizeStats *sz) const {
-  int mysize = sz->count(this);
-  sz->_method_bytes += mysize;
-  sz->_method_all_bytes += mysize;
-  sz->_rw_bytes += mysize;
-
-  if (constMethod()) {
-    constMethod()->collect_statistics(sz);
-  }
-  if (method_data()) {
-    method_data()->collect_statistics(sz);
-  }
-}
-#endif // INCLUDE_SERVICES
-
 // LogTouchedMethods and PrintTouchedMethods
 
 // TouchedMethodRecord -- we can't use a HashtableEntry<Method*> because
@@ -2473,7 +2459,7 @@ void Method::log_touched(TRAPS) {
                       my_sig->identity_hash();
   juint index = juint(hash) % table_size;
 
-  MutexLocker ml(TouchedMethodLog_lock, THREAD);
+  MutexLocker ml(THREAD, TouchedMethodLog_lock);
   if (_touched_method_table == NULL) {
     _touched_method_table = NEW_C_HEAP_ARRAY2(TouchedMethodRecord*, table_size,
                                               mtTracing, CURRENT_PC);

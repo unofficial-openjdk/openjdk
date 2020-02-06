@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,8 +43,7 @@
                     product_rw,                                             \
                     lp64_product,                                           \
                     range,                                                  \
-                    constraint,                                             \
-                    writeable)                                              \
+                    constraint)                                             \
                                                                             \
   product(bool, G1UseAdaptiveIHOP, true,                                    \
           "Adaptively adjust the initiating heap occupancy from the "       \
@@ -203,11 +202,6 @@
                                                                             \
   develop(bool, G1VerifyCTCleanup, false,                                   \
           "Verify card table cleanup.")                                     \
-                                                                            \
-  product(size_t, G1RSetScanBlockSize, 64,                                  \
-          "Size of a work unit of cards claimed by a worker thread"         \
-          "during RSet scanning.")                                          \
-          range(1, max_uintx)                                               \
                                                                             \
   develop(uintx, G1DummyRegionsPerGC, 0,                                    \
           "The number of dummy regions G1 will allocate at the end of "     \

@@ -31,8 +31,6 @@
 #include "c1/c1_ValueStack.hpp"
 #include "ci/ciArrayKlass.hpp"
 #include "ci/ciInstance.hpp"
-#include "gc/shared/barrierSet.hpp"
-#include "gc/shared/cardTableBarrierSet.hpp"
 #include "gc/shared/collectedHeap.hpp"
 #include "memory/universe.hpp"
 #include "nativeInst_sparc.hpp"
@@ -1734,12 +1732,6 @@ void LIR_Assembler::arith_op(LIR_Code code, LIR_Opr left, LIR_Opr right, LIR_Opr
   }
 }
 
-
-void LIR_Assembler::fpop() {
-  // do nothing
-}
-
-
 void LIR_Assembler::intrinsic_op(LIR_Code code, LIR_Opr value, LIR_Opr thread, LIR_Opr dest, LIR_Op* op) {
   switch (code) {
     case lir_tan: {
@@ -2660,16 +2652,6 @@ void LIR_Assembler::emit_compare_and_swap(LIR_OpCompareAndSwap* op) {
   }
 }
 
-void LIR_Assembler::set_24bit_FPU() {
-  Unimplemented();
-}
-
-
-void LIR_Assembler::reset_FPU() {
-  Unimplemented();
-}
-
-
 void LIR_Assembler::breakpoint() {
   __ breakpoint_trap();
 }
@@ -3057,19 +3039,6 @@ void LIR_Assembler::negate(LIR_Opr left, LIR_Opr dest, LIR_Opr tmp) {
     Register Rhi = left->as_register_hi();
     __ sub(G0, Rlow, dest->as_register_lo());
   }
-}
-
-
-void LIR_Assembler::fxch(int i) {
-  Unimplemented();
-}
-
-void LIR_Assembler::fld(int i) {
-  Unimplemented();
-}
-
-void LIR_Assembler::ffree(int i) {
-  Unimplemented();
 }
 
 void LIR_Assembler::rt_call(LIR_Opr result, address dest,

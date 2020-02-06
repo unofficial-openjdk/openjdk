@@ -35,8 +35,6 @@
 #include "ci/ciArrayKlass.hpp"
 #include "ci/ciInstance.hpp"
 #include "code/compiledIC.hpp"
-#include "gc/shared/barrierSet.hpp"
-#include "gc/shared/cardTableBarrierSet.hpp"
 #include "gc/shared/collectedHeap.hpp"
 #include "nativeInst_aarch64.hpp"
 #include "oops/objArrayKlass.hpp"
@@ -139,18 +137,6 @@ address LIR_Assembler::int_constant(jlong n) {
     return const_addr;
   }
 }
-
-void LIR_Assembler::set_24bit_FPU() { Unimplemented(); }
-
-void LIR_Assembler::reset_FPU() { Unimplemented(); }
-
-void LIR_Assembler::fpop() { Unimplemented(); }
-
-void LIR_Assembler::fxch(int i) { Unimplemented(); }
-
-void LIR_Assembler::fld(int i) { Unimplemented(); }
-
-void LIR_Assembler::ffree(int i) { Unimplemented(); }
 
 void LIR_Assembler::breakpoint() { Unimplemented(); }
 

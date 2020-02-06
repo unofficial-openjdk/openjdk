@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,10 +22,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 package jdk.javadoc.internal.doclets.toolkit.taglets;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import javax.lang.model.element.Element;
 
@@ -47,66 +49,50 @@ import static jdk.javadoc.doclet.Taglet.Location.*;
  */
 public class UserTaglet implements Taglet {
 
-    final private jdk.javadoc.doclet.Taglet userTaglet;
+    private final jdk.javadoc.doclet.Taglet userTaglet;
 
     public UserTaglet(jdk.javadoc.doclet.Taglet t) {
         userTaglet = t;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
+    public Set<jdk.javadoc.doclet.Taglet.Location> getAllowedLocations() {
+        return userTaglet.getAllowedLocations();
+    }
+
+    @Override
     public boolean inField() {
-        return userTaglet.isInlineTag()
-                || userTaglet.getAllowedLocations().contains(FIELD);
+        return userTaglet.getAllowedLocations().contains(FIELD);
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public boolean inConstructor() {
-        return userTaglet.isInlineTag()
-                || userTaglet.getAllowedLocations().contains(CONSTRUCTOR);
+        return userTaglet.getAllowedLocations().contains(CONSTRUCTOR);
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public boolean inMethod() {
-        return userTaglet.isInlineTag()
-                || userTaglet.getAllowedLocations().contains(METHOD);
+        return userTaglet.getAllowedLocations().contains(METHOD);
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public boolean inOverview() {
-        return userTaglet.isInlineTag()
-                || userTaglet.getAllowedLocations().contains(OVERVIEW);
+        return userTaglet.getAllowedLocations().contains(OVERVIEW);
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public boolean inModule() {
-        return userTaglet.isInlineTag()
-                || userTaglet.getAllowedLocations().contains(MODULE);
+        return userTaglet.getAllowedLocations().contains(MODULE);
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public boolean inPackage() {
-        return userTaglet.isInlineTag()
-                || userTaglet.getAllowedLocations().contains(PACKAGE);
+        return userTaglet.getAllowedLocations().contains(PACKAGE);
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public boolean inType() {
-        return userTaglet.isInlineTag()
-                || userTaglet.getAllowedLocations().contains(TYPE);
+        return userTaglet.getAllowedLocations().contains(TYPE);
     }
 
     /**
@@ -114,33 +100,33 @@ public class UserTaglet implements Taglet {
      *
      * @return true if this <code>Taglet</code> is an inline tag and false otherwise.
      */
+    @Override
     public boolean isInlineTag() {
         return userTaglet.isInlineTag();
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
+    public boolean isBlockTag() {
+        return userTaglet.isBlockTag();
+    }
+
+    @Override
     public String getName() {
         return userTaglet.getName();
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public Content getTagletOutput(Element element, DocTree tag, TagletWriter writer){
         Content output = writer.getOutputInstance();
         output.add(new RawHtml(userTaglet.toString(Collections.singletonList(tag), element)));
         return output;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public Content getTagletOutput(Element holder, TagletWriter writer) {
         Content output = writer.getOutputInstance();
         Utils utils = writer.configuration().utils;
-        List<? extends DocTree> tags = utils.getBlockTags(holder, getName());
+        List<? extends DocTree> tags = utils.getBlockTags(holder, this);
         if (!tags.isEmpty()) {
             String tagString = userTaglet.toString(tags, holder);
             if (tagString != null) {

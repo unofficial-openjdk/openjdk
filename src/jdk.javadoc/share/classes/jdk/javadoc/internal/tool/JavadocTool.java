@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.lang.model.element.Element;
@@ -121,18 +120,18 @@ public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
 
             return new JavadocTool(context);
         } catch (CompletionFailure ex) {
+            assert messager != null;
             messager.error(Position.NOPOS, ex.getMessage());
             return null;
         }
     }
 
-    public DocletEnvironment getEnvironment(Map<ToolOption,
-            Object> jdtoolOpts,
+    public DocletEnvironment getEnvironment(ToolOptions toolOptions,
             List<String> javaNames,
             Iterable<? extends JavaFileObject> fileObjects) throws ToolException {
         toolEnv = ToolEnvironment.instance(context);
-        toolEnv.initialize(jdtoolOpts);
-        ElementsTable etable = new ElementsTable(context, jdtoolOpts);
+        toolEnv.initialize(toolOptions);
+        ElementsTable etable = new ElementsTable(context, toolOptions);
         javadocFinder.sourceCompleter = etable.xclasses
                 ? Completer.NULL_COMPLETER
                 : sourceCompleter;
@@ -221,9 +220,9 @@ public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
             // Ensure that package-info is read for all included packages
             for (Element e : etable.getIncludedElements()) {
                 if (e.getKind() == ElementKind.PACKAGE) {
-                    PackageSymbol packge = (PackageSymbol) e;
-                    if (packge.package_info != null) {
-                        packge.package_info.complete();
+                    PackageSymbol p = (PackageSymbol) e;
+                    if (p.package_info != null) {
+                        p.package_info.complete();
                     }
                 }
             }
@@ -290,7 +289,7 @@ public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
     }
 
     /** Are surrogates supported? */
-    final static boolean surrogatesSupported = surrogatesSupported();
+    static final boolean surrogatesSupported = surrogatesSupported();
     private static boolean surrogatesSupported() {
         try {
             boolean b = Character.isHighSurrogate('a');

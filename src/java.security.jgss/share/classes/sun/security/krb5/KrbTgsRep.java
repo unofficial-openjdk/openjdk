@@ -44,7 +44,6 @@ public class KrbTgsRep extends KrbKdcRep {
     private TGSRep rep;
     private Credentials creds;
     private Ticket secondTicket;
-    private static final boolean DEBUG = Krb5.DEBUG;
 
     KrbTgsRep(byte[] ibuf, KrbTgsReq tgsReq)
         throws KrbException, IOException {
@@ -95,9 +94,16 @@ public class KrbTgsRep extends KrbKdcRep {
             }
         }
 
+        PrincipalName clientAlias = null;
+        if (rep.cname.equals(req.reqBody.cname)) {
+            // Only propagate the client alias if it is not an
+            // impersonation ticket (S4U2Self or S4U2Proxy).
+            clientAlias = tgsReq.getClientAlias();
+        }
+
         this.creds = new Credentials(rep.ticket,
                                 rep.cname,
-                                tgsReq.getClientAlias(),
+                                clientAlias,
                                 enc_part.sname,
                                 serverAlias,
                                 enc_part.key,

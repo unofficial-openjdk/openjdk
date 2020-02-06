@@ -1110,6 +1110,7 @@ private:
   // Convert with Truncation Scalar Double-Precision Floating-Point Value to Doubleword Integer
   void cvttsd2sil(Register dst, Address src);
   void cvttsd2sil(Register dst, XMMRegister src);
+  void cvttsd2siq(Register dst, Address src);
   void cvttsd2siq(Register dst, XMMRegister src);
 
   // Convert with Truncation Scalar Single-Precision Floating-Point Value to Doubleword Integer
@@ -1137,6 +1138,7 @@ private:
 
   void emms();
 
+#ifndef _LP64
   void fabs();
 
   void fadd(int i);
@@ -1270,16 +1272,17 @@ private:
 
   void fxch(int i = 1);
 
+  void fyl2x();
+  void frndint();
+  void f2xm1();
+  void fldl2e();
+#endif // !_LP64
+
   void fxrstor(Address src);
   void xrstor(Address src);
 
   void fxsave(Address dst);
   void xsave(Address dst);
-
-  void fyl2x();
-  void frndint();
-  void f2xm1();
-  void fldl2e();
 
   void hlt();
 
@@ -1838,14 +1841,14 @@ private:
 
   void shldl(Register dst, Register src);
   void shldl(Register dst, Register src, int8_t imm8);
+  void shrdl(Register dst, Register src);
+  void shrdl(Register dst, Register src, int8_t imm8);
 
   void shll(Register dst, int imm8);
   void shll(Register dst);
 
   void shlq(Register dst, int imm8);
   void shlq(Register dst);
-
-  void shrdl(Register dst, Register src);
 
   void shrl(Register dst, int imm8);
   void shrl(Register dst);
@@ -2139,6 +2142,9 @@ private:
   void vpsrad(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len);
   void evpsraq(XMMRegister dst, XMMRegister src, int shift, int vector_len);
   void evpsraq(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len);
+
+  void vpshldvd(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len);
+  void vpshrdvd(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len);
 
   // And packed integers
   void pand(XMMRegister dst, XMMRegister src);

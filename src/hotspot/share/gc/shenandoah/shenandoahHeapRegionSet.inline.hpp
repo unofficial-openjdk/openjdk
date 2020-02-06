@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -38,9 +39,9 @@ bool ShenandoahHeapRegionSet::is_in(ShenandoahHeapRegion* r) const {
   return is_in(r->region_number());
 }
 
-bool ShenandoahHeapRegionSet::is_in(HeapWord* p) const {
+bool ShenandoahHeapRegionSet::is_in(oop p) const {
   assert(_heap->is_in(p), "Must be in the heap");
-  uintx index = ((uintx) p) >> _region_size_bytes_shift;
+  uintx index = (cast_from_oop<uintx>(p)) >> _region_size_bytes_shift;
   // no need to subtract the bottom of the heap from p,
   // _biased_set_map is biased
   return _biased_set_map[index] == 1;

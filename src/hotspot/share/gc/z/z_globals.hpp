@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,12 +36,7 @@
                    product_rw,                                              \
                    lp64_product,                                            \
                    range,                                                   \
-                   constraint,                                              \
-                   writeable)                                               \
-                                                                            \
-  experimental(ccstr, ZPath, NULL,                                          \
-          "Filesystem path for Java heap backing storage "                  \
-          "(must be a tmpfs or a hugetlbfs filesystem)")                    \
+                   constraint)                                              \
                                                                             \
   experimental(double, ZAllocationSpikeTolerance, 2.0,                      \
           "Allocation spike tolerance factor")                              \

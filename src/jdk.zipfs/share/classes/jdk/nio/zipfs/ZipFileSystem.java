@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -488,6 +488,14 @@ class ZipFileSystem extends FileSystem {
         synchronized (deflaters) {
             for (Deflater def : deflaters)
                 def.end();
+        }
+
+        beginWrite();                // lock and sync
+        try {
+            // Clear the map so that its keys & values can be garbage collected
+            inodes = null;
+        } finally {
+            endWrite();
         }
 
         IOException ioe = null;
@@ -1567,9 +1575,7 @@ class ZipFileSystem extends FileSystem {
 
     // Creates a new empty temporary file in the same directory as the
     // specified file.  A variant of Files.createTempFile.
-    private Path createTempFileInSameDirectoryAs(Path path)
-        throws IOException
-    {
+    private Path createTempFileInSameDirectoryAs(Path path) throws IOException {
         Path parent = path.toAbsolutePath().getParent();
         Path dir = (parent == null) ? path.getFileSystem().getPath(".") : parent;
         Path tmpPath = Files.createTempFile(dir, "zipfstmp", null);
@@ -1715,6 +1721,7 @@ class ZipFileSystem extends FileSystem {
         }
         if (!hasUpdate)
             return;
+        PosixFileAttributes attrs = getPosixAttributes(zfpath);
         Path tmpFile = createTempFileInSameDirectoryAs(zfpath);
         try (OutputStream os = new BufferedOutputStream(Files.newOutputStream(tmpFile, WRITE))) {
             ArrayList<Entry> elist = new ArrayList<>(inodes.size());
@@ -1791,8 +1798,36 @@ class ZipFileSystem extends FileSystem {
             Files.delete(zfpath);
         }
 
+        // Set the POSIX permissions of the original Zip File if available
+        // before moving the temp file
+        if (attrs != null) {
+            Files.setPosixFilePermissions(tmpFile, attrs.permissions());
+        }
         Files.move(tmpFile, zfpath, REPLACE_EXISTING);
         hasUpdate = false;    // clear
+    }
+
+    /**
+     * Returns a file's POSIX file attributes.
+     * @param path The path to the file
+     * @return The POSIX file attributes for the specified file or
+     *         null if the POSIX attribute view is not available
+     * @throws IOException If an error occurs obtaining the POSIX attributes for
+     *                    the specified file
+     */
+    private PosixFileAttributes getPosixAttributes(Path path) throws IOException {
+        try {
+            PosixFileAttributeView view =
+                    Files.getFileAttributeView(path, PosixFileAttributeView.class);
+            // Return if the attribute view is not supported
+            if (view == null) {
+                return null;
+            }
+            return view.readAttributes();
+        } catch (UnsupportedOperationException e) {
+            // PosixFileAttributes not available
+            return null;
+        }
     }
 
     private IndexNode getInode(byte[] path) {

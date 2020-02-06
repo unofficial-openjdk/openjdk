@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -103,6 +103,17 @@ public class HtmlTree extends Content {
     }
 
     /**
+     * Sets the "id" attribute for this tag.
+     *
+     * @param id the value for the id attribute
+     * @return this object
+     */
+    public HtmlTree setId(String id) {
+        put(HtmlAttr.ID, id);
+        return this;
+    }
+
+    /**
      * Sets the "title" attribute for this tag.
      * Any HTML tags in the content will be removed.
      *
@@ -175,9 +186,6 @@ public class HtmlTree extends Content {
             add(new StringContent(stringContent));
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public int charCount() {
         int n = 0;
@@ -264,35 +272,6 @@ public class HtmlTree extends Content {
     public static HtmlTree A(String ref, Content body) {
         HtmlTree htmltree = new HtmlTree(HtmlTag.A, nullCheck(body));
         htmltree.put(HtmlAttr.HREF, encodeURL(ref));
-        return htmltree;
-    }
-
-    /**
-     * Generates an HTML anchor tag with id attribute and a body.
-     *
-     * @param id id for the anchor tag
-     * @param body body for the anchor tag
-     * @return an HtmlTree object
-     */
-    public static HtmlTree A_ID(String id, Content body) {
-        HtmlTree htmltree = new HtmlTree(HtmlTag.A);
-        htmltree.put(HtmlAttr.ID, nullCheck(id));
-        htmltree.add(nullCheck(body));
-        return htmltree;
-    }
-
-    /**
-     * Generates an HTML anchor tag with a style class, id attribute and a body.
-     *
-     * @param styleClass stylesheet class for the tag
-     * @param id id for the anchor tag
-     * @param body body for the anchor tag
-     * @return an HtmlTree object
-     */
-    public static HtmlTree A_ID(HtmlStyle styleClass, String id, Content body) {
-        HtmlTree htmltree = A_ID(id, body);
-        if (styleClass != null)
-            htmltree.setStyle(styleClass);
         return htmltree;
     }
 
@@ -733,6 +712,19 @@ public class HtmlTree extends Content {
     }
 
     /**
+     * Generates an SPAN tag with id attribute and a body.
+     *
+     * @param id id for the tag
+     * @param body body for the tag
+     * @return an HtmlTree object for the SPAN tag
+     */
+    public static HtmlTree SPAN_ID(String id, Content body) {
+        HtmlTree htmltree = new HtmlTree(HtmlTag.SPAN, nullCheck(body));
+        htmltree.put(HtmlAttr.ID, nullCheck(id));
+        return htmltree;
+    }
+
+    /**
      * Generates a SPAN tag with id and style class attributes. It also encloses
      * a content.
      *
@@ -882,9 +874,6 @@ public class HtmlTree extends Content {
         return htmlTree;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public boolean isEmpty() {
         return (!hasContent() && !hasAttrs());
@@ -946,6 +935,8 @@ public class HtmlTree extends Content {
             case SCRIPT :
                 return ((hasAttr(HtmlAttr.TYPE) && hasAttr(HtmlAttr.SRC) && !hasContent()) ||
                         (hasAttr(HtmlAttr.TYPE) && hasContent()));
+            case SPAN :
+                return (hasAttr(HtmlAttr.ID) || hasContent());
             default :
                 return hasContent();
         }
@@ -960,9 +951,6 @@ public class HtmlTree extends Content {
         return (htmlTag.blockType == HtmlTag.BlockType.INLINE);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public boolean write(Writer out, boolean atNewline) throws IOException {
         if (!isInline() && !atNewline)

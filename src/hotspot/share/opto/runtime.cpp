@@ -303,7 +303,7 @@ JRT_BLOCK_ENTRY(void, OptoRuntime::new_array_nozero_C(Klass* array_type, int len
     const size_t hs = arrayOopDesc::header_size(elem_type);
     // Align to next 8 bytes to avoid trashing arrays's length.
     const size_t aligned_hs = align_object_offset(hs);
-    HeapWord* obj = (HeapWord*)result;
+    HeapWord* obj = cast_from_oop<HeapWord*>(result);
     if (aligned_hs > hs) {
       Copy::zero_to_words(obj+hs, aligned_hs-hs);
     }
@@ -1107,6 +1107,25 @@ const TypeFunc* OptoRuntime::montgomerySquare_Type() {
   fields = TypeTuple::fields(1);
   fields[TypeFunc::Parms+0] = TypePtr::NOTNULL;
 
+  const TypeTuple* range = TypeTuple::make(TypeFunc::Parms, fields);
+  return TypeFunc::make(domain, range);
+}
+
+const TypeFunc * OptoRuntime::bigIntegerShift_Type() {
+  int argcnt = 5;
+  const Type** fields = TypeTuple::fields(argcnt);
+  int argp = TypeFunc::Parms;
+  fields[argp++] = TypePtr::NOTNULL;    // newArr
+  fields[argp++] = TypePtr::NOTNULL;    // oldArr
+  fields[argp++] = TypeInt::INT;        // newIdx
+  fields[argp++] = TypeInt::INT;        // shiftCount
+  fields[argp++] = TypeInt::INT;        // numIter
+  assert(argp == TypeFunc::Parms + argcnt, "correct decoding");
+  const TypeTuple* domain = TypeTuple::make(TypeFunc::Parms + argcnt, fields);
+
+  // no result type needed
+  fields = TypeTuple::fields(1);
+  fields[TypeFunc::Parms + 0] = NULL;
   const TypeTuple* range = TypeTuple::make(TypeFunc::Parms, fields);
   return TypeFunc::make(domain, range);
 }
