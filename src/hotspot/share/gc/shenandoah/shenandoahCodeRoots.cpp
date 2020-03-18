@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2017, 2019, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2017, 2020, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -33,6 +34,7 @@
 #include "memory/resourceArea.hpp"
 #include "memory/universe.hpp"
 #include "runtime/atomic.hpp"
+#include "utilities/powerOfTwo.hpp"
 
 ShenandoahParallelCodeCacheIterator::ShenandoahParallelCodeCacheIterator(const GrowableArray<CodeHeap*>* heaps) {
   _length = heaps->length();
@@ -169,11 +171,54 @@ void ShenandoahCodeRoots::arm_nmethods() {
   }
 }
 
+class ShenandoahDisarmNMethodClosure : public NMethodClosure {
+private:
+  BarrierSetNMethod* const _bs;
+
+public:
+  ShenandoahDisarmNMethodClosure() :
+    _bs(BarrierSet::barrier_set()->barrier_set_nmethod()) {
+  }
+
+  virtual void do_nmethod(nmethod* nm) {
+    _bs->disarm(nm);
+  }
+};
+
+class ShenandoahDisarmNMethodsTask : public AbstractGangTask {
+private:
+  ShenandoahDisarmNMethodClosure      _cl;
+  ShenandoahConcurrentNMethodIterator _iterator;
+
+public:
+  ShenandoahDisarmNMethodsTask() :
+    AbstractGangTask("ShenandoahDisarmNMethodsTask"),
+    _iterator(ShenandoahCodeRoots::table()) {
+    MutexLocker mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
+    _iterator.nmethods_do_begin();
+  }
+
+  ~ShenandoahDisarmNMethodsTask() {
+    MutexLocker mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
+    _iterator.nmethods_do_end();
+  }
+
+  virtual void work(uint worker_id) {
+    _iterator.nmethods_do(&_cl);
+  }
+};
+
+void ShenandoahCodeRoots::disarm_nmethods() {
+  ShenandoahDisarmNMethodsTask task;
+  ShenandoahHeap::heap()->workers()->run_task(&task);
+}
+
 class ShenandoahNMethodUnlinkClosure : public NMethodClosure {
 private:
-  bool            _unloading_occurred;
-  volatile bool   _failed;
-  ShenandoahHeap* _heap;
+  bool                      _unloading_occurred;
+  volatile bool             _failed;
+  ShenandoahHeap* const     _heap;
+  BarrierSetNMethod* const  _bs;
 
   void set_failed() {
     Atomic::store(&_failed, true);
@@ -199,9 +244,11 @@ public:
   ShenandoahNMethodUnlinkClosure(bool unloading_occurred) :
       _unloading_occurred(unloading_occurred),
       _failed(false),
-      _heap(ShenandoahHeap::heap()) {}
+      _heap(ShenandoahHeap::heap()),
+      _bs(ShenandoahBarrierSet::barrier_set()->barrier_set_nmethod()) {}
 
   virtual void do_nmethod(nmethod* nm) {
+    assert(_heap->is_concurrent_root_in_progress(), "Only this phase");
     if (failed()) {
       return;
     }
@@ -222,10 +269,10 @@ public:
     ShenandoahReentrantLocker locker(nm_data->lock());
 
     // Heal oops and disarm
-    if (_heap->is_evacuation_in_progress()) {
+    if (_bs->is_armed(nm)) {
       ShenandoahNMethod::heal_nmethod(nm);
+      _bs->disarm(nm);
     }
-    ShenandoahNMethod::disarm_nmethod(nm);
 
     // Clear compiled ICs and exception caches
     if (!nm->unload_nmethod_caches(_unloading_occurred)) {

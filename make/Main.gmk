@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -75,9 +75,6 @@ interim-langtools:
 interim-rmic:
 	+($(CD) $(TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f CompileInterimRmic.gmk)
 
-interim-cldrconverter:
-	+($(CD) $(TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f CopyInterimCLDRConverter.gmk)
-
 interim-tzdb:
 	+($(CD) $(TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f CopyInterimTZDB.gmk)
 
@@ -92,7 +89,7 @@ buildtools-hotspot:
 	+($(CD) $(TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f CompileToolsHotspot.gmk)
 
 ALL_TARGETS += buildtools-langtools interim-langtools \
-    interim-rmic interim-cldrconverter interim-tzdb buildtools-jdk buildtools-modules \
+    interim-rmic interim-tzdb buildtools-jdk buildtools-modules \
     buildtools-hotspot
 
 ################################################################################
@@ -407,6 +404,9 @@ release-file:
 exploded-image-optimize:
 	+($(CD) $(TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f ExplodedImageOptimize.gmk)
 
+graal-builder-image:
+	+($(CD) $(TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f GraalBuilderImage.gmk)
+
 ifeq ($(JCOV_ENABLED), true)
   jcov-image:
 	+($(CD) $(TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f Coverage.gmk jcov-image)
@@ -415,7 +415,7 @@ endif
 ALL_TARGETS += store-source-revision create-source-revision-tracker bootcycle-images zip-security \
     zip-source jrtfs-jar jdk-image legacy-jre-image \
     symbols-image static-libs-image mac-jdk-bundle mac-legacy-jre-bundle \
-    release-file exploded-image-optimize jcov-image
+    release-file exploded-image-optimize graal-builder-image jcov-image
 
 ################################################################################
 # Docs targets
@@ -674,7 +674,7 @@ else
 
   interim-langtools: $(INTERIM_LANGTOOLS_GENSRC_TARGETS)
 
-  buildtools-jdk: interim-langtools interim-cldrconverter interim-tzdb
+  buildtools-jdk: interim-langtools interim-tzdb
 
   buildtools-hotspot: interim-langtools
 
@@ -885,6 +885,8 @@ else
   symbols-image: $(LIBS_TARGETS) $(LAUNCHER_TARGETS)
 
   static-libs-image: $(STATIC_LIBS_TARGETS)
+
+  graal-builder-image: jdk-image static-libs-image
 
   mac-jdk-bundle: jdk-image
   mac-legacy-jre-bundle: legacy-jre-image

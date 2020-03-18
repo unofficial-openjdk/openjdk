@@ -301,7 +301,7 @@
 </table>
 <p>All compilers are expected to be able to compile to the C99 language standard, as some C99 features are used in the source code. Microsoft Visual Studio doesn't fully support C99 so in practice shared code is limited to using C99 features that it does support.</p>
 <h3 id="gcc">gcc</h3>
-<p>The minimum accepted version of gcc is 4.8. Older versions will generate a warning by <code>configure</code> and are unlikely to work.</p>
+<p>The minimum accepted version of gcc is 5.0. Older versions will generate a warning by <code>configure</code> and are unlikely to work.</p>
 <p>The JDK is currently known to be able to compile with at least version 8.3 of gcc.</p>
 <p>In general, any version between these two should be usable.</p>
 <h3 id="clang">clang</h3>
@@ -473,7 +473,7 @@ CC: Sun C++ 5.13 SunOS_i386 151846-10 2015/10/30</code></pre>
 <li><code>--with-version-string=&lt;string&gt;</code> - Specify the version string this build will be identified with.</li>
 <li><code>--with-version-&lt;part&gt;=&lt;value&gt;</code> - A group of options, where <code>&lt;part&gt;</code> can be any of <code>pre</code>, <code>opt</code>, <code>build</code>, <code>major</code>, <code>minor</code>, <code>security</code> or <code>patch</code>. Use these options to modify just the corresponding part of the version string from the default, or the value provided by <code>--with-version-string</code>.</li>
 <li><code>--with-jvm-variants=&lt;variant&gt;[,&lt;variant&gt;...]</code> - Build the specified variant (or variants) of Hotspot. Valid variants are: <code>server</code>, <code>client</code>, <code>minimal</code>, <code>core</code>, <code>zero</code>, <code>custom</code>. Note that not all variants are possible to combine in a single build.</li>
-<li><code>--with-jvm-features=&lt;feature&gt;[,&lt;feature&gt;...]</code> - Use the specified JVM features when building Hotspot. The list of features will be enabled on top of the default list. For the <code>custom</code> JVM variant, this default list is empty. A complete list of available JVM features can be found using <code>bash configure --help</code>.</li>
+<li><code>--enable-jvm-feature-&lt;feature&gt;</code> or <code>--disable-jvm-feature-&lt;feature&gt;</code> - Include (or exclude) <code>&lt;feature&gt;</code> as a JVM feature in Hotspot. You can also specify a list of features to be enabled, separated by space or comma, as <code>--with-jvm-features=&lt;feature&gt;[,&lt;feature&gt;...]</code>. If you prefix <code>&lt;feature&gt;</code> with a <code>-</code>, it will be disabled. These options will modify the default list of features for the JVM variant(s) you are building. For the <code>custom</code> JVM variant, the default list is empty. A complete list of valid JVM features can be found using <code>bash configure --help</code>.</li>
 <li><code>--with-target-bits=&lt;bits&gt;</code> - Create a target binary suitable for running on a <code>&lt;bits&gt;</code> platform. Use this to create 32-bit output on a 64-bit build platform, instead of doing a full cross-compile. (This is known as a <em>reduced</em> build.)</li>
 </ul>
 <p>On Linux, BSD and AIX, it is possible to override where Java by default searches for runtime/JNI libraries. This can be useful in situations where there is a special shared directory for system JNI libraries. This setting can in turn be overriden at runtime by setting the <code>java.library.path</code> property.</p>
@@ -639,11 +639,6 @@ x86_64-linux-gnu-to-ppc64le-linux-gnu</code></pre>
 <p>You will need two copies of your toolchain, one which generates output that can run on the target system (the normal, or <em>target</em>, toolchain), and one that generates output that can run on the build system (the <em>build</em> toolchain). Note that cross-compiling is only supported for gcc at the time being. The gcc standard is to prefix cross-compiling toolchains with the target denominator. If you follow this standard, <code>configure</code> is likely to pick up the toolchain correctly.</p>
 <p>The <em>build</em> toolchain will be autodetected just the same way the normal <em>build</em>/<em>target</em> toolchain will be autodetected when not cross-compiling. If this is not what you want, or if the autodetection fails, you can specify a devkit containing the <em>build</em> toolchain using <code>--with-build-devkit</code> to <code>configure</code>, or by giving <code>BUILD_CC</code> and <code>BUILD_CXX</code> arguments.</p>
 <p>It is often helpful to locate the cross-compilation tools, headers and libraries in a separate directory, outside the normal path, and point out that directory to <code>configure</code>. Do this by setting the sysroot (<code>--with-sysroot</code>) and appending the directory when searching for cross-compilations tools (<code>--with-toolchain-path</code>). As a compact form, you can also use <code>--with-devkit</code> to point to a single directory, if it is correctly setup. (See <code>basics.m4</code> for details.)</p>
-<p>If you are unsure what toolchain and versions to use, these have been proved working at the time of writing:</p>
-<ul>
-<li><a href="https://releases.linaro.org/archive/13.11/components/toolchain/binaries/gcc-linaro-aarch64-linux-gnu-4.8-2013.11_linux.tar.xz">aarch64</a></li>
-<li><a href="https://launchpad.net/linaro-toolchain-unsupported/trunk/2012.09/+download/gcc-linaro-arm-linux-gnueabihf-raspbian-2012.09-20120921_linux.tar.bz2">arm 32-bit hardware floating point</a></li>
-</ul>
 <h3 id="native-libraries">Native Libraries</h3>
 <p>You will need copies of external native libraries for the <em>target</em> system, present on the <em>build</em> machine while building.</p>
 <p>Take care not to replace the <em>build</em> system's version of these libraries by mistake, since that can render the <em>build</em> machine unusable.</p>

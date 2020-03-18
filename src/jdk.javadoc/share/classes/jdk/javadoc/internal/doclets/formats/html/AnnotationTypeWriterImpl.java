@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,8 +37,7 @@ import jdk.javadoc.internal.doclets.formats.html.markup.Entity;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlStyle;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTag;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTree;
-import jdk.javadoc.internal.doclets.formats.html.markup.Navigation;
-import jdk.javadoc.internal.doclets.formats.html.markup.Navigation.PageMode;
+import jdk.javadoc.internal.doclets.formats.html.Navigation.PageMode;
 import jdk.javadoc.internal.doclets.formats.html.markup.StringContent;
 import jdk.javadoc.internal.doclets.toolkit.AnnotationTypeWriter;
 import jdk.javadoc.internal.doclets.toolkit.Content;
@@ -78,9 +77,6 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
         this.navBar = new Navigation(annotationType, configuration, PageMode.CLASS, path);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public Content getHeader(String header) {
         Content headerContent = new ContentBuilder();
@@ -90,7 +86,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
         navBar.setNavLinkModule(linkContent);
         navBar.setMemberSummaryBuilder(configuration.getBuilderFactory().getMemberSummaryBuilder(this));
         navBar.setUserHeader(getUserHeaderFooter(true));
-        headerContent.add(navBar.getContent(true));
+        headerContent.add(navBar.getContent(Navigation.Position.TOP));
 
         HtmlTree div = new HtmlTree(HtmlTag.DIV);
         div.setStyle(HtmlStyle.header);
@@ -113,7 +109,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
         }
         LinkInfoImpl linkInfo = new LinkInfoImpl(configuration,
                 LinkInfoImpl.Kind.CLASS_HEADER, annotationType);
-        Content heading = HtmlTree.HEADING(Headings.PAGE_TITLE_HEADING, true,
+        Content heading = HtmlTree.HEADING_TITLE(Headings.PAGE_TITLE_HEADING,
                 HtmlStyle.title, new StringContent(header));
         heading.add(getTypeParameterLinks(linkInfo));
         div.add(heading);
@@ -123,59 +119,41 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
         return getBody(getWindowTitle(utils.getSimpleName(annotationType)));
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public Content getAnnotationContentHeader() {
         return getContentHeader();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void addFooter() {
         Content htmlTree = HtmlTree.FOOTER();
         navBar.setUserFooter(getUserHeaderFooter(false));
-        htmlTree.add(navBar.getContent(false));
+        htmlTree.add(navBar.getContent(Navigation.Position.BOTTOM));
         addBottom(htmlTree);
         bodyContents.addMainContent(MarkerComments.END_OF_CLASS_DATA)
                     .setFooter(htmlTree);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void printDocument(Content contentTree) throws DocFileIOException {
         String description = getDescription("declaration", annotationType);
         PackageElement pkg = utils.containingPackage(this.annotationType);
         List<DocPath> localStylesheets = getLocalStylesheets(pkg);
-        contentTree.add(bodyContents.toContent());
+        contentTree.add(bodyContents);
         printHtmlDocument(configuration.metakeywords.getMetaKeywords(annotationType),
                 description, localStylesheets, contentTree);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public Content getAnnotationInfoTreeHeader() {
         return getMemberTreeHeader();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public Content getAnnotationInfo(Content annotationInfoTree) {
         return HtmlTree.SECTION(HtmlStyle.description, annotationInfoTree);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void addAnnotationTypeSignature(String modifiers, Content annotationInfoTree) {
         Content hr = new HtmlTree(HtmlTag.HR);
@@ -187,7 +165,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
                 LinkInfoImpl.Kind.CLASS_SIGNATURE, annotationType);
         Content annotationName = new StringContent(utils.getSimpleName(annotationType));
         Content parameterLinks = getTypeParameterLinks(linkInfo);
-        if (configuration.linksource) {
+        if (options.linkSource()) {
             addSrcLink(annotationType, annotationName, pre);
             pre.add(parameterLinks);
         } else {
@@ -198,31 +176,22 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
         annotationInfoTree.add(pre);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void addAnnotationTypeDescription(Content annotationInfoTree) {
-        if (!configuration.nocomment) {
+        if (!options.noComment()) {
             if (!utils.getFullBody(annotationType).isEmpty()) {
                 addInlineComment(annotationType, annotationInfoTree);
             }
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void addAnnotationTypeTagInfo(Content annotationInfoTree) {
-        if (!configuration.nocomment) {
+        if (!options.noComment()) {
             addTagsInfo(annotationType, annotationInfoTree);
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void addAnnotationTypeDeprecationInfo(Content annotationInfoTree) {
         List<? extends DocTree> deprs = utils.getBlockTags(annotationType, DocTree.Kind.DEPRECATED);
@@ -232,7 +201,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
             Content div = HtmlTree.DIV(HtmlStyle.deprecationBlock, deprLabel);
             if (!deprs.isEmpty()) {
 
-                List<? extends DocTree> commentTags = ch.getDescription(configuration, deprs.get(0));
+                List<? extends DocTree> commentTags = ch.getDescription(deprs.get(0));
                 if (!commentTags.isEmpty()) {
                     addInlineDeprecatedComment(annotationType, deprs.get(0), div);
                 }
@@ -241,11 +210,14 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public TypeElement getAnnotationTypeElement() {
         return annotationType;
+    }
+
+    @Override
+    public Content getMemberDetailsTree(Content contentTree) {
+        return HtmlTree.SECTION(HtmlStyle.details, contentTree)
+                .setId(SectionName.ANNOTATION_TYPE_ELEMENT_DETAIL.getName());
     }
 }

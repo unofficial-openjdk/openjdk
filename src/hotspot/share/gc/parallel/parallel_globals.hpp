@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,8 +37,7 @@
                           product_rw,                                       \
                           lp64_product,                                     \
                           range,                                            \
-                          constraint,                                       \
-                          writeable)                                        \
+                          constraint)                                       \
   product(uintx, HeapMaximumCompactionInterval, 20,                         \
           "How often should we maximally compact the heap (not allowing "   \
           "any dead space)")                                                \
@@ -52,21 +51,15 @@
           "Use maximum compaction in the Parallel Old garbage collector "   \
           "for a system GC")                                                \
                                                                             \
-  product(size_t, ParallelOldDeadWoodLimiterMean, 50,                        \
+  product(size_t, ParallelOldDeadWoodLimiterMean, 50,                       \
           "The mean used by the parallel compact dead wood "                \
           "limiter (a number between 0-100)")                               \
           range(0, 100)                                                     \
                                                                             \
-  product(size_t, ParallelOldDeadWoodLimiterStdDev, 80,                      \
+  product(size_t, ParallelOldDeadWoodLimiterStdDev, 80,                     \
           "The standard deviation used by the parallel compact dead wood "  \
           "limiter (a number between 0-100)")                               \
           range(0, 100)                                                     \
-                                                                            \
-  develop(bool, TraceParallelOldGCMarkingPhase, false,                      \
-          "Trace marking phase in ParallelOldGC")                           \
-                                                                            \
-  develop(bool, TraceParallelOldGCDensePrefix, false,                       \
-          "Trace dense prefix computation for ParallelOldGC")               \
                                                                             \
   develop(uintx, GCWorkerDelayMillis, 0,                                    \
           "Delay in scheduling GC workers (in milliseconds)")               \

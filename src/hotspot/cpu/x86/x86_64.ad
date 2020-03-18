@@ -785,7 +785,7 @@ void emit_fp_min_max(MacroAssembler& _masm, XMMRegister dst,
 //=============================================================================
 const RegMask& MachConstantBaseNode::_out_RegMask = RegMask::Empty;
 
-int Compile::ConstantTable::calculate_table_base_offset() const {
+int ConstantTable::calculate_table_base_offset() const {
   return 0;  // absolute addressing, no offset
 }
 
@@ -814,13 +814,13 @@ void MachConstantBaseNode::format(PhaseRegAlloc* ra_, outputStream* st) const {
 void MachPrologNode::format(PhaseRegAlloc* ra_, outputStream* st) const {
   Compile* C = ra_->C;
 
-  int framesize = C->frame_size_in_bytes();
-  int bangsize = C->bang_size_in_bytes();
+  int framesize = C->output()->frame_size_in_bytes();
+  int bangsize = C->output()->bang_size_in_bytes();
   assert((framesize & (StackAlignmentInBytes-1)) == 0, "frame size not aligned");
   // Remove wordSize for return addr which is already pushed.
   framesize -= wordSize;
 
-  if (C->need_stack_bang(bangsize)) {
+  if (C->output()->need_stack_bang(bangsize)) {
     framesize -= wordSize;
     st->print("# stack bang (%d bytes)", bangsize);
     st->print("\n\t");
@@ -874,8 +874,8 @@ void MachPrologNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {
   Compile* C = ra_->C;
   MacroAssembler _masm(&cbuf);
 
-  int framesize = C->frame_size_in_bytes();
-  int bangsize = C->bang_size_in_bytes();
+  int framesize = C->output()->frame_size_in_bytes();
+  int bangsize = C->output()->bang_size_in_bytes();
 
   if (C->clinit_barrier_on_entry()) {
     assert(VM_Version::supports_fast_class_init_checks(), "sanity");
@@ -892,14 +892,14 @@ void MachPrologNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {
     __ bind(L_skip_barrier);
   }
 
-  __ verified_entry(framesize, C->need_stack_bang(bangsize)?bangsize:0, false, C->stub_function() != NULL);
+  __ verified_entry(framesize, C->output()->need_stack_bang(bangsize)?bangsize:0, false, C->stub_function() != NULL);
 
-  C->set_frame_complete(cbuf.insts_size());
+  C->output()->set_frame_complete(cbuf.insts_size());
 
   if (C->has_mach_constant_base_node()) {
     // NOTE: We set the table base offset here because users might be
     // emitted before MachConstantBaseNode.
-    Compile::ConstantTable& constant_table = C->constant_table();
+    ConstantTable& constant_table = C->output()->constant_table();
     constant_table.set_table_base_offset(constant_table.calculate_table_base_offset());
   }
 }
@@ -925,7 +925,7 @@ void MachEpilogNode::format(PhaseRegAlloc* ra_, outputStream* st) const
     st->cr(); st->print("\t");
   }
 
-  int framesize = C->frame_size_in_bytes();
+  int framesize = C->output()->frame_size_in_bytes();
   assert((framesize & (StackAlignmentInBytes-1)) == 0, "frame size not aligned");
   // Remove word for return adr already pushed
   // and RBP
@@ -966,7 +966,7 @@ void MachEpilogNode::emit(CodeBuffer& cbuf, PhaseRegAlloc* ra_) const
     __ vzeroupper();
   }
 
-  int framesize = C->frame_size_in_bytes();
+  int framesize = C->output()->frame_size_in_bytes();
   assert((framesize & (StackAlignmentInBytes-1)) == 0, "frame size not aligned");
   // Remove word for return adr already pushed
   // and RBP
@@ -1700,9 +1700,8 @@ const bool Matcher::misaligned_doubles_ok = true;
 // No-op on amd64
 void Matcher::pd_implicit_null_fixup(MachNode *node, uint idx) {}
 
-// Advertise here if the CPU requires explicit rounding operations to
-// implement the UseStrictFP mode.
-const bool Matcher::strict_fp_requires_explicit_rounding = true;
+// Advertise here if the CPU requires explicit rounding operations to implement strictfp mode.
+const bool Matcher::strict_fp_requires_explicit_rounding = false;
 
 // Are floats conerted to double when stored to stack during deoptimization?
 // On x64 it is stored without convertion so we can use normal access.
@@ -3121,7 +3120,7 @@ operand immL32()
 
 operand immL_Pow2()
 %{
-  predicate(is_power_of_2_long(n->get_long()));
+  predicate(is_power_of_2((julong)n->get_long()));
   match(ConL);
 
   op_cost(15);
@@ -3131,7 +3130,7 @@ operand immL_Pow2()
 
 operand immL_NotPow2()
 %{
-  predicate(is_power_of_2_long(~n->get_long()));
+  predicate(is_power_of_2((julong)~n->get_long()));
   match(ConL);
 
   op_cost(15);
@@ -10030,7 +10029,7 @@ instruct btsL_mem_imm(memory dst, immL_Pow2 con, rFlagsReg cr)
   ins_cost(125);
   format %{ "btsq    $dst, log2($con)\t# long" %}
   ins_encode %{
-    __ btsq($dst$$Address, log2_long($con$$constant));
+    __ btsq($dst$$Address, log2_long((julong)$con$$constant));
   %}
   ins_pipe(ialu_mem_imm);
 %}
@@ -10521,24 +10520,6 @@ instruct cmpD_imm(rRegI dst, regD src, immD con, rFlagsReg cr) %{
 
 //----------Arithmetic Conversion Instructions---------------------------------
 
-instruct roundFloat_nop(regF dst)
-%{
-  match(Set dst (RoundFloat dst));
-
-  ins_cost(0);
-  ins_encode();
-  ins_pipe(empty);
-%}
-
-instruct roundDouble_nop(regD dst)
-%{
-  match(Set dst (RoundDouble dst));
-
-  ins_cost(0);
-  ins_encode();
-  ins_pipe(empty);
-%}
-
 instruct convF2D_reg_reg(regD dst, regF src)
 %{
   match(Set dst (ConvF2D src));
@@ -10588,25 +10569,9 @@ instruct convF2I_reg_reg(rRegI dst, regF src, rFlagsReg cr)
 %{
   match(Set dst (ConvF2I src));
   effect(KILL cr);
-
-  format %{ "cvttss2sil $dst, $src\t# f2i\n\t"
-            "cmpl    $dst, #0x80000000\n\t"
-            "jne,s   done\n\t"
-            "subq    rsp, #8\n\t"
-            "movss   [rsp], $src\n\t"
-            "call    f2i_fixup\n\t"
-            "popq    $dst\n"
-    "done:   "%}
+  format %{ "convert_f2i $dst,$src" %}
   ins_encode %{
-    Label done;
-    __ cvttss2sil($dst$$Register, $src$$XMMRegister);
-    __ cmpl($dst$$Register, 0x80000000);
-    __ jccb(Assembler::notEqual, done);
-    __ subptr(rsp, 8);
-    __ movflt(Address(rsp, 0), $src$$XMMRegister);
-    __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, StubRoutines::x86::f2i_fixup())));
-    __ pop($dst$$Register);
-    __ bind(done);
+    __ convert_f2i($dst$$Register, $src$$XMMRegister);
   %}
   ins_pipe(pipe_slow);
 %}
@@ -10615,26 +10580,9 @@ instruct convF2L_reg_reg(rRegL dst, regF src, rFlagsReg cr)
 %{
   match(Set dst (ConvF2L src));
   effect(KILL cr);
-
-  format %{ "cvttss2siq $dst, $src\t# f2l\n\t"
-            "cmpq    $dst, [0x8000000000000000]\n\t"
-            "jne,s   done\n\t"
-            "subq    rsp, #8\n\t"
-            "movss   [rsp], $src\n\t"
-            "call    f2l_fixup\n\t"
-            "popq    $dst\n"
-    "done:   "%}
+  format %{ "convert_f2l $dst,$src"%}
   ins_encode %{
-    Label done;
-    __ cvttss2siq($dst$$Register, $src$$XMMRegister);
-    __ cmp64($dst$$Register,
-             ExternalAddress((address) StubRoutines::x86::double_sign_flip()));
-    __ jccb(Assembler::notEqual, done);
-    __ subptr(rsp, 8);
-    __ movflt(Address(rsp, 0), $src$$XMMRegister);
-    __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, StubRoutines::x86::f2l_fixup())));
-    __ pop($dst$$Register);
-    __ bind(done);
+    __ convert_f2l($dst$$Register, $src$$XMMRegister);
   %}
   ins_pipe(pipe_slow);
 %}
@@ -10643,25 +10591,9 @@ instruct convD2I_reg_reg(rRegI dst, regD src, rFlagsReg cr)
 %{
   match(Set dst (ConvD2I src));
   effect(KILL cr);
-
-  format %{ "cvttsd2sil $dst, $src\t# d2i\n\t"
-            "cmpl    $dst, #0x80000000\n\t"
-            "jne,s   done\n\t"
-            "subq    rsp, #8\n\t"
-            "movsd   [rsp], $src\n\t"
-            "call    d2i_fixup\n\t"
-            "popq    $dst\n"
-    "done:   "%}
+  format %{ "convert_d2i $dst,$src"%}
   ins_encode %{
-    Label done;
-    __ cvttsd2sil($dst$$Register, $src$$XMMRegister);
-    __ cmpl($dst$$Register, 0x80000000);
-    __ jccb(Assembler::notEqual, done);
-    __ subptr(rsp, 8);
-    __ movdbl(Address(rsp, 0), $src$$XMMRegister);
-    __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, StubRoutines::x86::d2i_fixup())));
-    __ pop($dst$$Register);
-    __ bind(done);
+    __ convert_d2i($dst$$Register, $src$$XMMRegister);
   %}
   ins_pipe(pipe_slow);
 %}
@@ -10670,26 +10602,9 @@ instruct convD2L_reg_reg(rRegL dst, regD src, rFlagsReg cr)
 %{
   match(Set dst (ConvD2L src));
   effect(KILL cr);
-
-  format %{ "cvttsd2siq $dst, $src\t# d2l\n\t"
-            "cmpq    $dst, [0x8000000000000000]\n\t"
-            "jne,s   done\n\t"
-            "subq    rsp, #8\n\t"
-            "movsd   [rsp], $src\n\t"
-            "call    d2l_fixup\n\t"
-            "popq    $dst\n"
-    "done:   "%}
+  format %{ "convert_d2l $dst,$src"%}
   ins_encode %{
-    Label done;
-    __ cvttsd2siq($dst$$Register, $src$$XMMRegister);
-    __ cmp64($dst$$Register,
-             ExternalAddress((address) StubRoutines::x86::double_sign_flip()));
-    __ jccb(Assembler::notEqual, done);
-    __ subptr(rsp, 8);
-    __ movdbl(Address(rsp, 0), $src$$XMMRegister);
-    __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, StubRoutines::x86::d2l_fixup())));
-    __ pop($dst$$Register);
-    __ bind(done);
+    __ convert_d2l($dst$$Register, $src$$XMMRegister);
   %}
   ins_pipe(pipe_slow);
 %}

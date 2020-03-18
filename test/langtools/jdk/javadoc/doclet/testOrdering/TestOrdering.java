@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -516,14 +516,14 @@ public class TestOrdering extends JavadocTester {
 
             checkOrder("pkg5/AnnoFieldTest.html",
                     "<h2>Field Details</h2>",
-                    "<div class=\"memberSignature\"><span class=\"modifiers\">static final</span>&nbsp;"
-                    + "<span class=\"returnType\">int</span>&nbsp;<span class=\"memberName\">one</span></div>",
-                    "<div class=\"memberSignature\"><span class=\"modifiers\">static final</span>&nbsp;"
-                    + "<span class=\"returnType\">int</span>&nbsp;<span class=\"memberName\">two</span></div>",
-                    "<div class=\"memberSignature\"><span class=\"modifiers\">static final</span>&nbsp;"
-                    + "<span class=\"returnType\">int</span>&nbsp;<span class=\"memberName\">three</span></div>",
-                    "<div class=\"memberSignature\"><span class=\"modifiers\">static final</span>&nbsp;"
-                    + "<span class=\"returnType\">int</span>&nbsp;<span class=\"memberName\">four</span></div>");
+                    "<div class=\"member-signature\"><span class=\"modifiers\">static final</span>&nbsp;"
+                    + "<span class=\"return-type\">int</span>&nbsp;<span class=\"member-name\">one</span></div>",
+                    "<div class=\"member-signature\"><span class=\"modifiers\">static final</span>&nbsp;"
+                    + "<span class=\"return-type\">int</span>&nbsp;<span class=\"member-name\">two</span></div>",
+                    "<div class=\"member-signature\"><span class=\"modifiers\">static final</span>&nbsp;"
+                    + "<span class=\"return-type\">int</span>&nbsp;<span class=\"member-name\">three</span></div>",
+                    "<div class=\"member-signature\"><span class=\"modifiers\">static final</span>&nbsp;"
+                    + "<span class=\"return-type\">int</span>&nbsp;<span class=\"member-name\">four</span></div>");
 
             checkOrder("pkg5/AnnoOptionalTest.html",
                     "<h2>Optional Element Summary</h2>",
@@ -532,10 +532,10 @@ public class TestOrdering extends JavadocTester {
                     "<a href=\"#three()\">three</a>",
                     "<a href=\"#two()\">two</a>",
                     "<h2>Element Details</h2>",
-                    "<h3><a id=\"one()\">one</a></h3>",
-                    "<h3><a id=\"two()\">two</a></h3>",
-                    "<h3><a id=\"three()\">three</a></h3>",
-                    "<h3><a id=\"four()\">four</a></h3>");
+                    "<h3>one</h3>",
+                    "<h3>two</h3>",
+                    "<h3>three</h3>",
+                    "<h3>four</h3>");
 
             checkOrder("pkg5/AnnoRequiredTest.html",
                     "<h2>Required Element Summary</h2>",
@@ -544,10 +544,10 @@ public class TestOrdering extends JavadocTester {
                     "<a href=\"#three()\">three</a>",
                     "<a href=\"#two()\">two</a>",
                     "<h2>Element Details</h2>",
-                    "<h3><a id=\"one()\">one</a></h3>",
-                    "<h3><a id=\"two()\">two</a></h3>",
-                    "<h3><a id=\"three()\">three</a></h3>",
-                    "<h3><a id=\"four()\">four</a></h3>");
+                    "<h3>one</h3>",
+                    "<h3>two</h3>",
+                    "<h3>three</h3>",
+                    "<h3>four</h3>");
 
             checkOrder("pkg5/CtorTest.html",
                     "<h2>Constructor Summary</h2>",
@@ -556,10 +556,10 @@ public class TestOrdering extends JavadocTester {
                     "<a href=\"#%3Cinit%3E(int,int,int)\"",
                     "<a href=\"#%3Cinit%3E(int,int,int,int)\"",
                     "<h2>Constructor Details</h2>",
-                    "<a id=\"&lt;init&gt;(int,int,int,int)\">",
-                    "<a id=\"&lt;init&gt;(int,int,int)\">",
-                    "<a id=\"&lt;init&gt;(int,int)\">",
-                    "<a id=\"&lt;init&gt;(int)\">");
+                    "<section class=\"detail\" id=\"&lt;init&gt;(int,int,int,int)\">",
+                    "<section class=\"detail\" id=\"&lt;init&gt;(int,int,int)\">",
+                    "<section class=\"detail\" id=\"&lt;init&gt;(int,int)\">",
+                    "<section class=\"detail\" id=\"&lt;init&gt;(int)\">");
 
             checkOrder("pkg5/EnumTest.html",
                     "<h2>Enum Constant Summary</h2>",
@@ -568,10 +568,10 @@ public class TestOrdering extends JavadocTester {
                     "<a href=\"#THREE\">THREE</a>",
                     "<a href=\"#TWO\">TWO</a>",
                     "<h2>Enum Constant Details</h2>",
-                    "<h3><a id=\"ONE\">ONE</a></h3>",
-                    "<h3><a id=\"TWO\">TWO</a></h3>",
-                    "<h3><a id=\"THREE\">THREE</a></h3>",
-                    "<h3><a id=\"FOUR\">FOUR</a></h3>");
+                    "<h3>ONE</h3>",
+                    "<h3>TWO</h3>",
+                    "<h3>THREE</h3>",
+                    "<h3>FOUR</h3>");
 
             checkOrder("pkg5/FieldTest.html",
                     "<h2>Field Summary</h2>",
@@ -580,10 +580,10 @@ public class TestOrdering extends JavadocTester {
                     "<a href=\"#three\">three</a>",
                     "<a href=\"#two\">two</a>",
                     "<h2>Field Details</h2>",
-                    "<h3><a id=\"one\">one</a></h3>",
-                    "<h3><a id=\"two\">two</a></h3>",
-                    "<h3><a id=\"three\">three</a></h3>",
-                    "<h3><a id=\"four\">four</a></h3>");
+                    "<h3>one</h3>",
+                    "<h3>two</h3>",
+                    "<h3>three</h3>",
+                    "<h3>four</h3>");
 
             checkOrder("pkg5/IntfTest.html",
                     "<h2>Method Summary</h2>",
@@ -592,10 +592,10 @@ public class TestOrdering extends JavadocTester {
                     "<a href=\"#three()\">three</a>",
                     "<a href=\"#two()\">two</a>",
                     "<h2>Method Details</h2>",
-                    "<h3><a id=\"one()\">one</a></h3>",
-                    "<h3><a id=\"two()\">two</a></h3>",
-                    "<h3><a id=\"three()\">three</a></h3>",
-                    "<h3><a id=\"four()\">four</a></h3>");
+                    "<h3>one</h3>",
+                    "<h3>two</h3>",
+                    "<h3>three</h3>",
+                    "<h3>four</h3>");
 
             checkOrder("pkg5/MethodTest.html",
                     "<h2>Method Summary</h2>",
@@ -604,10 +604,10 @@ public class TestOrdering extends JavadocTester {
                     "<a href=\"#three()\">three</a>",
                     "<a href=\"#two()\">two</a>",
                     "<h2>Method Details</h2>",
-                    "<h3><a id=\"one()\">one</a></h3>",
-                    "<h3><a id=\"two()\">two</a></h3>",
-                    "<h3><a id=\"three()\">three</a></h3>",
-                    "<h3><a id=\"four()\">four</a></h3>");
+                    "<h3>one</h3>",
+                    "<h3>two</h3>",
+                    "<h3>three</h3>",
+                    "<h3>four</h3>");
 
             checkOrder("pkg5/PropertyTest.html",
                     "<h2>Property Summary</h2>",
@@ -616,10 +616,10 @@ public class TestOrdering extends JavadocTester {
                     "<a href=\"#threeProperty\">three</a>",
                     "<a href=\"#twoProperty\">two</a>",
                     "<h2>Property Details</h2>",
-                    "<h3><a id=\"oneProperty()\">oneProperty</a></h3>",
-                    "<h3><a id=\"twoProperty()\">twoProperty</a></h3>",
-                    "<h3><a id=\"threeProperty()\">threeProperty</a></h3>",
-                    "<h3><a id=\"fourProperty()\">fourProperty</a></h3>");
+                    "<h3>oneProperty</h3>",
+                    "<h3>twoProperty</h3>",
+                    "<h3>threeProperty</h3>",
+                    "<h3>fourProperty</h3>");
 
         }
     }

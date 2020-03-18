@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -157,7 +157,8 @@
   nonstatic_field(InstanceKlass,               _constants,                                    ConstantPool*)                         \
   nonstatic_field(InstanceKlass,               _source_file_name_index,                       u2)                                    \
   nonstatic_field(InstanceKlass,               _init_state,                                   u1)                                    \
-  nonstatic_field(InstanceKlass,               _misc_flags,                                   u2)                                    \
+  nonstatic_field(InstanceKlass,               _init_thread,                                  Thread*)                               \
+  nonstatic_field(InstanceKlass,               _misc_flags,                                   u4)                                    \
   nonstatic_field(InstanceKlass,               _annotations,                                  Annotations*)                          \
                                                                                                                                      \
   volatile_nonstatic_field(JavaFrameAnchor,    _last_Java_sp,                                 intptr_t*)                             \
@@ -255,9 +256,11 @@
                                                                                                                                      \
   nonstatic_field(ObjArrayKlass,               _element_klass,                                Klass*)                                \
                                                                                                                                      \
-  volatile_nonstatic_field(ObjectMonitor,      _cxq,                                   ObjectWaiter*)                                \
-  volatile_nonstatic_field(ObjectMonitor,      _EntryList,                             ObjectWaiter*)                                \
-  volatile_nonstatic_field(ObjectMonitor,      _succ,                                  Thread*)                                      \
+  unchecked_nonstatic_field(ObjectMonitor,     _owner,                                        sizeof(void *)) /* NOTE: no type */    \
+  volatile_nonstatic_field(ObjectMonitor,      _recursions,                                   intptr_t)                              \
+  volatile_nonstatic_field(ObjectMonitor,      _cxq,                                          ObjectWaiter*)                         \
+  volatile_nonstatic_field(ObjectMonitor,      _EntryList,                                    ObjectWaiter*)                         \
+  volatile_nonstatic_field(ObjectMonitor,      _succ,                                         Thread*)                               \
                                                                                                                                      \
   volatile_nonstatic_field(oopDesc,            _mark,                                         markWord)                              \
   volatile_nonstatic_field(oopDesc,            _metadata._klass,                              Klass*)                                \
@@ -323,6 +326,8 @@
   static_field(StubRoutines,                _montgomeryMultiply,                              address)                               \
   static_field(StubRoutines,                _montgomerySquare,                                address)                               \
   static_field(StubRoutines,                _vectorizedMismatch,                              address)                               \
+  static_field(StubRoutines,                _bigIntegerRightShiftWorker,                      address)                               \
+  static_field(StubRoutines,                _bigIntegerLeftShiftWorker,                       address)                               \
                                                                                                                                      \
   nonstatic_field(Thread,                   _tlab,                                            ThreadLocalAllocBuffer)                \
   nonstatic_field(Thread,                   _allocated_bytes,                                 jlong)                                 \
@@ -605,6 +610,7 @@
   declare_constant(InvocationCounter::count_shift)                        \
                                                                           \
   declare_constant(markWord::hash_shift)                                  \
+  declare_constant(markWord::monitor_value)                               \
                                                                           \
   declare_constant(markWord::biased_lock_mask_in_place)                   \
   declare_constant(markWord::age_mask_in_place)                           \
@@ -726,7 +732,8 @@
 #ifdef X86
 
 #define VM_STRUCTS_CPU(nonstatic_field, static_field, unchecked_nonstatic_field, volatile_nonstatic_field, nonproduct_nonstatic_field, c2_nonstatic_field, unchecked_c1_static_field, unchecked_c2_static_field) \
-  volatile_nonstatic_field(JavaFrameAnchor, _last_Java_fp, intptr_t*)
+  volatile_nonstatic_field(JavaFrameAnchor, _last_Java_fp, intptr_t*) \
+  static_field(VM_Version, _has_intel_jcc_erratum, bool)
 
 #define VM_INT_CONSTANTS_CPU(declare_constant, declare_preprocessor_constant, declare_c1_constant, declare_c2_constant, declare_c2_preprocessor_constant) \
   LP64_ONLY(declare_constant(frame::arg_reg_save_area_bytes))       \

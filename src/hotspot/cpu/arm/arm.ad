@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+// Copyright (c) 2008, 2020, Oracle and/or its affiliates. All rights reserved.
 // DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 //
 // This code is free software; you can redistribute it and/or modify it
@@ -194,7 +194,7 @@ void emit_hi(CodeBuffer &cbuf, int val) {  }
 //=============================================================================
 const RegMask& MachConstantBaseNode::_out_RegMask = PTR_REG_mask();
 
-int Compile::ConstantTable::calculate_table_base_offset() const {
+int ConstantTable::calculate_table_base_offset() const {
   int offset = -(size() / 2);
   // flds, fldd: 8-bit  offset multiplied by 4: +/- 1024
   // ldr, ldrb : 12-bit offset:                 +/- 4096
@@ -211,7 +211,7 @@ void MachConstantBaseNode::postalloc_expand(GrowableArray <Node *> *nodes, Phase
 
 void MachConstantBaseNode::emit(CodeBuffer& cbuf, PhaseRegAlloc* ra_) const {
   Compile* C = ra_->C;
-  Compile::ConstantTable& constant_table = C->constant_table();
+  ConstantTable& constant_table = C->output()->constant_table();
   MacroAssembler _masm(&cbuf);
 
   Register r = as_Register(ra_->get_encode(this));
@@ -245,9 +245,9 @@ void MachPrologNode::format( PhaseRegAlloc *ra_, outputStream *st ) const {
     st->print_cr("NOP"); st->print("\t");
   }
 
-  size_t framesize = C->frame_size_in_bytes();
+  size_t framesize = C->output()->frame_size_in_bytes();
   assert((framesize & (StackAlignmentInBytes-1)) == 0, "frame size not aligned");
-  int bangsize = C->bang_size_in_bytes();
+  int bangsize = C->output()->bang_size_in_bytes();
   // Remove two words for return addr and rbp,
   framesize -= 2*wordSize;
   bangsize -= 2*wordSize;
@@ -257,7 +257,7 @@ void MachPrologNode::format( PhaseRegAlloc *ra_, outputStream *st ) const {
   // some VM calls (such as call site linkage) can use several kilobytes of
   // stack.  But the stack safety zone should account for that.
   // See bugs 4446381, 4468289, 4497237.
-  if (C->need_stack_bang(bangsize)) {
+  if (C->output()->need_stack_bang(bangsize)) {
     st->print_cr("! stack bang (%d bytes)", bangsize); st->print("\t");
   }
   st->print_cr("PUSH   R_FP|R_LR_LR"); st->print("\t");
@@ -275,9 +275,9 @@ void MachPrologNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {
     __ nop();
   }
 
-  size_t framesize = C->frame_size_in_bytes();
+  size_t framesize = C->output()->frame_size_in_bytes();
   assert((framesize & (StackAlignmentInBytes-1)) == 0, "frame size not aligned");
-  int bangsize = C->bang_size_in_bytes();
+  int bangsize = C->output()->bang_size_in_bytes();
   // Remove two words for return addr and fp,
   framesize -= 2*wordSize;
   bangsize -= 2*wordSize;
@@ -287,7 +287,7 @@ void MachPrologNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {
   // some VM calls (such as call site linkage) can use several kilobytes of
   // stack.  But the stack safety zone should account for that.
   // See bugs 4446381, 4468289, 4497237.
-  if (C->need_stack_bang(bangsize)) {
+  if (C->output()->need_stack_bang(bangsize)) {
     __ arm_stack_overflow_check(bangsize, Rtemp);
   }
 
@@ -298,13 +298,13 @@ void MachPrologNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {
 
   // offset from scratch buffer is not valid
   if (strcmp(cbuf.name(), "Compile::Fill_buffer") == 0) {
-    C->set_frame_complete( __ offset() );
+    C->output()->set_frame_complete( __ offset() );
   }
 
   if (C->has_mach_constant_base_node()) {
     // NOTE: We set the table base offset here because users might be
     // emitted before MachConstantBaseNode.
-    Compile::ConstantTable& constant_table = C->constant_table();
+    ConstantTable& constant_table = C->output()->constant_table();
     constant_table.set_table_base_offset(constant_table.calculate_table_base_offset());
   }
 }
@@ -322,7 +322,7 @@ int MachPrologNode::reloc() const {
 void MachEpilogNode::format( PhaseRegAlloc *ra_, outputStream *st ) const {
   Compile* C = ra_->C;
 
-  size_t framesize = C->frame_size_in_bytes();
+  size_t framesize = C->output()->frame_size_in_bytes();
   framesize -= 2*wordSize;
 
   if (framesize != 0) {
@@ -342,7 +342,7 @@ void MachEpilogNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {
   MacroAssembler _masm(&cbuf);
   Compile* C = ra_->C;
 
-  size_t framesize = C->frame_size_in_bytes();
+  size_t framesize = C->output()->frame_size_in_bytes();
   framesize -= 2*wordSize;
   if (framesize != 0) {
     __ add_slow(SP, SP, framesize);
@@ -351,10 +351,7 @@ void MachEpilogNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {
 
   // If this does safepoint polling, then do it here
   if (do_polling() && ra_->C->is_method_compilation()) {
-    // mov_slow here is usually one or two instruction
-    __ mov_address(Rtemp, (address)os::get_polling_page());
-    __ relocate(relocInfo::poll_return_type);
-    __ ldr(Rtemp, Address(Rtemp));
+    __ read_polling_page(Rtemp, relocInfo::poll_return_type);
   }
 }
 
@@ -830,7 +827,7 @@ void BoxLockNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {
 uint BoxLockNode::size(PhaseRegAlloc *ra_) const {
   // BoxLockNode is not a MachNode, so we can't just call MachNode::size(ra_)
   assert(ra_ == ra_->C->regalloc(), "sanity");
-  return ra_->C->scratch_emit_size(this);
+  return ra_->C->output()->scratch_emit_size(this);
 }
 
 //=============================================================================
@@ -1143,8 +1140,7 @@ const bool Matcher::misaligned_doubles_ok = false;
 void Matcher::pd_implicit_null_fixup(MachNode *node, uint idx) {
 }
 
-// Advertise here if the CPU requires explicit rounding operations
-// to implement the UseStrictFP mode.
+// Advertise here if the CPU requires explicit rounding operations to implement strictfp mode.
 const bool Matcher::strict_fp_requires_explicit_rounding = false;
 
 // Are floats converted to double when stored to stack during deoptimization?
@@ -10622,7 +10618,7 @@ instruct vsl16B_reg(vecX dst, vecX src, vecX shift) %{
 
 instruct vsl8B_immI(vecD dst, vecD src, immI shift) %{
   predicate(n->as_Vector()->length() == 8);
-  match(Set dst (LShiftVB src shift));
+  match(Set dst (LShiftVB src (LShiftCntV shift)));
   size(4);
   ins_cost(DEFAULT_COST); // FIXME
   format %{
@@ -10638,7 +10634,7 @@ instruct vsl8B_immI(vecD dst, vecD src, immI shift) %{
 
 instruct vsl16B_immI(vecX dst, vecX src, immI shift) %{
   predicate(n->as_Vector()->length() == 16);
-  match(Set dst (LShiftVB src shift));
+  match(Set dst (LShiftVB src (LShiftCntV shift)));
   size(4);
   ins_cost(DEFAULT_COST); // FIXME
   format %{
@@ -10677,7 +10673,7 @@ instruct vsl8S_reg(vecX dst, vecX src, vecX shift) %{
 
 instruct vsl4S_immI(vecD dst, vecD src, immI shift) %{
   predicate(n->as_Vector()->length() == 4);
-  match(Set dst (LShiftVS src shift));
+  match(Set dst (LShiftVS src (LShiftCntV shift)));
   size(4);
   ins_cost(DEFAULT_COST); // FIXME
   format %{
@@ -10732,7 +10728,7 @@ instruct vsl4I_reg(vecX dst, vecX src, vecX shift) %{
 
 instruct vsl2I_immI(vecD dst, vecD src, immI shift) %{
   predicate(n->as_Vector()->length() == 2 && VM_Version::has_simd());
-  match(Set dst (LShiftVI src shift));
+  match(Set dst (LShiftVI src (LShiftCntV shift)));
   size(4);
   ins_cost(DEFAULT_COST); // FIXME
   format %{
@@ -10748,7 +10744,7 @@ instruct vsl2I_immI(vecD dst, vecD src, immI shift) %{
 
 instruct vsl4I_immI(vecX dst, vecX src, immI shift) %{
   predicate(n->as_Vector()->length() == 4 && VM_Version::has_simd());
-  match(Set dst (LShiftVI src shift));
+  match(Set dst (LShiftVI src (LShiftCntV shift)));
   size(4);
   ins_cost(DEFAULT_COST); // FIXME
   format %{
@@ -10776,7 +10772,7 @@ instruct vsl2L_reg(vecX dst, vecX src, vecX shift) %{
 
 instruct vsl2L_immI(vecX dst, vecX src, immI shift) %{
   predicate(n->as_Vector()->length() == 2);
-  match(Set dst (LShiftVL src shift));
+  match(Set dst (LShiftVL src (LShiftCntV shift)));
   size(4);
   ins_cost(DEFAULT_COST); // FIXME
   format %{
@@ -10799,7 +10795,7 @@ instruct vsl2L_immI(vecX dst, vecX src, immI shift) %{
 // Chars vector logical right shift
 instruct vsrl4S_immI(vecD dst, vecD src, immI shift) %{
   predicate(n->as_Vector()->length() == 4);
-  match(Set dst (URShiftVS src shift));
+  match(Set dst (URShiftVS src (RShiftCntV shift)));
   size(4);
   ins_cost(DEFAULT_COST); // FIXME
   format %{
@@ -10815,7 +10811,7 @@ instruct vsrl4S_immI(vecD dst, vecD src, immI shift) %{
 
 instruct vsrl8S_immI(vecX dst, vecX src, immI shift) %{
   predicate(n->as_Vector()->length() == 8);
-  match(Set dst (URShiftVS src shift));
+  match(Set dst (URShiftVS src (RShiftCntV shift)));
   size(4);
   ins_cost(DEFAULT_COST); // FIXME
   format %{
@@ -10832,7 +10828,7 @@ instruct vsrl8S_immI(vecX dst, vecX src, immI shift) %{
 // Integers vector logical right shift
 instruct vsrl2I_immI(vecD dst, vecD src, immI shift) %{
   predicate(n->as_Vector()->length() == 2 && VM_Version::has_simd());
-  match(Set dst (URShiftVI src shift));
+  match(Set dst (URShiftVI src (RShiftCntV shift)));
   size(4);
   ins_cost(DEFAULT_COST); // FIXME
   format %{
@@ -10848,7 +10844,7 @@ instruct vsrl2I_immI(vecD dst, vecD src, immI shift) %{
 
 instruct vsrl4I_immI(vecX dst, vecX src, immI shift) %{
   predicate(n->as_Vector()->length() == 4 && VM_Version::has_simd());
-  match(Set dst (URShiftVI src shift));
+  match(Set dst (URShiftVI src (RShiftCntV shift)));
   size(4);
   ins_cost(DEFAULT_COST); // FIXME
   format %{
@@ -10865,7 +10861,7 @@ instruct vsrl4I_immI(vecX dst, vecX src, immI shift) %{
 // Longs vector logical right shift
 instruct vsrl2L_immI(vecX dst, vecX src, immI shift) %{
   predicate(n->as_Vector()->length() == 2);
-  match(Set dst (URShiftVL src shift));
+  match(Set dst (URShiftVL src (RShiftCntV shift)));
   size(4);
   ins_cost(DEFAULT_COST); // FIXME
   format %{

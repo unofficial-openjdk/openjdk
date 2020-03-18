@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,6 +56,9 @@ class PSPromotionManager {
   friend class PSRefProcTask;
 
  private:
+  typedef OverflowTaskQueue<StarTask, mtGC>           OopStarTaskQueue;
+  typedef GenericTaskQueueSet<OopStarTaskQueue, mtGC> OopStarTaskQueueSet;
+
   static PaddedEnd<PSPromotionManager>* _manager_array;
   static OopStarTaskQueueSet*           _stack_array_depth;
   static PreservedMarksSet*             _preserved_marks_set;
@@ -124,7 +127,7 @@ class PSPromotionManager {
   }
 
   oop* mask_chunked_array_oop(oop obj) {
-    assert(!is_oop_masked((oop*) obj), "invariant");
+    assert(!is_oop_masked(cast_from_oop<oop*>(obj)), "invariant");
     oop* ret = (oop*) (cast_from_oop<uintptr_t>(obj) | PS_CHUNKED_ARRAY_OOP_MASK);
     assert(is_oop_masked(ret), "invariant");
     return ret;
@@ -135,7 +138,7 @@ class PSPromotionManager {
     assert(!p.is_narrow(), "chunked array oops cannot be narrow");
     oop *chunk = (oop*)p;  // cast p to oop (uses conversion operator)
     oop ret = oop((oop*)((uintptr_t)chunk & ~PS_CHUNKED_ARRAY_OOP_MASK));
-    assert(!is_oop_masked((oop*) ret), "invariant");
+    assert(!is_oop_masked(cast_from_oop<oop*>(ret)), "invariant");
     return ret;
   }
 

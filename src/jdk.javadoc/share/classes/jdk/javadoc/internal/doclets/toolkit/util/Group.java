@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -94,6 +94,7 @@ public class Group {
      * comparison.
      */
     private static class MapKeyComparator implements Comparator<String> {
+        @Override
         public int compare(String key1, String key2) {
             return key2.length() - key1.length();
         }
@@ -239,8 +240,8 @@ public class Group {
         Map<String, SortedSet<ModuleElement>> groupModuleMap = new HashMap<>();
         String defaultGroupName =
             (elementNameGroupMap.isEmpty() && regExpGroupMap.isEmpty())?
-                configuration.getResources().getText("doclet.Modules") :
-                configuration.getResources().getText("doclet.Other_Modules");
+                configuration.getDocResources().getText("doclet.Modules") :
+                configuration.getDocResources().getText("doclet.Other_Modules");
         // if the user has not used the default group name, add it
         if (!groupList.contains(defaultGroupName)) {
             groupList.add(defaultGroupName);
@@ -281,8 +282,8 @@ public class Group {
         Map<String, SortedSet<PackageElement>> groupPackageMap = new HashMap<>();
         String defaultGroupName =
             (elementNameGroupMap.isEmpty() && regExpGroupMap.isEmpty())?
-                configuration.getResources().getText("doclet.Packages") :
-                configuration.getResources().getText("doclet.Other_Packages");
+                configuration.getDocResources().getText("doclet.Packages") :
+                configuration.getDocResources().getText("doclet.Other_Packages");
         // if the user has not used the default group name, add it
         if (!groupList.contains(defaultGroupName)) {
             groupList.add(defaultGroupName);

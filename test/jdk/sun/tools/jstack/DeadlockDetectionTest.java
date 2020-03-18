@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,19 +27,19 @@ import java.util.stream.Collectors;
 
 import jdk.test.lib.apps.LingeredApp;
 import jdk.test.lib.apps.LingeredAppWithDeadlock;
-import jdk.test.lib.Platform;
+import jdk.test.lib.JDKToolLauncher;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
-
 import jdk.test.lib.Utils;
-import jdk.test.lib.JDKToolLauncher;
+
+import jtreg.SkippedException;
 
 /**
  * @test
  * @summary Test deadlock detection
- * @requires vm.hasSAandCanAttach
+ * @requires vm.hasSA
  * @library /test/lib
- * @build jdk.test.lib.apps.* jdk.test.lib.Platform
+ * @build jdk.test.lib.apps.*
  * @build DeadlockDetectionTest
  * @run main DeadlockDetectionTest
  */
@@ -75,23 +75,19 @@ public class DeadlockDetectionTest {
         }
 
         try {
-            List<String> vmArgs = new ArrayList<String>();
-            vmArgs.add("-XX:+UsePerfData");
-            vmArgs.addAll(Utils.getVmOptions());
+            String[] vmArgs = Utils.appendTestJavaOpts("-XX:+UsePerfData");
 
             theApp = new LingeredAppWithDeadlock();
-            LingeredApp.startApp(vmArgs, theApp);
+            LingeredApp.startApp(theApp, vmArgs);
             OutputAnalyzer output = jstack(Long.toString(theApp.getPid()));
             System.out.println(output.getOutput());
 
             if (output.getExitValue() == 3) {
-                System.out.println("Test can't run for some reason. Skipping");
-            }
-            else {
+                throw new SkippedException("Test can't run for some reason");
+            } else {
                 output.shouldHaveExitValue(0);
                 output.shouldContain("Found 1 deadlock.");
             }
-
         } finally {
             LingeredApp.stopApp(theApp);
         }

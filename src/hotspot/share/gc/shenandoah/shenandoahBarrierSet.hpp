@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -83,6 +84,7 @@ public:
   virtual void on_thread_detach(Thread* thread);
 
   static inline oop resolve_forwarded_not_null(oop p);
+  static inline oop resolve_forwarded_not_null_mutator(oop p);
   static inline oop resolve_forwarded(oop p);
 
   template <DecoratorSet decorators, typename T>
@@ -122,6 +124,7 @@ private:
   template <class T>
   oop load_reference_barrier_native_impl(oop obj, T* load_addr);
 
+  inline bool skip_bulk_update(HeapWord* dst);
 public:
   // Callbacks for runtime accesses.
   template <DecoratorSet decorators, typename BarrierSetT = ShenandoahBarrierSet>

@@ -177,6 +177,7 @@ ctw_3 = \
   applications/ctw/modules/jdk_compiler.java \
   applications/ctw/modules/jdk_internal_vm_compiler.java \
   applications/ctw/modules/jdk_localedata.java \
+  applications/ctw/modules/jdk_localedata_2.java \
   applications/ctw/modules/jdk_scripting_nashorn.java \
 
 tier1_gc = \
@@ -194,7 +195,6 @@ tier1_gc_1 = \
   :gc_epsilon \
   gc/g1/ \
   -gc/g1/ihop/TestIHOPErgo.java
-  -gc/g1/TestTimelyCompaction.java
 
 tier1_gc_2 = \
   gc/ \
@@ -242,6 +242,7 @@ tier2_gc_shenandoah = \
   gc/ergonomics/TestInitialGCThreadLogging.java \
   gc/ergonomics/TestDynamicNumberOfGCThreads.java \
   gc/logging/TestGCId.java \
+  gc/logging/TestMetaSpaceLog.java \
   gc/metaspace/TestMetaspacePerfCounters.java \
   gc/metaspace/TestMetaspacePerfCounters.java \
   gc/startup_warnings/TestShenandoah.java \
@@ -335,6 +336,8 @@ hotspot_appcds_dynamic = \
  -runtime/cds/appcds/NonExistClasspath.java \
  -runtime/cds/appcds/RelativePath.java \
  -runtime/cds/appcds/SharedArchiveConsistency.java \
+ -runtime/cds/appcds/TestCombinedCompressedFlags.java \
+ -runtime/cds/appcds/TestZGCWithCDS.java \
  -runtime/cds/appcds/UnusedCPDuringDump.java \
  -runtime/cds/appcds/VerifierTest_1B.java
 
@@ -552,7 +555,7 @@ vmTestbase_largepages = \
   vmTestbase/metaspace/stressDictionary/StressDictionary.java \
   vmTestbase/metaspace/stressHierarchy/stressHierarchy001/TestDescription.java \
   vmTestbase/metaspace/stressHierarchy/stressHierarchy011/TestDescription.java \
-  vmTestbase/metaspace/flags/maxMetaspaceSize/TestDescription.java \
+  vmTestbase/metaspace/flags/maxMetaspaceSize/TestMaxMetaspaceSize.java \
   vmTestbase/metaspace/shrink_grow/ShrinkGrowTest/ShrinkGrowTest.java \
   vmTestbase/metaspace/shrink_grow/ShrinkGrowMultiJVM/ShrinkGrowMultiJVM.java \
   vmTestbase/metaspace/shrink_grow/CompressedClassSpaceSize/TestDescription.java

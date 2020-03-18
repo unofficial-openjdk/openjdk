@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2014, 2019, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2014, 2020, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -28,6 +29,7 @@
 #include "gc/shared/preservedMarks.inline.hpp"
 #include "gc/shenandoah/shenandoahForwarding.inline.hpp"
 #include "gc/shenandoah/shenandoahConcurrentMark.inline.hpp"
+#include "gc/shenandoah/shenandoahConcurrentRoots.hpp"
 #include "gc/shenandoah/shenandoahCollectionSet.hpp"
 #include "gc/shenandoah/shenandoahFreeSet.hpp"
 #include "gc/shenandoah/shenandoahPhaseTimings.hpp"
@@ -71,6 +73,12 @@ void ShenandoahMarkCompact::do_it(GCCause::Cause gc_cause) {
 
   if (VerifyBeforeGC) {
     Universe::verify();
+  }
+
+  // Degenerated GC may carry concurrent_root_in_progress flag when upgrading to
+  // full GC. We need to reset it before mutators resume.
+  if (ShenandoahConcurrentRoots::can_do_concurrent_class_unloading()) {
+    heap->set_concurrent_root_in_progress(false);
   }
 
   heap->set_full_gc_in_progress(true);
@@ -175,8 +183,7 @@ void ShenandoahMarkCompact::do_it(GCCause::Cause gc_cause) {
 
   {
     // Epilogue
-    SharedRestorePreservedMarksTaskExecutor exec(heap->workers());
-    _preserved_marks->restore(&exec);
+    _preserved_marks->restore(heap->workers());
     BiasedLocking::restore_marks();
     _preserved_marks->reclaim();
   }
@@ -217,7 +224,6 @@ public:
   void heap_region_do(ShenandoahHeapRegion *r) {
     _ctx->capture_top_at_mark_start(r);
     r->clear_live_data();
-    r->set_concurrent_iteration_safe_limit(r->top());
   }
 };
 
@@ -290,7 +296,7 @@ public:
   void do_object(oop p) {
     assert(_from_region != NULL, "must set before work");
     assert(_heap->complete_marking_context()->is_marked(p), "must be marked");
-    assert(!_heap->complete_marking_context()->allocated_after_mark_start((HeapWord*) p), "must be truly marked");
+    assert(!_heap->complete_marking_context()->allocated_after_mark_start(p), "must be truly marked");
 
     size_t obj_size = p->size();
     if (_compact_point + obj_size > _to_region->end()) {
@@ -657,8 +663,8 @@ public:
     assert(_heap->complete_marking_context()->is_marked(p), "must be marked");
     size_t size = (size_t)p->size();
     if (p->is_forwarded()) {
-      HeapWord* compact_from = (HeapWord*) p;
-      HeapWord* compact_to = (HeapWord*) p->forwardee();
+      HeapWord* compact_from = cast_from_oop<HeapWord*>(p);
+      HeapWord* compact_to = cast_from_oop<HeapWord*>(p->forwardee());
       Copy::aligned_conjoint_words(compact_from, compact_to, size);
       oop new_obj = oop(compact_to);
       new_obj->init_mark_raw();

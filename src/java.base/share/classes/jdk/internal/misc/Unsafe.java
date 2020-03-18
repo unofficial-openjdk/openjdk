@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,7 +40,7 @@ import static jdk.internal.misc.UnsafeConstants.*;
  * Although the class and all methods are public, use of this class is
  * limited because only trusted code can obtain instances of it.
  *
- * <em>Note:</em> It is the resposibility of the caller to make sure
+ * <em>Note:</em> It is the responsibility of the caller to make sure
  * arguments are checked before methods of this class are
  * called. While some rudimentary checks are performed on the input,
  * the checks are best effort and when performance is an overriding
@@ -425,7 +425,7 @@ public final class Unsafe {
     /**
      * Create an exception reflecting that some of the input was invalid
      *
-     * <em>Note:</em> It is the resposibility of the caller to make
+     * <em>Note:</em> It is the responsibility of the caller to make
      * sure arguments are checked before the methods are called. While
      * some rudimentary checks are performed on the input, the checks
      * are best effort and when performance is an overriding priority,
@@ -584,13 +584,24 @@ public final class Unsafe {
     /// wrappers for malloc, realloc, free:
 
     /**
+     * Round up allocation size to a multiple of HeapWordSize.
+     */
+    private long alignToHeapWordSize(long bytes) {
+        if (bytes >= 0) {
+            return (bytes + ADDRESS_SIZE - 1) & ~(ADDRESS_SIZE - 1);
+        } else {
+            throw invalidInput();
+        }
+    }
+
+    /**
      * Allocates a new block of native memory, of the given size in bytes.  The
      * contents of the memory are uninitialized; they will generally be
      * garbage.  The resulting native pointer will never be zero, and will be
      * aligned for all value types.  Dispose of this memory by calling {@link
      * #freeMemory}, or resize it with {@link #reallocateMemory}.
      *
-     * <em>Note:</em> It is the resposibility of the caller to make
+     * <em>Note:</em> It is the responsibility of the caller to make
      * sure arguments are checked before the methods are called. While
      * some rudimentary checks are performed on the input, the checks
      * are best effort and when performance is an overriding priority,
@@ -608,6 +619,8 @@ public final class Unsafe {
      * @see #putByte(long, byte)
      */
     public long allocateMemory(long bytes) {
+        bytes = alignToHeapWordSize(bytes);
+
         allocateMemoryChecks(bytes);
 
         if (bytes == 0) {
@@ -644,7 +657,7 @@ public final class Unsafe {
      * #reallocateMemory}.  The address passed to this method may be null, in
      * which case an allocation will be performed.
      *
-     * <em>Note:</em> It is the resposibility of the caller to make
+     * <em>Note:</em> It is the responsibility of the caller to make
      * sure arguments are checked before the methods are called. While
      * some rudimentary checks are performed on the input, the checks
      * are best effort and when performance is an overriding priority,
@@ -661,6 +674,8 @@ public final class Unsafe {
      * @see #allocateMemory
      */
     public long reallocateMemory(long address, long bytes) {
+        bytes = alignToHeapWordSize(bytes);
+
         reallocateMemoryChecks(address, bytes);
 
         if (bytes == 0) {
@@ -704,7 +719,7 @@ public final class Unsafe {
      * If the effective address and length are (resp.) even modulo 4 or 2,
      * the stores take place in units of 'int' or 'short'.
      *
-     * <em>Note:</em> It is the resposibility of the caller to make
+     * <em>Note:</em> It is the responsibility of the caller to make
      * sure arguments are checked before the methods are called. While
      * some rudimentary checks are performed on the input, the checks
      * are best effort and when performance is an overriding priority,
@@ -766,7 +781,7 @@ public final class Unsafe {
      * If the effective addresses and length are (resp.) even modulo 4 or 2,
      * the transfer takes place in units of 'int' or 'short'.
      *
-     * <em>Note:</em> It is the resposibility of the caller to make
+     * <em>Note:</em> It is the responsibility of the caller to make
      * sure arguments are checked before the methods are called. While
      * some rudimentary checks are performed on the input, the checks
      * are best effort and when performance is an overriding priority,
@@ -827,7 +842,7 @@ public final class Unsafe {
      * as discussed in {@link #getInt(Object,long)}.  When the object reference is null,
      * the offset supplies an absolute base address.
      *
-     * <em>Note:</em> It is the resposibility of the caller to make
+     * <em>Note:</em> It is the responsibility of the caller to make
      * sure arguments are checked before the methods are called. While
      * some rudimentary checks are performed on the input, the checks
      * are best effort and when performance is an overriding priority,
@@ -886,7 +901,7 @@ public final class Unsafe {
      * #allocateMemory} or {@link #reallocateMemory}.  The address passed to
      * this method may be null, in which case no action is taken.
      *
-     * <em>Note:</em> It is the resposibility of the caller to make
+     * <em>Note:</em> It is the responsibility of the caller to make
      * sure arguments are checked before the methods are called. While
      * some rudimentary checks are performed on the input, the checks
      * are best effort and when performance is an overriding priority,

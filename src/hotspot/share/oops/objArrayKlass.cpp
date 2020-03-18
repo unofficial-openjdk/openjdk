@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -80,13 +80,13 @@ Klass* ObjArrayKlass::allocate_objArray_klass(ClassLoaderData* loader_data,
         Klass* ek = NULL;
         {
           MutexUnlocker mu(MultiArray_lock);
-          super_klass = element_super->array_klass(CHECK_0);
+          super_klass = element_super->array_klass(CHECK_NULL);
           for( int i = element_supers->length()-1; i >= 0; i-- ) {
             Klass* elem_super = element_supers->at(i);
-            elem_super->array_klass(CHECK_0);
+            elem_super->array_klass(CHECK_NULL);
           }
           // Now retry from the beginning
-          ek = element_klass->array_klass(n, CHECK_0);
+          ek = element_klass->array_klass(n, CHECK_NULL);
         }  // re-lock
         return ek;
       }
@@ -124,13 +124,13 @@ Klass* ObjArrayKlass::allocate_objArray_klass(ClassLoaderData* loader_data,
   }
 
   // Initialize instance variables
-  ObjArrayKlass* oak = ObjArrayKlass::allocate(loader_data, n, element_klass, name, CHECK_0);
+  ObjArrayKlass* oak = ObjArrayKlass::allocate(loader_data, n, element_klass, name, CHECK_NULL);
 
   ModuleEntry* module = oak->module();
   assert(module != NULL, "No module entry for array");
 
   // Call complete_create_array_klass after all instance variables has been initialized.
-  ArrayKlass::complete_create_array_klass(oak, super_klass, module, CHECK_0);
+  ArrayKlass::complete_create_array_klass(oak, super_klass, module, CHECK_NULL);
 
   // Add all classes to our internal class loader list here,
   // including classes in the bootstrap (NULL) class loader.
@@ -171,7 +171,7 @@ int ObjArrayKlass::oop_size(oop obj) const {
 }
 
 objArrayOop ObjArrayKlass::allocate(int length, TRAPS) {
-  check_array_allocation_length(length, arrayOopDesc::max_array_length(T_OBJECT), CHECK_0);
+  check_array_allocation_length(length, arrayOopDesc::max_array_length(T_OBJECT), CHECK_NULL);
   int size = objArrayOopDesc::object_size(length);
   return (objArrayOop)Universe::heap()->array_allocate(this, size, length,
                                                        /* do_zero */ true, THREAD);
@@ -334,7 +334,7 @@ Klass* ObjArrayKlass::array_klass_impl(bool or_null, int n, TRAPS) {
     JavaThread *jt = (JavaThread *)THREAD;
     {
       // Ensure atomic creation of higher dimensions
-      MutexLocker mu(MultiArray_lock, THREAD);
+      MutexLocker mu(THREAD, MultiArray_lock);
 
       // Check if another thread beat us
       if (higher_dimension() == NULL) {

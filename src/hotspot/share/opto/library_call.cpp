@@ -58,7 +58,7 @@
 #include "runtime/objectMonitor.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "utilities/macros.hpp"
-
+#include "utilities/powerOfTwo.hpp"
 
 class LibraryIntrinsic : public InlineCallGenerator {
   // Extend the set of intrinsics known to the runtime:
@@ -327,6 +327,7 @@ class LibraryCallKit : public GraphKit {
   bool inline_mulAdd();
   bool inline_montgomeryMultiply();
   bool inline_montgomerySquare();
+  bool inline_bigIntegerShift(bool isRightShift);
   bool inline_vectorizedMismatch();
   bool inline_fma(vmIntrinsics::ID id);
   bool inline_character_compare(vmIntrinsics::ID id);
@@ -844,6 +845,11 @@ bool LibraryCallKit::try_to_inline(int predicate) {
     return inline_montgomeryMultiply();
   case vmIntrinsics::_montgomerySquare:
     return inline_montgomerySquare();
+
+  case vmIntrinsics::_bigIntegerRightShiftWorker:
+    return inline_bigIntegerShift(true);
+  case vmIntrinsics::_bigIntegerLeftShiftWorker:
+    return inline_bigIntegerShift(false);
 
   case vmIntrinsics::_vectorizedMismatch:
     return inline_vectorizedMismatch();
@@ -1779,8 +1785,15 @@ bool LibraryCallKit::inline_string_char_access(bool is_store) {
 //--------------------------round_double_node--------------------------------
 // Round a double node if necessary.
 Node* LibraryCallKit::round_double_node(Node* n) {
-  if (Matcher::strict_fp_requires_explicit_rounding && UseSSE <= 1)
-    n = _gvn.transform(new RoundDoubleNode(0, n));
+  if (Matcher::strict_fp_requires_explicit_rounding) {
+#ifdef IA32
+    if (UseSSE < 2) {
+      n = _gvn.transform(new RoundDoubleNode(NULL, n));
+    }
+#else
+    Unimplemented();
+#endif // IA32
+  }
   return n;
 }
 
@@ -3686,8 +3699,7 @@ bool LibraryCallKit::inline_array_copyOf(bool is_copyOfRange) {
       // Reason_class_check rather than Reason_intrinsic because we
       // want to intrinsify even if this traps.
       if (!too_many_traps(Deoptimization::Reason_class_check)) {
-        Node* not_subtype_ctrl = gen_subtype_check(load_object_klass(original),
-                                                   klass_node);
+        Node* not_subtype_ctrl = gen_subtype_check(original, klass_node);
 
         if (not_subtype_ctrl != top()) {
           PreserveJVMState pjvms(this);
@@ -4753,16 +4765,17 @@ bool LibraryCallKit::inline_arraycopy() {
     }
 
     // (9) each element of an oop array must be assignable
-    Node* src_klass  = load_object_klass(src);
     Node* dest_klass = load_object_klass(dest);
-    Node* not_subtype_ctrl = gen_subtype_check(src_klass, dest_klass);
+    if (src != dest) {
+      Node* not_subtype_ctrl = gen_subtype_check(src, dest_klass);
 
-    if (not_subtype_ctrl != top()) {
-      PreserveJVMState pjvms(this);
-      set_control(not_subtype_ctrl);
-      uncommon_trap(Deoptimization::Reason_intrinsic,
-                    Deoptimization::Action_make_not_entrant);
-      assert(stopped(), "Should be stopped");
+      if (not_subtype_ctrl != top()) {
+        PreserveJVMState pjvms(this);
+        set_control(not_subtype_ctrl);
+        uncommon_trap(Deoptimization::Reason_intrinsic,
+                      Deoptimization::Action_make_not_entrant);
+        assert(stopped(), "Should be stopped");
+      }
     }
     {
       PreserveJVMState pjvms(this);
@@ -4839,8 +4852,6 @@ LibraryCallKit::tightly_coupled_allocation(Node* ptr,
 
   // This arraycopy must unconditionally follow the allocation of the ptr.
   Node* alloc_ctl = ptr->in(0);
-  assert(just_allocated_object(alloc_ctl) == ptr, "most recent allo");
-
   Node* ctl = control();
   while (ctl != alloc_ctl) {
     // There may be guards which feed into the slow_region.
@@ -5248,6 +5259,60 @@ bool LibraryCallKit::inline_montgomerySquare() {
                                    a_start, n_start, len, inv, top(),
                                    m_start);
     set_result(m);
+  }
+
+  return true;
+}
+
+bool LibraryCallKit::inline_bigIntegerShift(bool isRightShift) {
+  address stubAddr = NULL;
+  const char* stubName = NULL;
+
+  stubAddr = isRightShift? StubRoutines::bigIntegerRightShift(): StubRoutines::bigIntegerLeftShift();
+  if (stubAddr == NULL) {
+    return false; // Intrinsic's stub is not implemented on this platform
+  }
+
+  stubName = isRightShift? "bigIntegerRightShiftWorker" : "bigIntegerLeftShiftWorker";
+
+  assert(callee()->signature()->size() == 5, "expected 5 arguments");
+
+  Node* newArr = argument(0);
+  Node* oldArr = argument(1);
+  Node* newIdx = argument(2);
+  Node* shiftCount = argument(3);
+  Node* numIter = argument(4);
+
+  const Type* newArr_type = newArr->Value(&_gvn);
+  const TypeAryPtr* top_newArr = newArr_type->isa_aryptr();
+  const Type* oldArr_type = oldArr->Value(&_gvn);
+  const TypeAryPtr* top_oldArr = oldArr_type->isa_aryptr();
+  if (top_newArr == NULL || top_newArr->klass() == NULL || top_oldArr == NULL
+      || top_oldArr->klass() == NULL) {
+    return false;
+  }
+
+  BasicType newArr_elem = newArr_type->isa_aryptr()->klass()->as_array_klass()->element_type()->basic_type();
+  BasicType oldArr_elem = oldArr_type->isa_aryptr()->klass()->as_array_klass()->element_type()->basic_type();
+  if (newArr_elem != T_INT || oldArr_elem != T_INT) {
+    return false;
+  }
+
+  // Make the call
+  {
+    Node* newArr_start = array_element_address(newArr, intcon(0), newArr_elem);
+    Node* oldArr_start = array_element_address(oldArr, intcon(0), oldArr_elem);
+
+    Node* call = make_runtime_call(RC_LEAF,
+                                   OptoRuntime::bigIntegerShift_Type(),
+                                   stubAddr,
+                                   stubName,
+                                   TypePtr::BOTTOM,
+                                   newArr_start,
+                                   oldArr_start,
+                                   newIdx,
+                                   shiftCount,
+                                   numIter);
   }
 
   return true;

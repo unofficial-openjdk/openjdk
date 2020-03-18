@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2015, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -53,7 +54,6 @@ private:
   static Node* dom_mem(Node* mem, Node* ctrl, int alias, Node*& mem_ctrl, PhaseIdealLoop* phase);
   static Node* no_branches(Node* c, Node* dom, bool allow_one_proj, PhaseIdealLoop* phase);
   static bool is_heap_state_test(Node* iff, int mask);
-  static bool try_common_gc_state_load(Node *n, PhaseIdealLoop *phase);
   static bool has_safepoint_between(Node* start, Node* stop, PhaseIdealLoop *phase);
   static Node* find_bottom_mem(Node* ctrl, PhaseIdealLoop* phase);
   static void follow_barrier_uses(Node* n, Node* ctrl, Unique_Node_List& uses, PhaseIdealLoop* phase);
@@ -231,10 +231,6 @@ public:
     ValueIn
   };
 
-  enum Strength {
-    NONE, STRONG
-  };
-
 private:
   bool _native;
 
@@ -257,7 +253,7 @@ public:
   virtual uint hash() const;
   virtual bool cmp( const Node &n ) const;
 
-  Strength get_barrier_strength();
+  bool is_redundant();
   CallStaticJavaNode* pin_and_expand_null_check(PhaseIterGVN& igvn);
 
 private:

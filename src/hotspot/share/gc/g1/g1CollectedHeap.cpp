@@ -66,6 +66,7 @@
 #include "gc/g1/heapRegion.inline.hpp"
 #include "gc/g1/heapRegionRemSet.hpp"
 #include "gc/g1/heapRegionSet.inline.hpp"
+#include "gc/shared/concurrentGCBreakpoints.hpp"
 #include "gc/shared/gcBehaviours.hpp"
 #include "gc/shared/gcHeapSummary.hpp"
 #include "gc/shared/gcId.hpp"
@@ -79,6 +80,7 @@
 #include "gc/shared/preservedMarks.inline.hpp"
 #include "gc/shared/suspendibleThreadSet.hpp"
 #include "gc/shared/referenceProcessor.inline.hpp"
+#include "gc/shared/taskTerminator.hpp"
 #include "gc/shared/taskqueue.inline.hpp"
 #include "gc/shared/weakProcessor.inline.hpp"
 #include "gc/shared/workerPolicy.hpp"
@@ -766,7 +768,7 @@ inline HeapWord* G1CollectedHeap::attempt_allocation(size_t min_word_size,
   return result;
 }
 
-void G1CollectedHeap::dealloc_archive_regions(MemRegion* ranges, size_t count, bool is_open) {
+void G1CollectedHeap::dealloc_archive_regions(MemRegion* ranges, size_t count) {
   assert(!is_init_completed(), "Expect to be called at JVM init time");
   assert(ranges != NULL, "MemRegion array NULL");
   assert(count != 0, "No MemRegions provided");
@@ -828,7 +830,7 @@ void G1CollectedHeap::dealloc_archive_regions(MemRegion* ranges, size_t count, b
     }
 
     // Notify mark-sweep that this is no longer an archive range.
-    G1ArchiveAllocator::clear_range_archive(ranges[i], is_open);
+    G1ArchiveAllocator::clear_range_archive(ranges[i]);
   }
 
   if (uncommitted_regions != 0) {
@@ -1131,9 +1133,6 @@ void G1CollectedHeap::print_heap_after_full_collection(G1HeapTransition* heap_tr
   heap_transition->print();
   print_heap_after_gc();
   print_heap_regions();
-#ifdef TRACESPINNING
-  ParallelTaskTerminator::print_termination_counts();
-#endif
 }
 
 bool G1CollectedHeap::do_full_collection(bool explicit_gc,
@@ -1801,8 +1800,8 @@ jint G1CollectedHeap::initialize() {
   // Create the G1ConcurrentMark data structure and thread.
   // (Must do this late, so that "max_regions" is defined.)
   _cm = new G1ConcurrentMark(this, prev_bitmap_storage, next_bitmap_storage);
-  if (_cm == NULL || !_cm->completed_initialization()) {
-    vm_shutdown_during_initialization("Could not create/initialize G1ConcurrentMark");
+  if (!_cm->completed_initialization()) {
+    vm_shutdown_during_initialization("Could not initialize G1ConcurrentMark");
     return JNI_ENOMEM;
   }
   _cm_thread = _cm->cm_thread();
@@ -2005,6 +2004,7 @@ bool G1CollectedHeap::should_do_concurrent_full_gc(GCCause::Cause cause) {
   switch (cause) {
     case GCCause::_g1_humongous_allocation: return true;
     case GCCause::_g1_periodic_collection:  return G1PeriodicGCInvokesConcurrent;
+    case GCCause::_wb_breakpoint:           return true;
     default:                                return is_user_requested_concurrent_full_gc(cause);
   }
 }
@@ -2175,24 +2175,42 @@ bool G1CollectedHeap::try_collect_concurrently(GCCause::Cause cause,
       old_marking_completed_after = _old_marking_cycles_completed;
     }
 
-    if (!GCCause::is_user_requested_gc(cause)) {
+    if (cause == GCCause::_wb_breakpoint) {
+      if (op.gc_succeeded()) {
+        LOG_COLLECT_CONCURRENTLY_COMPLETE(cause, true);
+        return true;
+      }
+      // When _wb_breakpoint there can't be another cycle or deferred.
+      assert(!op.cycle_already_in_progress(), "invariant");
+      assert(!op.whitebox_attached(), "invariant");
+      // Concurrent cycle attempt might have been cancelled by some other
+      // collection, so retry.  Unlike other cases below, we want to retry
+      // even if cancelled by a STW full collection, because we really want
+      // to start a concurrent cycle.
+      if (old_marking_started_before != old_marking_started_after) {
+        LOG_COLLECT_CONCURRENTLY(cause, "ignoring STW full GC");
+        old_marking_started_before = old_marking_started_after;
+      }
+    } else if (!GCCause::is_user_requested_gc(cause)) {
       // For an "automatic" (not user-requested) collection, we just need to
       // ensure that progress is made.
       //
       // Request is finished if any of
       // (1) the VMOp successfully performed a GC,
       // (2) a concurrent cycle was already in progress,
-      // (3) a new cycle was started (by this thread or some other), or
-      // (4) a Full GC was performed.
-      // Cases (3) and (4) are detected together by a change to
+      // (3) whitebox is controlling concurrent cycles,
+      // (4) a new cycle was started (by this thread or some other), or
+      // (5) a Full GC was performed.
+      // Cases (4) and (5) are detected together by a change to
       // _old_marking_cycles_started.
       //
-      // Note that (1) does not imply (3).  If we're still in the mixed
+      // Note that (1) does not imply (4).  If we're still in the mixed
       // phase of an earlier concurrent collection, the request to make the
       // collection an initial-mark won't be honored.  If we don't check for
       // both conditions we'll spin doing back-to-back collections.
       if (op.gc_succeeded() ||
           op.cycle_already_in_progress() ||
+          op.whitebox_attached() ||
           (old_marking_started_before != old_marking_started_after)) {
         LOG_COLLECT_CONCURRENTLY_COMPLETE(cause, true);
         return true;
@@ -2246,11 +2264,23 @@ bool G1CollectedHeap::try_collect_concurrently(GCCause::Cause cause,
       // a new cycle was started.
       assert(!op.gc_succeeded(), "invariant");
 
-      // If VMOp failed because a cycle was already in progress, it is now
-      // complete.  But it didn't finish this user-requested GC, so try
-      // again.
       if (op.cycle_already_in_progress()) {
+        // If VMOp failed because a cycle was already in progress, it
+        // is now complete.  But it didn't finish this user-requested
+        // GC, so try again.
         LOG_COLLECT_CONCURRENTLY(cause, "retry after in-progress");
+        continue;
+      } else if (op.whitebox_attached()) {
+        // If WhiteBox wants control, wait for notification of a state
+        // change in the controller, then try again.  Don't wait for
+        // release of control, since collections may complete while in
+        // control.  Note: This won't recognize a STW full collection
+        // while waiting; we can't wait on multiple monitors.
+        LOG_COLLECT_CONCURRENTLY(cause, "whitebox control stall");
+        MonitorLocker ml(ConcurrentGCBreakpoints::monitor());
+        if (ConcurrentGCBreakpoints::is_controlled()) {
+          ml.wait();
+        }
         continue;
       }
     }
@@ -2258,8 +2288,8 @@ bool G1CollectedHeap::try_collect_concurrently(GCCause::Cause cause,
     // Collection failed and should be retried.
     assert(op.transient_failure(), "invariant");
 
-    // If GCLocker is active, wait until clear before retrying.
     if (GCLocker::is_active_and_needs_gc()) {
+      // If GCLocker is active, wait until clear before retrying.
       LOG_COLLECT_CONCURRENTLY(cause, "gc-locker stall");
       GCLocker::stall_until_clear();
     }
@@ -2455,12 +2485,8 @@ void G1CollectedHeap::verify(VerifyOption vo) {
   _verifier->verify(vo);
 }
 
-bool G1CollectedHeap::supports_concurrent_phase_control() const {
+bool G1CollectedHeap::supports_concurrent_gc_breakpoints() const {
   return true;
-}
-
-bool G1CollectedHeap::request_concurrent_phase(const char* phase) {
-  return _cm_thread->request_concurrent_phase(phase);
 }
 
 bool G1CollectedHeap::is_heterogeneous_heap() const {
@@ -2778,8 +2804,6 @@ size_t G1CollectedHeap::pending_card_num() {
   Threads::threads_do(&count_from_threads);
 
   G1DirtyCardQueueSet& dcqs = G1BarrierSet::dirty_card_queue_set();
-  dcqs.verify_num_cards();
-
   return dcqs.num_cards() + count_from_threads._cards;
 }
 
@@ -2987,6 +3011,19 @@ bool G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_
     return false;
   }
 
+  do_collection_pause_at_safepoint_helper(target_pause_time_ms);
+  if (should_upgrade_to_full_gc(gc_cause())) {
+    log_info(gc, ergo)("Attempting maximally compacting collection");
+    bool result = do_full_collection(false /* explicit gc */,
+                                     true /* clear_all_soft_refs */);
+    // do_full_collection only fails if blocked by GC locker, but
+    // we've already checked for that above.
+    assert(result, "invariant");
+  }
+  return true;
+}
+
+void G1CollectedHeap::do_collection_pause_at_safepoint_helper(double target_pause_time_ms) {
   GCIdMark gc_id_mark;
 
   SvcGCMarker sgcm(SvcGCMarker::MINOR);
@@ -3126,10 +3163,6 @@ bool G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_
 
       verify_after_young_collection(verify_type);
 
-#ifdef TRACESPINNING
-      ParallelTaskTerminator::print_termination_counts();
-#endif
-
       gc_epilogue(false);
     }
 
@@ -3173,9 +3206,8 @@ bool G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_
     // Note: of course, the actual marking work will not start until the safepoint
     // itself is released in SuspendibleThreadSet::desynchronize().
     do_concurrent_mark();
+    ConcurrentGCBreakpoints::notify_idle_to_active();
   }
-
-  return true;
 }
 
 void G1CollectedHeap::remove_self_forwarding_pointers(G1RedirtyCardsQueueSet* rdcqs) {
@@ -3187,8 +3219,7 @@ void G1CollectedHeap::restore_after_evac_failure(G1RedirtyCardsQueueSet* rdcqs) 
   double remove_self_forwards_start = os::elapsedTime();
 
   remove_self_forwarding_pointers(rdcqs);
-  SharedRestorePreservedMarksTaskExecutor task_executor(workers());
-  _preserved_marks_set.restore(&task_executor);
+  _preserved_marks_set.restore(workers());
 
   phase_times()->record_evac_fail_remove_self_forwards((os::elapsedTime() - remove_self_forwards_start) * 1000.0);
 }
@@ -3466,14 +3497,14 @@ class G1STWRefProcTaskProxy: public AbstractGangTask {
   G1CollectedHeap* _g1h;
   G1ParScanThreadStateSet* _pss;
   RefToScanQueueSet* _task_queues;
-  ParallelTaskTerminator* _terminator;
+  TaskTerminator* _terminator;
 
 public:
   G1STWRefProcTaskProxy(ProcessTask& proc_task,
                         G1CollectedHeap* g1h,
                         G1ParScanThreadStateSet* per_thread_states,
                         RefToScanQueueSet *task_queues,
-                        ParallelTaskTerminator* terminator) :
+                        TaskTerminator* terminator) :
     AbstractGangTask("Process reference objects in parallel"),
     _proc_task(proc_task),
     _g1h(g1h),
@@ -3518,7 +3549,7 @@ void G1STWRefProcTaskExecutor::execute(ProcessTask& proc_task, uint ergo_workers
          "Ergonomically chosen workers (%u) should be less than or equal to active workers (%u)",
          ergo_workers, _workers->active_workers());
   TaskTerminator terminator(ergo_workers, _queues);
-  G1STWRefProcTaskProxy proc_task_proxy(proc_task, _g1h, _pss, _queues, terminator.terminator());
+  G1STWRefProcTaskProxy proc_task_proxy(proc_task, _g1h, _pss, _queues, &terminator);
 
   _workers->run_task(&proc_task_proxy, ergo_workers);
 }
@@ -3814,7 +3845,7 @@ protected:
     G1GCPhaseTimes* p = _g1h->phase_times();
 
     Ticks start = Ticks::now();
-    G1ParEvacuateFollowersClosure cl(_g1h, pss, _task_queues, _terminator.terminator(), objcopy_phase);
+    G1ParEvacuateFollowersClosure cl(_g1h, pss, _task_queues, &_terminator, objcopy_phase);
     cl.do_void();
 
     assert(pss->queue_is_empty(), "should be empty");

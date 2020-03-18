@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -293,6 +293,8 @@ protected:
   static int _model;
   static int _stepping;
 
+  static bool _has_intel_jcc_erratum;
+
   static address   _cpuinfo_segv_addr; // address of instruction which causes SEGV
   static address   _cpuinfo_cont_addr; // address of instruction after the one which causes SEGV
 
@@ -336,15 +338,18 @@ protected:
 #define CPU_AVX512VL ((uint64_t)UCONST64(0x200000000)) // EVEX instructions with smaller vector length
 #define CPU_SHA ((uint64_t)UCONST64(0x400000000))      // SHA instructions
 #define CPU_FMA ((uint64_t)UCONST64(0x800000000))      // FMA instructions
-#define CPU_VZEROUPPER ((uint64_t)UCONST64(0x1000000000))       // Vzeroupper instruction
-#define CPU_AVX512_VPOPCNTDQ ((uint64_t)UCONST64(0x2000000000)) // Vector popcount
-#define CPU_AVX512_VPCLMULQDQ ((uint64_t)UCONST64(0x4000000000)) //Vector carryless multiplication
-#define CPU_VAES ((uint64_t)UCONST64(0x8000000000))    // Vector AES instructions
-#define CPU_VNNI ((uint64_t)UCONST64(0x10000000000))   // Vector Neural Network Instructions
+#define CPU_VZEROUPPER ((uint64_t)UCONST64(0x1000000000))        // Vzeroupper instruction
+#define CPU_AVX512_VPOPCNTDQ ((uint64_t)UCONST64(0x2000000000))  // Vector popcount
+#define CPU_AVX512_VPCLMULQDQ ((uint64_t)UCONST64(0x4000000000)) // Vector carryless multiplication
+#define CPU_AVX512_VAES ((uint64_t)UCONST64(0x8000000000))       // Vector AES instructions
+#define CPU_AVX512_VNNI ((uint64_t)UCONST64(0x10000000000))      // Vector Neural Network Instructions
+#define CPU_AVX512_VBMI2 ((uint64_t)UCONST64(0x100000000000))    // VBMI2 shift left double instructions
 
 #define CPU_FLUSH ((uint64_t)UCONST64(0x20000000000))  // flush instruction
 #define CPU_FLUSHOPT ((uint64_t)UCONST64(0x40000000000)) // flushopt instruction
 #define CPU_CLWB ((uint64_t)UCONST64(0x80000000000))   // clwb instruction
+
+// NB! When adding new CPU feature detection consider updating feature string in VM_Version::get_processor_features().
 
 enum Extended_Family {
     // AMD
@@ -497,6 +502,8 @@ enum Extended_Family {
     return result;
   }
 
+  static bool compute_has_intel_jcc_erratum();
+
   static uint64_t feature_flags() {
     uint64_t result = 0;
     if (_cpuid_info.std_cpuid1_edx.bits.cmpxchg8 != 0)
@@ -564,9 +571,11 @@ enum Extended_Family {
         if (_cpuid_info.sef_cpuid7_ecx.bits.avx512_vpclmulqdq != 0)
           result |= CPU_AVX512_VPCLMULQDQ;
         if (_cpuid_info.sef_cpuid7_ecx.bits.vaes != 0)
-          result |= CPU_VAES;
+          result |= CPU_AVX512_VAES;
         if (_cpuid_info.sef_cpuid7_ecx.bits.avx512_vnni != 0)
-          result |= CPU_VNNI;
+          result |= CPU_AVX512_VNNI;
+        if (_cpuid_info.sef_cpuid7_ecx.bits.avx512_vbmi2 != 0)
+          result |= CPU_AVX512_VBMI2;
       }
     }
     if (_cpuid_info.sef_cpuid7_ebx.bits.bmi1 != 0)
@@ -854,14 +863,18 @@ public:
   static bool supports_sha()        { return (_features & CPU_SHA) != 0; }
   static bool supports_fma()        { return (_features & CPU_FMA) != 0 && supports_avx(); }
   static bool supports_vzeroupper() { return (_features & CPU_VZEROUPPER) != 0; }
-  static bool supports_vpopcntdq()  { return (_features & CPU_AVX512_VPOPCNTDQ) != 0; }
+  static bool supports_avx512_vpopcntdq()  { return (_features & CPU_AVX512_VPOPCNTDQ) != 0; }
   static bool supports_avx512_vpclmulqdq() { return (_features & CPU_AVX512_VPCLMULQDQ) != 0; }
-  static bool supports_vaes()       { return (_features & CPU_VAES) != 0; }
-  static bool supports_vnni()       { return (_features & CPU_VNNI) != 0; }
+  static bool supports_avx512_vaes()       { return (_features & CPU_AVX512_VAES) != 0; }
+  static bool supports_avx512_vnni()       { return (_features & CPU_AVX512_VNNI) != 0; }
+  static bool supports_avx512_vbmi2()      { return (_features & CPU_AVX512_VBMI2) != 0; }
 
   // Intel features
   static bool is_intel_family_core() { return is_intel() &&
                                        extended_cpu_family() == CPU_FAMILY_INTEL_CORE; }
+
+  static bool is_intel_skylake() { return is_intel_family_core() &&
+                                          extended_cpu_model() == CPU_MODEL_SKYLAKE; }
 
   static bool is_intel_tsc_synched_at_init()  {
     if (is_intel_family_core()) {
@@ -880,6 +893,12 @@ public:
     }
     return false;
   }
+
+  // This checks if the JVM is potentially affected by an erratum on Intel CPUs (SKX102)
+  // that causes unpredictable behaviour when jcc crosses 64 byte boundaries. Its microcode
+  // mitigation causes regressions when jumps or fused conditional branches cross or end at
+  // 32 byte boundaries.
+  static bool has_intel_jcc_erratum() { return _has_intel_jcc_erratum; }
 
   // AMD features
   static bool supports_3dnow_prefetch()    { return (_features & CPU_3DNOW_PREFETCH) != 0; }

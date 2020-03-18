@@ -40,6 +40,7 @@
 #include "opto/mulnode.hpp"
 #include "opto/rootnode.hpp"
 #include "opto/superword.hpp"
+#include "utilities/powerOfTwo.hpp"
 
 //=============================================================================
 //--------------------------is_cloop_ind_var-----------------------------------
@@ -2089,7 +2090,7 @@ bool IdealLoopTree::beautify_loops( PhaseIdealLoop *phase ) {
   // If I am a shared header (multiple backedges), peel off the many
   // backedges into a private merge point and use the merge point as
   // the one true backedge.
-  if( _head->req() > 3 ) {
+  if (_head->req() > 3 && !_irreducible) {
     // Merge the many backedges into a single backedge but leave
     // the hottest backedge as separate edge for the following peel.
     merge_many_backedges( phase );
@@ -2542,17 +2543,17 @@ void IdealLoopTree::dump_head() const {
     tty->print(" limit_check");
     entry = PhaseIdealLoop::skip_loop_predicates(entry);
   }
-  if (UseLoopPredicate) {
-    entry = PhaseIdealLoop::find_predicate_insertion_point(entry, Deoptimization::Reason_predicate);
-    if (entry != NULL) {
-      tty->print(" predicated");
+  if (UseProfiledLoopPredicate) {
+    predicate = PhaseIdealLoop::find_predicate_insertion_point(entry, Deoptimization::Reason_profile_predicate);
+    if (predicate != NULL) {
+      tty->print(" profile_predicated");
       entry = PhaseIdealLoop::skip_loop_predicates(entry);
     }
   }
-  if (UseProfiledLoopPredicate) {
-    entry = PhaseIdealLoop::find_predicate_insertion_point(entry, Deoptimization::Reason_profile_predicate);
-    if (entry != NULL) {
-      tty->print(" profile_predicated");
+  if (UseLoopPredicate) {
+    predicate = PhaseIdealLoop::find_predicate_insertion_point(entry, Deoptimization::Reason_predicate);
+    if (predicate != NULL) {
+      tty->print(" predicated");
     }
   }
   if (_head->is_CountedLoop()) {
@@ -2657,21 +2658,21 @@ void PhaseIdealLoop::collect_potentially_useful_predicates(
     LoopNode* lpn = loop->_head->as_Loop();
     Node* entry = lpn->in(LoopNode::EntryControl);
     Node* predicate_proj = find_predicate(entry); // loop_limit_check first
-    if (predicate_proj != NULL ) { // right pattern that can be used by loop predication
+    if (predicate_proj != NULL) { // right pattern that can be used by loop predication
       assert(entry->in(0)->in(1)->in(1)->Opcode() == Op_Opaque1, "must be");
-      useful_predicates.push(entry->in(0)->in(1)->in(1)); // good one
-      entry = skip_loop_predicates(entry);
-    }
-    predicate_proj = find_predicate(entry); // Predicate
-    if (predicate_proj != NULL ) {
       useful_predicates.push(entry->in(0)->in(1)->in(1)); // good one
       entry = skip_loop_predicates(entry);
     }
     if (UseProfiledLoopPredicate) {
       predicate_proj = find_predicate(entry); // Predicate
-      if (predicate_proj != NULL ) {
+      if (predicate_proj != NULL) {
         useful_predicates.push(entry->in(0)->in(1)->in(1)); // good one
+        entry = skip_loop_predicates(entry);
       }
+    }
+    predicate_proj = find_predicate(entry); // Predicate
+    if (predicate_proj != NULL) {
+      useful_predicates.push(entry->in(0)->in(1)->in(1)); // good one
     }
   }
 
@@ -3006,6 +3007,33 @@ void PhaseIdealLoop::build_and_optimize(LoopOptsMode mode) {
     C->restore_major_progress(old_progress);
 
     // Cleanup any modified bits
+    _igvn.optimize();
+
+    if (C->log() != NULL) {
+      log_loop_tree(_ltree_root, _ltree_root, C->log());
+    }
+    return;
+  }
+
+  if (mode == LoopOptsMaxUnroll) {
+    for (LoopTreeIterator iter(_ltree_root); !iter.done(); iter.next()) {
+      IdealLoopTree* lpt = iter.current();
+      if (lpt->is_innermost() && lpt->_allow_optimizations && !lpt->_has_call && lpt->is_counted()) {
+        lpt->compute_trip_count(this);
+        if (!lpt->do_one_iteration_loop(this) &&
+            !lpt->do_remove_empty_loop(this)) {
+          AutoNodeBudget node_budget(this);
+          if (lpt->_head->as_CountedLoop()->is_normal_loop() &&
+              lpt->policy_maximally_unroll(this)) {
+            memset( worklist.adr(), 0, worklist.Size()*sizeof(Node*) );
+            do_maximally_unroll(lpt, worklist);
+          }
+        }
+      }
+    }
+
+    C->restore_major_progress(old_progress);
+
     _igvn.optimize();
 
     if (C->log() != NULL) {
@@ -4061,7 +4089,7 @@ Node *PhaseIdealLoop::get_late_ctrl( Node *n, Node *early ) {
           }
         } else {
           Node *sctrl = has_ctrl(s) ? get_ctrl(s) : s->in(0);
-          assert(sctrl != NULL || s->outcnt() == 0, "must have control");
+          assert(sctrl != NULL || !s->is_reachable_from_root(), "must have control");
           if (sctrl != NULL && !sctrl->is_top() && C->can_alias(s->adr_type(), load_alias_idx) && is_dominator(early, sctrl)) {
             LCA = dom_lca_for_get_late_ctrl(LCA, sctrl, n);
           }
@@ -4322,6 +4350,9 @@ void PhaseIdealLoop::build_loop_late_post_work(Node *n, bool pinned) {
     case Op_StrIndexOfChar:
     case Op_AryEq:
     case Op_HasNegatives:
+      pinned = false;
+    }
+    if (n->is_CMove()) {
       pinned = false;
     }
     if( pinned ) {

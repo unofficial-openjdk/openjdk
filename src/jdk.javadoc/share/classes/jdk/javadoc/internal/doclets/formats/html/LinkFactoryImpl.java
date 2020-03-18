@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -64,17 +64,11 @@ public class LinkFactoryImpl extends LinkFactory {
         docPaths = writer.configuration.docPaths;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected Content newContent() {
         return new ContentBuilder();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected Content getClassLink(LinkInfo linkInfo) {
         BaseConfiguration configuration = m_writer.configuration;
@@ -129,9 +123,6 @@ public class LinkFactoryImpl extends LinkFactory {
         return link;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected Content getTypeParameterLinks(LinkInfo linkInfo, boolean isClassLabel) {
         Content links = newContent();
@@ -140,17 +131,13 @@ public class LinkFactoryImpl extends LinkFactory {
                 ? utils.getComponentType(linkInfo.type)
                 : null;
         if (linkInfo.executableElement != null) {
-            linkInfo.executableElement.getTypeParameters().stream().forEach((t) -> {
-                vars.add(t.asType());
-            });
+            linkInfo.executableElement.getTypeParameters().forEach(t -> vars.add(t.asType()));
         } else if (linkInfo.type != null && utils.isDeclaredType(linkInfo.type)) {
-            ((DeclaredType)linkInfo.type).getTypeArguments().stream().forEach(vars::add);
+            vars.addAll(((DeclaredType) linkInfo.type).getTypeArguments());
         } else if (ctype != null && utils.isDeclaredType(ctype)) {
-            ((DeclaredType)ctype).getTypeArguments().stream().forEach(vars::add);
+            vars.addAll(((DeclaredType) ctype).getTypeArguments());
         } else if (linkInfo.typeElement != null) {
-            linkInfo.typeElement.getTypeParameters().stream().forEach((t) -> {
-                vars.add(t.asType());
-            });
+            linkInfo.typeElement.getTypeParameters().forEach(t -> vars.add(t.asType()));
         } else {
             // Nothing to document.
             return links;
@@ -243,7 +230,7 @@ public class LinkFactoryImpl extends LinkFactory {
      * @return the tool tip for the appropriate class.
      */
     private String getClassToolTip(TypeElement typeElement, boolean isTypeLink) {
-        Resources resources = m_writer.configuration.getResources();
+        Resources resources = m_writer.configuration.getDocResources();
         if (isTypeLink) {
             return resources.getText("doclet.Href_Type_Param_Title",
                     utils.getSimpleName(typeElement));

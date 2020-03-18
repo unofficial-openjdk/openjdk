@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,21 +37,19 @@
 #include "runtime/os.hpp"
 #include "utilities/utf8.hpp"
 
-uint32_t Symbol::pack_length_and_refcount(int length, int refcount) {
-  STATIC_ASSERT(max_symbol_length == ((1 << 16) - 1));
+uint32_t Symbol::pack_hash_and_refcount(short hash, int refcount) {
   STATIC_ASSERT(PERM_REFCOUNT == ((1 << 16) - 1));
-  assert(length >= 0, "negative length");
-  assert(length <= max_symbol_length, "too long symbol");
   assert(refcount >= 0, "negative refcount");
   assert(refcount <= PERM_REFCOUNT, "invalid refcount");
-  uint32_t hi = length;
+  uint32_t hi = hash;
   uint32_t lo = refcount;
   return (hi << 16) | lo;
 }
 
 Symbol::Symbol(const u1* name, int length, int refcount) {
-  _length_and_refcount =  pack_length_and_refcount(length, refcount);
-  _identity_hash = (short)os::random();
+  _hash_and_refcount =  pack_hash_and_refcount((short)os::random(), refcount);
+  _length = length;
+  _body[0] = 0;  // in case length == 0
   for (int i = 0; i < length; i++) {
     byte_at_put(i, name[i]);
   }
@@ -77,25 +75,8 @@ void Symbol::operator delete(void *p) {
 void Symbol::set_permanent() {
   // This is called at a safepoint during dumping of a dynamic CDS archive.
   assert(SafepointSynchronize::is_at_safepoint(), "must be at a safepoint");
-  _length_and_refcount =  pack_length_and_refcount(length(), PERM_REFCOUNT);
+  _hash_and_refcount =  pack_hash_and_refcount(extract_hash(_hash_and_refcount), PERM_REFCOUNT);
 }
-
-
-// ------------------------------------------------------------------
-// Symbol::starts_with
-//
-// Tests if the symbol starts with the specified prefix of the given
-// length.
-bool Symbol::starts_with(const char* prefix, int len) const {
-  if (len > utf8_length()) return false;
-  while (len-- > 0) {
-    if (prefix[len] != char_at(len))
-      return false;
-  }
-  assert(len == -1, "we should be at the beginning");
-  return true;
-}
-
 
 // ------------------------------------------------------------------
 // Symbol::index_of
@@ -116,8 +97,11 @@ int Symbol::index_of_at(int i, const char* str, int len) const {
     if (scan == NULL)
       return -1;  // not found
     assert(scan >= bytes+i && scan <= limit, "scan oob");
-    if (memcmp(scan, str, len) == 0)
+    if (len <= 2
+        ? (char) scan[len-1] == str[len-1]
+        : memcmp(scan+1, str+1, len-1) == 0) {
       return (int)(scan - bytes);
+    }
   }
   return -1;
 }
@@ -186,8 +170,8 @@ const char* Symbol::as_klass_external_name(char* buf, int size) const {
     int   length = (int)strlen(str);
     // Turn all '/'s into '.'s (also for array klasses)
     for (int index = 0; index < length; index++) {
-      if (str[index] == '/') {
-        str[index] = '.';
+      if (str[index] == JVM_SIGNATURE_SLASH) {
+        str[index] = JVM_SIGNATURE_DOT;
       }
     }
     return str;
@@ -208,28 +192,25 @@ const char* Symbol::as_klass_external_name() const {
   return str;
 }
 
-static void print_class(outputStream *os, char *class_str, int len) {
-  for (int i = 0; i < len; ++i) {
-    if (class_str[i] == JVM_SIGNATURE_SLASH) {
+static void print_class(outputStream *os, const SignatureStream& ss) {
+  int sb = ss.raw_symbol_begin(), se = ss.raw_symbol_end();
+  for (int i = sb; i < se; ++i) {
+    int ch = ss.raw_char_at(i);
+    if (ch == JVM_SIGNATURE_SLASH) {
       os->put(JVM_SIGNATURE_DOT);
     } else {
-      os->put(class_str[i]);
+      os->put(ch);
     }
   }
 }
 
-static void print_array(outputStream *os, char *array_str, int len) {
-  int dimensions = 0;
-  for (int i = 0; i < len; ++i) {
-    if (array_str[i] == JVM_SIGNATURE_ARRAY) {
-      dimensions++;
-    } else if (array_str[i] == JVM_SIGNATURE_CLASS) {
-      // Expected format: L<type name>;. Skip 'L' and ';' delimiting the type name.
-      print_class(os, array_str+i+1, len-i-2);
-      break;
-    } else {
-      os->print("%s", type2name(char2type(array_str[i])));
-    }
+static void print_array(outputStream *os, SignatureStream& ss) {
+  int dimensions = ss.skip_array_prefix();
+  assert(dimensions > 0, "");
+  if (ss.is_reference()) {
+    print_class(os, ss);
+  } else {
+    os->print("%s", type2name(ss.type()));
   }
   for (int i = 0; i < dimensions; ++i) {
     os->print("[]");
@@ -240,10 +221,9 @@ void Symbol::print_as_signature_external_return_type(outputStream *os) {
   for (SignatureStream ss(this); !ss.is_done(); ss.next()) {
     if (ss.at_return_type()) {
       if (ss.is_array()) {
-        print_array(os, (char*)ss.raw_bytes(), (int)ss.raw_length());
-      } else if (ss.is_object()) {
-        // Expected format: L<type name>;. Skip 'L' and ';' delimiting the class name.
-        print_class(os, (char*)ss.raw_bytes()+1, (int)ss.raw_length()-2);
+        print_array(os, ss);
+      } else if (ss.is_reference()) {
+        print_class(os, ss);
       } else {
         os->print("%s", type2name(ss.type()));
       }
@@ -257,10 +237,9 @@ void Symbol::print_as_signature_external_parameters(outputStream *os) {
     if (ss.at_return_type()) break;
     if (!first) { os->print(", "); }
     if (ss.is_array()) {
-      print_array(os, (char*)ss.raw_bytes(), (int)ss.raw_length());
-    } else if (ss.is_object()) {
-      // Skip 'L' and ';'.
-      print_class(os, (char*)ss.raw_bytes()+1, (int)ss.raw_length()-2);
+      print_array(os, ss);
+    } else if (ss.is_reference()) {
+      print_class(os, ss);
     } else {
       os->print("%s", type2name(ss.type()));
     }
@@ -272,7 +251,7 @@ void Symbol::print_as_signature_external_parameters(outputStream *os) {
 // a thread could be concurrently removing the Symbol.  This is used during SymbolTable
 // lookup to avoid reviving a dead Symbol.
 bool Symbol::try_increment_refcount() {
-  uint32_t found = _length_and_refcount;
+  uint32_t found = _hash_and_refcount;
   while (true) {
     uint32_t old_value = found;
     int refc = extract_refcount(old_value);
@@ -281,7 +260,7 @@ bool Symbol::try_increment_refcount() {
     } else if (refc == 0) {
       return false; // dead, can't revive.
     } else {
-      found = Atomic::cmpxchg(&_length_and_refcount, old_value, old_value + 1);
+      found = Atomic::cmpxchg(&_hash_and_refcount, old_value, old_value + 1);
       if (found == old_value) {
         return true; // successfully updated.
       }
@@ -311,7 +290,7 @@ void Symbol::increment_refcount() {
 // to check the value after attempting to decrement so that if another
 // thread increments to PERM_REFCOUNT the value is not decremented.
 void Symbol::decrement_refcount() {
-  uint32_t found = _length_and_refcount;
+  uint32_t found = _hash_and_refcount;
   while (true) {
     uint32_t old_value = found;
     int refc = extract_refcount(old_value);
@@ -324,7 +303,7 @@ void Symbol::decrement_refcount() {
 #endif
       return;
     } else {
-      found = Atomic::cmpxchg(&_length_and_refcount, old_value, old_value - 1);
+      found = Atomic::cmpxchg(&_hash_and_refcount, old_value, old_value - 1);
       if (found == old_value) {
         return;  // successfully updated.
       }
@@ -334,7 +313,7 @@ void Symbol::decrement_refcount() {
 }
 
 void Symbol::make_permanent() {
-  uint32_t found = _length_and_refcount;
+  uint32_t found = _hash_and_refcount;
   while (true) {
     uint32_t old_value = found;
     int refc = extract_refcount(old_value);
@@ -347,8 +326,8 @@ void Symbol::make_permanent() {
 #endif
       return;
     } else {
-      int len = extract_length(old_value);
-      found = Atomic::cmpxchg(&_length_and_refcount, old_value, pack_length_and_refcount(len, PERM_REFCOUNT));
+      int hash = extract_hash(old_value);
+      found = Atomic::cmpxchg(&_hash_and_refcount, old_value, pack_hash_and_refcount(hash, PERM_REFCOUNT));
       if (found == old_value) {
         return;  // successfully updated.
       }

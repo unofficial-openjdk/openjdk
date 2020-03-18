@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -69,7 +69,7 @@ DefNewGeneration::IsAliveClosure::IsAliveClosure(Generation* young_gen) : _young
 }
 
 bool DefNewGeneration::IsAliveClosure::do_object_b(oop p) {
-  return (HeapWord*)p >= _young_gen->reserved().end() || p->is_forwarded();
+  return cast_from_oop<HeapWord*>(p) >= _young_gen->reserved().end() || p->is_forwarded();
 }
 
 DefNewGeneration::KeepAliveClosure::
@@ -167,10 +167,6 @@ DefNewGeneration::DefNewGeneration(ReservedSpace rs,
   _eden_space = new ContiguousSpace();
   _from_space = new ContiguousSpace();
   _to_space   = new ContiguousSpace();
-
-  if (_eden_space == NULL || _from_space == NULL || _to_space == NULL) {
-    vm_exit_during_initialization("Could not allocate a new gen space");
-  }
 
   // Compute the maximum eden and survivor space sizes. These sizes
   // are computed assuming the entire reserved space is committed.
@@ -711,8 +707,7 @@ void DefNewGeneration::remove_forwarding_pointers() {
 }
 
 void DefNewGeneration::restore_preserved_marks() {
-  SharedRestorePreservedMarksTaskExecutor task_executor(NULL);
-  _preserved_marks_set.restore(&task_executor);
+  _preserved_marks_set.restore(NULL);
 }
 
 void DefNewGeneration::handle_promotion_failure(oop old) {
@@ -758,7 +753,7 @@ oop DefNewGeneration::copy_to_survivor_space(oop old) {
     Prefetch::write(obj, interval);
 
     // Copy obj
-    Copy::aligned_disjoint_words((HeapWord*)old, (HeapWord*)obj, s);
+    Copy::aligned_disjoint_words(cast_from_oop<HeapWord*>(old), cast_from_oop<HeapWord*>(obj), s);
 
     // Increment age if obj still in new generation
     obj->incr_age();

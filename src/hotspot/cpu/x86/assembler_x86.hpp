@@ -27,6 +27,7 @@
 
 #include "asm/register.hpp"
 #include "runtime/vm_version.hpp"
+#include "utilities/powerOfTwo.hpp"
 
 class BiasedLockingCounters;
 
@@ -338,15 +339,15 @@ class Address {
 
  private:
   bool base_needs_rex() const {
-    return _base != noreg && _base->encoding() >= 8;
+    return _base->is_valid() && _base->encoding() >= 8;
   }
 
   bool index_needs_rex() const {
-    return _index != noreg &&_index->encoding() >= 8;
+    return _index->is_valid() &&_index->encoding() >= 8;
   }
 
   bool xmmindex_needs_rex() const {
-    return _xmmindex != xnoreg && _xmmindex->encoding() >= 8;
+    return _xmmindex->is_valid() && _xmmindex->encoding() >= 8;
   }
 
   relocInfo::relocType reloc() const { return _rspec.type(); }
@@ -658,8 +659,7 @@ private:
   bool _legacy_mode_dq;
   bool _legacy_mode_vl;
   bool _legacy_mode_vlbw;
-  bool _is_managed;
-  bool _vector_masking;    // For stub code use only
+  NOT_LP64(bool _is_managed;)
 
   class InstructionAttr *_attributes;
 
@@ -870,21 +870,33 @@ private:
     _legacy_mode_dq = (VM_Version::supports_avx512dq() == false);
     _legacy_mode_vl = (VM_Version::supports_avx512vl() == false);
     _legacy_mode_vlbw = (VM_Version::supports_avx512vlbw() == false);
-    _is_managed = false;
-    _vector_masking = false;
+    NOT_LP64(_is_managed = false;)
     _attributes = NULL;
   }
 
   void set_attributes(InstructionAttr *attributes) { _attributes = attributes; }
   void clear_attributes(void) { _attributes = NULL; }
 
-  void set_managed(void) { _is_managed = true; }
-  void clear_managed(void) { _is_managed = false; }
-  bool is_managed(void) { return _is_managed; }
+  void set_managed(void) { NOT_LP64(_is_managed = true;) }
+  void clear_managed(void) { NOT_LP64(_is_managed = false;) }
+  bool is_managed(void) {
+    NOT_LP64(return _is_managed;)
+    LP64_ONLY(return false;) }
 
   void lea(Register dst, Address src);
 
   void mov(Register dst, Register src);
+
+#ifdef _LP64
+  // support caching the result of some routines
+
+  // must be called before pusha(), popa(), vzeroupper() - checked with asserts
+  static void precompute_instructions();
+
+  void pusha_uncached();
+  void popa_uncached();
+#endif
+  void vzeroupper_uncached();
 
   void pusha();
   void popa();
@@ -1110,6 +1122,7 @@ private:
   // Convert with Truncation Scalar Double-Precision Floating-Point Value to Doubleword Integer
   void cvttsd2sil(Register dst, Address src);
   void cvttsd2sil(Register dst, XMMRegister src);
+  void cvttsd2siq(Register dst, Address src);
   void cvttsd2siq(Register dst, XMMRegister src);
 
   // Convert with Truncation Scalar Single-Precision Floating-Point Value to Doubleword Integer
@@ -1137,6 +1150,7 @@ private:
 
   void emms();
 
+#ifndef _LP64
   void fabs();
 
   void fadd(int i);
@@ -1270,16 +1284,17 @@ private:
 
   void fxch(int i = 1);
 
+  void fyl2x();
+  void frndint();
+  void f2xm1();
+  void fldl2e();
+#endif // !_LP64
+
   void fxrstor(Address src);
   void xrstor(Address src);
 
   void fxsave(Address dst);
   void xsave(Address dst);
-
-  void fyl2x();
-  void frndint();
-  void f2xm1();
-  void fldl2e();
 
   void hlt();
 
@@ -1838,14 +1853,14 @@ private:
 
   void shldl(Register dst, Register src);
   void shldl(Register dst, Register src, int8_t imm8);
+  void shrdl(Register dst, Register src);
+  void shrdl(Register dst, Register src, int8_t imm8);
 
   void shll(Register dst, int imm8);
   void shll(Register dst);
 
   void shlq(Register dst, int imm8);
   void shlq(Register dst);
-
-  void shrdl(Register dst, Register src);
 
   void shrl(Register dst, int imm8);
   void shrl(Register dst);
@@ -2140,6 +2155,9 @@ private:
   void evpsraq(XMMRegister dst, XMMRegister src, int shift, int vector_len);
   void evpsraq(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len);
 
+  void vpshldvd(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len);
+  void vpshrdvd(XMMRegister dst, XMMRegister src, XMMRegister shift, int vector_len);
+
   // And packed integers
   void pand(XMMRegister dst, XMMRegister src);
   void vpand(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
@@ -2211,10 +2229,10 @@ private:
   void evbroadcasti64x2(XMMRegister dst, Address src, int vector_len);
 
   // scalar single/double precision replicate
-  void vpbroadcastss(XMMRegister dst, XMMRegister src, int vector_len);
-  void vpbroadcastss(XMMRegister dst, Address src, int vector_len);
-  void vpbroadcastsd(XMMRegister dst, XMMRegister src, int vector_len);
-  void vpbroadcastsd(XMMRegister dst, Address src, int vector_len);
+  void vbroadcastss(XMMRegister dst, XMMRegister src, int vector_len);
+  void vbroadcastss(XMMRegister dst, Address src, int vector_len);
+  void vbroadcastsd(XMMRegister dst, XMMRegister src, int vector_len);
+  void vbroadcastsd(XMMRegister dst, Address src, int vector_len);
 
   // gpr sourced byte/word/dword/qword replicate
   void evpbroadcastb(XMMRegister dst, Register src, int vector_len);
@@ -2264,22 +2282,20 @@ public:
     bool no_reg_mask,   // when true, k0 is used when EVEX encoding is chosen, else embedded_opmask_register_specifier is used
     bool uses_vl)       // This instruction may have legacy constraints based on vector length for EVEX
     :
-      _avx_vector_len(vector_len),
       _rex_vex_w(rex_vex_w),
-      _rex_vex_w_reverted(false),
-      _legacy_mode(legacy_mode),
+      _legacy_mode(legacy_mode || UseAVX < 3),
       _no_reg_mask(no_reg_mask),
       _uses_vl(uses_vl),
-      _tuple_type(Assembler::EVEX_ETUP),
-      _input_size_in_bits(Assembler::EVEX_NObit),
+      _rex_vex_w_reverted(false),
       _is_evex_instruction(false),
-      _evex_encoding(0),
       _is_clear_context(true),
       _is_extended_context(false),
+      _avx_vector_len(vector_len),
+      _tuple_type(Assembler::EVEX_ETUP),
+      _input_size_in_bits(Assembler::EVEX_NObit),
+      _evex_encoding(0),
       _embedded_opmask_register_specifier(0), // hard code k0
-      _current_assembler(NULL) {
-    if (UseAVX < 3) _legacy_mode = true;
-  }
+      _current_assembler(NULL) { }
 
   ~InstructionAttr() {
     if (_current_assembler != NULL) {
@@ -2289,37 +2305,37 @@ public:
   }
 
 private:
-  int  _avx_vector_len;
   bool _rex_vex_w;
-  bool _rex_vex_w_reverted;
   bool _legacy_mode;
   bool _no_reg_mask;
   bool _uses_vl;
-  int  _tuple_type;
-  int  _input_size_in_bits;
+  bool _rex_vex_w_reverted;
   bool _is_evex_instruction;
-  int  _evex_encoding;
   bool _is_clear_context;
   bool _is_extended_context;
+  int  _avx_vector_len;
+  int  _tuple_type;
+  int  _input_size_in_bits;
+  int  _evex_encoding;
   int _embedded_opmask_register_specifier;
 
   Assembler *_current_assembler;
 
 public:
   // query functions for field accessors
-  int  get_vector_len(void) const { return _avx_vector_len; }
   bool is_rex_vex_w(void) const { return _rex_vex_w; }
-  bool is_rex_vex_w_reverted(void) { return _rex_vex_w_reverted; }
   bool is_legacy_mode(void) const { return _legacy_mode; }
   bool is_no_reg_mask(void) const { return _no_reg_mask; }
   bool uses_vl(void) const { return _uses_vl; }
-  int  get_tuple_type(void) const { return _tuple_type; }
-  int  get_input_size(void) const { return _input_size_in_bits; }
-  int  is_evex_instruction(void) const { return _is_evex_instruction; }
-  int  get_evex_encoding(void) const { return _evex_encoding; }
+  bool is_rex_vex_w_reverted(void) { return _rex_vex_w_reverted; }
+  bool is_evex_instruction(void) const { return _is_evex_instruction; }
   bool is_clear_context(void) const { return _is_clear_context; }
   bool is_extended_context(void) const { return _is_extended_context; }
-  int get_embedded_opmask_register_specifier(void) const { return _embedded_opmask_register_specifier; }
+  int  get_vector_len(void) const { return _avx_vector_len; }
+  int  get_tuple_type(void) const { return _tuple_type; }
+  int  get_input_size(void) const { return _input_size_in_bits; }
+  int  get_evex_encoding(void) const { return _evex_encoding; }
+  int  get_embedded_opmask_register_specifier(void) const { return _embedded_opmask_register_specifier; }
 
   // Set the vector len manually
   void set_vector_len(int vector_len) { _avx_vector_len = vector_len; }

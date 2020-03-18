@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -349,23 +349,12 @@ void MacroAssembler::pop_callee_saved_registers() {
   pop(rsi);
 }
 
-void MacroAssembler::pop_fTOS() {
-  fld_d(Address(rsp, 0));
-  addl(rsp, 2 * wordSize);
-}
-
 void MacroAssembler::push_callee_saved_registers() {
   push(rsi);
   push(rdi);
   push(rdx);
   push(rcx);
 }
-
-void MacroAssembler::push_fTOS() {
-  subl(rsp, 2 * wordSize);
-  fstp_d(Address(rsp, 0));
-}
-
 
 void MacroAssembler::pushoop(jobject obj) {
   push_literal32((int32_t)obj, oop_Relocation::spec_for_immediate());
@@ -2458,7 +2447,7 @@ void MacroAssembler::super_call_VM_leaf(address entry_point, Register arg_0, Reg
 void MacroAssembler::get_vm_result(Register oop_result, Register java_thread) {
   movptr(oop_result, Address(java_thread, JavaThread::vm_result_offset()));
   movptr(Address(java_thread, JavaThread::vm_result_offset()), NULL_WORD);
-  verify_oop(oop_result, "broken oop in call_VM_base");
+  verify_oop_msg(oop_result, "broken oop in call_VM_base");
 }
 
 void MacroAssembler::get_vm_result_2(Register metadata_result, Register java_thread) {
@@ -2735,18 +2724,6 @@ void MacroAssembler::divss(XMMRegister dst, AddressLiteral src) {
   }
 }
 
-// !defined(COMPILER2) is because of stupid core builds
-#if !defined(_LP64) || defined(COMPILER1) || !defined(COMPILER2) || INCLUDE_JVMCI
-void MacroAssembler::empty_FPU_stack() {
-  if (VM_Version::supports_mmx()) {
-    emms();
-  } else {
-    for (int i = 8; i-- > 0; ) ffree(i);
-  }
-}
-#endif // !LP64 || C1 || !C2 || INCLUDE_JVMCI
-
-
 void MacroAssembler::enter() {
   push(rbp);
   mov(rbp, rsp);
@@ -2765,6 +2742,7 @@ void MacroAssembler::fat_nop() {
   }
 }
 
+#ifndef _LP64
 void MacroAssembler::fcmp(Register tmp) {
   fcmp(tmp, 1, true, true);
 }
@@ -2846,6 +2824,37 @@ void MacroAssembler::fldcw(AddressLiteral src) {
   Assembler::fldcw(as_Address(src));
 }
 
+void MacroAssembler::fpop() {
+  ffree();
+  fincstp();
+}
+
+void MacroAssembler::fremr(Register tmp) {
+  save_rax(tmp);
+  { Label L;
+    bind(L);
+    fprem();
+    fwait(); fnstsw_ax();
+    sahf();
+    jcc(Assembler::parity, L);
+  }
+  restore_rax(tmp);
+  // Result is in ST0.
+  // Note: fxch & fpop to get rid of ST1
+  // (otherwise FPU stack could overflow eventually)
+  fxch(1);
+  fpop();
+}
+
+void MacroAssembler::empty_FPU_stack() {
+  if (VM_Version::supports_mmx()) {
+    emms();
+  } else {
+    for (int i = 8; i-- > 0; ) ffree(i);
+  }
+}
+#endif // !LP64
+
 void MacroAssembler::mulpd(XMMRegister dst, AddressLiteral src) {
   if (reachable(src)) {
     Assembler::mulpd(dst, as_Address(src));
@@ -2855,82 +2864,52 @@ void MacroAssembler::mulpd(XMMRegister dst, AddressLiteral src) {
   }
 }
 
-void MacroAssembler::increase_precision() {
-  subptr(rsp, BytesPerWord);
-  fnstcw(Address(rsp, 0));
-  movl(rax, Address(rsp, 0));
-  orl(rax, 0x300);
-  push(rax);
-  fldcw(Address(rsp, 0));
-  pop(rax);
-}
-
-void MacroAssembler::restore_precision() {
-  fldcw(Address(rsp, 0));
-  addptr(rsp, BytesPerWord);
-}
-
-void MacroAssembler::fpop() {
-  ffree();
-  fincstp();
-}
-
 void MacroAssembler::load_float(Address src) {
+#ifdef _LP64
+  movflt(xmm0, src);
+#else
   if (UseSSE >= 1) {
     movflt(xmm0, src);
   } else {
-    LP64_ONLY(ShouldNotReachHere());
-    NOT_LP64(fld_s(src));
+    fld_s(src);
   }
+#endif // LP64
 }
 
 void MacroAssembler::store_float(Address dst) {
+#ifdef _LP64
+  movflt(dst, xmm0);
+#else
   if (UseSSE >= 1) {
     movflt(dst, xmm0);
   } else {
-    LP64_ONLY(ShouldNotReachHere());
-    NOT_LP64(fstp_s(dst));
+    fstp_s(dst);
   }
+#endif // LP64
 }
 
 void MacroAssembler::load_double(Address src) {
+#ifdef _LP64
+  movdbl(xmm0, src);
+#else
   if (UseSSE >= 2) {
     movdbl(xmm0, src);
   } else {
-    LP64_ONLY(ShouldNotReachHere());
-    NOT_LP64(fld_d(src));
+    fld_d(src);
   }
+#endif // LP64
 }
 
 void MacroAssembler::store_double(Address dst) {
+#ifdef _LP64
+  movdbl(dst, xmm0);
+#else
   if (UseSSE >= 2) {
     movdbl(dst, xmm0);
   } else {
-    LP64_ONLY(ShouldNotReachHere());
-    NOT_LP64(fstp_d(dst));
+    fstp_d(dst);
   }
-}
-
-void MacroAssembler::fremr(Register tmp) {
-  save_rax(tmp);
-  { Label L;
-    bind(L);
-    fprem();
-    fwait(); fnstsw_ax();
-#ifdef _LP64
-    testl(rax, 0x400);
-    jcc(Assembler::notEqual, L);
-#else
-    sahf();
-    jcc(Assembler::parity, L);
-#endif // _LP64
-  }
-  restore_rax(tmp);
-  // Result is in ST0.
-  // Note: fxch & fpop to get rid of ST1
-  // (otherwise FPU stack could overflow eventually)
-  fxch(1);
-  fpop();
+#endif // LP64
 }
 
 // dst = c = a * b + c
@@ -4668,7 +4647,7 @@ void MacroAssembler::cmov32(Condition cc, Register dst, Register src) {
   }
 }
 
-void MacroAssembler::verify_oop(Register reg, const char* s) {
+void MacroAssembler::_verify_oop(Register reg, const char* s, const char* file, int line) {
   if (!VerifyOops) return;
 
   // Pass register number to verify_oop_subroutine
@@ -4676,7 +4655,7 @@ void MacroAssembler::verify_oop(Register reg, const char* s) {
   {
     ResourceMark rm;
     stringStream ss;
-    ss.print("verify_oop: %s: %s", reg->name(), s);
+    ss.print("verify_oop: %s: %s (%s:%d)", reg->name(), s, file, line);
     b = code_string(ss.as_string());
   }
   BLOCK_COMMENT("verify_oop {");
@@ -4758,7 +4737,7 @@ Address MacroAssembler::argument_address(RegisterOrConstant arg_slot,
 }
 
 
-void MacroAssembler::verify_oop_addr(Address addr, const char* s) {
+void MacroAssembler::_verify_oop_addr(Address addr, const char* s, const char* file, int line) {
   if (!VerifyOops) return;
 
   // Address adjust(addr.base(), addr.index(), addr.scale(), addr.disp() + BytesPerWord);
@@ -4767,7 +4746,7 @@ void MacroAssembler::verify_oop_addr(Address addr, const char* s) {
   {
     ResourceMark rm;
     stringStream ss;
-    ss.print("verify_oop_addr: %s", s);
+    ss.print("verify_oop_addr: %s (%s:%d)", s, file, line);
     b = code_string(ss.as_string());
   }
 #ifdef _LP64
@@ -5098,6 +5077,7 @@ void MacroAssembler::print_CPU_state() {
 }
 
 
+#ifndef _LP64
 static bool _verify_FPU(int stack_depth, char* s, CPU_State* state) {
   static int counter = 0;
   FPU_State* fs = &state->_fpu_state;
@@ -5154,7 +5134,6 @@ static bool _verify_FPU(int stack_depth, char* s, CPU_State* state) {
   return true;
 }
 
-
 void MacroAssembler::verify_FPU(int stack_depth, const char* s) {
   if (!VerifyFPU) return;
   push_CPU_state();
@@ -5174,6 +5153,7 @@ void MacroAssembler::verify_FPU(int stack_depth, const char* s) {
   }
   pop_CPU_state();
 }
+#endif // _LP64
 
 void MacroAssembler::restore_cpu_control_state_after_jni() {
   // Either restore the MXCSR register after returning from the JNI Call
@@ -5362,7 +5342,7 @@ void MacroAssembler::encode_heap_oop(Register r) {
 #ifdef ASSERT
   verify_heapbase("MacroAssembler::encode_heap_oop: heap base corrupted?");
 #endif
-  verify_oop(r, "broken oop in encode_heap_oop");
+  verify_oop_msg(r, "broken oop in encode_heap_oop");
   if (CompressedOops::base() == NULL) {
     if (CompressedOops::shift() != 0) {
       assert (LogMinObjAlignmentInBytes == CompressedOops::shift(), "decode alg wrong");
@@ -5387,7 +5367,7 @@ void MacroAssembler::encode_heap_oop_not_null(Register r) {
     bind(ok);
   }
 #endif
-  verify_oop(r, "broken oop in encode_heap_oop_not_null");
+  verify_oop_msg(r, "broken oop in encode_heap_oop_not_null");
   if (CompressedOops::base() != NULL) {
     subq(r, r12_heapbase);
   }
@@ -5408,7 +5388,7 @@ void MacroAssembler::encode_heap_oop_not_null(Register dst, Register src) {
     bind(ok);
   }
 #endif
-  verify_oop(src, "broken oop in encode_heap_oop_not_null2");
+  verify_oop_msg(src, "broken oop in encode_heap_oop_not_null2");
   if (dst != src) {
     movq(dst, src);
   }
@@ -5437,7 +5417,7 @@ void  MacroAssembler::decode_heap_oop(Register r) {
     addq(r, r12_heapbase);
     bind(done);
   }
-  verify_oop(r, "broken oop in decode_heap_oop");
+  verify_oop_msg(r, "broken oop in decode_heap_oop");
 }
 
 void  MacroAssembler::decode_heap_oop_not_null(Register r) {
@@ -9888,6 +9868,56 @@ void MacroAssembler::byte_array_inflate(Register src, Register dst, Register len
 }
 
 #ifdef _LP64
+void MacroAssembler::convert_f2i(Register dst, XMMRegister src) {
+  Label done;
+  cvttss2sil(dst, src);
+  // Conversion instructions do not match JLS for overflow, underflow and NaN -> fixup in stub
+  cmpl(dst, 0x80000000); // float_sign_flip
+  jccb(Assembler::notEqual, done);
+  subptr(rsp, 8);
+  movflt(Address(rsp, 0), src);
+  call(RuntimeAddress(CAST_FROM_FN_PTR(address, StubRoutines::x86::f2i_fixup())));
+  pop(dst);
+  bind(done);
+}
+
+void MacroAssembler::convert_d2i(Register dst, XMMRegister src) {
+  Label done;
+  cvttsd2sil(dst, src);
+  // Conversion instructions do not match JLS for overflow, underflow and NaN -> fixup in stub
+  cmpl(dst, 0x80000000); // float_sign_flip
+  jccb(Assembler::notEqual, done);
+  subptr(rsp, 8);
+  movdbl(Address(rsp, 0), src);
+  call(RuntimeAddress(CAST_FROM_FN_PTR(address, StubRoutines::x86::d2i_fixup())));
+  pop(dst);
+  bind(done);
+}
+
+void MacroAssembler::convert_f2l(Register dst, XMMRegister src) {
+  Label done;
+  cvttss2siq(dst, src);
+  cmp64(dst, ExternalAddress((address) StubRoutines::x86::double_sign_flip()));
+  jccb(Assembler::notEqual, done);
+  subptr(rsp, 8);
+  movflt(Address(rsp, 0), src);
+  call(RuntimeAddress(CAST_FROM_FN_PTR(address, StubRoutines::x86::f2l_fixup())));
+  pop(dst);
+  bind(done);
+}
+
+void MacroAssembler::convert_d2l(Register dst, XMMRegister src) {
+  Label done;
+  cvttsd2siq(dst, src);
+  cmp64(dst, ExternalAddress((address) StubRoutines::x86::double_sign_flip()));
+  jccb(Assembler::notEqual, done);
+  subptr(rsp, 8);
+  movdbl(Address(rsp, 0), src);
+  call(RuntimeAddress(CAST_FROM_FN_PTR(address, StubRoutines::x86::d2l_fixup())));
+  pop(dst);
+  bind(done);
+}
+
 void MacroAssembler::cache_wb(Address line)
 {
   // 64 bit cpus always support clflush
@@ -10000,4 +10030,4 @@ void MacroAssembler::get_thread(Register thread) {
   }
 }
 
-#endif
+#endif // !WIN32 || _LP64

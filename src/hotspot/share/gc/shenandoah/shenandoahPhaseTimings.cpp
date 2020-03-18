@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2017, 2019, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2017, 2020, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -40,38 +41,29 @@ const char* ShenandoahPhaseTimings::_phase_names[] = {
 
 #undef GC_PHASE_DECLARE_NAME
 
-ShenandoahPhaseTimings::ShenandoahPhaseTimings() : _policy(NULL) {
+ShenandoahPhaseTimings::ShenandoahPhaseTimings() {
   uint max_workers = MAX2(ConcGCThreads, ParallelGCThreads);
-  _worker_times = new ShenandoahWorkerTimings(max_workers);
-  _termination_times = new ShenandoahTerminationTimings(max_workers);
+  assert(max_workers > 0, "Must have some GC threads");
+
+#define GC_PAR_PHASE_DECLARE_WORKER_DATA(type, title) \
+  _gc_par_phases[ShenandoahPhaseTimings::type] = new WorkerDataArray<double>(title, max_workers);
+  // Root scanning phases
+  SHENANDOAH_GC_PAR_PHASE_DO(,, GC_PAR_PHASE_DECLARE_WORKER_DATA)
+#undef GC_PAR_PHASE_DECLARE_WORKER_DATA
+
   _policy = ShenandoahHeap::heap()->shenandoah_policy();
   assert(_policy != NULL, "Can not be NULL");
 }
 
-void ShenandoahPhaseTimings::record_phase_start(Phase phase) {
-  _timing_data[phase]._start = os::elapsedTime();
-}
-
-void ShenandoahPhaseTimings::record_phase_end(Phase phase) {
-  assert(_policy != NULL, "Not yet initialized");
-  double end = os::elapsedTime();
-  double elapsed = end - _timing_data[phase]._start;
-  if (!_policy->is_at_shutdown()) {
-    _timing_data[phase]._secs.add(elapsed);
-  }
-  ShenandoahHeap::heap()->heuristics()->record_phase_time(phase, elapsed);
-}
-
 void ShenandoahPhaseTimings::record_phase_time(Phase phase, double time) {
-  assert(_policy != NULL, "Not yet initialized");
   if (!_policy->is_at_shutdown()) {
-    _timing_data[phase]._secs.add(time);
+    _timing_data[phase].add(time);
   }
 }
 
 void ShenandoahPhaseTimings::record_workers_start(Phase phase) {
   for (uint i = 0; i < GCParPhasesSentinel; i++) {
-    _worker_times->reset(i);
+    _gc_par_phases[i]->reset();
   }
 }
 
@@ -90,13 +82,15 @@ void ShenandoahPhaseTimings::record_workers_end(Phase phase) {
             phase == final_update_refs_roots ||
             phase == full_gc_roots ||
             phase == degen_gc_update_roots ||
+            phase == full_gc_purge_par ||
+            phase == purge_par ||
             phase == _num_phases,
             "only in these phases we can add per-thread phase times");
   if (phase != _num_phases) {
     // Merge _phase_time to counters below the given phase.
     for (uint i = 0; i < GCParPhasesSentinel; i++) {
-      double t = _worker_times->average(i);
-      _timing_data[phase + i + 1]._secs.add(t);
+      double t = _gc_par_phases[i]->average();
+      _timing_data[phase + i + 1].add(t);
     }
   }
 }
@@ -112,80 +106,38 @@ void ShenandoahPhaseTimings::print_on(outputStream* out) const {
   out->cr();
 
   for (uint i = 0; i < _num_phases; i++) {
-    if (_timing_data[i]._secs.maximum() != 0) {
-      print_summary_sd(out, _phase_names[i], &(_timing_data[i]._secs));
+    if (_timing_data[i].maximum() != 0) {
+      out->print_cr("%-27s = %8.2lf s (a = %8.0lf us) (n = " INT32_FORMAT_W(5) ") (lvls, us = %8.0lf, %8.0lf, %8.0lf, %8.0lf, %8.0lf)",
+                    _phase_names[i],
+                    _timing_data[i].sum(),
+                    _timing_data[i].avg() * 1000000.0,
+                    _timing_data[i].num(),
+                    _timing_data[i].percentile(0) * 1000000.0,
+                    _timing_data[i].percentile(25) * 1000000.0,
+                    _timing_data[i].percentile(50) * 1000000.0,
+                    _timing_data[i].percentile(75) * 1000000.0,
+                    _timing_data[i].maximum() * 1000000.0
+      );
     }
   }
 }
 
-void ShenandoahPhaseTimings::print_summary_sd(outputStream* out, const char* str, const HdrSeq* seq) const {
-  out->print_cr("%-27s = %8.2lf s (a = %8.0lf us) (n = " INT32_FORMAT_W(5) ") (lvls, us = %8.0lf, %8.0lf, %8.0lf, %8.0lf, %8.0lf)",
-          str,
-          seq->sum(),
-          seq->avg() * 1000000.0,
-          seq->num(),
-          seq->percentile(0)  * 1000000.0,
-          seq->percentile(25) * 1000000.0,
-          seq->percentile(50) * 1000000.0,
-          seq->percentile(75) * 1000000.0,
-          seq->maximum() * 1000000.0
-  );
+void ShenandoahPhaseTimings::record_worker_time(ShenandoahPhaseTimings::GCParPhases phase, uint worker_id, double secs) {
+  _gc_par_phases[phase]->set(worker_id, secs);
 }
 
-ShenandoahWorkerTimings::ShenandoahWorkerTimings(uint max_gc_threads) :
-        _max_gc_threads(max_gc_threads)
-{
-  assert(max_gc_threads > 0, "Must have some GC threads");
-
-#define GC_PAR_PHASE_DECLARE_WORKER_DATA(type, title) \
-  _gc_par_phases[ShenandoahPhaseTimings::type] = new WorkerDataArray<double>(title, max_gc_threads);
-  // Root scanning phases
-  SHENANDOAH_GC_PAR_PHASE_DO(GC_PAR_PHASE_DECLARE_WORKER_DATA)
-#undef GC_PAR_PHASE_DECLARE_WORKER_DATA
+ShenandoahWorkerTimingsTracker::ShenandoahWorkerTimingsTracker(ShenandoahPhaseTimings::GCParPhases phase, uint worker_id) :
+        _phase(phase), _timings(ShenandoahHeap::heap()->phase_timings()), _worker_id(worker_id) {
+  _start_time = os::elapsedTime();
 }
 
-// record the time a phase took in seconds
-void ShenandoahWorkerTimings::record_time_secs(ShenandoahPhaseTimings::GCParPhases phase, uint worker_i, double secs) {
-  _gc_par_phases[phase]->set(worker_i, secs);
-}
+ShenandoahWorkerTimingsTracker::~ShenandoahWorkerTimingsTracker() {
+  _timings->record_worker_time(_phase, _worker_id, os::elapsedTime() - _start_time);
 
-double ShenandoahWorkerTimings::average(uint i) const {
-  return _gc_par_phases[i]->average();
-}
-
-void ShenandoahWorkerTimings::reset(uint i) {
-  _gc_par_phases[i]->reset();
-}
-
-void ShenandoahWorkerTimings::print() const {
-  for (uint i = 0; i < ShenandoahPhaseTimings::GCParPhasesSentinel; i++) {
-    _gc_par_phases[i]->print_summary_on(tty);
+  if (ShenandoahGCPhase::is_root_work_phase()) {
+    ShenandoahPhaseTimings::Phase root_phase = ShenandoahGCPhase::current_phase();
+    ShenandoahPhaseTimings::Phase cur_phase = (ShenandoahPhaseTimings::Phase)((int)root_phase + (int)_phase + 1);
+    _event.commit(GCId::current(), _worker_id, ShenandoahPhaseTimings::phase_name(cur_phase));
   }
-}
-
-
-ShenandoahTerminationTimings::ShenandoahTerminationTimings(uint max_gc_threads) {
-  _gc_termination_phase = new WorkerDataArray<double>("Task Termination (ms):", max_gc_threads);
-}
-
-void ShenandoahTerminationTimings::record_time_secs(uint worker_id, double secs) {
-  if (_gc_termination_phase->get(worker_id) == WorkerDataArray<double>::uninitialized()) {
-    _gc_termination_phase->set(worker_id, secs);
-  } else {
-    // worker may re-enter termination phase
-    _gc_termination_phase->add(worker_id, secs);
-  }
-}
-
-void ShenandoahTerminationTimings::print() const {
-  _gc_termination_phase->print_summary_on(tty);
-}
-
-double ShenandoahTerminationTimings::average() const {
-  return _gc_termination_phase->average();
-}
-
-void ShenandoahTerminationTimings::reset() {
-  _gc_termination_phase->reset();
 }
 

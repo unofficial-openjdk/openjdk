@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1994, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,6 +56,7 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.PropertyPermission;
 import java.util.ResourceBundle;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
@@ -2043,8 +2044,6 @@ public final class System {
         // register shared secrets
         setJavaLangAccess();
 
-        ClassLoader.initLibraryPaths();
-
         // Subsystems that are invoked during initialization can invoke
         // VM.isBooted() in order to avoid doing things that should
         // wait until the VM is fully initialized. The initialization level
@@ -2236,8 +2235,8 @@ public final class System {
             public void addOpensToAllUnnamed(Module m, String pn) {
                 m.implAddOpensToAllUnnamed(pn);
             }
-            public void addOpensToAllUnnamed(Module m, Iterator<String> packages) {
-                m.implAddOpensToAllUnnamed(packages);
+            public void addOpensToAllUnnamed(Module m, Set<String> concealedPackages, Set<String> exportedPackages) {
+                m.implAddOpensToAllUnnamed(concealedPackages, exportedPackages);
             }
             public void addUses(Module m, Class<?> service) {
                 m.implAddUses(service);
@@ -2276,11 +2275,6 @@ public final class System {
 
             public void setCause(Throwable t, Throwable cause) {
                 t.setCause(cause);
-            }
-
-            public void loadLibrary(Class<?> caller, String library) {
-                assert library.indexOf(java.io.File.separatorChar) < 0;
-                ClassLoader.loadLibrary(caller, library, false);
             }
         });
     }

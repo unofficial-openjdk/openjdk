@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,7 +35,8 @@
  * 8027645 8035076 8039124 8035975 8074678 6854417 8143854 8147531 7071819
  * 8151481 4867170 7080302 6728861 6995635 6736245 4916384 6328855 6192895
  * 6345469 6988218 6693451 7006761 8140212 8143282 8158482 8176029 8184706
- * 8194667 8197462 8184692 8221431 8224789 8228352 8230829
+ * 8194667 8197462 8184692 8221431 8224789 8228352 8230829 8236034 8235812
+ * 8216332 8214245
  *
  * @library /test/lib
  * @library /lib/testlibrary/java/lang
@@ -55,9 +56,13 @@ import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.nio.CharBuffer;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.function.Function;
@@ -66,6 +71,8 @@ import java.util.regex.Matcher;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Stream;
+
 import jdk.test.lib.RandomFactory;
 
 /**
@@ -186,6 +193,8 @@ public class RegExTest {
         invalidGroupName();
         illegalRepetitionRange();
         surrogatePairWithCanonEq();
+        lineBreakWithQuantifier();
+        caseInsensitivePMatch();
 
         if (failure) {
             throw new
@@ -4787,47 +4796,48 @@ public class RegExTest {
     }
 
     private static void grapheme() throws Exception {
-        Files.lines(UCDFiles.GRAPHEME_BREAK_TEST)
+        Stream.concat(Files.lines(UCDFiles.GRAPHEME_BREAK_TEST),
+                Files.lines(Paths.get(System.getProperty("test.src", "."), "GraphemeTestCases.txt")))
             .filter( ln -> ln.length() != 0 && !ln.startsWith("#") )
             .forEach( ln -> {
-                    ln = ln.replaceAll("\\s+|\\([a-zA-Z]+\\)|\\[[a-zA-Z]]+\\]|#.*", "");
-                    // System.out.println(str);
-                    String[] strs = ln.split("\u00f7|\u00d7");
-                    StringBuilder src = new StringBuilder();
-                    ArrayList<String> graphemes = new ArrayList<>();
-                    StringBuilder buf = new StringBuilder();
-                    int offBk = 0;
-                    for (String str : strs) {
-                        if (str.length() == 0)  // first empty str
-                            continue;
-                        int cp = Integer.parseInt(str, 16);
-                        src.appendCodePoint(cp);
-                        buf.appendCodePoint(cp);
-                        offBk += (str.length() + 1);
-                        if (ln.charAt(offBk) == '\u00f7') {    // DIV
-                            graphemes.add(buf.toString());
-                            buf = new StringBuilder();
-                        }
+                ln = ln.replaceAll("\\s+|\\([a-zA-Z]+\\)|\\[[a-zA-Z]]+\\]|#.*", "");
+                // System.out.println(str);
+                String[] strs = ln.split("\u00f7|\u00d7");
+                StringBuilder src = new StringBuilder();
+                ArrayList<String> graphemes = new ArrayList<>();
+                StringBuilder buf = new StringBuilder();
+                int offBk = 0;
+                for (String str : strs) {
+                    if (str.length() == 0)  // first empty str
+                        continue;
+                    int cp = Integer.parseInt(str, 16);
+                    src.appendCodePoint(cp);
+                    buf.appendCodePoint(cp);
+                    offBk += (str.length() + 1);
+                    if (ln.charAt(offBk) == '\u00f7') {    // DIV
+                        graphemes.add(buf.toString());
+                        buf = new StringBuilder();
                     }
-                    Pattern p = Pattern.compile("\\X");
-                    Matcher m = p.matcher(src.toString());
-                    Scanner s = new Scanner(src.toString()).useDelimiter("\\b{g}");
-                    for (String g : graphemes) {
-                        // System.out.printf("     grapheme:=[%s]%n", g);
-                        // (1) test \\X directly
-                        if (!m.find() || !m.group().equals(g)) {
-                            System.out.println("Failed \\X [" + ln + "] : " + g);
-                            failCount++;
-                        }
-                        // (2) test \\b{g} + \\X  via Scanner
-                        boolean hasNext = s.hasNext(p);
-                        // if (!s.hasNext() || !s.next().equals(next)) {
-                        if (!s.hasNext(p) || !s.next(p).equals(g)) {
-                            System.out.println("Failed b{g} [" + ln + "] : " + g);
-                            failCount++;
-                        }
+                }
+                Pattern p = Pattern.compile("\\X");
+                Matcher m = p.matcher(src.toString());
+                Scanner s = new Scanner(src.toString()).useDelimiter("\\b{g}");
+                for (String g : graphemes) {
+                    // System.out.printf("     grapheme:=[%s]%n", g);
+                    // (1) test \\X directly
+                    if (!m.find() || !m.group().equals(g)) {
+                        System.out.println("Failed \\X [" + ln + "] : " + g);
+                        failCount++;
                     }
-                });
+                    // (2) test \\b{g} + \\X  via Scanner
+                    boolean hasNext = s.hasNext(p);
+                    // if (!s.hasNext() || !s.next().equals(next)) {
+                    if (!s.hasNext(p) || !s.next(p).equals(g)) {
+                        System.out.println("Failed b{g} [" + ln + "] : " + g);
+                        failCount++;
+                    }
+                }
+            });
         // some sanity checks
         if (!Pattern.compile("\\X{10}").matcher("abcdefghij").matches() ||
             !Pattern.compile("\\b{g}(?:\\X\\b{g}){5}\\b{g}").matcher("abcde").matches() ||
@@ -4999,5 +5009,150 @@ public class RegExTest {
             System.out.println("Unexpected exception: " + t);
         }
         report("surrogatePairWithCanonEq");
+    }
+
+    // This test is for 8235812
+    private static void lineBreakWithQuantifier() {
+        // key:    pattern
+        // value:  lengths of input that must match the pattern
+        Map<String, List<Integer>> cases = Map.ofEntries(
+            Map.entry("\\R?",      List.of(0, 1)),
+            Map.entry("\\R*",      List.of(0, 1, 2, 3)),
+            Map.entry("\\R+",      List.of(1, 2, 3)),
+            Map.entry("\\R{0}",    List.of(0)),
+            Map.entry("\\R{1}",    List.of(1)),
+            Map.entry("\\R{2}",    List.of(2)),
+            Map.entry("\\R{3}",    List.of(3)),
+            Map.entry("\\R{0,}",   List.of(0, 1, 2, 3)),
+            Map.entry("\\R{1,}",   List.of(1, 2, 3)),
+            Map.entry("\\R{2,}",   List.of(2, 3)),
+            Map.entry("\\R{3,}",   List.of(3)),
+            Map.entry("\\R{0,0}",  List.of(0)),
+            Map.entry("\\R{0,1}",  List.of(0, 1)),
+            Map.entry("\\R{0,2}",  List.of(0, 1, 2)),
+            Map.entry("\\R{0,3}",  List.of(0, 1, 2, 3)),
+            Map.entry("\\R{1,1}",  List.of(1)),
+            Map.entry("\\R{1,2}",  List.of(1, 2)),
+            Map.entry("\\R{1,3}",  List.of(1, 2, 3)),
+            Map.entry("\\R{2,2}",  List.of(2)),
+            Map.entry("\\R{2,3}",  List.of(2, 3)),
+            Map.entry("\\R{3,3}",  List.of(3)),
+            Map.entry("\\R",       List.of(1)),
+            Map.entry("\\R\\R",    List.of(2)),
+            Map.entry("\\R\\R\\R", List.of(3))
+        );
+
+        // key:    length of input
+        // value:  all possible inputs of given length
+        Map<Integer, List<String>> inputs = new HashMap<>();
+        String[] Rs = { "\r\n", "\r", "\n",
+                        "\u000B", "\u000C", "\u0085", "\u2028", "\u2029" };
+        StringBuilder sb = new StringBuilder();
+        for (int len = 0; len <= 3; ++len) {
+            int[] idx = new int[len + 1];
+            do {
+                sb.setLength(0);
+                for (int j = 0; j < len; ++j)
+                    sb.append(Rs[idx[j]]);
+                inputs.computeIfAbsent(len, ArrayList::new).add(sb.toString());
+                idx[0]++;
+                for (int j = 0; j < len; ++j) {
+                    if (idx[j] < Rs.length)
+                        break;
+                    idx[j] = 0;
+                    idx[j+1]++;
+                }
+            } while (idx[len] == 0);
+        }
+
+        // exhaustive testing
+        for (String patStr : cases.keySet()) {
+            Pattern[] pats = patStr.endsWith("R")
+                ? new Pattern[] { Pattern.compile(patStr) }  // no quantifiers
+                : new Pattern[] { Pattern.compile(patStr),          // greedy
+                                  Pattern.compile(patStr + "?") };  // reluctant
+            Matcher m = pats[0].matcher("");
+            for (Pattern p : pats) {
+                m.usePattern(p);
+                for (int len : cases.get(patStr)) {
+                    for (String in : inputs.get(len)) {
+                        if (!m.reset(in).matches()) {
+                            failCount++;
+                            System.err.println("Expected to match '" +
+                                    in + "' =~ /" + p + "/");
+                        }
+                    }
+                }
+            }
+        }
+        report("lineBreakWithQuantifier");
+    }
+
+    // This test is for 8214245
+    private static void caseInsensitivePMatch() {
+        for (String input : List.of("abcd", "AbCd", "ABCD")) {
+            for (String pattern : List.of("abcd", "aBcD", "[a-d]{4}",
+                    "(?:a|b|c|d){4}", "\\p{Lower}{4}", "\\p{Ll}{4}",
+                    "\\p{IsLl}{4}", "\\p{gc=Ll}{4}",
+                    "\\p{general_category=Ll}{4}", "\\p{IsLowercase}{4}",
+                    "\\p{javaLowerCase}{4}", "\\p{Upper}{4}", "\\p{Lu}{4}",
+                    "\\p{IsLu}{4}", "\\p{gc=Lu}{4}", "\\p{general_category=Lu}{4}",
+                    "\\p{IsUppercase}{4}", "\\p{javaUpperCase}{4}",
+                    "\\p{Lt}{4}", "\\p{IsLt}{4}", "\\p{gc=Lt}{4}",
+                    "\\p{general_category=Lt}{4}", "\\p{IsTitlecase}{4}",
+                    "\\p{javaTitleCase}{4}", "[\\p{Lower}]{4}", "[\\p{Ll}]{4}",
+                    "[\\p{IsLl}]{4}", "[\\p{gc=Ll}]{4}",
+                    "[\\p{general_category=Ll}]{4}", "[\\p{IsLowercase}]{4}",
+                    "[\\p{javaLowerCase}]{4}", "[\\p{Upper}]{4}", "[\\p{Lu}]{4}",
+                    "[\\p{IsLu}]{4}", "[\\p{gc=Lu}]{4}",
+                    "[\\p{general_category=Lu}]{4}", "[\\p{IsUppercase}]{4}",
+                    "[\\p{javaUpperCase}]{4}", "[\\p{Lt}]{4}", "[\\p{IsLt}]{4}",
+                    "[\\p{gc=Lt}]{4}", "[\\p{general_category=Lt}]{4}",
+                    "[\\p{IsTitlecase}]{4}", "[\\p{javaTitleCase}]{4}"))
+            {
+                if (!Pattern.compile(pattern, Pattern.CASE_INSENSITIVE)
+                            .matcher(input)
+                            .matches())
+                {
+                    failCount++;
+                    System.err.println("Expected to match: " +
+                                       "'" + input + "' =~ /" + pattern + "/");
+                }
+            }
+        }
+
+        for (String input : List.of("\u01c7", "\u01c8", "\u01c9")) {
+            for (String pattern : List.of("\u01c7", "\u01c8", "\u01c9",
+                    "[\u01c7\u01c8]", "[\u01c7\u01c9]", "[\u01c8\u01c9]",
+                    "[\u01c7-\u01c8]", "[\u01c8-\u01c9]", "[\u01c7-\u01c9]",
+                    "\\p{Lower}", "\\p{Ll}", "\\p{IsLl}", "\\p{gc=Ll}",
+                    "\\p{general_category=Ll}", "\\p{IsLowercase}",
+                    "\\p{javaLowerCase}", "\\p{Upper}", "\\p{Lu}",
+                    "\\p{IsLu}", "\\p{gc=Lu}", "\\p{general_category=Lu}",
+                    "\\p{IsUppercase}", "\\p{javaUpperCase}",
+                    "\\p{Lt}", "\\p{IsLt}", "\\p{gc=Lt}",
+                    "\\p{general_category=Lt}", "\\p{IsTitlecase}",
+                    "\\p{javaTitleCase}", "[\\p{Lower}]", "[\\p{Ll}]",
+                    "[\\p{IsLl}]", "[\\p{gc=Ll}]",
+                    "[\\p{general_category=Ll}]", "[\\p{IsLowercase}]",
+                    "[\\p{javaLowerCase}]", "[\\p{Upper}]", "[\\p{Lu}]",
+                    "[\\p{IsLu}]", "[\\p{gc=Lu}]",
+                    "[\\p{general_category=Lu}]", "[\\p{IsUppercase}]",
+                    "[\\p{javaUpperCase}]", "[\\p{Lt}]", "[\\p{IsLt}]",
+                    "[\\p{gc=Lt}]", "[\\p{general_category=Lt}]",
+                    "[\\p{IsTitlecase}]", "[\\p{javaTitleCase}]"))
+            {
+                if (!Pattern.compile(pattern, Pattern.CASE_INSENSITIVE
+                                            | Pattern.UNICODE_CHARACTER_CLASS)
+                            .matcher(input)
+                            .matches())
+                {
+                    failCount++;
+                    System.err.println("Expected to match: " +
+                                       "'" + input + "' =~ /" + pattern + "/");
+                }
+            }
+        }
+        report("caseInsensitivePMatch");
     }
 }

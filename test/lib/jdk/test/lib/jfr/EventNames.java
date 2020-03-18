@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -87,6 +87,10 @@ public class EventNames {
     public final static String PlaceholderTableStatistics = PREFIX + "PlaceholderTableStatistics";
     public final static String LoaderConstraintsTableStatistics = PREFIX + "LoaderConstraintsTableStatistics";
     public final static String ProtectionDomainCacheTableStatistics = PREFIX + "ProtectionDomainCacheTableStatistics";
+    public static final String RedefineClasses = PREFIX + "RedefineClasses";
+    public static final String RetransformClasses = PREFIX + "RetransformClasses";
+    public static final String ClassRedefinition = PREFIX + "ClassRedefinition";
+
     // This event is hard to test
     public final static String ReservedStackActivation = PREFIX + "ReservedStackActivation";
 
@@ -167,6 +171,7 @@ public class EventNames {
     public final static String NativeLibrary = PREFIX + "NativeLibrary";
     public final static String PhysicalMemory = PREFIX + "PhysicalMemory";
     public final static String NetworkUtilization = PREFIX + "NetworkUtilization";
+    public static final String ProcessStart = PREFIX + "ProcessStart";
 
     // JDK
     public static final String FileForce  = PREFIX + "FileForce";
@@ -191,11 +196,9 @@ public class EventNames {
     public final static String ActiveRecording = PREFIX + "ActiveRecording";
     public final static String ActiveSetting = PREFIX + "ActiveSetting";
     public static final String Flush = PREFIX + "Flush";
-    public static final String FlushStringPool = PREFIX + "FlushStringPool";
-    public static final String FlushStacktrace = PREFIX + "FlushStacktrace";
-    public static final String FlushStorage = PREFIX + "FlushStorage";
-    public static final String FlushMetadata = PREFIX + "FlushMetadata";
-    public static final String FlushTypeSet = PREFIX + "FlushTypeSet";
+
+    // Diagnostics
+    public static final String HeapDump = PREFIX + "HeapDump";
 
     public static boolean isGcEvent(EventType et) {
         return et.getCategoryNames().contains(GC_CATEGORY);

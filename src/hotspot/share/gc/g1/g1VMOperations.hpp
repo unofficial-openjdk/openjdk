@@ -29,10 +29,6 @@
 #include "gc/shared/gcVMOperations.hpp"
 
 // VM_operations for the G1 collector.
-// VM_GC_Operation:
-//   - VM_G1Concurrent
-//   - VM_G1CollectForAllocation
-//   - VM_G1CollectFull
 
 class VM_G1CollectFull : public VM_GC_Operation {
   bool _gc_succeeded;
@@ -52,6 +48,7 @@ class VM_G1TryInitiateConcMark : public VM_GC_Operation {
   double _target_pause_time_ms;
   bool _transient_failure;
   bool _cycle_already_in_progress;
+  bool _whitebox_attached;
   bool _terminating;
   bool _gc_succeeded;
 
@@ -64,6 +61,7 @@ public:
   virtual void doit();
   bool transient_failure() const { return _transient_failure; }
   bool cycle_already_in_progress() const { return _cycle_already_in_progress; }
+  bool whitebox_attached() const { return _whitebox_attached; }
   bool terminating() const { return _terminating; }
   bool gc_succeeded() const { return _gc_succeeded; }
 };

@@ -79,9 +79,6 @@ void Generation::ref_processor_init() {
   assert(!_reserved.is_empty(), "empty generation?");
   _span_based_discoverer.set_span(_reserved);
   _ref_processor = new ReferenceProcessor(&_span_based_discoverer);    // a vanilla reference processor
-  if (_ref_processor == NULL) {
-    vm_exit_during_initialization("Could not allocate ReferenceProcessor object");
-  }
 }
 
 void Generation::print() const { print_on(tty); }
@@ -169,7 +166,7 @@ oop Generation::promote(oop obj, size_t obj_size) {
 
   HeapWord* result = allocate(obj_size, false);
   if (result != NULL) {
-    Copy::aligned_disjoint_words((HeapWord*)obj, result, obj_size);
+    Copy::aligned_disjoint_words(cast_from_oop<HeapWord*>(obj), result, obj_size);
     return oop(result);
   } else {
     GenCollectedHeap* gch = GenCollectedHeap::heap();

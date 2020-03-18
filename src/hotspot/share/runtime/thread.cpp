@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -68,7 +68,6 @@
 #include "runtime/fieldDescriptor.inline.hpp"
 #include "runtime/flags/jvmFlagConstraintList.hpp"
 #include "runtime/flags/jvmFlagRangeList.hpp"
-#include "runtime/flags/jvmFlagWriteableList.hpp"
 #include "runtime/deoptimization.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/handles.inline.hpp"
@@ -350,6 +349,7 @@ void Thread::record_stack_base_and_size() {
   // If possible, refrain from doing anything which may crash or assert since
   // quite probably those crash dumps will be useless.
   set_stack_base(os::current_stack_base());
+  assert(_stack_base != NULL, "current_stack_base failed for %s", name());
   set_stack_size(os::current_stack_size());
 
 #ifdef SOLARIS
@@ -388,7 +388,7 @@ void Thread::call_run() {
 
   log_debug(os, thread)("Thread " UINTX_FORMAT " stack dimensions: "
     PTR_FORMAT "-" PTR_FORMAT " (" SIZE_FORMAT "k).",
-    os::current_thread_id(), p2i(stack_base() - stack_size()),
+    os::current_thread_id(), p2i(stack_end()),
     p2i(stack_base()), stack_size()/1024);
 
   // Perform <ChildClass> initialization actions
@@ -526,9 +526,25 @@ void Thread::start(Thread* thread) {
   }
 }
 
+class InstallAsyncExceptionClosure : public HandshakeClosure {
+  Handle _throwable; // The Throwable thrown at the target Thread
+public:
+  InstallAsyncExceptionClosure(Handle throwable) : HandshakeClosure("InstallAsyncException"), _throwable(throwable) {}
+
+  void do_thread(Thread* thr) {
+    JavaThread* target = (JavaThread*)thr;
+    // Note that this now allows multiple ThreadDeath exceptions to be
+    // thrown at a thread.
+    // The target thread has run and has not exited yet.
+    target->send_thread_stop(_throwable());
+  }
+};
+
 void Thread::send_async_exception(oop java_thread, oop java_throwable) {
-  VM_ThreadStop vm_stop(java_thread, java_throwable);
-  VMThread::execute(&vm_stop);
+  Handle throwable(Thread::current(), java_throwable);
+  JavaThread* target = java_lang_Thread::thread(java_thread);
+  InstallAsyncExceptionClosure vm_stop(throwable);
+  Handshake::execute(&vm_stop, target);
 }
 
 
@@ -1003,31 +1019,13 @@ void Thread::check_for_valid_safepoint_state() {
 }
 #endif // ASSERT
 
-bool Thread::is_in_stack(address adr) const {
-  assert(Thread::current() == this, "is_in_stack can only be called from current thread");
-  address end = os::current_stack_pointer();
-  // Allow non Java threads to call this without stack_base
-  if (_stack_base == NULL) return true;
-  if (stack_base() > adr && adr >= end) return true;
-
-  return false;
-}
-
-bool Thread::is_in_usable_stack(address adr) const {
-  size_t stack_guard_size = os::uses_stack_guard_pages() ? JavaThread::stack_guard_zone_size() : 0;
-  size_t usable_stack_size = _stack_size - stack_guard_size;
-
-  return ((adr < stack_base()) && (adr >= stack_base() - usable_stack_size));
-}
-
-
 // We had to move these methods here, because vm threads get into ObjectSynchronizer::enter
 // However, there is a note in JavaThread::is_lock_owned() about the VM threads not being
 // used for compilation in the future. If that change is made, the need for these methods
 // should be revisited, and they should be removed if possible.
 
 bool Thread::is_lock_owned(address adr) const {
-  return on_local_stack(adr);
+  return is_in_full_stack(adr);
 }
 
 bool Thread::set_as_starting_thread() {
@@ -1244,7 +1242,7 @@ void JavaThread::allocate_threadObj(Handle thread_group, const char* thread_name
     return;
   }
 
-  Klass* group =  SystemDictionary::ThreadGroup_klass();
+  Klass* group = SystemDictionary::ThreadGroup_klass();
   Handle threadObj(THREAD, this->threadObj());
 
   JavaCalls::call_special(&result,
@@ -1814,7 +1812,6 @@ bool JavaThread::reguard_stack(void) {
   return reguard_stack(os::current_stack_pointer());
 }
 
-
 void JavaThread::block_if_vm_exited() {
   if (_terminated == _vm_exited) {
     // _vm_exited is set at safepoint, and Threads_lock is never released
@@ -2383,9 +2380,8 @@ void JavaThread::handle_special_runtime_exit_condition(bool check_asyncs) {
 }
 
 void JavaThread::send_thread_stop(oop java_throwable)  {
-  assert(Thread::current()->is_VM_thread(), "should be in the vm thread");
-  assert(Threads_lock->is_locked(), "Threads_lock should be locked by safepoint code");
-  assert(SafepointSynchronize::is_at_safepoint(), "all threads are stopped");
+  ResourceMark rm;
+  assert(Thread::current()->is_VM_thread() || Thread::current() == this, "should be in the vm thread");
 
   // Do not throw asynchronous exceptions against the compiler thread
   // (the compiler thread should not be a Java thread -- fix in 1.4.2)
@@ -2402,11 +2398,10 @@ void JavaThread::send_thread_stop(oop java_throwable)  {
       if (has_last_Java_frame()) {
         frame f = last_frame();
         if (f.is_runtime_frame() || f.is_safepoint_blob_frame()) {
-          // BiasedLocking needs an updated RegisterMap for the revoke monitors pass
-          RegisterMap reg_map(this, UseBiasedLocking);
+          RegisterMap reg_map(this, false);
           frame compiled_frame = f.sender(&reg_map);
           if (!StressCompiledExceptionHandlers && compiled_frame.can_be_deoptimized()) {
-            Deoptimization::deoptimize(this, compiled_frame, &reg_map);
+            Deoptimization::deoptimize(this, compiled_frame);
           }
         }
       }
@@ -2851,8 +2846,7 @@ void JavaThread::frames_do(void f(frame*, const RegisterMap* map)) {
 // Deoptimization
 // Function for testing deoptimization
 void JavaThread::deoptimize() {
-  // BiasedLocking needs an updated RegisterMap for the revoke monitors pass
-  StackFrameStream fst(this, UseBiasedLocking);
+  StackFrameStream fst(this, false);
   bool deopt = false;           // Dump stack only if a deopt actually happens.
   bool only_at = strlen(DeoptimizeOnlyAt) > 0;
   // Iterate over all frames in the thread and deoptimize
@@ -2889,7 +2883,7 @@ void JavaThread::deoptimize() {
         trace_frames();
         trace_stack();
       }
-      Deoptimization::deoptimize(this, *fst.current(), fst.register_map());
+      Deoptimization::deoptimize(this, *fst.current());
     }
   }
 
@@ -2915,11 +2909,10 @@ void JavaThread::make_zombies() {
 
 void JavaThread::deoptimize_marked_methods() {
   if (!has_last_Java_frame()) return;
-  // BiasedLocking needs an updated RegisterMap for the revoke monitors pass
-  StackFrameStream fst(this, UseBiasedLocking);
+  StackFrameStream fst(this, false);
   for (; !fst.is_done(); fst.next()) {
     if (fst.current()->should_be_deoptimized()) {
-      Deoptimization::deoptimize(this, *fst.current(), fst.register_map());
+      Deoptimization::deoptimize(this, *fst.current());
     }
   }
 }
@@ -3157,7 +3150,7 @@ const char* JavaThread::get_thread_name() const {
     if (!(cur->is_Java_thread() && cur == this)) {
       // Current JavaThreads are allowed to get their own name without
       // the Threads_lock.
-      assert_locked_or_safepoint(Threads_lock);
+      assert_locked_or_safepoint_or_handshake(Threads_lock, this);
     }
   }
 #endif // ASSERT
@@ -3621,7 +3614,7 @@ void Threads::possibly_parallel_threads_do(bool is_par, ThreadClosure* tc) {
 //     fields in, out, and err. Set up java signal handlers, OS-specific
 //     system settings, and thread group of the main thread.
 static void call_initPhase1(TRAPS) {
-  Klass* klass =  SystemDictionary::resolve_or_fail(vmSymbols::java_lang_System(), true, CHECK);
+  Klass* klass = SystemDictionary::System_klass();
   JavaValue result(T_VOID);
   JavaCalls::call_static(&result, klass, vmSymbols::initPhase1_name(),
                                          vmSymbols::void_method_signature(), CHECK);
@@ -3641,7 +3634,7 @@ static void call_initPhase1(TRAPS) {
 static void call_initPhase2(TRAPS) {
   TraceTime timer("Initialize module system", TRACETIME_LOG(Info, startuptime));
 
-  Klass* klass = SystemDictionary::resolve_or_fail(vmSymbols::java_lang_System(), true, CHECK);
+  Klass* klass = SystemDictionary::System_klass();
 
   JavaValue result(T_INT);
   JavaCallArguments args;
@@ -3663,7 +3656,7 @@ static void call_initPhase2(TRAPS) {
 //     and system class loader may be a custom class loaded from -Xbootclasspath/a,
 //     other modules or the application's classpath.
 static void call_initPhase3(TRAPS) {
-  Klass* klass = SystemDictionary::resolve_or_fail(vmSymbols::java_lang_System(), true, CHECK);
+  Klass* klass = SystemDictionary::System_klass();
   JavaValue result(T_VOID);
   JavaCalls::call_static(&result, klass, vmSymbols::initPhase3_name(),
                                          vmSymbols::void_method_signature(), CHECK);
@@ -3802,8 +3795,6 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   if (!constraint_result) {
     return JNI_EINVAL;
   }
-
-  JVMFlagWriteableList::mark_startup();
 
   if (PauseAtStartup) {
     os::pause();
@@ -4335,6 +4326,13 @@ void Threads::create_vm_init_libraries() {
 // Last thread running calls java.lang.Shutdown.shutdown()
 void JavaThread::invoke_shutdown_hooks() {
   HandleMark hm(this);
+
+  // Link all classes for dynamic CDS dumping before vm exit.
+  // Same operation is being done in JVM_BeforeHalt for handling the
+  // case where the application calls System.exit().
+  if (DynamicDumpSharedSpaces) {
+    MetaspaceShared::link_and_cleanup_shared_classes(this);
+  }
 
   // We could get here with a pending exception, if so clear it now.
   if (this->has_pending_exception()) {

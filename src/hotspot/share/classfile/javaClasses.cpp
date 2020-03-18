@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -296,7 +296,7 @@ Handle java_lang_String::create_from_unicode(const jchar* unicode, int length, T
 }
 
 oop java_lang_String::create_oop_from_unicode(const jchar* unicode, int length, TRAPS) {
-  Handle h_obj = create_from_unicode(unicode, length, CHECK_0);
+  Handle h_obj = create_from_unicode(unicode, length, CHECK_NULL);
   return h_obj();
 }
 
@@ -343,7 +343,7 @@ Handle java_lang_String::create_from_str(const char* utf8_str, TRAPS) {
 }
 
 oop java_lang_String::create_oop_from_str(const char* utf8_str, TRAPS) {
-  Handle h_obj = create_from_str(utf8_str, CHECK_0);
+  Handle h_obj = create_from_str(utf8_str, CHECK_NULL);
   return h_obj();
 }
 
@@ -882,7 +882,7 @@ void java_lang_Class::set_mirror_module_field(Klass* k, Handle mirror, Handle mo
 
     bool javabase_was_defined = false;
     {
-      MutexLocker m1(Module_lock, THREAD);
+      MutexLocker m1(THREAD, Module_lock);
       // Keep list of classes needing java.base module fixup
       if (!ModuleEntryTable::javabase_defined()) {
         assert(k->java_mirror() != NULL, "Class's mirror is null");
@@ -1399,10 +1399,8 @@ void java_lang_Class::set_signers(oop java_class, objArrayOop signers) {
 
 
 void java_lang_Class::set_class_loader(oop java_class, oop loader) {
-  // jdk7 runs Queens in bootstrapping and jdk8-9 has no coordinated pushes yet.
-  if (_class_loader_offset != 0) {
-    java_class->obj_field_put(_class_loader_offset, loader);
-  }
+  assert(_class_loader_offset != 0, "offsets should have been initialized");
+  java_class->obj_field_put(_class_loader_offset, loader);
 }
 
 oop java_lang_Class::class_loader(oop java_class) {
@@ -1443,7 +1441,7 @@ void java_lang_Class::set_source_file(oop java_class, oop source_file) {
 oop java_lang_Class::create_basic_type_mirror(const char* basic_type_name, BasicType type, TRAPS) {
   // This should be improved by adding a field at the Java level or by
   // introducing a new VM klass (see comment in ClassFileParser)
-  oop java_class = InstanceMirrorKlass::cast(SystemDictionary::Class_klass())->allocate_instance(NULL, CHECK_0);
+  oop java_class = InstanceMirrorKlass::cast(SystemDictionary::Class_klass())->allocate_instance(NULL, CHECK_NULL);
   if (type != T_VOID) {
     Klass* aklass = Universe::typeArrayKlassObj(type);
     assert(aklass != NULL, "correct bootstrap");
@@ -1633,20 +1631,12 @@ void java_lang_Class::serialize_offsets(SerializeClosure* f) {
 #endif
 
 int java_lang_Class::classRedefinedCount(oop the_class_mirror) {
-  if (classRedefinedCount_offset == -1) {
-    // If we don't have an offset for it then just return -1 as a marker.
-    return -1;
-  }
-
+  assert(classRedefinedCount_offset != -1, "offsets should have been initialized");
   return the_class_mirror->int_field(classRedefinedCount_offset);
 }
 
 void java_lang_Class::set_classRedefinedCount(oop the_class_mirror, int value) {
-  if (classRedefinedCount_offset == -1) {
-    // If we don't have an offset for it then nothing to set.
-    return;
-  }
-
+  assert(classRedefinedCount_offset != -1, "offsets should have been initialized");
   the_class_mirror->int_field_put(classRedefinedCount_offset, value);
 }
 
@@ -2024,10 +2014,8 @@ class BacktraceBuilder: public StackObj {
   typeArrayOop    _bcis;
   objArrayOop     _mirrors;
   typeArrayOop    _names; // Needed to insulate method name against redefinition.
-  // This is set to a java.lang.Boolean(true) if the top frame
-  // of the backtrace is omitted because it shall be hidden.
-  // Else it is null.
-  oop             _has_hidden_top_frame;
+  // True if the top frame of the backtrace is omitted because it shall be hidden.
+  bool            _has_hidden_top_frame;
   int             _index;
   NoSafepointVerifier _nsv;
 
@@ -2063,15 +2051,15 @@ class BacktraceBuilder: public StackObj {
     assert(names != NULL, "names array should be initialized in backtrace");
     return names;
   }
-  static oop get_has_hidden_top_frame(objArrayHandle chunk) {
+  static bool has_hidden_top_frame(objArrayHandle chunk) {
     oop hidden = chunk->obj_at(trace_hidden_offset);
-    return hidden;
+    return hidden != NULL;
   }
 
  public:
 
   // constructor for new backtrace
-  BacktraceBuilder(TRAPS): _head(NULL), _methods(NULL), _bcis(NULL), _mirrors(NULL), _names(NULL), _has_hidden_top_frame(NULL) {
+  BacktraceBuilder(TRAPS): _head(NULL), _methods(NULL), _bcis(NULL), _mirrors(NULL), _names(NULL), _has_hidden_top_frame(false) {
     expand(CHECK);
     _backtrace = Handle(THREAD, _head);
     _index = 0;
@@ -2082,7 +2070,7 @@ class BacktraceBuilder: public StackObj {
     _bcis = get_bcis(backtrace);
     _mirrors = get_mirrors(backtrace);
     _names = get_names(backtrace);
-    _has_hidden_top_frame = get_has_hidden_top_frame(backtrace);
+    _has_hidden_top_frame = has_hidden_top_frame(backtrace);
     assert(_methods->length() == _bcis->length() &&
            _methods->length() == _mirrors->length() &&
            _mirrors->length() == _names->length(),
@@ -2162,19 +2150,17 @@ class BacktraceBuilder: public StackObj {
   }
 
   void set_has_hidden_top_frame(TRAPS) {
-    if (_has_hidden_top_frame == NULL) {
+    if (!_has_hidden_top_frame) {
       // It would be nice to add java/lang/Boolean::TRUE here
       // to indicate that this backtrace has a hidden top frame.
       // But this code is used before TRUE is allocated.
-      // Therefor let's just use an arbitrary legal oop
-      // available right here. We only test for != null
-      // anyways. _methods is a short[].
+      // Therefore let's just use an arbitrary legal oop
+      // available right here. _methods is a short[].
       assert(_methods != NULL, "we need a legal oop");
-      _has_hidden_top_frame = _methods;
-      _head->obj_at_put(trace_hidden_offset, _has_hidden_top_frame);
+      _has_hidden_top_frame = true;
+      _head->obj_at_put(trace_hidden_offset, _methods);
     }
   }
-
 };
 
 struct BacktraceElement : public StackObj {
@@ -2657,13 +2643,13 @@ oop java_lang_StackTraceElement::create(const methodHandle& method, int bci, TRA
   InstanceKlass* k = SystemDictionary::StackTraceElement_klass();
   assert(k != NULL, "must be loaded in 1.4+");
   if (k->should_be_initialized()) {
-    k->initialize(CHECK_0);
+    k->initialize(CHECK_NULL);
   }
 
-  Handle element = k->allocate_instance_handle(CHECK_0);
+  Handle element = k->allocate_instance_handle(CHECK_NULL);
 
   int version = method->constants()->version();
-  fill_in(element, method->method_holder(), method, version, bci, method->name(), CHECK_0);
+  fill_in(element, method->method_holder(), method, version, bci, method->name(), CHECK_NULL);
   return element();
 }
 
@@ -3409,13 +3395,13 @@ oop java_lang_boxing_object::initialize_and_allocate(BasicType type, TRAPS) {
   Klass* k = SystemDictionary::box_klass(type);
   if (k == NULL)  return NULL;
   InstanceKlass* ik = InstanceKlass::cast(k);
-  if (!ik->is_initialized())  ik->initialize(CHECK_0);
+  if (!ik->is_initialized())  ik->initialize(CHECK_NULL);
   return ik->allocate_instance(THREAD);
 }
 
 
 oop java_lang_boxing_object::create(BasicType type, jvalue* value, TRAPS) {
-  oop box = initialize_and_allocate(type, CHECK_0);
+  oop box = initialize_and_allocate(type, CHECK_NULL);
   if (box == NULL)  return NULL;
   switch (type) {
     case T_BOOLEAN:
@@ -4044,18 +4030,17 @@ void java_security_AccessControlContext::serialize_offsets(SerializeClosure* f) 
 
 oop java_security_AccessControlContext::create(objArrayHandle context, bool isPrivileged, Handle privileged_context, TRAPS) {
   assert(_isPrivileged_offset != 0, "offsets should have been initialized");
+  assert(_isAuthorized_offset != -1, "offsets should have been initialized");
   // Ensure klass is initialized
-  SystemDictionary::AccessControlContext_klass()->initialize(CHECK_0);
+  SystemDictionary::AccessControlContext_klass()->initialize(CHECK_NULL);
   // Allocate result
-  oop result = SystemDictionary::AccessControlContext_klass()->allocate_instance(CHECK_0);
+  oop result = SystemDictionary::AccessControlContext_klass()->allocate_instance(CHECK_NULL);
   // Fill in values
   result->obj_field_put(_context_offset, context());
   result->obj_field_put(_privilegedContext_offset, privileged_context());
   result->bool_field_put(_isPrivileged_offset, isPrivileged);
-  // whitelist AccessControlContexts created by the JVM if present
-  if (_isAuthorized_offset != -1) {
-    result->bool_field_put(_isAuthorized_offset, true);
-  }
+  // whitelist AccessControlContexts created by the JVM
+  result->bool_field_put(_isAuthorized_offset, true);
   return result;
 }
 
@@ -4159,10 +4144,7 @@ bool java_lang_ClassLoader::is_instance(oop obj) {
 // based on non-null field
 // Written to by java.lang.ClassLoader, vm only reads this field, doesn't set it
 bool java_lang_ClassLoader::parallelCapable(oop class_loader) {
-  if (parallelCapable_offset == -1) {
-     // Default for backward compatibility is false
-     return false;
-  }
+  assert(parallelCapable_offset != -1, "offsets should have been initialized");
   return (class_loader->obj_field(parallelCapable_offset) != NULL);
 }
 
@@ -4796,9 +4778,9 @@ void JavaClasses::compute_hard_coded_offsets() {
 // Compute non-hard-coded field offsets of all the classes in this file
 void JavaClasses::compute_offsets() {
   if (UseSharedSpaces) {
-    assert(JvmtiExport::is_early_phase() && !(JvmtiExport::should_post_class_file_load_hook() &&
-                                              JvmtiExport::has_early_class_hook_env()),
-           "JavaClasses::compute_offsets() must be called in early JVMTI phase.");
+    JVMTI_ONLY(assert(JvmtiExport::is_early_phase() && !(JvmtiExport::should_post_class_file_load_hook() &&
+                                                         JvmtiExport::has_early_class_hook_env()),
+                      "JavaClasses::compute_offsets() must be called in early JVMTI phase."));
     // None of the classes used by the rest of this function can be replaced by
     // JMVTI ClassFileLoadHook.
     // We are safe to use the archived offsets, which have already been restored

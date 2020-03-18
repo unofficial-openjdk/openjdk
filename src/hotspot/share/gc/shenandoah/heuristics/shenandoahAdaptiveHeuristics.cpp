@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -32,10 +33,7 @@
 #include "utilities/quickSort.hpp"
 
 ShenandoahAdaptiveHeuristics::ShenandoahAdaptiveHeuristics() :
-  ShenandoahHeuristics(),
-  _cycle_gap_history(new TruncatedSeq(5)),
-  _conc_mark_duration_history(new TruncatedSeq(5)),
-  _conc_uprefs_duration_history(new TruncatedSeq(5)) {}
+  ShenandoahHeuristics() {}
 
 ShenandoahAdaptiveHeuristics::~ShenandoahAdaptiveHeuristics() {}
 
@@ -101,16 +99,6 @@ void ShenandoahAdaptiveHeuristics::choose_collection_set_from_regiondata(Shenand
 
 void ShenandoahAdaptiveHeuristics::record_cycle_start() {
   ShenandoahHeuristics::record_cycle_start();
-  double last_cycle_gap = (_cycle_start - _last_cycle_end);
-  _cycle_gap_history->add(last_cycle_gap);
-}
-
-void ShenandoahAdaptiveHeuristics::record_phase_time(ShenandoahPhaseTimings::Phase phase, double secs) {
-  if (phase == ShenandoahPhaseTimings::conc_mark) {
-    _conc_mark_duration_history->add(secs);
-  } else if (phase == ShenandoahPhaseTimings::conc_update_refs) {
-    _conc_uprefs_duration_history->add(secs);
-  } // Else ignore
 }
 
 bool ShenandoahAdaptiveHeuristics::should_start_gc() const {
@@ -173,29 +161,6 @@ bool ShenandoahAdaptiveHeuristics::should_start_gc() const {
   }
 
   return ShenandoahHeuristics::should_start_gc();
-}
-
-bool ShenandoahAdaptiveHeuristics::should_start_update_refs() {
-  if (! _update_refs_adaptive) {
-    return _update_refs_early;
-  }
-
-  double cycle_gap_avg = _cycle_gap_history->avg();
-  double conc_mark_avg = _conc_mark_duration_history->avg();
-  double conc_uprefs_avg = _conc_uprefs_duration_history->avg();
-
-  if (_update_refs_early) {
-    double threshold = ShenandoahMergeUpdateRefsMinGap / 100.0;
-    if (conc_mark_avg + conc_uprefs_avg > cycle_gap_avg * threshold) {
-      _update_refs_early = false;
-    }
-  } else {
-    double threshold = ShenandoahMergeUpdateRefsMaxGap / 100.0;
-    if (conc_mark_avg + conc_uprefs_avg < cycle_gap_avg * threshold) {
-      _update_refs_early = true;
-    }
-  }
-  return _update_refs_early;
 }
 
 const char* ShenandoahAdaptiveHeuristics::name() {

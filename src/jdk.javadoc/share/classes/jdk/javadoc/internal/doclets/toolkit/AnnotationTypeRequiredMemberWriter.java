@@ -44,31 +44,29 @@ public interface AnnotationTypeRequiredMemberWriter {
      *
      * @return content tree for the member tree header
      */
-    public Content getMemberTreeHeader();
+    Content getMemberTreeHeader();
 
     /**
      * Add the annotation type details marker.
      *
      * @param memberDetails the content tree representing details marker
      */
-    public void addAnnotationDetailsMarker(Content memberDetails);
+    void addAnnotationDetailsMarker(Content memberDetails);
 
     /**
      * Add the annotation type details tree header.
      *
-     * @param typeElement the annotation type being documented
+     * @return content tree for the annotation details header
      */
-    public Content getAnnotationDetailsTreeHeader(TypeElement typeElement);
+    Content getAnnotationDetailsTreeHeader();
 
     /**
      * Get the annotation type documentation tree header.
      *
      * @param member the annotation type being documented
-     * @param annotationDetailsTree the content tree representing annotation type details
      * @return content tree for the annotation type documentation header
      */
-    public Content getAnnotationDocTreeHeader(Element member,
-            Content annotationDetailsTree);
+    Content getAnnotationDocTreeHeader(Element member);
 
     /**
      * Get the annotation type details tree.
@@ -77,7 +75,7 @@ public interface AnnotationTypeRequiredMemberWriter {
      * @param annotationDetailsTree the content tree representing annotation type details
      * @return content tree for the annotation type details
      */
-    public Content getAnnotationDetails(Content annotationDetailsTreeHeader, Content annotationDetailsTree);
+    Content getAnnotationDetails(Content annotationDetailsTreeHeader, Content annotationDetailsTree);
 
     /**
      * Get the annotation type documentation.
@@ -85,7 +83,7 @@ public interface AnnotationTypeRequiredMemberWriter {
      * @param annotationDocTree the content tree representing annotation type documentation
      * @return content tree for the annotation type documentation
      */
-    public Content getAnnotationDoc(Content annotationDocTree);
+    Content getAnnotationDoc(Content annotationDocTree);
 
     /**
      * Get the signature for the given member.
@@ -93,7 +91,7 @@ public interface AnnotationTypeRequiredMemberWriter {
      * @param member the member being documented
      * @return content tree for the annotation type signature
      */
-    public Content getSignature(Element member);
+    Content getSignature(Element member);
 
     /**
      * Add the deprecated output for the given member.
@@ -101,7 +99,7 @@ public interface AnnotationTypeRequiredMemberWriter {
      * @param member the member being documented
      * @param annotationDocTree content tree to which the deprecated information will be added
      */
-    public void addDeprecated(Element member, Content annotationDocTree);
+    void addDeprecated(Element member, Content annotationDocTree);
 
     /**
      * Add the comments for the given member.
@@ -109,7 +107,7 @@ public interface AnnotationTypeRequiredMemberWriter {
      * @param member the member being documented
      * @param annotationDocTree the content tree to which the comments will be added
      */
-    public void addComments(Element member, Content annotationDocTree);
+    void addComments(Element member, Content annotationDocTree);
 
     /**
      * Add the tags for the given member.
@@ -117,5 +115,5 @@ public interface AnnotationTypeRequiredMemberWriter {
      * @param member the member being documented
      * @param annotationDocTree the content tree to which the tags will be added
      */
-    public void addTags(Element member, Content annotationDocTree);
+    void addTags(Element member, Content annotationDocTree);
 }

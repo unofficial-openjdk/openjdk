@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -2064,7 +2064,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         Node prev = null;
         Node firstTail = null;
         Branch branch = null;
-        Node branchConn = null;
+        BranchConn branchConn = null;
 
         for (;;) {
             Node node = sequence(end);
@@ -2212,7 +2212,24 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
                 break;
             }
 
-            node = closure(node);
+            if (node instanceof LineEnding) {
+                LineEnding le = (LineEnding)node;
+                node = closureOfLineEnding(le);
+
+                if (node != le) {
+                    // LineEnding was replaced with an anonymous group
+                    if (head == null)
+                        head = node;
+                    else
+                        tail.next = node;
+                    // Double return: Tail was returned in root
+                    tail = root;
+                    continue;
+                }
+            } else {
+                node = closure(node);
+            }
+
             /* save the top dot-greedy nodes (.*, .+) as well
             if (node instanceof GreedyCharProperty &&
                 ((GreedyCharProperty)node).cp instanceof Dot) {
@@ -2887,7 +2904,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
                     break;
                 case "gc":
                 case "general_category":
-                    p = CharPredicates.forProperty(value);
+                    p = CharPredicates.forProperty(value, has(CASE_INSENSITIVE));
                     break;
                 default:
                     break;
@@ -2903,17 +2920,16 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
             } else if (name.startsWith("Is")) {
                 // \p{IsGeneralCategory} and \p{IsScriptName}
                 String shortName = name.substring(2);
-                p = CharPredicates.forUnicodeProperty(shortName);
+                p = CharPredicates.forUnicodeProperty(shortName, has(CASE_INSENSITIVE));
                 if (p == null)
-                    p = CharPredicates.forProperty(shortName);
+                    p = CharPredicates.forProperty(shortName, has(CASE_INSENSITIVE));
                 if (p == null)
                     p = CharPredicates.forUnicodeScript(shortName);
             } else {
-                if (has(UNICODE_CHARACTER_CLASS)) {
-                    p = CharPredicates.forPOSIXName(name);
-                }
+                if (has(UNICODE_CHARACTER_CLASS))
+                    p = CharPredicates.forPOSIXName(name, has(CASE_INSENSITIVE));
                 if (p == null)
-                    p = CharPredicates.forProperty(name);
+                    p = CharPredicates.forProperty(name, has(CASE_INSENSITIVE));
             }
             if (p == null)
                 throw error("Unknown character property name {" + name + "}");
@@ -3079,18 +3095,31 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         if (saveTCNCount < topClosureNodes.size())
             topClosureNodes.subList(saveTCNCount, topClosureNodes.size()).clear();
 
+        return groupWithClosure(node, head, tail, capturingGroup);
+    }
+
+    /**
+     * Transforms a Group with quantifiers into some special constructs
+     * (such as Branch or Loop/GroupCurly), if necessary.
+     *
+     * This method is applied either to actual groups or to the Unicode
+     * linebreak (aka \\R) represented as an anonymous group.
+     */
+    private Node groupWithClosure(Node node, Node head, Node tail,
+                                  boolean capturingGroup)
+    {
         if (node instanceof Ques) {
             Ques ques = (Ques) node;
             if (ques.type == Qtype.POSSESSIVE) {
                 root = node;
                 return node;
             }
-            tail.next = new BranchConn();
-            tail = tail.next;
+            BranchConn branchConn = new BranchConn();
+            tail = tail.next = branchConn;
             if (ques.type == Qtype.GREEDY) {
-                head = new Branch(head, null, tail);
+                head = new Branch(head, null, branchConn);
             } else { // Reluctant quantifier
-                head = new Branch(null, head, tail);
+                head = new Branch(null, head, branchConn);
             }
             root = tail;
             return head;
@@ -3243,21 +3272,53 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         GREEDY, LAZY, POSSESSIVE, INDEPENDENT
     }
 
-    private Node curly(Node prev, int cmin) {
+    private Qtype qtype() {
         int ch = next();
         if (ch == '?') {
             next();
-            return new Curly(prev, cmin, MAX_REPS, Qtype.LAZY);
+            return Qtype.LAZY;
         } else if (ch == '+') {
             next();
-            return new Curly(prev, cmin, MAX_REPS, Qtype.POSSESSIVE);
+            return Qtype.POSSESSIVE;
         }
-        if (prev instanceof BmpCharProperty) {
-            return new BmpCharPropertyGreedy((BmpCharProperty)prev, cmin);
-        } else if (prev instanceof CharProperty) {
-            return new CharPropertyGreedy((CharProperty)prev, cmin);
+        return Qtype.GREEDY;
+    }
+
+    private Node curly(Node prev, int cmin) {
+        Qtype qtype = qtype();
+        if (qtype == Qtype.GREEDY) {
+            if (prev instanceof BmpCharProperty) {
+                return new BmpCharPropertyGreedy((BmpCharProperty)prev, cmin);
+            } else if (prev instanceof CharProperty) {
+                return new CharPropertyGreedy((CharProperty)prev, cmin);
+            }
         }
-        return new Curly(prev, cmin, MAX_REPS, Qtype.GREEDY);
+        return new Curly(prev, cmin, MAX_REPS, qtype);
+    }
+
+    /**
+     * Processing repetition of a Unicode linebreak \\R.
+     */
+    private Node closureOfLineEnding(LineEnding le) {
+        int ch = peek();
+        if (ch != '?' && ch != '*' && ch != '+' && ch != '{') {
+            return le;
+        }
+
+        // Replace the LineEnding with an anonymous group
+        // (?:\\u000D\\u000A|[\\u000A\\u000B\\u000C\\u000D\\u0085\\u2028\\u2029])
+        Node grHead = createGroup(true);
+        Node grTail = root;
+        BranchConn branchConn = new BranchConn();
+        branchConn.next = grTail;
+        Node slice = new Slice(new int[] {0x0D, 0x0A});
+        slice.next = branchConn;
+        Node chClass = newCharProperty(x -> x == 0x0A || x == 0x0B ||
+                x == 0x0C || x == 0x0D || x == 0x85 || x == 0x2028 ||
+                x == 0x2029);
+        chClass.next = branchConn;
+        grHead.next = new Branch(slice, chClass, branchConn);
+        return groupWithClosure(closure(grHead), grHead, grTail, false);
     }
 
     /**
@@ -3269,15 +3330,7 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         int ch = peek();
         switch (ch) {
         case '?':
-            ch = next();
-            if (ch == '?') {
-                next();
-                return new Ques(prev, Qtype.LAZY);
-            } else if (ch == '+') {
-                next();
-                return new Ques(prev, Qtype.POSSESSIVE);
-            }
-            return new Ques(prev, Qtype.GREEDY);
+            return new Ques(prev, qtype());
         case '*':
             return curly(prev, 0);
         case '+':
@@ -3314,16 +3367,10 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
                     throw error("Unclosed counted closure");
                 if (cmax < cmin)
                     throw error("Illegal repetition range");
-                ch = peek();
-                if (ch == '?') {
-                    next();
-                    return new Curly(prev, cmin, cmax, Qtype.LAZY);
-                } else if (ch == '+') {
-                    next();
-                    return new Curly(prev, cmin, cmax, Qtype.POSSESSIVE);
-                } else {
-                    return new Curly(prev, cmin, cmax, Qtype.GREEDY);
-                }
+                unread();
+                return (cmin == 0 && cmax == 1)
+                        ? new Ques(prev, qtype())
+                        : new Curly(prev, cmin, cmax, qtype());
             } else {
                 throw error("Illegal repetition");
             }
@@ -4730,8 +4777,8 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
     static final class Branch extends Node {
         Node[] atoms = new Node[2];
         int size = 2;
-        Node conn;
-        Branch(Node first, Node second, Node branchConn) {
+        BranchConn conn;
+        Branch(Node first, Node second, BranchConn branchConn) {
             conn = branchConn;
             atoms[0] = first;
             atoms[1] = second;
@@ -4739,9 +4786,10 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
 
         void add(Node node) {
             if (size >= atoms.length) {
-                Node[] tmp = new Node[atoms.length*2];
-                System.arraycopy(atoms, 0, tmp, 0, atoms.length);
-                atoms = tmp;
+                int len = ArraysSupport.newLength(size,
+                        1,    /* minimum growth */
+                        size  /* preferred growth */);
+                atoms = Arrays.copyOf(atoms, len);
             }
             atoms[size++] = node;
         }
@@ -5626,7 +5674,7 @@ NEXT:       while (i <= last) {
             return ch -> is(ch) || p.is(ch);
         }
         default CharPredicate union(CharPredicate p1,
-                                    CharPredicate p2 ) {
+                                    CharPredicate p2) {
             return ch -> is(ch) || p1.is(ch) || p2.is(ch);
         }
         default CharPredicate negate() {

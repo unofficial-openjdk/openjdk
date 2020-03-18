@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,7 @@ import jtreg.SkippedException;
 /**
  * @test
  * @library /test/lib
- * @requires vm.hasSAandCanAttach
+ * @requires vm.hasSA
  * @requires vm.flavor == "server" & !vm.emulatedClient & !(vm.opt.TieredStopAtLevel == 1)
  * @build jdk.test.lib.apps.*
  * @run main/othervm TestPrintMdo
@@ -41,14 +41,12 @@ import jtreg.SkippedException;
 public class TestPrintMdo {
 
     public static void main (String... args) throws Exception {
-
         System.out.println("Starting TestPrintMdo test");
         LingeredApp app = null;
         try {
             ClhsdbLauncher test = new ClhsdbLauncher();
-            List<String> vmArgs = new ArrayList<String>();
-            vmArgs.add("-XX:+ProfileInterpreter");
-            vmArgs.addAll(Utils.getVmOptions());
+            String[] vmArgs = Utils.appendTestJavaOpts(
+                "-XX:+ProfileInterpreter");
 
             app = LingeredApp.startApp(vmArgs);
             System.out.println ("Started LingeredApp with pid " + app.getPid());

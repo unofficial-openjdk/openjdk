@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2014, Red Hat Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -35,15 +35,13 @@
 #include "ci/ciArrayKlass.hpp"
 #include "ci/ciInstance.hpp"
 #include "code/compiledIC.hpp"
-#include "gc/shared/barrierSet.hpp"
-#include "gc/shared/cardTableBarrierSet.hpp"
 #include "gc/shared/collectedHeap.hpp"
 #include "nativeInst_aarch64.hpp"
 #include "oops/objArrayKlass.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/sharedRuntime.hpp"
+#include "utilities/powerOfTwo.hpp"
 #include "vmreg_aarch64.inline.hpp"
-
 
 
 #ifndef PRODUCT
@@ -139,18 +137,6 @@ address LIR_Assembler::int_constant(jlong n) {
     return const_addr;
   }
 }
-
-void LIR_Assembler::set_24bit_FPU() { Unimplemented(); }
-
-void LIR_Assembler::reset_FPU() { Unimplemented(); }
-
-void LIR_Assembler::fpop() { Unimplemented(); }
-
-void LIR_Assembler::fxch(int i) { Unimplemented(); }
-
-void LIR_Assembler::fld(int i) { Unimplemented(); }
-
-void LIR_Assembler::ffree(int i) { Unimplemented(); }
 
 void LIR_Assembler::breakpoint() { Unimplemented(); }
 
@@ -446,12 +432,9 @@ int LIR_Assembler::emit_unwind_handler() {
   }
 
   if (compilation()->env()->dtrace_method_probes()) {
-    __ call_Unimplemented();
-#if 0
-    __ movptr(Address(rsp, 0), rax);
-    __ mov_metadata(Address(rsp, sizeof(void*)), method()->constant_encoding());
-    __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, SharedRuntime::dtrace_method_exit)));
-#endif
+    __ mov(c_rarg0, rthread);
+    __ mov_metadata(c_rarg1, method()->constant_encoding());
+    __ call_VM_leaf(CAST_FROM_FN_PTR(address, SharedRuntime::dtrace_method_exit), c_rarg0, c_rarg1);
   }
 
   if (method()->is_synchronized() || compilation()->env()->dtrace_method_probes()) {
@@ -1761,7 +1744,7 @@ void LIR_Assembler::arith_op(LIR_Code code, LIR_Opr left, LIR_Opr right, LIR_Opr
           code == lir_add ? __ add(dreg, lreg_lo, c) : __ sub(dreg, lreg_lo, c);
           break;
         case lir_div:
-          assert(c > 0 && is_power_of_2_long(c), "divisor must be power-of-2 constant");
+          assert(c > 0 && is_power_of_2(c), "divisor must be power-of-2 constant");
           if (c == 1) {
             // move lreg_lo to dreg if divisor is 1
             __ mov(dreg, lreg_lo);
@@ -1774,7 +1757,7 @@ void LIR_Assembler::arith_op(LIR_Code code, LIR_Opr left, LIR_Opr right, LIR_Opr
           }
           break;
         case lir_rem:
-          assert(c > 0 && is_power_of_2_long(c), "divisor must be power-of-2 constant");
+          assert(c > 0 && is_power_of_2(c), "divisor must be power-of-2 constant");
           if (c == 1) {
             // move 0 to dreg if divisor is 1
             __ mov(dreg, zr);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -251,7 +251,7 @@ var getJibProfilesCommon = function (input, data) {
         configure_args: concat(["--enable-jtreg-failure-handler"],
             "--with-exclude-translations=de,es,fr,it,ko,pt_BR,sv,ca,tr,cs,sk,ja_JP_A,ja_JP_HA,ja_JP_HI,ja_JP_I,zh_TW,zh_HK",
             "--disable-manpages",
-            "--with-jvm-features=-shenandoahgc",
+            "--disable-jvm-feature-shenandoahgc",
             versionArgs(input, common))
     };
     // Extra settings for debug profiles
@@ -466,8 +466,7 @@ var getJibProfilesProfiles = function (input, common, data) {
             build_cpu: "x64",
             dependencies: ["devkit", "build_devkit", "cups"],
             configure_args: [
-                "--openjdk-target=aarch64-linux-gnu", "--with-freetype=bundled",
-                "--disable-warnings-as-errors"
+                "--openjdk-target=aarch64-linux-gnu",
             ],
         },
 
@@ -539,7 +538,7 @@ var getJibProfilesProfiles = function (input, common, data) {
         });
 
     // Generate -gcov profiles
-    [ "linux-x64", "macosx-x64" ].forEach(function (name) {
+    [ "linux-aarch64", "linux-x64", "macosx-x64" ].forEach(function (name) {
         var gcovName = name + "-gcov";
         profiles[gcovName] = clone(profiles[name]);
         profiles[gcovName].default_make_targets = ["product-bundles", "test-bundles"];
@@ -626,7 +625,7 @@ var getJibProfilesProfiles = function (input, common, data) {
         });
 
     // JCov profiles build JCov-instrumented JDK image based on images provided through dependencies.
-    [ "linux-x64", "macosx-x64", "solaris-sparcv9", "windows-x64"]
+    [ "linux-aarch64", "linux-x64", "macosx-x64", "solaris-sparcv9", "windows-x64"]
         .forEach(function (name) {
             var jcovName = name + "-jcov";
             profiles[jcovName] = clone(common.main_profile_base);
@@ -783,7 +782,7 @@ var getJibProfilesProfiles = function (input, common, data) {
     });
 
     // Artifacts of JCov profiles
-    [ "linux-x64", "macosx-x64", "solaris-sparcv9", "windows-x64"]
+    [ "linux-aarch64", "linux-x64", "macosx-x64", "solaris-sparcv9", "windows-x64"]
         .forEach(function (name) {
             var o = artifactData[name]
             var jdk_subdir = (o.jdk_subdir != null ? o.jdk_subdir : "jdk-" + data.version);
@@ -803,7 +802,7 @@ var getJibProfilesProfiles = function (input, common, data) {
         });
 
     // Artifacts of gcov (native-code-coverage) profiles
-    [ "linux-x64", "macosx-x64" ].forEach(function (name) {
+    [ "linux-aarch64", "linux-x64", "macosx-x64" ].forEach(function (name) {
         var o = artifactData[name]
         var pf = o.platform
         var jdk_subdir = (o.jdk_subdir != null ? o.jdk_subdir : "jdk-" + data.version);
@@ -866,7 +865,7 @@ var getJibProfilesProfiles = function (input, common, data) {
         testImageProfile = testedProfile;
     }
     var testedProfileTest = testImageProfile + ".test"
-    var testOnlyMake = [ "run-test-prebuilt", "LOG_CMDLINES=true", "JTREG_VERBOSE=fail,error,time" ];
+    var testOnlyMake = [ "test-prebuilt", "LOG_CMDLINES=true", "JTREG_VERBOSE=fail,error,time" ];
     if (testedProfile.endsWith("-gcov")) {
         testOnlyMake = concat(testOnlyMake, "GCOV_ENABLED=true")
     }
@@ -974,7 +973,7 @@ var getJibProfilesDependencies = function (input, common) {
         solaris_x64: "SS12u4-Solaris11u1+1.0",
         solaris_sparcv9: "SS12u6-Solaris11u3+1.0",
         windows_x64: "VS2017-15.9.16+1.0",
-        linux_aarch64: "gcc8.2.0-Fedora27+1.0",
+        linux_aarch64: "gcc8.3.0-OL7.6+1.0",
         linux_arm: "gcc8.2.0-Fedora27+1.0",
         linux_ppc64le: "gcc8.2.0-Fedora27+1.0",
         linux_s390x: "gcc8.2.0-Fedora27+1.0"
@@ -1004,9 +1003,17 @@ var getJibProfilesDependencies = function (input, common) {
         ? input.get("gnumake", "install_path") + "/cygwin/bin"
         : input.get("gnumake", "install_path") + "/bin");
 
-    var dependencies = {
-
-        boot_jdk: {
+    if (input.build_cpu == 'aarch64') {
+	boot_jdk = {
+            organization: common.organization,
+            ext: "tar.gz",
+            module: "jdk-linux_aarch64",
+            revision: "13+1.0",
+            configure_args: "--with-boot-jdk=" + common.boot_jdk_home,
+            environment_path: common.boot_jdk_home + "/bin"
+	}
+    } else {
+	boot_jdk = {
             server: "jpg",
             product: "jdk",
             version: common.boot_jdk_version,
@@ -1015,7 +1022,11 @@ var getJibProfilesDependencies = function (input, common) {
                 + boot_jdk_platform + "_bin" + boot_jdk_ext,
             configure_args: "--with-boot-jdk=" + common.boot_jdk_home,
             environment_path: common.boot_jdk_home + "/bin"
-        },
+	}
+    }
+
+    var dependencies = {
+        boot_jdk: boot_jdk,
 
         devkit: {
             organization: common.organization,
@@ -1041,11 +1052,12 @@ var getJibProfilesDependencies = function (input, common) {
         },
 
         jtreg: {
-            server: "javare",
-            revision: "4.2",
-            build_number: "b16",
+            server: "jpg",
+            product: "jtreg",
+            version: "5.0",
+            build_number: "b01",
             checksum_file: "MD5_VALUES",
-            file: "jtreg_bin-4.2.zip",
+            file: "bundles/jtreg_bin-5.0.zip",
             environment_name: "JT_HOME",
             environment_path: input.get("jtreg", "install_path") + "/jtreg/bin"
         },
@@ -1066,7 +1078,7 @@ var getJibProfilesDependencies = function (input, common) {
             // build_number: "b07",
             // file: "bundles/jcov-3_0.zip",
             organization: common.organization,
-            revision: "3.0-58-support+1.0",
+            revision: "3.0-59-support+1.0",
             ext: "zip",
             environment_name: "JCOV_HOME",
         },

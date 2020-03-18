@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,7 +46,6 @@
 #include "logging/logMessage.hpp"
 #include "logging/logStream.hpp"
 #include "memory/allocation.inline.hpp"
-#include "memory/heapInspection.hpp"
 #include "memory/iterator.inline.hpp"
 #include "memory/metadataFactory.hpp"
 #include "memory/metaspaceClosure.hpp"
@@ -764,7 +763,7 @@ bool InstanceKlass::link_class_or_fail(TRAPS) {
 }
 
 bool InstanceKlass::link_class_impl(TRAPS) {
-  if (DumpSharedSpaces && is_in_error_state()) {
+  if (DumpSharedSpaces && SystemDictionaryShared::has_class_failed_verification(this)) {
     // This is for CDS dumping phase only -- we use the in_error_state to indicate that
     // the class has failed verification. Throwing the NoClassDefFoundError here is just
     // a convenient way to stop repeat attempts to verify the same (bad) class.
@@ -1154,7 +1153,9 @@ int  InstanceKlass::nof_implementors() const {
 //
 // The _implementor field only exists for interfaces.
 void InstanceKlass::add_implementor(Klass* k) {
-  assert_lock_strong(Compile_lock);
+  if (Universe::is_fully_initialized()) {
+    assert_lock_strong(Compile_lock);
+  }
   assert(is_interface(), "not interface");
   // Filter out my subinterfaces.
   // (Note: Interfaces are never on the subklass list.)
@@ -1173,7 +1174,7 @@ void InstanceKlass::add_implementor(Klass* k) {
   Klass* ik = implementor();
   if (ik == NULL) {
     set_implementor(k);
-  } else if (ik != this) {
+  } else if (ik != this && ik != k) {
     // There is already an implementor. Use itself as an indicator of
     // more than one implementors.
     set_implementor(this);
@@ -1323,7 +1324,7 @@ Klass* InstanceKlass::array_klass_impl(bool or_null, int n, TRAPS) {
     JavaThread *jt = (JavaThread *)THREAD;
     {
       // Atomic creation of array_klasses
-      MutexLocker ma(MultiArray_lock, THREAD);
+      MutexLocker ma(THREAD, MultiArray_lock);
 
       // Check if update has already taken place
       if (array_klasses() == NULL) {
@@ -1400,6 +1401,10 @@ void InstanceKlass::mask_for(const methodHandle& method, int bci,
   oop_map_cache->lookup(method, bci, entry_for);
 }
 
+bool InstanceKlass::contains_field_offset(int offset) {
+  fieldDescriptor fd;
+  return find_field_from_offset(offset, false, &fd);
+}
 
 bool InstanceKlass::find_local_field(Symbol* name, Symbol* sig, fieldDescriptor* fd) const {
   for (JavaFieldStream fs(this); !fs.done(); fs.next()) {
@@ -2368,12 +2373,10 @@ void InstanceKlass::metaspace_pointers_do(MetaspaceClosure* it) {
 void InstanceKlass::remove_unshareable_info() {
   Klass::remove_unshareable_info();
 
-  if (is_in_error_state()) {
+  if (SystemDictionaryShared::has_class_failed_verification(this)) {
     // Classes are attempted to link during dumping and may fail,
     // but these classes are still in the dictionary and class list in CLD.
-    // Check in_error state first because in_error is > linked state, so
-    // is_linked() is true.
-    // If there's a linking error, there is nothing else to remove.
+    // If the class has failed verification, there is nothing else to remove.
     return;
   }
 
@@ -2468,39 +2471,7 @@ void InstanceKlass::restore_unshareable_info(ClassLoaderData* loader_data, Handl
   }
 }
 
-// returns true IFF is_in_error_state() has been changed as a result of this call.
-bool InstanceKlass::check_sharing_error_state() {
-  assert(DumpSharedSpaces, "should only be called during dumping");
-  bool old_state = is_in_error_state();
-
-  if (!is_in_error_state()) {
-    bool bad = false;
-    for (InstanceKlass* sup = java_super(); sup; sup = sup->java_super()) {
-      if (sup->is_in_error_state()) {
-        bad = true;
-        break;
-      }
-    }
-    if (!bad) {
-      Array<InstanceKlass*>* interfaces = transitive_interfaces();
-      for (int i = 0; i < interfaces->length(); i++) {
-        InstanceKlass* iface = interfaces->at(i);
-        if (iface->is_in_error_state()) {
-          bad = true;
-          break;
-        }
-      }
-    }
-
-    if (bad) {
-      set_in_error_state();
-    }
-  }
-
-  return (old_state != is_in_error_state());
-}
-
-void InstanceKlass::set_class_loader_type(s2 loader_type) {
+void InstanceKlass::set_shared_class_loader_type(s2 loader_type) {
   switch (loader_type) {
   case ClassLoader::BOOT_LOADER:
     _misc_flags |= _misc_is_shared_boot_class;
@@ -3540,61 +3511,6 @@ void InstanceKlass::print_class_load_logging(ClassLoaderData* loader_data,
     msg.debug("%s", debug_stream.as_string());
   }
 }
-
-#if INCLUDE_SERVICES
-// Size Statistics
-void InstanceKlass::collect_statistics(KlassSizeStats *sz) const {
-  Klass::collect_statistics(sz);
-
-  sz->_inst_size  = wordSize * size_helper();
-  sz->_vtab_bytes = wordSize * vtable_length();
-  sz->_itab_bytes = wordSize * itable_length();
-  sz->_nonstatic_oopmap_bytes = wordSize * nonstatic_oop_map_size();
-
-  int n = 0;
-  n += (sz->_methods_array_bytes         = sz->count_array(methods()));
-  n += (sz->_method_ordering_bytes       = sz->count_array(method_ordering()));
-  n += (sz->_local_interfaces_bytes      = sz->count_array(local_interfaces()));
-  n += (sz->_transitive_interfaces_bytes = sz->count_array(transitive_interfaces()));
-  n += (sz->_fields_bytes                = sz->count_array(fields()));
-  n += (sz->_inner_classes_bytes         = sz->count_array(inner_classes()));
-  n += (sz->_nest_members_bytes          = sz->count_array(nest_members()));
-  n += (sz->_record_components_bytes     = sz->count_array(record_components()));
-  sz->_ro_bytes += n;
-
-  const ConstantPool* cp = constants();
-  if (cp) {
-    cp->collect_statistics(sz);
-  }
-
-  const Annotations* anno = annotations();
-  if (anno) {
-    anno->collect_statistics(sz);
-  }
-
-  const Array<Method*>* methods_array = methods();
-  if (methods()) {
-    for (int i = 0; i < methods_array->length(); i++) {
-      Method* method = methods_array->at(i);
-      if (method) {
-        sz->_method_count ++;
-        method->collect_statistics(sz);
-      }
-    }
-  }
-
-  const Array<RecordComponent*>* components = record_components();
-  if (components != NULL) {
-    for (int i = 0; i < components->length(); i++) {
-      RecordComponent* component = components->at(i);
-      if (component != NULL) {
-        component->collect_statistics(sz);
-      }
-    }
-  }
-
-}
-#endif // INCLUDE_SERVICES
 
 // Verification
 

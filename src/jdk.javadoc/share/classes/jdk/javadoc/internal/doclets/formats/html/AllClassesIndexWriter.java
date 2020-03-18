@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,10 +34,8 @@ import com.sun.source.doctree.DocTree;
 import jdk.javadoc.internal.doclets.formats.html.markup.BodyContents;
 import jdk.javadoc.internal.doclets.formats.html.markup.ContentBuilder;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlStyle;
-import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTag;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTree;
-import jdk.javadoc.internal.doclets.formats.html.markup.Navigation;
-import jdk.javadoc.internal.doclets.formats.html.markup.Navigation.PageMode;
+import jdk.javadoc.internal.doclets.formats.html.Navigation.PageMode;
 import jdk.javadoc.internal.doclets.formats.html.markup.Table;
 import jdk.javadoc.internal.doclets.formats.html.markup.TableHeader;
 import jdk.javadoc.internal.doclets.toolkit.Content;
@@ -54,20 +52,20 @@ public class AllClassesIndexWriter extends HtmlDocletWriter {
     /**
      * Index of all the classes.
      */
-    protected IndexBuilder indexbuilder;
+    protected IndexBuilder indexBuilder;
 
     /**
-     * Construct AllClassesIndexWriter object. Also initializes the indexbuilder variable in this
+     * Construct AllClassesIndexWriter object. Also initializes the indexBuilder variable in this
      * class.
      *
      * @param configuration The current configuration
      * @param filename Path to the file which is getting generated.
-     * @param indexbuilder Unicode based Index from {@link IndexBuilder}
+     * @param indexBuilder Unicode based Index from {@link IndexBuilder}
      */
     public AllClassesIndexWriter(HtmlConfiguration configuration,
-            DocPath filename, IndexBuilder indexbuilder) {
+            DocPath filename, IndexBuilder indexBuilder) {
         super(configuration, filename);
-        this.indexbuilder = indexbuilder;
+        this.indexBuilder = indexBuilder;
     }
 
     /**
@@ -96,23 +94,22 @@ public class AllClassesIndexWriter extends HtmlDocletWriter {
         String label = resources.getText("doclet.All_Classes");
         Content header = new ContentBuilder();
         addTop(header);
-        Navigation navBar = new Navigation(null, configuration, PageMode.ALLCLASSES, path);
+        Navigation navBar = new Navigation(null, configuration, PageMode.ALL_CLASSES, path);
         navBar.setUserHeader(getUserHeaderFooter(true));
-        header.add(navBar.getContent(true));
+        header.add(navBar.getContent(Navigation.Position.TOP));
         Content allClassesContent = new ContentBuilder();
         addContents(allClassesContent);
         Content mainContent = new ContentBuilder();
         mainContent.add(allClassesContent);
         Content footer = HtmlTree.FOOTER();
         navBar.setUserFooter(getUserHeaderFooter(false));
-        footer.add(navBar.getContent(false));
+        footer.add(navBar.getContent(Navigation.Position.BOTTOM));
         addBottom(footer);
         HtmlTree bodyTree = getBody(getWindowTitle(label));
         bodyTree.add(new BodyContents()
                 .setHeader(header)
                 .addMainContent(mainContent)
-                .setFooter(footer)
-                .toContent());
+                .setFooter(footer));
         printHtmlDocument(null, "class index", bodyTree);
     }
 
@@ -134,8 +131,8 @@ public class AllClassesIndexWriter extends HtmlDocletWriter {
                 .addTab(resources.errorSummary, e -> utils.isError((TypeElement)e))
                 .addTab(resources.annotationTypeSummary, utils::isAnnotationType)
                 .setTabScript(i -> "show(" + i + ");");
-        for (Character unicode : indexbuilder.index()) {
-            for (Element element : indexbuilder.getMemberList(unicode)) {
+        for (Character unicode : indexBuilder.keys()) {
+            for (Element element : indexBuilder.getMemberList(unicode)) {
                 TypeElement typeElement = (TypeElement) element;
                 if (!utils.isCoreClass(typeElement)) {
                     continue;
@@ -144,14 +141,12 @@ public class AllClassesIndexWriter extends HtmlDocletWriter {
             }
         }
         Content titleContent = contents.allClassesLabel;
-        Content pHeading = HtmlTree.HEADING(Headings.PAGE_TITLE_HEADING, true,
+        Content pHeading = HtmlTree.HEADING_TITLE(Headings.PAGE_TITLE_HEADING,
                 HtmlStyle.title, titleContent);
         Content headerDiv = HtmlTree.DIV(HtmlStyle.header, pHeading);
         content.add(headerDiv);
         if (!table.isEmpty()) {
-            HtmlTree div = new HtmlTree(HtmlTag.DIV, table.toContent());
-            div.setStyle(HtmlStyle.allClassesContainer);
-            content.add(div);
+            content.add(table);
             if (table.needsScript()) {
                 getMainBodyScript().append(table.getScript());
             }

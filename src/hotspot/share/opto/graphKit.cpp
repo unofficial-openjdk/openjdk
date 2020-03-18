@@ -41,9 +41,11 @@
 #include "opto/parse.hpp"
 #include "opto/rootnode.hpp"
 #include "opto/runtime.hpp"
+#include "opto/subtypenode.hpp"
 #include "runtime/deoptimization.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "utilities/bitMap.inline.hpp"
+#include "utilities/powerOfTwo.hpp"
 
 //----------------------------GraphKit-----------------------------------------
 // Main utility constructor.
@@ -1406,6 +1408,9 @@ Node* GraphKit::cast_not_null(Node* obj, bool do_replace_in_map) {
 // opts so the test goes away and the compiled code doesn't execute a
 // useless check.
 Node* GraphKit::must_be_not_null(Node* value, bool do_replace_in_map) {
+  if (!TypePtr::NULL_PTR->higher_equal(_gvn.type(value))) {
+    return value;
+  }
   Node* chk = _gvn.transform(new CmpPNode(value, null()));
   Node *tst = _gvn.transform(new BoolNode(chk, BoolTest::ne));
   Node* opaq = _gvn.transform(new Opaque4Node(C, tst, intcon(1)));
@@ -2139,22 +2144,6 @@ Node* GraphKit::just_allocated_object(Node* current_control) {
 }
 
 
-void GraphKit::round_double_arguments(ciMethod* dest_method) {
-  // (Note:  TypeFunc::make has a cache that makes this fast.)
-  const TypeFunc* tf    = TypeFunc::make(dest_method);
-  int             nargs = tf->domain()->cnt() - TypeFunc::Parms;
-  for (int j = 0; j < nargs; j++) {
-    const Type *targ = tf->domain()->field_at(j + TypeFunc::Parms);
-    if( targ->basic_type() == T_DOUBLE ) {
-      // If any parameters are doubles, they must be rounded before
-      // the call, dstore_rounding does gvn.transform
-      Node *arg = argument(j);
-      arg = dstore_rounding(arg);
-      set_argument(j, arg);
-    }
-  }
-}
-
 /**
  * Record profiling data exact_kls for Node n with the type system so
  * that it can propagate it (speculation)
@@ -2320,43 +2309,80 @@ void GraphKit::record_profiled_return_for_speculation() {
 }
 
 void GraphKit::round_double_result(ciMethod* dest_method) {
-  // A non-strict method may return a double value which has an extended
-  // exponent, but this must not be visible in a caller which is 'strict'
-  // If a strict caller invokes a non-strict callee, round a double result
+  if (Matcher::strict_fp_requires_explicit_rounding) {
+    // If a strict caller invokes a non-strict callee, round a double result.
+    // A non-strict method may return a double value which has an extended exponent,
+    // but this must not be visible in a caller which is strict.
+    BasicType result_type = dest_method->return_type()->basic_type();
+    assert(method() != NULL, "must have caller context");
+    if( result_type == T_DOUBLE && method()->is_strict() && !dest_method->is_strict() ) {
+      // Destination method's return value is on top of stack
+      // dstore_rounding() does gvn.transform
+      Node *result = pop_pair();
+      result = dstore_rounding(result);
+      push_pair(result);
+    }
+  }
+}
 
-  BasicType result_type = dest_method->return_type()->basic_type();
-  assert( method() != NULL, "must have caller context");
-  if( result_type == T_DOUBLE && method()->is_strict() && !dest_method->is_strict() ) {
-    // Destination method's return value is on top of stack
-    // dstore_rounding() does gvn.transform
-    Node *result = pop_pair();
-    result = dstore_rounding(result);
-    push_pair(result);
+void GraphKit::round_double_arguments(ciMethod* dest_method) {
+  if (Matcher::strict_fp_requires_explicit_rounding) {
+    // (Note:  TypeFunc::make has a cache that makes this fast.)
+    const TypeFunc* tf    = TypeFunc::make(dest_method);
+    int             nargs = tf->domain()->cnt() - TypeFunc::Parms;
+    for (int j = 0; j < nargs; j++) {
+      const Type *targ = tf->domain()->field_at(j + TypeFunc::Parms);
+      if (targ->basic_type() == T_DOUBLE) {
+        // If any parameters are doubles, they must be rounded before
+        // the call, dstore_rounding does gvn.transform
+        Node *arg = argument(j);
+        arg = dstore_rounding(arg);
+        set_argument(j, arg);
+      }
+    }
   }
 }
 
 // rounding for strict float precision conformance
 Node* GraphKit::precision_rounding(Node* n) {
-  return UseStrictFP && _method->flags().is_strict()
-    && UseSSE == 0 && Matcher::strict_fp_requires_explicit_rounding
-    ? _gvn.transform( new RoundFloatNode(0, n) )
-    : n;
+  if (Matcher::strict_fp_requires_explicit_rounding) {
+#ifdef IA32
+    if (_method->flags().is_strict() && UseSSE == 0) {
+      return _gvn.transform(new RoundFloatNode(0, n));
+    }
+#else
+    Unimplemented();
+#endif // IA32
+  }
+  return n;
 }
 
 // rounding for strict double precision conformance
 Node* GraphKit::dprecision_rounding(Node *n) {
-  return UseStrictFP && _method->flags().is_strict()
-    && UseSSE <= 1 && Matcher::strict_fp_requires_explicit_rounding
-    ? _gvn.transform( new RoundDoubleNode(0, n) )
-    : n;
+  if (Matcher::strict_fp_requires_explicit_rounding) {
+#ifdef IA32
+    if (_method->flags().is_strict() && UseSSE < 2) {
+      return _gvn.transform(new RoundDoubleNode(0, n));
+    }
+#else
+    Unimplemented();
+#endif // IA32
+  }
+  return n;
 }
 
 // rounding for non-strict double stores
 Node* GraphKit::dstore_rounding(Node* n) {
-  return Matcher::strict_fp_requires_explicit_rounding
-    && UseSSE <= 1
-    ? _gvn.transform( new RoundDoubleNode(0, n) )
-    : n;
+  if (Matcher::strict_fp_requires_explicit_rounding) {
+#ifdef IA32
+    if (UseSSE < 2) {
+      return _gvn.transform(new RoundDoubleNode(0, n));
+    }
+#else
+    Unimplemented();
+#endif // IA32
+  }
+  return n;
 }
 
 //=============================================================================
@@ -2598,21 +2624,20 @@ void GraphKit::make_slow_call_ex(Node* call, ciInstanceKlass* ex_klass, bool sep
   set_control(norm);
 }
 
-static IfNode* gen_subtype_check_compare(Node* ctrl, Node* in1, Node* in2, BoolTest::mask test, float p, PhaseGVN* gvn, BasicType bt) {
+static IfNode* gen_subtype_check_compare(Node* ctrl, Node* in1, Node* in2, BoolTest::mask test, float p, PhaseGVN& gvn, BasicType bt) {
   Node* cmp = NULL;
   switch(bt) {
   case T_INT: cmp = new CmpINode(in1, in2); break;
   case T_ADDRESS: cmp = new CmpPNode(in1, in2); break;
   default: fatal("unexpected comparison type %s", type2name(bt));
   }
-  gvn->transform(cmp);
-  Node* bol = gvn->transform(new BoolNode(cmp, test));
+  gvn.transform(cmp);
+  Node* bol = gvn.transform(new BoolNode(cmp, test));
   IfNode* iff = new IfNode(ctrl, bol, p, COUNT_UNKNOWN);
-  gvn->transform(iff);
-  if (!bol->is_Con()) gvn->record_for_igvn(iff);
+  gvn.transform(iff);
+  if (!bol->is_Con()) gvn.record_for_igvn(iff);
   return iff;
 }
-
 
 //-------------------------------gen_subtype_check-----------------------------
 // Generate a subtyping check.  Takes as input the subtype and supertype.
@@ -2622,9 +2647,8 @@ static IfNode* gen_subtype_check_compare(Node* ctrl, Node* in1, Node* in2, BoolT
 // but that's not exposed to the optimizer.  This call also doesn't take in an
 // Object; if you wish to check an Object you need to load the Object's class
 // prior to coming here.
-Node* Phase::gen_subtype_check(Node* subklass, Node* superklass, Node** ctrl, MergeMemNode* mem, PhaseGVN* gvn) {
-  Compile* C = gvn->C;
-
+Node* Phase::gen_subtype_check(Node* subklass, Node* superklass, Node** ctrl, Node* mem, PhaseGVN& gvn) {
+  Compile* C = gvn.C;
   if ((*ctrl)->is_top()) {
     return C->top();
   }
@@ -2635,9 +2659,9 @@ Node* Phase::gen_subtype_check(Node* subklass, Node* superklass, Node** ctrl, Me
   if (subklass == superklass)
     return C->top();             // false path is dead; no test needed.
 
-  if (gvn->type(superklass)->singleton()) {
-    ciKlass* superk = gvn->type(superklass)->is_klassptr()->klass();
-    ciKlass* subk   = gvn->type(subklass)->is_klassptr()->klass();
+  if (gvn.type(superklass)->singleton()) {
+    ciKlass* superk = gvn.type(superklass)->is_klassptr()->klass();
+    ciKlass* subk   = gvn.type(subklass)->is_klassptr()->klass();
 
     // In the common case of an exact superklass, try to fold up the
     // test before generating code.  You may ask, why not just generate
@@ -2652,7 +2676,7 @@ Node* Phase::gen_subtype_check(Node* subklass, Node* superklass, Node** ctrl, Me
     case Compile::SSC_always_false:
       {
         Node* always_fail = *ctrl;
-        *ctrl = gvn->C->top();
+        *ctrl = gvn.C->top();
         return always_fail;
       }
     case Compile::SSC_always_true:
@@ -2661,8 +2685,8 @@ Node* Phase::gen_subtype_check(Node* subklass, Node* superklass, Node** ctrl, Me
       {
         // Just do a direct pointer compare and be done.
         IfNode* iff = gen_subtype_check_compare(*ctrl, subklass, superklass, BoolTest::eq, PROB_STATIC_FREQUENT, gvn, T_ADDRESS);
-        *ctrl = gvn->transform(new IfTrueNode(iff));
-        return gvn->transform(new IfFalseNode(iff));
+        *ctrl = gvn.transform(new IfTrueNode(iff));
+        return gvn.transform(new IfFalseNode(iff));
       }
     case Compile::SSC_full_test:
       break;
@@ -2676,11 +2700,11 @@ Node* Phase::gen_subtype_check(Node* subklass, Node* superklass, Node** ctrl, Me
   // will always succeed.  We could leave a dependency behind to ensure this.
 
   // First load the super-klass's check-offset
-  Node *p1 = gvn->transform(new AddPNode(superklass, superklass, gvn->MakeConX(in_bytes(Klass::super_check_offset_offset()))));
-  Node* m = mem->memory_at(C->get_alias_index(gvn->type(p1)->is_ptr()));
-  Node *chk_off = gvn->transform(new LoadINode(NULL, m, p1, gvn->type(p1)->is_ptr(), TypeInt::INT, MemNode::unordered));
+  Node *p1 = gvn.transform(new AddPNode(superklass, superklass, gvn.MakeConX(in_bytes(Klass::super_check_offset_offset()))));
+  Node* m = C->immutable_memory();
+  Node *chk_off = gvn.transform(new LoadINode(NULL, m, p1, gvn.type(p1)->is_ptr(), TypeInt::INT, MemNode::unordered));
   int cacheoff_con = in_bytes(Klass::secondary_super_cache_offset());
-  bool might_be_cache = (gvn->find_int_con(chk_off, cacheoff_con) == cacheoff_con);
+  bool might_be_cache = (gvn.find_int_con(chk_off, cacheoff_con) == cacheoff_con);
 
   // Load from the sub-klass's super-class display list, or a 1-word cache of
   // the secondary superclass list, or a failing value with a sentinel offset
@@ -2690,15 +2714,22 @@ Node* Phase::gen_subtype_check(Node* subklass, Node* superklass, Node** ctrl, Me
   // klass loads can never produce a NULL).
   Node *chk_off_X = chk_off;
 #ifdef _LP64
-  chk_off_X = gvn->transform(new ConvI2LNode(chk_off_X));
+  chk_off_X = gvn.transform(new ConvI2LNode(chk_off_X));
 #endif
-  Node *p2 = gvn->transform(new AddPNode(subklass,subklass,chk_off_X));
+  Node *p2 = gvn.transform(new AddPNode(subklass,subklass,chk_off_X));
   // For some types like interfaces the following loadKlass is from a 1-word
   // cache which is mutable so can't use immutable memory.  Other
   // types load from the super-class display table which is immutable.
-  m = mem->memory_at(C->get_alias_index(gvn->type(p2)->is_ptr()));
-  Node *kmem = might_be_cache ? m : C->immutable_memory();
-  Node *nkls = gvn->transform(LoadKlassNode::make(*gvn, NULL, kmem, p2, gvn->type(p2)->is_ptr(), TypeKlassPtr::OBJECT_OR_NULL));
+  Node *kmem = C->immutable_memory();
+  // secondary_super_cache is not immutable but can be treated as such because:
+  // - no ideal node writes to it in a way that could cause an
+  //   incorrect/missed optimization of the following Load.
+  // - it's a cache so, worse case, not reading the latest value
+  //   wouldn't cause incorrect execution
+  if (might_be_cache && mem != NULL) {
+    kmem = mem->is_MergeMem() ? mem->as_MergeMem()->memory_at(C->get_alias_index(gvn.type(p2)->is_ptr())) : mem;
+  }
+  Node *nkls = gvn.transform(LoadKlassNode::make(gvn, NULL, kmem, p2, gvn.type(p2)->is_ptr(), TypeKlassPtr::OBJECT_OR_NULL));
 
   // Compile speed common case: ARE a subtype and we canNOT fail
   if( superklass == nkls )
@@ -2708,8 +2739,8 @@ Node* Phase::gen_subtype_check(Node* subklass, Node* superklass, Node** ctrl, Me
   // time.  Test to see if the value loaded just previously from the subklass
   // is exactly the superklass.
   IfNode *iff1 = gen_subtype_check_compare(*ctrl, superklass, nkls, BoolTest::eq, PROB_LIKELY(0.83f), gvn, T_ADDRESS);
-  Node *iftrue1 = gvn->transform( new IfTrueNode (iff1));
-  *ctrl = gvn->transform(new IfFalseNode(iff1));
+  Node *iftrue1 = gvn.transform( new IfTrueNode (iff1));
+  *ctrl = gvn.transform(new IfFalseNode(iff1));
 
   // Compile speed common case: Check for being deterministic right now.  If
   // chk_off is a constant and not equal to cacheoff then we are NOT a
@@ -2723,9 +2754,9 @@ Node* Phase::gen_subtype_check(Node* subklass, Node* superklass, Node** ctrl, Me
 
   // Gather the various success & failures here
   RegionNode *r_ok_subtype = new RegionNode(4);
-  gvn->record_for_igvn(r_ok_subtype);
+  gvn.record_for_igvn(r_ok_subtype);
   RegionNode *r_not_subtype = new RegionNode(3);
-  gvn->record_for_igvn(r_not_subtype);
+  gvn.record_for_igvn(r_not_subtype);
 
   r_ok_subtype->init_req(1, iftrue1);
 
@@ -2734,17 +2765,17 @@ Node* Phase::gen_subtype_check(Node* subklass, Node* superklass, Node** ctrl, Me
   // check-offset points into the subklass display list or the 1-element
   // cache.  If it points to the display (and NOT the cache) and the display
   // missed then it's not a subtype.
-  Node *cacheoff = gvn->intcon(cacheoff_con);
+  Node *cacheoff = gvn.intcon(cacheoff_con);
   IfNode *iff2 = gen_subtype_check_compare(*ctrl, chk_off, cacheoff, BoolTest::ne, PROB_LIKELY(0.63f), gvn, T_INT);
-  r_not_subtype->init_req(1, gvn->transform(new IfTrueNode (iff2)));
-  *ctrl = gvn->transform(new IfFalseNode(iff2));
+  r_not_subtype->init_req(1, gvn.transform(new IfTrueNode (iff2)));
+  *ctrl = gvn.transform(new IfFalseNode(iff2));
 
   // Check for self.  Very rare to get here, but it is taken 1/3 the time.
   // No performance impact (too rare) but allows sharing of secondary arrays
   // which has some footprint reduction.
   IfNode *iff3 = gen_subtype_check_compare(*ctrl, subklass, superklass, BoolTest::eq, PROB_LIKELY(0.36f), gvn, T_ADDRESS);
-  r_ok_subtype->init_req(2, gvn->transform(new IfTrueNode(iff3)));
-  *ctrl = gvn->transform(new IfFalseNode(iff3));
+  r_ok_subtype->init_req(2, gvn.transform(new IfTrueNode(iff3)));
+  *ctrl = gvn.transform(new IfFalseNode(iff3));
 
   // -- Roads not taken here: --
   // We could also have chosen to perform the self-check at the beginning
@@ -2767,16 +2798,38 @@ Node* Phase::gen_subtype_check(Node* subklass, Node* superklass, Node** ctrl, Me
   // out of line, and it can only improve I-cache density.
   // The decision to inline or out-of-line this final check is platform
   // dependent, and is found in the AD file definition of PartialSubtypeCheck.
-  Node* psc = gvn->transform(
+  Node* psc = gvn.transform(
     new PartialSubtypeCheckNode(*ctrl, subklass, superklass));
 
-  IfNode *iff4 = gen_subtype_check_compare(*ctrl, psc, gvn->zerocon(T_OBJECT), BoolTest::ne, PROB_FAIR, gvn, T_ADDRESS);
-  r_not_subtype->init_req(2, gvn->transform(new IfTrueNode (iff4)));
-  r_ok_subtype ->init_req(3, gvn->transform(new IfFalseNode(iff4)));
+  IfNode *iff4 = gen_subtype_check_compare(*ctrl, psc, gvn.zerocon(T_OBJECT), BoolTest::ne, PROB_FAIR, gvn, T_ADDRESS);
+  r_not_subtype->init_req(2, gvn.transform(new IfTrueNode (iff4)));
+  r_ok_subtype ->init_req(3, gvn.transform(new IfFalseNode(iff4)));
 
   // Return false path; set default control to true path.
-  *ctrl = gvn->transform(r_ok_subtype);
-  return gvn->transform(r_not_subtype);
+  *ctrl = gvn.transform(r_ok_subtype);
+  return gvn.transform(r_not_subtype);
+}
+
+Node* GraphKit::gen_subtype_check(Node* obj_or_subklass, Node* superklass) {
+  if (ExpandSubTypeCheckAtParseTime) {
+    MergeMemNode* mem = merged_memory();
+    Node* ctrl = control();
+    Node* subklass = obj_or_subklass;
+    if (!_gvn.type(obj_or_subklass)->isa_klassptr()) {
+      subklass = load_object_klass(obj_or_subklass);
+    }
+
+    Node* n = Phase::gen_subtype_check(subklass, superklass, &ctrl, mem, _gvn);
+    set_control(ctrl);
+    return n;
+  }
+
+  const TypePtr* adr_type = TypeKlassPtr::make(TypePtr::NotNull, C->env()->Object_klass(), Type::OffsetBot);
+  Node* check = _gvn.transform(new SubTypeCheckNode(C, obj_or_subklass, superklass));
+  Node* bol = _gvn.transform(new BoolNode(check, BoolTest::eq));
+  IfNode* iff = create_and_xform_if(control(), bol, PROB_STATIC_FREQUENT, COUNT_UNKNOWN);
+  set_control(_gvn.transform(new IfTrueNode(iff)));
+  return _gvn.transform(new IfFalseNode(iff));
 }
 
 // Profile-driven exact type check:
@@ -2808,10 +2861,9 @@ Node* GraphKit::type_check_receiver(Node* receiver, ciKlass* klass,
 Node* GraphKit::subtype_check_receiver(Node* receiver, ciKlass* klass,
                                        Node** casted_receiver) {
   const TypeKlassPtr* tklass = TypeKlassPtr::make(klass);
-  Node* recv_klass = load_object_klass(receiver);
   Node* want_klass = makecon(tklass);
 
-  Node* slow_ctl = gen_subtype_check(recv_klass, want_klass);
+  Node* slow_ctl = gen_subtype_check(receiver, want_klass);
 
   // Cast receiver after successful check
   const TypeOopPtr* recv_type = tklass->cast_to_exactness(false)->is_klassptr()->as_instance_type();
@@ -3076,11 +3128,8 @@ Node* GraphKit::gen_instanceof(Node* obj, Node* superklass, bool safe_for_replac
     }
   }
 
-  // Load the object's klass
-  Node* obj_klass = load_object_klass(not_null_obj);
-
   // Generate the subtype check
-  Node* not_subtype_ctrl = gen_subtype_check(obj_klass, superklass);
+  Node* not_subtype_ctrl = gen_subtype_check(not_null_obj, superklass);
 
   // Plug in the success path to the general merge in slot 1.
   region->init_req(_obj_path, control());
@@ -3203,11 +3252,8 @@ Node* GraphKit::gen_checkcast(Node *obj, Node* superklass,
   }
 
   if (cast_obj == NULL) {
-    // Load the object's klass
-    Node* obj_klass = load_object_klass(not_null_obj);
-
     // Generate the subtype check
-    Node* not_subtype_ctrl = gen_subtype_check( obj_klass, superklass );
+    Node* not_subtype_ctrl = gen_subtype_check(not_null_obj, superklass );
 
     // Plug in success path into the merge
     cast_obj = _gvn.transform(new CheckCastPPNode(control(), not_null_obj, toop));
@@ -3216,7 +3262,7 @@ Node* GraphKit::gen_checkcast(Node *obj, Node* superklass,
       if (not_subtype_ctrl != top()) { // If failure is possible
         PreserveJVMState pjvms(this);
         set_control(not_subtype_ctrl);
-        builtin_throw(Deoptimization::Reason_class_check, obj_klass);
+        builtin_throw(Deoptimization::Reason_class_check, load_object_klass(not_null_obj));
       }
     } else {
       (*failure_control) = not_subtype_ctrl;

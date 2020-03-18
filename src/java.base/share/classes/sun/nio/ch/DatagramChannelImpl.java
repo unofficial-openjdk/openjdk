@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -84,6 +84,9 @@ class DatagramChannelImpl
     // Used to make native read and write calls
     private static final NativeDispatcher nd = new DatagramDispatcher();
 
+    // true if interruptible (can be false to emulate legacy DatagramSocket)
+    private final boolean interruptible;
+
     // The protocol family of the socket
     private final ProtocolFamily family;
 
@@ -158,13 +161,14 @@ class DatagramChannelImpl
     // -- End of fields protected by stateLock
 
 
-    public DatagramChannelImpl(SelectorProvider sp) throws IOException {
+    DatagramChannelImpl(SelectorProvider sp, boolean interruptible) throws IOException {
         this(sp, (Net.isIPv6Available()
                 ? StandardProtocolFamily.INET6
-                : StandardProtocolFamily.INET));
+                : StandardProtocolFamily.INET),
+                interruptible);
     }
 
-    public DatagramChannelImpl(SelectorProvider sp, ProtocolFamily family)
+    DatagramChannelImpl(SelectorProvider sp, ProtocolFamily family, boolean interruptible)
         throws IOException
     {
         super(sp);
@@ -184,6 +188,7 @@ class DatagramChannelImpl
         ResourceManager.beforeUdpCreate();
         boolean initialized = false;
         try {
+            this.interruptible = interruptible;
             this.family = family;
             this.fd = fd = Net.socket(family, false);
             this.fdVal = IOUtil.fdVal(fd);
@@ -211,7 +216,7 @@ class DatagramChannelImpl
         this.cleaner = CleanerFactory.cleaner().register(this, releaser);
     }
 
-    public DatagramChannelImpl(SelectorProvider sp, FileDescriptor fd)
+    DatagramChannelImpl(SelectorProvider sp, FileDescriptor fd)
         throws IOException
     {
         super(sp);
@@ -221,6 +226,7 @@ class DatagramChannelImpl
         ResourceManager.beforeUdpCreate();
         boolean initialized = false;
         try {
+            this.interruptible = true;
             this.family = Net.isIPv6Available()
                     ? StandardProtocolFamily.INET6
                     : StandardProtocolFamily.INET;
@@ -338,23 +344,41 @@ class DatagramChannelImpl
 
             ProtocolFamily family = familyFor(name);
 
+            // Some platforms require both IPV6_XXX and IP_XXX socket options to
+            // be set when the channel's socket is IPv6 and it is used to send
+            // IPv4 multicast datagrams. The IP_XXX socket options are set on a
+            // best effort basis.
+            boolean needToSetIPv4Option = (family != Net.UNSPEC)
+                    && (this.family == StandardProtocolFamily.INET6)
+                    && Net.shouldSetBothIPv4AndIPv6Options();
+
+            // outgoing multicast interface
             if (name == StandardSocketOptions.IP_MULTICAST_IF) {
-                NetworkInterface interf = (NetworkInterface)value;
+                assert family != Net.UNSPEC;
+                NetworkInterface interf = (NetworkInterface) value;
                 if (family == StandardProtocolFamily.INET6) {
                     int index = interf.getIndex();
                     if (index == -1)
                         throw new IOException("Network interface cannot be identified");
                     Net.setInterface6(fd, index);
-                } else {
+                }
+                if (family == StandardProtocolFamily.INET || needToSetIPv4Option) {
                     // need IPv4 address to identify interface
                     Inet4Address target = Net.anyInet4Address(interf);
-                    if (target == null)
+                    if (target != null) {
+                        try {
+                            Net.setInterface4(fd, Net.inet4AsInt(target));
+                        } catch (IOException ioe) {
+                            if (family == StandardProtocolFamily.INET) throw ioe;
+                        }
+                    } else if (family == StandardProtocolFamily.INET) {
                         throw new IOException("Network interface not configured for IPv4");
-                    int targetAddress = Net.inet4AsInt(target);
-                    Net.setInterface4(fd, targetAddress);
+                    }
                 }
                 return this;
             }
+
+            // SO_REUSEADDR needs special handling as it may be emulated
             if (name == StandardSocketOptions.SO_REUSEADDR
                 && Net.useExclusiveBind() && localAddress != null) {
                 reuseAddressEmulated = true;
@@ -363,6 +387,12 @@ class DatagramChannelImpl
 
             // remaining options don't need any special handling
             Net.setSocketOption(fd, family, name, value);
+            if (needToSetIPv4Option && family != StandardProtocolFamily.INET) {
+                try {
+                    Net.setSocketOption(fd, StandardProtocolFamily.INET, name, value);
+                } catch (IOException ignore) { }
+            }
+
             return this;
         }
     }
@@ -452,7 +482,7 @@ class DatagramChannelImpl
     private SocketAddress beginRead(boolean blocking, boolean mustBeConnected)
         throws IOException
     {
-        if (blocking) {
+        if (blocking && interruptible) {
             // set hook for Thread.interrupt
             begin();
         }
@@ -485,8 +515,12 @@ class DatagramChannelImpl
                     tryFinishClose();
                 }
             }
-            // remove hook for Thread.interrupt
-            end(completed);
+            if (interruptible) {
+                // remove hook for Thread.interrupt (may throw AsynchronousCloseException)
+                end(completed);
+            } else if (!completed && !isOpen()) {
+                throw new AsynchronousCloseException();
+            }
         }
     }
 
@@ -927,7 +961,7 @@ class DatagramChannelImpl
                 beginRead(blocking, true);
                 n = IOUtil.read(fd, dsts, offset, length, nd);
                 if (blocking) {
-                    while (IOStatus.okayToRetry(n) && isOpen()) {
+                    while (IOStatus.okayToRetry(n)  && isOpen()) {
                         park(Net.POLLIN);
                         n = IOUtil.read(fd, dsts, offset, length, nd);
                     }
@@ -954,7 +988,7 @@ class DatagramChannelImpl
     private SocketAddress beginWrite(boolean blocking, boolean mustBeConnected)
         throws IOException
     {
-        if (blocking) {
+        if (blocking && interruptible) {
             // set hook for Thread.interrupt
             begin();
         }
@@ -987,8 +1021,13 @@ class DatagramChannelImpl
                     tryFinishClose();
                 }
             }
-            // remove hook for Thread.interrupt
-            end(completed);
+
+            if (interruptible) {
+                // remove hook for Thread.interrupt (may throw AsynchronousCloseException)
+                end(completed);
+            } else if (!completed && !isOpen()) {
+                throw new AsynchronousCloseException();
+            }
         }
     }
 
@@ -1542,6 +1581,22 @@ class DatagramChannelImpl
 
             key.invalidate();
             registry.remove(key);
+        }
+    }
+
+    /**
+     * Finds an existing membership of a multicast group. Returns null if this
+     * channel's socket is not a member of the group.
+     *
+     * @apiNote This method is for use by the socket adaptor
+     */
+    MembershipKey findMembership(InetAddress group, NetworkInterface interf) {
+        synchronized (stateLock) {
+            if (registry != null) {
+                return registry.checkMembership(group, interf, null);
+            } else {
+                return null;
+            }
         }
     }
 

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -72,6 +73,9 @@ public:
   void setup_for_evac();
   void setup_for_updaterefs();
   void setup_for_traversal();
+
+  void setup_for_reset();
+  void setup_for_preclean();
 
   inline void report_mark(size_t words);
   inline void report_evac(size_t words);

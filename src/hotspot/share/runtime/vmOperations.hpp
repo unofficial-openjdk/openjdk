@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,7 +42,6 @@
 #define VM_OPS_DO(template)                       \
   template(None)                                  \
   template(Cleanup)                               \
-  template(ThreadStop)                            \
   template(ThreadDump)                            \
   template(PrintThreads)                          \
   template(FindDeadlocks)                         \
@@ -102,7 +101,6 @@
   template(ShenandoahFullGC)                      \
   template(ShenandoahInitMark)                    \
   template(ShenandoahFinalMarkStartEvac)          \
-  template(ShenandoahFinalEvac)                   \
   template(ShenandoahInitTraversalGC)             \
   template(ShenandoahFinalTraversalGC)            \
   template(ShenandoahInitUpdateRefs)              \
@@ -137,7 +135,7 @@ class VM_Operation : public StackObj {
 
  private:
   Thread*         _calling_thread;
-  long            _timestamp;
+  uint64_t        _timestamp;
   VM_Operation*   _next;
   VM_Operation*   _prev;
 
@@ -151,8 +149,8 @@ class VM_Operation : public StackObj {
   Thread* calling_thread() const                 { return _calling_thread; }
   void set_calling_thread(Thread* thread);
 
-  long timestamp() const              { return _timestamp; }
-  void set_timestamp(long timestamp)  { _timestamp = timestamp; }
+  uint64_t timestamp() const              { return _timestamp; }
+  void set_timestamp(uint64_t timestamp)  { _timestamp = timestamp; }
 
   // Called by VM thread - does in turn invoke doit(). Do not override this
   void evaluate();
@@ -177,7 +175,6 @@ class VM_Operation : public StackObj {
   // Configuration. Override these appropriately in subclasses.
   virtual VMOp_Type type() const = 0;
   virtual bool allow_nested_vm_operations() const { return false; }
-  virtual void oops_do(OopClosure* f)              { /* do nothing */ };
 
   // An operation can either be done inside a safepoint
   // or concurrently with Java threads running.
@@ -208,30 +205,6 @@ class VM_Cleanup: public VM_Operation {
  public:
   VMOp_Type type() const { return VMOp_Cleanup; }
   void doit() {};
-};
-
-class VM_ThreadStop: public VM_Operation {
- private:
-  oop     _thread;        // The Thread that the Throwable is thrown against
-  oop     _throwable;     // The Throwable thrown at the target Thread
- public:
-  // All oops are passed as JNI handles, since there is no guarantee that a GC might happen before the
-  // VM operation is executed.
-  VM_ThreadStop(oop thread, oop throwable) {
-    _thread    = thread;
-    _throwable = throwable;
-  }
-  VMOp_Type type() const                         { return VMOp_ThreadStop; }
-  oop target_thread() const                      { return _thread; }
-  oop throwable() const                          { return _throwable;}
-  void doit();
-  // We deoptimize if top-most frame is compiled - this might require a C2I adapter to be generated
-  bool allow_nested_vm_operations() const        { return true; }
-
-  // GC support
-  void oops_do(OopClosure* f) {
-    f->do_oop(&_thread); f->do_oop(&_throwable);
-  }
 };
 
 class VM_ClearICs: public VM_Operation {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -492,7 +492,7 @@ void os::initialize_jdk_signal_support(TRAPS) {
                             thread_oop,
                             CHECK);
 
-    { MutexLocker mu(Threads_lock);
+    { MutexLocker mu(THREAD, Threads_lock);
       JavaThread* signal_thread = new JavaThread(&signal_thread_entry);
 
       // At this point it may be possible that no osthread was created for the
@@ -1016,10 +1016,9 @@ void os::print_date_and_time(outputStream *st, char* buf, size_t buflen) {
   }
 
   double t = os::elapsedTime();
-  // NOTE: It tends to crash after a SEGV if we want to printf("%f",...) in
-  //       Linux. Must be a bug in glibc ? Workaround is to round "t" to int
-  //       before printf. We lost some precision, but who cares?
+  // NOTE: a crash using printf("%f",...) on Linux was historically noted here.
   int eltime = (int)t;  // elapsed time in seconds
+  int eltimeFraction = (int) ((t - eltime) * 1000000);
 
   // print elapsed time in a human-readable format:
   int eldays = eltime / secs_per_day;
@@ -1029,7 +1028,7 @@ void os::print_date_and_time(outputStream *st, char* buf, size_t buflen) {
   int elmins = (eltime - day_secs - hour_secs) / secs_per_min;
   int minute_secs = elmins * secs_per_min;
   int elsecs = (eltime - day_secs - hour_secs - minute_secs);
-  st->print_cr(" elapsed time: %d seconds (%dd %dh %dm %ds)", eltime, eldays, elhours, elmins, elsecs);
+  st->print_cr(" elapsed time: %d.%06d seconds (%dd %dh %dm %ds)", eltime, eltimeFraction, eldays, elhours, elmins, elsecs);
 }
 
 
@@ -1114,7 +1113,7 @@ void os::print_location(outputStream* st, intptr_t x, bool verbose) {
     }
     // If the addr is in the stack region for this thread then report that
     // and print thread info
-    if (thread->on_local_stack(addr)) {
+    if (thread->is_in_full_stack(addr)) {
       st->print_cr(INTPTR_FORMAT " is pointing into the stack for thread: "
                    INTPTR_FORMAT, p2i(addr), p2i(thread));
       if (verbose) thread->print_on(st);

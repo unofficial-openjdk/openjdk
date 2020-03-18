@@ -92,14 +92,7 @@ OtherRegionsTable::OtherRegionsTable(Mutex* m) :
     _fine_eviction_stride = _max_fine_entries / _fine_eviction_sample_size;
   }
 
-  _fine_grain_regions = NEW_C_HEAP_ARRAY3(PerRegionTablePtr, _max_fine_entries,
-                        mtGC, CURRENT_PC, AllocFailStrategy::RETURN_NULL);
-
-  if (_fine_grain_regions == NULL) {
-    vm_exit_out_of_memory(sizeof(void*)*_max_fine_entries, OOM_MALLOC_ERROR,
-                          "Failed to allocate _fine_grain_entries.");
-  }
-
+  _fine_grain_regions = NEW_C_HEAP_ARRAY(PerRegionTablePtr, _max_fine_entries, mtGC);
   for (size_t i = 0; i < _max_fine_entries; i++) {
     _fine_grain_regions[i] = NULL;
   }
@@ -109,59 +102,19 @@ void OtherRegionsTable::link_to_all(PerRegionTable* prt) {
   // We always append to the beginning of the list for convenience;
   // the order of entries in this list does not matter.
   if (_first_all_fine_prts != NULL) {
-    assert(_first_all_fine_prts->prev() == NULL, "invariant");
-    _first_all_fine_prts->set_prev(prt);
     prt->set_next(_first_all_fine_prts);
   } else {
     // this is the first element we insert. Adjust the "last" pointer
     _last_all_fine_prts = prt;
     assert(prt->next() == NULL, "just checking");
   }
-  // the new element is always the first element without a predecessor
-  prt->set_prev(NULL);
   _first_all_fine_prts = prt;
 
-  assert(prt->prev() == NULL, "just checking");
   assert(_first_all_fine_prts == prt, "just checking");
   assert((_first_all_fine_prts == NULL && _last_all_fine_prts == NULL) ||
          (_first_all_fine_prts != NULL && _last_all_fine_prts != NULL),
          "just checking");
   assert(_last_all_fine_prts == NULL || _last_all_fine_prts->next() == NULL,
-         "just checking");
-  assert(_first_all_fine_prts == NULL || _first_all_fine_prts->prev() == NULL,
-         "just checking");
-}
-
-void OtherRegionsTable::unlink_from_all(PerRegionTable* prt) {
-  if (prt->prev() != NULL) {
-    assert(_first_all_fine_prts != prt, "just checking");
-    prt->prev()->set_next(prt->next());
-    // removing the last element in the list?
-    if (_last_all_fine_prts == prt) {
-      _last_all_fine_prts = prt->prev();
-    }
-  } else {
-    assert(_first_all_fine_prts == prt, "just checking");
-    _first_all_fine_prts = prt->next();
-    // list is empty now?
-    if (_first_all_fine_prts == NULL) {
-      _last_all_fine_prts = NULL;
-    }
-  }
-
-  if (prt->next() != NULL) {
-    prt->next()->set_prev(prt->prev());
-  }
-
-  prt->set_next(NULL);
-  prt->set_prev(NULL);
-
-  assert((_first_all_fine_prts == NULL && _last_all_fine_prts == NULL) ||
-         (_first_all_fine_prts != NULL && _last_all_fine_prts != NULL),
-         "just checking");
-  assert(_last_all_fine_prts == NULL || _last_all_fine_prts->next() == NULL,
-         "just checking");
-  assert(_first_all_fine_prts == NULL || _first_all_fine_prts->prev() == NULL,
          "just checking");
 }
 
@@ -247,7 +200,6 @@ void OtherRegionsTable::add_reference(OopOrNarrowOopStar from, uint tid) {
   // OtherRegionsTable for why this is OK.
   assert(prt != NULL, "Inv");
 
-  bool added = prt->add_reference(from);
   if (prt->add_reference(from)) {
     num_added_by_coarsening++;
   }

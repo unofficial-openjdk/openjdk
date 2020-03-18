@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,8 +42,7 @@
                  diagnostic_pd, \
                  notproduct, \
                  range, \
-                 constraint, \
-                 writeable) \
+                 constraint) \
                                                                             \
   /* Printing */                                                            \
   notproduct(bool, PrintC1Statistics, false,                                \
@@ -170,9 +169,6 @@
                                                                             \
   develop(bool, UseTableRanges, true,                                       \
           "Faster versions of lookup table using ranges")                   \
-                                                                            \
-  develop_pd(bool, RoundFPResults,                                          \
-          "Indicates whether rounding is needed for floating point results")\
                                                                             \
   develop(intx, NestedInliningSizeRatio, 90,                                \
           "Percentage of prev. allowed inline size in recursive inlining")  \

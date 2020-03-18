@@ -85,18 +85,6 @@ void VM_Operation::print_on_error(outputStream* st) const {
   }
 }
 
-void VM_ThreadStop::doit() {
-  assert(SafepointSynchronize::is_at_safepoint(), "must be at a safepoint");
-  ThreadsListHandle tlh;
-  JavaThread* target = java_lang_Thread::thread(target_thread());
-  // Note that this now allows multiple ThreadDeath exceptions to be
-  // thrown at a thread.
-  if (target != NULL && (!EnableThreadSMRExtraValidityChecks || tlh.includes(target))) {
-    // The target thread has run and has not exited yet.
-    target->send_thread_stop(throwable());
-  }
-}
-
 void VM_ClearICs::doit() {
   if (_preserve_static_stubs) {
     CodeCache::cleanup_inline_caches();
@@ -146,12 +134,11 @@ void VM_DeoptimizeAll::doit() {
         tcount = 0;
           int fcount = 0;
           // Deoptimize some selected frames.
-          // Biased llocking wants a updated register map
-          for(StackFrameStream fst(thread, UseBiasedLocking); !fst.is_done(); fst.next()) {
+          for(StackFrameStream fst(thread, false); !fst.is_done(); fst.next()) {
             if (fst.current()->can_be_deoptimized()) {
               if (fcount++ == fnum) {
                 fcount = 0;
-                Deoptimization::deoptimize(thread, *fst.current(), fst.register_map());
+                Deoptimization::deoptimize(thread, *fst.current());
               }
             }
           }

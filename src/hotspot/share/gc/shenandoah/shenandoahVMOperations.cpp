@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -48,11 +49,6 @@ void VM_ShenandoahInitMark::doit() {
 void VM_ShenandoahFinalMarkStartEvac::doit() {
   ShenandoahGCPauseMark mark(_gc_id, SvcGCMarker::CONCURRENT);
   ShenandoahHeap::heap()->entry_final_mark();
-}
-
-void VM_ShenandoahFinalEvac::doit() {
-  ShenandoahGCPauseMark mark(_gc_id, SvcGCMarker::CONCURRENT);
-  ShenandoahHeap::heap()->entry_final_evac();
 }
 
 void VM_ShenandoahFullGC::doit() {

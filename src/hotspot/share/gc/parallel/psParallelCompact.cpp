@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,6 +53,7 @@
 #include "gc/shared/referenceProcessor.hpp"
 #include "gc/shared/referenceProcessorPhaseTimes.hpp"
 #include "gc/shared/spaceDecorator.inline.hpp"
+#include "gc/shared/taskTerminator.hpp"
 #include "gc/shared/weakProcessor.hpp"
 #include "gc/shared/workerPolicy.hpp"
 #include "gc/shared/workgroup.hpp"
@@ -1114,14 +1115,14 @@ PSParallelCompact::compute_dense_prefix_via_density(const SpaceId id,
     (1.0 - cur_density) * (1.0 - cur_density) * cur_density * cur_density;
   const size_t deadwood_goal = size_t(space_capacity * deadwood_density);
 
-  if (TraceParallelOldGCDensePrefix) {
-    tty->print_cr("cur_dens=%5.3f dw_dens=%5.3f dw_goal=" SIZE_FORMAT,
-                  cur_density, deadwood_density, deadwood_goal);
-    tty->print_cr("space_live=" SIZE_FORMAT " " "space_used=" SIZE_FORMAT " "
-                  "space_cap=" SIZE_FORMAT,
-                  space_live, space_used,
-                  space_capacity);
-  }
+  log_develop_debug(gc, compaction)(
+      "cur_dens=%5.3f dw_dens=%5.3f dw_goal=" SIZE_FORMAT,
+      cur_density, deadwood_density, deadwood_goal);
+  log_develop_debug(gc, compaction)(
+      "space_live=" SIZE_FORMAT " space_used=" SIZE_FORMAT " "
+      "space_cap=" SIZE_FORMAT,
+      space_live, space_used,
+      space_capacity);
 
   // XXX - Use binary search?
   HeapWord* dense_prefix = sd.region_to_addr(cp);
@@ -1130,12 +1131,12 @@ PSParallelCompact::compute_dense_prefix_via_density(const SpaceId id,
   while (cp < end_cp) {
     HeapWord* region_destination = cp->destination();
     const size_t cur_deadwood = pointer_delta(dense_prefix, region_destination);
-    if (TraceParallelOldGCDensePrefix && Verbose) {
-      tty->print_cr("c#=" SIZE_FORMAT_W(4) " dst=" PTR_FORMAT " "
-                    "dp=" PTR_FORMAT " " "cdw=" SIZE_FORMAT_W(8),
-                    sd.region(cp), p2i(region_destination),
-                    p2i(dense_prefix), cur_deadwood);
-    }
+
+    log_develop_trace(gc, compaction)(
+        "c#=" SIZE_FORMAT_W(4) " dst=" PTR_FORMAT " "
+        "dp=" PTR_FORMAT " cdw=" SIZE_FORMAT_W(8),
+        sd.region(cp), p2i(region_destination),
+        p2i(dense_prefix), cur_deadwood);
 
     if (cur_deadwood >= deadwood_goal) {
       // Found the region that has the correct amount of deadwood to the left.
@@ -1157,11 +1158,13 @@ PSParallelCompact::compute_dense_prefix_via_density(const SpaceId id,
         if (density_to_right <= prev_region_density_to_right) {
           return dense_prefix;
         }
-        if (TraceParallelOldGCDensePrefix && Verbose) {
-          tty->print_cr("backing up from c=" SIZE_FORMAT_W(4) " d2r=%10.8f "
-                        "pc_d2r=%10.8f", sd.region(cp), density_to_right,
-                        prev_region_density_to_right);
-        }
+
+        log_develop_trace(gc, compaction)(
+            "backing up from c=" SIZE_FORMAT_W(4) " d2r=%10.8f "
+            "pc_d2r=%10.8f",
+            sd.region(cp), density_to_right,
+            prev_region_density_to_right);
+
         dense_prefix -= region_size;
         live_to_right = prev_region_live_to_right;
         space_to_right = prev_region_space_to_right;
@@ -1195,16 +1198,17 @@ void PSParallelCompact::print_dense_prefix_stats(const char* const algorithm,
   const size_t live_to_right = new_top - cp->destination();
   const size_t dead_to_right = space->top() - addr - live_to_right;
 
-  tty->print_cr("%s=" PTR_FORMAT " dpc=" SIZE_FORMAT_W(5) " "
-                "spl=" SIZE_FORMAT " "
-                "d2l=" SIZE_FORMAT " d2l%%=%6.4f "
-                "d2r=" SIZE_FORMAT " l2r=" SIZE_FORMAT
-                " ratio=%10.8f",
-                algorithm, p2i(addr), region_idx,
-                space_live,
-                dead_to_left, dead_to_left_pct,
-                dead_to_right, live_to_right,
-                double(dead_to_right) / live_to_right);
+  log_develop_debug(gc, compaction)(
+      "%s=" PTR_FORMAT " dpc=" SIZE_FORMAT_W(5) " "
+      "spl=" SIZE_FORMAT " "
+      "d2l=" SIZE_FORMAT " d2l%%=%6.4f "
+      "d2r=" SIZE_FORMAT " l2r=" SIZE_FORMAT " "
+      "ratio=%10.8f",
+      algorithm, p2i(addr), region_idx,
+      space_live,
+      dead_to_left, dead_to_left_pct,
+      dead_to_right, live_to_right,
+      double(dead_to_right) / live_to_right);
 }
 #endif  // #ifndef PRODUCT
 
@@ -1412,16 +1416,16 @@ PSParallelCompact::compute_dense_prefix(const SpaceId id,
   const size_t dead_wood_limit = MIN2(size_t(space_capacity * limiter),
                                       dead_wood_max);
 
-  if (TraceParallelOldGCDensePrefix) {
-    tty->print_cr("space_live=" SIZE_FORMAT " " "space_used=" SIZE_FORMAT " "
-                  "space_cap=" SIZE_FORMAT,
-                  space_live, space_used,
-                  space_capacity);
-    tty->print_cr("dead_wood_limiter(%6.4f, " SIZE_FORMAT ")=%6.4f "
-                  "dead_wood_max=" SIZE_FORMAT " dead_wood_limit=" SIZE_FORMAT,
-                  density, min_percent_free, limiter,
-                  dead_wood_max, dead_wood_limit);
-  }
+  log_develop_debug(gc, compaction)(
+      "space_live=" SIZE_FORMAT " space_used=" SIZE_FORMAT " "
+      "space_cap=" SIZE_FORMAT,
+      space_live, space_used,
+      space_capacity);
+  log_develop_debug(gc, compaction)(
+      "dead_wood_limiter(%6.4f, " SIZE_FORMAT ")=%6.4f "
+      "dead_wood_max=" SIZE_FORMAT " dead_wood_limit=" SIZE_FORMAT,
+      density, min_percent_free, limiter,
+      dead_wood_max, dead_wood_limit);
 
   // Locate the region with the desired amount of dead space to the left.
   const RegionData* const limit_cp =
@@ -1535,7 +1539,7 @@ PSParallelCompact::summarize_space(SpaceId id, bool maximum_compaction)
     _space_info[id].set_dense_prefix(dense_prefix_end);
 
 #ifndef PRODUCT
-    if (TraceParallelOldGCDensePrefix) {
+    if (log_is_enabled(Debug, gc, compaction)) {
       print_dense_prefix_stats("ratio", id, maximum_compaction,
                                dense_prefix_end);
       HeapWord* addr = compute_dense_prefix_via_density(id, maximum_compaction);
@@ -1609,16 +1613,16 @@ void PSParallelCompact::summary_phase(ParCompactionManager* cm,
 {
   GCTraceTime(Info, gc, phases) tm("Summary Phase", &_gc_timer);
 
-#ifdef  ASSERT
-  if (TraceParallelOldGCMarkingPhase) {
-    tty->print_cr("add_obj_count=" SIZE_FORMAT " "
-                  "add_obj_bytes=" SIZE_FORMAT,
-                  add_obj_count, add_obj_size * HeapWordSize);
-    tty->print_cr("mark_bitmap_count=" SIZE_FORMAT " "
-                  "mark_bitmap_bytes=" SIZE_FORMAT,
-                  mark_bitmap_count, mark_bitmap_size * HeapWordSize);
-  }
-#endif  // #ifdef ASSERT
+  log_develop_debug(gc, marking)(
+      "add_obj_count=" SIZE_FORMAT " "
+      "add_obj_bytes=" SIZE_FORMAT,
+      add_obj_count,
+      add_obj_size * HeapWordSize);
+  log_develop_debug(gc, marking)(
+      "mark_bitmap_count=" SIZE_FORMAT " "
+      "mark_bitmap_bytes=" SIZE_FORMAT,
+      mark_bitmap_count,
+      mark_bitmap_size * HeapWordSize);
 
   // Quick summarization of each space into itself, to see how much is live.
   summarize_spaces_quick();
@@ -1968,10 +1972,6 @@ bool PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
                          marking_start.ticks(), compaction_start.ticks(),
                          collection_exit.ticks());
 
-#ifdef TRACESPINNING
-  ParallelTaskTerminator::print_termination_counts();
-#endif
-
   AdaptiveSizePolicyOutput::print(size_policy, heap->total_collections());
 
   _gc_timer.register_gc_end();
@@ -2149,7 +2149,7 @@ static void mark_from_roots_work(ParallelRootType::Value root_type, uint worker_
   cm->follow_marking_stacks();
 }
 
-static void steal_marking_work(ParallelTaskTerminator& terminator, uint worker_id) {
+static void steal_marking_work(TaskTerminator& terminator, uint worker_id) {
   assert(ParallelScavengeHeap::heap()->is_gc_active(), "called outside gc");
 
   ParCompactionManager* cm =
@@ -2181,7 +2181,7 @@ public:
       AbstractGangTask("MarkFromRootsTask"),
       _strong_roots_scope(active_workers),
       _subtasks(),
-      _terminator(active_workers, ParCompactionManager::stack_array()),
+      _terminator(active_workers, ParCompactionManager::oop_task_queues()),
       _active_workers(active_workers) {
     _subtasks.set_n_threads(active_workers);
     _subtasks.set_n_tasks(ParallelRootType::sentinel);
@@ -2197,7 +2197,7 @@ public:
     Threads::possibly_parallel_threads_do(true /*parallel */, &closure);
 
     if (_active_workers > 1) {
-      steal_marking_work(*_terminator.terminator(), worker_id);
+      steal_marking_work(_terminator, worker_id);
     }
   }
 };
@@ -2213,7 +2213,7 @@ public:
       AbstractGangTask("PCRefProcTask"),
       _task(task),
       _ergo_workers(ergo_workers),
-      _terminator(_ergo_workers, ParCompactionManager::stack_array()) {
+      _terminator(_ergo_workers, ParCompactionManager::oop_task_queues()) {
   }
 
   virtual void work(uint worker_id) {
@@ -2227,7 +2227,7 @@ public:
     _task.work(worker_id, *PSParallelCompact::is_alive_closure(),
                mark_and_push_closure, follow_stack_closure);
 
-    steal_marking_work(*_terminator.terminator(), worker_id);
+    steal_marking_work(_terminator, worker_id);
   }
 };
 
@@ -2452,7 +2452,7 @@ public:
   }
 
   bool try_claim(PSParallelCompact::UpdateDensePrefixTask& reference) {
-    uint claimed = Atomic::add(&_counter, 1u) - 1; // -1 is so that we start with zero
+    uint claimed = Atomic::fetch_and_add(&_counter, 1u);
     if (claimed < _insert_index) {
       reference = _backing_array[claimed];
       return true;
@@ -2586,7 +2586,7 @@ void PSParallelCompact::write_block_fill_histogram()
 }
 #endif // #ifdef ASSERT
 
-static void compaction_with_stealing_work(ParallelTaskTerminator* terminator, uint worker_id) {
+static void compaction_with_stealing_work(TaskTerminator* terminator, uint worker_id) {
   assert(ParallelScavengeHeap::heap()->is_gc_active(), "called outside gc");
 
   ParCompactionManager* cm =
@@ -2629,7 +2629,7 @@ public:
   UpdateDensePrefixAndCompactionTask(TaskQueue& tq, uint active_workers) :
       AbstractGangTask("UpdateDensePrefixAndCompactionTask"),
       _tq(tq),
-      _terminator(active_workers, ParCompactionManager::region_array()),
+      _terminator(active_workers, ParCompactionManager::region_task_queues()),
       _active_workers(active_workers) {
   }
   virtual void work(uint worker_id) {
@@ -2644,7 +2644,7 @@ public:
 
     // Once a thread has drained it's stack, it should try to steal regions from
     // other threads.
-    compaction_with_stealing_work(_terminator.terminator(), worker_id);
+    compaction_with_stealing_work(&_terminator, worker_id);
   }
 };
 
@@ -3383,7 +3383,7 @@ MoveAndUpdateClosure::do_addr(HeapWord* addr, size_t words) {
   assert(oopDesc::is_oop_or_null(moved_oop), "Expected an oop or NULL at " PTR_FORMAT, p2i(moved_oop));
 
   update_state(words);
-  assert(copy_destination() == (HeapWord*)moved_oop + moved_oop->size(), "sanity");
+  assert(copy_destination() == cast_from_oop<HeapWord*>(moved_oop) + moved_oop->size(), "sanity");
   return is_full() ? ParMarkBitMap::full : ParMarkBitMap::incomplete;
 }
 

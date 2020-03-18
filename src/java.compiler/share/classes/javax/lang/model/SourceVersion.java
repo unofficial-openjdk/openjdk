@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,7 +60,9 @@ public enum SourceVersion {
      *  11: local-variable syntax for lambda parameters
      *  12: no changes (switch expressions in preview)
      *  13: no changes (switch expressions and text blocks in preview)
-     *  14: switch expressions
+     *  14: switch expressions (pattern matching and records in
+     *      preview, text blocks in preview again)
+     *  15: TBD
      */
 
     /**
@@ -203,7 +205,15 @@ public enum SourceVersion {
      *
      * @since 14
      */
-     RELEASE_14;
+    RELEASE_14,
+
+    /**
+     * The version recognized by the Java Platform, Standard Edition
+     * 15.
+     *
+     * @since 15
+     */
+     RELEASE_15;
 
     // Note that when adding constants for newer releases, the
     // behavior of latest() and latestSupported() must be updated too.
@@ -214,7 +224,7 @@ public enum SourceVersion {
      * @return the latest source version that can be modeled
      */
     public static SourceVersion latest() {
-        return RELEASE_14;
+        return RELEASE_15;
     }
 
     private static final SourceVersion latestSupported = getLatestSupported();
@@ -229,7 +239,7 @@ public enum SourceVersion {
     private static SourceVersion getLatestSupported() {
         int intVersion = Runtime.version().feature();
         return (intVersion >= 11) ?
-            valueOf("RELEASE_" + Math.min(14, intVersion)):
+            valueOf("RELEASE_" + Math.min(15, intVersion)):
             RELEASE_10;
     }
 
@@ -277,6 +287,8 @@ public enum SourceVersion {
      * @return {@code true} if this string is a
      * syntactically valid identifier or keyword, {@code false}
      * otherwise.
+     *
+     * @jls 3.8 Identifiers
      */
     public static boolean isIdentifier(CharSequence name) {
         String id = name.toString();
@@ -301,9 +313,16 @@ public enum SourceVersion {
 
     /**
      * Returns whether or not {@code name} is a syntactically valid
-     * qualified name in the latest source version.  Unlike {@link
-     * #isIdentifier isIdentifier}, this method returns {@code false}
-     * for keywords, boolean literals, and the null literal.
+     * qualified name in the latest source version.
+     *
+     * Syntactically, a qualified name is a sequence of identifiers
+     * separated by period characters ("{@code .}"). This method
+     * splits the input string into period-separated segments and
+     * applies checks to each segment in turn.
+     *
+     * Unlike {@link #isIdentifier isIdentifier}, this method returns
+     * {@code false} for keywords, boolean literals, and the null
+     * literal in any segment.
      *
      * This method returns {@code true} for <i>restricted
      * keywords</i> and <i>restricted identifiers</i>
@@ -320,9 +339,16 @@ public enum SourceVersion {
 
     /**
      * Returns whether or not {@code name} is a syntactically valid
-     * qualified name in the given source version.  Unlike {@link
-     * #isIdentifier isIdentifier}, this method returns {@code false}
-     * for keywords, boolean literals, and the null literal.
+     * qualified name in the given source version.
+     *
+     * Syntactically, a qualified name is a sequence of identifiers
+     * separated by period characters ("{@code .}"). This method
+     * splits the input string into period-separated segments and
+     * applies checks to each segment in turn.
+     *
+     * Unlike {@link #isIdentifier isIdentifier}, this method returns
+     * {@code false} for keywords, boolean literals, and the null
+     * literal in any segment.
      *
      * This method returns {@code true} for <i>restricted
      * keywords</i> and <i>restricted identifiers</i>

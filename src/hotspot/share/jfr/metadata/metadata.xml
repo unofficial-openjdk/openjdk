@@ -26,8 +26,9 @@
 
 <Metadata>
 
-  <Event name="ThreadStart" category="Java Application" label="Java Thread Start" thread="true" startTime="false">
-    <Field type="Thread" name="thread" label="Java Thread" />
+  <Event name="ThreadStart" category="Java Application" label="Java Thread Start" thread="true" startTime="false" stackTrace="true">
+    <Field type="Thread" name="thread" label="New Java Thread" />
+    <Field type="Thread" name="parentThread" label="Parent Java Thread" />
   </Event>
 
   <Event name="ThreadEnd" category="Java Application" label="Java Thread End" thread="true" startTime="false">
@@ -99,6 +100,22 @@
   <Event name="ClassDefine" category="Java Virtual Machine, Class Loading" label="Class Define" thread="true" stackTrace="true" startTime="false">
     <Field type="Class" name="definedClass" label="Defined Class" />
     <Field type="ClassLoader" name="definingClassLoader" label="Defining Class Loader" />
+  </Event>
+
+  <Event name="ClassRedefinition" category="Java Virtual Machine, Class Loading" label="Class Redefinition" thread="false" stackTrace="false" startTime="false">
+    <Field type="Class" name="redefinedClass" label="Redefined Class" />
+    <Field type="int" name="classModificationCount" label="Class Modification Count" description="The number of times the class has changed"/>
+    <Field type="ulong" name="redefinitionId" label="Class Redefinition Id" relation="ClassRedefinitionId"/>
+  </Event>
+
+  <Event name="RedefineClasses" category="Java Virtual Machine, Class Loading" label="Redefine Classes" thread="true" stackTrace="true">
+    <Field type="int" name="classCount" label="Class Count" />
+    <Field type="ulong" name="redefinitionId" label="Class Redefinition Id" relation="ClassRedefinitionId" />
+  </Event>
+
+  <Event name="RetransformClasses" category="Java Virtual Machine, Class Loading" label="Retransform Classes" thread="true" stackTrace="true">
+    <Field type="int" name="classCount" label="Class Count"/>
+    <Field type="ulong" name="redefinitionId" label="Class Redefinition Id" relation="ClassRedefinitionId" />
   </Event>
 
   <Event name="ClassUnload" category="Java Virtual Machine, Class Loading" label="Class Unload" thread="true" startTime="false">
@@ -1023,6 +1040,13 @@
     <Field type="ulong" contentType="bytes" name="size" label="Size Written" />
   </Event>
 
+  <Event name="HeapDump" category="Java Virtual Machine, Diagnostics" label="Heap Dump" stackTrace="true" thread="true">
+    <Field type="string" name="destination" label="Destination" />
+    <Field type="long" name="size" label="Size" />
+    <Field type="boolean" name="gcBeforeDump" label="GC Before Dump" />
+    <Field type="boolean" name="onOutOfMemoryError" label="On Out of Memory Error" />
+  </Event>
+
   <Type name="DeoptimizationReason" label="Deoptimization Reason">
     <Field type="string" name="reason" label="Reason" />
   </Type>
@@ -1229,7 +1253,8 @@
   <Relation name="CompileId" />
   <Relation name="SweepId"/>
   <Relation name="FlushId"/>
-
+  <Relation name="ClassRedefinitionId"/>
+  
   <XmlType name="Package" parameterType="const PackageEntry*" fieldType="const PackageEntry*"/>
   <XmlType name="Class" javaType="java.lang.Class" parameterType="const Klass*" fieldType="const Klass*"/>
   <XmlType name="Module"  parameterType="const ModuleEntry*" fieldType="const ModuleEntry*"/>

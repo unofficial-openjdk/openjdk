@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -62,126 +62,96 @@ public class AnnotationTypeFieldWriterImpl extends AbstractMemberWriter
         super(writer, annotationType);
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public Content getMemberSummaryHeader(TypeElement typeElement,
-            Content memberSummaryTree) {
+                                          Content memberSummaryTree) {
         memberSummaryTree.add(
                 MarkerComments.START_OF_ANNOTATION_TYPE_FIELD_SUMMARY);
         Content memberTree = new ContentBuilder();
-        writer.addSummaryHeader(this, typeElement, memberTree);
+        writer.addSummaryHeader(this, memberTree);
         return memberTree;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public Content getMemberTreeHeader() {
         return writer.getMemberTreeHeader();
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public void addMemberTree(Content memberSummaryTree, Content memberTree) {
-        writer.addMemberTree(HtmlStyle.fieldSummary, memberSummaryTree, memberTree);
+        writer.addMemberTree(HtmlStyle.fieldSummary,
+                SectionName.ANNOTATION_TYPE_FIELD_SUMMARY, memberSummaryTree, memberTree);
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public void addAnnotationFieldDetailsMarker(Content memberDetails) {
         memberDetails.add(MarkerComments.START_OF_ANNOTATION_TYPE_FIELD_DETAILS);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public Content getAnnotationDetailsTreeHeader(TypeElement typeElement) {
+    @Override
+    public Content getAnnotationDetailsTreeHeader() {
         Content memberDetailsTree = new ContentBuilder();
         if (!writer.printedAnnotationFieldHeading) {
             Content heading = HtmlTree.HEADING(Headings.TypeDeclaration.DETAILS_HEADING,
                     contents.fieldDetailsLabel);
-            memberDetailsTree.add(links.createAnchor(
-                    SectionName.ANNOTATION_TYPE_FIELD_DETAIL));
             memberDetailsTree.add(heading);
             writer.printedAnnotationFieldHeading = true;
         }
         return memberDetailsTree;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public Content getAnnotationDocTreeHeader(Element member,
-            Content annotationDetailsTree) {
+    @Override
+    public Content getAnnotationDocTreeHeader(Element member) {
         Content annotationDocTree = new ContentBuilder();
-        Content heading = new HtmlTree(Headings.TypeDeclaration.MEMBER_HEADING);
-        heading.add(links.createAnchor(name(member), new StringContent(name(member))));
+        Content heading = HtmlTree.HEADING(Headings.TypeDeclaration.MEMBER_HEADING,
+                new StringContent(name(member)));
         annotationDocTree.add(heading);
-        return HtmlTree.SECTION(HtmlStyle.detail, annotationDocTree);
+        return HtmlTree.SECTION(HtmlStyle.detail, annotationDocTree).setId(name(member));
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public Content getSignature(Element member) {
         return new MemberSignature(member)
                 .addType(getType(member))
                 .toContent();
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public void addDeprecated(Element member, Content annotationDocTree) {
         addDeprecatedInfo(member, annotationDocTree);
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public void addComments(Element member, Content annotationDocTree) {
         addComment(member, annotationDocTree);
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public void addTags(Element member, Content annotationDocTree) {
         writer.addTagsInfo(member, annotationDocTree);
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public Content getAnnotationDetails(Content annotationDetailsTreeHeader, Content annotationDetailsTree) {
         Content annotationDetails = new ContentBuilder();
         annotationDetails.add(annotationDetailsTreeHeader);
         annotationDetails.add(annotationDetailsTree);
-        return getMemberTree(HtmlTree.SECTION(HtmlStyle.fieldDetails, annotationDetails));
+        return getMemberTree(HtmlTree.SECTION(HtmlStyle.fieldDetails, annotationDetails)
+                .setId(SectionName.ANNOTATION_TYPE_FIELD_DETAIL.getName()));
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public Content getAnnotationDoc(Content annotationDocTree) {
         return getMemberTree(annotationDocTree);
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public void addSummaryLabel(Content memberTree) {
-        Content label = HtmlTree.HEADING(Headings.TypeDeclaration.SUMMARY_HEADING,
+        HtmlTree label = HtmlTree.HEADING(Headings.TypeDeclaration.SUMMARY_HEADING,
                 contents.fieldSummaryLabel);
         memberTree.add(label);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public TableHeader getSummaryTableHeader(Element member) {
         return new TableHeader(contents.modifierAndTypeLabel, contents.fields,
@@ -202,32 +172,10 @@ public class AnnotationTypeFieldWriterImpl extends AbstractMemberWriter
                 .setColumnStyles(HtmlStyle.colFirst, HtmlStyle.colSecond, HtmlStyle.colLast);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void addSummaryAnchor(TypeElement typeElement, Content memberTree) {
-        memberTree.add(links.createAnchor(
-                SectionName.ANNOTATION_TYPE_FIELD_SUMMARY));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void addInheritedSummaryAnchor(TypeElement typeElement, Content inheritedTree) {
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void addInheritedSummaryLabel(TypeElement typeElement, Content inheritedTree) {
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void addSummaryLink(LinkInfoImpl.Kind context, TypeElement typeElement, Element member,
             Content tdSummary) {
@@ -237,24 +185,18 @@ public class AnnotationTypeFieldWriterImpl extends AbstractMemberWriter
         tdSummary.add(code);
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     protected void addInheritedSummaryLink(TypeElement typeElement,
             Element member, Content linksTree) {
         //Not applicable.
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     protected void addSummaryType(Element member, Content tdSummaryType) {
         addModifierAndType(member, getType(member), tdSummaryType);
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     protected Content getDeprecatedLink(Element member) {
         return writer.getDocLink(LinkInfoImpl.Kind.MEMBER,
                 member, utils.getFullyQualifiedName(member));

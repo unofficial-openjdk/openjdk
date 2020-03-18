@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,9 +38,9 @@ import java.io.PrintWriter;
 public class Main {
 
     /**
-     * Constructor should never be called.
+     * This constructor should never be called.
      */
-    private Main() {}
+    private Main() { throw new AssertionError(); }
 
     /**
      * The main entry point called by the launcher. This will call
@@ -88,7 +88,7 @@ public class Main {
         return jdoc.begin(args).exitCode;
     }
 
-    public static enum Result {
+    public enum Result {
         /** completed with no errors */
         OK(0),
         /** Completed with reported errors */
@@ -99,8 +99,6 @@ public class Main {
         SYSERR(3),
         /** Terminated abnormally */
         ABNORMAL(4);
-
-        private static final long serialVersionUID = 1L;
 
         Result(int exitCode) {
             this.exitCode = exitCode;

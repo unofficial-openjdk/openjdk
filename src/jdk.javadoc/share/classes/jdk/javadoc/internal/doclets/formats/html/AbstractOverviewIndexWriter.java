@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,10 +28,8 @@ package jdk.javadoc.internal.doclets.formats.html;
 import jdk.javadoc.internal.doclets.formats.html.markup.BodyContents;
 import jdk.javadoc.internal.doclets.formats.html.markup.ContentBuilder;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlStyle;
-import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTag;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTree;
-import jdk.javadoc.internal.doclets.formats.html.markup.Navigation;
-import jdk.javadoc.internal.doclets.formats.html.markup.Navigation.PageMode;
+import jdk.javadoc.internal.doclets.formats.html.Navigation.PageMode;
 import jdk.javadoc.internal.doclets.formats.html.markup.RawHtml;
 import jdk.javadoc.internal.doclets.toolkit.Content;
 import jdk.javadoc.internal.doclets.toolkit.util.DocFileIOException;
@@ -72,7 +70,7 @@ public abstract class AbstractOverviewIndexWriter extends HtmlDocletWriter {
     protected void addNavigationBarHeader(Content header) {
         addTop(header);
         navBar.setUserHeader(getUserHeaderFooter(true));
-        header.add(navBar.getContent(true));
+        header.add(navBar.getContent(Navigation.Position.TOP));
     }
 
     /**
@@ -83,7 +81,7 @@ public abstract class AbstractOverviewIndexWriter extends HtmlDocletWriter {
      */
     protected void addNavigationBarFooter(Content footer) {
         navBar.setUserFooter(getUserHeaderFooter(false));
-        footer.add(navBar.getContent(false));
+        footer.add(navBar.getContent(Navigation.Position.BOTTOM));
         addBottom(footer);
     }
 
@@ -97,10 +95,7 @@ public abstract class AbstractOverviewIndexWriter extends HtmlDocletWriter {
     protected void addOverviewHeader(Content main) {
         addConfigurationTitle(main);
         if (!utils.getFullBody(configuration.overviewElement).isEmpty()) {
-            HtmlTree div = new HtmlTree(HtmlTag.DIV);
-            div.setStyle(HtmlStyle.contentContainer);
-            addOverviewComment(div);
-            main.add(div);
+            addOverviewComment(main);
         }
     }
 
@@ -138,10 +133,9 @@ public abstract class AbstractOverviewIndexWriter extends HtmlDocletWriter {
         body.add(new BodyContents()
                 .setHeader(header)
                 .addMainContent(main)
-                .setFooter(footer)
-                .toContent());
+                .setFooter(footer));
         printHtmlDocument(
-                configuration.metakeywords.getOverviewMetaKeywords(title, configuration.doctitle),
+                configuration.metakeywords.getOverviewMetaKeywords(title, configuration.getOptions().docTitle()),
                 description, body);
     }
 
@@ -158,8 +152,9 @@ public abstract class AbstractOverviewIndexWriter extends HtmlDocletWriter {
      * @param body the document tree to which the title will be added
      */
     protected void addConfigurationTitle(Content body) {
-        if (configuration.doctitle.length() > 0) {
-            Content title = new RawHtml(configuration.doctitle);
+        String doctitle = configuration.getOptions().docTitle();
+        if (!doctitle.isEmpty()) {
+            Content title = new RawHtml(doctitle);
             Content heading = HtmlTree.HEADING(Headings.PAGE_TITLE_HEADING,
                     HtmlStyle.title, title);
             Content div = HtmlTree.DIV(HtmlStyle.header, heading);

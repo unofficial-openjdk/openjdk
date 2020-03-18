@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@ package jdk.javadoc.internal.doclets.formats.html.markup;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.util.Objects;
 
 import jdk.javadoc.internal.doclets.toolkit.Content;
 import jdk.javadoc.internal.doclets.toolkit.util.DocletConstants;
@@ -49,40 +50,14 @@ public class Comment extends Content {
      * @param comment comment text for the comment
      */
     public Comment(String comment) {
-        commentText = nullCheck(comment);
+        commentText = Objects.requireNonNull(comment);
     }
 
-    /**
-     * This method is not supported by the class.
-     *
-     * @param content content that needs to be added
-     * @throws UnsupportedOperationException always
-     */
-    public void add(Content content) {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * This method is not supported by the class.
-     *
-     * @param stringContent string content that needs to be added
-     * @throws UnsupportedOperationException always
-     */
     @Override
-    public void add(CharSequence stringContent) {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public boolean isEmpty() {
         return commentText.isEmpty();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public boolean write(Writer out, boolean atNewline) throws IOException {
         if (!atNewline)

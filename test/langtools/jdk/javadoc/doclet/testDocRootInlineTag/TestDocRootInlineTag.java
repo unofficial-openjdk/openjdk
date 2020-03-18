@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -55,11 +55,11 @@ public class TestDocRootInlineTag extends JavadocTester {
         checkExit(Exit.OK);
 
         checkOutput("TestDocRootTag.html", true,
-                "<a href=\"" + uri + "/java/io/File.html?is-external=true\" "
-                + "title=\"class or interface in java.io\" class=\"externalLink\"><code>File</code></a>",
+                "<a href=\"" + uri + "/java/io/File.html\" "
+                + "title=\"class or interface in java.io\" class=\"external-link\"><code>File</code></a>",
                 "<a href=\"./index-all.html\">index</a>",
-                "<a href=\"" + uri + "/java/io/File.html?is-external=true\" "
-                + "title=\"class or interface in java.io\" class=\"externalLink\"><code>Second File Link</code></a>",
+                "<a href=\"" + uri + "/java/io/File.html\" "
+                + "title=\"class or interface in java.io\" class=\"external-link\"><code>Second File Link</code></a>",
                 "The value of @docRoot is \"./\"");
 
         checkOutput("index-all.html", true,

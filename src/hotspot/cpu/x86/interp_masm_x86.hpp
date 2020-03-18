@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -269,7 +269,6 @@ class InterpreterMacroAssembler: public MacroAssembler {
   void profile_virtual_call(Register receiver, Register mdp,
                             Register scratch2,
                             bool receiver_can_be_null = false);
-  void profile_called_method(Register method, Register mdp, Register reg2) NOT_JVMCI_RETURN;
   void profile_ret(Register return_bci, Register mdp);
   void profile_null_seen(Register mdp);
   void profile_typecheck(Register mdp, Register klass, Register scratch);
@@ -280,7 +279,8 @@ class InterpreterMacroAssembler: public MacroAssembler {
 
   // Debugging
   // only if +VerifyOops && state == atos
-  void verify_oop(Register reg, TosState state = atos);
+#define interp_verify_oop(reg, state) _interp_verify_oop(reg, state, __FILE__, __LINE__);
+  void _interp_verify_oop(Register reg, TosState state, const char* file, int line);
   // only if +VerifyFPU  && (state == ftos || state == dtos)
   void verify_FPU(int stack_depth, TosState state = ftos);
 

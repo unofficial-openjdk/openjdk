@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -164,7 +164,7 @@ public class ElementsTable {
     private final JavaFileManager fm;
     private final List<Location> locations;
     private final Modules modules;
-    private final Map<ToolOption, Object> opts;
+    private final ToolOptions options;
     private final Messager messager;
     private final JavaCompiler compiler;
 
@@ -173,7 +173,7 @@ public class ElementsTable {
     // specified elements
     private Set<ModuleElement> specifiedModuleElements = new LinkedHashSet<>();
     private Set<PackageElement> specifiedPackageElements = new LinkedHashSet<>();
-    private Set<TypeElement> specifiedTypeElements =new LinkedHashSet<>();
+    private Set<TypeElement> specifiedTypeElements = new LinkedHashSet<>();
 
     // included elements
     private Set<ModuleElement> includedModuleElements = null;
@@ -201,15 +201,15 @@ public class ElementsTable {
      * Creates the table to manage included and excluded elements.
      *
      * @param context the context to locate commonly used objects
-     * @param location the location used to locate source files
+     * @param options the tool options
      */
-    ElementsTable(Context context, Map<ToolOption, Object> opts) {
+    ElementsTable(Context context, ToolOptions options) {
         this.toolEnv = ToolEnvironment.instance(context);
         this.syms = Symtab.instance(context);
         this.names = Names.instance(context);
         this.fm = toolEnv.fileManager;
         this.modules = Modules.instance(context);
-        this.opts = opts;
+        this.options = options;
         this.messager = Messager.instance0(context);
         this.compiler = JavaCompiler.instance(context);
         Source source = Source.instance(context);
@@ -229,9 +229,9 @@ public class ElementsTable {
 
         getEntry("").excluded = false;
 
-        accessFilter = new ModifierFilter(opts);
-        xclasses = (boolean)opts.getOrDefault(ToolOption.XCLASSES, false);
-        expandRequires = (AccessKind)opts.get(ToolOption.EXPAND_REQUIRES);
+        accessFilter = new ModifierFilter(options);
+        xclasses = options.xclasses();
+        expandRequires = options.expandRequires();
     }
 
     /**
@@ -318,9 +318,7 @@ public class ElementsTable {
      *
      * @param e the element in question
      *
-     * @see getIncludedModuleElements
-     * @see getIncludedPackageElements
-     * @see getIncludedTypeElements
+     * @see #getIncludedElements()
      *
      * @return true if included
      */
@@ -407,39 +405,34 @@ public class ElementsTable {
         return null;
     }
 
-    @SuppressWarnings("unchecked")
     ElementsTable scanSpecifiedItems() throws ToolException {
 
         // scan modules specified on the command line
-        List<String> moduleNames = (List<String>) opts.computeIfAbsent(ToolOption.MODULE,
-                s -> Collections.EMPTY_LIST);
+        List<String> modules = options.modules();
         List<String> mlist = new ArrayList<>();
-        for (String m : moduleNames) {
+        for (String m : modules) {
             List<Location> moduleLocations = getModuleLocation(locations, m);
             if (moduleLocations.isEmpty()) {
                 String text = messager.getText("main.module_not_found", m);
                 throw new ToolException(CMDERR, text);
             }
             if (moduleLocations.contains(StandardLocation.SOURCE_PATH)) {
-                sanityCheckSourcePathModules(moduleNames);
+                sanityCheckSourcePathModules(modules);
             }
             mlist.add(m);
             ModuleSymbol msym = syms.enterModule(names.fromString(m));
-            specifiedModuleElements.add((ModuleElement) msym);
+            specifiedModuleElements.add(msym);
         }
 
         // scan for modules with qualified packages
         cmdLinePackages.stream()
-                .filter((mpkg) -> (mpkg.hasModule()))
-                .forEachOrdered((mpkg) -> {
-                    mlist.add(mpkg.moduleName);
-        });
+                .filter(ModulePackage::hasModule)
+                .forEachOrdered(mpkg -> mlist.add(mpkg.moduleName));
 
         // scan for modules with qualified subpackages
-        ((List<String>)opts.computeIfAbsent(ToolOption.SUBPACKAGES, v -> Collections.EMPTY_LIST))
-            .stream()
+        options.subpackages().stream()
             .map(ModulePackage::new)
-            .forEachOrdered((mpkg) -> {
+            .forEachOrdered(mpkg -> {
                 subPackages.add(mpkg);
                 if (mpkg.hasModule()) {
                     mlist.add(mpkg.moduleName);
@@ -448,8 +441,8 @@ public class ElementsTable {
 
         // all the modules specified on the command line have been scraped
         // init the module systems
-        modules.addExtraAddModules(mlist.toArray(new String[mlist.size()]));
-        modules.initModules(this.classTreeList);
+        this.modules.addExtraAddModules(mlist.toArray(new String[mlist.size()]));
+        this.modules.initModules(this.classTreeList);
 
         return this;
     }
@@ -486,7 +479,7 @@ public class ElementsTable {
     ElementsTable packages(Collection<String> packageNames) {
         packageNames.stream()
             .map(ModulePackage::new)
-            .forEachOrdered((mpkg) -> cmdLinePackages.add(mpkg));
+            .forEachOrdered(mpkg -> cmdLinePackages.add(mpkg));
         return this;
     }
 
@@ -504,16 +497,12 @@ public class ElementsTable {
         return result;
     }
 
-    @SuppressWarnings("unchecked")
     private void computeSubpackages() throws ToolException {
-        ((List<String>) opts.computeIfAbsent(ToolOption.EXCLUDE, v -> Collections.EMPTY_LIST))
-                .stream()
+        options.excludes().stream()
                 .map(ModulePackage::new)
-                .forEachOrdered((mpkg) -> excludePackages.add(mpkg));
+                .forEachOrdered(mpkg -> excludePackages.add(mpkg));
 
-        excludePackages.forEach((p) -> {
-            getEntry(p).excluded = true;
-        });
+        excludePackages.forEach(p -> getEntry(p).excluded = true);
 
         for (ModulePackage modpkg : subPackages) {
             List<Location> locs = getLocation(modpkg);
@@ -728,11 +717,9 @@ public class ElementsTable {
         // process types
         Set<TypeElement> iclasses = new LinkedHashSet<>();
         // add all types enclosed in expanded modules and packages
-        ipackages.forEach((pkg) -> {
-            addAllClasses(iclasses, pkg);
-        });
+        ipackages.forEach(pkg -> addAllClasses(iclasses, pkg));
         // add all types and its nested types
-        specifiedTypeElements.forEach((klass) -> {
+        specifiedTypeElements.forEach(klass -> {
             ModuleElement mdle = toolEnv.elements.getModuleOf(klass);
             if (mdle != null && !mdle.isUnnamed())
                 imodules.add(mdle);
@@ -755,7 +742,7 @@ public class ElementsTable {
         computeSubpackages();
 
         Set<PackageElement> packlist = new LinkedHashSet<>();
-        cmdLinePackages.forEach((modpkg) -> {
+        cmdLinePackages.forEach(modpkg -> {
             PackageElement pkg;
             if (modpkg.hasModule()) {
                 ModuleElement mdle = toolEnv.elements.getModuleElement(modpkg.moduleName);
@@ -779,8 +766,8 @@ public class ElementsTable {
      */
     private void computeSpecifiedTypes() throws ToolException {
         Set<TypeElement> classes = new LinkedHashSet<>();
-          classDecList.forEach((def) -> {
-            TypeElement te = (TypeElement) def.sym;
+          classDecList.forEach(def -> {
+            TypeElement te = def.sym;
             if (te != null) {
                 addAllClasses(classes, te, true);
             }
@@ -830,7 +817,7 @@ public class ElementsTable {
     /**
      * Returns the set of source files for a package.
      *
-     * @param packageName the specified package
+     * @param modpkg the specified package
      * @return the set of file objects for the specified package
      * @throws ToolException if an error occurs while accessing the files
      */
@@ -1030,7 +1017,7 @@ public class ElementsTable {
 
                 @Override
                 public Boolean visitUnknown(Element e, Void p) {
-                    throw new AssertionError("unkown element: " + p);
+                    throw new AssertionError("unknown element: " + e);
                 }
             };
         }
@@ -1039,7 +1026,7 @@ public class ElementsTable {
 
     @SuppressWarnings("preview")
     private class IncludedVisitor extends SimpleElementVisitor14<Boolean, Void> {
-        final private Set<Element> includedCache;
+        private final Set<Element> includedCache;
 
         public IncludedVisitor() {
             includedCache = new LinkedHashSet<>();
@@ -1214,24 +1201,24 @@ public class ElementsTable {
         /**
          * Constructor - Specify a filter.
          *
-         * @param accessSet an Access filter.
+         * @param options the tool options
          */
-        ModifierFilter(Map<ToolOption, Object> opts) {
+        ModifierFilter(ToolOptions options) {
 
             AccessKind accessValue = null;
             for (ElementKind kind : ALLOWED_KINDS) {
                 switch (kind) {
                     case METHOD:
-                        accessValue  = (AccessKind)opts.get(ToolOption.SHOW_MEMBERS);
+                        accessValue  = options.showMembersAccess();
                         break;
                     case CLASS:
-                        accessValue  = (AccessKind)opts.get(ToolOption.SHOW_TYPES);
+                        accessValue  = options.showTypesAccess();
                         break;
                     case PACKAGE:
-                        accessValue  = (AccessKind)opts.get(ToolOption.SHOW_PACKAGES);
+                        accessValue  = options.showPackagesAccess();
                         break;
                     case MODULE:
-                        accessValue  = (AccessKind)opts.get(ToolOption.SHOW_MODULE_CONTENTS);
+                        accessValue  = options.showModuleContents();
                         break;
                     default:
                         throw new AssertionError("unknown element: " + kind);
@@ -1242,8 +1229,8 @@ public class ElementsTable {
             }
         }
 
-        static EnumSet<AccessKind> getFilterSet(AccessKind acccessValue) {
-            switch (acccessValue) {
+        static EnumSet<AccessKind> getFilterSet(AccessKind accessValue) {
+            switch (accessValue) {
                 case PUBLIC:
                     return EnumSet.of(AccessKind.PUBLIC);
                 case PROTECTED:

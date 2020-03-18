@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2015, 2019, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2015, 2020, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -41,11 +42,15 @@ inline oop ShenandoahBarrierSet::resolve_forwarded_not_null(oop p) {
 }
 
 inline oop ShenandoahBarrierSet::resolve_forwarded(oop p) {
-  if (((HeapWord*) p) != NULL) {
+  if (p != NULL) {
     return resolve_forwarded_not_null(p);
   } else {
     return p;
   }
+}
+
+inline oop ShenandoahBarrierSet::resolve_forwarded_not_null_mutator(oop p) {
+  return ShenandoahForwarding::get_forwardee_mutator(p);
 }
 
 inline void ShenandoahBarrierSet::enqueue(oop obj) {
@@ -119,7 +124,9 @@ inline oop ShenandoahBarrierSet::AccessBarrier<decorators, BarrierSetT>::oop_loa
   if (value != NULL) {
     ShenandoahBarrierSet *const bs = ShenandoahBarrierSet::barrier_set();
     value = bs->load_reference_barrier_native(value, addr);
-    bs->keep_alive_if_weak<decorators>(value);
+    if (value != NULL) {
+      bs->keep_alive_if_weak<decorators>(value);
+    }
   }
   return value;
 }
@@ -258,6 +265,8 @@ bool ShenandoahBarrierSet::AccessBarrier<decorators, BarrierSetT>::oop_arraycopy
 
 template <class T, bool HAS_FWD, bool EVAC, bool ENQUEUE>
 void ShenandoahBarrierSet::arraycopy_work(T* src, size_t count) {
+  assert(HAS_FWD == _heap->has_forwarded_objects(), "Forwarded object status is sane");
+
   Thread* thread = Thread::current();
   SATBMarkQueue& queue = ShenandoahThreadLocalData::satb_mark_queue(thread);
   ShenandoahMarkingContext* ctx = _heap->marking_context();
@@ -267,8 +276,7 @@ void ShenandoahBarrierSet::arraycopy_work(T* src, size_t count) {
     T o = RawAccess<>::oop_load(elem_ptr);
     if (!CompressedOops::is_null(o)) {
       oop obj = CompressedOops::decode_not_null(o);
-      if (HAS_FWD && cset->is_in((HeapWord *) obj)) {
-        assert(_heap->has_forwarded_objects(), "only get here with forwarded objects");
+      if (HAS_FWD && cset->is_in(obj)) {
         oop fwd = resolve_forwarded_not_null(obj);
         if (EVAC && obj == fwd) {
           fwd = _heap->evacuate_object(obj, thread);
@@ -286,15 +294,14 @@ void ShenandoahBarrierSet::arraycopy_work(T* src, size_t count) {
 
 template <class T>
 void ShenandoahBarrierSet::arraycopy_pre_work(T* src, T* dst, size_t count) {
-  if (_heap->is_concurrent_mark_in_progress()) {
-    if (_heap->has_forwarded_objects()) {
-      arraycopy_work<T, true, false, true>(dst, count);
-    } else {
-      arraycopy_work<T, false, false, true>(dst, count);
-    }
+  if (_heap->is_concurrent_mark_in_progress() &&
+      !_heap->marking_context()->allocated_after_mark_start(reinterpret_cast<HeapWord*>(dst))) {
+    arraycopy_work<T, false, false, true>(dst, count);
   }
 
-  arraycopy_update_impl(src, count);
+  if (_heap->has_forwarded_objects()) {
+    arraycopy_update_impl(src, count);
+  }
 }
 
 void ShenandoahBarrierSet::arraycopy_pre(oop* src, oop* dst, size_t count) {
@@ -305,8 +312,13 @@ void ShenandoahBarrierSet::arraycopy_pre(narrowOop* src, narrowOop* dst, size_t 
   arraycopy_pre_work(src, dst, count);
 }
 
+inline bool ShenandoahBarrierSet::skip_bulk_update(HeapWord* dst) {
+  return dst >= _heap->heap_region_containing(dst)->get_update_watermark();
+}
+
 template <class T>
 void ShenandoahBarrierSet::arraycopy_update_impl(T* src, size_t count) {
+  if (skip_bulk_update(reinterpret_cast<HeapWord*>(src))) return;
   if (_heap->is_evacuation_in_progress()) {
     ShenandoahEvacOOMScope oom_evac;
     arraycopy_work<T, true, true, false>(src, count);

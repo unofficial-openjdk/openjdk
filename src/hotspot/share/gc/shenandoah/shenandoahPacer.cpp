@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -174,6 +175,31 @@ void ShenandoahPacer::setup_for_idle() {
   log_info(gc, ergo)("Pacer for Idle. Initial: " SIZE_FORMAT "%s, Alloc Tax Rate: %.1fx",
                      byte_size_in_proper_unit(initial), proper_unit_for_byte_size(initial),
                      tax);
+}
+
+/*
+ * There is no useful notion of progress for these operations. To avoid stalling
+ * the allocators unnecessarily, allow them to run unimpeded.
+ */
+
+void ShenandoahPacer::setup_for_preclean() {
+  assert(ShenandoahPacing, "Only be here when pacing is enabled");
+
+  size_t initial = _heap->max_capacity();
+  restart_with(initial, 1.0);
+
+  log_info(gc, ergo)("Pacer for Precleaning. Non-Taxable: " SIZE_FORMAT "%s",
+                     byte_size_in_proper_unit(initial), proper_unit_for_byte_size(initial));
+}
+
+void ShenandoahPacer::setup_for_reset() {
+  assert(ShenandoahPacing, "Only be here when pacing is enabled");
+
+  size_t initial = _heap->max_capacity();
+  restart_with(initial, 1.0);
+
+  log_info(gc, ergo)("Pacer for Reset. Non-Taxable: " SIZE_FORMAT "%s",
+                     byte_size_in_proper_unit(initial), proper_unit_for_byte_size(initial));
 }
 
 size_t ShenandoahPacer::update_and_get_progress_history() {

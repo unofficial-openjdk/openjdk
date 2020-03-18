@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,7 +34,6 @@
 #include "logging/logTag.hpp"
 #include "memory/metaspaceShared.hpp"
 #include "memory/resourceArea.hpp"
-#include "runtime/fieldType.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/javaCalls.hpp"
 #include "utilities/defaultStream.hpp"
@@ -319,7 +318,7 @@ InstanceKlass* ClassListParser::load_class_from_source(Symbol* class_name, TRAPS
 
     // This tells JVM_FindLoadedClass to not find this class.
     k->set_shared_classpath_index(UNREGISTERED_INDEX);
-    k->clear_class_loader_type();
+    k->clear_shared_class_loader_type();
   }
 
   return k;
@@ -338,7 +337,7 @@ Klass* ClassListParser::load_current_class(TRAPS) {
       error("If source location is not specified, interface(s) must not be specified");
     }
 
-    bool non_array = !FieldType::is_array(class_name_symbol);
+    bool non_array = !Signature::is_array(class_name_symbol);
 
     JavaValue result(T_OBJECT);
     if (non_array) {
@@ -350,9 +349,9 @@ Klass* ClassListParser::load_current_class(TRAPS) {
       // delegate to the correct loader (boot, platform or app) depending on
       // the class name.
 
-      Handle s = java_lang_String::create_from_symbol(class_name_symbol, CHECK_0);
+      Handle s = java_lang_String::create_from_symbol(class_name_symbol, CHECK_NULL);
       // ClassLoader.loadClass() wants external class name format, i.e., convert '/' chars to '.'
-      Handle ext_class_name = java_lang_String::externalize_classname(s, CHECK_0);
+      Handle ext_class_name = java_lang_String::externalize_classname(s, CHECK_NULL);
       Handle loader = Handle(THREAD, SystemDictionary::java_system_loader());
 
       JavaCalls::call_virtual(&result,

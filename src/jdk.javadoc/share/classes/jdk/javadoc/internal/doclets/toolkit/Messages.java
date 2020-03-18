@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,19 +45,30 @@ import static javax.tools.Diagnostic.Kind.*;
 public class Messages {
     private final BaseConfiguration configuration;
     private final Resources resources;
-    private Reporter reporter;
+    private final Reporter reporter;
 
     /**
      * Creates a {@code Messages} object to provide standardized access to
      * the doclet's diagnostic reporting mechanisms.
      *
-     * @param configuration the doclet's configuration, used to access
-     *  the doclet's resources, reporter, and additional methods and state
-     *  used to filter out messages, if any, which should be suppressed.
+     * @param configuration the doclet's configuration, used to access the doclet's
+     *                      reporter, and additional methods and state used to
+     *                      filter out messages, if any, which should be suppressed.
+     * @param resources     resources for console messages and exceptions
      */
-    public Messages(BaseConfiguration configuration) {
+    public Messages(BaseConfiguration configuration, Resources resources) {
         this.configuration = configuration;
-        resources = configuration.getResources();
+        this.resources = resources;
+        reporter = configuration.getReporter();
+    }
+
+    /**
+     * Returns the resources being used when generating messages.
+     *
+     * @return the resources
+     */
+    public Resources getResources() {
+        return resources;
     }
 
     // ***** Errors *****
@@ -132,7 +143,7 @@ public class Messages {
      * @param args optional arguments to be replaced in the message.
      */
     public void notice(String key, Object... args) {
-        if (!configuration.quiet) {
+        if (!configuration.getOptions().quiet()) {
             report(NOTE, resources.getText(key, args));
         }
     }
@@ -140,25 +151,14 @@ public class Messages {
     // ***** Internal support *****
 
     private void report(Diagnostic.Kind k, String msg) {
-        initReporter();
         reporter.print(k, msg);
     }
 
     private void report(Diagnostic.Kind k, DocTreePath p, String msg) {
-        initReporter();
         reporter.print(k, p, msg);
     }
 
     private void report(Diagnostic.Kind k, Element e, String msg) {
-        initReporter();
         reporter.print(k, e, msg);
-    }
-
-    // Lazy init the reporter for now, until we can fix/improve
-    // the init of HtmlConfiguration in HtmlDoclet (and similar.)
-    private void initReporter() {
-        if (reporter == null) {
-            reporter = configuration.reporter;
-        }
     }
 }

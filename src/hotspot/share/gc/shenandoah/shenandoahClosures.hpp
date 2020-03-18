@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -24,6 +25,7 @@
 #define SHARE_GC_SHENANDOAH_SHENANDOAHCLOSURES_HPP
 
 #include "memory/iterator.hpp"
+#include "oops/accessDecorators.hpp"
 
 class ShenandoahHeap;
 class ShenandoahMarkingContext;
@@ -66,20 +68,7 @@ private:
   inline void do_oop_work(T* p);
 };
 
-class ShenandoahTraversalUpdateRefsClosure: public OopClosure {
-private:
-  ShenandoahHeap* const           _heap;
-  ShenandoahHeapRegionSet* const  _traversal_set;
-
-public:
-  inline ShenandoahTraversalUpdateRefsClosure();
-  inline void do_oop(oop* p);
-  inline void do_oop(narrowOop* p);
-private:
-  template <class T>
-  inline void do_oop_work(T* p);
-};
-
+template <DecoratorSet MO = MO_UNORDERED>
 class ShenandoahEvacuateUpdateRootsClosure: public BasicOopIterateClosure {
 private:
   ShenandoahHeap* _heap;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,8 @@
 
 package jdk.javadoc.internal.doclets.formats.html.markup;
 
+import java.io.IOException;
+import java.io.Writer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -33,7 +35,7 @@ import jdk.javadoc.internal.doclets.formats.html.Contents;
 import jdk.javadoc.internal.doclets.toolkit.Content;
 
 /**
- * A row header for an HTML table.
+ * A row of header cells for an HTML table.
  *
  * The header contains a list of {@code <th>} cells, providing the column headers.
  * The attribute {@code scope="col"} is automatically added to each header cell.
@@ -44,7 +46,7 @@ import jdk.javadoc.internal.doclets.toolkit.Content;
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
  */
-public class TableHeader {
+public class TableHeader extends Content {
 
     /**
      * The content to be put in each of the {@code <th>} cells in the header row.
@@ -64,7 +66,7 @@ public class TableHeader {
      */
     public TableHeader(Contents contents, String... colHeaderKeys) {
         this.cellContents = Arrays.stream(colHeaderKeys)
-                .map((key) -> contents.getContent(key))
+                .map(contents::getContent)
                 .collect(Collectors.toList());
     }
 
@@ -113,10 +115,27 @@ public class TableHeader {
     }
 
     /**
+     * {@inheritDoc}
+     *
+     * @implSpec This implementation always returns {@code false}.
+     *
+     * @return {@code false}
+     */
+    @Override
+    public boolean isEmpty() {
+        return false;
+    }
+
+    @Override
+    public boolean write(Writer out, boolean atNewline) throws IOException {
+        return toContent().write(out, atNewline);
+    }
+
+    /**
      * Converts this header to a {@link Content} object, for use in an {@link HtmlTree}.
      * @return a Content object
      */
-    public Content toContent() {
+    private Content toContent() {
         String scope = "col";
         Content tr = new HtmlTree(HtmlTag.TR);
         int i = 0;

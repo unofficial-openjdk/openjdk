@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013, 2019, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -45,7 +46,7 @@ private:
     T o = RawAccess<>::oop_load(p);
     if (!CompressedOops::is_null(o)) {
       oop obj = CompressedOops::decode_not_null(o);
-      if (_cset->is_in((HeapWord *)obj)) {
+      if (_cset->is_in(obj)) {
         oop fwd = _bs->resolve_forwarded_not_null(obj);
         if (EVAC && obj == fwd) {
           fwd = _heap->evacuate_object(obj, _thread);
@@ -81,6 +82,7 @@ void ShenandoahBarrierSet::clone_barrier(oop obj) {
   // that potentially need to be updated.
 
   shenandoah_assert_correct(NULL, obj);
+  if (skip_bulk_update(cast_from_oop<HeapWord*>(obj))) return;
   if (_heap->is_evacuation_in_progress()) {
     ShenandoahEvacOOMScope evac_scope;
     ShenandoahUpdateRefsForOopClosure</* evac = */ true, /* enqueue */ false> cl;

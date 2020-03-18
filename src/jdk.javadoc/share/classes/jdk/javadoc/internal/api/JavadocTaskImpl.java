@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.tools.DocumentationTool.DocumentationTask;
@@ -54,14 +53,17 @@ public class JavadocTaskImpl implements DocumentationTask {
     private final AtomicBoolean used = new AtomicBoolean();
 
     private final Context context;
-    private Class<?> docletClass;
-    private Iterable<String> options;
-    private Iterable<? extends JavaFileObject> fileObjects;
+    private final Class<?> docletClass;
+    private final Iterable<String> options;
+    private final Iterable<? extends JavaFileObject> fileObjects;
     private Locale locale;
-    private List<String> addModules = new ArrayList<>();
+    private final List<String> addModules = new ArrayList<>();
 
-    public JavadocTaskImpl(Context context, Class<?> docletClass,
-            Iterable<String> options, Iterable<? extends JavaFileObject> fileObjects) {
+    public JavadocTaskImpl(Context context,
+                           Class<?> docletClass,
+                           Iterable<String> options,
+                           Iterable<? extends JavaFileObject> fileObjects)
+    {
         this.context = context;
         this.docletClass = docletClass;
 
@@ -72,33 +74,36 @@ public class JavadocTaskImpl implements DocumentationTask {
         setLocale(Locale.getDefault());
     }
 
+    @Override
     public void setLocale(Locale locale) {
-        if (used.get())
+        if (used.get()) {
             throw new IllegalStateException();
+        }
         this.locale = locale;
     }
 
     @Override
     public void addModules(Iterable<String> moduleNames) {
         nullCheck(moduleNames);
-        if (used.get())
+        if (used.get()) {
             throw new IllegalStateException();
+        }
         for (String name : moduleNames) {
             addModules.add(name);
         }
     }
 
+    @Override
     public Boolean call() {
-        if (!used.getAndSet(true)) {
-            initContext();
-            Start jdoc = new Start(context);
-            try {
-                return jdoc.begin(docletClass, options, fileObjects);
-            } catch (ClientCodeException e) {
-                throw new RuntimeException(e.getCause());
-            }
-        } else {
+        if (used.getAndSet(true)) {
             throw new IllegalStateException("multiple calls to method 'call'");
+        }
+        initContext();
+        Start jdoc = new Start(context);
+        try {
+            return jdoc.begin(docletClass, options, fileObjects);
+        } catch (ClientCodeException e) {
+            throw new RuntimeException(e.getCause());
         }
     }
 
@@ -114,7 +119,7 @@ public class JavadocTaskImpl implements DocumentationTask {
     }
 
     private static <T> Iterable<T> nullCheck(Iterable<T> items) {
-        for (T item: items) {
+        for (T item : items) {
             if (item == null)
                 throw new NullPointerException();
         }

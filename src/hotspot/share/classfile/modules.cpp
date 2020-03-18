@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+* Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
 * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 *
 * This code is free software; you can redistribute it and/or modify it
@@ -194,7 +194,7 @@ static void define_javabase_module(jobject module, jstring version,
 
   bool duplicate_javabase = false;
   {
-    MutexLocker m1(Module_lock, THREAD);
+    MutexLocker m1(THREAD, Module_lock);
 
     if (ModuleEntryTable::javabase_defined()) {
       duplicate_javabase = true;
@@ -379,7 +379,7 @@ void Modules::define_module(jobject module, jboolean is_open, jstring version,
   PackageEntryTable* package_table = NULL;
   PackageEntry* existing_pkg = NULL;
   {
-    MutexLocker ml(Module_lock, THREAD);
+    MutexLocker ml(THREAD, Module_lock);
 
     if (num_packages > 0) {
       package_table = get_package_entry_table(h_loader);
@@ -453,7 +453,7 @@ void Modules::define_module(jobject module, jboolean is_open, jstring version,
 
   // If the module is defined to the boot loader and an exploded build is being
   // used, prepend <java.home>/modules/modules_name to the system boot class path.
-  if (loader == NULL && !ClassLoader::has_jrt_entry()) {
+  if (h_loader.is_null() && !ClassLoader::has_jrt_entry()) {
     ClassLoader::add_to_exploded_build_list(module_symbol, CHECK);
   }
 }

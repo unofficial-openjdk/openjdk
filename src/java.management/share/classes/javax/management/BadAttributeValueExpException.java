@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,10 +45,10 @@ public class BadAttributeValueExpException extends Exception   {
 
     /**
      * @serial A string representation of the attribute that originated this exception.
-     * for example, the string value can be the return of {@code attribute.toString()}
+     * For example, the string value can be the return of {@code attribute.toString()}.
      */
     @SuppressWarnings("serial") // See handling in constructor and readObject
-    private Object val;
+    private String val;
 
     /**
      * Constructs a BadAttributeValueExpException using the specified Object to
@@ -68,23 +68,22 @@ public class BadAttributeValueExpException extends Exception   {
         return "BadAttributeValueException: " + val;
     }
 
+    /**
+     * Restores the fields of a BadAttributeValueExpException from the stream.
+     * If the 'val' field in the stream does not contain a string
+     * it is replaced with an implementation specific string representation
+     * of the value in the stream.
+     *
+     * @param ois an ObjectInput Stream
+     * @throws IOException thrown if an error occurs
+     * @throws ClassNotFoundException if a class can not be found
+     */
     private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
         ObjectInputStream.GetField gf = ois.readFields();
         Object valObj = gf.get("val", null);
 
-        if (valObj == null) {
-            val = null;
-        } else if (valObj instanceof String) {
-            val= valObj;
-        } else if (System.getSecurityManager() == null
-                || valObj instanceof Long
-                || valObj instanceof Integer
-                || valObj instanceof Float
-                || valObj instanceof Double
-                || valObj instanceof Byte
-                || valObj instanceof Short
-                || valObj instanceof Boolean) {
-            val = valObj.toString();
+        if (valObj instanceof String || valObj == null) {
+            val = (String)valObj;
         } else { // the serialized object is from a version without JDK-8019292 fix
             val = System.identityHashCode(valObj) + "@" + valObj.getClass().getName();
         }

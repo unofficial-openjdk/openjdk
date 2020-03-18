@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,22 +30,23 @@ import jdk.test.lib.apps.LingeredApp;
 import jdk.test.lib.JDKToolLauncher;
 import jdk.test.lib.Platform;
 import jdk.test.lib.process.OutputAnalyzer;
+import jdk.test.lib.SA.SATestUtils;
 import jdk.test.lib.Utils;
 
 /**
  * @test
- * @requires vm.hasSAandCanAttach
+ * @requires vm.hasSA
  * @library /test/lib
  * @run main JhsdbThreadInfoTest
  */
 public class JhsdbThreadInfoTest {
 
     public static void main(String[] args) throws Exception {
-
+        SATestUtils.skipIfCannotAttach(); // throws SkippedException if attach not expected to work.
         LingeredApp app = null;
 
         try {
-            app = LingeredApp.startApp(Utils.getVmOptions());
+            app = LingeredApp.startApp();
             System.out.println("Started LingeredApp with pid " + app.getPid());
 
             JDKToolLauncher jhsdbLauncher = JDKToolLauncher.createUsingTestJDK("jhsdb");
@@ -54,8 +55,7 @@ public class JhsdbThreadInfoTest {
             jhsdbLauncher.addToolArg("--pid");
             jhsdbLauncher.addToolArg(Long.toString(app.getPid()));
 
-            ProcessBuilder pb = new ProcessBuilder();
-            pb.command(jhsdbLauncher.getCommand());
+            ProcessBuilder pb = SATestUtils.createProcessBuilder(jhsdbLauncher);
             Process jhsdb = pb.start();
 
             OutputAnalyzer out = new OutputAnalyzer(jhsdb);

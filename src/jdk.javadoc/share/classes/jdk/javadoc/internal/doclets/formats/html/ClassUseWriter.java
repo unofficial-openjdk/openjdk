@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,8 +45,7 @@ import jdk.javadoc.internal.doclets.formats.html.markup.ContentBuilder;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlStyle;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTag;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTree;
-import jdk.javadoc.internal.doclets.formats.html.markup.Navigation;
-import jdk.javadoc.internal.doclets.formats.html.markup.Navigation.PageMode;
+import jdk.javadoc.internal.doclets.formats.html.Navigation.PageMode;
 import jdk.javadoc.internal.doclets.formats.html.markup.StringContent;
 import jdk.javadoc.internal.doclets.toolkit.Content;
 import jdk.javadoc.internal.doclets.toolkit.util.ClassTree;
@@ -54,6 +53,7 @@ import jdk.javadoc.internal.doclets.toolkit.util.ClassUseMapper;
 import jdk.javadoc.internal.doclets.toolkit.util.DocFileIOException;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPath;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPaths;
+import jdk.javadoc.internal.doclets.toolkit.util.Utils;
 
 
 /**
@@ -158,19 +158,21 @@ public class ClassUseWriter extends SubWriterHolderWriter {
      */
     public static void generate(HtmlConfiguration configuration, ClassTree classtree) throws DocFileIOException  {
         ClassUseMapper mapper = new ClassUseMapper(configuration, classtree);
+        boolean nodeprecated = configuration.getOptions().noDeprecated();
+        Utils utils = configuration.utils;
         for (TypeElement aClass : configuration.getIncludedTypeElements()) {
             // If -nodeprecated option is set and the containing package is marked
             // as deprecated, do not generate the class-use page. We will still generate
             // the class-use page if the class is marked as deprecated but the containing
             // package is not since it could still be linked from that package-use page.
-            if (!(configuration.nodeprecated &&
-                  configuration.utils.isDeprecated(configuration.utils.containingPackage(aClass))))
+            if (!(nodeprecated &&
+                  utils.isDeprecated(utils.containingPackage(aClass))))
                 ClassUseWriter.generate(configuration, mapper, aClass);
         }
         for (PackageElement pkg : configuration.packages) {
             // If -nodeprecated option is set and the package is marked
             // as deprecated, do not generate the package-use page.
-            if (!(configuration.nodeprecated && configuration.utils.isDeprecated(pkg)))
+            if (!(nodeprecated && utils.isDeprecated(pkg)))
                 PackageUseWriter.generate(configuration, mapper, pkg);
         }
     }
@@ -216,21 +218,20 @@ public class ClassUseWriter extends SubWriterHolderWriter {
      */
     protected void generateClassUseFile() throws DocFileIOException {
         HtmlTree body = getClassUseHeader();
-        HtmlTree div = new HtmlTree(HtmlTag.DIV);
-        div.setStyle(HtmlStyle.classUseContainer);
+        Content mainContent = new ContentBuilder();
         if (pkgSet.size() > 0) {
-            addClassUse(div);
+            addClassUse(mainContent);
         } else {
-            div.add(contents.getContent("doclet.ClassUse_No.usage.of.0",
+            mainContent.add(contents.getContent("doclet.ClassUse_No.usage.of.0",
                     utils.getFullyQualifiedName(typeElement)));
         }
-        bodyContents.addMainContent(div);
+        bodyContents.addMainContent(mainContent);
         HtmlTree footer = HtmlTree.FOOTER();
         navBar.setUserFooter(getUserHeaderFooter(false));
-        footer.add(navBar.getContent(false));
+        footer.add(navBar.getContent(Navigation.Position.BOTTOM));
         addBottom(footer);
         bodyContents.setFooter(footer);
-        body.add(bodyContents.toContent());
+        body.add(bodyContents);
         String description = getDescription("use", typeElement);
         printHtmlDocument(null, description, body);
     }
@@ -267,7 +268,7 @@ public class ClassUseWriter extends SubWriterHolderWriter {
         for (PackageElement pkg : pkgSet) {
             addPackageUse(pkg, table);
         }
-        contentTree.add(table.toContent());
+        contentTree.add(table);
     }
 
     /**
@@ -295,7 +296,7 @@ public class ClassUseWriter extends SubWriterHolderWriter {
             addSummaryComment(pkg, summary);
             table.addRow(getPackageLink(pkg), summary);
         }
-        contentTree.add(table.toContent());
+        contentTree.add(table);
     }
 
     /**
@@ -307,8 +308,7 @@ public class ClassUseWriter extends SubWriterHolderWriter {
         HtmlTree ul = new HtmlTree(HtmlTag.UL);
         ul.setStyle(HtmlStyle.blockList);
         for (PackageElement pkg : pkgSet) {
-            Content markerAnchor = links.createAnchor(getPackageAnchorName(pkg));
-            HtmlTree htmlTree = HtmlTree.SECTION(HtmlStyle.detail, markerAnchor);
+            HtmlTree htmlTree = HtmlTree.SECTION(HtmlStyle.detail).setId(getPackageAnchorName(pkg));
             Content link = contents.getContent("doclet.ClassUse_Uses.of.0.in.1",
                     getLink(new LinkInfoImpl(configuration, LinkInfoImpl.Kind.CLASS_USE_HEADER,
                             typeElement)),
@@ -434,13 +434,13 @@ public class ClassUseWriter extends SubWriterHolderWriter {
                 .label(resources.getText("doclet.Class")));
         navBar.setNavLinkClass(classLinkContent);
         navBar.setUserHeader(getUserHeaderFooter(true));
-        headerContent.add(navBar.getContent(true));
+        headerContent.add(navBar.getContent(Navigation.Position.TOP));
         ContentBuilder headingContent = new ContentBuilder();
         headingContent.add(contents.getContent("doclet.ClassUse_Title", cltype));
         headingContent.add(new HtmlTree(HtmlTag.BR));
         headingContent.add(clname);
-        Content heading = HtmlTree.HEADING(Headings.PAGE_TITLE_HEADING,
-                true, HtmlStyle.title, headingContent);
+        Content heading = HtmlTree.HEADING_TITLE(Headings.PAGE_TITLE_HEADING,
+                HtmlStyle.title, headingContent);
         Content div = HtmlTree.DIV(HtmlStyle.header, heading);
         bodyContents.setHeader(headerContent).addMainContent(div);
         return bodyTree;

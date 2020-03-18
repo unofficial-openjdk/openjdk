@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -76,8 +76,8 @@ public class TestIndexTaglet extends JavadocTester {
 
         checkOrder("pkg/A.html",
                 "<h2>Method Details</h2>\n",
-                "<div class=\"block\">test description with <a id=\"search_phrase_a\" "
-                 +    "class=\"searchTagResult\">search_phrase_a</a></div>");
+                "<div class=\"block\">test description with <span id=\"search_phrase_a\" "
+                 +    "class=\"search-tag-result\">search_phrase_a</span></div>");
 
         checkOrder("pkg/A.html",
                 "<h2>Method Summary</h2>\n",
@@ -124,7 +124,7 @@ public class TestIndexTaglet extends JavadocTester {
         checkExit(Exit.OK);
 
         checkOutput("pkg/A.html", true,
-                "This is a class. Here is <a id=\"foo\" class=\"searchTagResult\">foo</a>.",
-                "This is a method. Here is <a id=\"foo-1\" class=\"searchTagResult\">foo</a>.");
+                "This is a class. Here is <span id=\"foo\" class=\"search-tag-result\">foo</span>.",
+                "This is a method. Here is <span id=\"foo-1\" class=\"search-tag-result\">foo</span>.");
     }
 }

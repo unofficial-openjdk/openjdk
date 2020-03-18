@@ -8,7 +8,7 @@
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICUAR PURPOSE.  See the GNU General Public License
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
  *
@@ -19,7 +19,6 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
 #include "precompiled.hpp"
@@ -31,6 +30,63 @@
 template <typename T> T max_pow2() {
   T max_val = max_value<T>();
   return max_val - (max_val >> 1);
+}
+
+template <typename T> static void test_is_power_of_2() {
+  EXPECT_FALSE(is_power_of_2(T(0)));
+  EXPECT_FALSE(is_power_of_2(~T(0)));
+
+  if (IsSigned<T>::value) {
+    EXPECT_FALSE(is_power_of_2(std::numeric_limits<T>::min()));
+  }
+
+  // Test true
+  for (T i = max_pow2<T>(); i > 0; i = (i >> 1)) {
+    EXPECT_TRUE(is_power_of_2(i)) << "value = " << T(i);
+  }
+
+  // Test one less
+  for (T i = max_pow2<T>(); i > 2; i = (i >> 1)) {
+    EXPECT_FALSE(is_power_of_2(i - 1)) << "value = " << T(i - 1);
+  }
+
+  // Test one more
+  for (T i = max_pow2<T>(); i > 1; i = (i >> 1)) {
+    EXPECT_FALSE(is_power_of_2(i + 1)) << "value = " << T(i + 1);
+  }
+}
+
+TEST(power_of_2, is_power_of_2) {
+  test_is_power_of_2<int8_t>();
+  test_is_power_of_2<int16_t>();
+  test_is_power_of_2<int32_t>();
+  test_is_power_of_2<int64_t>();
+  test_is_power_of_2<int8_t>();
+  test_is_power_of_2<int16_t>();
+  test_is_power_of_2<int32_t>();
+  test_is_power_of_2<int64_t>();
+
+  test_is_power_of_2<jint>();
+  test_is_power_of_2<jlong>();
+}
+
+TEST(power_of_2, exact_log2) {
+  {
+    uintptr_t j = 1;
+#ifdef _LP64
+    for (int i = 0; i < 64; i++, j <<= 1) {
+#else
+    for (int i = 0; i < 32; i++, j <<= 1) {
+#endif
+      EXPECT_EQ(i, exact_log2(j));
+    }
+  }
+  {
+    julong j = 1;
+    for (int i = 0; i < 64; i++, j <<= 1) {
+      EXPECT_EQ(i, exact_log2_long(j));
+    }
+  }
 }
 
 template <typename T> void round_up_power_of_2() {

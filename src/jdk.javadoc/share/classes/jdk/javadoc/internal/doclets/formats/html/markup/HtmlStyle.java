@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,8 +25,11 @@
 
 package jdk.javadoc.internal.doclets.formats.html.markup;
 
+import java.util.Locale;
+import java.util.regex.Pattern;
+
 /**
- * Enum representing HTML styles. The name map to values in the CSS file.
+ * Enum representing HTML styles, with associated entries in the stylesheet files.
  *
  *  <p><b>This is NOT part of any supported API.
  *  If you write code that depends on this, you do so at your own risk.
@@ -36,8 +39,6 @@ package jdk.javadoc.internal.doclets.formats.html.markup;
 public enum HtmlStyle {
     aboutLanguage,
     activeTableTab,
-    allClassesContainer,
-    allPackagesContainer,
     altColor,
     annotations,
     arguments,
@@ -45,7 +46,6 @@ public enum HtmlStyle {
     blockList,
     bottomNav,
     circle,
-    classUseContainer,
     classUses,
     colConstructorName,
     colDeprecatedItemName,
@@ -56,8 +56,6 @@ public enum HtmlStyle {
     constructorDetails,
     constructorSummary,
     constantDetails,
-    constantValuesContainer,
-    contentContainer,
     deprecatedLabel,
     deprecatedSummary,
     deprecationBlock,
@@ -79,6 +77,7 @@ public enum HtmlStyle {
     hierarchy,
     horizontal,
     implementationLabel,
+    index,
     inheritance,
     inheritedList,
     interfaceName,
@@ -101,9 +100,8 @@ public enum HtmlStyle {
     navBarCell1Rev,
     navList,
     navListSearch,
-    navPadding,
     nestedClassSummary,
-    overrideSpecifyLabel,
+    notes,
     overviewSummary,
     packages,
     packageDescription,
@@ -111,34 +109,28 @@ public enum HtmlStyle {
     packageLabelInType,
     packagesSummary,
     packageUses,
-    paramLabel,
     propertyDetails,
     propertySummary,
     providesSummary,
     requiresSummary,
-    returnLabel,
     returnType,
     rowColor,
     searchTagLink,
     searchTagResult,
-    seeLabel,
-    serializedFormContainer,
     serializedPackageContainer,
     serializedClassDetails,
     servicesSummary,
-    simpleTagLabel,
     skipNav,
+    source,
     sourceContainer,
     sourceLineNo,
     subNav,
     subNavList,
     subTitle,
     summary,
-    systemPropertiesContainer,
     systemPropertiesSummary,
     tabEnd,
     tableTab,
-    throwsLabel,
     title,
     topNav,
     typeNameLabel,
@@ -148,5 +140,25 @@ public enum HtmlStyle {
     typeSummary,
     useSummary,
     usesSummary,
-    verticalSeparator
+    verticalSeparator;
+
+    private final String cssName;
+
+    HtmlStyle() {
+        cssName = Pattern.compile("\\p{Upper}")
+                .matcher(toString())
+                .replaceAll(mr -> "-" + mr.group().toLowerCase(Locale.US));
+    }
+
+    HtmlStyle(String cssName) {
+        this.cssName = cssName;
+    }
+
+    /**
+     * Returns the CSS class name associated with this style.
+     * @return the CSS class name
+     */
+    public String cssName() {
+        return cssName;
+    }
 }

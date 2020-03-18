@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2014, 2019, Red Hat Inc. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Red Hat Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,6 +47,7 @@
 #include "runtime/jniHandles.inline.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/thread.hpp"
+#include "utilities/powerOfTwo.hpp"
 #ifdef COMPILER1
 #include "c1/c1_LIRAssembler.hpp"
 #endif
@@ -55,6 +56,7 @@
 #include "opto/compile.hpp"
 #include "opto/intrinsicnode.hpp"
 #include "opto/node.hpp"
+#include "opto/output.hpp"
 #endif
 
 #ifdef PRODUCT
@@ -744,7 +746,7 @@ address MacroAssembler::trampoline_call(Address entry, CodeBuffer *cbuf) {
     CompileTask* task = ciEnv::current()->task();
     in_scratch_emit_size =
       (task != NULL && is_c2_compile(task->comp_level()) &&
-       Compile::current()->in_scratch_emit_size());
+       Compile::current()->output()->in_scratch_emit_size());
 #endif
     if (!in_scratch_emit_size) {
       address stub = emit_trampoline_stub(offset(), entry.target());
@@ -1741,7 +1743,7 @@ Address MacroAssembler::form_address(Register Rd, Register base, long byte_offse
   {
     unsigned long word_offset = byte_offset >> shift;
     unsigned long masked_offset = word_offset & 0xfff000;
-    if (Address::offset_ok_for_immed(word_offset - masked_offset)
+    if (Address::offset_ok_for_immed(word_offset - masked_offset, 0)
         && Assembler::operand_valid_for_add_sub_immediate(masked_offset << shift)) {
       add(Rd, base, masked_offset << shift);
       word_offset -= masked_offset;
@@ -3904,46 +3906,71 @@ void  MacroAssembler::decode_heap_oop_not_null(Register dst, Register src) {
   }
 }
 
-void MacroAssembler::encode_klass_not_null(Register dst, Register src) {
+MacroAssembler::KlassDecodeMode MacroAssembler::_klass_decode_mode(KlassDecodeNone);
+
+MacroAssembler::KlassDecodeMode MacroAssembler::klass_decode_mode() {
+  assert(UseCompressedClassPointers, "not using compressed class pointers");
+  assert(Metaspace::initialized(), "metaspace not initialized yet");
+
+  if (_klass_decode_mode != KlassDecodeNone) {
+    return _klass_decode_mode;
+  }
+
+  assert(LogKlassAlignmentInBytes == CompressedKlassPointers::shift()
+         || 0 == CompressedKlassPointers::shift(), "decode alg wrong");
+
   if (CompressedKlassPointers::base() == NULL) {
+    return (_klass_decode_mode = KlassDecodeZero);
+  }
+
+  if (operand_valid_for_logical_immediate(
+        /*is32*/false, (uint64_t)CompressedKlassPointers::base())) {
+    const uint64_t range_mask =
+      (1UL << log2_intptr(CompressedKlassPointers::range())) - 1;
+    if (((uint64_t)CompressedKlassPointers::base() & range_mask) == 0) {
+      return (_klass_decode_mode = KlassDecodeXor);
+    }
+  }
+
+  const uint64_t shifted_base =
+    (uint64_t)CompressedKlassPointers::base() >> CompressedKlassPointers::shift();
+  guarantee((shifted_base & 0xffff0000ffffffff) == 0,
+            "compressed class base bad alignment");
+
+  return (_klass_decode_mode = KlassDecodeMovk);
+}
+
+void MacroAssembler::encode_klass_not_null(Register dst, Register src) {
+  switch (klass_decode_mode()) {
+  case KlassDecodeZero:
     if (CompressedKlassPointers::shift() != 0) {
-      assert (LogKlassAlignmentInBytes == CompressedKlassPointers::shift(), "decode alg wrong");
       lsr(dst, src, LogKlassAlignmentInBytes);
     } else {
       if (dst != src) mov(dst, src);
     }
-    return;
-  }
+    break;
 
-  if (use_XOR_for_compressed_class_base) {
+  case KlassDecodeXor:
     if (CompressedKlassPointers::shift() != 0) {
       eor(dst, src, (uint64_t)CompressedKlassPointers::base());
       lsr(dst, dst, LogKlassAlignmentInBytes);
     } else {
       eor(dst, src, (uint64_t)CompressedKlassPointers::base());
     }
-    return;
-  }
+    break;
 
-  if (((uint64_t)CompressedKlassPointers::base() & 0xffffffff) == 0
-      && CompressedKlassPointers::shift() == 0) {
-    movw(dst, src);
-    return;
-  }
+  case KlassDecodeMovk:
+    if (CompressedKlassPointers::shift() != 0) {
+      ubfx(dst, src, LogKlassAlignmentInBytes, 32);
+    } else {
+      movw(dst, src);
+    }
+    break;
 
-#ifdef ASSERT
-  verify_heapbase("MacroAssembler::encode_klass_not_null2: heap base corrupted?");
-#endif
-
-  Register rbase = dst;
-  if (dst == src) rbase = rheapbase;
-  mov(rbase, (uint64_t)CompressedKlassPointers::base());
-  sub(dst, src, rbase);
-  if (CompressedKlassPointers::shift() != 0) {
-    assert (LogKlassAlignmentInBytes == CompressedKlassPointers::shift(), "decode alg wrong");
-    lsr(dst, dst, LogKlassAlignmentInBytes);
+  case KlassDecodeNone:
+    ShouldNotReachHere();
+    break;
   }
-  if (dst == src) reinit_heapbase();
 }
 
 void MacroAssembler::encode_klass_not_null(Register r) {
@@ -3951,49 +3978,44 @@ void MacroAssembler::encode_klass_not_null(Register r) {
 }
 
 void  MacroAssembler::decode_klass_not_null(Register dst, Register src) {
-  Register rbase = dst;
   assert (UseCompressedClassPointers, "should only be used for compressed headers");
 
-  if (CompressedKlassPointers::base() == NULL) {
+  switch (klass_decode_mode()) {
+  case KlassDecodeZero:
     if (CompressedKlassPointers::shift() != 0) {
-      assert(LogKlassAlignmentInBytes == CompressedKlassPointers::shift(), "decode alg wrong");
       lsl(dst, src, LogKlassAlignmentInBytes);
     } else {
       if (dst != src) mov(dst, src);
     }
-    return;
-  }
+    break;
 
-  if (use_XOR_for_compressed_class_base) {
+  case KlassDecodeXor:
     if (CompressedKlassPointers::shift() != 0) {
       lsl(dst, src, LogKlassAlignmentInBytes);
       eor(dst, dst, (uint64_t)CompressedKlassPointers::base());
     } else {
       eor(dst, src, (uint64_t)CompressedKlassPointers::base());
     }
-    return;
+    break;
+
+  case KlassDecodeMovk: {
+    const uint64_t shifted_base =
+      (uint64_t)CompressedKlassPointers::base() >> CompressedKlassPointers::shift();
+
+    if (dst != src) movw(dst, src);
+    movk(dst, shifted_base >> 32, 32);
+
+    if (CompressedKlassPointers::shift() != 0) {
+      lsl(dst, dst, LogKlassAlignmentInBytes);
+    }
+
+    break;
   }
 
-  if (((uint64_t)CompressedKlassPointers::base() & 0xffffffff) == 0
-      && CompressedKlassPointers::shift() == 0) {
-    if (dst != src)
-      movw(dst, src);
-    movk(dst, (uint64_t)CompressedKlassPointers::base() >> 32, 32);
-    return;
+  case KlassDecodeNone:
+    ShouldNotReachHere();
+    break;
   }
-
-  // Cannot assert, unverified entry point counts instructions (see .ad file)
-  // vtableStubs also counts instructions in pd_code_size_limit.
-  // Also do not verify_oop as this is called by verify_oop.
-  if (dst == src) rbase = rheapbase;
-  mov(rbase, (uint64_t)CompressedKlassPointers::base());
-  if (CompressedKlassPointers::shift() != 0) {
-    assert(LogKlassAlignmentInBytes == CompressedKlassPointers::shift(), "decode alg wrong");
-    add(dst, rbase, src, Assembler::LSL, LogKlassAlignmentInBytes);
-  } else {
-    add(dst, rbase, src);
-  }
-  if (dst == src) reinit_heapbase();
 }
 
 void  MacroAssembler::decode_klass_not_null(Register r) {
@@ -4839,6 +4861,8 @@ void MacroAssembler::string_indexof_char(Register str1, Register cnt1,
   Register ch1 = rscratch1;
   Register result_tmp = rscratch2;
 
+  cbz(cnt1, NOMATCH);
+
   cmp(cnt1, (u1)4);
   br(LT, DO1_SHORT);
 
@@ -4899,10 +4923,14 @@ void MacroAssembler::string_compare(Register str1, Register str2,
       DIFFERENCE, NEXT_WORD, SHORT_LOOP_TAIL, SHORT_LAST2, SHORT_LAST_INIT,
       SHORT_LOOP_START, TAIL_CHECK;
 
-  const u1 STUB_THRESHOLD = 64 + 8;
   bool isLL = ae == StrIntrinsicNode::LL;
   bool isLU = ae == StrIntrinsicNode::LU;
   bool isUL = ae == StrIntrinsicNode::UL;
+
+  // The stub threshold for LL strings is: 72 (64 + 8) chars
+  // UU: 36 chars, or 72 bytes (valid for the 64-byte large loop with prefetch)
+  // LU/UL: 24 chars, or 48 bytes (valid for the 16-character loop at least)
+  const u1 stub_threshold = isLL ? 72 : ((isLU || isUL) ? 24 : 36);
 
   bool str1_isL = isLL || isLU;
   bool str2_isL = isLL || isUL;
@@ -4944,7 +4972,7 @@ void MacroAssembler::string_compare(Register str1, Register str2,
       cmp(str1, str2);
       br(Assembler::EQ, DONE);
       ldr(tmp2, Address(str2));
-      cmp(cnt2, STUB_THRESHOLD);
+      cmp(cnt2, stub_threshold);
       br(GE, STUB);
       subsw(cnt2, cnt2, minCharsInWord);
       br(EQ, TAIL_CHECK);
@@ -4953,10 +4981,8 @@ void MacroAssembler::string_compare(Register str1, Register str2,
       sub(cnt2, zr, cnt2, LSL, str2_chr_shift);
     } else if (isLU) {
       ldrs(vtmp, Address(str1));
-      cmp(str1, str2);
-      br(Assembler::EQ, DONE);
       ldr(tmp2, Address(str2));
-      cmp(cnt2, STUB_THRESHOLD);
+      cmp(cnt2, stub_threshold);
       br(GE, STUB);
       subw(cnt2, cnt2, 4);
       eor(vtmpZ, T16B, vtmpZ, vtmpZ);
@@ -4969,10 +4995,8 @@ void MacroAssembler::string_compare(Register str1, Register str2,
       fmovd(tmp1, vtmp);
     } else { // UL case
       ldr(tmp1, Address(str1));
-      cmp(str1, str2);
-      br(Assembler::EQ, DONE);
       ldrs(vtmp, Address(str2));
-      cmp(cnt2, STUB_THRESHOLD);
+      cmp(cnt2, stub_threshold);
       br(GE, STUB);
       subw(cnt2, cnt2, 4);
       lea(str1, Address(str1, cnt2, Address::uxtw(str1_chr_shift)));

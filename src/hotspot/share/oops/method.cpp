@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,7 +39,6 @@
 #include "logging/log.hpp"
 #include "logging/logTag.hpp"
 #include "memory/allocation.inline.hpp"
-#include "memory/heapInspection.hpp"
 #include "memory/metadataFactory.hpp"
 #include "memory/metaspaceClosure.hpp"
 #include "memory/metaspaceShared.hpp"
@@ -523,7 +522,7 @@ void Method::build_interpreter_method_data(const methodHandle& method, TRAPS) {
 
   // Grab a lock here to prevent multiple
   // MethodData*s from being created.
-  MutexLocker ml(MethodData_lock, THREAD);
+  MutexLocker ml(THREAD, MethodData_lock);
   if (method->method_data() == NULL) {
     ClassLoaderData* loader_data = method->method_holder()->class_loader_data();
     MethodData* method_data = MethodData::allocate(loader_data, method, THREAD);
@@ -578,9 +577,16 @@ int Method::extra_stack_words() {
   return extra_stack_entries() * Interpreter::stackElementSize;
 }
 
-void Method::compute_size_of_parameters(Thread *thread) {
-  ArgumentSizeComputer asc(signature());
-  set_size_of_parameters(asc.size() + (is_static() ? 0 : 1));
+// Derive size of parameters, return type, and fingerprint,
+// all in one pass, which is run at load time.
+// We need the first two, and might as well grab the third.
+void Method::compute_from_signature(Symbol* sig) {
+  // At this point, since we are scanning the signature,
+  // we might as well compute the whole fingerprint.
+  Fingerprinter fp(sig, is_static());
+  set_size_of_parameters(fp.size_of_parameters());
+  constMethod()->set_result_type(fp.return_type());
+  constMethod()->set_fingerprint(fp.fingerprint());
 }
 
 bool Method::is_empty_method() const {
@@ -805,7 +811,13 @@ objArrayHandle Method::resolved_checked_exceptions_impl(Method* method, TRAPS) {
     for (int i = 0; i < length; i++) {
       CheckedExceptionElement* table = h_this->checked_exceptions_start(); // recompute on each iteration, not gc safe
       Klass* k = h_this->constants()->klass_at(table[i].class_cp_index, CHECK_(objArrayHandle()));
-      assert(k->is_subclass_of(SystemDictionary::Throwable_klass()), "invalid exception class");
+      if (log_is_enabled(Warning, exceptions) &&
+          !k->is_subclass_of(SystemDictionary::Throwable_klass())) {
+        ResourceMark rm(THREAD);
+        log_warning(exceptions)(
+          "Class %s in throws clause of method %s is not a subtype of class java.lang.Throwable",
+          k->external_name(), method->external_name());
+      }
       mirrors->obj_at_put(i, k->java_mirror());
     }
     return mirrors;
@@ -989,7 +1001,6 @@ void Method::set_not_compilable(const char* reason, int comp_level, bool report)
     if (is_c2_compile(comp_level))
       set_not_c2_compilable();
   }
-  CompilationPolicy::policy()->disable_compilation(this);
   assert(!CompilationPolicy::can_be_compiled(methodHandle(Thread::current(), this), comp_level), "sanity check");
 }
 
@@ -1016,7 +1027,6 @@ void Method::set_not_osr_compilable(const char* reason, int comp_level, bool rep
     if (is_c2_compile(comp_level))
       set_not_c2_osr_compilable();
   }
-  CompilationPolicy::policy()->disable_compilation(this);
   assert(!CompilationPolicy::can_be_osr_compiled(methodHandle(Thread::current(), this), comp_level), "sanity check");
 }
 
@@ -1165,9 +1175,11 @@ void Method::link_method(const methodHandle& h_method, TRAPS) {
   // If the code cache is full, we may reenter this function for the
   // leftover methods that weren't linked.
   if (is_shared()) {
+#ifdef ASSERT
     address entry = Interpreter::entry_for_cds_method(h_method);
     assert(entry != NULL && entry == _i2i_entry,
            "should be correctly set during dump time");
+#endif
     if (adapter() != NULL) {
       return;
     }
@@ -1444,9 +1456,7 @@ methodHandle Method::make_method_handle_intrinsic(vmIntrinsics::ID iid,
   m->set_signature_index(_imcp_invoke_signature);
   assert(MethodHandles::is_signature_polymorphic_name(m->name()), "");
   assert(m->signature() == signature, "");
-  ResultTypeFinder rtf(signature);
-  m->constMethod()->set_result_type(rtf.type());
-  m->compute_size_of_parameters(THREAD);
+  m->compute_from_signature(signature);
   m->init_intrinsic_id();
   assert(m->is_method_handle_intrinsic(), "");
 #ifdef ASSERT
@@ -1672,7 +1682,6 @@ void Method::init_intrinsic_id() {
   }
 }
 
-// These two methods are static since a GC may move the Method
 bool Method::load_signature_classes(const methodHandle& m, TRAPS) {
   if (!THREAD->can_call_java()) {
     // There is nothing useful this routine can do from within the Compile thread.
@@ -1681,16 +1690,11 @@ bool Method::load_signature_classes(const methodHandle& m, TRAPS) {
     return false;
   }
   bool sig_is_loaded = true;
-  Handle class_loader(THREAD, m->method_holder()->class_loader());
-  Handle protection_domain(THREAD, m->method_holder()->protection_domain());
   ResourceMark rm(THREAD);
-  Symbol*  signature = m->signature();
-  for(SignatureStream ss(signature); !ss.is_done(); ss.next()) {
-    if (ss.is_object()) {
-      Symbol* sym = ss.as_symbol();
-      Symbol*  name  = sym;
-      Klass* klass = SystemDictionary::resolve_or_null(name, class_loader,
-                                             protection_domain, THREAD);
+  for (ResolvingSignatureStream ss(m()); !ss.is_done(); ss.next()) {
+    if (ss.is_reference()) {
+      // load everything, including arrays "[Lfoo;"
+      Klass* klass = ss.as_klass(SignatureStream::ReturnNull, THREAD);
       // We are loading classes eagerly. If a ClassNotFoundException or
       // a LinkageError was generated, be sure to ignore it.
       if (HAS_PENDING_EXCEPTION) {
@@ -1708,15 +1712,13 @@ bool Method::load_signature_classes(const methodHandle& m, TRAPS) {
 }
 
 bool Method::has_unloaded_classes_in_signature(const methodHandle& m, TRAPS) {
-  Handle class_loader(THREAD, m->method_holder()->class_loader());
-  Handle protection_domain(THREAD, m->method_holder()->protection_domain());
   ResourceMark rm(THREAD);
-  Symbol*  signature = m->signature();
-  for(SignatureStream ss(signature); !ss.is_done(); ss.next()) {
+  for(ResolvingSignatureStream ss(m()); !ss.is_done(); ss.next()) {
     if (ss.type() == T_OBJECT) {
-      Symbol* name = ss.as_symbol_or_null();
-      if (name == NULL) return true;
-      Klass* klass = SystemDictionary::find(name, class_loader, protection_domain, THREAD);
+      // Do not use ss.is_reference() here, since we don't care about
+      // unloaded array component types.
+      Klass* klass = ss.as_klass_if_loaded(THREAD);
+      assert(!HAS_PENDING_EXCEPTION, "as_klass_if_loaded contract");
       if (klass == NULL) return true;
     }
   }
@@ -1734,7 +1736,7 @@ void Method::print_short_name(outputStream* st) {
   name()->print_symbol_on(st);
   if (WizardMode) signature()->print_symbol_on(st);
   else if (MethodHandles::is_signature_polymorphic(intrinsic_id()))
-    MethodHandles::print_as_basic_type_signature_on(st, signature(), true);
+    MethodHandles::print_as_basic_type_signature_on(st, signature());
 }
 
 // Comparer for sorting an object array containing
@@ -1787,8 +1789,8 @@ class SignatureTypePrinter : public SignatureTypeNames {
     _use_separator = false;
   }
 
-  void print_parameters()              { _use_separator = false; iterate_parameters(); }
-  void print_returntype()              { _use_separator = false; iterate_returntype(); }
+  void print_parameters()              { _use_separator = false; do_parameters_on(this); }
+  void print_returntype()              { _use_separator = false; do_type(return_type()); }
 };
 
 
@@ -2427,23 +2429,6 @@ void Method::print_value_on(outputStream* st) const {
   if (WizardMode && code() != NULL) st->print(" ((nmethod*)%p)", code());
 }
 
-#if INCLUDE_SERVICES
-// Size Statistics
-void Method::collect_statistics(KlassSizeStats *sz) const {
-  int mysize = sz->count(this);
-  sz->_method_bytes += mysize;
-  sz->_method_all_bytes += mysize;
-  sz->_rw_bytes += mysize;
-
-  if (constMethod()) {
-    constMethod()->collect_statistics(sz);
-  }
-  if (method_data()) {
-    method_data()->collect_statistics(sz);
-  }
-}
-#endif // INCLUDE_SERVICES
-
 // LogTouchedMethods and PrintTouchedMethods
 
 // TouchedMethodRecord -- we can't use a HashtableEntry<Method*> because
@@ -2473,7 +2458,7 @@ void Method::log_touched(TRAPS) {
                       my_sig->identity_hash();
   juint index = juint(hash) % table_size;
 
-  MutexLocker ml(TouchedMethodLog_lock, THREAD);
+  MutexLocker ml(THREAD, TouchedMethodLog_lock);
   if (_touched_method_table == NULL) {
     _touched_method_table = NEW_C_HEAP_ARRAY2(TouchedMethodRecord*, table_size,
                                               mtTracing, CURRENT_PC);

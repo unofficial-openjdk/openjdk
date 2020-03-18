@@ -1,7 +1,7 @@
 
 
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1156,18 +1156,18 @@ int compare(ReassignedField* left, ReassignedField* right) {
 // Restore fields of an eliminated instance object using the same field order
 // returned by HotSpotResolvedObjectTypeImpl.getInstanceFields(true)
 static int reassign_fields_by_klass(InstanceKlass* klass, frame* fr, RegisterMap* reg_map, ObjectValue* sv, int svIndex, oop obj, bool skip_internal) {
-  if (klass->superklass() != NULL) {
-    svIndex = reassign_fields_by_klass(klass->superklass(), fr, reg_map, sv, svIndex, obj, skip_internal);
-  }
-
   GrowableArray<ReassignedField>* fields = new GrowableArray<ReassignedField>();
-  for (AllFieldStream fs(klass); !fs.done(); fs.next()) {
-    if (!fs.access_flags().is_static() && (!skip_internal || !fs.access_flags().is_internal())) {
-      ReassignedField field;
-      field._offset = fs.offset();
-      field._type = FieldType::basic_type(fs.signature());
-      fields->append(field);
+  InstanceKlass* ik = klass;
+  while (ik != NULL) {
+    for (AllFieldStream fs(ik); !fs.done(); fs.next()) {
+      if (!fs.access_flags().is_static() && (!skip_internal || !fs.access_flags().is_internal())) {
+        ReassignedField field;
+        field._offset = fs.offset();
+        field._type = Signature::basic_type(fs.signature());
+        fields->append(field);
+      }
     }
+    ik = ik->superklass();
   }
   fields->sort(compare);
   for (int i = 0; i < fields->length(); i++) {
@@ -1516,7 +1516,7 @@ void Deoptimization::deoptimize_single_frame(JavaThread* thread, frame fr, Deopt
   fr.deoptimize(thread);
 }
 
-void Deoptimization::deoptimize(JavaThread* thread, frame fr, RegisterMap *map, DeoptReason reason) {
+void Deoptimization::deoptimize(JavaThread* thread, frame fr, DeoptReason reason) {
   // Deoptimize only if the frame comes from compile code.
   // Do not deoptimize the frame which is already patched
   // during the execution of the loops below.
@@ -1534,15 +1534,15 @@ address Deoptimization::deoptimize_for_missing_exception_handler(CompiledMethod*
   cm->make_not_entrant();
 
   // Use Deoptimization::deoptimize for all of its side-effects:
-  // revoking biases of monitors, gathering traps statistics, logging...
+  // gathering traps statistics, logging...
   // it also patches the return pc but we do not care about that
   // since we return a continuation to the deopt_blob below.
   JavaThread* thread = JavaThread::current();
-  RegisterMap reg_map(thread, UseBiasedLocking);
+  RegisterMap reg_map(thread, false);
   frame runtime_frame = thread->last_frame();
   frame caller_frame = runtime_frame.sender(&reg_map);
   assert(caller_frame.cb()->as_compiled_method_or_null() == cm, "expect top frame compiled method");
-  Deoptimization::deoptimize(thread, caller_frame, &reg_map, Deoptimization::Reason_not_compiled_exception_handler);
+  Deoptimization::deoptimize(thread, caller_frame, Deoptimization::Reason_not_compiled_exception_handler);
 
   MethodData* trap_mdo = get_method_data(thread, methodHandle(thread, cm->method()), true);
   if (trap_mdo != NULL) {
@@ -1557,12 +1557,12 @@ void Deoptimization::deoptimize_frame_internal(JavaThread* thread, intptr_t* id,
   assert(thread == Thread::current() || SafepointSynchronize::is_at_safepoint(),
          "can only deoptimize other thread at a safepoint");
   // Compute frame and register map based on thread and sp.
-  RegisterMap reg_map(thread, UseBiasedLocking);
+  RegisterMap reg_map(thread, false);
   frame fr = thread->last_frame();
   while (fr.id() != id) {
     fr = fr.sender(&reg_map);
   }
-  deoptimize(thread, fr, &reg_map, reason);
+  deoptimize(thread, fr, reason);
 }
 
 
@@ -1606,33 +1606,20 @@ Deoptimization::get_method_data(JavaThread* thread, const methodHandle& m,
 
 #if COMPILER2_OR_JVMCI
 void Deoptimization::load_class_by_index(const constantPoolHandle& constant_pool, int index, TRAPS) {
-  // in case of an unresolved klass entry, load the class.
+  // In case of an unresolved klass entry, load the class.
+  // This path is exercised from case _ldc in Parse::do_one_bytecode,
+  // and probably nowhere else.
+  // Even that case would benefit from simply re-interpreting the
+  // bytecode, without paying special attention to the class index.
+  // So this whole "class index" feature should probably be removed.
+
   if (constant_pool->tag_at(index).is_unresolved_klass()) {
     Klass* tk = constant_pool->klass_at_ignore_error(index, CHECK);
     return;
   }
 
-  if (!constant_pool->tag_at(index).is_symbol()) return;
-
-  Handle class_loader (THREAD, constant_pool->pool_holder()->class_loader());
-  Symbol*  symbol  = constant_pool->symbol_at(index);
-
-  // class name?
-  if (symbol->char_at(0) != '(') {
-    Handle protection_domain (THREAD, constant_pool->pool_holder()->protection_domain());
-    SystemDictionary::resolve_or_null(symbol, class_loader, protection_domain, CHECK);
-    return;
-  }
-
-  // then it must be a signature!
-  ResourceMark rm(THREAD);
-  for (SignatureStream ss(symbol); !ss.is_done(); ss.next()) {
-    if (ss.is_object()) {
-      Symbol* class_name = ss.as_symbol();
-      Handle protection_domain (THREAD, constant_pool->pool_holder()->protection_domain());
-      SystemDictionary::resolve_or_null(class_name, class_loader, protection_domain, CHECK);
-    }
-  }
+  assert(!constant_pool->tag_at(index).is_symbol(),
+         "no symbolic names here, please");
 }
 
 

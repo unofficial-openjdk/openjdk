@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -74,6 +74,7 @@
 #include "utilities/elfFile.hpp"
 #include "utilities/growableArray.hpp"
 #include "utilities/macros.hpp"
+#include "utilities/powerOfTwo.hpp"
 #include "utilities/vmError.hpp"
 
 // put OS-includes here
@@ -717,9 +718,8 @@ void os::Linux::expand_stack_to(address bottom) {
 bool os::Linux::manually_expand_stack(JavaThread * t, address addr) {
   assert(t!=NULL, "just checking");
   assert(t->osthread()->expanding_stack(), "expand should be set");
-  assert(t->stack_base() != NULL, "stack_base was not initialized");
 
-  if (addr <  t->stack_base() && addr >= t->stack_reserved_zone_base()) {
+  if (t->is_in_usable_stack(addr)) {
     sigset_t mask_all, old_sigset;
     sigfillset(&mask_all);
     pthread_sigmask(SIG_SETMASK, &mask_all, &old_sigset);
@@ -2302,6 +2302,19 @@ void os::Linux::print_full_memory_info(outputStream* st) {
   st->print("\n/proc/meminfo:\n");
   _print_ascii_file("/proc/meminfo", st);
   st->cr();
+
+  // some information regarding THPs; for details see
+  // https://www.kernel.org/doc/Documentation/vm/transhuge.txt
+  st->print_cr("/sys/kernel/mm/transparent_hugepage/enabled:");
+  if (!_print_ascii_file("/sys/kernel/mm/transparent_hugepage/enabled", st)) {
+    st->print_cr("  <Not Available>");
+  }
+  st->cr();
+  st->print_cr("/sys/kernel/mm/transparent_hugepage/defrag (defrag/compaction efforts parameter):");
+  if (!_print_ascii_file("/sys/kernel/mm/transparent_hugepage/defrag", st)) {
+    st->print_cr("  <Not Available>");
+  }
+  st->cr();
 }
 
 void os::Linux::print_ld_preload_file(outputStream* st) {
@@ -3163,6 +3176,8 @@ bool os::Linux::libnuma_init() {
                                                   libnuma_v2_dlsym(handle, "numa_get_interleave_mask")));
       set_numa_move_pages(CAST_TO_FN_PTR(numa_move_pages_func_t,
                                          libnuma_dlsym(handle, "numa_move_pages")));
+      set_numa_set_preferred(CAST_TO_FN_PTR(numa_set_preferred_func_t,
+                                            libnuma_dlsym(handle, "numa_set_preferred")));
 
       if (numa_available() != -1) {
         set_numa_all_nodes((unsigned long*)libnuma_dlsym(handle, "numa_all_nodes"));
@@ -3298,6 +3313,7 @@ os::Linux::numa_distance_func_t os::Linux::_numa_distance;
 os::Linux::numa_get_membind_func_t os::Linux::_numa_get_membind;
 os::Linux::numa_get_interleave_mask_func_t os::Linux::_numa_get_interleave_mask;
 os::Linux::numa_move_pages_func_t os::Linux::_numa_move_pages;
+os::Linux::numa_set_preferred_func_t os::Linux::_numa_set_preferred;
 os::Linux::NumaAllocationPolicy os::Linux::_current_numa_policy;
 unsigned long* os::Linux::_numa_all_nodes;
 struct bitmask* os::Linux::_numa_all_nodes_ptr;
@@ -5123,8 +5139,9 @@ void os::Linux::numa_init() {
   } else {
     if ((Linux::numa_max_node() < 1) || Linux::is_bound_to_single_node()) {
       // If there's only one node (they start from 0) or if the process
-      // is bound explicitly to a single node using membind, disable NUMA.
-      UseNUMA = false;
+      // is bound explicitly to a single node using membind, disable NUMA unless
+      // user explicilty forces NUMA optimizations on single-node/UMA systems
+      UseNUMA = ForceNUMA;
     } else {
 
       LogTarget(Info,os) log;
@@ -5162,10 +5179,6 @@ void os::Linux::numa_init() {
       UseAdaptiveSizePolicy = false;
       UseAdaptiveNUMAChunkSizing = false;
     }
-  }
-
-  if (!UseNUMA && ForceNUMA) {
-    UseNUMA = true;
   }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,9 +48,9 @@ public class ClhsdbFindPC {
 
             theApp = new LingeredAppWithTrivialMain();
             if (withXcomp) {
-                LingeredApp.startApp(List.of("-Xcomp"), theApp);
+                LingeredApp.startApp(theApp, "-Xcomp");
             } else {
-                LingeredApp.startApp(List.of("-Xint"), theApp);
+                LingeredApp.startApp(theApp, "-Xint");
             }
             System.out.print("Started LingeredApp ");
             if (withXcomp) {
@@ -68,36 +68,32 @@ public class ClhsdbFindPC {
             // the 'jstack -v' command
             cmds = new ArrayList<String>();
 
-            // Output could be null if the test was skipped due to
-            // attach permission issues.
-            if (output != null) {
-                String cmdStr = null;
-                String[] parts = output.split("LingeredAppWithTrivialMain.main");
-                String[] tokens = parts[1].split(" ");
-                for (String token : tokens) {
-                    if (token.contains("pc")) {
-                        String[] address = token.split("=");
-                        // address[1] represents the address of the Method
-                        cmdStr = "findpc " + address[1].replace(",","");
-                        cmds.add(cmdStr);
-                        break;
-                    }
+            String cmdStr = null;
+            String[] parts = output.split("LingeredAppWithTrivialMain.main");
+            String[] tokens = parts[1].split(" ");
+            for (String token : tokens) {
+                if (token.contains("pc")) {
+                    String[] address = token.split("=");
+                    // address[1] represents the address of the Method
+                    cmdStr = "findpc " + address[1].replace(",","");
+                    cmds.add(cmdStr);
+                    break;
                 }
+            }
 
-                Map<String, List<String>> expStrMap = new HashMap<>();
-                if (withXcomp) {
-                    expStrMap.put(cmdStr, List.of(
+            Map<String, List<String>> expStrMap = new HashMap<>();
+            if (withXcomp) {
+                expStrMap.put(cmdStr, List.of(
                             "In code in NMethod for LingeredAppWithTrivialMain.main",
                             "content:",
                             "oops:",
                             "frame size:"));
-                } else {
-                    expStrMap.put(cmdStr, List.of(
+            } else {
+                expStrMap.put(cmdStr, List.of(
                             "In interpreter codelet"));
-                }
-
-                test.run(theApp.getPid(), cmds, expStrMap, null);
             }
+
+            test.run(theApp.getPid(), cmds, expStrMap, null);
         } catch (SkippedException se) {
             throw se;
         } catch (Exception ex) {
@@ -114,4 +110,3 @@ public class ClhsdbFindPC {
         System.out.println("Test PASSED");
     }
 }
-

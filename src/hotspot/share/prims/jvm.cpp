@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -94,6 +94,7 @@
 #endif
 
 #include <errno.h>
+#include <jfr/recorder/jfrRecorder.hpp>
 
 /*
   NOTE about use of any ctor or function call that can trigger a safepoint/GC:
@@ -468,6 +469,10 @@ extern volatile jint vm_created;
 
 JVM_ENTRY_NO_ENV(void, JVM_BeforeHalt())
   JVMWrapper("JVM_BeforeHalt");
+  // Link all classes for dynamic CDS dumping before vm exit.
+  if (DynamicDumpSharedSpaces) {
+    MetaspaceShared::link_and_cleanup_shared_classes(THREAD);
+  }
   EventShutdown event;
   if (event.should_commit()) {
     event.set_reason("Shutdown requested from Java");
@@ -557,7 +562,7 @@ JVM_ENTRY(jstring, JVM_GetExtendedNPEMessage(JNIEnv *env, jthrowable throwable))
   stringStream ss;
   bool ok = BytecodeUtils::get_NPE_message_at(&ss, method, bci);
   if (ok) {
-    oop result = java_lang_String::create_oop_from_str(ss.base(), CHECK_0);
+    oop result = java_lang_String::create_oop_from_str(ss.base(), CHECK_NULL);
     return (jstring) JNIHandles::make_local(env, result);
   } else {
     return NULL;
@@ -2783,7 +2788,7 @@ void jio_print(const char* s, size_t len) {
   if (Arguments::vfprintf_hook() != NULL) {
     jio_fprintf(defaultStream::output_stream(), "%.*s", (int)len, s);
   } else {
-    // Make an unused local variable to avoid warning from gcc 4.x compiler.
+    // Make an unused local variable to avoid warning from gcc compiler.
     size_t count = ::write(defaultStream::output_fd(), s, (int)len);
   }
 }
@@ -2882,6 +2887,15 @@ JVM_ENTRY(void, JVM_StartThread(JNIEnv* env, jobject jthread))
               os::native_thread_creation_failed_msg());
   }
 
+#if INCLUDE_JFR
+  if (JfrRecorder::is_recording() && EventThreadStart::is_enabled() &&
+      EventThreadStart::is_stacktrace_enabled()) {
+    JfrThreadLocal* tl = native_thread->jfr_thread_local();
+    // skip Thread.start() and Thread.start0()
+    tl->set_cached_stack_trace_id(JfrStackTraceRepository::record(thread, 2));
+  }
+#endif
+
   Thread::start(native_thread);
 
 JVM_END
@@ -2906,7 +2920,7 @@ JVM_ENTRY(void, JVM_StopThread(JNIEnv* env, jobject jthread, jobject throwable))
   bool is_alive = tlh.cv_internal_thread_to_JavaThread(jthread, &receiver, &java_thread);
   Events::log_exception(thread,
                         "JVM_StopThread thread JavaThread " INTPTR_FORMAT " as oop " INTPTR_FORMAT " [exception " INTPTR_FORMAT "]",
-                        p2i(receiver), p2i((address)java_thread), p2i(throwable));
+                        p2i(receiver), p2i(java_thread), p2i(throwable));
 
   if (is_alive) {
     // jthread refers to a live JavaThread.
@@ -3371,6 +3385,7 @@ JVM_ENTRY_NO_ENV(void*, JVM_LoadLibrary(const char* name))
 
     THROW_HANDLE_0(h_exception);
   }
+  log_info(library)("Loaded library %s, handle " INTPTR_FORMAT, name, p2i(load_result));
   return load_result;
 JVM_END
 
@@ -3378,12 +3393,17 @@ JVM_END
 JVM_LEAF(void, JVM_UnloadLibrary(void* handle))
   JVMWrapper("JVM_UnloadLibrary");
   os::dll_unload(handle);
+  log_info(library)("Unloaded library with handle " INTPTR_FORMAT, p2i(handle));
 JVM_END
 
 
 JVM_LEAF(void*, JVM_FindLibraryEntry(void* handle, const char* name))
   JVMWrapper("JVM_FindLibraryEntry");
-  return os::dll_lookup(handle, name);
+  void* find_result = os::dll_lookup(handle, name);
+  log_info(library)("%s %s in library with handle " INTPTR_FORMAT,
+                    find_result != NULL ? "Found" : "Failed to find",
+                    name, p2i(handle));
+  return find_result;
 JVM_END
 
 

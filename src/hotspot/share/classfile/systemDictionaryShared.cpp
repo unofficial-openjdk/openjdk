@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -76,6 +76,7 @@ public:
   };
 
   InstanceKlass*               _klass;
+  bool                         _failed_verification;
   int                          _id;
   int                          _clsfile_size;
   int                          _clsfile_crc32;
@@ -84,6 +85,7 @@ public:
 
   DumpTimeSharedClassInfo() {
     _klass = NULL;
+    _failed_verification = false;
     _id = -1;
     _clsfile_size = -1;
     _clsfile_crc32 = -1;
@@ -124,7 +126,15 @@ public:
 
   bool is_excluded() {
     // _klass may become NULL due to DynamicArchiveBuilder::set_to_null
-    return _excluded || _klass == NULL;
+    return _excluded || _failed_verification || _klass == NULL;
+  }
+
+  void set_failed_verification() {
+    _failed_verification = true;
+  }
+
+  bool failed_verification() {
+    return _failed_verification;
   }
 };
 
@@ -823,7 +833,7 @@ InstanceKlass* SystemDictionaryShared::find_or_load_shared_class(
       ObjectLocker ol(lockObject, THREAD, DoObjectLock);
 
       {
-        MutexLocker mu(SystemDictionary_lock, THREAD);
+        MutexLocker mu(THREAD, SystemDictionary_lock);
         InstanceKlass* check = find_class(d_hash, name, dictionary);
         if (check != NULL) {
           return check;
@@ -935,7 +945,7 @@ InstanceKlass* SystemDictionaryShared::acquire_class_for_current_thread(
   ClassLoaderData* loader_data = ClassLoaderData::class_loader_data(class_loader());
 
   {
-    MutexLocker mu(SharedDictionary_lock, THREAD);
+    MutexLocker mu(THREAD, SharedDictionary_lock);
     if (ik->class_loader_data() != NULL) {
       //    ik is already loaded (by this loader or by a different loader)
       // or ik is being loaded by a different thread (by this loader or by a different loader)
@@ -978,8 +988,8 @@ bool SystemDictionaryShared::add_unregistered_class(InstanceKlass* k, TRAPS) {
   } else {
     bool isnew = _loaded_unregistered_classes.put(name, true);
     assert(isnew, "sanity");
-    MutexLocker mu_r(Compile_lock, THREAD); // add_to_hierarchy asserts this.
-    SystemDictionary::add_to_hierarchy(k, CHECK_0);
+    MutexLocker mu_r(THREAD, Compile_lock); // add_to_hierarchy asserts this.
+    SystemDictionary::add_to_hierarchy(k, CHECK_false);
     return true;
   }
 }
@@ -1108,9 +1118,9 @@ bool SystemDictionaryShared::should_be_excluded(InstanceKlass* k) {
     return true;
   }
   if (k->init_state() < InstanceKlass::linked) {
-    // In static dumping, we will attempt to link all classes. Those that fail to link will
-    // be marked as in error state.
-    assert(DynamicDumpSharedSpaces, "must be");
+    // In CDS dumping, we will attempt to link all classes. Those that fail to link will
+    // be recorded in DumpTimeSharedClassInfo.
+    Arguments::assert_is_dumping_archive();
 
     // TODO -- rethink how this can be handled.
     // We should try to link ik, however, we can't do it here because
@@ -1118,7 +1128,11 @@ bool SystemDictionaryShared::should_be_excluded(InstanceKlass* k) {
     // 2. linking a class may cause other classes to be loaded, which means
     //    a custom ClassLoader.loadClass() may be called, at a point where the
     //    class loader doesn't expect it.
-    warn_excluded(k, "Not linked");
+    if (has_class_failed_verification(k)) {
+      warn_excluded(k, "Failed verification");
+    } else {
+      warn_excluded(k, "Not linked");
+    }
     return true;
   }
   if (k->major_version() < 50 /*JAVA_6_VERSION*/) {
@@ -1157,10 +1171,10 @@ void SystemDictionaryShared::validate_before_archiving(InstanceKlass* k) {
   guarantee(info != NULL, "Class %s must be entered into _dumptime_table", name);
   guarantee(!info->is_excluded(), "Should not attempt to archive excluded class %s", name);
   if (is_builtin(k)) {
-    guarantee(k->loader_type() != 0,
+    guarantee(!k->is_shared_unregistered_class(),
               "Class loader type must be set for BUILTIN class %s", name);
   } else {
-    guarantee(k->loader_type() == 0,
+    guarantee(k->is_shared_unregistered_class(),
               "Class loader type must not be set for UNREGISTERED class %s", name);
   }
 }
@@ -1185,6 +1199,22 @@ bool SystemDictionaryShared::is_excluded_class(InstanceKlass* k) {
   assert(_no_class_loading_should_happen, "sanity");
   Arguments::assert_is_dumping_archive();
   return find_or_allocate_info_for(k)->is_excluded();
+}
+
+void SystemDictionaryShared::set_class_has_failed_verification(InstanceKlass* ik) {
+  Arguments::assert_is_dumping_archive();
+  find_or_allocate_info_for(ik)->set_failed_verification();
+}
+
+bool SystemDictionaryShared::has_class_failed_verification(InstanceKlass* ik) {
+  Arguments::assert_is_dumping_archive();
+  if (_dumptime_table == NULL) {
+    assert(DynamicDumpSharedSpaces, "sanity");
+    assert(ik->is_shared(), "must be a shared class in the static archive");
+    return false;
+  }
+  DumpTimeSharedClassInfo* p = _dumptime_table->get(ik);
+  return (p == NULL) ? false : p->failed_verification();
 }
 
 class IterateDumpTimeSharedClassTable : StackObj {
@@ -1407,6 +1437,12 @@ void SystemDictionaryShared::serialize_dictionary_headers(SerializeClosure* soc,
   } else {
     _dynamic_builtin_dictionary.serialize_header(soc);
     _dynamic_unregistered_dictionary.serialize_header(soc);
+  }
+}
+
+void SystemDictionaryShared::serialize_well_known_klasses(SerializeClosure* soc) {
+  for (int i = FIRST_WKID; i < WKID_LIMIT; i++) {
+    soc->do_ptr((void**)&_well_known_klasses[i]);
   }
 }
 

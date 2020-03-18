@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2005, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -55,7 +55,6 @@ requires.properties= \
     vm.cpu.features \
     vm.debug \
     vm.hasSA \
-    vm.hasSAandCanAttach \
     vm.hasJFR \
     vm.rtm.cpu \
     vm.rtm.compiler \
@@ -71,7 +70,7 @@ requires.properties= \
     test.vm.gc.nvdimm
 
 # Minimum jtreg version
-requiredVersion=4.2 b16
+requiredVersion=5.0 b1
 
 # Path to libraries in the topmost test directory. This is needed so @library
 # does not need ../../../ notation to reach them
@@ -82,6 +81,3 @@ useNewOptions=true
 
 # Use --patch-module instead of -Xmodule:
 useNewPatchModule=true
-
-# disabled till JDK-8219140 is fixed
-allowSmartActionArgs=false

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -2173,7 +2173,7 @@ run:
             if (result != NULL) {
               // Initialize object (if nonzero size and need) and then the header
               if (need_zero ) {
-                HeapWord* to_zero = (HeapWord*) result + sizeof(oopDesc) / oopSize;
+                HeapWord* to_zero = cast_from_oop<HeapWord*>(result) + sizeof(oopDesc) / oopSize;
                 obj_size -= sizeof(oopDesc) / oopSize;
                 if (obj_size > 0 ) {
                   memset(to_zero, 0, obj_size * HeapWordSize);
@@ -2347,11 +2347,8 @@ run:
 
           case JVM_CONSTANT_Dynamic:
             {
-              oop result = constants->resolved_references()->obj_at(index);
-              if (result == NULL) {
-                CALL_VM(InterpreterRuntime::resolve_ldc(THREAD, (Bytecodes::Code) opcode), handle_exception);
-                result = THREAD->vm_result();
-              }
+              CALL_VM(InterpreterRuntime::resolve_ldc(THREAD, (Bytecodes::Code) opcode), handle_exception);
+              oop result = THREAD->vm_result();
               VERIFY_OOP(result);
 
               jvalue value;
@@ -2391,11 +2388,8 @@ run:
 
           case JVM_CONSTANT_Dynamic:
             {
-              oop result = constants->resolved_references()->obj_at(index);
-              if (result == NULL) {
-                CALL_VM(InterpreterRuntime::resolve_ldc(THREAD, (Bytecodes::Code) opcode), handle_exception);
-                result = THREAD->vm_result();
-              }
+              CALL_VM(InterpreterRuntime::resolve_ldc(THREAD, (Bytecodes::Code) opcode), handle_exception);
+              oop result = THREAD->vm_result();
               VERIFY_OOP(result);
 
               jvalue value;

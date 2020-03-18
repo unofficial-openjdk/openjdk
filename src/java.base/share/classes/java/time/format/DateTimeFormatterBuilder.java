@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -4123,7 +4123,8 @@ public final class DateTimeFormatterBuilder {
             }
             Locale locale = context.getLocale();
             boolean isCaseSensitive = context.isCaseSensitive();
-            Set<String> regionIds = ZoneRulesProvider.getAvailableZoneIds();
+            Set<String> regionIds = new HashSet<>(ZoneRulesProvider.getAvailableZoneIds());
+            Set<String> nonRegionIds = new HashSet<>(64);
             int regionIdsSize = regionIds.size();
 
             Map<Locale, Entry<Integer, SoftReference<PrefixTree>>> cached =
@@ -4139,7 +4140,8 @@ public final class DateTimeFormatterBuilder {
                 zoneStrings = TimeZoneNameUtility.getZoneStrings(locale);
                 for (String[] names : zoneStrings) {
                     String zid = names[0];
-                    if (!regionIds.contains(zid)) {
+                    if (!regionIds.remove(zid)) {
+                        nonRegionIds.add(zid);
                         continue;
                     }
                     tree.add(zid, zid);    // don't convert zid -> metazone
@@ -4149,12 +4151,27 @@ public final class DateTimeFormatterBuilder {
                         tree.add(names[i], zid);
                     }
                 }
+
+                // add names for provider's custom ids
+                final PrefixTree t = tree;
+                regionIds.stream()
+                    .filter(zid -> !zid.startsWith("Etc") && !zid.startsWith("GMT"))
+                    .forEach(cid -> {
+                        String[] cidNames = TimeZoneNameUtility.retrieveDisplayNames(cid, locale);
+                        int i = textStyle == TextStyle.FULL ? 1 : 2;
+                        for (; i < cidNames.length; i += 2) {
+                            if (cidNames[i] != null && !cidNames[i].isEmpty()) {
+                                t.add(cidNames[i], cid);
+                            }
+                        }
+                    });
+
                 // if we have a set of preferred zones, need a copy and
                 // add the preferred zones again to overwrite
                 if (preferredZones != null) {
                     for (String[] names : zoneStrings) {
                         String zid = names[0];
-                        if (!preferredZones.contains(zid) || !regionIds.contains(zid)) {
+                        if (!preferredZones.contains(zid) || nonRegionIds.contains(zid)) {
                             continue;
                         }
                         int i = textStyle == TextStyle.FULL ? 1 : 2;
@@ -4243,9 +4260,15 @@ public final class DateTimeFormatterBuilder {
                 char nextNextChar = text.charAt(position + 1);
                 if (context.charEquals(nextChar, 'U') && context.charEquals(nextNextChar, 'T')) {
                     if (length >= position + 3 && context.charEquals(text.charAt(position + 2), 'C')) {
-                        return parseOffsetBased(context, text, position, position + 3, OffsetIdPrinterParser.INSTANCE_ID_ZERO);
+                        // There are localized zone texts that start with "UTC", e.g.
+                        // "UTC\u221210:00" (MINUS SIGN instead of HYPHEN-MINUS) in French.
+                        // Exclude those ZoneText cases.
+                        if (!(this instanceof ZoneTextPrinterParser)) {
+                            return parseOffsetBased(context, text, position, position + 3, OffsetIdPrinterParser.INSTANCE_ID_ZERO);
+                        }
+                    } else {
+                        return parseOffsetBased(context, text, position, position + 2, OffsetIdPrinterParser.INSTANCE_ID_ZERO);
                     }
-                    return parseOffsetBased(context, text, position, position + 2, OffsetIdPrinterParser.INSTANCE_ID_ZERO);
                 } else if (context.charEquals(nextChar, 'G') && length >= position + 3 &&
                         context.charEquals(nextNextChar, 'M') && context.charEquals(text.charAt(position + 2), 'T')) {
                     if (length >= position + 4 && context.charEquals(text.charAt(position + 3), '0')) {

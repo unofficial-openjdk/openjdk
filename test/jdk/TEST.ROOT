@@ -53,13 +53,12 @@ requires.properties= \
     vm.cds \
     vm.debug \
     vm.hasSA \
-    vm.hasSAandCanAttach \
     vm.hasJFR \
     docker.support \
     release.implementor
 
 # Minimum jtreg version
-requiredVersion=4.2 b16
+requiredVersion=5.0 b1
 
 # Path to libraries in the topmost test directory. This is needed so @library
 # does not need ../../ notation to reach them
@@ -70,6 +69,3 @@ useNewOptions=true
 
 # Use --patch-module instead of -Xmodule:
 useNewPatchModule=true
-
-# disabled till JDK-8219408 is fixed
-allowSmartActionArgs=false

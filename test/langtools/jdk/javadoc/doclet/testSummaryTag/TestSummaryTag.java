@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,33 +48,33 @@ public class TestSummaryTag extends JavadocTester {
         checkExit(Exit.OK);
 
         checkOutput("index-all.html", true,
-            "<dl>\n"
-            + "<dt><span class=\"memberNameLink\"><a href=\"p1/A.html#m()\">m()"
+            "<dl class=\"index\">\n"
+            + "<dt><span class=\"member-name-link\"><a href=\"p1/A.html#m()\">m()"
             + "</a></span> - Method in class p1.<a href=\"p1/A.html\" title=\"class in p1\">A</a></dt>\n"
             + "<dd>\n"
             + "<div class=\"block\">First sentence</div>\n"
             + "</dd>\n"
-            + "<dt><span class=\"memberNameLink\"><a href=\"p1/B.html#m()\">m()"
+            + "<dt><span class=\"member-name-link\"><a href=\"p1/B.html#m()\">m()"
             + "</a></span> - Method in class p1.<a href=\"p1/B.html\" title=\"class in p1\">B</a></dt>\n"
             + "<dd>\n"
             + "<div class=\"block\">First sentence</div>\n"
             + "</dd>\n"
-            + "<dt><span class=\"memberNameLink\"><a href=\"p1/A.html#m1()\">m1()"
+            + "<dt><span class=\"member-name-link\"><a href=\"p1/A.html#m1()\">m1()"
             + "</a></span> - Method in class p1.<a href=\"p1/A.html\" title=\"class in p1\">A</a></dt>\n"
             + "<dd>\n"
             + "<div class=\"block\"> First sentence </div>\n"
             + "</dd>\n"
-            + "<dt><span class=\"memberNameLink\"><a href=\"p1/A.html#m2()\">m2()"
+            + "<dt><span class=\"member-name-link\"><a href=\"p1/A.html#m2()\">m2()"
             + "</a></span> - Method in class p1.<a href=\"p1/A.html\" title=\"class in p1\">A</a></dt>\n"
             + "<dd>\n"
             + "<div class=\"block\">Some html &lt;foo&gt; &nbsp; codes</div>\n"
             + "</dd>\n"
-            + "<dt><span class=\"memberNameLink\"><a href=\"p1/A.html#m3()\">m3()"
+            + "<dt><span class=\"member-name-link\"><a href=\"p1/A.html#m3()\">m3()"
             + "</a></span> - Method in class p1.<a href=\"p1/A.html\" title=\"class in p1\">A</a></dt>\n"
             + "<dd>\n"
             + "<div class=\"block\">First sentence </div>\n"
             + "</dd>\n"
-            + "<dt><span class=\"memberNameLink\"><a href=\"p1/A.html#m4()\">m4()"
+            + "<dt><span class=\"member-name-link\"><a href=\"p1/A.html#m4()\">m4()"
             + "</a></span> - Method in class p1.<a href=\"p1/A.html\" title=\"class in p1\">A</a></dt>\n"
             + "<dd>\n"
             + "<div class=\"block\">First sentence i.e. the first sentence</div>\n"
@@ -85,10 +85,10 @@ public class TestSummaryTag extends JavadocTester {
 
         // make sure the second @summary's content is displayed correctly
         checkOutput("p1/A.html", true,
-             "<section class=\"detail\">\n"
-             + "<h3><a id=\"m3()\">m3</a></h3>\n"
-             + "<div class=\"memberSignature\"><span class=\"modifiers\">public</span>&nbsp;"
-             + "<span class=\"returnType\">void</span>&nbsp;<span class=\"memberName\">m3</span>()</div>\n"
+             "<section class=\"detail\" id=\"m3()\">\n"
+             + "<h3>m3</h3>\n"
+             + "<div class=\"member-signature\"><span class=\"modifiers\">public</span>&nbsp;"
+             + "<span class=\"return-type\">void</span>&nbsp;<span class=\"member-name\">m3</span>()</div>\n"
              + "<div class=\"block\">First sentence  some text maybe second sentence.</div>\n"
              + "</section>\n"
         );

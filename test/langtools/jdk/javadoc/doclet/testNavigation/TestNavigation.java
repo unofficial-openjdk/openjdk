@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -62,45 +62,41 @@ public class TestNavigation extends JavadocTester {
         checkSubNav();
 
         checkOutput("pkg/A.html", true,
-                "<ul class=\"navList\" title=\"Navigation\">\n" +
+                "<ul id=\"navbar.top.firstrow\" class=\"nav-list\" title=\"Navigation\">\n" +
                 "<li><a href=\"../index.html\">Overview</a></li>");
 
         checkOutput("pkg/C.html", true,
-                "<ul class=\"navList\" title=\"Navigation\">\n" +
+                "<ul id=\"navbar.top.firstrow\" class=\"nav-list\" title=\"Navigation\">\n" +
                 "<li><a href=\"../index.html\">Overview</a></li>");
 
         checkOutput("pkg/E.html", true,
-                "<ul class=\"navList\" title=\"Navigation\">\n" +
+                "<ul id=\"navbar.top.firstrow\" class=\"nav-list\" title=\"Navigation\">\n" +
                 "<li><a href=\"../index.html\">Overview</a></li>");
 
         checkOutput("pkg/I.html", true,
                 // Test for 4664607
-                "<div class=\"skipNav\"><a href=\"#skip.navbar.top\" title=\"Skip navigation links\">Skip navigation links</a></div>\n"
-                + "<a id=\"navbar.top.firstrow\">\n"
-                + "<!--   -->\n"
-                + "</a>",
+                "<div class=\"skip-nav\"><a href=\"#skip.navbar.top\" title=\"Skip navigation links\">Skip navigation links</a></div>\n"
+                + "<ul id=\"navbar.top.firstrow\" class=\"nav-list\" title=\"Navigation\">\n",
                 "<li><a href=\"../index.html\">Overview</a></li>");
 
         // Remaining tests check for additional padding to offset the fixed navigation bar.
         checkOutput("pkg/A.html", true,
                 "<!-- ========= END OF TOP NAVBAR ========= -->\n"
-                + "<div class=\"skipNav\"><a id=\"skip.navbar.top\">\n"
+                + "<span class=\"skip-nav\" id=\"skip.navbar.top\">\n"
                 + "<!--   -->\n"
-                + "</a></div>\n"
-                + "</nav>\n"
+                + "</span></nav>\n"
                 + "</header>\n"
-                + "<div class=\"flexContent\">\n"
+                + "<div class=\"flex-content\">\n"
                 + "<main role=\"main\">\n"
                 + "<!-- ======== START OF CLASS DATA ======== -->");
 
         checkOutput("pkg/package-summary.html", true,
                 "<!-- ========= END OF TOP NAVBAR ========= -->\n"
-                + "<div class=\"skipNav\"><a id=\"skip.navbar.top\">\n"
+                + "<span class=\"skip-nav\" id=\"skip.navbar.top\">\n"
                 + "<!--   -->\n"
-                + "</a></div>\n"
-                + "</nav>\n"
+                + "</span></nav>\n"
                 + "</header>\n"
-                + "<div class=\"flexContent\">\n"
+                + "<div class=\"flex-content\">\n"
                 + "<main role=\"main\">\n"
                 + "<div class=\"header\">");
     }
@@ -117,21 +113,19 @@ public class TestNavigation extends JavadocTester {
 
         checkOutput("pkg/A.html", true,
                 "<!-- ========= END OF TOP NAVBAR ========= -->\n"
-                + "<div class=\"skipNav\"><a id=\"skip.navbar.top\">\n"
+                + "<span class=\"skip-nav\" id=\"skip.navbar.top\">\n"
                 + "<!--   -->\n"
-                + "</a></div>\n"
-                + "</nav>\n"
+                + "</span></nav>\n"
                 + "</header>\n"
-                + "<div class=\"flexContent\">\n"
+                + "<div class=\"flex-content\">\n"
                 + "<main role=\"main\">\n"
                 + "<!-- ======== START OF CLASS DATA ======== -->");
 
         checkOutput("pkg/package-summary.html", true,
                 "<!-- ========= END OF TOP NAVBAR ========= -->\n"
-                + "<div class=\"skipNav\"><a id=\"skip.navbar.top\">\n"
+                + "<span class=\"skip-nav\" id=\"skip.navbar.top\">\n"
                 + "<!--   -->\n"
-                + "</a></div>\n"
-                + "</nav>");
+                + "</span></nav>\n");
     }
 
     // Test to make sure that no extra padding for nav bar gets generated if -nonavbar is specified.
@@ -147,7 +141,7 @@ public class TestNavigation extends JavadocTester {
         checkOutput("pkg/A.html", false,
                 "<!-- ========= END OF TOP NAVBAR ========= -->\n"
                 + "</div>\n"
-                + "<div class=\"skipNav\"><a id=\"skip.navbar.top\">\n"
+                + "<div class=\"skip-nav\"><a id=\"skip.navbar.top\">\n"
                 + "<!--   -->\n"
                 + "</a></div>\n"
                 + "</nav>\n"
@@ -157,7 +151,7 @@ public class TestNavigation extends JavadocTester {
         checkOutput("pkg/package-summary.html", false,
                 "<!-- ========= END OF TOP NAVBAR ========= -->\n"
                 + "</div>\n"
-                + "<div class=\"skipNav\"><a id=\"skip.navbar.top\">\n"
+                + "<div class=\"skip-nav\"><a id=\"skip.navbar.top\">\n"
                 + "<!--   -->\n"
                 + "</a></div>\n"
                 + "</nav>");
@@ -284,5 +278,5 @@ public class TestNavigation extends JavadocTester {
                 + "  allClassesLink = document.getElementById(\"allclasses_navbar_top\");",
                 "<script type=\"text/javascript\"><!--\n"
                 + "  allClassesLink = document.getElementById(\"allclasses_navbar_bottom\");");
-}
+    }
 }

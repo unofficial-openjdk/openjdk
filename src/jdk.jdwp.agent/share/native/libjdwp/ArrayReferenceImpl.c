@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -413,6 +413,9 @@ readLongComponents(JNIEnv *env, PacketInputStream *in,
                    jarray array, int index, int length)
 {
     int i;
+#if defined (_WIN32) && defined (_MSC_VER)
+    __declspec(align(8))
+#endif
     jlong component;
 
     for (i = 0; (i < length) && !inStream_error(in); i++) {
@@ -441,6 +444,9 @@ readDoubleComponents(JNIEnv *env, PacketInputStream *in,
                    jarray array, int index, int length)
 {
     int i;
+#if defined (_WIN32) && defined (_MSC_VER)
+    __declspec(align(8))
+#endif
     jdouble component;
 
     for (i = 0; (i < length) && !inStream_error(in); i++) {
@@ -586,8 +592,10 @@ setValues(PacketInputStream *in, PacketOutputStream *out)
     return JNI_TRUE;
 }
 
+Command ArrayReference_Commands[] = {
+    {length, "Length"},
+    {getValues, "GetValues"},
+    {setValues, "SetValues"}
+};
 
-void *ArrayReference_Cmds[] = { (void *)0x3
-    ,(void *)length
-    ,(void *)getValues
-    ,(void *)setValues};
+DEBUG_DISPATCH_DEFINE_CMDSET(ArrayReference)

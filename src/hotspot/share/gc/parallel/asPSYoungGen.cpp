@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,6 @@
 #include "precompiled.hpp"
 #include "gc/parallel/asPSYoungGen.hpp"
 #include "gc/parallel/parallelScavengeHeap.hpp"
-#include "gc/parallel/psMarkSweepDecorator.hpp"
 #include "gc/parallel/psScavenge.inline.hpp"
 #include "gc/parallel/psYoungGen.hpp"
 #include "gc/shared/gcUtil.hpp"
@@ -61,8 +60,7 @@ void ASPSYoungGen::initialize_virtual_space(ReservedSpace rs,
   assert(_init_gen_size != 0, "Should have a finite size");
   _virtual_space = new PSVirtualSpaceHighToLow(rs, alignment);
   if (!_virtual_space->expand_by(_init_gen_size)) {
-    vm_exit_during_initialization("Could not reserve enough space for "
-                                  "object heap");
+    vm_exit_during_initialization("Could not reserve enough space for object heap");
   }
 }
 

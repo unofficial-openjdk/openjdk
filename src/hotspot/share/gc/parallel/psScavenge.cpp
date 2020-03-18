@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,6 @@
 #include "gc/parallel/psAdaptiveSizePolicy.hpp"
 #include "gc/parallel/psClosure.inline.hpp"
 #include "gc/parallel/psCompactionManager.hpp"
-#include "gc/parallel/psMarkSweepProxy.hpp"
 #include "gc/parallel/psParallelCompact.inline.hpp"
 #include "gc/parallel/psPromotionManager.inline.hpp"
 #include "gc/parallel/psRootType.hpp"
@@ -49,6 +48,7 @@
 #include "gc/shared/referenceProcessorPhaseTimes.hpp"
 #include "gc/shared/scavengableNMethods.hpp"
 #include "gc/shared/spaceDecorator.inline.hpp"
+#include "gc/shared/taskTerminator.hpp"
 #include "gc/shared/weakProcessor.hpp"
 #include "gc/shared/workerPolicy.hpp"
 #include "gc/shared/workgroup.hpp"
@@ -139,7 +139,7 @@ static void scavenge_roots_work(ParallelRootType::Value root_type, uint worker_i
   pm->drain_stacks(false);
 }
 
-static void steal_work(ParallelTaskTerminator& terminator, uint worker_id) {
+static void steal_work(TaskTerminator& terminator, uint worker_id) {
   assert(ParallelScavengeHeap::heap()->is_gc_active(), "called outside gc");
 
   PSPromotionManager* pm =
@@ -241,7 +241,7 @@ public:
     _task.work(worker_id, is_alive, keep_alive, evac_followers);
 
     if (_task.marks_oops_alive() && _active_workers > 1) {
-      steal_work(*_terminator.terminator(), worker_id);
+      steal_work(_terminator, worker_id);
     }
   }
 };
@@ -284,11 +284,7 @@ bool PSScavenge::invoke() {
     SoftRefPolicy* srp = heap->soft_ref_policy();
     const bool clear_all_softrefs = srp->should_clear_all_soft_refs();
 
-    if (UseParallelOldGC) {
-      full_gc_done = PSParallelCompact::invoke_no_policy(clear_all_softrefs);
-    } else {
-      full_gc_done = PSMarkSweepProxy::invoke_no_policy(clear_all_softrefs);
-    }
+    full_gc_done = PSParallelCompact::invoke_no_policy(clear_all_softrefs);
   }
 
   return full_gc_done;
@@ -382,7 +378,7 @@ public:
     // ParallelGCThreads is > 1.
 
     if (_active_workers > 1) {
-      steal_work(*_terminator.terminator() , worker_id);
+      steal_work(_terminator, worker_id);
     }
   }
 };
@@ -734,10 +730,6 @@ bool PSScavenge::invoke_no_policy() {
   log_debug(gc, task, time)("VM-Thread " JLONG_FORMAT " " JLONG_FORMAT " " JLONG_FORMAT,
                             scavenge_entry.ticks(), scavenge_midpoint.ticks(),
                             scavenge_exit.ticks());
-
-#ifdef TRACESPINNING
-  ParallelTaskTerminator::print_termination_counts();
-#endif
 
   AdaptiveSizePolicyOutput::print(size_policy, heap->total_collections());
 

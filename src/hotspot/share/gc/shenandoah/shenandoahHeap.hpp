@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2013, 2019, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2013, 2020, Red Hat, Inc. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -38,7 +39,6 @@
 
 class ConcurrentGCTimer;
 class ReferenceProcessor;
-class ShenandoahAllocTracker;
 class ShenandoahCollectorPolicy;
 class ShenandoahControlThread;
 class ShenandoahGCSession;
@@ -376,7 +376,6 @@ public:
   // call the entry method below
   void vmop_entry_init_mark();
   void vmop_entry_final_mark();
-  void vmop_entry_final_evac();
   void vmop_entry_init_updaterefs();
   void vmop_entry_final_updaterefs();
   void vmop_entry_init_traversal();
@@ -388,7 +387,6 @@ public:
   // and workers for net VM operation
   void entry_init_mark();
   void entry_final_mark();
-  void entry_final_evac();
   void entry_init_updaterefs();
   void entry_final_updaterefs();
   void entry_init_traversal();
@@ -412,7 +410,6 @@ private:
   // Actual work for the phases
   void op_init_mark();
   void op_final_mark();
-  void op_final_evac();
   void op_init_updaterefs();
   void op_final_updaterefs();
   void op_init_traversal();
@@ -438,6 +435,9 @@ private:
   const char* init_mark_event_message() const;
   const char* final_mark_event_message() const;
   const char* conc_mark_event_message() const;
+  const char* init_traversal_event_message() const;
+  const char* final_traversal_event_message() const;
+  const char* conc_traversal_event_message() const;
   const char* degen_event_message(ShenandoahDegenPoint point) const;
 
 // ---------- GC subsystems
@@ -454,7 +454,6 @@ private:
   ShenandoahPacer*           _pacer;
   ShenandoahVerifier*        _verifier;
 
-  ShenandoahAllocTracker*    _alloc_tracker;
   ShenandoahPhaseTimings*    _phase_timings;
 
   ShenandoahControlThread*   control_thread()          { return _control_thread;    }
@@ -470,7 +469,6 @@ public:
   ShenandoahPacer*           pacer()             const { return _pacer;             }
 
   ShenandoahPhaseTimings*    phase_timings()     const { return _phase_timings;     }
-  ShenandoahAllocTracker*    alloc_tracker()     const { return _alloc_tracker;     }
 
   ShenandoahVerifier*        verifier();
 
@@ -694,11 +692,11 @@ public:
 
   ShenandoahCollectionSet* collection_set() const { return _collection_set; }
 
-  template <class T>
-  inline bool in_collection_set(T obj) const;
+  // Checks if object is in the collection set.
+  inline bool in_collection_set(oop obj) const;
 
-  // Avoid accidentally calling the method above with ShenandoahHeapRegion*, which would be *wrong*.
-  inline bool in_collection_set(ShenandoahHeapRegion* r) shenandoah_not_implemented_return(false);
+  // Checks if location is in the collection set. Can be interior pointer, not the oop itself.
+  inline bool in_collection_set_loc(void* loc) const;
 
   // Evacuates object src. Returns the evacuated object, either evacuated
   // by this thread, or by some other thread.

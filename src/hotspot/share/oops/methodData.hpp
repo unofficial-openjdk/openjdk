@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,6 @@
 #include "utilities/align.hpp"
 
 class BytecodeStream;
-class KlassSizeStats;
 
 // The MethodData object collects counts and other profile information
 // during zeroth-tier (interpretive) and first-tier execution.
@@ -1230,7 +1229,7 @@ public:
   static int static_cell_count() {
     // At this point we could add more profile state, e.g., for arguments.
     // But for now it's the same size as the base record type.
-    return ReceiverTypeData::static_cell_count() JVMCI_ONLY(+ (uint) MethodProfileWidth * receiver_type_row_cell_count);
+    return ReceiverTypeData::static_cell_count();
   }
 
   virtual int cell_count() const {
@@ -1241,61 +1240,6 @@ public:
   static ByteSize virtual_call_data_size() {
     return cell_offset(static_cell_count());
   }
-
-#if INCLUDE_JVMCI
-  static ByteSize method_offset(uint row) {
-    return cell_offset(method_cell_index(row));
-  }
-  static ByteSize method_count_offset(uint row) {
-    return cell_offset(method_count_cell_index(row));
-  }
-  static int method_cell_index(uint row) {
-    return receiver0_offset + (row + TypeProfileWidth) * receiver_type_row_cell_count;
-  }
-  static int method_count_cell_index(uint row) {
-    return count0_offset + (row + TypeProfileWidth) * receiver_type_row_cell_count;
-  }
-  static uint method_row_limit() {
-    return MethodProfileWidth;
-  }
-
-  Method* method(uint row) const {
-    assert(row < method_row_limit(), "oob");
-
-    Method* method = (Method*)intptr_at(method_cell_index(row));
-    assert(method == NULL || method->is_method(), "must be");
-    return method;
-  }
-
-  uint method_count(uint row) const {
-    assert(row < method_row_limit(), "oob");
-    return uint_at(method_count_cell_index(row));
-  }
-
-  void set_method(uint row, Method* m) {
-    assert((uint)row < method_row_limit(), "oob");
-    set_intptr_at(method_cell_index(row), (uintptr_t)m);
-  }
-
-  void set_method_count(uint row, uint count) {
-    assert(row < method_row_limit(), "oob");
-    set_uint_at(method_count_cell_index(row), count);
-  }
-
-  void clear_method_row(uint row) {
-    assert(row < method_row_limit(), "oob");
-    // Clear total count - indicator of polymorphic call site (see comment for clear_row() in ReceiverTypeData).
-    set_nonprofiled_count(0);
-    set_method(row, NULL);
-    set_method_count(row, 0);
-  }
-
-  // GC support
-  virtual void clean_weak_klass_links(bool always_clean);
-
-  // Redefinition support
-  virtual void clean_weak_method_links();
-#endif // INCLUDE_JVMCI
 
   void print_method_data_on(outputStream* st) const NOT_JVMCI_RETURN;
   void print_data_on(outputStream* st, const char* extra = NULL) const;
@@ -2181,9 +2125,6 @@ public:
   // My size
   int size_in_bytes() const { return _size; }
   int size() const    { return align_metadata_size(align_up(_size, BytesPerWord)/BytesPerWord); }
-#if INCLUDE_SERVICES
-  void collect_statistics(KlassSizeStats *sz) const;
-#endif
 
   int      creation_mileage() const  { return _creation_mileage; }
   void set_creation_mileage(int x)   { _creation_mileage = x; }

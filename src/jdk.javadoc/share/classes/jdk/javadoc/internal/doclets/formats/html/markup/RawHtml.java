@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,37 +52,11 @@ public class RawHtml extends Content {
         rawHtmlContent = rawHtml.toString();
     }
 
-    /**
-     * This method is not supported by the class.
-     *
-     * @param content content that needs to be added
-     * @throws UnsupportedOperationException always
-     */
-    public void add(Content content) {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * This method is not supported by the class.
-     *
-     * @param stringContent string content that needs to be added
-     * @throws UnsupportedOperationException always
-     */
     @Override
-    public void add(CharSequence stringContent) {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public boolean isEmpty() {
         return rawHtmlContent.isEmpty();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public String toString() {
         return rawHtmlContent;
@@ -147,9 +121,6 @@ public class RawHtml extends Content {
         return count;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public boolean write(Writer out, boolean atNewline) throws IOException {
         out.write(rawHtmlContent);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -210,6 +210,8 @@ void FileMapHeader::populate(FileMapInfo* mapinfo, size_t alignment) {
   _narrow_oop_mode = CompressedOops::mode();
   _narrow_oop_base = CompressedOops::base();
   _narrow_oop_shift = CompressedOops::shift();
+  _compressed_oops = UseCompressedOops;
+  _compressed_class_ptrs = UseCompressedClassPointers;
   _max_heap_size = MaxHeapSize;
   _narrow_klass_shift = CompressedKlassPointers::shift();
   if (HeapShared::is_heap_object_archiving_allowed()) {
@@ -289,6 +291,23 @@ void SharedClassPathEntry::set_name(const char* name, TRAPS) {
   size_t len = strlen(name) + 1;
   _name = MetadataFactory::new_array<char>(ClassLoaderData::the_null_class_loader_data(), (int)len, THREAD);
   strcpy(_name->data(), name);
+}
+
+void SharedClassPathEntry::copy_from(SharedClassPathEntry* ent, ClassLoaderData* loader_data, TRAPS) {
+  _type = ent->_type;
+  _timestamp = ent->_timestamp;
+  _filesize = ent->_filesize;
+  _from_class_path_attr = ent->_from_class_path_attr;
+  set_name(ent->name(), THREAD);
+
+  if (ent->is_jar() && !ent->is_signed() && ent->manifest() != NULL) {
+    Array<u1>* buf = MetadataFactory::new_array<u1>(loader_data,
+                                                    ent->manifest_size(),
+                                                    THREAD);
+    char* p = (char*)(buf->data());
+    memcpy(p, ent->manifest(), ent->manifest_size());
+    set_manifest(buf);
+  }
 }
 
 const char* SharedClassPathEntry::name() const {
@@ -379,8 +398,24 @@ void SharedPathTable::dumptime_init(ClassLoaderData* loader_data, Thread* THREAD
   num_entries += FileMapInfo::num_non_existent_class_paths();
   size_t bytes = entry_size * num_entries;
 
-  _table = MetadataFactory::new_array<u8>(loader_data, (int)(bytes + 7 / 8), THREAD);
+  _table = MetadataFactory::new_array<u8>(loader_data, (int)bytes, THREAD);
   _size = num_entries;
+}
+
+// Make a copy of the _shared_path_table for use during dynamic CDS dump.
+// It is needed because some Java code continues to execute after dynamic dump has finished.
+// However, during dynamic dump, we have modified FileMapInfo::_shared_path_table so
+// FileMapInfo::shared_path(i) returns incorrect information in ClassLoader::record_result().
+void FileMapInfo::copy_shared_path_table(ClassLoaderData* loader_data, Thread* THREAD) {
+  size_t entry_size = sizeof(SharedClassPathEntry);
+  size_t bytes = entry_size * _shared_path_table.size();
+
+  _saved_shared_path_table = SharedPathTable(MetadataFactory::new_array<u8>(loader_data, (int)bytes, THREAD),
+                                             _shared_path_table.size());
+
+  for (int i = 0; i < _shared_path_table.size(); i++) {
+    _saved_shared_path_table.path_at(i)->copy_from(shared_path(i), loader_data, THREAD);
+  }
 }
 
 void FileMapInfo::allocate_shared_path_table() {
@@ -407,6 +442,8 @@ void FileMapInfo::allocate_shared_path_table() {
   }
 
   assert(i == _shared_path_table.size(), "number of shared path entry mismatch");
+
+  copy_shared_path_table(loader_data, THREAD);
 }
 
 int FileMapInfo::add_shared_classpaths(int i, const char* which, ClassPathEntry *cpe, TRAPS) {
@@ -935,10 +972,6 @@ bool FileMapInfo::get_base_archive_name_from_header(const char* archive_name,
   return true;
 }
 
-void FileMapInfo::restore_shared_path_table() {
-  _shared_path_table = _current_info->header()->shared_path_table();
-}
-
 // Read the FileMapInfo information from the file.
 
 bool FileMapInfo::init_from_file(int fd) {
@@ -1164,9 +1197,9 @@ void FileMapInfo::write_region(int region, char* base, size_t size,
 
   si->set_file_offset(_file_offset);
   char* requested_base = (target_base == NULL) ? NULL : target_base + MetaspaceShared::final_delta();
-  log_info(cds)("Shared file region  %d: " SIZE_FORMAT_HEX_W(08)
-                " bytes, addr " INTPTR_FORMAT " file offset " SIZE_FORMAT_HEX_W(08),
-                region, size, p2i(requested_base), _file_offset);
+  log_debug(cds)("Shared file region  %d: " SIZE_FORMAT_HEX_W(08)
+                 " bytes, addr " INTPTR_FORMAT " file offset " SIZE_FORMAT_HEX_W(08),
+                 region, size, p2i(requested_base), _file_offset);
 
   int crc = ClassLoader::crc32(0, base, (jint)size);
   si->init(region, target_base, size, read_only, allow_exec, crc);
@@ -1185,8 +1218,8 @@ void FileMapInfo::write_bitmap_region(const CHeapBitMap* ptrmap) {
   ptrmap->write_to(buffer, size_in_bytes);
   header()->set_ptrmap_size_in_bits(size_in_bits);
 
-  log_info(cds)("ptrmap = " INTPTR_FORMAT " (" SIZE_FORMAT " bytes)",
-                p2i(buffer), size_in_bytes);
+  log_debug(cds)("ptrmap = " INTPTR_FORMAT " (" SIZE_FORMAT " bytes)",
+                 p2i(buffer), size_in_bytes);
   write_region(MetaspaceShared::bm, (char*)buffer, size_in_bytes, /*read_only=*/true, /*allow_exec=*/false);
 }
 
@@ -1247,8 +1280,8 @@ size_t FileMapInfo::write_archive_heap_regions(GrowableArray<MemRegion> *heap_me
       total_size += size;
     }
 
-    log_info(cds)("Archive heap region %d: " INTPTR_FORMAT " - " INTPTR_FORMAT " = " SIZE_FORMAT_W(8) " bytes",
-                  i, p2i(start), p2i(start + size), size);
+    log_debug(cds)("Archive heap region %d: " INTPTR_FORMAT " - " INTPTR_FORMAT " = " SIZE_FORMAT_W(8) " bytes",
+                   i, p2i(start), p2i(start + size), size);
     write_region(i, start, size, false, false);
     if (size > 0) {
       address oopmap = oopmaps->at(arr_idx)._oopmap;
@@ -1355,7 +1388,7 @@ bool FileMapInfo::remap_shared_readonly_as_readwrite() {
 }
 
 // Memory map a region in the address space.
-static const char* shared_region_name[] = { "MiscData", "ReadWrite", "ReadOnly", "MiscCode", "Bitmap",
+static const char* shared_region_name[] = { "MiscCode", "ReadWrite", "ReadOnly", "Bitmap",
                                             "String1", "String2", "OpenArchive1", "OpenArchive2" };
 
 MapArchiveResult FileMapInfo::map_regions(int regions[], int num_regions, char* mapped_base_address, ReservedSpace rs) {
@@ -1559,9 +1592,9 @@ address FileMapInfo::decode_start_address(FileMapRegion* spc, bool with_current_
   assert(offset == (size_t)(uint32_t)offset, "must be 32-bit only");
   uint n = (uint)offset;
   if (with_current_oop_encoding_mode) {
-    return (address)CompressedOops::decode_not_null(n);
+    return cast_from_oop<address>(CompressedOops::decode_not_null(n));
   } else {
-    return (address)HeapShared::decode_from_archive(n);
+    return cast_from_oop<address>(HeapShared::decode_from_archive(n));
   }
 }
 
@@ -1745,7 +1778,15 @@ void FileMapInfo::map_heap_regions() {
 
 bool FileMapInfo::map_heap_data(MemRegion **heap_mem, int first,
                                 int max, int* num, bool is_open_archive) {
-  MemRegion * regions = new MemRegion[max];
+  MemRegion* regions = MemRegion::create_array(max, mtInternal);
+
+  struct Cleanup {
+    MemRegion* _regions;
+    bool _aborted;
+    Cleanup(MemRegion* regions) : _regions(regions), _aborted(true) { }
+    ~Cleanup() { if (_aborted) { FREE_C_HEAP_ARRAY(MemRegion, _regions); } }
+  } cleanup(regions);
+
   FileMapRegion* si;
   int region_num = 0;
 
@@ -1790,7 +1831,7 @@ bool FileMapInfo::map_heap_data(MemRegion **heap_mem, int first,
                                 si->allow_exec());
     if (base == NULL || base != addr) {
       // dealloc the regions from java heap
-      dealloc_archive_heap_regions(regions, region_num, is_open_archive);
+      dealloc_archive_heap_regions(regions, region_num);
       log_info(cds)("UseSharedSpaces: Unable to map at required address in java heap. "
                     INTPTR_FORMAT ", size = " SIZE_FORMAT " bytes",
                     p2i(addr), regions[i].byte_size());
@@ -1799,12 +1840,13 @@ bool FileMapInfo::map_heap_data(MemRegion **heap_mem, int first,
 
     if (VerifySharedSpaces && !region_crc_check(addr, regions[i].byte_size(), si->crc())) {
       // dealloc the regions from java heap
-      dealloc_archive_heap_regions(regions, region_num, is_open_archive);
+      dealloc_archive_heap_regions(regions, region_num);
       log_info(cds)("UseSharedSpaces: mapped heap regions are corrupt");
       return false;
     }
   }
 
+  cleanup._aborted = false;
   // the shared heap data is mapped successfully
   *heap_mem = regions;
   *num = region_num;
@@ -1855,10 +1897,10 @@ void FileMapInfo::fixup_mapped_heap_regions() {
 }
 
 // dealloc the archive regions from java heap
-void FileMapInfo::dealloc_archive_heap_regions(MemRegion* regions, int num, bool is_open) {
+void FileMapInfo::dealloc_archive_heap_regions(MemRegion* regions, int num) {
   if (num > 0) {
     assert(regions != NULL, "Null archive ranges array with non-zero count");
-    G1CollectedHeap::heap()->dealloc_archive_regions(regions, num, is_open);
+    G1CollectedHeap::heap()->dealloc_archive_regions(regions, num);
   }
 }
 #endif // INCLUDE_CDS_JAVA_HEAP
@@ -1915,14 +1957,19 @@ void FileMapInfo::assert_mark(bool check) {
   }
 }
 
-void FileMapInfo::metaspace_pointers_do(MetaspaceClosure* it) {
-  _shared_path_table.metaspace_pointers_do(it);
+void FileMapInfo::metaspace_pointers_do(MetaspaceClosure* it, bool use_copy) {
+  if (use_copy) {
+    _saved_shared_path_table.metaspace_pointers_do(it);
+  } else {
+    _shared_path_table.metaspace_pointers_do(it);
+  }
 }
 
 FileMapInfo* FileMapInfo::_current_info = NULL;
 FileMapInfo* FileMapInfo::_dynamic_archive_info = NULL;
 bool FileMapInfo::_heap_pointers_need_patching = false;
 SharedPathTable FileMapInfo::_shared_path_table;
+SharedPathTable FileMapInfo::_saved_shared_path_table;
 bool FileMapInfo::_validating_shared_path_table = false;
 bool FileMapInfo::_memory_mapping_failed = false;
 GrowableArray<const char*>* FileMapInfo::_non_existent_class_paths = NULL;
@@ -1972,12 +2019,13 @@ char* FileMapInfo::region_addr(int idx) {
   }
 }
 
+// The 3 core spaces are MC->RW->RO
 FileMapRegion* FileMapInfo::first_core_space() const {
-  return is_static() ? space_at(MetaspaceShared::mc) : space_at(MetaspaceShared::rw);
+  return space_at(MetaspaceShared::mc);
 }
 
 FileMapRegion* FileMapInfo::last_core_space() const {
-  return is_static() ? space_at(MetaspaceShared::md) : space_at(MetaspaceShared::mc);
+  return space_at(MetaspaceShared::ro);
 }
 
 int FileMapHeader::compute_crc() {
@@ -2040,6 +2088,14 @@ bool FileMapHeader::validate() {
             "for testing purposes only and should not be used in a production environment");
   }
 
+  log_info(cds)("Archive was created with UseCompressedOops = %d, UseCompressedClassPointers = %d",
+                          compressed_oops(), compressed_class_pointers());
+  if (compressed_oops() != UseCompressedOops || compressed_class_pointers() != UseCompressedClassPointers) {
+    FileMapInfo::fail_continue("Unable to use shared archive.\nThe saved state of UseCompressedOops and UseCompressedClassPointers is "
+                               "different from runtime, CDS will be disabled.");
+    return false;
+  }
+
   return true;
 }
 
@@ -2051,8 +2107,7 @@ bool FileMapInfo::validate_header() {
 bool FileMapInfo::is_in_shared_region(const void* p, int idx) {
   assert(idx == MetaspaceShared::ro ||
          idx == MetaspaceShared::rw ||
-         idx == MetaspaceShared::mc ||
-         idx == MetaspaceShared::md, "invalid region index");
+         idx == MetaspaceShared::mc, "invalid region index");
   char* base = region_addr(idx);
   if (p >= base && p < base + space_at(idx)->used()) {
     return true;
@@ -2075,11 +2130,9 @@ void FileMapInfo::stop_sharing_and_unmap(const char* msg) {
     // Dealloc the archive heap regions only without unmapping. The regions are part
     // of the java heap. Unmapping of the heap regions are managed by GC.
     map_info->dealloc_archive_heap_regions(open_archive_heap_ranges,
-                                           num_open_archive_heap_ranges,
-                                           true);
+                                           num_open_archive_heap_ranges);
     map_info->dealloc_archive_heap_regions(closed_archive_heap_ranges,
-                                           num_closed_archive_heap_ranges,
-                                           false);
+                                           num_closed_archive_heap_ranges);
   } else if (DumpSharedSpaces) {
     fail_stop("%s", msg);
   }
@@ -2109,7 +2162,7 @@ ClassPathEntry* FileMapInfo::get_classpath_entry_for_jvmti(int i, TRAPS) {
       }
     }
 
-    MutexLocker mu(CDSClassFileStream_lock, THREAD);
+    MutexLocker mu(THREAD, CDSClassFileStream_lock);
     if (_classpath_entries_for_jvmti[i] == NULL) {
       _classpath_entries_for_jvmti[i] = ent;
     } else {

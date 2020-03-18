@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -204,13 +204,6 @@ class APITest {
             "script-dir/jquery-ui.min.css",
             "script-dir/jquery-ui.structure.min.css",
             "script-dir/jquery-ui.structure.css",
-            "script-dir/external/jquery/jquery.js",
-            "script-dir/jszip/dist/jszip.js",
-            "script-dir/jszip/dist/jszip.min.js",
-            "script-dir/jszip-utils/dist/jszip-utils.js",
-            "script-dir/jszip-utils/dist/jszip-utils.min.js",
-            "script-dir/jszip-utils/dist/jszip-utils-ie.js",
-            "script-dir/jszip-utils/dist/jszip-utils-ie.min.js",
             "script-dir/images/ui-bg_glass_65_dadada_1x400.png",
             "script-dir/images/ui-icons_454545_256x240.png",
             "script-dir/images/ui-bg_glass_95_fef1ec_1x400.png",
@@ -223,11 +216,9 @@ class APITest {
             "script-dir/images/ui-icons_222222_256x240.png",
             "script-dir/images/ui-bg_glass_75_e6e6e6_1x400.png",
             "member-search-index.js",
-            "member-search-index.zip",
             "overview-tree.html",
             "element-list",
             "package-search-index.js",
-            "package-search-index.zip",
             "pkg/C.html",
             "pkg/package-summary.html",
             "pkg/package-tree.html",
@@ -236,13 +227,11 @@ class APITest {
             "script.js",
             "search.js",
             "stylesheet.css",
-            "system-properties.html",
-            "type-search-index.js",
-            "type-search-index.zip"
+            "type-search-index.js"
     ));
 
     protected static Set<String> noIndexFiles = standardExpectFiles.stream()
-            .filter(s -> !s.startsWith("script-dir") && !s.startsWith("resources") && !s.endsWith("zip")
+            .filter(s -> !s.startsWith("script-dir") && !s.startsWith("resources")
             && !s.equals("index-all.html") && !s.equals("search.js") && !s.endsWith("-search-index.js")
             && !s.equals("allclasses-index.html") && !s.equals("allpackages-index.html")
             && !s.equals("system-properties.html"))

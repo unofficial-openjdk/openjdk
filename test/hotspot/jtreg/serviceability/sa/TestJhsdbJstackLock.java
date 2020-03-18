@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,11 +35,12 @@ import jdk.test.lib.JDKToolLauncher;
 import jdk.test.lib.Platform;
 import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.process.ProcessTools;
+import jdk.test.lib.SA.SATestUtils;
 import jdk.test.lib.Utils;
 
 /**
  * @test
- * @requires vm.hasSAandCanAttach
+ * @requires vm.hasSA
  * @library /test/lib
  * @run main/othervm TestJhsdbJstackLock
  */
@@ -47,14 +48,12 @@ import jdk.test.lib.Utils;
 public class TestJhsdbJstackLock {
 
     public static void main (String... args) throws Exception {
-
+        SATestUtils.skipIfCannotAttach(); // throws SkippedException if attach not expected to work.
         LingeredApp app = null;
 
         try {
-            List<String> vmArgs = new ArrayList<String>(Utils.getVmOptions());
-
             app = new LingeredAppWithLock();
-            LingeredApp.startApp(vmArgs, app);
+            LingeredApp.startApp(app);
             System.out.println ("Started LingeredApp with pid " + app.getPid());
 
             JDKToolLauncher launcher = JDKToolLauncher.createUsingTestJDK("jhsdb");
@@ -62,8 +61,7 @@ public class TestJhsdbJstackLock {
             launcher.addToolArg("--pid");
             launcher.addToolArg(Long.toString(app.getPid()));
 
-            ProcessBuilder pb = new ProcessBuilder();
-            pb.command(launcher.getCommand());
+            ProcessBuilder pb = SATestUtils.createProcessBuilder(launcher);
             Process jhsdb = pb.start();
             OutputAnalyzer out = new OutputAnalyzer(jhsdb);
 

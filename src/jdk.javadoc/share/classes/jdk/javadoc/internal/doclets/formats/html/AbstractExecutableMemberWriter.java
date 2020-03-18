@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -82,9 +82,6 @@ public abstract class AbstractExecutableMemberWriter extends AbstractMemberWrite
         return writer.getTypeParameterLinks(linkInfo);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected Content getDeprecatedLink(Element member) {
         Content deprecatedLinkContent = new ContentBuilder();
@@ -260,7 +257,7 @@ public abstract class AbstractExecutableMemberWriter extends AbstractMemberWrite
         if (!exceptions.isEmpty()) {
             Content link = writer.getLink(new LinkInfoImpl(configuration, MEMBER, exceptions.get(0)));
             htmltree.add(link);
-            for(int i = 1; i < exceptions.size(); i++) {
+            for (int i = 1; i < exceptions.size(); i++) {
                 htmltree.add(",");
                 htmltree.add(DocletConstants.NL);
                 Content exceptionLink = writer.getLink(new LinkInfoImpl(configuration, MEMBER,

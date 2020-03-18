@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -72,11 +72,7 @@ jint G1ConcurrentRefineThreadControl::initialize(G1ConcurrentRefine* cr, uint nu
   _cr = cr;
   _num_max_threads = num_max_threads;
 
-  _threads = NEW_C_HEAP_ARRAY_RETURN_NULL(G1ConcurrentRefineThread*, num_max_threads, mtGC);
-  if (_threads == NULL) {
-    vm_shutdown_during_initialization("Could not allocate thread holder array.");
-    return JNI_ENOMEM;
-  }
+  _threads = NEW_C_HEAP_ARRAY(G1ConcurrentRefineThread*, num_max_threads, mtGC);
 
   for (uint i = 0; i < num_max_threads; i++) {
     if (UseDynamicNumberOfGCThreads && i != 0 /* Always start first thread. */) {
@@ -89,6 +85,11 @@ jint G1ConcurrentRefineThreadControl::initialize(G1ConcurrentRefine* cr, uint nu
       }
     }
   }
+
+  if (num_max_threads > 0) {
+    G1BarrierSet::dirty_card_queue_set().set_primary_refinement_thread(_threads[0]);
+  }
+
   return JNI_OK;
 }
 
@@ -108,7 +109,7 @@ void G1ConcurrentRefineThreadControl::maybe_activate_next(uint cur_worker_id) {
     _threads[worker_id] = create_refinement_thread(worker_id, false);
     thread_to_activate = _threads[worker_id];
   }
-  if (thread_to_activate != NULL && !thread_to_activate->is_active()) {
+  if (thread_to_activate != NULL) {
     thread_to_activate->activate();
   }
 }
@@ -190,6 +191,10 @@ STATIC_ASSERT(max_yellow_zone <= max_red_zone);
 // For logging zone values, ensuring consistency of level and tags.
 #define LOG_ZONES(...) log_debug( CTRL_TAGS )(__VA_ARGS__)
 
+static size_t buffers_to_cards(size_t value) {
+  return value * G1UpdateBufferSize;
+}
+
 // Package for pair of refinement thread activation and deactivation
 // thresholds.  The activation and deactivation levels are resp. the first
 // and second values of the pair.
@@ -207,8 +212,9 @@ static Thresholds calc_thresholds(size_t green_zone,
     // available buffers near green_zone value.  When yellow_size is
     // large we don't want to allow a full step to accumulate before
     // doing any processing, as that might lead to significantly more
-    // than green_zone buffers to be processed during scanning.
-    step = MIN2(step, ParallelGCThreads / 2.0);
+    // than green_zone buffers to be processed during pause.  So limit
+    // to an extra half buffer per pause-time processing thread.
+    step = MIN2(step, buffers_to_cards(ParallelGCThreads) / 2.0);
   }
   size_t activate_offset = static_cast<size_t>(ceil(step * (worker_id + 1)));
   size_t deactivate_offset = static_cast<size_t>(floor(step * worker_id));
@@ -231,10 +237,6 @@ G1ConcurrentRefine::G1ConcurrentRefine(size_t green_zone,
 
 jint G1ConcurrentRefine::initialize() {
   return _thread_control.initialize(this, max_num_threads());
-}
-
-static size_t buffers_to_cards(size_t value) {
-  return value * G1UpdateBufferSize;
 }
 
 static size_t calc_min_yellow_zone_size() {
@@ -297,13 +299,6 @@ G1ConcurrentRefine* G1ConcurrentRefine::create(jint* ecode) {
                                                   yellow_zone,
                                                   red_zone,
                                                   min_yellow_zone_size);
-
-  if (cr == NULL) {
-    *ecode = JNI_ENOMEM;
-    vm_shutdown_during_initialization("Could not create G1ConcurrentRefine");
-    return NULL;
-  }
-
   *ecode = cr->initialize();
   return cr;
 }
@@ -443,8 +438,8 @@ uint G1ConcurrentRefine::worker_id_offset() {
   return G1DirtyCardQueueSet::num_par_ids();
 }
 
-void G1ConcurrentRefine::maybe_activate_more_threads(uint worker_id, size_t num_cur_buffers) {
-  if (num_cur_buffers > activation_threshold(worker_id + 1)) {
+void G1ConcurrentRefine::maybe_activate_more_threads(uint worker_id, size_t num_cur_cards) {
+  if (num_cur_cards > activation_threshold(worker_id + 1)) {
     _thread_control.maybe_activate_next(worker_id);
   }
 }
@@ -456,10 +451,8 @@ bool G1ConcurrentRefine::do_refinement_step(uint worker_id,
   size_t curr_cards = dcqs.num_cards();
   // If the number of the cards falls down into the yellow zone,
   // that means that the transition period after the evacuation pause has ended.
-  // Since the value written to the DCQS is the same for all threads, there is no
-  // need to synchronize.
-  if (dcqs.max_cards_padding() > 0 && curr_cards <= yellow_zone()) {
-    dcqs.set_max_cards_padding(0);
+  if (curr_cards <= yellow_zone()) {
+    dcqs.discard_max_cards_padding();
   }
 
   maybe_activate_more_threads(worker_id, curr_cards);

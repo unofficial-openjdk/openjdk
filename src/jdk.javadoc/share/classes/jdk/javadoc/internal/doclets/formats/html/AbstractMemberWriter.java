@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -73,6 +73,7 @@ import static javax.lang.model.element.Modifier.SYNCHRONIZED;
 public abstract class AbstractMemberWriter implements MemberSummaryWriter {
 
     protected final HtmlConfiguration configuration;
+    protected final HtmlOptions options;
     protected final Utils utils;
     protected final SubWriterHolderWriter writer;
     protected final Contents contents;
@@ -80,18 +81,15 @@ public abstract class AbstractMemberWriter implements MemberSummaryWriter {
     protected final Links links;
 
     protected final TypeElement typeElement;
-    public final boolean nodepr;
-
-    protected boolean printedSummaryHeader = false;
 
     public AbstractMemberWriter(SubWriterHolderWriter writer, TypeElement typeElement) {
         this.configuration = writer.configuration;
+        this.options = configuration.getOptions();
         this.writer = writer;
-        this.nodepr = configuration.nodeprecated;
         this.typeElement = typeElement;
         this.utils = configuration.utils;
         this.contents = configuration.contents;
-        this.resources = configuration.resources;
+        this.resources = configuration.docResources;
         this.links = writer.links;
     }
 
@@ -142,8 +140,6 @@ public abstract class AbstractMemberWriter implements MemberSummaryWriter {
      */
     protected abstract Table createSummaryTable();
 
-
-
     /**
      * Add inherited summary label for the member.
      *
@@ -151,22 +147,6 @@ public abstract class AbstractMemberWriter implements MemberSummaryWriter {
      * @param inheritedTree the content tree to which the inherited summary label will be added
      */
     public abstract void addInheritedSummaryLabel(TypeElement typeElement, Content inheritedTree);
-
-    /**
-     * Add the anchor for the summary section of the member.
-     *
-     * @param typeElement the TypeElement to be documented
-     * @param memberTree the content tree to which the summary anchor will be added
-     */
-    public abstract void addSummaryAnchor(TypeElement typeElement, Content memberTree);
-
-    /**
-     * Add the anchor for the inherited summary section of the member.
-     *
-     * @param typeElement the TypeElement to be documented
-     * @param inheritedTree the content tree to which the inherited summary anchor will be added
-     */
-    public abstract void addInheritedSummaryAnchor(TypeElement typeElement, Content inheritedTree);
 
     /**
      * Add the summary type for the member.
@@ -215,17 +195,6 @@ public abstract class AbstractMemberWriter implements MemberSummaryWriter {
      * @return a content tree representing the link
      */
     protected abstract Content getDeprecatedLink(Element member);
-
-    protected CharSequence makeSpace(int len) {
-        if (len <= 0) {
-            return "";
-        }
-        StringBuilder sb = new StringBuilder(len);
-        for (int i = 0; i < len; i++) {
-            sb.append(' ');
-        }
-        return sb;
-    }
 
     /**
      * Add the modifier and type for the member in the member summary.
@@ -391,12 +360,12 @@ public abstract class AbstractMemberWriter implements MemberSummaryWriter {
                 writer.addSummaryLinkComment(this, element, desc);
                 useTable.addRow(summaryType, typeContent, desc);
             }
-            contentTree.add(useTable.toContent());
+            contentTree.add(useTable);
         }
     }
 
     protected void serialWarning(Element e, String key, String a1, String a2) {
-        if (configuration.serialwarn) {
+        if (options.serialWarn()) {
             configuration.messages.warning(e, key, a1, a2);
         }
     }
@@ -484,7 +453,7 @@ public abstract class AbstractMemberWriter implements MemberSummaryWriter {
         if (table.needsScript()) {
             writer.getMainBodyScript().append(table.getScript());
         }
-        return table.toContent();
+        return table;
     }
 
     /**
@@ -510,11 +479,11 @@ public abstract class AbstractMemberWriter implements MemberSummaryWriter {
         private Content exceptions;
 
         // Threshold for length of type parameters before switching from inline to block representation.
-        private final static int TYPE_PARAMS_MAX_INLINE_LENGTH = 50;
+        private static final int TYPE_PARAMS_MAX_INLINE_LENGTH = 50;
 
         // Threshold for combined length of modifiers, type params and return type before breaking
         // it up with a line break before the return type.
-        private final static int RETURN_TYPE_MAX_LINE_LENGTH = 50;
+        private static final int RETURN_TYPE_MAX_LINE_LENGTH = 50;
 
         /**
          * Create a new member signature builder.
@@ -614,7 +583,7 @@ public abstract class AbstractMemberWriter implements MemberSummaryWriter {
             // Name
             HtmlTree nameSpan = new HtmlTree(HtmlTag.SPAN);
             nameSpan.setStyle(HtmlStyle.memberName);
-            if (configuration.linksource) {
+            if (options.linkSource()) {
                 Content name = new StringContent(name(element));
                 writer.addSrcLink(element, name, nameSpan);
             } else {
@@ -722,7 +691,7 @@ public abstract class AbstractMemberWriter implements MemberSummaryWriter {
 
             // Exceptions
             if (exceptions != null && !exceptions.isEmpty()) {
-                CharSequence indent = makeSpace(indentSize + 1 - 7);
+                CharSequence indent = " ".repeat(Math.max(0, indentSize + 1 - 7));
                 htmltree.add(DocletConstants.NL);
                 htmltree.add(indent);
                 htmltree.add("throws ");

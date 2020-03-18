@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,8 +47,7 @@ import jdk.javadoc.internal.doclets.formats.html.markup.HtmlAttr;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlStyle;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTag;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTree;
-import jdk.javadoc.internal.doclets.formats.html.markup.Navigation;
-import jdk.javadoc.internal.doclets.formats.html.markup.Navigation.PageMode;
+import jdk.javadoc.internal.doclets.formats.html.Navigation.PageMode;
 import jdk.javadoc.internal.doclets.formats.html.markup.StringContent;
 import jdk.javadoc.internal.doclets.toolkit.ClassWriter;
 import jdk.javadoc.internal.doclets.toolkit.Content;
@@ -80,10 +79,10 @@ public class ClassWriterImpl extends SubWriterHolderWriter implements ClassWrite
                      "org.omg.CORBA.Object");
 
     private static final Set<String> suppressImplementingSet
-            = Set.of( "java.lang.Cloneable",
-                    "java.lang.constant.Constable",
-                    "java.lang.constant.ConstantDesc",
-                    "java.io.Serializable");
+            = Set.of("java.lang.Cloneable",
+                     "java.lang.constant.Constable",
+                     "java.lang.constant.ConstantDesc",
+                     "java.io.Serializable");
 
     protected final TypeElement typeElement;
 
@@ -105,9 +104,6 @@ public class ClassWriterImpl extends SubWriterHolderWriter implements ClassWrite
         this.navBar = new Navigation(typeElement, configuration, PageMode.CLASS, path);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public Content getHeader(String header) {
         HtmlTree bodyTree = getBody(getWindowTitle(utils.getSimpleName(typeElement)));
@@ -118,7 +114,7 @@ public class ClassWriterImpl extends SubWriterHolderWriter implements ClassWrite
         navBar.setNavLinkModule(linkContent);
         navBar.setMemberSummaryBuilder(configuration.getBuilderFactory().getMemberSummaryBuilder(this));
         navBar.setUserHeader(getUserHeaderFooter(true));
-        headerContent.add(navBar.getContent(true));
+        headerContent.add(navBar.getContent(Navigation.Position.TOP));
         HtmlTree div = new HtmlTree(HtmlTag.DIV);
         div.setStyle(HtmlStyle.header);
         if (configuration.showModules) {
@@ -144,7 +140,7 @@ public class ClassWriterImpl extends SubWriterHolderWriter implements ClassWrite
                 LinkInfoImpl.Kind.CLASS_HEADER, typeElement);
         //Let's not link to ourselves in the header.
         linkInfo.linkToSelf = false;
-        Content heading = HtmlTree.HEADING(Headings.PAGE_TITLE_HEADING, true,
+        Content heading = HtmlTree.HEADING_TITLE(Headings.PAGE_TITLE_HEADING,
                 HtmlStyle.title, new StringContent(header));
         heading.add(getTypeParameterLinks(linkInfo));
         div.add(heading);
@@ -154,67 +150,46 @@ public class ClassWriterImpl extends SubWriterHolderWriter implements ClassWrite
         return bodyTree;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public Content getClassContentHeader() {
         return getContentHeader();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void addFooter() {
         bodyContents.addMainContent(MarkerComments.END_OF_CLASS_DATA);
         Content htmlTree = HtmlTree.FOOTER();
         navBar.setUserFooter(getUserHeaderFooter(false));
-        htmlTree.add(navBar.getContent(false));
+        htmlTree.add(navBar.getContent(Navigation.Position.BOTTOM));
         addBottom(htmlTree);
         bodyContents.setFooter(htmlTree);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void printDocument(Content contentTree) throws DocFileIOException {
         String description = getDescription("declaration", typeElement);
         PackageElement pkg = utils.containingPackage(typeElement);
         List<DocPath> localStylesheets = getLocalStylesheets(pkg);
-        contentTree.add(bodyContents.toContent());
+        contentTree.add(bodyContents);
         printHtmlDocument(configuration.metakeywords.getMetaKeywords(typeElement),
                 description, localStylesheets, contentTree);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public Content getClassInfoTreeHeader() {
         return getMemberTreeHeader();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public Content getClassInfo(Content classInfoTree) {
         return getMemberTree(HtmlStyle.description, classInfoTree);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected TypeElement getCurrentPageElement() {
         return typeElement;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override @SuppressWarnings("preview")
     public void addClassSignature(String modifiers, Content classInfoTree) {
         Content hr = new HtmlTree(HtmlTag.HR);
@@ -228,7 +203,7 @@ public class ClassWriterImpl extends SubWriterHolderWriter implements ClassWrite
         linkInfo.linkToSelf = false;
         Content className = new StringContent(utils.getSimpleName(typeElement));
         Content parameterLinks = getTypeParameterLinks(linkInfo);
-        if (configuration.linksource) {
+        if (options.linkSource()) {
             addSrcLink(typeElement, className, pre);
             pre.add(parameterLinks);
         } else {
@@ -281,7 +256,7 @@ public class ClassWriterImpl extends SubWriterHolderWriter implements ClassWrite
         String sep = "";
         for (RecordComponentElement e : typeElement.getRecordComponents()) {
             content.add(sep);
-            getAnnotations(e.getAnnotationMirrors(), false).stream()
+            getAnnotations(e.getAnnotationMirrors(), false)
                     .forEach(a -> { content.add(a); content.add(" "); });
             Content link = getLink(new LinkInfoImpl(configuration, LinkInfoImpl.Kind.RECORD_COMPONENT,
                     e.asType()));
@@ -294,12 +269,9 @@ public class ClassWriterImpl extends SubWriterHolderWriter implements ClassWrite
         return content;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void addClassDescription(Content classInfoTree) {
-        if(!configuration.nocomment) {
+        if (!options.noComment()) {
             // generate documentation for the class.
             if (!utils.getFullBody(typeElement).isEmpty()) {
                 addInlineComment(typeElement, classInfoTree);
@@ -307,12 +279,9 @@ public class ClassWriterImpl extends SubWriterHolderWriter implements ClassWrite
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void addClassTagInfo(Content classInfoTree) {
-        if(!configuration.nocomment) {
+        if (!options.noComment()) {
             // Print Information about all the tags here
             addTagsInfo(typeElement, classInfoTree);
         }
@@ -367,9 +336,6 @@ public class ClassWriterImpl extends SubWriterHolderWriter implements ClassWrite
         return content;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void addClassTree(Content classContentTree) {
         if (!utils.isClass(typeElement)) {
@@ -378,23 +344,17 @@ public class ClassWriterImpl extends SubWriterHolderWriter implements ClassWrite
         classContentTree.add(getClassInheritanceTree(typeElement.asType()));
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void addParamInfo(Content classInfoTree) {
         if (utils.hasBlockTag(typeElement, DocTree.Kind.PARAM)) {
             Content paramInfo = (new ParamTaglet()).getTagletOutput(typeElement,
                     getTagletWriterInstance(false));
             if (!paramInfo.isEmpty()) {
-                classInfoTree.add(HtmlTree.DL(paramInfo));
+                classInfoTree.add(HtmlTree.DL(HtmlStyle.notes, paramInfo));
             }
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void addSubClassInfo(Content classInfoTree) {
         if (utils.isClass(typeElement)) {
@@ -405,37 +365,27 @@ public class ClassWriterImpl extends SubWriterHolderWriter implements ClassWrite
             }
             Set<TypeElement> subclasses = classtree.directSubClasses(typeElement, false);
             if (!subclasses.isEmpty()) {
-                Content label = contents.subclassesLabel;
-                Content dt = HtmlTree.DT(label);
-                Content dl = HtmlTree.DL(dt);
-                dl.add(getClassLinks(LinkInfoImpl.Kind.SUBCLASSES,
-                        subclasses));
+                HtmlTree dl = HtmlTree.DL(HtmlStyle.notes);
+                dl.add(HtmlTree.DT(contents.subclassesLabel));
+                dl.add(HtmlTree.DD(getClassLinks(LinkInfoImpl.Kind.SUBCLASSES, subclasses)));
                 classInfoTree.add(dl);
             }
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void addSubInterfacesInfo(Content classInfoTree) {
         if (utils.isInterface(typeElement)) {
             Set<TypeElement> subInterfaces = classtree.allSubClasses(typeElement, false);
             if (!subInterfaces.isEmpty()) {
-                Content label = contents.subinterfacesLabel;
-                Content dt = HtmlTree.DT(label);
-                Content dl = HtmlTree.DL(dt);
-                dl.add(getClassLinks(LinkInfoImpl.Kind.SUBINTERFACES,
-                        subInterfaces));
+                Content dl = HtmlTree.DL(HtmlStyle.notes);
+                dl.add(HtmlTree.DT(contents.subinterfacesLabel));
+                dl.add(HtmlTree.DD(getClassLinks(LinkInfoImpl.Kind.SUBINTERFACES, subInterfaces)));
                 classInfoTree.add(dl);
             }
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void addInterfaceUsageInfo (Content classInfoTree) {
         if (!utils.isInterface(typeElement)) {
@@ -448,34 +398,25 @@ public class ClassWriterImpl extends SubWriterHolderWriter implements ClassWrite
         }
         Set<TypeElement> implcl = classtree.implementingClasses(typeElement);
         if (!implcl.isEmpty()) {
-            Content label = contents.implementingClassesLabel;
-            Content dt = HtmlTree.DT(label);
-            Content dl = HtmlTree.DL(dt);
-            dl.add(getClassLinks(LinkInfoImpl.Kind.IMPLEMENTED_CLASSES,
-                    implcl));
+            HtmlTree dl = HtmlTree.DL(HtmlStyle.notes);
+            dl.add(HtmlTree.DT(contents.implementingClassesLabel));
+            dl.add(HtmlTree.DD(getClassLinks(LinkInfoImpl.Kind.IMPLEMENTED_CLASSES, implcl)));
             classInfoTree.add(dl);
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void addImplementedInterfacesInfo(Content classInfoTree) {
         SortedSet<TypeMirror> interfaces = new TreeSet<>(utils.makeTypeMirrorClassUseComparator());
         interfaces.addAll(utils.getAllInterfaces(typeElement));
         if (utils.isClass(typeElement) && !interfaces.isEmpty()) {
-            Content label = contents.allImplementedInterfacesLabel;
-            Content dt = HtmlTree.DT(label);
-            Content dl = HtmlTree.DL(dt);
-            dl.add(getClassLinks(LinkInfoImpl.Kind.IMPLEMENTED_INTERFACES, interfaces));
+            HtmlTree dl = HtmlTree.DL(HtmlStyle.notes);
+            dl.add(HtmlTree.DT(contents.allImplementedInterfacesLabel));
+            dl.add(HtmlTree.DD(getClassLinks(LinkInfoImpl.Kind.IMPLEMENTED_INTERFACES, interfaces)));
             classInfoTree.add(dl);
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void addSuperInterfacesInfo(Content classInfoTree) {
         SortedSet<TypeMirror> interfaces =
@@ -483,17 +424,13 @@ public class ClassWriterImpl extends SubWriterHolderWriter implements ClassWrite
         interfaces.addAll(utils.getAllInterfaces(typeElement));
 
         if (utils.isInterface(typeElement) && !interfaces.isEmpty()) {
-            Content label = contents.allSuperinterfacesLabel;
-            Content dt = HtmlTree.DT(label);
-            Content dl = HtmlTree.DL(dt);
-            dl.add(getClassLinks(LinkInfoImpl.Kind.SUPER_INTERFACES, interfaces));
+            HtmlTree dl = HtmlTree.DL(HtmlStyle.notes);
+            dl.add(HtmlTree.DT(contents.allSuperinterfacesLabel));
+            dl.add(HtmlTree.DD(getClassLinks(LinkInfoImpl.Kind.SUPER_INTERFACES, interfaces)));
             classInfoTree.add(dl);
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void addNestedClassInfo(final Content classInfoTree) {
         Element outerClass = typeElement.getEnclosingElement();
@@ -502,11 +439,10 @@ public class ClassWriterImpl extends SubWriterHolderWriter implements ClassWrite
         new SimpleElementVisitor8<Void, Void>() {
             @Override
             public Void visitType(TypeElement e, Void p) {
-                Content label = utils.isInterface(e)
+                HtmlTree dl = HtmlTree.DL(HtmlStyle.notes);
+                dl.add(HtmlTree.DT(utils.isInterface(e)
                         ? contents.enclosingInterfaceLabel
-                        : contents.enclosingClassLabel;
-                Content dt = HtmlTree.DT(label);
-                Content dl = HtmlTree.DL(dt);
+                        : contents.enclosingClassLabel));
                 Content dd = new HtmlTree(HtmlTag.DD);
                 dd.add(getLink(new LinkInfoImpl(configuration,
                         LinkInfoImpl.Kind.CLASS, e)));
@@ -517,14 +453,11 @@ public class ClassWriterImpl extends SubWriterHolderWriter implements ClassWrite
         }.visit(outerClass);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void addFunctionalInterfaceInfo (Content classInfoTree) {
         if (isFunctionalInterface()) {
-            Content dt = HtmlTree.DT(contents.functionalInterface);
-            Content dl = HtmlTree.DL(dt);
+            HtmlTree dl = HtmlTree.DL(HtmlStyle.notes);
+            dl.add(HtmlTree.DT(contents.functionalInterface));
             Content dd = new HtmlTree(HtmlTag.DD);
             dd.add(contents.functionalInterfaceMessage);
             dl.add(dd);
@@ -543,9 +476,6 @@ public class ClassWriterImpl extends SubWriterHolderWriter implements ClassWrite
     }
 
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void addClassDeprecationInfo(Content classInfoTree) {
         List<? extends DocTree> deprs = utils.getBlockTags(typeElement, DocTree.Kind.DEPRECATED);
@@ -555,7 +485,7 @@ public class ClassWriterImpl extends SubWriterHolderWriter implements ClassWrite
             if (!deprs.isEmpty()) {
                 CommentHelper ch = utils.getCommentHelper(typeElement);
                 DocTree dt = deprs.get(0);
-                List<? extends DocTree> commentTags = ch.getBody(configuration, dt);
+                List<? extends DocTree> commentTags = ch.getBody(dt);
                 if (!commentTags.isEmpty()) {
                     addInlineDeprecatedComment(typeElement, deprs.get(0), div);
                 }
@@ -572,12 +502,12 @@ public class ClassWriterImpl extends SubWriterHolderWriter implements ClassWrite
      * @return a content tree for the class list
      */
     private Content getClassLinks(LinkInfoImpl.Kind context, Collection<?> list) {
-        Content dd = new HtmlTree(HtmlTag.DD);
+        Content content = new ContentBuilder();
         boolean isFirst = true;
         for (Object type : list) {
             if (!isFirst) {
                 Content separator = new StringContent(", ");
-                dd.add(separator);
+                content.add(separator);
             } else {
                 isFirst = false;
             }
@@ -585,14 +515,14 @@ public class ClassWriterImpl extends SubWriterHolderWriter implements ClassWrite
             if (type instanceof TypeElement) {
                 Content link = getLink(
                         new LinkInfoImpl(configuration, context, (TypeElement)(type)));
-                dd.add(HtmlTree.CODE(link));
+                content.add(HtmlTree.CODE(link));
             } else {
                 Content link = getLink(
                         new LinkInfoImpl(configuration, context, ((TypeMirror)type)));
-                dd.add(HtmlTree.CODE(link));
+                content.add(HtmlTree.CODE(link));
             }
         }
-        return dd;
+        return content;
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -199,12 +199,10 @@ JVMCIObjectArray CompilerToVM::initialize_intrinsics(JVMCI_TRAPS) {
   do_bool_flag(CITimeEach)                                                 \
   do_uintx_flag(CodeCacheSegmentSize)                                      \
   do_intx_flag(CodeEntryAlignment)                                         \
-  do_bool_flag(CompactFields)                                              \
   do_intx_flag(ContendedPaddingWidth)                                      \
   do_bool_flag(DontCompileHugeMethods)                                     \
   do_bool_flag(EagerJVMCI)                                                 \
   do_bool_flag(EnableContended)                                            \
-  do_intx_flag(FieldsAllocationStyle)                                      \
   do_bool_flag(FoldStableValues)                                           \
   do_bool_flag(ForceUnreachable)                                           \
   do_intx_flag(HugeMethodLimit)                                            \
@@ -212,7 +210,6 @@ JVMCIObjectArray CompilerToVM::initialize_intrinsics(JVMCI_TRAPS) {
   do_intx_flag(JVMCICounterSize)                                           \
   do_bool_flag(JVMCIPrintProperties)                                       \
   do_bool_flag(JVMCIUseFastLocking)                                        \
-  do_intx_flag(MethodProfileWidth)                                         \
   do_intx_flag(ObjectAlignmentInBytes)                                     \
   do_bool_flag(PrintInlining)                                              \
   do_bool_flag(ReduceInitialCardMarks)                                     \
@@ -232,7 +229,6 @@ JVMCIObjectArray CompilerToVM::initialize_intrinsics(JVMCI_TRAPS) {
   X86_ONLY(do_bool_flag(UseCountTrailingZerosInstruction))                 \
   do_bool_flag(UseG1GC)                                                    \
   do_bool_flag(UseParallelGC)                                              \
-  do_bool_flag(UseParallelOldGC)                                           \
   do_bool_flag(UseSerialGC)                                                \
   do_bool_flag(UseZGC)                                                     \
   do_bool_flag(UseEpsilonGC)                                               \
@@ -244,7 +240,7 @@ JVMCIObjectArray CompilerToVM::initialize_intrinsics(JVMCI_TRAPS) {
   do_bool_flag(UseSHA1Intrinsics)                                          \
   do_bool_flag(UseSHA256Intrinsics)                                        \
   do_bool_flag(UseSHA512Intrinsics)                                        \
-  do_intx_flag(UseSSE)                                                     \
+  X86_ONLY(do_intx_flag(UseSSE))                                           \
   COMPILER2_PRESENT(do_bool_flag(UseSquareToLenIntrinsic))                 \
   do_bool_flag(UseStackBanging)                                            \
   do_bool_flag(UseTLAB)                                                    \
