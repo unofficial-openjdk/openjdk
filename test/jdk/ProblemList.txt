@@ -121,6 +121,7 @@ java/awt/Focus/FocusOwnerFrameOnClick/FocusOwnerFrameOnClick.java 8081489 generi
 java/awt/Focus/IconifiedFrameFocusChangeTest/IconifiedFrameFocusChangeTest.java 6849364 generic-all
 java/awt/Focus/AutoRequestFocusTest/AutoRequestFocusToFrontTest.java 6848406 generic-all
 java/awt/Focus/AutoRequestFocusTest/AutoRequestFocusSetVisibleTest.java 6848407 generic-all
+java/awt/Focus/UnaccessibleChoice/AccessibleChoiceTest.java 8239801 macosx-all
 java/awt/Frame/MaximizedUndecorated/MaximizedUndecorated.java 8022302 generic-all
 java/awt/Frame/FrameLocation/FrameLocation.java 8233703 linux-all
 java/awt/FileDialog/FileDialogIconTest/FileDialogIconTest.java 8160558 windows-all
@@ -253,6 +254,7 @@ java/awt/font/TextLayout/TextLayoutBounds.java 8169188 generic-all
 java/awt/font/StyledMetrics/BoldSpace.java 8198422 linux-all
 java/awt/FontMetrics/FontCrash.java 8198336 windows-all
 java/awt/FontMetrics/MaxAdvanceIsMax.java 8221305,8231495 solaris-all,macosx-all,linux-all
+java/awt/image/BufferedImage/ICMColorDataTest/ICMColorDataTest.java 8233028 generic-all
 java/awt/image/DrawImage/IncorrectAlphaSurface2SW.java 8056077 generic-all
 java/awt/image/DrawImage/IncorrectClipXorModeSW2Surface.java 8196025 windows-all
 java/awt/image/DrawImage/IncorrectClipXorModeSurface2Surface.java 8196025 windows-all
@@ -806,6 +808,7 @@ javax/swing/JPopupMenu/4966112/bug4966112.java 8064915 macosx-all
 javax/swing/JSpinner/8223788/JSpinnerButtonFocusTest.java 8238085 macosx-all
 javax/swing/MultiUIDefaults/Test6860438.java 8198391 generic-all
 javax/swing/MultiUIDefaults/4300666/bug4300666.java 7105119 macosx-all
+javax/swing/UIDefaults/8146330/UIDefaultKeySizeTest.java 8241228 linux-all,solaris-all
 javax/swing/UITest/UITest.java 8198392 generic-all
 javax/swing/plaf/basic/BasicComboBoxEditor/Test8015336.java 8198394 generic-all
 javax/swing/plaf/metal/MetalLookAndFeel/Test8039750.java 8198395 generic-all
@@ -823,7 +826,6 @@ javax/swing/DataTransfer/8059739/bug8059739.java 8199074 generic-all
 javax/swing/JCheckBox/8032667/bug8032667_image_diff.java 8199063 macosx-all
 javax/swing/JComboBox/7031551/bug7031551.java 8199056 generic-all
 javax/swing/JScrollBar/6924059/bug6924059.java 8199078 generic-all
-javax/swing/JTabbedPane/TabProb.java 8236635 linux-all
 javax/swing/JTree/8003830/bug8003830.java 8199057 generic-all
 javax/swing/plaf/nimbus/ColorCustomizationTest.java 8199080 generic-all
 javax/swing/SwingWorker/6432565/bug6432565.java 8199077 generic-all

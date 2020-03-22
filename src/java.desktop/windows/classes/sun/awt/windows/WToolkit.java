@@ -60,7 +60,6 @@ import java.awt.Point;
 import java.awt.PopupMenu;
 import java.awt.PrintJob;
 import java.awt.RenderingHints;
-import java.awt.Robot;
 import java.awt.ScrollPane;
 import java.awt.Scrollbar;
 import java.awt.SystemTray;
@@ -553,11 +552,11 @@ public final class WToolkit extends SunToolkit implements Runnable {
     }
 
     @Override
-    public RobotPeer createRobot(Robot target, GraphicsDevice screen) {
-        // (target is unused for now)
-        // Robot's don't need to go in the peer map since
-        // they're not Component's
-        return new WRobotPeer(screen);
+    public RobotPeer createRobot(GraphicsDevice screen) throws AWTException {
+        if (screen instanceof Win32GraphicsDevice) {
+            return new WRobotPeer();
+        }
+        return super.createRobot(screen);
     }
 
     public WEmbeddedFramePeer createEmbeddedFrame(WEmbeddedFrame target) {
@@ -664,9 +663,12 @@ public final class WToolkit extends SunToolkit implements Runnable {
     static ColorModel screenmodel;
 
     @Override
-    public Insets getScreenInsets(GraphicsConfiguration gc)
-    {
-        return getScreenInsets(((Win32GraphicsDevice) gc.getDevice()).getScreen());
+    public Insets getScreenInsets(final GraphicsConfiguration gc) {
+        GraphicsDevice gd = gc.getDevice();
+        if (!(gd instanceof Win32GraphicsDevice)) {
+            return super.getScreenInsets(gc);
+        }
+        return getScreenInsets(((Win32GraphicsDevice) gd).getScreen());
     }
 
     @Override
